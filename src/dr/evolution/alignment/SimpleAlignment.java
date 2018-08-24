@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.Sequences;
+import dr.evolution.sequence.UncertainSequence;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.NumberFormatter;
@@ -39,6 +40,7 @@ import dr.util.NumberFormatter;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -185,8 +187,8 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         } else if (dataType != sequence.getDataType()) {
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
-
-        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
+        
+        int invalidCharAt = sequence.getInvalidChar();
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
@@ -212,31 +214,14 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
 
-        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
+        int invalidCharAt = sequence.getInvalidChar();
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
 
         super.insertSequence(position, sequence);
     }
-
-    /**
-     * search invalid character in the sequence by given data type, and return its index
-     */
-    protected int getInvalidChar(String sequence, DataType dataType) {
-        final char[] validChars = dataType.getValidChars();
-        if (validChars != null) {
-            String validString = new String(validChars);
-
-            for (int i = 0; i < sequence.length(); i++) {
-                char c = sequence.charAt(i);
-
-                if (validString.indexOf(c) < 0) return i;
-            }
-        }
-        return -1;
-    }
-
+    
     // **************************************************************
     // SiteList IMPLEMENTATION
     // **************************************************************
@@ -273,6 +258,36 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return pattern;
     }
 
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        if (areUncertain())   {
+
+            double[][] pattern = new double[getSequenceCount()][];
+            for (int i = 0; i < getSequenceCount(); ++i) {
+
+                Sequence seq = getSequence(i);
+                if (siteIndex > seq.getLength()) {
+                    pattern[i] = new double[dataType.getStateCount()];
+                    Arrays.fill(pattern[i], 1.0);
+                } else {
+                    if (seq instanceof UncertainSequence) {
+                        pattern[i] = ((UncertainSequence) seq).getUncertainPattern(siteIndex);
+                    } else {
+                        pattern[i] = new double[dataType.getStateCount()];
+                        int[] states = dataType.getStates(seq.getState(siteIndex));
+                        for (int state : states) {
+                            pattern[i][state] = 1.0;
+                        }
+                    }
+                }
+            }
+
+            return pattern;
+        } else {
+            throw new UnsupportedOperationException("getUncertainSitePattern not implemented yet");
+        }
+    }
+
     /**
      * Gets the pattern index at a particular site
      *
@@ -294,6 +309,11 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         }
 
         return seq.getState(siteIndex);
+    }
+
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainState not implemented yet");
     }
 
     /**
@@ -417,11 +437,21 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return getSitePattern(patternIndex);
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPattern not implemented yet");
+    }
+
     /**
      * @return state at (taxonIndex, patternIndex)
      */
     public int getPatternState(int taxonIndex, int patternIndex) {
         return getState(taxonIndex, patternIndex);
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPatternState not implemented yet");
     }
 
     /**
@@ -457,6 +487,17 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
     @Override
     public boolean areUnique() {
+        return false;
+    }
+
+    @Override
+    public boolean areUncertain() {
+
+        for (Sequence seq : sequences) {
+            if (seq instanceof UncertainSequence) {
+                return true;
+            }
+        }
         return false;
     }
 

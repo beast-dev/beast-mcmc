@@ -53,7 +53,7 @@
         </javac>
     </target>
 
-    <target name="build" depends="compile" description="generate the jar file">
+    <target name="dist" depends="compile" description="generate the jar file">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
@@ -95,7 +95,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.5.1" />
+    <property name="version" value="1.5.2" />
     <property name="packaging_tools" value="packaging_tools" />
     <property name="release_dir" value="release_tempest" />
     <property name="name" value="TempEst" />
@@ -112,7 +112,7 @@
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                  or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows" depends="build" description="release Windows version of TempEst">
+    <target name="windows" depends="dist" description="release Windows version of TempEst">
 
         <delete dir="${Windows_package_dir}" />
         <!-- Create the release directory -->
@@ -147,7 +147,7 @@
         <echo message="Windows version release is finished." />
     </target>
 
-    <target name="linux" depends="build" description="release Linux/Unix version of TempEst">
+    <target name="linux" depends="dist" description="release Linux/Unix version of TempEst">
         <delete dir="${Linux_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Linux_package_dir}" />
@@ -176,14 +176,17 @@
         <echo message="Linux/Unix version release is finished." />
     </target>
 
-    <target name="mac" depends="build" description="release Mac version of Tempest">
+    <!-- this will only work on Andrew's computer -->
+    <property name="AppleSigner" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
+
+    <target name="mac" depends="dist" description="release Mac version of Tempest">
         <delete dir="${Mac_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Mac_package_dir}" />
 
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
-        <taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
+        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
 
         <!-- create a jar bundle for the mac -->
         <jarbundler dir="${Mac_package_dir}"
@@ -195,13 +198,23 @@
                         arguments=""
                         vmoptions="-Xmx1024M"
                         version="${version}"
-                        copyright="${name} v${version}, Copyright 2006-2016, Andrew Rambaut"
+                        highresolutioncapable="true"
+                        copyright="${name} v${version}, Copyright 2006-2018, Andrew Rambaut"
                         bundleid="tempest" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">
                 <include name="**/tempest.jar"/>
             </jarfileset>
         </jarbundler>
+
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${name} v${version}.app"/>
+        </exec>
 
         <echo message="Building disk image." />
 
@@ -218,6 +231,16 @@
             <arg value="${release_dir}/${name} v${version}.dmg"/>
         </exec>
 
+        <exec executable="codesign">
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${release_dir}/${name} v${version}.dmg"/>
+        </exec>
+
         <echo message="Mac version release is finished." />
     </target>
+
+
+    <target name="build" depends="mac, windows, linux" description="build all the executables" />
 </project>

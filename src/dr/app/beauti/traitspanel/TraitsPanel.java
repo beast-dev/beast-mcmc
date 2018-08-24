@@ -103,13 +103,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         traitsTableModel = new TraitsTableModel();
 //        TableSorter sorter = new TableSorter(traitsTableModel);
-//        traitsTable = new JTable(sorter);
-//        sorter.setTableHeader(traitsTable.getTableHeader());
+//        predictorsTable = new JTable(sorter);
+//        sorter.setTableHeader(predictorsTable.getTableHeader());
         traitsTable = new JTable(traitsTableModel);
 
         traitsTable.getTableHeader().setReorderingAllowed(false);
         traitsTable.getTableHeader().setResizingAllowed(false);
-//        traitsTable.getTableHeader().setDefaultRenderer(
+//        predictorsTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = traitsTable.getColumnModel().getColumn(1);
@@ -166,6 +166,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
 
         toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
@@ -246,17 +247,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         updateButtons();
 
-//        int selRow = traitsTable.getSelectedRow();
+//        int selRow = predictorsTable.getSelectedRow();
 //        traitsTableModel.fireTableDataChanged();
 //
 //        if (selRow < 0) {
 //            selRow = 0;
 //        }
-//        traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//        predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
 
 //        if (selectedTrait == null) {
-//            traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+//            predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
 //        }
 
         traitsTableModel.fireTableDataChanged();
@@ -267,7 +268,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//        int selRow = traitsTable.getSelectedRow();
+//        int selRow = predictorsTable.getSelectedRow();
 //        if (selRow >= 0 && options.traitsOptions.selecetedTraits.size() > 0) {
 //            selectedTrait = options.traitsOptions.selecetedTraits.get(selRow);
 //        }
@@ -289,13 +290,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             }
 
 //            if (selRow > 0) {
-//                traitsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
+//                predictorsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
 //            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
-//                traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+//                predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
 //            }
 
             traitsTableModel.fireTableDataChanged();
-            options.updatePartitionAllLinks();
+//            options.updatePartitionAllLinks();
             frame.setDirty();
         }
     }
@@ -304,7 +305,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int selRow = traitsTable.getSelectedRow();
         if (selRow >= 0) {
             currentTrait = options.traits.get(selRow);
-//            traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//            predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
 //        } else {
 //            currentTrait = null;
@@ -437,15 +438,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean addTrait(String traitName) {
-        return addTrait(null, traitName, false);
+        return addTrait(null, traitName);
     }
 
-    public boolean addTrait(String message, String traitName, boolean isSpeciesTrait) {
+    public boolean addTrait(String message, String traitName) {
         if (createTraitDialog == null) {
             createTraitDialog = new CreateTraitDialog(frame);
         }
 
-        createTraitDialog.setSpeciesTrait(isSpeciesTrait);
         createTraitDialog.setTraitName(traitName);
         createTraitDialog.setMessage(message);
 
@@ -472,19 +472,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         } else if (result == CreateTraitDialog.OK_IMPORT) {
             boolean done = frame.doImportTraits();
             if (done) {
-                if (isSpeciesTrait) {
-                    // check that we did indeed import a 'species' trait
-                    if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                        JOptionPane.showMessageDialog(this,
-                                "The imported trait file didn't contain a trait\n" +
-                                        "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
-                                        "Please edit it or select a different file.",
-                                "Reserved trait name",
-                                JOptionPane.WARNING_MESSAGE);
-
-                        return false;
-                    }
-                }
                 updateButtons();
             }
             return done;
@@ -547,10 +534,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void removeTrait(String traitName) {
-        if (options.useStarBEAST && traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used by *BEAST.\nTurn *BEAST off before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
         TraitData traitData = options.getTrait(traitName);
         if (options.getTraitPartitions(traitData).size() > 0) {
             JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
@@ -673,7 +656,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            return !options.useStarBEAST || !options.traits.get(row).getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString());
+            return true;
         }
 
         public String getColumnName(int column) {

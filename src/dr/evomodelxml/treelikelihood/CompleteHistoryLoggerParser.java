@@ -38,15 +38,18 @@ import dr.xml.*;
 public class CompleteHistoryLoggerParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "completeHistoryLogger";
+    public static final String EXTERNAL = "external";
+    public static final String INTERNAL = "internal";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
+        boolean logExternal = xo.getAttribute(EXTERNAL, true);
+        boolean logInternal = xo.getAttribute(INTERNAL, true);
         MarkovJumpsTraitProvider treeLikelihood =
                 (MarkovJumpsTraitProvider) xo.getChild(MarkovJumpsTraitProvider.class);
 
         HistoryFilter filter = (HistoryFilter) xo.getChild(HistoryFilter.class);
 
-        return new CompleteHistoryLogger(treeLikelihood, filter);
+        return new CompleteHistoryLogger(treeLikelihood, filter, logInternal, logExternal);
     }
 
     public String getParserName() {
@@ -66,6 +69,8 @@ public class CompleteHistoryLoggerParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(EXTERNAL, true),
+            AttributeRule.newBooleanRule(INTERNAL, true),
             new ElementRule(MarkovJumpsTraitProvider.class),
             new ElementRule(HistoryFilter.class, true),
     };

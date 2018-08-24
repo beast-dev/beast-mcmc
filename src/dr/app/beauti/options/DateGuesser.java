@@ -110,7 +110,12 @@ public class DateGuesser implements Serializable {
 
                 if (taxonDateMap != null) {
                     String dateString = taxonDateMap.get(taxon);
+                    if (dateString == null) {
+                        continue;
+                    }
+
                     parseDate(taxon.getId(), dateString, values);
+
                 } else {
                     switch (guessType) {
                         case ORDER:
@@ -150,7 +155,7 @@ public class DateGuesser implements Serializable {
             // @todo if any taxa aren't set then return warning
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            date.setPrecision(values[1]);
+            date.setUncertainty(values[1]);
             taxon.setAttribute("date", date);
         }
     }

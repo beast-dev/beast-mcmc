@@ -47,6 +47,42 @@ public class TreeUtils {
 
     }
 
+    public static double getSubTreeLength(Tree tree, Set<Taxon> taxa) {
+
+        double[] treeLength = new double[] { 0.0 };
+
+        getSubTreeLength(tree, tree.getRoot(), taxa, treeLength);
+
+        return treeLength[0];
+
+    }
+
+    private static int getSubTreeLength(Tree tree, NodeRef node, Set<Taxon> taxa, double[] treeLength) {
+        int childCount = tree.getChildCount(node);
+        if (childCount == 0) {
+            if (taxa.contains(tree.getNodeTaxon(node))) {
+                treeLength[0] += tree.getBranchLength(node);
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        int count = 0;
+        for (int i = 0; i < childCount; i++) {
+            count += getSubTreeLength(tree, tree.getChild(node, i), taxa, treeLength);
+        }
+
+        if (count > 0 && count < taxa.size()) {
+            if (node != tree.getRoot()) {
+                treeLength[0] += tree.getBranchLength(node);
+            }
+            return count;
+        }
+
+        return 0;
+    }
+
     public static double getMinNodeHeight(Tree tree, NodeRef node) {
 
         int childCount = tree.getChildCount(node);
@@ -420,6 +456,22 @@ public class TreeUtils {
 
     public static NodeRef getCommonAncestor(Tree tree, NodeRef n1, NodeRef n2) {
         while( n1 != n2 ) {
+            if( tree.getNodeHeight(n1) < tree.getNodeHeight(n2) ) {
+                n1 = tree.getParent(n1);
+            } else {
+                n2 = tree.getParent(n2);
+            }
+        }
+        return n1;
+    }
+
+    public static NodeRef getCommonAncestorSafely(Tree tree, NodeRef n1, NodeRef n2) {
+        while( n1 != n2 ) {
+
+            if (tree.isRoot(n1)) return n1;
+
+            if (tree.isRoot(n2)) return n2;
+
             if( tree.getNodeHeight(n1) < tree.getNodeHeight(n2) ) {
                 n1 = tree.getParent(n1);
             } else {

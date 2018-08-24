@@ -61,8 +61,8 @@ public class IndividualPrior extends AbstractPeriodPriorDistribution {
 
         if(logDenominator == Double.NEGATIVE_INFINITY){
             if(distribution instanceof LogNormalDistributionModel){
-                double mean = ((LogNormalDistributionModel)distribution).getM();
-                double stdev = ((LogNormalDistributionModel)distribution).getS();
+                double mean = ((LogNormalDistributionModel)distribution).getMu();
+                double stdev = ((LogNormalDistributionModel)distribution).getSigma();
 
                 double scaledValue = (Math.log(minValue)-mean)/stdev;
 
@@ -89,8 +89,8 @@ public class IndividualPrior extends AbstractPeriodPriorDistribution {
         }
         if(out == Double.NEGATIVE_INFINITY){
             if(distribution instanceof LogNormalDistributionModel){
-                double mean = ((LogNormalDistributionModel)distribution).getM();
-                double stdev = ((LogNormalDistributionModel)distribution).getS();
+                double mean = ((LogNormalDistributionModel)distribution).getMu();
+                double stdev = ((LogNormalDistributionModel)distribution).getSigma();
 
                 double scaledValue = (Math.log(limit)-mean)/stdev;
 

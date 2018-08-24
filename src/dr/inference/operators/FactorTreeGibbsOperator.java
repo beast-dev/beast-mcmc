@@ -12,7 +12,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 /**
  * Created by max on 5/16/16.
  */
-public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator {
 
     private final LatentFactorModel lfm;
     private double pathParameter = 1;
@@ -33,12 +33,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         this.workingTree = null;
         missingIndicator = lfm.getMissingIndicator();
     }
-
-    @Override
-    public int getStepCount() {
-        return 0;
-    }
-
+    
     @Override
     public String getPerformanceSuggestion() {
         return null;
@@ -80,13 +75,13 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
 
     double[][] getPrecision(int column){
         double [][] treePrec = getTreePrec(column);
-
         for (int i = 0; i < lfm.getLoadings().getColumnDimension(); i++) {
             for (int j = i; j < lfm.getLoadings().getColumnDimension(); j++) {
                 for (int k = 0; k < lfm.getLoadings().getRowDimension(); k++) {
-                    treePrec[i][j] += lfm.getLoadings().getParameterValue(k, i) * errorPrec.getParameterValue(k, k) * lfm.getLoadings().getParameterValue(k, j) * pathParameter;
-                    treePrec[j][i] = treePrec[i][j];
+                    if(missingIndicator == null || missingIndicator.getParameterValue(column * lfm.getLoadings().getRowDimension() + k) != 1){
+                    treePrec[i][j] += lfm.getLoadings().getParameterValue(k, i) * errorPrec.getParameterValue(k, k) * lfm.getLoadings().getParameterValue(k, j) * pathParameter;}
                 }
+                treePrec[j][i] = treePrec[i][j];
             }
         }
         return treePrec;

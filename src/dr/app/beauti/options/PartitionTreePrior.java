@@ -50,7 +50,7 @@ public class PartitionTreePrior extends PartitionOptions {
     private TreePriorParameterizationType skylineModel = TreePriorParameterizationType.CONSTANT_SKYLINE;
     private TreePriorParameterizationType skyrideSmoothing = TreePriorParameterizationType.TIME_AWARE_SKYRIDE;
     private int skyGridCount = 50;
-    private double skyGridInterval = -1.0;
+    private double skyGridInterval = Double.NaN;
     private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
@@ -59,6 +59,8 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -81,6 +83,8 @@ public class PartitionTreePrior extends PartitionOptions {
         this.populationSizeModel = source.populationSizeModel;
         this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
+
+        initModelParametersAndOpererators();
     }
 
     @Override
@@ -140,8 +144,10 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
 
-        createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
+        /*createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);*/
+        createParameterLognormalPrior("yule.birthRate", "Yule speciation process birth rate",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
 
         createNonNegativeParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.01, 0.0, 100000.0);

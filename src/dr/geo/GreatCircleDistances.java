@@ -111,7 +111,7 @@ public class GreatCircleDistances {
 
     public static void main(String[] args) throws ParserConfigurationException, IOException, SAXException, XMLParseException {
 
-        XMLParser parser = new XMLParser(true, true);
+        XMLParser parser = new XMLParser(false, true, true, null);
         parser.addXMLObjectParser(new TaxonParser());
         parser.addXMLObjectParser(new TaxaParser());
         parser.addXMLObjectParser(new AttributeParser());

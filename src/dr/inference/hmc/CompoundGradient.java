@@ -101,6 +101,9 @@ public class CompoundGradient implements GradientWrtParameterProvider {
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
+
+            System.err.println(grad.getLikelihood().getId() + " " + grad.getParameter().getId());
+
             double[] tmp = grad.getGradientLogDensity();
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();

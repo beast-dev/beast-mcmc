@@ -43,9 +43,9 @@ import java.util.logging.Logger;
  *
  * @author Marc Suchard
  */
-public class TransformedTreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
+public class TransformedTreeModel extends AbstractModel implements MutableTreeModel, TransformableTree, Citable {
 
-    public TransformedTreeModel(String id, TreeModel tree, TreeTransform treeTransform) {
+    public TransformedTreeModel(String id, MutableTreeModel tree, TreeTransform treeTransform) {
         super(id);
         this.treeModel = tree;
         this.treeTransform = treeTransform;
@@ -83,7 +83,7 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeTransform) {
-            treeModel.pushTreeChangedEvent(); // All internal node heights have changed!
+            fireModelChanged(new TreeChangedEvent.WholeTree()); // All internal node heights have changed!
         } else if (model == treeModel) {
             fireModelChanged(object, index);
         } else {
@@ -186,7 +186,7 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
     }
 
     private final TreeTransform treeTransform;
-    private final TreeModel treeModel;
+    private final MutableTreeModel treeModel;
 
     public double[] getMultivariateNodeTrait(NodeRef node, String name) {
         return treeModel.getMultivariateNodeTrait(node, name);
@@ -329,5 +329,20 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
     @Override
     public List<Citation> getCitations() {
         return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
+    }
+
+    @Override
+    public NodeRef getOriginalNode(NodeRef transformedNode) {
+        return transformedNode;
+    }
+
+    @Override
+    public NodeRef getTransformedNode(NodeRef originalNode) {
+        return originalNode;
+    }
+
+    @Override
+    public Tree getOriginalTree() {
+        return treeModel;
     }
 }

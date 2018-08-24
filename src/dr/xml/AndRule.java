@@ -96,7 +96,19 @@ public class AndRule implements XMLSyntaxRule {
 		return html;
 	}
 
-	/**
+    /**
+     * Describes the rule.
+     */
+    public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
+        String html = prefix + "All of:\n";
+        for (XMLSyntaxRule rule : rules) {
+            html += rule.markdownRuleString(handler, prefix + "    ");
+        }
+        html += "\n\n";
+        return html;
+    }
+
+    /**
 	 * Describes the rule.
 	 */
 	public String ruleString(XMLObject xo) {

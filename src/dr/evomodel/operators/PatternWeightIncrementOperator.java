@@ -97,12 +97,7 @@ public class PatternWeightIncrementOperator extends SimpleMCMCOperator implement
     public void reject() {
         super.reject();
     }
-
-    @Override
-    public int getStepCount() {
-        return 0;
-    }
-
+    
     public String getPerformanceSuggestion() {
         if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
             return "";

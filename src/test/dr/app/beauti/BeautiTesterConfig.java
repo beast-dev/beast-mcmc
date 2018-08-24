@@ -353,7 +353,7 @@ public class BeautiTesterConfig {
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
 
-                        importer.parseAssumptionsBlock(charSets);
+                        importer.parseAssumptionsBlock(charSets, null);
 
                     } else {
                         // Ignore the block..
@@ -458,7 +458,7 @@ public class BeautiTesterConfig {
                         }
                     }
                     if (partition.getPartitionSubstitutionModel() == null) {
-                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(options, partition);
+                        PartitionSubstitutionModel pm = new PartitionSubstitutionModel(options, "default", partition);
                         partition.setPartitionSubstitutionModel(pm);
 //                        options.addPartitionSubstitutionModel(pm);
                     }

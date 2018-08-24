@@ -39,14 +39,14 @@ public interface Axis {
 
     // These constants are used for automatic scaling to select exactly
     // where the axis starts and stops.
-    static public final int AT_MAJOR_TICK=0;
-    static public final int AT_MAJOR_TICK_PLUS=1;
-    static public final int AT_MINOR_TICK=2;
-    static public final int AT_MINOR_TICK_PLUS=3;
-    static public final int AT_DATA=4;
-    static public final int AT_ZERO=5;
-    static public final int AT_VALUE=6;
-    static public final int AT_MAJOR_TICK_MINUS=7; // offset towards negatives, especially to raise 0 in y
+    int AT_MAJOR_TICK=0;
+    int AT_MAJOR_TICK_PLUS=1;
+    int AT_MINOR_TICK=2;
+    int AT_MINOR_TICK_PLUS=3;
+    int AT_DATA=4;
+    int AT_ZERO=5;
+    int AT_VALUE=6;
+    int AT_MAJOR_TICK_MINUS=7; // offset towards negatives, especially to raise 0 in y
 
     /**
      *	Set axis flags
@@ -106,90 +106,95 @@ public interface Axis {
     /**
      *	Set the axis to automatic calibration
      */
-    public void setAutomatic(int minAxisFlag, int maxAxisFlag);
+    void setAutomatic(int minAxisFlag, int maxAxisFlag);
 
     /**
      *	Set the range of the data
      */
-    public void setRange(double minValue, double maxValue);
+    void setRange(double minValue, double maxValue);
 
     /**
      *	Adds the range of the data
      */
-    public void addRange(double minValue, double maxValue);
+    void addRange(double minValue, double maxValue);
 
     /**
      *	Transform a value
      */
-    public double transform(double value);
+    double transform(double value);
 
     /**
      *	Untransform a value
      */
-    public double untransform(double value);
+    double untransform(double value);
 
     /**
      *	@return a string that appropriately formats the value
      */
-    public String format(double value);
+    String format(double value);
 
     /**
      *	@return minimum range of the axis
      */
-    public double getMinAxis();
+    double getMinAxis();
 
     /**
      *	@return maximum range of the axis
      */
-    public double getMaxAxis();
+    double getMaxAxis();
 
     /**
      *	@return minimum range of the data
      */
-    public double getMinData();
+    double getMinData();
 
     /**
      *	@return maximum range of the data
      */
-    public double getMaxData();
+    double getMaxData();
 
     /**
      *	@return the number of major tick marks along the axis
      */
-    public int getMajorTickCount();
+    int getMajorTickCount();
 
     /**
      *	@return the number of minor tick marks within each major one
      *	By default all major ticks have the same number of minor ticks
      *	except the last which has none.
      */
-    public int getMinorTickCount(int majorTickIndex);
+    int getMinorTickCount(int majorTickIndex);
 
     /**
      *	@return the value of the majorTickIndex'th major tick
      */
-    public double getMajorTickValue(int majorTickIndex);
+    double getMajorTickValue(int majorTickIndex);
+
+    /**
+     *	@return the label of the majorTickIndex'th major tick
+     */
+    String getMajorTickLabel(int majorTickIndex);
 
     /**
      *	@return the value of the minorTickIndex'th minor tick
      */
-    public double getMinorTickValue(int minorTickIndex, int majorTickIndex);
+    double getMinorTickValue(int minorTickIndex, int majorTickIndex);
 
     /**
      *	@return the spacing between major ticks
      */
-    public double getMajorTickSpacing();
+    double getMajorTickSpacing();
 
     /**
      *	@return the spacing between minor ticks
      */
-    public double getMinorTickSpacing();
+    double getMinorTickSpacing();
 
     /**	class AbstractAxis
      *	This class provides a base class for all axis.
      */
 
-    public abstract class AbstractAxis implements Axis {
+    abstract class AbstractAxis implements Axis {
 
         // The minimum and maximum values of the data
         protected double minData=Double.POSITIVE_INFINITY, maxData=Double.NEGATIVE_INFINITY;
@@ -225,6 +230,7 @@ public interface Axis {
         protected boolean isCalibrated = false;
 
         protected final NumberFormatter formatter = new NumberFormatter(8);
+        protected final NumberFormatter discreteFormatter = new NumberFormatter(0);
 
         // Used internally
         private double epsilon;
@@ -311,7 +317,15 @@ public interface Axis {
         }
 
 
+        /**
+         * Turn a double value into a formatted string
+         * @param value
+         * @return
+         */
         public String format(double value) {
+            if (isDiscrete) {
+                return discreteFormatter.format(value);
+            }
             return formatter.format(value);
         }
 
@@ -545,6 +559,11 @@ public interface Axis {
             double r=maxTick-minTick;
             majorTickCount=(int)(r/u);
 
+            if (r == 0) {
+                majorTickCount = 1;
+                return;
+            }
+            
             while (majorTickCount < prefMajorTickCount) {
                 u=majorTick/2;	// Try using halves
                 if (!isDiscrete || u==Math.floor(u)) { // u is an integer
@@ -821,13 +840,22 @@ public interface Axis {
                 return minorTickCount;
         }
 
-        /**	getMajorTick
+        /**
+         * getMajorTickValue
          *	Returns the value of the majorTickIndex'th major tick
          */
         public double getMajorTickValue(int majorTickIndex) {
             if (!isCalibrated)
                 calibrate();
             return (majorTickIndex*majorTick)+minTick;
+        }
+
+        /**
+         * getMajorTickValue
+         *	Returns the value of the majorTickIndex'th major tick
+         */
+        public String getMajorTickLabel(int majorTickIndex) {
+            return format(getMajorTickValue(majorTickIndex));
         }
 
         /**	getMinorTick

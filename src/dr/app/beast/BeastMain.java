@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -94,7 +94,7 @@ public class BeastMain {
 
             FileReader fileReader = new FileReader(inputFile);
 
-            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -192,7 +192,7 @@ public class BeastMain {
                     // turn off all messages for subsequent reads of the file (they will be the same as the
                     // first time).
                     messageHandler.setLevel(Level.OFF);
-                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
+                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
@@ -227,7 +227,8 @@ public class BeastMain {
                     dome.getMessage());
             throw new RuntimeException("Terminate");
         } catch (dr.xml.XMLParseException pxe) {
-            pxe.printStackTrace(System.err);
+            // Leave the printing of the stack trace until the end - too noisy otherwise
+            //pxe.printStackTrace(System.err);
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
@@ -240,7 +241,7 @@ public class BeastMain {
 
             } else {
                 infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage());
+                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
@@ -259,7 +260,7 @@ public class BeastMain {
                                 "values. This will result in Priors with zero probability.\n\n" +
                                 "The individual components of the posterior are as follows:\n" +
                                 rex.getMessage() + "\n" +
-                                "For more information go to <http://beast.bio.ed.ac.uk/>.");
+                                "For more information go to <http://beast.community>.");
             } else {
                 // This call never returns as another RuntimeException exception is raised by
                 // the error log handler???
@@ -335,9 +336,9 @@ public class BeastMain {
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
+                        new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
-                        new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
@@ -360,18 +361,26 @@ public class BeastMain {
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
-                        new Arguments.LongOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
                         new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
+                        new Arguments.Option("force_resume", "Force resuming from a dumped state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
+
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
+            arguments.addOption("beagle_auto",
+                "BEAGLE: automatically select fastest resource for analysis",
+                "beagle_info");
+        };
 
         int argumentCount = 0;
 
@@ -429,9 +438,14 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
 
+        if (arguments.hasOption("tests")) {
+            long fullEvaluationCount = arguments.getLongOption("tests");
+            System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
+        }
+
         if (arguments.hasOption("threshold")) {
-            double evaluationThreshold = arguments.getRealOption("threshold");
-            System.setProperty("mcmc.evaluation.threshold", Double.toString(evaluationThreshold));
+            double fullEvaluationThreshold = arguments.getRealOption("threshold");
+            System.setProperty("mcmc.evaluation.threshold", Double.toString(fullEvaluationThreshold));
         }
 
         int threadCount = -1;
@@ -490,8 +504,11 @@ public class BeastMain {
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
 
         // if any beagle flag is specified then use beagle...
-        boolean useBeagle = !arguments.hasOption("beagle_off");
+        //final boolean useBeagle = true;
 
+        if (arguments.hasOption("beagle_auto")) {
+            System.setProperty("beagle.resource.auto", Boolean.TRUE.toString());
+        }
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
         }
@@ -579,6 +596,10 @@ public class BeastMain {
             System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
         }
 
+        if (arguments.hasOption("force_resume")) {
+            System.setProperty("force.resume", Boolean.TRUE.toString());
+        }
+
         if (arguments.hasOption("citations_file")) {
             String debugStateFile = arguments.getStringOption("citations_file");
             System.setProperty("citations.filename", debugStateFile);
@@ -660,7 +681,7 @@ public class BeastMain {
             dialog.setAllowOverwrite(allowOverwrite);
             dialog.setSeed(seed);
 
-            dialog.setUseBeagle(useBeagle);
+            //dialog.setUseBeagle(useBeagle);
 
             if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
                 dialog.setPreferBeagleGPU();
@@ -683,28 +704,25 @@ public class BeastMain {
             seed = dialog.getSeed();
             threadCount = dialog.getThreadPoolSize();
 
-            useBeagle = dialog.useBeagle();
-            if (useBeagle) {
-                beagleShowInfo = dialog.showBeagleInfo();
-                if (dialog.preferBeagleCPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-                }
-                if (dialog.preferBeagleSSE()) {
-                    beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
-                } else {
-                    beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-                }
-                if (dialog.preferBeagleGPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
-                }
-                if (dialog.preferBeagleDouble()) {
-                    beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-                }
-                if (dialog.preferBeagleSingle()) {
-                    beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
-                }
-                System.setProperty("beagle.scaling", dialog.scalingScheme());
+            beagleShowInfo = dialog.showBeagleInfo();
+            if (dialog.preferBeagleCPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
+            if (dialog.preferBeagleSSE()) {
+                beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+            } else {
+                beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+            if (dialog.preferBeagleGPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+            }
+            if (dialog.preferBeagleDouble()) {
+                beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+            }
+            if (dialog.preferBeagleSingle()) {
+                beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+            }
+            System.setProperty("beagle.scaling", dialog.scalingScheme());
 
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
@@ -714,13 +732,11 @@ public class BeastMain {
 
         }
 
-        if (useBeagle) {
-            BeagleInfo.printVersionInformation();
+        BeagleInfo.printVersionInformation();
 
-            if (BeagleInfo.getVersion().startsWith("1.")) {
-                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
-            }
+        if (BeagleInfo.getVersion().startsWith("1.")) {
+            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
+                    "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
         }
 
         if (beagleShowInfo) {
@@ -777,9 +793,7 @@ public class BeastMain {
             System.setProperty("log.allow.overwrite", "true");
         }
 
-        if (useBeagle) {
-            additionalParsers.add("beagle");
-        }
+        additionalParsers.add("beagle");
 
         if (beagleFlags != 0) {
             System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
@@ -797,7 +811,8 @@ public class BeastMain {
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
-            rte.printStackTrace(System.err);
+            // The stack trace here is not useful
+//            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
                 System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");

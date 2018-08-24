@@ -25,6 +25,8 @@
 
 package dr.app.beauti.util;
 
+import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
@@ -93,7 +95,7 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if Assumptions block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    public void parseAssumptionsBlock(List<CharSet> charSets) throws ImportException, IOException {
+    public void parseAssumptionsBlock(List<CharSet> charSets, List<TaxSet> taxSets) throws ImportException, IOException {
         boolean done = false;
         while (!done) {
             String command = readToken(";");
@@ -102,6 +104,10 @@ public class NexusApplicationImporter extends NexusImporter {
             } else if (match("CHARSET", command, 5)) {
                 if (getLastDelimiter() != ';') {
                     charSets.add(readCharSetCommand());
+                }
+            } else if (match("TAXSET", command, 5)) {
+                if (getLastDelimiter() != ';') {
+                    taxSets.add(readTaxSetCommand());
                 }
             } else {
                 System.err.println("The command, '" + command + "', is not used by BEAST and has been ignored");
@@ -197,6 +203,45 @@ public class NexusApplicationImporter extends NexusImporter {
 //        System.out.println();
 
         return charSet;
+    }
+
+    private TaxSet readTaxSetCommand() throws ImportException, IOException {
+
+        String name = readToken("=;");
+
+        TaxSet taxSet = new TaxSet(name);
+
+//        System.out.print("Char set " + name);
+
+        int from;
+        int to;
+
+        while (getLastDelimiter() != ';') {
+
+            String token = readToken(";,");
+
+            String[] parts = token.split("-");
+
+            try {
+
+                if (parts.length == 2) {
+                    from = Integer.parseInt(parts[0].trim());
+                     to = Integer.parseInt(parts[1].trim());
+                } else if (parts.length == 1) {
+                    from = Integer.parseInt(parts[0].trim());
+                    to = from;
+                } else {
+                    throw new ImportException("TaxSet, " + name + ", unable to be parsed");
+                }
+            } catch (NumberFormatException nfe) {
+                throw new ImportException("TaxSet, " + name + ", unable to be parsed");
+            }
+            taxSet.addCharSetBlock(new CharSetBlock(from, to, 0));
+
+        }
+//        System.out.println();
+
+        return taxSet;
     }
 
     /**
@@ -399,4 +444,34 @@ public class NexusApplicationImporter extends NexusImporter {
         private final int toSite;
         private final int every;
     }
+
+    public class TaxSet {
+
+        String name;
+        List<CharSetBlock> blocks;  // use the CharSetBlocks
+
+        public TaxSet(String name) {
+            this.name = name;
+            blocks = new ArrayList<CharSetBlock>();
+        }
+
+        public List<CharSetBlock> getBlocks() {
+            return blocks;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void addCharSetBlock(CharSetBlock b) {
+            blocks.add(b);
+        }
+
+        public TaxonList constructTaxonSet(TaxonList taxa) {
+
+            return new Taxa();
+        }
+    }
+
+
 }

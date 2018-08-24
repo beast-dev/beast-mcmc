@@ -59,7 +59,12 @@ public class MCMCParser extends AbstractXMLObjectParser {
         }
         coercionDelay = xo.getAttribute(COERCION_DELAY, coercionDelay);
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
-        long fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, 2000);
+
+        long fullEvaluationCount = 1000;
+        if (System.getProperty("mcmc.evaluation.count") != null) {
+            fullEvaluationCount = Long.parseLong(System.getProperty("mcmc.evaluation.count"));
+        }
+        fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, fullEvaluationCount);
 
         double evaluationTestThreshold = MarkovChain.EVALUATION_TEST_THRESHOLD;
         if (System.getProperty("mcmc.evaluation.threshold") != null) {

@@ -67,9 +67,11 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     public static final String TOTAL_COUNT_NAME = "totalChangeCount";
     public static final String COMPLETE_HISTORY_NAME = "completeHistory";
 
-    public CompleteHistoryLogger(MarkovJumpsTraitProvider treeLikelihood, HistoryFilter filter) {
+    public CompleteHistoryLogger(MarkovJumpsTraitProvider treeLikelihood, HistoryFilter filter, boolean internal, boolean external) {
         this.tree = treeLikelihood.getTreeModel();
         this.patternCount = treeLikelihood.getPatternCount();
+        this.internal = internal;
+        this.external = external;
 
         treeTraitHistory = new TreeTrait[patternCount];
         for (int site = 0; site < patternCount; ++site) {
@@ -207,40 +209,42 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                     for (int i = 0; i < tree.getNodeCount(); ++i) {
                         NodeRef node = tree.getNode(i);
                         if (!tree.isRoot(node)) {
-                            NodeRef parent = tree.getParent(node);
-                            double parentTime = tree.getNodeHeight(parent);
-                            double childTime = tree.getNodeHeight(node);
-                            double minTime = Math.min(parentTime, childTime);
-                            double maxTime = Math.max(parentTime, childTime);
-                            String trait = treeTraitHistory[anonSite].getTraitString(tree, node);
-                            if (trait != null && trait.compareTo("{}") != 0) {
-                                Object[] changes = (Object[]) parseValue(trait);
-                                for (int j = 0; j < changes.length; ++j) {
+                            if((tree.isExternal(node) && external) || (!tree.isExternal(node) && internal)){
+                                NodeRef parent = tree.getParent(node);
+                                double parentTime = tree.getNodeHeight(parent);
+                                double childTime = tree.getNodeHeight(node);
+                                double minTime = Math.min(parentTime, childTime);
+                                double maxTime = Math.max(parentTime, childTime);
+                                String trait = treeTraitHistory[anonSite].getTraitString(tree, node);
+                                if (trait != null && trait.compareTo("{}") != 0) {
+                                    Object[] changes = (Object[]) parseValue(trait);
+                                    for (int j = 0; j < changes.length; ++j) {
 
-                                    Object[] change = (Object[]) changes[j];
-                                    int offset = (change.length == 4) ? 1 : 0;
-                                    String source = (String) change[1 + offset];
-                                    String dest = (String) change[2 + offset];
-                                    double thisTime = (Double) change[0 + offset];
-                                    if (thisTime < 0.0) {
-                                        throw new RuntimeException("negative time");
-                                    }
-                                    if (thisTime > maxTime || thisTime < minTime) {
-                                        throw new RuntimeException("Invalid simulation time");
-                                    }
-
-                                    // TODO Delegate to Filter(source, dest, thisTime).  If filtered then
-                                    boolean filtered = filter.filter(source, dest, thisTime);
-                                    if (filtered) {
-                                        if (!empty) {
-                                            bf.append(",");
+                                        Object[] change = (Object[]) changes[j];
+                                        int offset = (change.length == 4) ? 1 : 0;
+                                        String source = (String) change[1 + offset];
+                                        String dest = (String) change[2 + offset];
+                                        double thisTime = (Double) change[0 + offset];
+                                        if (thisTime < 0.0) {
+                                            throw new RuntimeException("negative time");
                                         }
-                                        StateHistory.addEventToStringBuilder(bf, source, dest,
-                                                thisTime, anonSite + 1);
-                                        count++;
-                                        empty = false;
-                                    } else {
-                                        // Do nothing
+                                        if (thisTime > maxTime || thisTime < minTime) {
+                                            throw new RuntimeException("Invalid simulation time");
+                                        }
+
+                                        // TODO Delegate to Filter(source, dest, thisTime).  If filtered then
+                                        boolean filtered = filter.filter(source, dest, thisTime);
+                                        if (filtered) {
+                                            if (!empty) {
+                                                bf.append(",");
+                                            }
+                                            StateHistory.addEventToStringBuilder(bf, source, dest,
+                                                    thisTime, anonSite + 1);
+                                            count++;
+                                            empty = false;
+                                        } else {
+                                            // Do nothing
+                                        }
                                     }
                                 }
                             }
@@ -273,6 +277,8 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     final private TreeTrait[] treeTraitHistory;
     final private TreeTrait treeTraitCount;
     final private int patternCount;
+    final private boolean internal;
+    final private boolean external;
 
     private HistoryFilter filter;
 }

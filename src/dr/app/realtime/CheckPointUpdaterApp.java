@@ -33,8 +33,12 @@ import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.Taxon;
+import dr.inference.loggers.Logger;
+import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
+import dr.inference.model.Likelihood;
+import dr.util.Transform;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -44,7 +48,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Guy Baele
@@ -128,13 +134,13 @@ public class CheckPointUpdaterApp {
     }
 
     /**
-     * The goal is to modify and existing checkpoint file with additional information and generate a novel checkpoint file.
+     * The goal is to modify an existing checkpoint file with additional information and generate a novel checkpoint file.
      * Running the MCMC chain after parsing the file(s) should not happen.
      * @param beastXMLFileName
      */
     public CheckPointUpdaterApp(String beastXMLFileName, String debugStateFile, UpdateChoice choice) {
         //no additional parsers, we don't need BEAGLE at the moment just yet
-        XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML);
+        XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML, null);
         try {
             FileReader fileReader = new FileReader(beastXMLFileName);
 
@@ -144,6 +150,12 @@ public class CheckPointUpdaterApp {
             //get the MCMC object
             MCMC mcmc = (MCMC) parser.parse(fileReader, MCMC.class);
             MarkovChain mc = mcmc.getMarkovChain();
+
+            //make sure that no output files (i.e. logs) are being created
+            Logger[] loggers = mcmc.getLoggers();
+            for (int j = 0; j < loggers.length; j++) {
+                ((MCLogger) loggers[j]).setFormatters(Collections.EMPTY_LIST);
+            }
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
@@ -156,22 +168,33 @@ public class CheckPointUpdaterApp {
             //TODO Check if this works for multiple trees (e.g. for multiple partitions)
             long state = checkpoint.loadState(mc, new double[]{Double.NaN});
 
+            //TODO Check if this can be uncommented again
+            //System.out.println("Pre-checking likelihood values ...");
             //probably don't need this but it's good to check
-            double logL = mc.evaluate();
-            System.out.println("likelihood = " + logL);
-            mc.getLikelihood().makeDirty();
-            logL = mc.evaluate();
-            System.out.println("likelihood = " + logL);
+            //double logL = mc.evaluate();
+            //System.out.println("likelihood = " + logL);
+            //mc.getLikelihood().makeDirty();
+            //logL = mc.evaluate();
+            //System.out.println("likelihood = " + logL);
+
+            double logL;
 
             if (ADD_TAXA) {
 
                 checkpoint.extendLoadState(choice);
 
+                mc.getLikelihood().makeDirty();
                 logL = mc.evaluate();
                 System.out.println("likelihood = " + logL);
                 mc.getLikelihood().makeDirty();
                 logL = mc.evaluate();
                 System.out.println("likelihood = " + logL);
+
+                //TODO Print full compoundLikelihood evaluation
+                Set<Likelihood> likelihoodSet = mc.getLikelihood().getLikelihoodSet();
+                for (Likelihood l : likelihoodSet) {
+                    System.out.println("  " + l.getLogLikelihood());
+                }
 
             }
 

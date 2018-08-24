@@ -51,7 +51,7 @@ public class ErrorLogHandler extends StreamHandler {
                 if (errorCount > 1) {
                     throw new RuntimeException("ErrorLog: Maximum number of errors (" + (maxErrorCount + 1) + ") reached. Terminating BEAST");
                 } else {
-                    throw new RuntimeException("An error was encounted. Terminating BEAST");
+                    throw new RuntimeException("An error was encountered. Terminating BEAST");
                 }
             }
         }

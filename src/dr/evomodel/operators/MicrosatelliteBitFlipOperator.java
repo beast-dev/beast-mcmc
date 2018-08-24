@@ -70,7 +70,7 @@ public class MicrosatelliteBitFlipOperator extends SimpleMCMCOperator {
         for(int i = 0; i < bitVec.length; i++){
             bitVec[i] = parameter.getParameterValue(i);
         }
-        //int index = (int)Math.random()*parameter.getDimension();
+        //int index = (int)MathUtils.nextDouble()*parameter.getDimension();
         int index = variableIndices[MathUtils.nextInt(variableIndices.length)];
         //System.out.println(index);
         int oldVal  = (int)parameter.getParameterValue(index);

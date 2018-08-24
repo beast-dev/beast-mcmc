@@ -37,6 +37,7 @@ import dr.xml.*;
  * @author Alexei Drummond
  * @version $Id: ConstantMigrationModel.java,v 1.4 2006/09/08 14:28:07 rambaut Exp $
  */
+@Deprecated
 public class ConstantMigrationModel extends MigrationModel {
     //
     // Public stuff

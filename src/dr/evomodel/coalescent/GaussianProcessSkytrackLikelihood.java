@@ -30,6 +30,7 @@ package dr.evomodel.coalescent;
 //import com.sun.servicetag.SystemEnvironment;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.loggers.LogColumn;
@@ -250,8 +251,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         super.handleModelChangedEvent(model, object, index); // Call super, since it may do something important
         if (model == tree) {
             // treeModel has changed; treeModel calls pushTreeChangedEvent that ultimately gets passed to here
-            if (object instanceof TreeModel.TreeChangedEvent) {
-                TreeModel.TreeChangedEvent tce = (TreeModel.TreeChangedEvent) object;
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent tce = (TreeChangedEvent) object;
                 // tce tells much about what type of event happened.  In general, one does not care.
 //                System.err.println("Change in tree detected, flag true");
                 flagForJulia = true; // flag set, so lazy work can occur elsewhere.

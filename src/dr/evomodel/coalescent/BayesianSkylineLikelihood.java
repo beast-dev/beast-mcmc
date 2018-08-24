@@ -63,6 +63,10 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                                      int type) {
         super(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
 
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skyline");
+
         this.groupSizeParameter = groupSizeParameter;
         this.popSizeParameter = popSizeParameter;
         int events = tree.getExternalNodeCount() - 1;

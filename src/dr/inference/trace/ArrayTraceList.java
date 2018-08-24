@@ -57,6 +57,10 @@ public class ArrayTraceList extends AbstractTraceList {
         return name;
     }
 
+    public String getFullName() {
+        return name;
+    }
+    
     public int getTraceCount() {
         return traces.size();
     }
@@ -104,15 +108,15 @@ public class ArrayTraceList extends AbstractTraceList {
         return false;
     }
 
-    public List getValues(int index, int fromIndex, int toIndex) {
+    public List<Double> getValues(int index, int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public List getValues(int index) {
+    public List<Double> getValues(int index) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public List getBurninValues(int index) {
+    public List<Double> getBurninValues(int index) {
         throw new UnsupportedOperationException("not available");
     }
 

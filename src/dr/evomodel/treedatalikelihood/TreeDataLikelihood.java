@@ -25,17 +25,11 @@
 
 package dr.evomodel.treedatalikelihood;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.evomodel.tree.TreeChangedEvent;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 import java.util.List;
@@ -51,11 +45,11 @@ import java.util.logging.Logger;
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
 
-    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
     public TreeDataLikelihood(DataLikelihoodDelegate likelihoodDelegate,
-                              TreeModel treeModel,
+                              Tree treeModel,
                               BranchRateModel branchRateModel) {
 
         super("TreeDataLikelihood");  // change this to use a const once the parser exists
@@ -73,9 +67,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.setCallback(this);
 
         this.treeModel = treeModel;
-        isTreeRandom = treeModel.isTreeRandom();
+        isTreeRandom = (treeModel instanceof AbstractModel) && ((AbstractModel) treeModel).isVariable();
         if (isTreeRandom) {
-            addModel(treeModel);
+            addModel(((AbstractModel)treeModel));
         }
 
         likelihoodKnown = false;
@@ -87,7 +81,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         addModel(this.branchRateModel);
 
         treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                likelihoodDelegate.getOptimalTraversalType());
+                    likelihoodDelegate.getOptimalTraversalType()
+        );
+
+        rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
 
         hasInitialized = true;
     }
@@ -119,8 +116,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             totalGetLogLikelihoodCount++;
 
         if (!likelihoodKnown) {
-            if (COUNT_TOTAL_OPERATIONS)
+            if (COUNT_TOTAL_OPERATIONS) {
                 totalCalculateLikelihoodCount++;
+            }
 
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
@@ -159,25 +157,34 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
+            if (object instanceof TreeChangedEvent) {
+
+                final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
 
                 if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
 
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                if (treeChangedEvent.isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
-
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                    if (rateRescalingScheme == RateRescalingScheme.NONE ||             // The usual behaviour
+                            (rateRescalingScheme == RateRescalingScheme.TREE_HEIGHT && // Or, tree-height scaling
+                                    !treeModel.isRoot(treeChangedEvent.getNode()))) {  // and not the root
+                        updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+                    } else {
+                        // Tree-length scaling or a change of the root
+                        updateAllNodes();
+                    }
+                } else if (treeChangedEvent.isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
                     updateAllNodes();
-                } else {
-                    // Other event types are ignored (probably trait changes).
                 }
+//                else {
+//                    // Other event types are ignored (probably trait changes).
+//                }
             }
         } else if (model == likelihoodDelegate) {
 
@@ -237,7 +244,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      *
      * @return the log likelihood.
      */
-    private final double calculateLogLikelihood() {
+    private double calculateLogLikelihood() {
 
         double logL = Double.NEGATIVE_INFINITY;
         boolean done = false;
@@ -303,16 +310,16 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodKnown = false;
     }
 
-    /**
-     * Set update flag for a node and all its descendents
-     */
-    protected void updateNodeAndDescendents(NodeRef node) {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalRateUpdateSingleCount++;
-
-        treeTraversalDelegate.updateNodeAndDescendents(node);
-        likelihoodKnown = false;
-    }
+//    /**
+//     * Set update flag for a node and all its descendents
+//     */
+//    protected void updateNodeAndDescendents(NodeRef node) {
+//        if (COUNT_TOTAL_OPERATIONS)
+//            totalRateUpdateSingleCount++;
+//
+//        treeTraversalDelegate.updateNodeAndDescendents(node);
+//        likelihoodKnown = false;
+//    }
 
     /**
      * Set update flag for all nodes
@@ -337,20 +344,19 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             String delegateString = likelihoodDelegate.getReport();
             if (delegateString != null) {
                 sb.append(delegateString);
-                System.err.println(delegateString);
             }
 
-            sb.append(getClass().getName() + "(" + getLogLikelihood() + ")");
+            sb.append(getClass().getName()).append("(").append(getLogLikelihood()).append(")");
 
             if (COUNT_TOTAL_OPERATIONS)
-                sb.append("\n  total operations = " + totalOperationCount +
-                          "\n  matrix updates = " + totalMatrixUpdateCount +
-                          "\n  model changes = " + totalModelChangedCount +
-                          "\n  make dirties = " + totalMakeDirtyCount +
-                          "\n  calculate likelihoods = " + totalCalculateLikelihoodCount +
-                          "\n  get likelihoods = " + totalGetLogLikelihoodCount +
-                          "\n  all rate updates = " + totalRateUpdateAllCount +
-                          "\n  partial rate updates = " + totalRateUpdateSingleCount);
+                sb.append("\n  total operations = ").append(totalOperationCount).append(
+                          "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
+                          "\n  model changes = ").append(totalModelChangedCount).append(
+                          "\n  make dirties = ").append(totalMakeDirtyCount).append(
+                          "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
+                          "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
+                          "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
+                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount);
 
             return sb.toString();
         } else {
@@ -408,7 +414,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * the tree model
      */
-    private final TreeModel treeModel;
+    private final Tree treeModel;
 
     /**
      * the branch rate model
@@ -421,6 +427,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private final Helper treeTraits = new Helper();
 
     private final LikelihoodTreeTraversal treeTraversalDelegate;
+
+    private final RateRescalingScheme rateRescalingScheme;
 
     private double logLikelihood;
     private double storedLogLikelihood;

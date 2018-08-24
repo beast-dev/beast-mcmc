@@ -73,7 +73,9 @@ public class PanelUtils {
 		// comp.setFont(UIManager.getFont("SmallSystemFont"));
 		// comp.putClientProperty("JComponent.sizeVariant", "small");
 		if (comp instanceof JButton) {
-			comp.putClientProperty("JButton.buttonType", "roundRect");
+			comp.putClientProperty("JButton.buttonType", "textured");
+//			comp.putClientProperty("JButton.buttonType", "bevel");
+//			comp.putClientProperty("JButton.buttonType", "roundRect");
 		}
 		if (comp instanceof JComboBox) {
 			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);

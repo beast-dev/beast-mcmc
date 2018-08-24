@@ -42,7 +42,7 @@ public class DateParser extends AbstractXMLObjectParser {
     public static final String UNITS = "units";
     public static final String ORIGIN = "origin";
     public static final String DIRECTION = "direction";
-    
+
     public static final String FORWARDS = DateUnitsType.FORWARDS.getAttribute(); //"forwards";
     public static final String BACKWARDS = DateUnitsType.BACKWARDS.getAttribute(); //"backwards";
 
@@ -50,7 +50,8 @@ public class DateParser extends AbstractXMLObjectParser {
     public static final String MONTHS = DateUnitsType.MONTHS.getAttribute(); //"units";
     public static final String DAYS = DateUnitsType.DAYS.getAttribute(); //"days";
 
-    public static final String PRECISION = "precision";
+    public static final String UNCERTAINTY = "uncertainty";
+    public static final String PRECISION = "precision"; // inappropriate older attribute
 
     public String getParserName() {
         return Date.DATE;
@@ -126,9 +127,15 @@ public class DateParser extends AbstractXMLObjectParser {
             }
         }
 
-        if (xo.hasAttribute(PRECISION)) {
-            double precision = (Double)xo.getDoubleAttribute(PRECISION);
-            date.setPrecision(precision);
+        if (xo.hasAttribute(UNCERTAINTY)) {
+            double uncertainty = xo.getDoubleAttribute(UNCERTAINTY);
+            date.setUncertainty(uncertainty);
+        } else if (xo.hasAttribute(PRECISION)) {
+            // Precision was the old term for uncertainty which was confusing
+            // because it was the reciprocal. Parse this term synonymously for
+            // backwards compatibility.
+            double uncertainty = xo.getDoubleAttribute(PRECISION);
+            date.setUncertainty(uncertainty);
         }
 
 
@@ -159,7 +166,10 @@ public class DateParser extends AbstractXMLObjectParser {
                     "The origin of this time scale, which must be a valid calendar date", "01/01/01", true),
             new StringAttributeRule(UNITS, "The units of the timescale", new String[]{YEARS, MONTHS, DAYS}, true),
             new StringAttributeRule(DIRECTION, "The direction of the timescale", new String[]{FORWARDS, BACKWARDS}, true),
-            AttributeRule.newDoubleRule(PRECISION, true, "The precision to which the date is specified"),
+            new XORRule(
+                    AttributeRule.newDoubleRule(UNCERTAINTY, false, "The uncertainty to which the date is specified"),
+                    AttributeRule.newDoubleRule(PRECISION, false, "The uncertainty to which the date is specified"), true
+            )
     };
 
     public Class getReturnType() {

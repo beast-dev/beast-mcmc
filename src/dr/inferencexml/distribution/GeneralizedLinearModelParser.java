@@ -68,8 +68,9 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //        System.err.println("PASSED 0");
         XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
         Parameter dependentParam = null;
-        if (cxo != null)
+        if (cxo != null) {
             dependentParam = (Parameter) cxo.getChild(Parameter.class);
+        }
 
         String family = xo.getStringAttribute(FAMILY);
         GeneralizedLinearModel glm;
@@ -160,6 +161,10 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                 Parameter indicator = null;
                 if (cxo != null) {
                     indicator = (Parameter) cxo.getChild(Parameter.class);
+                    if (indicator.getDimension() <= 1) {
+                        // if a dimension hasn't been set, then set it automatically
+                        indicator.setDimension(independentParam.getDimension());
+                    }
                     if (indicator.getDimension() != independentParam.getDimension())
                         throw new XMLParseException("dim(" + independentParam.getId() + ") != dim(" + indicator.getId() + ")");
                 }
@@ -197,6 +202,10 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     private void checkRandomEffectsDimensions(Parameter randomEffect, Parameter dependentParam)
             throws XMLParseException {
         if (dependentParam != null) {
+            if (randomEffect.getDimension() <= 1) {
+                // if a dimension hasn't been set, then set it automatically
+                randomEffect.setDimension(dependentParam.getDimension());
+            }
             if (randomEffect.getDimension() != dependentParam.getDimension()) {
                 throw new XMLParseException(
                         "dim(" + dependentParam.getId() + ") != dim(" + randomEffect.getId() + ")"
@@ -208,12 +217,20 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     private void checkDimensions(Parameter independentParam, Parameter dependentParam, DesignMatrix designMatrix)
             throws XMLParseException {
         if (dependentParam != null) {
+            if (dependentParam.getDimension() <= 1) {
+                // if a dimension hasn't been set, then set it automatically
+                dependentParam.setDimension(designMatrix.getRowDimension());
+            }
             if ((dependentParam.getDimension() != designMatrix.getRowDimension()) ||
                     (independentParam.getDimension() != designMatrix.getColumnDimension()))
                 throw new XMLParseException(
                         "dim(" + dependentParam.getId() + ") != dim(" + designMatrix.getId() + " %*% " + independentParam.getId() + ")"
                 );
         } else {
+            if (independentParam.getDimension() <= 1) {
+                // if a dimension hasn't been set, then set it automatically
+                independentParam.setDimension(designMatrix.getColumnDimension());
+            }
             if (independentParam.getDimension() != designMatrix.getColumnDimension()) {
                 throw new XMLParseException(
                         "dim(" + independentParam.getId() + ") is incompatible with dim (" + designMatrix.getId() + ")"

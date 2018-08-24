@@ -39,20 +39,19 @@ public enum OperatorType {
     RANDOM_WALK("randomWalk"),
     RANDOM_WALK_ABSORBING("randomWalkAbsorbing"),
     RANDOM_WALK_REFLECTING("randomWalkReflecting"),
-    RANDOM_WALK_INT("randomWalkIntegerOperator"),
+    RANDOM_WALK_LOG("randomWalkLog"),
+    RANDOM_WALK_LOGIT("randomWalkLogit"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
-    UP_DOWN_ALL_RATES_HEIGHTS("upDownAllRatesHeights"),
     MICROSAT_UP_DOWN("microsatUpDown"),
     SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
-    CENTERED_SCALE("centeredScale"),
     DELTA_EXCHANGE("deltaExchange"),
     WEIGHTED_DELTA_EXCHANGE("weightedDeltaExchange"),
     INTEGER_DELTA_EXCHANGE("integerDeltaExchange"),
     SWAP("swap"),
     BITFLIP("bitFlip"),
-    BITFIP_IN_SUBST(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR),// bitFlipInSubstitutionModelOperator
+    BITFLIP_IN_SUBST(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR),// bitFlipInSubstitutionModelOperator
     RATE_BIT_EXCHANGE(RateBitExchangeOperator.OPERATOR_NAME), // rateBitExchangeOperator
     TREE_BIT_MOVE("treeBitMove"),
     SAMPLE_NONACTIVE("sampleNoneActiveOperator"),
@@ -68,8 +67,7 @@ public enum OperatorType {
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
-    WILSON_BALDING("wilsonBalding"),
-    NODE_REHIGHT(TreeNodeSlideParser.TREE_NODE_REHEIGHT); // nodeReHeight
+    WILSON_BALDING("wilsonBalding");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

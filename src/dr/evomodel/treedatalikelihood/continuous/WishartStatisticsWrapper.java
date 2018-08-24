@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -41,7 +42,7 @@ import dr.xml.*;
 
 import java.util.List;
 
-import static dr.evomodel.treedatalikelihood.ProcessSimulationDelegate.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
@@ -85,7 +86,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
                 dataLikelihood.getBranchRateModel(),
                 TreeTraversal.TraversalType.POST_ORDER);
 
-        if (likelihoodDelegate.getIntegrator() instanceof ContinuousDiffusionIntegrator.Multivariate) {
+        if (likelihoodDelegate.getIntegrator() instanceof MultivariateIntegrator) {
             outerProductDelegate = likelihoodDelegate.createObservedDataOnly(likelihoodDelegate);
         } else {
             outerProductDelegate = likelihoodDelegate;
@@ -182,7 +183,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return likelihoodDelegate.getDiffusionModel().getPrecisionParameter();
     }
 

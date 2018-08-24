@@ -271,6 +271,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             if (loggers != null) {
                 for (Logger logger : loggers) {
+                    logger.log(currentState);
                     logger.stopLogging();
                 }
             }
@@ -282,7 +283,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             if (operatorAnalysisFile != null) {
                 try {
                     PrintStream out = new PrintStream(new FileOutputStream(operatorAnalysisFile));
-                    OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useCoercion());
+                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useCoercion());
                     out.flush();
                     out.close();
                 } catch (IOException e) {

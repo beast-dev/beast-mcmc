@@ -33,8 +33,8 @@ import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.lang.reflect.Method;
+import java.security.AccessControlException;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -46,7 +46,7 @@ import java.util.Set;
  * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
  */
 public class BeautiApp extends MultiDocApplication {
-    private final static Version version = new BeastVersion();
+    public final static Version VERSION = new BeastVersion();
 
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
@@ -64,9 +64,9 @@ public class BeautiApp extends MultiDocApplication {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAUti " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("BEAUti " + VERSION.getVersionString() + ", " + VERSION.getDateString(), 60);
         centreLine("Bayesian Evolutionary Analysis Utility", 60);
-        for (String creditLine : version.getCredits()) {
+        for (String creditLine : VERSION.getCredits()) {
             centreLine(creditLine, 60);
         }
         System.out.println();
@@ -160,121 +160,143 @@ public class BeautiApp extends MultiDocApplication {
 //            new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
 //
 //        } else {
-            String inputFileName = null;
-            if (args2.length == 1) {
-                inputFileName = args2[0];
-            }
+        String inputFileName = null;
+        if (args2.length == 1) {
+            inputFileName = args2[0];
+        }
 
-            if (OSType.isMac()) {
-                System.setProperty("apple.awt.graphics.UseQuartz", "true");
-                System.setProperty("apple.awt.antialiasing","true");
-                System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");
+        if (OSType.isMac()) {
+            // Explicitly turn on font antialiasing.
+            System.setProperty("swing.aatext", "true");
 
-                System.setProperty("apple.laf.useScreenMenuBar","true");
-                System.setProperty("apple.awt.draggableWindowBackground","true");
-                System.setProperty("apple.awt.showGrowBox","true");
+            System.setProperty("apple.awt.graphics.UseQuartz", "true");
+            System.setProperty("apple.awt.antialiasing", "true");
+            System.setProperty("apple.awt.rendering", "VALUE_RENDER_QUALITY");
 
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.draggableWindowBackground", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
+
+//            int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
+//
+//            System.out.println("Java version: " + javaVersion);
+//
+//
+//            if (javaVersion < 10) {
+//                try {
+//                    // set the Quaqua Look and Feel in the UIManager
+//                    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+//                        public void run() {
+//                            try {
+//                                System.setProperty(
+//                                        "Quaqua.design", "Sierra"
+//                                );
+//
+//                                try {
+//                                    // We need to do this using dynamic class loading to avoid other platforms
+//                                    // having to link to this class. If the Quaqua library is not on the classpath
+//                                    // it simply won't be used.
+//                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
+//
+////                                Method method = qm.getMethod("setIncludedUIs", Set.class);
+////                                Set<String> includes = new HashSet<String>();
+//////                                includes.add("ColorChooser");
+//////                                includes.add("FileChooser");
+////                                includes.add("Button");
+////                                includes.add("SplitPane");
+////                                includes.add("Table");
+////                                includes.add("Panel");
+////                                method.invoke(null, includes);
+//
+//                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
+//                                    Set<String> excludes = new HashSet<String>();
+//                                    excludes.add("RootPane");
+////                                excludes.add("Table");
+//                                    excludes.add("TextField");
+//                                    method.invoke(null, excludes);
+//
+//                                } catch (Throwable e) {
+//                                }
+//
+//                                //set the Quaqua Look and Feel in the UIManager
+//                                UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
+//                                lafLoaded = true;
+//                            } catch (Exception e) {
+//                            }
+//                        }
+//                    });
+//                } catch (Exception e) {
+//                }
+//            }
+
+            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
+            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+        }
+
+        try {
+
+            if (!lafLoaded) {
                 try {
-                    // set the Quaqua Look and Feel in the UIManager
+                    // set the System Look and Feel in the UIManager
                     javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                         public void run() {
                             try {
-                                try {
-                                    // We need to do this using dynamic class loading to avoid other platforms
-                                    // having to link to this class. If the Quaqua library is not on the classpath
-                                    // it simply won't be used.
-                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
-
-                                    Set<String> excludes = new HashSet<String>();
-                                    excludes.add("Button");
-                                    excludes.add("ToolBar");
-                                    method.invoke(null, excludes);
-
-                                }
-                                catch (Throwable e) {
-                                }
-
-                                //set the Quaqua Look and Feel in the UIManager
-                                UIManager.setLookAndFeel(
-                                        "ch.randelshofer.quaqua.QuaquaLookAndFeel"
-                                );
-                                lafLoaded = true;
+                                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                             } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         }
                     });
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-                UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
             }
 
-            try {
+            java.net.URL url = BeautiApp.class.getResource("images/beauti.png");
+            Icon icon = null;
 
-                if (!lafLoaded) {
-                    try {
-                        // set the System Look and Feel in the UIManager
-                        javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-                            public void run() {
-                                try {
-                                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                java.net.URL url = BeautiApp.class.getResource("images/beauti.png");
-                Icon icon = null;
-
-                if (url != null) {
-                    icon = new ImageIcon(url);
-                }
-
-                final String nameString = "BEAUti";
-                final String versionString = version.getVersionString();
-
-                String aboutString = "<html>" +
-                        "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
-                        "<center>" +
-                        "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
-                        "Version " + versionString + ", " + version.getDateString() + "</p>" +
-                        "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
-                        "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
-                        version.getHTMLCredits() +
-                        "</div></center></div></html>";
-
-                String websiteURLString = "http://beast.bio.ed.ac.uk/BEAUti";
-                String helpURLString = "http://beast.bio.ed.ac.uk/BEAUti";
-
-                System.setProperty("BEAST & BEAUTi Version", version.getVersion());
-
-                BeautiApp app = new BeautiApp(nameString, aboutString, icon,
-                        websiteURLString, helpURLString);
-                app.setDocumentFrameFactory(new DocumentFrameFactory() {
-                    public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
-                        return new BeautiFrame(nameString);
-                    }
-                });
-                app.initialize();
-
-                if (inputFileName != null) {
-                    app.doOpen(inputFileName);
-                } else {
-                    app.doNew();
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,
-                        "Please report this to the authors",
-                        JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
+            if (url != null) {
+                icon = new ImageIcon(url);
             }
+
+            final String nameString = "BEAUti";
+            final String versionString = VERSION.getVersionString();
+
+            String aboutString = "<html>" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<center>" +
+                    "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
+                    "Version " + versionString + ", " + VERSION.getDateString() + "</p>" +
+                    "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
+                    "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
+                    VERSION.getHTMLCredits() +
+                    "</div></center></div></html>";
+
+            String websiteURLString = "http://beast.community/BEAUti";
+            String helpURLString = "http://beast.community/BEAUti";
+
+            System.setProperty("BEAST & BEAUTi Version", VERSION.getVersion());
+
+            BeautiApp app = new BeautiApp(nameString, aboutString, icon,
+                    websiteURLString, helpURLString);
+            app.setDocumentFrameFactory(new DocumentFrameFactory() {
+                public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
+                    return new BeautiFrame(nameString);
+                }
+            });
+            app.initialize();
+
+            if (inputFileName != null) {
+                app.doOpen(inputFileName);
+            } else {
+                app.doNew();
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,
+                    "Please report this to the authors",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
 //        }
     }
 

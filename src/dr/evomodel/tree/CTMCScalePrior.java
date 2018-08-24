@@ -26,6 +26,8 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -37,7 +39,9 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)
@@ -49,6 +53,7 @@ import java.util.List;
 public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     final private Parameter ctmcScale;
     final private TreeModel treeModel;
+    private Set<Taxon> taxa = null;
     private double treeLength;
     private boolean treeLengthKnown;
 
@@ -68,23 +73,26 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
 
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
                           SubstitutionModel substitutionModel) {
-        this(name, ctmcScale, treeModel, reciprocal, substitutionModel, false);
+        this(name, ctmcScale, treeModel, null, reciprocal, substitutionModel, false);
     }
 
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
+    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, TaxonList taxonList, boolean reciprocal,
                           SubstitutionModel substitutionModel, boolean trial) {
         super(name);
         this.ctmcScale = ctmcScale;
         this.treeModel = treeModel;
+
+        if (taxonList != null) {
+            this.taxa = new HashSet<Taxon>();
+            for (Taxon taxon : taxonList) {
+                this.taxa.add(taxon);
+            }
+        }
         addModel(treeModel);
         treeLengthKnown = false;
         this.reciprocal = reciprocal;
         this.substitutionModel = substitutionModel;
         this.trial = trial;
-    }
-
-    private void updateTreeLength() {
-        treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -111,7 +119,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     private double calculateTrialLikelihood() {
-        double totalTreeTime = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
+        double totalTreeTime = getTreeLength();
 
         double[] eigenValues = substitutionModel.getEigenDecomposition().getEigenValues();
         // Find second largest
@@ -135,16 +143,10 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
 
     public double getLogLikelihood() {
 
-//        if (!treeLengthKnown) {
-//            updateTreeLength();
-//            treeLengthKnown = true;
-//        }
-//        double totalTreeTime = treeLength;
-
         if (trial) return calculateTrialLikelihood();
 
-        double totalTreeTime = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
-        if (reciprocal) {
+        double totalTreeTime = getTreeLength();
+            if (reciprocal) {
             totalTreeTime = 1.0 / totalTreeTime;
         }
         if (substitutionModel != null) {
@@ -165,6 +167,19 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
             logLike += logNormalization - 0.5 * Math.log(ab) - ab * totalTreeTime; // TODO Change to treeLength and confirm results
         }
         return logLike;
+    }
+
+    private double getTreeLength() {
+        //if (!treeLengthKnown) {
+            if (taxa == null) {
+                treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
+            } else {
+                treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
+            }
+        //    treeLengthKnown = true;
+        //}
+        
+        return treeLength;
     }
 
     public void makeDirty() {

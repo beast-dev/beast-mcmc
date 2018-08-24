@@ -71,19 +71,31 @@ public class PDFPlot extends Plot.AbstractPlot {
             return;
         }
 
+        double quantile01 = distribution.quantile(0.01);
+        double quantile99 = distribution.quantile(0.99);
+
         // if the distribution has a bound then use it, otherwise find a range using a small quantile
         if (!Double.isInfinite(distribution.getProbabilityDensityFunction().getLowerBound())) {
             // the actual bound may be undefined so come just inside it...
-            xMin = distribution.getProbabilityDensityFunction().getLowerBound() + 1.0E-20;
+            xMin = distribution.getProbabilityDensityFunction().getLowerBound();
+            double value = distribution.getProbabilityDensityFunction().evaluate(xMin);
+            if (Double.isNaN(value) || Double.isInfinite(value)) {
+                xMin = Math.max(quantile01, distribution.getProbabilityDensityFunction().getLowerBound() + 1E-100);
+            }
         } else {
-            xMin = distribution.quantile(0.005);
+            xMin = quantile01;
         }
+
         // if the distribution has a bound then use it, otherwise find a range using a small quantile
         if (!Double.isInfinite(distribution.getProbabilityDensityFunction().getUpperBound())) {
             // the actual bound may be undefined so come just inside it...
-            xMax = distribution.getProbabilityDensityFunction().getUpperBound() - 1.0E-20;
+            xMax = distribution.getProbabilityDensityFunction().getUpperBound();
+            double value = distribution.getProbabilityDensityFunction().evaluate(xMax);
+            if (Double.isNaN(value) || Double.isInfinite(value)) {
+                xMax = Math.min(quantile99, distribution.getProbabilityDensityFunction().getUpperBound() - 1E-100);
+            }
         } else {
-            xMax = distribution.quantile(0.995);
+            xMax = quantile99;
         }
 
         if (Double.isNaN(xMin) || Double.isInfinite(xMin)) {
@@ -119,14 +131,15 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Paint actual plot
      */
+    @Override
     public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                          double xOffset, double yOffset) {
+                          double xOffset, double yOffset, int plotNumber, int plotCount) {
 
         if (distribution == null) {
             return;
         }
 
-        super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+        super.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber, plotCount);
 
         g2.setPaint(linePaint);
         g2.setStroke(lineStroke);
@@ -147,6 +160,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
+    @Override
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         // do nothing because paintPlot is overridden
     }

@@ -431,11 +431,21 @@ public class Patterns implements PatternList {
         return patterns[patternIndex];
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
+    }
+
     /**
      * @return state at (taxonIndex, patternIndex)
      */
     public int getPatternState(int taxonIndex, int patternIndex) {
         return patterns[patternIndex][taxonIndex];
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
     }
 
     /**
@@ -471,6 +481,11 @@ public class Patterns implements PatternList {
     @Override
     public boolean areUnique() {
         return areUnique;
+    }
+
+    @Override
+    public boolean areUncertain() {
+        return false;
     }
 
     // **************************************************************

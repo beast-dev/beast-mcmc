@@ -26,6 +26,7 @@
 package dr.inference.trace;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A class that stores the correlation statistics for a trace.
@@ -36,11 +37,25 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
-public class TraceCorrelation<T> extends TraceDistribution<T> {
-    final long stepSize;
+public class TraceCorrelation extends TraceDistribution {
+    private final long stepSize;
 
-    public TraceCorrelation(List<T> values, TraceType traceType, long stepSize) {
-        super(values, traceType);
+    public TraceCorrelation(List<Double> values, TraceType traceType, long stepSize) {
+        this(values, traceType, stepSize, false);
+    }
+
+    public TraceCorrelation(List<Double> values, TraceType traceType, long stepSize, boolean isConstant) {
+        super(values, traceType, isConstant);
+        this.stepSize = stepSize;
+
+        if (stepSize > 0) {
+            analyseCorrelation(values, stepSize);
+        }
+    }
+
+    public TraceCorrelation(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, long stepSize, boolean isConstant) {
+        super(values, categoryLabelMap, categoryOrder, isConstant);
+
         this.stepSize = stepSize;
 
         if (stepSize > 0) {
@@ -64,24 +79,31 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     // private methods
     //************************************************************************
 
-    protected double stdErrorOfMean;
-    protected double stdErrorOfVariance;
-    protected double ACT;
-    protected double stdErrOfACT;
-    protected double ESS;
+    private double stdErrorOfMean;
+    private double stdErrorOfVariance;
+    private double ACT;
+    private double stdErrOfACT;
+    private double ESS;
 
     private static final int MAX_LAG = 2000;
 
-    private void analyseCorrelation(List<T> values, long stepSize) {
+    private void analyseCorrelation(List<Double> values, long stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
         if (stepSize > 0) {
             if (getTraceType().isNumber()) {
-                double[] doubleValues = new double[values.size()];
-                for (int i = 0; i < values.size(); i++) {
-                    doubleValues[i] = ((Number) values.get(i)).doubleValue();
+                if (!isConstant()) {
+                    double[] doubleValues = new double[values.size()];
+                    for (int i = 0; i < values.size(); i++) {
+                        doubleValues[i] = values.get(i);
+                    }
+                    analyseCorrelationNumeric(doubleValues, stepSize);
+                } else {
+                    stdErrorOfMean = 0.0;
+                    ACT = Double.NaN;
+                    ESS = Double.NaN;
+                    stdErrOfACT = Double.NaN;
                 }
-                analyseCorrelationNumeric(doubleValues, stepSize);
 
             } else if (getTraceType() == TraceType.CATEGORICAL) {
                 //todo Do not know how to calculate
@@ -138,8 +160,9 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
                     // assVarCor  += 2.0*((gammaStat[lag-1] * gammaStat[lag-1]) + (gammaStat[lag] * gammaStat[lag])) / (gammaStat[0] * gammaStat[0]);
                 }
                 // stop
-                else
+                else {
                     maxLag = lag;
+                }
             }
         }
 
@@ -147,16 +170,18 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         stdErrorOfMean = Math.sqrt(varStat / samples);
 
         // auto correlation time
-        if (gammaStat[0]==0)
+        if (gammaStat[0] == 0) {
             ACT = 0;
-        else
+        } else {
             ACT = stepSize * varStat / gammaStat[0];
+        }
 
         // effective sample size
-        if (ACT==0)
-            ESS=1;
-        else
+        if (ACT == 0) {
+            ESS = 1;
+        } else {
             ESS = (stepSize * samples) / ACT;
+        }
 
         // standard deviation of autocorrelation time
         stdErrOfACT = (2.0 * Math.sqrt(2.0 * (2.0 * (double) (maxLag + 1)) / samples) * (varStat / gammaStat[0]) * stepSize);

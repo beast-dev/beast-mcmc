@@ -118,17 +118,14 @@ public class XMLObject {
 
     /**
      * @param c the class of the children to return
-     * @return all children with a native format of the given class, or null if no such child exists.
+     * @return all children with a native format of the given class, or empty if no such child exists.
      */
     public <T> List<T> getAllChildren(Class<T> c) {
 
-        List<T> allChildren = null;
+        List<T> allChildren = new ArrayList<T>();;
         for (int i = 0; i < getChildCount(); i++) {
             Object child = getChild(i);
             if( c.isInstance(child) ) {
-                if (allChildren == null) {
-                    allChildren = new ArrayList<T>();
-                }
                 allChildren.add(c.cast(child));
             }
 
@@ -316,6 +313,7 @@ public class XMLObject {
     public boolean getBooleanAttribute(String name) throws XMLParseException {
         return getBoolean(getAndTest(name));
     }
+
 
     /**
      * @return the named attribute as a double.

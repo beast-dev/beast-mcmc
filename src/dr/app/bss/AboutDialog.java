@@ -167,7 +167,7 @@ public class AboutDialog extends JDialog {
 		add(label);
 
 		website = new JLabel();
-		addres = "http://beast.bio.ed.ac.uk";
+		addres = "http://beast.community";
 		website.setText("<html><p><a href=\"" + addres + "\">" + addres
 				+ "</a></p></html>");
 		website.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

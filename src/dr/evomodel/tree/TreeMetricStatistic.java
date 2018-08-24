@@ -25,81 +25,41 @@
 
 package dr.evomodel.tree;
 
-import dr.evolution.tree.BranchScoreMetric;
-import dr.evolution.tree.CladeMetric;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
-import dr.inference.model.Statistic;
-import jebl.evolution.treemetrics.BilleraMetric;
-import jebl.evolution.treemetrics.CladeHeightMetric;
-import jebl.evolution.treemetrics.RobinsonsFouldMetric;
-import jebl.evolution.treemetrics.RootedTreeMetric;
-import jebl.evolution.trees.SimpleRootedTree;
+import dr.evolution.tree.treemetrics.TreeMetric;
 
 /**
  * A statistic that returns the distance between two trees.
- * <p/>
- * Currently supports the following metrics,
- * 1. compare - returns a 0 for identity of topology, 1 otherwise.
- * 2. Billera tree distance.
- * 3. ROBINSONS FOULD
- * 4. Clade height
- * 5. Branch Score
  *
- * @author Alexei Drummond
  * @author Andrew Rambaut
- * @author Joseph Heled
- * @author Sebastian Hoehna
- * @version $Id: TreeMetricStatistic.java,v 1.14 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TreeMetricStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TreeMetricStatistic extends TreeStatistic {
 
-    public enum Method {
-        TOPOLOGY, BILLERA, ROBINSONSFOULD, CLADEHEIGHTM, BRANCHSCORE, CLADEMETRIC
+    /**
+     * Constructor which creates statistic that just says whether two trees have the same topology
+     * @param name
+     * @param referenceTree
+     */
+    public TreeMetricStatistic(String name, Tree referenceTree, Tree targetTree) {
+        this(name, referenceTree, targetTree, null);
     }
 
-    public TreeMetricStatistic(String name, Tree target, Tree reference, Method method) {
+    public TreeMetricStatistic(String name, Tree referenceTree, Tree targetTree, TreeMetric treeMetric) {
         super(name);
 
-        this.target = target;
-        this.method = method;
-
-        switch (method) {
-            case TOPOLOGY: {
-                this.referenceNewick = TreeUtils.uniqueNewick(reference, reference.getRoot());
-                break;
-            }
-            default: {
-                jreference = TreeUtils.asJeblTree(reference);
-                break;
-            }
-        }
-
-        switch (method) {
-            case BILLERA:
-                metric = new BilleraMetric();
-                break;
-            case ROBINSONSFOULD:
-                metric = new RobinsonsFouldMetric();
-                break;
-            case CLADEHEIGHTM:
-                metric = new CladeHeightMetric();
-                break;
-            case BRANCHSCORE:
-                metric = new BranchScoreMetric();
-                break;
-            case CLADEMETRIC:
-                metric = new CladeMetric();
-                break;
-        }
+        this.referenceTree = referenceTree;
+        this.targetTree = targetTree;
+        this.treeMetric = treeMetric;
+        this.focalNewick = TreeUtils.uniqueNewick(referenceTree, referenceTree.getRoot());
     }
 
     public void setTree(Tree tree) {
-        this.target = tree;
+        this.targetTree = tree;
     }
 
     public Tree getTree() {
-        return target;
+        return targetTree;
     }
 
     public int getDimension() {
@@ -111,35 +71,23 @@ public class TreeMetricStatistic extends Statistic.Abstract implements TreeStati
      */
     public double getStatisticValue(int dim) {
 
-        if (method == Method.TOPOLOGY) {
+        if (treeMetric == null) {
+            // simply return if the two trees have the same topology
             return compareTreesByTopology();
         }
 
-        return metric.getMetric(jreference, TreeUtils.asJeblTree(target));
+        return treeMetric.getMetric(referenceTree, targetTree);
     }
 
     private double compareTreesByTopology() {
-        final String tar = TreeUtils.uniqueNewick(target, target.getRoot());
-        return tar.equals(referenceNewick) ? 0.0 : 1.0;
+        final String targetNewick = TreeUtils.uniqueNewick(targetTree, targetTree.getRoot());
+        return targetNewick.equals(focalNewick) ? 1.0 : 0.0;
     }
 
-    public static String methodNames(String s) {
-        String r = "";
-        for (Method m : Method.values()) {
-            if (r.length() > 0)
-                r = r + s;
-            r = r + m.name();
-        }
-        return r;
-    }
+    private Tree targetTree;
+    private final Tree referenceTree;
 
-    private final Method method;
+    private final String focalNewick;
 
-    private Tree target = null;
-
-    private String referenceNewick = null;
-
-    private SimpleRootedTree jreference = null;
-
-    RootedTreeMetric metric = null;
+    private final TreeMetric treeMetric;
 }

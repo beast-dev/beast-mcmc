@@ -34,7 +34,7 @@ import dr.inference.model.Statistic;
  *
  * @author Luiz Carvalho
  */
-public class TerminalBranchStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TerminalBranchStatistic extends TreeStatistic {
 
     public TerminalBranchStatistic(String name, Tree tree) {
         super(name);

@@ -25,6 +25,8 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.RelaxedDriftModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -45,6 +47,7 @@ public class RelaxedDriftModelParser extends AbstractXMLObjectParser {
     public static final String RATES = "rates";
     public static final String RATE_IND = "rateIndicator";
     public static final String DRIFT_RATES = "driftRates";
+    public static final String BRANCH_CHANGES = "branchChanges";
 
     public String getParserName() {
         return RELAXED_DRIFT;
@@ -63,12 +66,16 @@ public class RelaxedDriftModelParser extends AbstractXMLObjectParser {
             driftRates = (Parameter) xo.getElementFirstChild(DRIFT_RATES);
         }
 
+        ArbitraryBranchRates branchChanges = null;
+        if (xo.hasChildNamed(BRANCH_CHANGES)){
+            branchChanges = (ArbitraryBranchRates) xo.getElementFirstChild(BRANCH_CHANGES);
+        }
 
         Logger.getLogger("dr.evomodel").info("Using relaxed drift model.");
 
 
         return new RelaxedDriftModel(tree, rateIndicatorParameter,
-                ratesParameter, driftRates);
+                ratesParameter, driftRates, branchChanges);
     }
 
     //************************************************************************
@@ -92,6 +99,7 @@ public class RelaxedDriftModelParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(RATES, Parameter.class, "The rates parameter", false),
             new ElementRule(RATE_IND, Parameter.class, "The indicator parameter", false),
-            new ElementRule(DRIFT_RATES, Parameter.class, "the drift rates parameter", true)
+            new ElementRule(DRIFT_RATES, Parameter.class, "The drift rates parameter", true),
+            new ElementRule(BRANCH_CHANGES, ArbitraryBranchRates.class, "Branch specific rate change indicators", true)
     };
 }

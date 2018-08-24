@@ -510,7 +510,7 @@ public class TempestPanel extends JPanel implements Exportable {
                 }
 
                 rootToTipChart.removeAllPlots();
-                NumericalDensityPlot dp = new NumericalDensityPlot(values, 20, null);
+                NumericalDensityPlot dp = new NumericalDensityPlot(values, 20);
                 dp.setLineColor(new Color(9, 70, 15));
 
                 double yOffset = (Double) dp.getYData().getMax() / 2;

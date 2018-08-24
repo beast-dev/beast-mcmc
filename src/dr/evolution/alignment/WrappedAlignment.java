@@ -51,6 +51,11 @@ public abstract class WrappedAlignment extends Alignment.Abstract {
      */
     public abstract int getState(int taxonIndex, int siteIndex);
 
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainState not implemented yet");
+    }
+
 
     public void setDataType(DataType dataType) {
         // do nothing by default
@@ -85,11 +90,26 @@ public abstract class WrappedAlignment extends Alignment.Abstract {
         return unaligned.toString();
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPattern not implemented yet");
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPatternState not implemented yet");
+    }
+
     /**
      * @return the DataType of this siteList
      */
     public DataType getDataType() {
         return alignment.getDataType();
+    }
+
+    @Override
+    public boolean areUncertain() {
+        return false;
     }
 
     /**
@@ -113,6 +133,11 @@ public abstract class WrappedAlignment extends Alignment.Abstract {
         }
 
         return pattern;
+    }
+
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainSitePattern not implemented yet");
     }
 
     /**

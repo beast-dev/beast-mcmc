@@ -36,6 +36,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
+import dr.evomodelxml.tree.TreeLengthStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.MicrosatellitePatternParser;
 import dr.evoxml.UPGMATreeParser;
@@ -62,9 +63,9 @@ public class TreeModelGenerator extends Generator {
      */
     void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
 
-        setModelPrefix(model.getPrefix());
+        String prefix = model.getPrefix();
 
-        final String treeModelName = modelPrefix + TreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+        final String treeModelName = prefix + TreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
 
         writer.writeComment("Generate a tree model");
         writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
@@ -73,13 +74,13 @@ public class TreeModelGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                writer.writeIDref("tree", modelPrefix + STARTING_TREE);
+                writer.writeIDref("tree", prefix + STARTING_TREE);
                 break;
             case UPGMA:
-                writer.writeIDref(UPGMATreeParser.UPGMA_TREE, modelPrefix + STARTING_TREE);
+                writer.writeIDref(UPGMATreeParser.UPGMA_TREE, prefix + STARTING_TREE);
                 break;
             case RANDOM:
-                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, modelPrefix + STARTING_TREE);
+                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, prefix + STARTING_TREE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
@@ -87,7 +88,7 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + OldCoalescentSimulatorParser.ROOT_HEIGHT), true);
+                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.ROOT_HEIGHT), true);
         writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 
 
@@ -184,14 +185,24 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
 
-        writer.writeComment("Statistic for time of most recent common ancestor of tree");
-        writer.writeTag(TMRCAStatisticParser.TMRCA_STATISTIC,
+        writer.writeComment("Statistic for sum of the branch lengths of the tree (tree length)");
+        writer.writeTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC,
                 new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, treeModelName + ".rootAge"),
-                        new Attribute.Default<String>(TMRCAStatisticParser.ABSOLUTE, "true")
-                },  false);
+                        new Attribute.Default<String>(XMLParser.ID, prefix + "treeLength"),
+                }, false);
         writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
-        writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+        writer.writeCloseTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC);
+
+        if (model.hasTipCalibrations()) {
+            writer.writeComment("Statistic for time of most recent common ancestor of tree");
+            writer.writeTag(TMRCAStatisticParser.TMRCA_STATISTIC,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, prefix + "age(root)"),
+                            new Attribute.Default<String>(TMRCAStatisticParser.ABSOLUTE, "true")
+                    }, false);
+            writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+            writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
+        }
 
         if (model.getDataType().getType() == DataType.MICRO_SAT) {
             for (AbstractPartitionData partitionData : options.getDataPartitions(model)) {

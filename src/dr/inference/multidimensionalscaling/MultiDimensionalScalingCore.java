@@ -35,10 +35,14 @@ package dr.inference.multidimensionalscaling;
 
 public interface MultiDimensionalScalingCore {
 
+    @SuppressWarnings("all")
     long USE_NATIVE_MDS = 1 << 0;       // 1
                                         // 2
+    @SuppressWarnings("unused")
     long SINGLE_PRECISION = 1 << 2;     // 4
+    @SuppressWarnings("unused")
     long MULTI_CORE = 1 << 3;           // 8
+    @SuppressWarnings("unused")
     long OPENCL_VECTORIZATION = 1 << 4; // 16
     long LEFT_TRUNCATION = 1 << 5;      // 32
 
@@ -95,5 +99,6 @@ public interface MultiDimensionalScalingCore {
     /**
      * Get pair-wise data
      */
+    @SuppressWarnings("unused")
     double[] getPairwiseData();
 }

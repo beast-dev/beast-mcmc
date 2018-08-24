@@ -32,7 +32,7 @@ import dr.util.Attribute;
  * @author Andrew Rambaut
  * @version $Id: TestStatistic.java,v 1.12 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TestStatistic extends BooleanStatistic {
+public class TestStatistic extends Statistic.Abstract implements BooleanStatistic {
 
     private Attribute attribute = null;
     private Attribute attribute2 = null;
@@ -78,6 +78,13 @@ public class TestStatistic extends BooleanStatistic {
 
     public int getDimension() {
         return 1;
+    }
+
+    /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
     }
 
     /**

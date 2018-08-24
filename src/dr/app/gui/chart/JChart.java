@@ -30,19 +30,19 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.Vector;
+import java.awt.geom.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JChart extends JPanel {
 
+    private static final boolean DEBUG = true;
     /**
      *
      */
     private static final long serialVersionUID = -7064065852204509247L;
-    protected Axis yAxis, xAxis;
-    private Vector<Plot> plots = new Vector<Plot>();
+    private Axis yAxis, xAxis;
+    private List<Plot> plots = new ArrayList<Plot>();
 
     private Paint plotBackgroundPaint = Color.white;
 
@@ -73,8 +73,17 @@ public class JChart extends JPanel {
 
     private double xScale, yScale, xOffset, yOffset;
 
+    private double aspectRatio;
+    private boolean useAspectRatio = false;
+
     public JChart(Axis xAxis, Axis yAxis) {
         this(null, xAxis, yAxis);
+    }
+
+    public JChart(Axis xAxis, Axis yAxis, double aspectRatio) {
+        this(null, xAxis, yAxis);
+        this.aspectRatio = aspectRatio;
+        this.useAspectRatio = true;
     }
 
     public JChart(Plot plot, Axis xAxis, Axis yAxis) {
@@ -84,8 +93,12 @@ public class JChart extends JPanel {
         this.xAxis = xAxis;
         this.yAxis = yAxis;
 
-        if (plot != null)
+        if (plot != null) {
             addPlot(plot);
+        }
+
+        this.aspectRatio = 1.0;
+        this.useAspectRatio = false;
 
         addMouseListener(new MListener());
         addMouseMotionListener(new MMListener());
@@ -125,6 +138,8 @@ public class JChart extends JPanel {
 
     public void addPlot(Plot plot) {
         plot.setAxes(xAxis, yAxis);
+        plot.setChart(this);
+        plot.setPlotNumber(plots.size());
         plots.add(plot);
         recalibrate();
         repaint();
@@ -147,6 +162,14 @@ public class JChart extends JPanel {
         yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
         recalibrate();
         repaint();
+    }
+
+    public List<Plot> getPlots() {
+        return plots;
+    }
+
+    public void setPlots(List<Plot> plots) {
+        this.plots = plots;
     }
 
     public int getPlotCount() {
@@ -327,6 +350,20 @@ public class JChart extends JPanel {
             double w = size.width - (majorTickSize * 1.25) - maxYTickLabelWidth - (maxXTickLabelWidth / 2);
             double h = size.height - yTickLabelOffset - (majorTickSize * 1.25) - tickLabelHeight;
 
+            //store current transformation in case of a translate transform
+            AffineTransform orig = g2.getTransform();
+            if (useAspectRatio) {
+                double newH = w / aspectRatio;
+                if (newH > h) {
+                    w = h * aspectRatio;
+                } else {
+                    h = newH;
+                }
+                if (size.width > size.height) {
+                    g2.translate((size.width - size.height)/2.0, 0.0);
+                }
+            }
+
             plotBounds = new Rectangle2D.Double((majorTickSize * 1.25) + maxYTickLabelWidth, yTickLabelOffset, w, h);
 
             xOffset = plotBounds.getX();
@@ -380,20 +417,29 @@ public class JChart extends JPanel {
 
             paintAxis(g2, xAxis, true);
             paintAxis(g2, yAxis, false);
+
+            //restore transformation in any case
+            g2.setTransform(orig);
+
         } catch (ChartRuntimeException cre) {
+            if (DEBUG) {
+                System.err.println(cre.getStackTrace());
+            }
             // ignore (just won't paint chart)
         }
 
     }
 
     protected void paintContents(Graphics2D g2) {
+        int plotNumber = 0;
         for (Plot plot : plots) {
-            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+            plot.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber, plots.size());
+            plotNumber += 1;
         }
     }
 
     protected void paintFrame(Graphics2D g2) {
-        g2.setPaint(framePaint);
+        g2.setPaint(framePaint);     
         g2.setStroke(frameStroke);
         g2.draw(plotBounds);
     }
@@ -537,71 +583,167 @@ public class JChart extends JPanel {
         return maxWidth;
     }
 
-    protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis)
-    {
-        int n1 = axis.getMajorTickCount();
-        int n2, i, j;
+    protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis) {
+        if (axis.getIsDiscrete()) {
+            int n1 = axis.getMajorTickCount();
+            int n2, i, j;
 
-        n2 = axis.getMinorTickCount(-1);
-        if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
+            n2 = axis.getMinorTickCount(-1);
 
-            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
+            for (i = 0; i < n1; i++) {
+                paintMajorTick(g2, axis.getMajorTickValue(i), axis.getMajorTickLabel(i), horizontalAxis);
+                n2 = axis.getMinorTickCount(i);
 
-            for (j = 1; j < n2; j++) {
-                paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
+                if (i == (n1 - 1) && axis.getLabelLast()) { // Draw last minor tick as a major one
+
+                    paintMajorTick(g2, axis.getMinorTickValue(0, i), axis.format((int) axis.getMinorTickValue(0, i)), horizontalAxis);
+
+                    for (j = 1; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
+                } else {
+
+                    for (j = 0; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
+                }
             }
         } else {
+            int n1 = axis.getMajorTickCount();
+            int n2, i, j;
 
-            for (j = 0; j < n2; j++) {
-                paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
-            }
-        }
+            n2 = axis.getMinorTickCount(-1);
+            if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
 
-        for (i = 0; i < n1; i++) {
-
-            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
-            n2 = axis.getMinorTickCount(i);
-
-            if (i == (n1-1) && axis.getLabelLast()) { // Draw last minor tick as a major one
-
-                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
+                paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
 
                 for (j = 1; j < n2; j++) {
-                    paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
                 }
             } else {
 
-                for (j = 0; j <  n2; j++) {
-                    paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                for (j = 0; j < n2; j++) {
+                    paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
+                }
+            }
+
+            for (i = 0; i < n1; i++) {
+
+                paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
+                n2 = axis.getMinorTickCount(i);
+
+                if (i == (n1 - 1) && axis.getLabelLast()) { // Draw last minor tick as a major one
+
+                    paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
+
+                    for (j = 1; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
+                } else {
+
+                    for (j = 0; j < n2; j++) {
+                        paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                    }
                 }
             }
         }
     }
 
-    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
+    protected String getXAxisLabel(double value) {
+        return xAxis.format(value);
+    }
+
+    protected String getYAxisLabel(double value) {
+        return yAxis.format(value);
+    }
+
+//    protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis) {
+//        g2.setPaint(getAxisPaint());
+//        g2.setStroke(getAxisStroke());
+//
+//        if (label == null) {
+//            label = " ";
+//        }
+//
+//        if (horizontalAxis) {
+//            double pos = transformX(value);
+//
+//            Line2D line = new Line2D.Double(pos, getPlotBounds().getMaxY(), pos, getPlotBounds().getMaxY() + getMajorTickSize());
+//            g2.draw(line);
+//
+//            g2.setPaint(getLabelPaint());
+//            double width = g2.getFontMetrics().stringWidth(label);
+//
+//            if (label == null) {
+//                label = getXAxis().format(value);
+//            }
+//            g2.drawString(label, (float) (pos - (width / 2)), (float) (getPlotBounds().getMaxY() + (getMajorTickSize() * 1.25) + getXTickLabelOffset()));
+//
+//        } else {
+//            double pos = transformY(value);
+//
+//            Line2D line = new Line2D.Double(getPlotBounds().getMinX(), pos, getPlotBounds().getMinX() - getMajorTickSize(), pos);
+//            g2.draw(line);
+//
+//            g2.setPaint(getLabelPaint());
+//            double width = g2.getFontMetrics().stringWidth(label);
+//
+//            if (label == null) {
+//                label = getYAxis().format(value);
+//            }
+//            g2.drawString(label, (float)(getPlotBounds().getMinX() - width - (getMajorTickSize() * 1.25)), (float)(pos + getYTickLabelOffset()));
+//        }
+//    }
+
+    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis) {
+        paintMajorTick(g2, value, null, horizontalAxis);
+    }
+
+    protected void paintMajorTick(Graphics2D g2, double value, String label, boolean horizontalAxis)
     {
         g2.setPaint(axisPaint);
         g2.setStroke(axisStroke);
+
+
         if (horizontalAxis) {
-            String label = xAxis.format(value);
-            double pos = transformX(value);
+                if (label == null) {
+                label = getXAxisLabel(value);
+            }
 
-            Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
-            g2.draw(line);
+            if (label != null) {
+                double pos = transformX(value);
 
-            g2.setPaint(labelPaint);
-            double width = g2.getFontMetrics().stringWidth(label);
-            g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+                Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
+                g2.draw(line);
+
+                g2.setPaint(labelPaint);
+                double width = g2.getFontMetrics().stringWidth(label);
+            /*if (rotateHorizontal) {
+                AffineTransform orig = g2.getTransform();
+                g2.rotate(Math.toRadians(90), (float) (pos - width / 2), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset - width / 2));
+                g2.setTransform(orig);
+            } else {
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            }*/
+                g2.drawString(label, (float) (pos - (width / 2)), (float) (plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+            }
+
         } else {
-            String label = yAxis.format(value);
-            double pos = transformY(value);
+            if (label == null) {
+                label = getYAxisLabel(value);
+            }
 
-            Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);
-            g2.draw(line);
+            if (label != null) {
+                double pos = transformY(value);
 
-            g2.setPaint(labelPaint);
-            double width = g2.getFontMetrics().stringWidth(label);
-            g2.drawString(label, (float)(plotBounds.getMinX() - width - (majorTickSize * 1.25)), (float)(pos + yTickLabelOffset));
+                Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);
+                g2.draw(line);
+
+                g2.setPaint(labelPaint);
+                double width = g2.getFontMetrics().stringWidth(label);
+                g2.drawString(label, (float) (plotBounds.getMinX() - width - (majorTickSize * 1.25)), (float) (pos + yTickLabelOffset));
+            }
         }
     }
 

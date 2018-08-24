@@ -43,7 +43,7 @@ public class TraceAnalysis {
      * @throws java.io.IOException if general error reading file
      * @throws TraceException      if trace file in wrong format or corrupted
      */
-    public static LogFileTraces analyzeLogFile(String fileName, int burnin) throws java.io.IOException, TraceException {
+    public static LogFileTraces analyzeLogFile(String fileName, long burnin) throws java.io.IOException, TraceException {
 
         File file = new File(fileName);
         LogFileTraces traces = new LogFileTraces(fileName, file);
@@ -164,7 +164,7 @@ public class TraceAnalysis {
             String analysisType = "aicm";
             int bootstrapLength = 1000;
 
-            List<Double> sample = traces.getValues(traceIndex);
+            List<Double> sample = (List)traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
@@ -176,14 +176,14 @@ public class TraceAnalysis {
         return traces;
     }
 
-    public static void reportTrace(String fileName, int inBurnin, String traceName) throws IOException, TraceException {
+    public static void reportTrace(String fileName, long inBurnin, String traceName) throws IOException, TraceException {
         File file = new File(fileName);
 
         LogFileTraces traces = new LogFileTraces(fileName, file);
         traces.loadTraces();
-        int burnin = inBurnin;
+        long burnin = inBurnin;
         if (burnin == -1) {
-            burnin = (int) (traces.getMaxState() / 10);
+            burnin = traces.getMaxState() / 10;
         }
 
         traces.setBurnIn(burnin);
@@ -310,7 +310,7 @@ public class TraceAnalysis {
             String analysisType = "aicm";
             int bootstrapLength = 1000;
 
-            List<Double> sample = traces.getValues(traceIndex);
+            List<Double> sample = (List)traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
@@ -330,6 +330,14 @@ public class TraceAnalysis {
         if (value > 0 && (Math.abs(value) < 0.01 || Math.abs(value) >= 100000.0)) {
             return formatter.format(value);
         } else return formatter2.format(value);
+    }
+
+    public static String formattedNumber(double value, int decimalPlaces) {
+        String pattern = "####0.";
+        for (int i = 0; i < decimalPlaces; i++) {
+            pattern += "#";
+        }
+        return new DecimalFormat(pattern).format(value);
     }
 
     static final String[] colNamesNumeric = {"mean", "stderr_of_mean", "stdev", "variance", "median", "min", "max",
@@ -457,7 +465,7 @@ public class TraceAnalysis {
                 break;
             //+++++ categorical +++++
             case 15:
-                value = tc.getMode().toString();
+                value = Integer.toString(tc.getMode()); // todo map to category string
                 break;
             case 16:
                 value = tc.getFrequencyOfMode();
@@ -466,15 +474,15 @@ public class TraceAnalysis {
                 value = tc.getProbabilityOfMode();
                 break;
             case 18:
-                value = tc.printUniqueValues();
+                value = tc.getCredibleSet().toString(); // todo full set
                 break;
             case 19:
-                value = tc.printCredibleSet();
+                value = tc.getCredibleSet().toString(); // todo render as list using category strings
                 break;
         }
         if (value == null)
             return "";
-        else if (value instanceof Double && Double.isNaN(((Double) value).doubleValue()))
+        else if (value instanceof Double && Double.isNaN((Double) value))
             return "";
         else
             return value.toString();

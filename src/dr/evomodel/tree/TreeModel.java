@@ -29,10 +29,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.inference.model.*;
-import dr.util.Attributable;
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
+import dr.util.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -45,7 +42,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
+public class TreeModel extends AbstractModel implements MutableTreeModel, Keywordable, Citable {
 
     //
     // Public stuff
@@ -178,7 +175,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     /**
      * Push a tree changed event into the event stack.
      */
-    public void pushTreeChangedEvent(TreeChangedEvent event) {
+    public void pushTreeChangedEvent(dr.evomodel.tree.TreeChangedEvent event) {
 
         if (!isTreeRandom) throw new IllegalStateException("Attempting state change in fixed tree");
 
@@ -208,7 +205,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
 
-    private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
+    private final List<dr.evomodel.tree.TreeChangedEvent> treeChangedEvents = new ArrayList<dr.evomodel.tree.TreeChangedEvent>();
 
     public boolean hasRates() {
         return hasRates;
@@ -218,7 +215,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         return inEdit;
     }
 
-    public class TreeChangedEvent {
+    public class TreeChangedEvent implements dr.evomodel.tree.TreeChangedEvent {
         static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 
         final Node node;
@@ -239,10 +236,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             this.index = index;
         }
 
+        @Override
         public int getIndex() {
             return index;
         }
 
+        @Override
         public Node getNode() {
             return node;
         }
@@ -255,10 +254,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             return parameter == null;
         }
 
+        @Override
         public boolean isNodeChanged() {
             return node != null;
         }
 
+        @Override
         public boolean isNodeParameterChanged() {
             return parameter != null;
         }
@@ -481,7 +482,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     /**
      * Set a new node as root node.
      */
-    public final void setRoot(NodeRef newRoot) {
+    public void setRoot(NodeRef newRoot) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
@@ -520,7 +521,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     private Node oldRoot;
 
     public boolean beginTreeEdit() {
-        if (inEdit) throw new RuntimeException("Alreading in edit transaction mode!");
+        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
 
         oldRoot = root;
 
@@ -546,7 +547,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+        for (dr.evomodel.tree.TreeChangedEvent treeChangedEvent : treeChangedEvents) {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
         treeChangedEvents.clear();
@@ -697,7 +698,9 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
      * @param nodeHeights Also sets the node heights to the provided values
      * @param childOrder Array that contains whether a child node is left or right child
      */
-    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder) {
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames) {
+
+        int[] nodeMap = createNodeMap(taxaNames);
 
         if (this.nodeCount != edges.length) {
             throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
@@ -711,16 +714,30 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
             }
         }
 
-        //set the node heights
-        for (int i = 0; i < nodeHeights.length; i++) {
-            setNodeHeight(nodes[i], nodeHeights[i]);
+        //start with setting the external node heights
+        for (int i = 0; i < this.getExternalNodeCount(); i++) {
+            this.setNodeHeight(this.getExternalNode(nodeMap[i]), nodeHeights[i]);
+        }
+        //set the internal node heights
+        for (int i = 0; i < (this.getExternalNodeCount() - 1); i++) {
+            //No just restart counting, will fix later on in the code by adding additionalTaxa variable
+            this.setNodeHeight(this.getInternalNode(i), nodeHeights[this.getExternalNodeCount() + i]);
         }
 
         int newRootIndex = -1;
         //now add the parent-child links again to ALL the nodes
         for (int i = 0; i < edges.length; i++) {
             if (edges[i] != -1) {
-                nodes[edges[i]].addChild(nodes[i]);
+                //make distinction between external nodes and internal nodes
+                if (i < this.getExternalNodeCount()) {
+                    //external node
+                    this.addChild(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
+                    System.out.println("external: " + edges[i] + " > " + nodeMap[i]);
+                } else {
+                    //internal node
+                    this.addChild(this.getNode(edges[i]), this.getNode(i));
+                    System.out.println("internal: " + edges[i] + " > " + i);
+                }
             } else {
                 newRootIndex = i;
             }
@@ -728,20 +745,90 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
 
         //not possible to determine correct ordering of child nodes in the loop where they're being assigned
         //hence perform possible swaps in a separate loop
+
         for (int i = 0; i < edges.length; i++) {
-            if (edges[i] != -1) {
-                if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
-                    //swap child nodes
-                    Node childOne = nodes[edges[i]].removeChild(0);
-                    Node childTwo = nodes[edges[i]].removeChild(1);
-                    nodes[edges[i]].addChild(childTwo);
-                    nodes[edges[i]].addChild(childOne);
+                if (edges[i] != -1) {
+                    if(i < this.externalNodeCount) {
+                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[nodeMap[i]]) {
+                            //swap child nodes
+                            Node childOne = nodes[edges[i]].removeChild(0);
+                            Node childTwo = nodes[edges[i]].removeChild(1);
+                            nodes[edges[i]].addChild(childTwo);
+                            nodes[edges[i]].addChild(childOne);
+                        }
+                    }else{
+                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
+                            //swap child nodes
+                            Node childOne = nodes[edges[i]].removeChild(0);
+                            Node childTwo = nodes[edges[i]].removeChild(1);
+                            nodes[edges[i]].addChild(childTwo);
+                            nodes[edges[i]].addChild(childOne);
+                        }
+                    }
                 }
-            }
+
         }
 
         this.setRoot(nodes[newRootIndex]);
+    }
 
+    private int[] createNodeMap(String[] taxaNames) {
+
+        System.out.println("Creating a node mapping:");
+
+        int external = this.getExternalNodeCount();
+
+        int[] nodeMap = new int[external];
+        for (int i = 0; i < taxaNames.length; i++) {
+            for (int j = 0; j < external; j++) {
+                if (taxaNames[i].equals(this.getNodeTaxon(this.getExternalNode(j)).getId())) {
+                    //taxon found
+                    nodeMap[i] = j;
+                }
+            }
+        }
+        return nodeMap;
+    }
+
+    /**
+     * Imports trait information from a file
+     * @param edges Edges are provided as index: child number; parent: array entry
+     * @param traitModels List of TreeParameterModel object that contain trait information
+     * @param traitValues Values to be copied into the List of TreeParameterModel objects
+     */
+    public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues, String[] taxaNames) {
+        int[] nodeMap = createNodeMap(taxaNames);
+        int index = 0;
+
+        for (TreeParameterModel tpm : traitModels) {
+
+            for (int i = 0; i < this.getRoot().getNumber(); i++) {
+                if (i < this.getExternalNodeCount()) {
+                        tpm.setNodeValue(this, this.getExternalNode(nodeMap[i]), traitValues[index][i]);
+                        System.out.println("Setting external node " + this.getExternalNode(nodeMap[i]) + " to " + traitValues[index][i]);
+
+                    } else {
+                        tpm.setNodeValue(this, this.getNode(i), traitValues[index][i]);
+                        System.out.println("Setting internal node " + this.getNode(i ) + " to " + traitValues[index][i]);
+                    }
+            }
+
+            // In TreeParameterModel, when this.getRoot.getNumber() and rootNodeNumber.getValue(0) are not equal,
+            // handleRootMove() will get called and move parameter/trait values to different indices.  Here, we
+            // preemptively move around trait values (if necessary) so that if handleRootMove() gets called, the
+            // trait values end up in the correct indices.
+            if(this.getRoot().getNumber() < edges.length-1){
+                tpm.setNodeValue(this, this.getNode(this.getRoot().getNumber()+1), traitValues[index][this.getNodeCount()-1]);
+               // System.out.println("Setting node " + this.getNode(this.getRoot().getNumber()+1) + " " + " to " + traitValues[index][this.getNodeCount()-1]);
+            }
+
+            for (int i = this.getRoot().getNumber()+2; i < edges.length; i++) {
+                    tpm.setNodeValue(this, this.getNode(i), traitValues[index][i-1]);
+                   // System.out.println("Setting node " + this.getNode(i ) + " to " + traitValues[index][i-1]);
+            }
+
+            index++;
+        }
     }
 
     /**
@@ -1566,6 +1653,22 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
     }
 
     // ***********************************************************************
+    // Interface: Keywordable
+    // ***********************************************************************
+
+    @Override
+    public void addKeyword(String keyword) {
+        keywords.add(keyword);
+    }
+
+    @Override
+    public List<String> getKeywords() {
+        return keywords;
+    }
+
+    private final List<String> keywords = new ArrayList<String>();
+
+    // ***********************************************************************
     // Private members
     // ***********************************************************************
 
@@ -1613,7 +1716,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree, C
         return isTipDateSampled;
     }
 
-    public boolean isTreeRandom() {
+    @Override
+    public boolean isVariable() {
         return isTreeRandom;
     }
 

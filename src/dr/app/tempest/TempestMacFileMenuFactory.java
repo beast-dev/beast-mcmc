@@ -62,6 +62,14 @@ public class TempestMacFileMenuFactory implements MenuFactory {
         menu.add(item);
 
         if (frame != null) {
+            menu.addSeparator();
+
+            item = new JMenuItem(frame.getImportAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            menu.add(item);
+
+            menu.addSeparator();
+
             item = new JMenuItem(frame.getCloseWindowAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
             menu.add(item);
@@ -74,6 +82,15 @@ public class TempestMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
             menu.add(item);
         } else {
+            menu.addSeparator();
+
+            item = new JMenuItem("Import Dates...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            menu.addSeparator();
+
             // No frame available so create a disabled menu for the default menu bar
             item = new JMenuItem("Close");
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));

@@ -42,6 +42,8 @@ import java.util.logging.Logger;
  */
 public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
 
+    private static boolean FAIL_SILENTLY = true;
+
     private double scaleFactor;
     private double lambdaScaleFactor;
     private int fieldLength;
@@ -190,19 +192,25 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
             try {
                 jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
             } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
+                if (FAIL_SILENTLY) {
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
-                return null;
+                throw new RuntimeException("Newton-Raphson F.");
             } catch (no.uib.cipr.matrix.MatrixSingularException e) {
+                if (FAIL_SILENTLY) {
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-
-//                throw new OperatorFailedException("");
-                return null;
+                throw new RuntimeException("Newton-Raphson F.");
             }
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations) {
+                if (FAIL_SILENTLY) {
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                 throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                         "Try starting BEAST with a more accurate initial tree.");

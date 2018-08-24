@@ -57,26 +57,35 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
 
         if (proportionParam.getDimension() != 1 && proportionParam.getDimension() != countsParam.getDimension()) {
             throw new XMLParseException("Proportion dimension (" + proportionParam.getDimension() + ") " +
-            "must equal 1 or counts dimension (" + countsParam.getDimension() + ")");
+                    "must equal 1 or counts dimension (" + countsParam.getDimension() + ")");
         }
 
-        cxo = xo.getChild(TRIALS);
         Parameter trialsParam;
-        if (cxo.hasAttribute(VALUES)) {
-            int[] tmp = cxo.getIntegerArrayAttribute(VALUES);
-            double[] v = new double[tmp.length];
-            for (int i = 0; i < tmp.length; ++i) {
-                v[i] = tmp[i];
+        cxo = xo.getChild(TRIALS);
+        if (cxo != null) {
+            if (cxo.hasAttribute(VALUES)) {
+                int[] tmp = cxo.getIntegerArrayAttribute(VALUES);
+                double[] v = new double[tmp.length];
+                for (int i = 0; i < tmp.length; ++i) {
+                    v[i] = tmp[i];
+                }
+                trialsParam = new Parameter.Default(v);
+            } else {
+                trialsParam = (Parameter) cxo.getChild(Parameter.class);
             }
-            trialsParam = new Parameter.Default(v);
         } else {
-            trialsParam = (Parameter) cxo.getChild(Parameter.class);
+            trialsParam = new Parameter.Default(1.0);
         }
+        
+//        if (trialsParam.getDimension()  <= 1) {
+//            trialsParam.setDimension(countsParam.getDimension());
+//        }
 
         if (trialsParam.getDimension() != countsParam.getDimension()) {
             throw new XMLParseException("Trials dimension (" + trialsParam.getDimension()
                     + ") must equal counts dimension (" + countsParam.getDimension() + ")");
         }
+
 
         return new BinomialLikelihood(trialsParam, proportionParam, countsParam, onLogitScale);
 

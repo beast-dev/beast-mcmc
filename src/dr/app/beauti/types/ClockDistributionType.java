@@ -33,7 +33,8 @@ public enum ClockDistributionType {
     LOGNORMAL("Lognormal"),
     GAMMA("Gamma"),
     CAUCHY("Cauchy"),
-    EXPONENTIAL ("Exponential");
+    EXPONENTIAL ("Exponential"),
+    MODEL_AVERAGING ("Model Averaging");
 
     ClockDistributionType(String displayName) {
         this.displayName = displayName;

@@ -32,9 +32,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
@@ -121,5 +119,33 @@ public class Clade implements Comparable<Clade> {
     public void setHeight(double height){
     	this.height = height;
     }
-    
+
+    public static Set<Clade> getCladeSet(Tree tree) {
+        return new HashSet<Clade>(getCladeList(tree));
+    }
+
+    public static List<Clade> getCladeList(Tree tree) {
+        List<Clade> clades = new ArrayList<Clade>();
+        getClades(clades, tree, tree.getRoot());
+        return clades;
+    }
+
+    private static BitSet getClades(List<Clade> clades, Tree tree, NodeRef node) {
+
+        BitSet bits = new BitSet();
+
+        if (tree.isExternal(node)) {
+
+            bits.set(node.getNumber());
+
+        } else {
+            bits.or(getClades(clades, tree, tree.getChild(node, 0)));
+            bits.or(getClades(clades, tree, tree.getChild(node, 1)));
+
+            clades.add(new Clade(bits, tree.getNodeHeight(node)));
+        }
+
+        return bits;
+    }
+
 }

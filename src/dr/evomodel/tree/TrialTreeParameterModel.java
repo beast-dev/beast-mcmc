@@ -25,6 +25,7 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
@@ -45,7 +46,7 @@ public class TrialTreeParameterModel extends TreeParameterModel {
 //        this(tree, parameter, includeRoot, includeTips, Intent.NODE);
 //    }
 
-    public TrialTreeParameterModel(TreeModel tree, Parameter parameter, boolean includeRoot, boolean includeTips,
+    public TrialTreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot, boolean includeTips,
                                    Intent intent) {
         super(tree, parameter, includeRoot, intent);
         this.includeTips = includeTips;

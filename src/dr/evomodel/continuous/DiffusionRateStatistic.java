@@ -26,7 +26,7 @@
 package dr.evomodel.continuous;
 
 import dr.app.util.Arguments;
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeStatistic;
@@ -37,8 +37,6 @@ import dr.stats.DiscreteStatistics;
 import dr.xml.*;
 
 import java.util.*;
-
-import java.io.IOException;
 
 /**
  * @author Marc Suchard
@@ -123,7 +121,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 //        System.out.println("dim = "+dim+", heightLower = "+lowerHeight+", heightUpper = "+upperHeight);
 
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
-            MultivariateTraitTree tree = traitLikelihood.getTreeModel();
+            MutableTreeModel tree = traitLikelihood.getTreeModel();
             BranchRateModel branchRates = traitLikelihood.getBranchRateModel();
 
             for (int i = 0; i < tree.getNodeCount(); i++) {

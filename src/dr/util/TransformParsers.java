@@ -29,7 +29,6 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -37,17 +36,15 @@ import java.util.List;
 
 public class TransformParsers {
 
+    @SuppressWarnings("unused")
     public static XMLObjectParser COMPOUND_PARSER = new AbstractXMLObjectParser() {
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-//            return new
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            Transform transform = new Transform.Collection(xo.getAllChildren(Transform.ParsedTransform.class),
+            return new Transform.Collection(xo.getAllChildren(Transform.ParsedTransform.class),
                     parameter);
-
-            return transform;
         }
 
         @Override
@@ -74,6 +71,7 @@ public class TransformParsers {
         }
     };
 
+    @SuppressWarnings("unused")
     public static XMLObjectParser COMPOSE_PARSER = new AbstractXMLObjectParser() {
 
         @Override
@@ -133,6 +131,7 @@ public class TransformParsers {
         }
     };
 
+    @SuppressWarnings("unused")
     public static XMLObjectParser INVERSE_PARSER = new AbstractXMLObjectParser() {
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -140,9 +139,9 @@ public class TransformParsers {
             Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform)
                     xo.getChild(Transform.ParsedTransform.class);
 
-            Transform xform = parsedTransform.transform;
+            Transform transform = parsedTransform.transform;
 
-            if (xform instanceof Transform.UnivariableTransform) {
+            if (transform instanceof Transform.UnivariableTransform) {
 
                 Transform.ParsedTransform inverseTransform = parsedTransform.clone();
                 inverseTransform.transform = new Transform.Inverse((Transform.UnivariableTransform)
@@ -177,13 +176,14 @@ public class TransformParsers {
         }
     };
 
+    @SuppressWarnings("unused")
     public static XMLObjectParser TRANSFORM_PARSER = new AbstractXMLObjectParser() {
 
          public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-             Transform thisTransform = Transform.NONE;
+             Transform thisTransform;
              String name = (String) xo.getAttribute(TYPE);
-             System.err.println("name: " + name);
+//             System.err.println("name: " + name);
 
              thisTransform = null;
              for (Transform.Type type: Transform.Type.values()) {
@@ -212,11 +212,12 @@ public class TransformParsers {
                  // todo: check values are valid
                  transform.start--; // zero-indexed
              } else {
+                 if (xo.hasAttribute(SUM)) {
+                     transform.fixedSum = xo.getDoubleAttribute(SUM);
+                 }
                  transform.parameters = new ArrayList<Parameter>();
 
-                 for (Parameter param : xo.getAllChildren(Parameter.class)) {
-                     transform.parameters.add(param);
-                 }
+                 transform.parameters.addAll(xo.getAllChildren(Parameter.class));
              }
 
              return transform;
@@ -228,6 +229,7 @@ public class TransformParsers {
                      AttributeRule.newIntegerRule(START, true),
                      AttributeRule.newIntegerRule(END, true),
                      AttributeRule.newIntegerRule(EVERY, true),
+                     AttributeRule.newDoubleRule(SUM, true),
                      AttributeRule.newBooleanRule(INVERSE, true),
                      new ElementRule(Transform.ParsedTransform.class, 0, 1),
                      new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
@@ -252,10 +254,11 @@ public class TransformParsers {
     public static final String TYPE = "type";
     public static final String START = "start";
     public static final String END = "end";
+    public static final String SUM = "sum";
     public static final String EVERY = "every";
-    public static final String INVERSE = "inverseTransform";
-    public static final String COMPOSE = "composedTransform";
-    public static final String OUTER = "outer";
-    public static final String INNER = "inner";
-    public static final String COMPOUND = "compoundTransform";
+    private static final String INVERSE = "inverseTransform";
+    private static final String COMPOSE = "composedTransform";
+    private static final String OUTER = "outer";
+    private static final String INNER = "inner";
+    private static final String COMPOUND = "compoundTransform";
 }

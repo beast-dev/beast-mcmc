@@ -357,7 +357,7 @@ public class ConditionalCladeFrequency extends
             sum += EPSILON * (splits - noChildClades);
 
             // roulette wheel
-            double randomNumber = Math.random() * sum;
+            double randomNumber = MathUtils.nextDouble() * sum;
             for (BitSet child : keys) {
                 Clade tmp = childClades.get(child);
                 if (parent.getSize() > tmp.getSize() + 1) {

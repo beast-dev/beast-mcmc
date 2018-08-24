@@ -62,6 +62,12 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 // Poisson Prior on non zero ratesBSSVS
                 modelOptions.createDiscreteStatistic(prefix + "nonZeroRates", "the number of non-zero rates for BSSVS");
 
+                // GLM
+                modelOptions.createParameterNormalPrior(prefix + "coefficients", "a vector of log coefficients for each GLM predictor", PriorScaleType.NONE, 0.0, 0.0, 2.0, 0.0);
+                modelOptions.createParameter(prefix + "coefIndicators", "a vector of bits indicating non-zero coefficients for GLM", 1.0);
+
+                // Operators
+
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
                 modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
@@ -71,13 +77,17 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createOperator(prefix + "root.frequencies", OperatorType.DELTA_EXCHANGE, 0.75, 1.0);
 
                 //bit Flip on clock.rate in PartitionClockModelSubstModelLink
-//                modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", prefix + "mu",
+//                modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFLIP_IN_SUBST.toString() + "mu", prefix + "mu",
 //                        "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
                 modelOptions.createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME,
                         "(indicators, rates)",
                         "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                         prefix + "indicators", prefix + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 7.0);
 
+
+                modelOptions.createOperator(prefix + "coefficients", OperatorType.RANDOM_WALK, 0.75, 5.0);
+                // todo - this should be a special MVN operator.. 
+                modelOptions.createOperator(prefix + "coefIndicators", OperatorType.BITFLIP, -1.0, 5.0);
             }
         }
     }
@@ -98,6 +108,8 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
                     nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     nonZeroRates.offset = 0.0;
+                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                    throw new IllegalArgumentException("GLM substitution type can't be used by rate-level BSSVS");
                 } else {
                     throw new IllegalArgumentException("unknown discrete substitution type");
                 }
@@ -105,8 +117,14 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 params.add(nonZeroRates);
             }
 
-            params.add(modelOptions.getParameter(prefix + "frequencies"));
-            params.add(modelOptions.getParameter(prefix + "rates"));
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                params.add(modelOptions.getParameter(prefix + "coefficients"));
+                // Don't show this parameter as the prior is a custom MVN
+                // params.add(modelOptions.getParameter(prefix + "coefIndicators"));
+            } else {
+                params.add(modelOptions.getParameter(prefix + "frequencies"));
+                params.add(modelOptions.getParameter(prefix + "rates"));
+            }
         }
 
         for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
@@ -128,12 +146,19 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
         for (PartitionSubstitutionModel substitutionModel : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = substitutionModel.getName() + ".";
 
-//            ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
-            ops.add(modelOptions.getOperator(prefix + "rates"));
+            if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {
+                ops.add(modelOptions.getOperator(prefix + "coefficients"));
+                ops.add(modelOptions.getOperator(prefix + "coefIndicators"));
 
-            if (substitutionModel.isActivateBSSVS()) {
-                ops.add(modelOptions.getOperator(prefix + "indicators"));
+            } else {
+//            ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
+                ops.add(modelOptions.getOperator(prefix + "rates"));
+
+                if (substitutionModel.isActivateBSSVS()) {
+                    ops.add(modelOptions.getOperator(prefix + "indicators"));
+                }
             }
+
         }
         for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {

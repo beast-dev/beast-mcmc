@@ -60,10 +60,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
             }
         }
         //Force the boundaries of rate
-        if (!exp) {
-            Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rateParameter.getDimension());
-            rateParameter.addBounds(bound);
-        }
+        Parameter.DefaultBounds bounds = exp ?
+                new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                        rateParameter.getDimension()) :
+                new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0,
+                        rateParameter.getDimension());
+        rateParameter.addBounds(bounds);
 
         this.rates = new TreeParameterModel(tree, rateParameter, false);
         this.rateParameter = rateParameter;
@@ -83,12 +85,15 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
         double rate = rates.getNodeValue(tree, node);
-        if (reciprocal) {
-            rate = 1.0 / rate;
-        }
+
         if (exp) {
             rate = Math.exp(rate);
         }
+
+        if (reciprocal) {
+            rate = 1.0 / rate;
+        }
+
         return rate;
     }
 

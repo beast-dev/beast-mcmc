@@ -114,6 +114,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skyride");
+
         this.popSizeParameter = popParameter;
         this.groupSizeParameter = groupParameter;
         this.precisionParameter = precParameter;

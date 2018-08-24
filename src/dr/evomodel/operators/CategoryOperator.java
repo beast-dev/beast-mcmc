@@ -26,6 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.alignment.Alignment;
+import dr.math.MathUtils;
 import dr.oldevomodel.sitemodel.CategorySampleModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -59,7 +60,7 @@ public class CategoryOperator extends SimpleMCMCOperator {
      */
     public final double doOperation() {
 
-        int randomSite = (int) (Math.random() * siteCount);
+        int randomSite = (int) (MathUtils.nextDouble() * siteCount);
 
         int currentCategory = (int) categoryParameter.getParameterValue(randomSite);
 
@@ -76,7 +77,7 @@ public class CategoryOperator extends SimpleMCMCOperator {
             }
         }
 
-        int newCategory = temp[(int) (Math.random() * temp.length)];
+        int newCategory = temp[(int) (MathUtils.nextDouble() * temp.length)];
 
         categoryParameter.setParameterValue(randomSite, newCategory);
         siteModel.addSitesInCategoryCount(newCategory);

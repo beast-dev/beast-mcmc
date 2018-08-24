@@ -53,7 +53,7 @@ public abstract class ModelOptions implements Serializable {
     public static final double demoWeights = 3.0;
 
     protected static final double branchWeights = 30.0;
-    protected static final double treeWeights = 15.0;
+    protected static final double treeWeights = 30.0;
     protected static final double rateWeights = 3.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
@@ -100,9 +100,14 @@ public abstract class ModelOptions implements Serializable {
     }
 
     public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
-                                                              PriorScaleType scaleType, double maintainedSum, boolean amtk) {
-        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR)
-                .isNonNegative(true).maintainedSum(maintainedSum)
+                                                              int dimension, double maintainedSum, boolean amtk) {
+        return createNonNegativeParameterDirichletPrior(name, description, options, dimension, maintainedSum, false, amtk);
+    }
+
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options,
+                                                              int dimension, double maintainedSum, boolean priorFixed, boolean amtk) {
+        return new Parameter.Builder(name, description).dimension(dimension).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).maintainedSum(maintainedSum).isPriorFixed(priorFixed)
                 .isAdaptiveMultivariateCompatible(amtk)
                 .partitionOptions(options).build(parameters);
     }
@@ -214,11 +219,11 @@ public abstract class ModelOptions implements Serializable {
                 .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
 
-    protected Parameter createStatistic(String name, String description) {
+    public Parameter createStatistic(String name, String description) {
         return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).build(parameters);
     }
 
-    protected Parameter createNonNegativeStatistic(String name, String description) {
+    public Parameter createNonNegativeStatistic(String name, String description) {
         return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).isNonNegative(true).build(parameters);
     }
     //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
@@ -236,26 +241,16 @@ public abstract class ModelOptions implements Serializable {
     }
 
     public Operator createScaleOperator(String parameterName, double tuning, double weight) {
-        Parameter parameter = getParameter(parameterName);
-        String description;
-        if (parameter.getDescription() == null) {
-            description = parameterName;
-        } else {
-            description = parameter.getDescription();
-        }
-        return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).
-                build(operators);
+        return createScaleOperator(parameterName, null, tuning, weight);
     }
 
     public Operator createScaleOperator(String parameterName, String description, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
+        if (description == null) {
+            description = (parameter.getDescription() == null ? parameterName : parameter.getDescription());
+        }
         return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
     }
-
-//    public void createScaleAllOperator(String parameterName, double tuning, double weight) { // tuning = 0.75
-//        Parameter parameter = getParameter(parameterName);
-//        new Operator.Builder(parameterName, parameterName, parameter, OperatorType.SCALE_ALL, tuning, weight).build(operators);
-//    }
 
     public Operator createOperator(String key, String name, String description, String parameterName, OperatorType type,
                                    double tuning, double weight) {
@@ -274,28 +269,17 @@ public abstract class ModelOptions implements Serializable {
     }
 
     public Operator createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
-                                         OperatorType type, boolean isPara1Up, double tuning, double weight) {
-        if (isPara1Up) {
-            return operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
-                    .parameter2(parameter2).build());
-        } else {
-            return operators.put(key, new Operator.Builder(name, description, parameter2, type, tuning, weight)
-                    .parameter2(parameter1).build());
-        }
+                                         OperatorType type, double tuning, double weight) {
+        return operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
+                .parameter2(parameter2).build());
     }
 
     public Operator createBitFlipInSubstitutionModelOperator(String key, String name, String description, Parameter parameter,
                                                              PartitionOptions options, double tuning, double weight) {
 //        Parameter parameter = getParameter(parameterName);
-        return operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFIP_IN_SUBST, tuning, weight)
+        return operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFLIP_IN_SUBST, tuning, weight)
                 .partitionOptions(options).build());
     }
-
-    public Operator createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
-        final Parameter parameter = new Parameter.Builder(paraName, description).build();
-        return operators.put(paraName, new Operator.Builder(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS,
-                tuning, weight).build());
-    }//TODO a switch like createUpDownOperator?
 
     public Operator createDuplicate(String name, String description, Parameter parameter, Operator source) {
         return new Operator.Builder(name, description, parameter, source.getOperatorType(), source.getTuning(), source.getWeight()).build(operators);
@@ -392,7 +376,9 @@ public abstract class ModelOptions implements Serializable {
         return operators;
     }
 
-    public String noDuplicatedPrefix(String a , String b) {
+    @Deprecated
+    public String noDuplicatedPrefix1(String a , String b) {
+        // @todo AR - this doesn't make sense.
         if (a.equals(b)) {
             return a;
         } else {

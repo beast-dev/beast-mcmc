@@ -48,14 +48,14 @@ import java.util.List;
  */
 public class GTR extends BaseSubstitutionModel implements Citable {
 
-    public static final String A_TO_C = "rateAC";
-    public static final String A_TO_G = "rateAG";
-    public static final String A_TO_T = "rateAT";
-    public static final String C_TO_G = "rateCG";
-    public static final String C_TO_T = "rateCT";
-    public static final String G_TO_T = "rateGT";
+    public static final String A_TO_C = "AC";
+    public static final String A_TO_G = "AG";
+    public static final String A_TO_T = "AT";
+    public static final String C_TO_G = "CG";
+    public static final String C_TO_T = "CT";
+    public static final String G_TO_T = "GT";
 
-    private Parameter rates = null;
+    private Parameter ratesParameter = null;
 
     private Variable<Double> rateACVariable = null;
     private Variable<Double> rateAGVariable = null;
@@ -72,8 +72,8 @@ public class GTR extends BaseSubstitutionModel implements Citable {
             Parameter rates,
             FrequencyModel freqModel) {
         super("GTR", Nucleotides.INSTANCE, freqModel);
-        this.rates = rates;
-        this.rates.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rates.getDimension()));
+        this.ratesParameter = rates;
+        this.ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rates.getDimension()));
         addVariable(rates);
     }
 
@@ -158,7 +158,7 @@ public class GTR extends BaseSubstitutionModel implements Citable {
     }
 
     protected void setupRelativeRates(double[] rates) {
-        if (rates != null) {
+        if (ratesParameter == null) {
             if (rateACVariable != null) {
                 rates[0] = rateACVariable.getValue(0);
             }
@@ -178,7 +178,7 @@ public class GTR extends BaseSubstitutionModel implements Citable {
                 rates[5] = rateGTVariable.getValue(0);
             }
         } else {
-            System.arraycopy(this.rates.getParameterValues(), 0, rates, 0, rates.length);
+            System.arraycopy(this.ratesParameter.getParameterValues(), 0, rates, 0, rates.length);
         }
     }
 

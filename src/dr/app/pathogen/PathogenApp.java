@@ -68,7 +68,7 @@ public class PathogenApp extends MultiDocApplication {
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                     "<p>Part of the BEAST package:<br>" +
-                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>";
+                    "<a href=\"http://beast.community\">http://beast.community</a></p>";
         }
 
     };

@@ -207,8 +207,8 @@ public class ARGLikelihood extends AbstractARGLikelihood {
         }
 
         if (model == treeModel) {
-            if (object instanceof ARGModel.TreeChangedEvent) {
-                ARGModel.TreeChangedEvent event = (ARGModel.TreeChangedEvent) object;
+            if (object instanceof ARGModel.ARGTreeChangedEvent) {
+                ARGModel.ARGTreeChangedEvent event = (ARGModel.ARGTreeChangedEvent) object;
                 if (event.isSizeChanged() ) {
                     updateAllNodes(); // TODO Update only affected portion of tree
                     reconstructTree = true;

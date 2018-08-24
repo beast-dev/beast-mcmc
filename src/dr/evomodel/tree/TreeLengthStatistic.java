@@ -35,7 +35,7 @@ import dr.inference.model.Statistic;
  * @author Alexei Drummond
  * @version $Id: RateStatistic.java,v 1.9 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TreeLengthStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TreeLengthStatistic extends TreeStatistic {
 
     public TreeLengthStatistic(String name, Tree tree) {
         super(name);

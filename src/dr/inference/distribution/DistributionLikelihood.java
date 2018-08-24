@@ -26,6 +26,7 @@
 package dr.inference.distribution;
 
 import dr.math.distributions.Distribution;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -101,17 +102,22 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     public double calculateLogLikelihood() {
 
         if (DEBUG) {
-            System.out.println("Calling DistributionLikelihood.calculateLogLikelihood()");
-            System.out.println(distribution.toString());
-            System.out.println(dataList.toString() + "\n");
+            System.err.println("Calling DistributionLikelihood.calculateLogLikelihood()");
+            System.err.println(distribution.toString());
+            System.err.println(dataList.toString() + "\n");
         }
 
         double logL = 0.0;
+        int count = 0;
 
         for( Attribute<double[]> data : dataList ) {
 
             // Using this in the loop is incredibly wasteful, especially in the loop condition to get the length
             final double[] attributeValue = data.getAttributeValue();
+
+            if (DEBUG) {
+                System.err.println("\t" + new Vector(attributeValue));
+            }
 
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 
@@ -125,15 +131,16 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
                     // at zero anyway.
                     return Double.NEGATIVE_INFINITY;
                 }
-                logL += getLogPDF(value);
+                logL += getLogPDF(value, count);
+                count += 1;
             }
 
         }
         return logL;
     }
 
-    protected double getLogPDF(double value){
-        return distribution.logPdf(value/scale)/scale;
+    protected double getLogPDF(double value, int i){
+        return distribution.logPdf(value/scale) - Math.log(scale);
     }
 
     @Override

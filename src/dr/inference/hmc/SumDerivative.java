@@ -97,6 +97,8 @@ public class SumDerivative implements GradientWrtParameterProvider {
         final double[] derivative = derivativeList.get(0).getGradientLogDensity();
 
         if (DEBUG) {
+            // stop timer
+
             String name = derivativeList.get(0).getLikelihood().getId();
             System.err.println(name);
             System.err.println(new Vector(derivative));
@@ -111,6 +113,8 @@ public class SumDerivative implements GradientWrtParameterProvider {
             final double[] temp = derivativeList.get(i).getGradientLogDensity();
 
             if (DEBUG) {
+                // stop timer
+                
                 String name = derivativeList.get(i).getLikelihood().getId();
                 System.err.println(name);
                 System.err.println(new Vector(temp));
@@ -122,11 +126,16 @@ public class SumDerivative implements GradientWrtParameterProvider {
         }
 
         if (DEBUG) {
-            System.exit(-1);
+            // print times
+
+            if (DEBUG_KILL) {
+                System.exit(-1);
+            }
         }
 
         return derivative;
     }
 
     private static final boolean DEBUG = false;
+    private static final boolean DEBUG_KILL = false;
 }

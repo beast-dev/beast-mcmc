@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.util.Keywordable;
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
 
@@ -38,7 +39,7 @@ import java.util.concurrent.*;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood, Reportable {
+public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
 
     public final static boolean UNROLL_COMPOUND = true;
 
@@ -386,13 +387,39 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         };
     }
 
-    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn {
+    @Override
+    public void addKeyword(String keyword) {
+        throw new UnsupportedOperationException("Can't add keywords here");
+    }
+
+    @Override
+    public List<String> getKeywords() {
+        List<String> keywords = new ArrayList<String>();
+        for (Likelihood likelihood : likelihoods) {
+            if (likelihood instanceof Keywordable) {
+                keywords.addAll(((Keywordable)likelihood).getKeywords());
+            }
+        }
+        return keywords;
+    }
+
+    private class LikelihoodColumn extends dr.inference.loggers.NumberColumn implements Keywordable {
         public LikelihoodColumn(String label) {
             super(label);
         }
 
         public double getDoubleValue() {
             return getLogLikelihood();
+        }
+
+        @Override
+        public void addKeyword(String keyword) {
+            throw new UnsupportedOperationException("Can't add keywords here");
+        }
+
+        @Override
+        public List<String> getKeywords() {
+            return CompoundLikelihood.this.getKeywords();
         }
     }
 

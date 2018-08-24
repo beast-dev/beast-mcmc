@@ -71,6 +71,11 @@ public class ShuffledSiteList extends ResamplePatterns implements SiteList
         return patterns.getSitePattern(siteIndices[siteIndex]);
     }
 
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        return patterns.getUncertainSitePattern(siteIndices[siteIndex]);
+	}
+
     public int getPatternIndex(int siteIndex) {
         return patterns.getPatternIndex(siteIndices[siteIndex]);
     }
@@ -79,5 +84,15 @@ public class ShuffledSiteList extends ResamplePatterns implements SiteList
         return patterns.getState(taxonIndex, siteIndices[siteIndex]);
     }
 
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        return patterns.getUncertainState(taxonIndex, siteIndices[siteIndex]);
+	}
+
     int siteIndices[] = null;
+
+    @Override
+    public boolean areUncertain() {
+        return false;
+    }
 }

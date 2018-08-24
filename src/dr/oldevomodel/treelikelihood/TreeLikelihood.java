@@ -35,6 +35,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
@@ -233,17 +234,17 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
+            if (object instanceof TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                if (((TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
 
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     updateAllNodes();
                 } else {

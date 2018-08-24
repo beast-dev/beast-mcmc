@@ -53,7 +53,7 @@ public class MicrosatelliteOptions extends ModelOptions {
             createOperator(partitionData.getName() + "." + "microsatInternalNodesParameter", partitionData.getName() + " microsat internal nodes",
                     "Random integer walk on microsatellite sampler tree internal node parameter",
                     partitionData.getName() + "." + MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL + ".internalNodesParameter",
-                    OperatorType.RANDOM_WALK_INT, 1.0, branchWeights);
+                    OperatorType.INTEGER_RANDOM_WALK, 1.0, branchWeights);
         }
     }
 

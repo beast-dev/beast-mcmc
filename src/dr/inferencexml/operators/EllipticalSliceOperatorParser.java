@@ -28,12 +28,14 @@ package dr.inferencexml.operators;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.EllipticalSliceOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.xml.*;
+import org.ejml.ops.CommonOps;
 
 /**
  */
@@ -55,13 +57,22 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         final Parameter variable = (Parameter) xo.getChild(Parameter.class);
-        boolean drawByRowTemp=false;
-        if(xo.hasAttribute(DRAW_BY_ROW))
-            drawByRowTemp=xo.getBooleanAttribute(DRAW_BY_ROW);
-        final boolean drawByRow=drawByRowTemp;
+        boolean drawByRowTemp = false;
+        if (xo.hasAttribute(DRAW_BY_ROW)) {
+            drawByRowTemp = xo.getBooleanAttribute(DRAW_BY_ROW);
+        }
+        final boolean drawByRow = drawByRowTemp;
 
         boolean signal = xo.getAttribute(SIGNAL_CONSTITUENT_PARAMETERS, true);
-        if (!signal && !(variable instanceof CompoundParameter)) signal = true;
+        if (!signal) {
+            Parameter possiblyCompound = variable;
+            if (variable instanceof MaskedParameter) {
+                possiblyCompound = ((MaskedParameter) variable).getUnmaskedParameter();
+            }
+            if (!(possiblyCompound instanceof CompoundParameter)) {
+                signal = true;
+            }
+        }
 
         double bracketAngle = xo.getAttribute(BRACKET_ANGLE, 0.0);
 
@@ -81,13 +92,14 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
             }
 
 
-            if(likelihood.getDistribution() instanceof MultivariateNormalDistribution)
+            if (likelihood.getDistribution() instanceof MultivariateNormalDistribution)
                 gaussianProcess = (MultivariateNormalDistribution) likelihood.getDistribution();
 
-            if(likelihood.getDistribution() instanceof MultivariateNormalDistributionModel)
+            if (likelihood.getDistribution() instanceof MultivariateNormalDistributionModel)
                 gaussianProcess = (MultivariateNormalDistributionModel) likelihood.getDistribution();
 
         }
+
         EllipticalSliceOperator operator = new EllipticalSliceOperator(variable, gaussianProcess,
                 drawByRow, signal, bracketAngle,
                 translationInvariant, rotationInvariant);

@@ -56,7 +56,12 @@ public interface XMLSyntaxRule {
 	 * Describes the rule in wiki.
 	 */
 	public String wikiRuleString(XMLDocumentationHandler handler, String prefix);
-	
+
+	/**
+	 * Describes the rule in markdown.
+	 */
+	public String markdownRuleString(XMLDocumentationHandler handler, String prefix);
+
 	/**
 	 * Describes the rule as pertains to the given object.
 	 * In particular if object does not satisfy the rule then how.

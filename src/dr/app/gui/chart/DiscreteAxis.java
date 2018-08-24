@@ -25,18 +25,30 @@
 
 package dr.app.gui.chart;
 
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DiscreteAxis extends Axis.AbstractAxis {
 
-	private boolean originBetweenCategories;
-	private boolean showEveryCategory;
+	private final boolean originBetweenCategories;
+	private final boolean showEveryCategory;
+	private final Map<Integer, String> categoryLabelMap;
 
 	public DiscreteAxis(boolean originBetweenCategories, boolean showEveryCategory) {
+		this(null,originBetweenCategories, showEveryCategory);
+	}
+
+	public DiscreteAxis(Map<Integer, String> categoryLabelMap, boolean originBetweenCategories, boolean showEveryCategory) {
 		super(AT_MAJOR_TICK, AT_MAJOR_TICK, true);
 
 		this.originBetweenCategories = originBetweenCategories;
 		this.showEveryCategory = showEveryCategory;
+
+		this.categoryLabelMap = categoryLabelMap;
+
+		prefMajorTickCount = 20;
 	}
 
 	/**
@@ -53,6 +65,18 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 		return value;	// a linear transform !
 	}
 
+	@Override
+	public String format(double value) {
+		if (categoryLabelMap != null) {
+			String label = categoryLabelMap.get((int)value);
+			if (label == null) {
+				return "Missing";
+			}
+			return label;
+		}
+		return super.format(value);
+	}
+
 	public void calibrate() {
 		majorTick=1;
 		minorTick=1;
@@ -65,19 +89,19 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 		if (!showEveryCategory) {
 			while (majorTickCount > prefMajorTickCount) {
 				majorTickCount=(int)((maxTick-minTick)/(majorTick*2))+1;
-				if (majorTickCount > prefMajorTickCount) {
+				if (majorTickCount <= prefMajorTickCount) {
 					majorTick*=2;
-					break;
+                    break;
 				}
 				majorTickCount=(int)((maxTick-minTick)/(majorTick*4))+1;
-				if (majorTickCount > prefMajorTickCount) {
+				if (majorTickCount <= prefMajorTickCount) {
 					majorTick*=4;
-					break;
+                    break;
 				}
 				majorTickCount=(int)((maxTick-minTick)/(majorTick*5))+1;
-				if (majorTickCount > prefMajorTickCount) {
+				if (majorTickCount <= prefMajorTickCount) {
 					majorTick*=5;
-					break;
+                    break;
 				}
 
 				majorTick*=10;
@@ -90,7 +114,7 @@ public class DiscreteAxis extends Axis.AbstractAxis {
 		minAxis=minTick;
 		maxAxis=maxTick;
 
-		handleAxisFlags();
+		// handleAxisFlags();
 
 		if (originBetweenCategories) {
 			minAxis-=0.5;

@@ -208,7 +208,7 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-//    Minin VN, Suchard MA (2008) . Philos Trans R Soc Lond B Biol Sci 363(1512):3985–3995.
+//    Minin VN, Suchard MA (2008) . Philos Trans R Soc Lond B Biol Sci 363(1512):3985-3995.
 
 //    public static Citation LEMEY_2012 = new Citation(
 //            new Author[]{

@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -73,7 +73,7 @@ public class DiffusionRateCovarianceStatistic extends Statistic.Abstract {
         String traitName = traitLikelihoods.get(0).getTraitName();
 
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
-            MultivariateTraitTree tree = traitLikelihood.getTreeModel();
+            MutableTreeModel tree = traitLikelihood.getTreeModel();
 
             int counter = 0;
             int index = 0;
@@ -192,7 +192,7 @@ public class DiffusionRateCovarianceStatistic extends Statistic.Abstract {
                 AttributeRule.newStringRule(NAME, true),
                 AttributeRule.newBooleanRule(BOOLEAN_DIS_OPTION, true),
                 AttributeRule.newBooleanRule(BOOLEAN_DC_OPTION, true),
-                new ElementRule(MultivariateTraitTree.class),
+                new ElementRule(MutableTreeModel.class),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
         };
     };

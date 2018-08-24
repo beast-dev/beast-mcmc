@@ -25,6 +25,8 @@
 
 package dr.app.beauti.generator;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
@@ -49,6 +51,8 @@ import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.List;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -56,8 +60,91 @@ import dr.xml.XMLParser;
  */
 public class TreeLikelihoodGenerator extends Generator {
 
+    private static final boolean GENERATE_TREE_LIKELIHOOD = false;
+
     public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+    }
+
+    public void writeAllTreeLikelihoods(XMLWriter writer) throws GeneratorException {
+        for (List<PartitionData> partitions : options.multiPartitionLists)  {
+            writeTreeDataLikelihood(partitions, writer);
+            writer.writeText("");
+        }
+
+        for (AbstractPartitionData partition : options.otherPartitions) {
+            // generate tree likelihoods for the other data partitions
+            if (partition.getTaxonList() != null) {
+                if (partition instanceof PartitionData) {
+                    writeTreeLikelihood((PartitionData) partition, writer);
+                    writer.writeText("");
+                } else if (partition instanceof PartitionPattern) { // microsat
+                    writeTreeLikelihood((PartitionPattern) partition, writer);
+                    writer.writeText("");
+                } else {
+                    throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
+                }
+            }
+        }
+    }
+
+    public void writeTreeDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
+
+        PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+        PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
+
+        String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
+        String idString = prefix + "treeLikelihood";
+
+        Attribute[] attributes = new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, idString),
+                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+        };
+
+        writer.writeComment("Likelihood for tree given sequence data");
+        writer.writeOpenTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, attributes);
+
+        for (PartitionData partition : partitions) {
+            substModel = partition.getPartitionSubstitutionModel();
+            PartitionClockModel cm = partition.getPartitionClockModel();
+            if (clockModel == null) {
+                clockModel = cm;
+            } else if (clockModel != cm) {
+                throw new RuntimeException("All the partitions in a TreeDataLikelihood should share the same clock model.");
+            }
+
+            if (substModel.getCodonHeteroPattern() != null) {
+
+                for (int num = 1; num <= substModel.getCodonPartitionCount(); num++) {
+                    String prefix1 = partition.getPrefix() + substModel.getPrefixCodon(num);
+
+                    writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
+                    writeCodonPatternsRef(prefix1, num, substModel.getCodonPartitionCount(), writer);
+
+                    writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
+
+                    writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
+                }
+
+
+            } else {
+                String prefix1 = partition.getPrefix();
+                writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
+                writer.writeIDref(SitePatternsParser.PATTERNS, prefix1 + SitePatternsParser.PATTERNS);
+                writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+                writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
+            }
+
+
+        }
+
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+
+
+        writer.writeCloseTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
+
     }
 
     /**
@@ -138,6 +225,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1),
                     new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
                     new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.SAVE_HISTORY, saveCompleteHistory ? "true" : "false"),
+                    new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.LOG_HISTORY, saveCompleteHistory ? "true" : "false"),
             };
         } else if (tag.equals(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD)) {
             attributes = new Attribute[]{
@@ -180,11 +268,35 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeCloseTag(tag);
     }
 
+    /**
+     * Write a list of idrefs to all treelikelihoods
+     * @param writer
+     */
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
-        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
-                .getComponentOptions(AncestralStatesComponentOptions.class);
+        for (List<PartitionData> partitions : options.multiPartitionLists)  {
+            // TreeDataLikelihoods are labelled by their tree and clock models
+            PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+            PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-        for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+            String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
+            String idString = prefix + "treeLikelihood";
+
+            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, idString);
+        }
+
+        for (AbstractPartitionData partition : options.otherPartitions) {
+            // generate tree likelihoods for the other data partitions
+
+            // TreeLikelihood are labelled by their partition
+            AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                    .getComponentOptions(AncestralStatesComponentOptions.class);
+
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+
+            if (model.isDolloModel()) {
+                return; // DolloComponent will add tree likelihood
+            }
+
             String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
             if (ancestralStatesOptions.usingAncestralStates(partition)) {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
@@ -197,23 +309,33 @@ public class TreeLikelihoodGenerator extends Generator {
                 }
             }
 
-            if (partition.getTaxonList() != null) {
-                if (partition instanceof PartitionData && partition.getTraits() == null) {
-                    // is an alignment data partition
-                    PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-                    if (substModel.getDataType().getType() == DataType.NUCLEOTIDES && substModel.getCodonHeteroPattern() != null) {
-                        for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefixCodon(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
-                        }
-                    } else {
-                        writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
-                    }
-                } else if (partition instanceof PartitionPattern) { // microsat
-                    writer.writeIDref(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD,
-                            partition.getPrefix() + MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD);
+            if (model.getDataType().getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
+
+                for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+                    writeTreeLikelihoodRef(treeLikelihoodTag, TreeLikelihoodParser.TREE_LIKELIHOOD, i, partition, writer);
                 }
+
+
+            } else {
+                writeTreeLikelihoodRef(treeLikelihoodTag, TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
             }
         }
+    }
+
+    private void writeTreeLikelihoodRef(String tag, String id, int num, AbstractPartitionData partition, XMLWriter writer) {
+
+        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+
+        String prefix;
+        if (num > 0) {
+            prefix = partition.getPrefix() + substModel.getPrefixCodon(num);
+        } else {
+            prefix = partition.getPrefix();
+        }
+
+        String idString = prefix + id;
+
+        writer.writeIDref(tag, idString);
     }
 
     /**
@@ -263,6 +385,33 @@ public class TreeLikelihoodGenerator extends Generator {
         } else {
             writer.writeIDref(AsymmetricQuadraticModel.ASYMQUAD_MODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL);
         }
+    }
+
+    /**
+     * Is the data partition suitable for using the MultipartitionTreeDataLikelihoodDelegate.
+     *
+     * @param partition the partition  to write likelihood block for
+     */
+    public boolean canUseMultiPartition(AbstractPartitionData partition) {
+
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+
+        PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+
+        if (model.isDolloModel()) {
+            return false;
+        }
+
+        if (ancestralStatesOptions.usingAncestralStates(partition)) {
+            return false;
+        }
+
+        if (model.getDataType().getType() != DataType.NUCLEOTIDES && model.getDataType().getType() != DataType.AMINO_ACIDS) {
+            return false;
+        }
+
+        return true;
     }
 
 }

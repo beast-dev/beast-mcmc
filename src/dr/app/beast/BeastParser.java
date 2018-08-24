@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import dr.util.Citation;
 import dr.util.Pair;
+import dr.util.Version;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -53,8 +54,8 @@ public class BeastParser extends XMLParser {
     public static final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
     public String parsers;
 
-    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML) {
-        super(parserWarnings, strictXML);
+    public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML, Version version) {
+        super(verbose, parserWarnings, strictXML, version);
 
         addCitable(BeastVersion.INSTANCE);
 
@@ -81,7 +82,7 @@ public class BeastParser extends XMLParser {
             if (System.getProperty("parsers") != null) {
                 // If a system property has been set then allow this to override the default
                 // e.g. -Dparsers=development
-                parsers = properties.getProperty("parsers");
+                parsers = System.getProperty("parsers");
             }
 
             if (parsers.equalsIgnoreCase(DEV)) {

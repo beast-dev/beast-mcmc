@@ -86,7 +86,13 @@ public class BitMoveOperator extends SimpleMCMCOperator {
                 }
 
             }
-        } else throw new RuntimeException("Not enough bits to move!");
+        } else {
+            // might be better to return negative infinity and reject the move - there is likely
+            // to be a bit flip operator on which will sort the problem out.
+            //throw new RuntimeException("Not enough bits to move!");
+
+            return Double.NEGATIVE_INFINITY;
+        }
 
         return 0.0;
     }

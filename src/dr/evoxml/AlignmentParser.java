@@ -30,6 +30,7 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.sequence.UncertainSequence;
 import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 
@@ -63,7 +64,9 @@ public class AlignmentParser extends AbstractXMLObjectParser {
         for (int i = 0; i < xo.getChildCount(); i++) {
 
             final Object child = xo.getChild(i);
-            if (child instanceof Sequence) {
+            if (child instanceof UncertainSequence) {
+                alignment.addSequence((UncertainSequence) child);
+            } else if (child instanceof Sequence) {
                 alignment.addSequence((Sequence) child);
             } else if (child instanceof DataType) {
                 // already dealt with

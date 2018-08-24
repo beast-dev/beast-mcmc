@@ -39,6 +39,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     public static final String FAST_MATRIX_PARAMETER = "fastMatrixParameter";
     public static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
     public static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
+    public static final String STARTING_VALUE = "startingValue";
 
     public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
         super(id);
@@ -76,17 +77,17 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         @Override
         protected void storeValues() {
-            throw new RuntimeException("Do not call");
+            // Do nothing; storeValues() on whole matrix should have been called.
         }
 
         @Override
         protected void restoreValues() {
-            throw new RuntimeException("Do not call");
+            // Do nothing; restoreValues() on whole matrix should have been called.
         }
 
         @Override
         protected void acceptValues() {
-            throw new RuntimeException("Do not call");
+            // Do nothing; acceptValues() on whole matrix should have been called.
         }
 
         @Override
@@ -102,6 +103,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         @Override
         public void setParameterValue(int dim, double value) {
             matrix.setParameterValue(dim, column, value);
+            super.fireParameterChangedEvent(dim, Parameter.ChangeType.VALUE_CHANGED);
         }
 
         @Override
@@ -131,7 +133,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         @Override
         public void fireParameterChangedEvent(int index, ChangeType type){
-            matrix.fireParameterChangedEvent(index, type);
+            matrix.fireParameterChangedEvent(index + column * getDimension(), type);
+            super.fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
 
         @Override
@@ -277,10 +280,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final String name = xo.hasId() ? xo.getId() : null;
+            final double startingValue = xo.hasAttribute(STARTING_VALUE) ? xo.getDoubleAttribute(STARTING_VALUE) : 1;
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
 
-            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, 1);
+            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, startingValue);
 
             return matrixParameter;
         }
@@ -301,6 +305,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
                 AttributeRule.newIntegerRule(ROW_DIMENSION, false),
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, false),
+                AttributeRule.newDoubleRule(STARTING_VALUE, true),
         };
 
         public Class getReturnType() {

@@ -35,18 +35,24 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
+import dr.math.matrixAlgebra.Matrix;
+
 
 import java.util.logging.Logger;
 
@@ -72,17 +78,27 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     protected double rootPriorSampleSize;
 
     private final MatrixParameter precisionParam;
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private final int dim;
 
     public double[][] postMeans;
     public double[][] preMeans;
     public double[] preP;
     public double[] postP;
+    private Parameter mask;
+    private boolean hasMask=false;
+    //private int estourou=0;
+    //private double ultimoAccept=0;
+    private   int numFixed = 0;
+    private int numUpdate = 0;
+    private int[] doUpdate;
+    private int[] dontUpdate;
+
+
 
     public LatentLiabilityGibbs(
             FullyConjugateMultivariateTraitLikelihood traitModel,
-            LatentTruncation LatentLiability, CompoundParameter tipTraitParameter,
+            LatentTruncation LatentLiability, CompoundParameter tipTraitParameter,  Parameter mask,
             double weight) {
         super();
 
@@ -94,6 +110,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         this.traitModel = traitModel;
         this.tipTraitParameter = tipTraitParameter;
 
+
         this.rootPriorMean = traitModel.getPriorMean();
         this.rootPriorSampleSize = traitModel.getPriorSampleSize();
 
@@ -101,12 +118,36 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         this.treeModel = traitModel.getTreeModel();
         dim = precisionParam.getRowDimension(); // assumed to be square
 
+        this.mask=mask;
+        if(mask!=null) {
+            hasMask=true;
+          //  printInformation(mask);
+        }
+
 
         postMeans = new double[treeModel.getNodeCount()][dim];
         preMeans = new double[treeModel.getNodeCount()][dim];
         preP = new double[treeModel.getNodeCount()];
         postP = new double[treeModel.getNodeCount()];
 
+
+
+
+        dontUpdate=new int[dim];
+        doUpdate=new int[dim];
+
+        if (hasMask) {
+             for (int i = 0; i < dim; i++) {
+                if (mask.getParameterValue(i) == 0.0) {
+                    dontUpdate[numFixed] = i;
+                    numFixed++;
+                } else {
+                    doUpdate[numUpdate] = i;
+                    numUpdate++;
+                }
+
+            }
+        }
 
         setWeight(weight);
     }
@@ -127,6 +168,8 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
 
+
+
     private void printInformation(double[] par) {
         StringBuffer sb = new StringBuffer("\n \n double vector \n");
         for (int j = 0; j < treeModel.getNodeCount(); j++) {
@@ -134,6 +177,9 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         }
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
+
+
+
 
 
     private void printInformation(double[][] par) {
@@ -158,7 +204,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
 
 
     private void printInformation(double par, String lala) {
-        StringBuffer sb = new StringBuffer("\n \n double \n");
+        StringBuffer sb = new StringBuffer("\n");
 
         sb.append(lala);
         sb.append("\t\t");
@@ -462,10 +508,11 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
 
+
     public double sampleNode2(NodeRef node) {
 
         final int thisNumber = node.getNumber();
-//        double[] traitValue = getNodeTrait(node);
+
 
 
 //        double[] mean = new double[dim];
@@ -489,48 +536,170 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         double[][] thisP=traitModel.getConditionalPrecision(thisNumber);
 
 
-
- 	/*	  Sample it all traits together as one multivariate normal
- 	 */
-        MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(mean, thisP);
-
-
         double[] oldValue = getNodeTrait(node);
-
         double[] value = oldValue;
 
         int attempt = 0;
         boolean validTip = false;
 
-        while (!validTip & attempt < 10000) {
+        if(hasMask) {
 
-            value = distribution.nextMultivariateNormal();
+            double[] oldCompVal =new double[numUpdate];
+            double[] newValue =new double[numUpdate];
+            double[][] condP=new double[numUpdate][numUpdate];
 
-            setNodeTrait(node, value);
-
-            if (latentLiability.validTraitForTip(thisNumber)) {
-                validTip = true;
+            for (int i=0; i<numUpdate;i++){
+                oldCompVal[i]=  value[doUpdate[i]];
+                for (int j=0;j<numUpdate;j++){
+                    condP[i][j]= thisP[doUpdate[i]][doUpdate[j]];
+                }
             }
-            attempt++;
-        }           // TODO Failure rate should be stored somewhere and polled later for diagnostics
-        //  printInformation((double)attempt);
 
 
-        double pOld = distribution.logPdf(oldValue);
-
-        double pNew = distribution.logPdf(value);
 
 
-        double logq = pOld - pNew;
+
+            double[] condMean = getComponentConditionalMean(thisP, oldValue, mean, condP);
 
 
-        traitModel.getTraitParameter().getParameter(thisNumber).fireParameterChangedEvent();
+
+            // Start sampling
 
 
-        return logq;
+            MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(condMean, condP);
+
+
+
+
+            //estourou++;
+            while (!validTip & attempt < 10000) {
+               newValue = distribution.nextMultivariateNormal();
+
+                 for(int i=0; i<numUpdate; i++){
+                   value[doUpdate[i]]=newValue[i];
+                 }
+
+                setNodeTrait(node, value);
+
+                if (latentLiability.validTraitForTip(thisNumber)) {
+                    validTip = true;
+               // estourou--;
+                }
+                attempt++;
+            }           // TODO Failure rate should be stored somewhere and polled later for diagnostics
+
+      /*      if (Math.floorMod(getCount(),10000)==1) {
+              printInformation(estourou/10000.0 , "Could not sample truncated normal");
+              estourou=0;
+              printInformation(((double)getAcceptCount()-ultimoAccept)/10000.0, "Accept probability");
+              ultimoAccept=(double)getAcceptCount();
+
+          }
+
+        */
+
+
+            double pOld = distribution.logPdf(oldCompVal);
+
+            double pNew = distribution.logPdf(newValue);
+
+            double logq= pOld -pNew;
+
+
+            traitModel.getTraitParameter().getParameter(thisNumber).fireParameterChangedEvent();
+
+
+
+
+            return logq;
+
+              }else {
+
+
+            //	  Sample it all traits together as one multivariate normal
+
+           MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(mean, thisP);
+
+
+            while (!validTip & attempt < 10000) {
+
+                value = distribution.nextMultivariateNormal();
+
+                setNodeTrait(node, value);
+
+                if (latentLiability.validTraitForTip(thisNumber)) {
+                    validTip = true;
+                }
+                attempt++;
+            }
+
+
+            double pOld = distribution.logPdf(oldValue);
+
+            double pNew = distribution.logPdf(value);
+
+
+            double logq = pOld - pNew;
+
+
+            traitModel.getTraitParameter().getParameter(thisNumber).fireParameterChangedEvent();
+
+
+            return logq;
+
+        }
+
+
+
 
 
     }
+
+
+   private double[] getComponentConditionalMean(double[][] thisP, double[] oldValue, double[] mean, double[][] condP){
+
+       double[] condMean =new double[numUpdate];
+
+       double[][]  H =new   double[numUpdate][numFixed];
+       Matrix  prod  =new Matrix(numUpdate,numFixed);
+       Vector dif =new Vector(numUpdate);
+       double[] contMeans = new double[numFixed] ;
+
+
+       for (int i=0; i<numUpdate;i++){
+           for (int j=0;j<numFixed;j++){
+               H[i][j]= thisP[doUpdate[i]][dontUpdate[j]];
+           }
+       }
+
+       for (int i=0; i<numFixed;i++){
+           contMeans[i]= oldValue[dontUpdate[i]]-mean[dontUpdate[i]];
+       }
+
+
+       Matrix invK= new SymmetricMatrix(condP).inverse() ;
+       Matrix HH= new Matrix(H);
+
+       try {
+           prod = invK.product(HH);
+           dif= prod.product(new Vector(contMeans)) ;
+
+       } catch (IllegalDimension illegalDimension) {
+           illegalDimension.printStackTrace();
+       }
+
+       for(int i=0; i<numUpdate;i++){
+           condMean[i]= mean[doUpdate[i]] - dif.component(i);
+
+       }
+
+
+       return condMean;
+   }
+
+
+
+
 
 
     private double getConditionalMean(int entry, double[][] thisP, double[] traitValue, double[] mean) {
@@ -556,6 +725,9 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
+        public final static String MASK = "mask";
+
+
         public String getParserName() {
             return LATENT_LIABILITY_GIBBS_OPERATOR;
         }
@@ -564,7 +736,7 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-            if (xo.getChildCount() != 3) {
+            if (xo.getChildCount() < 3) {
                 throw new XMLParseException(
                         "Element with id = '" + xo.getName() + "' should contain:\n" +
                                 "\t 1 conjugate multivariateTraitLikelihood, 1 latentLiabilityLikelihood and one parameter \n"
@@ -579,7 +751,21 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
 
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
 
-            return new LatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, weight);
+
+                Parameter mask =null;
+
+
+
+            if (xo.hasChildNamed(MASK)) {
+                mask = (Parameter) xo.getElementFirstChild(MASK);
+            }
+
+
+
+
+
+
+            return new LatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight);
         }
 
         //************************************************************************
@@ -602,8 +788,10 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(FullyConjugateMultivariateTraitLikelihood.class, "The model for the latent random variables"),
                 new ElementRule(LatentTruncation.class, "The model that links latent and observed variables"),
+                new ElementRule(MASK, dr.inference.model.Parameter.class, "Mask: 1 for latent variables that should be sampled",true),
 //	                new ElementRule(MultinomialLatentLiabilityLikelihood.class, "The model that links latent and observed variables"),
                 new ElementRule(CompoundParameter.class, "The parameter of tip locations from the tree")
+
 
         };
     };

@@ -30,6 +30,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.Version;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,14 +53,14 @@ public class BeastVersion implements Version, Citable {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.9.0pre20170207";
+    private static final String VERSION = "1.10.1";
 
-    private static final String DATE_STRING = "2002-2017";
+    private static final String DATE_STRING = "2002-2018";
 
-    private static final boolean IS_PRERELEASE = true;
+    private static final boolean IS_PRERELEASE = false;
 
     // this is now being manually updated since the move to GitHub. 7 digits of GitHub hash.
-    private static final String REVISION = "20fe946";
+    private static final String REVISION = "831dbf4";
 
     public String getVersion() {
         return VERSION;
@@ -92,7 +93,7 @@ public class BeastVersion implements Version, Citable {
                 "",
                 "Downloads, Help & Resources:",
 
-                "\thttp://beast.bio.ed.ac.uk",
+                "\thttp://beast.community",
                 "",
                 "Source code distributed under the GNU Lesser General Public License:",
                 "\thttp://github.com/beast-dev/beast-mcmc",
@@ -117,7 +118,7 @@ public class BeastVersion implements Version, Citable {
                         "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
                         "<p>David Geffen School of Medicine, University of California, Los Angeles<br>" +
                         "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
-                        "<p><a href=\"http://beast.bio.ed.ac.uk\">http://beast.bio.ed.ac.uk</a></p>" +
+                        "<p><a href=\"http://beast.community\">http://beast.community</a></p>" +
                         "<p>Source code distributed under the GNU LGPL:<br>" +
                         "<a href=\"http://github.com/beast-dev/beast-mcmc\">http://github.com/beast-dev/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +
@@ -144,20 +145,36 @@ public class BeastVersion implements Version, Citable {
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
+        return Arrays.asList(CITATIONS);
     }
 
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("AJ", "Drummond"),
-                    new Author("MA", "Suchard"),
-                    new Author("Dong", "Xie"),
-                    new Author("A", "Rambaut")
-            },
-            "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
-            2012,
-            "Mol Biol Evol",
-            29, 1969, 1973,
-            "10.1093/molbev/mss075");
+    public static Citation[] CITATIONS = new Citation[] {
+            new Citation(
+                    new Author[]{
+                            new Author("MA", "Suchard"),
+                            new Author("P", "Lemey"),
+                            new Author("G", "Baele"),
+                            new Author("DL", "Ayres"),
+                            new Author("AJ", "Drummond"),
+                            new Author("A", "Rambaut")
+                    },
+                    "Bayesian phylogenetic and phylodynamic data integration using BEAST 1.10",
+                    2018,
+                    "Virus Evolution",
+                    4, "vey016",
+                    "10.1093/ve/vey016"),
+//            new Citation(
+//                    new Author[]{
+//                            new Author("AJ", "Drummond"),
+//                            new Author("MA", "Suchard"),
+//                            new Author("Dong", "Xie"),
+//                            new Author("A", "Rambaut")
+//                    },
+//                    "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
+//                    2012,
+//                    "Mol Biol Evol",
+//                    29, 1969, 1973,
+//                    "10.1093/molbev/mss075")
+    };
 
 }

@@ -33,14 +33,14 @@ import dr.math.distributions.GammaDistribution;
 /**
  * Created by max on 6/12/14.
  */
-public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator {
     //    private double[] FacXLoad;
 //    private double[] residual;
     private LatentFactorModel LFM;
     private GammaDistribution prior;
     private boolean randomScan;
     private double shape;
-    double pathWeight=1.0;
+    double pathWeight = 1.0;
     final Parameter missingIndicator;
 
     public LatentFactorModelPrecisionGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan) {
@@ -55,7 +55,7 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 //        setShape();
     }
 
-    private double getShape(int i){
+    private double getShape(int i) {
         return this.prior.getShape() + LFM.getRowCount(i) * .5 * pathWeight;
     }
 
@@ -86,14 +86,8 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
         precision.setParameterValueQuietly(i, nextPrecision);
     }
 
-    public void setPathParameter(double beta)
-    {
-        pathWeight=beta;
-    }
-
-    @Override
-    public int getStepCount() {
-        return 0;
+    public void setPathParameter(double beta) {
+        pathWeight = beta;
     }
 
     @Override

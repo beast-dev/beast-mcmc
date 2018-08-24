@@ -37,7 +37,7 @@ import dr.inference.model.Statistic;
  * @author Alexei Drummond
  * @version $Id: TreeShapeStatistic.java,v 1.4 2005/07/11 14:06:25 rambaut Exp $
  */
-public class TreeShapeStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TreeShapeStatistic extends TreeStatistic {
 
     public TreeShapeStatistic(String name, TreeModel target) {
         super(name);

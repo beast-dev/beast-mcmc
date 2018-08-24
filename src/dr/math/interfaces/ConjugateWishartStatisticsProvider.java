@@ -39,5 +39,5 @@ public interface ConjugateWishartStatisticsProvider {
     
     WishartSufficientStatistics getWishartStatistics();
 
-    MatrixParameterInterface getPrecisionParamter();
+    MatrixParameterInterface getPrecisionParameter();
 }

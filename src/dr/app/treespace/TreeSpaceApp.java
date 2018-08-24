@@ -104,8 +104,8 @@ public class TreeSpaceApp extends MultiDocApplication {
                     "<p>by Andrew Rambaut</p></div>" +
                     "</div></html>";
 
-            String websiteURLString = "http://beast.bio.ed.ac.uk/";
-            String helpURLString = "http://beast.bio.ed.ac.uk/phylogeography/";
+            String websiteURLString = "http://beast.community";
+            String helpURLString = "http://beast.community/phylogeography";
 
             TreeSpaceApp app = new TreeSpaceApp(nameString, aboutString, icon,
                     websiteURLString, helpURLString);

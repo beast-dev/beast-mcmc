@@ -28,6 +28,9 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     public void setRowDimension(int rowDimension){
         int oldRowDimension = this.rowDimension;
         this.rowDimension = rowDimension;
+        if(rowDimension > maxRow){
+            throw new RuntimeException("Row Dimension Larger Than Maximum");
+        }
         if(rowDimension > oldRowDimension)
             fireParameterChangedEvent(-1, ChangeType.ADDED);
         else
@@ -36,6 +39,9 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
 
     public void setColumnDimension(int columnDimension){
         int oldColumnDimension = this.columnDimension;
+        if(columnDimension > maxCol){
+            throw new RuntimeException("Column Dimension Larger Than Maximum");
+        }
         this.columnDimension = columnDimension;
         if(columnDimension > oldColumnDimension)
             fireParameterChangedEvent(-1, ChangeType.ADDED);
@@ -79,7 +85,7 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
 
         if (row >= col || !lowerTriangle){
             super.setParameterValueQuietly(row, col, value);
-            fireParameterChangedEvent(index, null);
+            fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
     }
 

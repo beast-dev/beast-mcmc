@@ -44,7 +44,13 @@ public interface SiteList extends PatternList {
 	 */
 	int[] getSitePattern(int siteIndex);
 
-	/** 
+	/**
+	 * Gets the pattern of site as an array of state frequency vectors (one per sequence)
+	 * @return the site pattern at siteIndex
+	 */
+	double[][] getUncertainSitePattern(int siteIndex);
+
+	/**
 	 * Gets the pattern index at a particular site
 	 * @return the patternIndex
 	 */
@@ -54,4 +60,9 @@ public interface SiteList extends PatternList {
 	 * @return the sequence state at (taxon, site) 
 	 */
 	int getState(int taxonIndex, int siteIndex);
+
+	/**
+	 * @return the sequence state frequency vector at (taxon, site)
+	 */
+	double[] getUncertainState(int taxonIndex, int siteIndex);
 }

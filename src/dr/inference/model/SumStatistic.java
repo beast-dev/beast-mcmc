@@ -25,84 +25,29 @@
 
 package dr.inference.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: SumStatistic.java,v 1.2 2005/05/24 20:26:00 rambaut Exp $
  */
-public class SumStatistic extends Statistic.Abstract {
+public class SumStatistic  extends AbstractAlgebraStatistic {
 
-    private int dimension = 0;
-    private final boolean elementwise;
-    private final boolean absolute;
+    private boolean absolute;
 
-    public SumStatistic(String name, boolean elementwise, boolean absolute) {
-        super(name);
-        this.elementwise = elementwise;
+    public SumStatistic(String name, boolean elementwise, double[] constants, boolean absolute) {
+        super(name, elementwise, constants);
         this.absolute = absolute;
     }
 
-    public SumStatistic(String name, boolean elementwise) {
-        this(name, elementwise, false);
+    public SumStatistic(String name, boolean elementwise, double[] constants){
+        this(name, elementwise, constants, false);
     }
 
-    public void addStatistic(Statistic statistic) {
-        if (!elementwise) {
-            if (dimension == 0) {
-                dimension = statistic.getDimension();
-            } else if (dimension != statistic.getDimension()) {
-                throw new IllegalArgumentException();
-            }
-        } else {
-            dimension = 1;
+    @Override
+    protected double doOperation(double a, double b) {
+        if(!absolute) {
+            return a + b;
+        }else{
+            return Math.abs(a) + Math.abs(b);
         }
-        statistics.add(statistic);
     }
-
-    public int getDimension() {
-        return elementwise ? 1 : dimension;
-    }
-
-    /**
-     * @return mean of contained statistics
-     */
-    public double getStatisticValue(int dim) {
-
-        double sum = 0.0;
-
-        if (elementwise) {
-            assert dim == 0;
-        }
-
-        for (Statistic statistic : statistics) {
-            if (elementwise) {
-                if (absolute) {
-                    //  System.err.println("statistic.getDimension(): " + statistic.getDimension());
-                    for (int j = 0; j < statistic.getDimension(); j++) {
-                        sum += Math.abs(statistic.getStatisticValue(j));
-                    }
-                } else {
-                    for (int j = 0; j < statistic.getDimension(); j++) {
-                        sum += statistic.getStatisticValue(j);
-                        //    if(statistic.getStatisticValue(j)<0) {
-                        //      System.err.println("statisticValue: " + statistic.getStatisticValue(j));
-                        //  }
-                    }
-                }
-            } else {
-                sum += statistic.getStatisticValue(dim);
-            }
-        }
-
-        return sum;
-    }
-
-    // ****************************************************************
-    // Private and protected stuff
-    // ****************************************************************
-
-    private final List<Statistic> statistics = new ArrayList<Statistic>();
 }

@@ -68,6 +68,7 @@ public class Main {
 			}
 		} catch (Exception e) {
 			Log.getConsoleLog().append(e.getMessage());
+			System.exit(1);
 		} 
 	}
 

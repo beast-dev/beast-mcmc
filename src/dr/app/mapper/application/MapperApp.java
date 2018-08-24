@@ -73,7 +73,7 @@ public class MapperApp extends MultiDocApplication {
                     "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
 
                     "<p>Part of the BEAST package:<br>" +
-                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>";
+                    "<a href=\"http://beast.community\">http://beast.community</a></p>";
         }
 
     };

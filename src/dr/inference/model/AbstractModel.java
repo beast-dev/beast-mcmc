@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import dr.inference.parallel.MPISerializable;
+import dr.util.Keywordable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -39,7 +40,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id: AbstractModel.java,v 1.13 2006/08/17 15:30:08 rambaut Exp $
  */
-public abstract class AbstractModel implements Model, ModelListener, VariableListener, StatisticList, MPISerializable {
+public abstract class AbstractModel implements Model, ModelListener, VariableListener, StatisticList, MPISerializable, Keywordable {
 
     /**
      * @param name Model Name
@@ -126,6 +127,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         return listenerHelper.getListenerCount() > 0;
     }
 
+    public boolean isVariable() { return true; }
 
     /**
      * Fires a model changed event.
@@ -394,6 +396,22 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         }
         return super.toString();
     }
+
+    // ***********************************************************************
+    // Interface: Keywordable
+    // ***********************************************************************
+
+    @Override
+    public void addKeyword(String keyword) {
+        keywords.add(keyword);
+    }
+
+    @Override
+    public List<String> getKeywords() {
+        return keywords;
+    }
+
+    private final List<String> keywords = new ArrayList<String>();
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

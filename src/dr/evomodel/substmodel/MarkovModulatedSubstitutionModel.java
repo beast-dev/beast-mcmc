@@ -125,7 +125,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         addModel(freqModel);
 
         if (stateCount != stateSizes) {
-            throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
+            throw new RuntimeException("Incompatible state counts in " + getModelName() + " (currently: " + stateCount + "). Models add up to " + stateSizes + ".");
         }
 
         birthDeathModel = true;
@@ -245,6 +245,13 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         // Add switching rates to matrix
         if (!IGNORE_RATES && numBaseModel > 1) {
             double[] swRates = switchingRates.getParameterValues();
+            if (DEBUG) {
+                System.err.print("Switching rates: ");
+                for (int i = 0; i < swRates.length; i++) {
+                    System.err.print(swRates[i] + " ");
+                }
+                System.err.println();
+            }
             double totalRate = 0.0;
             for (double rate : swRates) {
                 totalRate += rate;
@@ -300,8 +307,25 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             System.err.println(new dr.math.matrixAlgebra.Vector(ed.getEigenValues()));
             System.err.println("");
             double[] tp = new double[q.length * q.length];
+            //the code below gets the matrix entries (after possible renormalization)
             getTransitionProbabilities(1.0, tp, ed);
             System.err.println(new Vector(tp));
+
+            double[] infinitesimal = new double[q.length * q.length];
+            getInfinitesimalMatrix(infinitesimal);
+            double[][] matrixForm = new double[q.length][q.length];
+            int i = 0,j = 0;
+            for (int k = 0; k < infinitesimal.length; k++) {
+                matrixForm[i][j] = infinitesimal[k];
+                j++;
+                if ((k+1) % q.length == 0) {
+                    i++;
+                    j = 0;
+                }
+            }
+            System.err.println("Infinitesimal Q matrix:\n" + new Matrix(matrixForm));
+
+            //System.exit(0);
         }
 
         return ed;

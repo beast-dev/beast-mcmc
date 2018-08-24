@@ -52,9 +52,7 @@ import org.jdom.JDOMException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 
@@ -65,6 +63,8 @@ import java.util.List;
  */
 public class BEAUTiImporter {
 
+    private final String DEFAULT_NAME = "default";
+    
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
@@ -165,7 +165,7 @@ public class BEAUTiImporter {
                         name += count;
                     }
                 }
-                setData(name, taxa, alignment, null, null, null, null);
+                setData(name, taxa, alignment, null, null, null, null, null);
 
                 count++;
             }
@@ -198,6 +198,7 @@ public class BEAUTiImporter {
         List<Tree> trees = new ArrayList<Tree>();
         PartitionSubstitutionModel model = null;
         List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
+        List<NexusApplicationImporter.TaxSet> taxSets = new ArrayList<NexusApplicationImporter.TaxSet>();
 
         try {
             FileReader reader = new FileReader(file);
@@ -276,7 +277,7 @@ public class BEAUTiImporter {
 
                     } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK || block == NexusApplicationImporter.SETS_BLOCK) {
 
-                        importer.parseAssumptionsBlock(charSets);
+                        importer.parseAssumptionsBlock(charSets, taxSets);
 
                     } else {
                         // Ignore the block..
@@ -302,7 +303,7 @@ public class BEAUTiImporter {
 //            throw new Exception(e.getMessage());
         }
 
-        setData(file.getName(), taxa, alignment, charSets, model, null, trees);
+        setData(file.getName(), taxa, alignment, charSets, taxSets, model, null, trees);
     }
 
     // FASTA
@@ -317,7 +318,7 @@ public class BEAUTiImporter {
 
             reader.close();
 
-            setData(file.getName(), alignment, alignment, null, null, null, null);
+            setData(file.getName(), alignment, alignment, null, null, null, null, null);
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
         } catch (IOException e) {
@@ -400,10 +401,116 @@ public class BEAUTiImporter {
                 j++;
             }
         }
-        setData(file.getName(), taxa, null, null, null, importedTraits, null);
+        setData(file.getName(), taxa, null, null, null, null, importedTraits, null);
     }
 
-    public boolean validateTraitName(String traitName) {
+    public boolean importPredictors(final File file, final TraitData trait) throws Exception {
+        List<Predictor> importedPredictors = new ArrayList<Predictor>();
+//        Taxa taxa = options.taxonList;
+
+        // This is the order that states will be in...
+        Set<String> states = trait.getStatesOfTrait();
+
+        String fileName = file.getName();
+        String extension = "";
+        if (fileName.lastIndexOf(".") != -1) {
+            extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+            fileName =  fileName.substring(0, fileName.lastIndexOf("."));
+        }
+        boolean isCSV = extension.toUpperCase().equals("CSV");
+
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file), isCSV);
+
+        String[] stateNamesCol = dataTable.getColumnLabels();
+        String[] stateNamesRow = dataTable.getRowLabels();
+
+        if (dataTable.getRowCount() != states.size()) {
+            JOptionPane.showMessageDialog(frame, "Predictor data does not have the same number of rows as trait states",
+                    "Mismatched states", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        for (String name : stateNamesRow) {
+            if (!states.contains(name)) {
+                JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
+                        "Unrecognized state", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+
+        boolean isMatrix = false;
+
+        if (dataTable.getColumnCount() == states.size()) {
+            // likely this is a matrix
+            int matches = states.size();
+            for (String name : stateNamesCol) {
+                if (!states.contains(name)) {
+                    matches -= 1;
+                }
+            }
+            if (((double)matches) / states.size() > 0.5) { // arbitrary cut off but if 50% matching then presumably they all should
+                for (String name : stateNamesCol) {
+                    if (!states.contains(name)) {
+                        JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
+                                "Unrecognized state", JOptionPane.ERROR_MESSAGE);
+                        return false;
+                    }
+                }
+
+                isMatrix = true;
+            }
+        }
+
+        if (isMatrix) {
+            double[][] data = new double[dataTable.getRowCount()][dataTable.getRowCount()];
+
+            String name = stateNamesCol[0];
+            for (int i = 0; i < dataTable.getRowCount(); i++) {
+                String[] row = dataTable.getRow(i);
+                for (int j = 0; j < row.length; j++) {
+                    try {
+                        data[i][j] = Double.parseDouble(row[j]);
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i+1),
+                                "Missing value", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+
+            }
+            Predictor predictor = new Predictor(options, fileName, trait, stateNamesRow, data, Predictor.Type.MATRIX);
+            importedPredictors.add(predictor);
+
+        } else {
+            // a series of vectors
+            for (int i = 0; i < dataTable.getColumnCount(); i++) {
+                String name = stateNamesCol[i];
+
+                double[][] data = new double[dataTable.getRowCount()][1];
+
+                String[] values = dataTable.getColumn(i);
+                for (int j = 0; j < values.length; j++) {
+                    try {
+                        data[j][0] =  Double.parseDouble(values[j]);
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j+1),
+                                "Missing value", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+                Predictor predictor = new Predictor(options, name, trait, stateNamesRow, data, Predictor.Type.BOTH_VECTOR);
+                importedPredictors.add(predictor);
+            }
+        }
+
+        for (Predictor predictor : importedPredictors) {
+            trait.addPredictor(predictor);
+        }
+
+        return true;
+    }
+
+    private boolean validateTraitName(String traitName) {
         // check that the name is valid
         if (traitName.trim().length() == 0) {
             Toolkit.getDefaultToolkit().beep();
@@ -441,7 +548,9 @@ public class BEAUTiImporter {
 
     // for Alignment
     private void setData(String fileName, TaxonList taxonList, Alignment alignment,
-                         List<NexusApplicationImporter.CharSet> charSets, PartitionSubstitutionModel model,
+                         List<NexusApplicationImporter.CharSet> charSets,
+                         List<NexusApplicationImporter.TaxSet> taxSets,
+                         PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
@@ -452,6 +561,8 @@ public class BEAUTiImporter {
         addTaxonList(taxonList);
 
         addAlignment(alignment, charSets, model, fileName, fileNameStem);
+
+        addTaxonSets(taxonList, taxSets);
 
         addTraits(traits);
 
@@ -515,10 +626,28 @@ public class BEAUTiImporter {
                 taxonList.getTaxon(i).setAttribute("date", date);
             }
         }
-
     }
 
-    private void addAlignment(Alignment alignment, List<NexusApplicationImporter.CharSet> charSets,
+    private void addTaxonSets(TaxonList taxonList, List<NexusApplicationImporter.TaxSet> taxSets) throws ImportException {
+        if (taxSets != null) {
+            for (NexusApplicationImporter.TaxSet taxSet : taxSets) {
+                Taxa taxa = new Taxa(taxSet.getName());
+                for (NexusApplicationImporter.CharSetBlock block : taxSet.getBlocks()) {
+                    for (int i = block.getFromSite(); i <= block.getToSite(); i++) {
+                        taxa.addTaxon(taxonList.getTaxon(i - 1));
+                    }
+                }
+                options.taxonSets.add(taxa);
+                options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+                options.taxonSetsMono.put(taxa, false);
+                options.taxonSetsIncludeStem.put(taxa, false);
+                options.taxonSetsHeights.put(taxa, 0.0);
+            }
+        }
+    }
+
+    private void addAlignment(Alignment alignment,
+                              List<NexusApplicationImporter.CharSet> charSets,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
         if (alignment != null) {
@@ -587,7 +716,7 @@ public class BEAUTiImporter {
             } else {// only this works
                 if (options.getPartitionSubstitutionModels(partition.getDataType()).size() < 1) {// use same substitution model in beginning
                     // PartitionSubstitutionModel based on PartitionData
-                    PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, partition);
+                    PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, DEFAULT_NAME, partition);
                     partition.setPartitionSubstitutionModel(psm);
                 } else { //if (options.getPartitionSubstitutionModels() != null) {
 //                        && options.getPartitionSubstitutionModels().size() == 1) {
@@ -599,48 +728,50 @@ public class BEAUTiImporter {
             }
         }
 
-        options.updatePartitionAllLinks();
-        //options.clockModelOptions.initClockModelGroup();
+//        options.updatePartitionAllLinks();
+//        options.clockModelOptions.initClockModelGroup();
     }
 
     private void setClockAndTree(AbstractPartitionData partition) {
+
+        PartitionTreeModel treeModel;
+
+        // use same tree model and same tree prior in beginning
+        if (options.getPartitionTreeModels().size() < 1) {
+            // PartitionTreeModel based on PartitionData
+            treeModel = new PartitionTreeModel(options, DEFAULT_NAME);
+            partition.setPartitionTreeModel(treeModel);
+
+            // PartitionTreePrior always based on PartitionTreeModel
+            PartitionTreePrior ptp = new PartitionTreePrior(options, treeModel);
+            treeModel.setPartitionTreePrior(ptp);
+        } else { //if (options.getPartitionTreeModels() != null) {
+//                        && options.getPartitionTreeModels().size() == 1) {
+            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
+                treeModel = new PartitionTreeModel(options, partition.getName()); // different tree model,
+                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
+                treeModel.setPartitionTreePrior(ptp);
+            } else {
+                treeModel = options.getPartitionTreeModels().get(0); // same tree model,
+            }
+            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
+        }
+
         // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
         if (options.getPartitionClockModels(partition.getDataType()).size() < 1) {
             // PartitionClockModel based on PartitionData
-            PartitionClockModel pcm = new PartitionClockModel(options, partition);
+            PartitionClockModel pcm = new PartitionClockModel(options, DEFAULT_NAME, partition, treeModel);
             partition.setPartitionClockModel(pcm);
         } else { //if (options.getPartitionClockModels() != null) {
 //                        && options.getPartitionClockModels().size() == 1) {
             PartitionClockModel pcm;
             if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                pcm = new PartitionClockModel(options, partition);
+                pcm = new PartitionClockModel(options, partition.getName(), partition, treeModel);
             } else {
                 // make sure in the same data type
                 pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
             }
             partition.setPartitionClockModel(pcm);
-        }
-
-        // use same tree model and same tree prior in beginning
-        if (options.getPartitionTreeModels().size() < 1) {
-            // PartitionTreeModel based on PartitionData
-            PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
-            partition.setPartitionTreeModel(ptm);
-
-            // PartitionTreePrior always based on PartitionTreeModel
-            PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
-            ptm.setPartitionTreePrior(ptp);
-        } else { //if (options.getPartitionTreeModels() != null) {
-//                        && options.getPartitionTreeModels().size() == 1) {
-            PartitionTreeModel ptm;
-            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                ptm = new PartitionTreeModel(options, partition); // different tree model,
-                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
-                ptm.setPartitionTreePrior(ptp);
-            } else {
-                ptm = options.getPartitionTreeModels().get(0); // same tree model,
-            }
-            partition.setPartitionTreeModel(ptm); // if same tree model, therefore same prior
         }
     }
 
@@ -659,7 +790,7 @@ public class BEAUTiImporter {
                 options.addTrait(trait);
             }
 
-            options.updatePartitionAllLinks();
+//            options.updatePartitionAllLinks();
         }
     }
 

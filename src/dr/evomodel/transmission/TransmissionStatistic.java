@@ -47,7 +47,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: TransmissionStatistic.java,v 1.11 2005/06/27 21:19:15 rambaut Exp $
  */
-public class TransmissionStatistic extends BooleanStatistic implements TreeStatistic {
+public class TransmissionStatistic extends TreeStatistic implements BooleanStatistic {
 
     // PUBLIC STUFF
 
@@ -146,6 +146,13 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
     }
 
     /**
+     * @return boolean result of test.
+     */
+    public double getStatisticValue(int dim) {
+        return getBoolean(dim) ? 1.0 : 0.0;
+    }
+
+    /**  /**
      * @return true if the population tree is compatible with the species tree
      */
     public boolean getBoolean(int dim) {

@@ -32,8 +32,6 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
-import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
-import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
@@ -43,17 +41,21 @@ import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
-import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.RandomWalkOperator;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
+import dr.oldevomodel.substmodel.AbstractSubstitutionModel;
+import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.util.Attribute;
 import dr.util.Transform;
 import dr.util.TransformParsers;
 import dr.xml.XMLParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,6 +64,8 @@ import java.util.List;
  * @author Walter Xie
  */
 public class OperatorsGenerator extends Generator {
+
+    public static final boolean NEW_AVMVN = true;
 
     public OperatorsGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
@@ -110,8 +114,6 @@ public class OperatorsGenerator extends Generator {
 
         for (Operator operator : operators) {
             if (operator.getWeight() > 0. && operator.isUsed()) {
-                setModelPrefix(operator.getPrefix());
-
                 writeOperator(operator, writer);
             }
         }
@@ -123,6 +125,8 @@ public class OperatorsGenerator extends Generator {
 
     private void writeOperator(Operator operator, XMLWriter writer) {
 
+        String prefix = operator.getPrefix();
+
         switch (operator.getOperatorType()) {
 
             case SCALE:
@@ -132,13 +136,16 @@ public class OperatorsGenerator extends Generator {
                 writeRandomWalkOperator(operator, writer);
                 break;
             case RANDOM_WALK_ABSORBING:
-                writeRandomWalkOperator(operator, false, writer);
-                break;
-            case RANDOM_WALK_INT:
-                writeRandomWalkIntegerOperator(operator, writer);
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.absorbing, writer);
                 break;
             case RANDOM_WALK_REFLECTING:
-                writeRandomWalkOperator(operator, true, writer);
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.reflecting, writer);
+                break;
+            case RANDOM_WALK_LOG:
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.log, writer);
+                break;
+            case RANDOM_WALK_LOGIT:
+                writeRandomWalkOperator(operator, RandomWalkOperator.BoundaryCondition.logit, writer);
                 break;
             case INTEGER_RANDOM_WALK:
                 writeIntegerRandomWalkOperator(operator, writer);
@@ -149,17 +156,11 @@ public class OperatorsGenerator extends Generator {
             case MICROSAT_UP_DOWN:
                 writeUpDownOperator(MicrosatelliteUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
                 break;
-            case UP_DOWN_ALL_RATES_HEIGHTS:
-                writeUpDownOperatorAllRatesTrees(operator, writer);
-                break;
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
                 break;
             case SCALE_INDEPENDENTLY:
                 writeScaleOperator(operator, writer, true);
-                break;
-            case CENTERED_SCALE:
-                writeCenteredOperator(operator, writer);
                 break;
             case DELTA_EXCHANGE:
                 writeDeltaOperator(operator, false, writer);
@@ -176,14 +177,14 @@ public class OperatorsGenerator extends Generator {
             case BITFLIP:
                 writeBitFlipOperator(operator, writer);
                 break;
-            case BITFIP_IN_SUBST:
+            case BITFLIP_IN_SUBST:
                 writeBitFlipInSubstOperator(operator, writer);
                 break;
             case RATE_BIT_EXCHANGE:
                 writeRateBitExchangeOperator(operator, writer);
                 break;
             case TREE_BIT_MOVE:
-                writeTreeBitMoveOperator(operator, writer);
+                writeTreeBitMoveOperator(operator, prefix, writer);
                 break;
             case UNIFORM:
                 writeUniformOperator(operator, writer);
@@ -192,20 +193,23 @@ public class OperatorsGenerator extends Generator {
                 writeIntegerUniformOperator(operator, writer);
                 break;
             case SUBTREE_LEAP:
-                writeSubtreeLeapOperator(operator, writer);
+                writeSubtreeLeapOperator(operator, prefix, writer);
+                break;
+            case SUBTREE_JUMP:
+                writeSubtreeJumpOperator(operator, prefix, writer);
                 break;
             case SUBTREE_SLIDE:
-                writeSubtreeSlideOperator(operator, writer);
+                writeSubtreeSlideOperator(operator, prefix, writer);
                 break;
             // write multivariate operator
             case NARROW_EXCHANGE:
-                writeNarrowExchangeOperator(operator, writer);
+                writeNarrowExchangeOperator(operator, prefix, writer);
                 break;
             case WIDE_EXCHANGE:
-                writeWideExchangeOperator(operator, writer);
+                writeWideExchangeOperator(operator, prefix, writer);
                 break;
             case WILSON_BALDING:
-                writeWilsonBaldingOperator(operator, writer);
+                writeWilsonBaldingOperator(operator, prefix, writer);
                 break;
             case SAMPLE_NONACTIVE:
                 writeSampleNonActiveOperator(operator, writer);
@@ -214,13 +218,10 @@ public class OperatorsGenerator extends Generator {
                 writeScaleWithIndicatorsOperator(operator, writer);
                 break;
             case GMRF_GIBBS_OPERATOR:
-                writeGMRFGibbsOperator(operator, writer);
+                writeGMRFGibbsOperator(operator, prefix, writer);
                 break;
             case SKY_GRID_GIBBS_OPERATOR:
-                writeSkyGridGibbsOperator(operator, writer);
-                break;
-            case NODE_REHIGHT:
-                writeSpeciesTreeOperator(operator, writer);
+                writeSkyGridGibbsOperator(operator, prefix, writer);
                 break;
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
@@ -280,7 +281,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(name);
     }
 
-    private void writeRandomWalkOperator(Operator operator, boolean reflecting, XMLWriter writer) {
+    private void writeRandomWalkOperator(Operator operator, RandomWalkOperator.BoundaryCondition boundaryCondition, XMLWriter writer) {
         final String name = RandomWalkOperatorParser.RANDOM_WALK_OPERATOR;
         writer.writeOpenTag(
                 name,
@@ -288,25 +289,13 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.getTuning()),
                         getWeightAttribute(operator.getWeight()),
                         new Attribute.Default<String>("boundaryCondition",
-                                (reflecting ? "reflecting" : "absorbing")),
+                                boundaryCondition.name()),
                         (operator.isAutoOptimize() == false ?
                                 new Attribute.Default<Boolean>("autoOptimize", false) :
                                 null)
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(name);
-    }
-
-    private void writeRandomWalkIntegerOperator(Operator operator, XMLWriter writer) {
-        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR;
-        writer.writeOpenTag(
-                name,
-                new Attribute[]{
-                        new Attribute.Default<Double>("windowSize", operator.getTuning()),
-                        getWeightAttribute(operator.getWeight())
-                });
-        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(name);
     }
 
@@ -332,6 +321,7 @@ public class OperatorsGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.getTuning()),
                         new Attribute.Default<String>(ScaleOperatorParser.SCALE_ALL, "true"),
+                        new Attribute.Default<String>(ScaleOperatorParser.IGNORE_BOUNDS, "true"),
                         getWeightAttribute(operator.getWeight())
                 });
 
@@ -346,18 +336,6 @@ public class OperatorsGenerator extends Generator {
         }
 
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
-    }
-
-    private void writeCenteredOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(CenteredScaleOperatorParser.CENTERED_SCALE,
-                new Attribute[]{
-                        new Attribute.Default<Double>(CenteredScaleOperatorParser.SCALE_FACTOR, operator.getTuning()),
-                        getWeightAttribute(operator.getWeight())
-                }
-        );
-        writeParameter1Ref(writer, operator);
-//        writeOperatorRef(writer, operator);
-        writer.writeCloseTag(CenteredScaleOperatorParser.CENTERED_SCALE);
     }
 
     private void writeDeltaOperator(Operator operator, boolean weighted, XMLWriter writer) {
@@ -449,10 +427,10 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(RateBitExchangeOperator.OPERATOR_NAME);
     }
 
-    private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
+    private void writeTreeBitMoveOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
@@ -472,28 +450,24 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR);
     }
 
-    private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
+    private void writeNarrowExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
-    private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
+    private void writeWideExchangeOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
-    private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
+    private void writeWilsonBaldingOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(WilsonBaldingParser.WILSON_BALDING,
                 getWeightAttribute(operator.getWeight()));
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
-        // not supported anymore. probably never worked. (todo) get it out of GUI too
-//        if (options.nodeHeightPrior == TreePriorType.CONSTANT) {
-//            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
-//        }
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(WilsonBaldingParser.WILSON_BALDING);
     }
 
@@ -516,7 +490,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
     }
 
-    private void writeSkyGridGibbsOperator(Operator operator, XMLWriter writer) {
+    private void writeSkyGridGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
@@ -524,11 +498,11 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, treePriorPrefix + "skygrid");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR);
     }
 
-    private void writeGMRFGibbsOperator(Operator operator, XMLWriter writer) {
+    private void writeGMRFGibbsOperator(Operator operator, String treePriorPrefix, XMLWriter writer) {
         writer.writeOpenTag(
                 GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
@@ -536,7 +510,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, treePriorPrefix + "skyride");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR);
     }
 
@@ -556,18 +530,30 @@ public class OperatorsGenerator extends Generator {
 
     // write multivariate operator
 
-    private void writeSubtreeLeapOperator(Operator operator, XMLWriter writer) {
+    private void writeSubtreeLeapOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
-    private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {
+    private void writeSubtreeJumpOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(SubtreeJumpOperatorParser.SUBTREE_JUMP,
+                new Attribute[]{
+                // not tuneable at the moment.
+//                        new Attribute.Default<Double>("size", operator.getTuning()),
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(SubtreeJumpOperatorParser.SUBTREE_JUMP);
+    }
+
+    private void writeSubtreeSlideOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE,
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.getTuning()),
@@ -575,17 +561,8 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.getWeight())
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
-    }
-
-    private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT,
-                new Attribute[]{getWeightAttribute(operator.getWeight())}
-        );
-        writer.writeIDref(TraitData.TRAIT_SPECIES, TraitData.TRAIT_SPECIES);
-        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, Generator.SP_TREE);
-        writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
     private void writeUpDownOperator(String opTag, Operator operator, XMLWriter writer) {
@@ -597,154 +574,150 @@ public class OperatorsGenerator extends Generator {
         );
 
         writer.writeOpenTag(UpDownOperatorParser.UP);
-
-        if (!operator.getParameter1().isFixed() /* && operator.getClockModelGroup().getRateTypeOption() != FixRateType.FIXED_MEAN */) {
-            writeParameter1Ref(writer, operator);
-        } else {
-            writer.writeComment("Rate is fixed - scale node heights only");
-        }
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(UpDownOperatorParser.UP);
 
         writer.writeOpenTag(UpDownOperatorParser.DOWN);
-        if (operator.getTag() == null) {
-            writeParameter2Ref(writer, operator);
-        } else {
-            writer.writeIDref(operator.getTag(), operator.getIdref());
-        }
+        writeParameter2Ref(writer, operator);
         writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
         writer.writeCloseTag(opTag);
     }
 
-    private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.getTuning()),
-                        getWeightAttribute(operator.getWeight())
-                }
-        );
-
-        writer.writeOpenTag(UpDownOperatorParser.UP);
-
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            if (model.isEstimatedRate()) {
-            switch (model.getClockType()) {
-                case STRICT_CLOCK:
-                case RANDOM_LOCAL_CLOCK:
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
-                    break;
-
-                case UNCORRELATED:
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
-//                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
-//                            break;
-                        case EXPONENTIAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                            break;
-                    }
-                    break;
-
-                case AUTOCORRELATED:
-                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//	                break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown clock model");
-            }
-        }
-        if (options.useStarBEAST) {
-            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-            }
-        }// nothing for EBSP
-
-        writer.writeCloseTag(UpDownOperatorParser.UP);
-
-        writer.writeOpenTag(UpDownOperatorParser.DOWN);
-
-        if (options.useStarBEAST) {
-            writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
-            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-            writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
-        } else if (options.isEBSPSharingSamePrior()) {
-            writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".populationMean");
-            writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".popSize");
-        }
-
-        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
-        }
-
-        writer.writeCloseTag(UpDownOperatorParser.DOWN);
-
-        writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
-    }
-
     private void writeAdaptiveMultivariateOperator(Operator operator, XMLWriter writer) {
 
-        //determine how many parameters will be part of the AVMVN transition kernel
-        int parameterCount = 0;
-        for (Parameter parameter : options.selectParameters()) {
-            parameterCount++;
-        }
-        //options set according to recommendations in AVMVN paper
-        int initial = 200*parameterCount;
-        int burnin = initial/2;
+        if (NEW_AVMVN) {
 
-        writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
-                new Attribute[]{
-                        getWeightAttribute(operator.getWeight()),
-                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
-                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
-                        new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
-                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
-                        new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
-                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
-                        new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
-                });
+            try {
+                //determine how many parameters will be part of the AVMVN transition kernel
+                int parameterCount = 0;
+                for (Parameter parameter : options.selectParameters()) {
+                    parameterCount++;
+                }
+                //options set according to recommendations in AVMVN paper
+                int initial = 200 * parameterCount;
+                int burnin = initial / 2;
 
-        // @todo Need to collate only the parameters being controlled by this here.
+                writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
+                        new Attribute[]{
+                                getWeightAttribute(operator.getWeight()),
+                                new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
+                                new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
+                                new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
+                                new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
+                                new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
+                                new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
+                                new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
+                        });
 
-        for (Parameter parameter : options.selectParameters()) {
-            if (parameter.isAdaptiveMultivariateCompatible) {
-                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                ArrayList<Parameter> logList = new ArrayList<Parameter>();
+                ArrayList<Parameter> noList = new ArrayList<Parameter>();
+                ArrayList<Parameter> constrainedList = new ArrayList<Parameter>();
+
+                for (Parameter parameter : options.selectParameters()) {
+                    if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
+                        //System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
+                        if (parameter.isNonNegative && !parameter.isMaintainedSum) {
+                            logList.add(parameter);
+                        } else if (parameter.isInRealSpace()) {
+                            noList.add(parameter);
+                        } else if (parameter.isMaintainedSum) {
+                            constrainedList.add(parameter);
+                        } else {
+                            System.out.println("Parameter " + parameter + " should likely be equipped with a Dirichlet prior.");
+                            System.out.println("Use of a Dirichlet prior for frequencies is set to: " + options.useNewFrequenciesPrior());
+                            throw new UnsupportedOperationException("Parameter " + parameter.getName() + " with unidentified transformation.");
+                        }
+                    }
+                }
+
+                if (logList.size() > 0) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName())});
+                    for (Parameter parameter : logList) {
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    }
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                if (noList.size() > 0) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName())});
+                    for (Parameter parameter : noList) {
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    }
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                for (Parameter parameter : constrainedList) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
+                            new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
+                    writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
+
+            } catch (UnsupportedOperationException unSup) {
+                System.out.println(unSup);
             }
-        }
 
-        //set appropriate transformations for all parameters
-        //TODO: we should aggregate as best as possible the different transformation so as to have fewer attributes
-        int startTransform = 0;
-        for (Parameter parameter : options.selectParameters()) {
-            if (parameter.isAdaptiveMultivariateCompatible) {
-                if (parameter.isNonNegative) {
-                    writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName()),
-                            new Attribute.Default<Integer>(TransformParsers.START, startTransform),
-                            new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
-                    }, true);
-                    startTransform += parameter.getDimensionWeight();
-                    System.out.println(parameter + ": " + parameter.getDimensionWeight());
+        } else {
 
-                } else { // -Inf to Inf
-                    writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName()),
-                            new Attribute.Default<Integer>(TransformParsers.START, startTransform),
-                            new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
-                    }, true);
-                    startTransform += parameter.getDimensionWeight();
-                    System.out.println(parameter + ": " + parameter.getDimensionWeight());
+            //determine how many parameters will be part of the AVMVN transition kernel
+            int parameterCount = 0;
+            for (Parameter parameter : options.selectParameters()) {
+                parameterCount++;
+            }
+            //options set according to recommendations in AVMVN paper
+            int initial = 200 * parameterCount;
+            int burnin = initial / 2;
+
+            writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
+                    new Attribute[]{
+                            getWeightAttribute(operator.getWeight()),
+                            new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
+                            new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
+                            new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
+                            new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
+                            new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
+                            new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
+                            new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
+                    });
+
+            // @todo Need to collate only the parameters being controlled by this here.
+
+            for (Parameter parameter : options.selectParameters()) {
+                if (parameter.isAdaptiveMultivariateCompatible) {
+                    writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
                 }
             }
-        }
 
-        writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
+            //set appropriate transformations for all parameters
+            //TODO: we should aggregate as best as possible the different transformation so as to have fewer attributes
+            int startTransform = 0;
+            for (Parameter parameter : options.selectParameters()) {
+                if (parameter.isAdaptiveMultivariateCompatible) {
+                    if (parameter.isNonNegative) {
+                        writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName()),
+                                new Attribute.Default<Integer>(TransformParsers.START, startTransform),
+                                new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
+                        }, true);
+                        startTransform += parameter.getDimensionWeight();
+                        System.out.println(parameter + ": " + parameter.getDimensionWeight());
+
+                    } else { // -Inf to Inf
+                        writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName()),
+                                new Attribute.Default<Integer>(TransformParsers.START, startTransform),
+                                new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
+                        }, true);
+                        startTransform += parameter.getDimensionWeight();
+                        System.out.println(parameter + ": " + parameter.getDimensionWeight());
+                    }
+                }
+            }
+
+            writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
+
+        }
     }
 
     private Attribute getWeightAttribute(double weight) {

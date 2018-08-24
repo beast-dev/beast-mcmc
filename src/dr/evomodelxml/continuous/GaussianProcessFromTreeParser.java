@@ -25,23 +25,54 @@
 
 package dr.evomodelxml.continuous;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GaussianProcessFromTree;
+import dr.evomodel.continuous.GibbsSampleMissingTraitsOperator;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.TreeTipGaussianProcess;
+import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.xml.*;
 
 /**
- * Created by max on 12/9/14.
+ * @author Marc A. Suchard
+ * @author Max R. Tolkoff
  */
 public class GaussianProcessFromTreeParser extends AbstractXMLObjectParser {
-    public static final String GAUSSIAN_PROCESS_FROM_TREE="gaussianProcessFromTree";
+
+    public static final String GAUSSIAN_PROCESS_FROM_TREE = "gaussianProcessFromTree";
+    public static final String MASK_TO_MISSING = "maskDrawToMissingOnly";
+
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+            new XORRule(
+                    new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+                    new ElementRule(TreeDataLikelihood.class)
+            ),
+            AttributeRule.newBooleanRule(MASK_TO_MISSING, true),
     };
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        FullyConjugateMultivariateTraitLikelihood traitModel=(FullyConjugateMultivariateTraitLikelihood)xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
-        return new GaussianProcessFromTree(traitModel);
+
+        FullyConjugateMultivariateTraitLikelihood traitModel = (FullyConjugateMultivariateTraitLikelihood)
+                xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+
+        if (traitModel != null) {
+            return new GaussianProcessFromTree(traitModel);
+        }
+
+        TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        ContinuousDataLikelihoodDelegate dataDelegate =
+                GibbsSampleMissingTraitsOperator.parseContinuousDataLikelihoodDelegate(xo);
+
+        boolean mask = xo.getAttribute(MASK_TO_MISSING, true);
+
+        TreeTipGaussianProcess process = new TreeTipGaussianProcess(dataDelegate.getDataModel().getModelName(),
+                treeDataLikelihood, dataDelegate, null, true);
+
+        return process;
+
     }
 
     @Override
@@ -56,7 +87,7 @@ public class GaussianProcessFromTreeParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return GaussianProcessFromTree.class;
+        return GaussianProcessRandomGenerator.class;
     }
 
     @Override

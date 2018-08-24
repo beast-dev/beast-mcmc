@@ -26,13 +26,19 @@
 package dr.math.distributions;
 
 import dr.math.UnivariateFunction;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.analysis.DifferentiableUnivariateRealFunction;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.integration.SimpsonIntegrator;
+import org.apache.commons.math.analysis.solvers.NewtonSolver;
 
 /**
  * @author Marc Suchard
  */
 public abstract class KernelDensityEstimatorDistribution implements Distribution {
 
-    public KernelDensityEstimatorDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
+    KernelDensityEstimatorDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
 
         this.sample = new double[sample.length];
         for (int i = 0; i < sample.length; i++) {
@@ -48,6 +54,10 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
     abstract protected void processBounds(Double lowerBound, Double upperBound);
 
     abstract protected void setBandWidth(Double bandWidth);
+
+    abstract public double getFromPoint();
+
+    abstract public double getToPoint();
 
     /**
      * probability density function of the distribution
@@ -76,17 +86,52 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
      * @return cdf value
      */
     public double cdf(double x) {
-        throw new RuntimeException("Not Implemented.");
+
+        double cdf;
+        try {
+            cdf = cdfFunction.value(x);
+        } catch (FunctionEvaluationException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return cdf;
     }
 
     /**
      * quantile (inverse cumulative density function) of the distribution
      *
      * @param y argument
-     * @return icdf value
+     * @return cdf value
      */
-    public double quantile(double y) {
-        throw new RuntimeException("Not Implemented.");
+    public double quantile(final double y) {
+
+        final DifferentiableUnivariateRealFunction root =
+                new DifferentiableUnivariateRealFunction() {
+
+            @Override
+            public UnivariateRealFunction derivative() {
+                return pdfFunction;
+            }
+
+            @Override
+            public double value(double x) throws FunctionEvaluationException {
+
+                return cdfFunction.value(x) - y;
+            }
+        };
+
+        NewtonSolver solver = new NewtonSolver(root);
+
+        double q;
+        try {
+            q = solver.solve(getFromPoint(), getToPoint());
+        } catch (MaxIterationsExceededException e) {
+            throw new RuntimeException(e.getMessage());
+        } catch (FunctionEvaluationException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return q;
     }
 
     /**
@@ -121,10 +166,10 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
     public enum Type {
         GAUSSIAN("Gaussian"),
         GAMMA("Gamma"),
-        LOGTRANSFORMEDGAUSSIAN("LogTransformedGaussian"),
+        LOG_TRANSFORMED_GAUSSIAN("LogTransformedGaussian"),
         BETA("Beta");
 
-        private Type(String text) {
+        Type(String text) {
             this.text = text;
         }
 
@@ -146,6 +191,33 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
     protected int N;
     protected double lowerBound;
     protected double upperBound;
-    protected double bandWidth;
+    double bandWidth;
     protected double[] sample;
+
+    private final SimpsonIntegrator integrator = new SimpsonIntegrator();
+
+    private final UnivariateRealFunction pdfFunction = new UnivariateRealFunction() {
+
+        @Override
+        public double value(double x) throws FunctionEvaluationException {
+            return pdf(x);
+        }
+    };
+
+    private final UnivariateRealFunction cdfFunction = new UnivariateRealFunction() {
+
+        @Override
+        public double value(double x) throws FunctionEvaluationException {
+            double rangeMin = getFromPoint();
+
+            double cdf;
+            try {
+                cdf = integrator.integrate(pdfFunction, rangeMin, x);
+            } catch (MaxIterationsExceededException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+
+            return cdf;
+        }
+    };
 }

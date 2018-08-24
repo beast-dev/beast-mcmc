@@ -51,18 +51,8 @@ import java.util.List;
 public abstract class Generator {
 
     protected static final String COALESCENT = "coalescent";
-    public static final String SP_TREE = "sptree";
-    protected static final String SP_START_TREE = "spStartingTree";
-    protected static final String SPECIATION_LIKE = "speciation.likelihood";
-    public static final String SPLIT_POPS = "splitPopSize";
-    protected static final String PDIST = "pdist";
-    //	protected static final String STP = "stp";
-    protected static final String SPOPS = TraitData.TRAIT_SPECIES + "." + "popSizesLikelihood";
 
     protected final BeautiOptions options;
-
-    //    protected PartitionSubstitutionModel model;
-    protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
 
     protected Generator(BeautiOptions options) {
         this.options = options;
@@ -81,14 +71,6 @@ public abstract class Generator {
         for (ComponentGenerator component : components) {
                 component.checkOptions();
         }
-    }
-
-    public String getModelPrefix() {
-        return modelPrefix;
-    }
-
-    public void setModelPrefix(String modelPrefix) {
-        this.modelPrefix = modelPrefix;
     }
 
     /**
@@ -312,8 +294,8 @@ public abstract class Generator {
         writer.writeCloseTag(wrapperName);
     }
 
-    protected void writeCodonPatternsRef(String prefix, int num, int CodonPartitionCount, XMLWriter writer) {
-        if (CodonPartitionCount == 2 && num == 1) { // "11" of "112", num start from 1
+    protected void writeCodonPatternsRef(String prefix, int num, int codonPartitionCount, XMLWriter writer) {
+        if (codonPartitionCount == 2 && num == 1) { // "11" of "112", num start from 1
             writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + SitePatternsParser.PATTERNS);
         } else { // "2" of "112" and "123"
             writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
@@ -392,8 +374,8 @@ public abstract class Generator {
             case LOGNORMAL_PRIOR:
                 writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
                         new Attribute[]{
-                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace()),
-                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, parameter.isMeanInRealSpace())
+                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, parameter.isInRealSpace()),
+                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, parameter.isInRealSpace())
                         });
                 writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
                 writer.writeText(Double.toString(parameter.mean));

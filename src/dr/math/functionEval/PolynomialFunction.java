@@ -25,6 +25,7 @@
 
 package dr.math.functionEval;
 
+import dr.math.MathUtils;
 import dr.math.interfaces.OneVariableFunction;
 import dr.math.iterations.NewtonZeroFinder;
 
@@ -254,7 +255,7 @@ public double[] roots( double desiredPrecision)
 	PolynomialFunction dp = derivative();
 	double start = 0;
 	while ( Math.abs( dp.value( start)) < desiredPrecision )
-		start = Math.random();
+		start = MathUtils.nextDouble();
 	PolynomialFunction p = this;
 	NewtonZeroFinder rootFinder = new NewtonZeroFinder( this, dp, start);
 	rootFinder.setDesiredPrecision( desiredPrecision);

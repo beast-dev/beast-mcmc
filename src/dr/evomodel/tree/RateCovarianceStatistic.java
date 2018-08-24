@@ -37,7 +37,7 @@ import dr.stats.DiscreteStatistics;
  * @author Alexei Drummond
  * @version $Id: RateCovarianceStatistic.java,v 1.5 2005/07/11 14:06:25 rambaut Exp $
  */
-public class RateCovarianceStatistic extends Statistic.Abstract implements TreeStatistic {
+public class RateCovarianceStatistic extends TreeStatistic {
 
     public RateCovarianceStatistic(String name, Tree tree, BranchRateModel branchRateModel) {
         super(name);

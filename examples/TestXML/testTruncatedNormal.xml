@@ -1,0 +1,151 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+<!-- 	<parameter id="draw" value="2" lower="0.0"/> -->
+	<parameter id="draw" value="2.0 2.1" />
+	
+	<multivariateNormalDistributionModel id="normal">
+		<meanParameter>
+   			<parameter id="mu" value="0.5 0.5"/>
+ 		</meanParameter>
+ 		<precisionParameter>
+ 			<matrixParameter>
+				<parameter value="2.0 1.0"/>
+				<parameter value="1.0 2.0"/>
+			</matrixParameter>
+		</precisionParameter>
+	</multivariateNormalDistributionModel>
+
+	<multivariateDistributionLikelihood id="distribution">
+		<distribution>
+			<multivariateNormalDistributionModel idref="normal"/>
+		</distribution>
+		<data>
+			<parameter idref="draw"/>
+ 		</data>
+	</multivariateDistributionLikelihood>
+	
+   
+	<operators id="operators.rw">
+	
+        <randomWalkOperator windowSize="0.75" weight="1">
+            <parameter idref="draw"/>
+        </randomWalkOperator>
+
+	</operators>    
+        
+	
+	<operators id="operators.hmc">
+
+ 		<hamiltonianMonteCarloOperator mode="nuts"
+ 		weight="1" nSteps="10000" stepSize="0.1" drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="distribution"/>							
+			</gradient>
+			<parameter idref="draw"/>
+ 	</hamiltonianMonteCarloOperator>
+ 	
+
+
+	</operators>
+
+	<mcmc id="mcmc.hmc" chainLength="100" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>                
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc"/>
+		<log logEvery="1">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>                
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>			
+		</log>
+		<log logEvery="1000" fileName="testMvnHmc.log">
+			<likelihood idref="likelihood.hmc"/>           
+			<parameter idref="draw"/>        
+		</log>
+	</mcmc>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc.hmc"/>
+		</property>
+	</report>	
+	
+<!-- 
+	<mcmc id="mcmc.rw" chainLength="1000000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.rw">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>                
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.rw"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.rw"/>                
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>			
+		</log>
+		<log logEvery="1000" fileName="testMvnRw.log">
+			<likelihood idref="likelihood.rw"/>           
+			<parameter idref="draw"/>        
+		</log>
+	</mcmc>
+	 
+	<report>
+		<property name="timer">
+			<object idref="mcmc.rw"/>
+		</property>
+	</report>			
+ 
+	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>
+ -->	
+	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
+	
+</beast>
+
+<!-- Trunc > 0
+burnIn   <= 99900,   maxState  = 999000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.rw	-1.2746	0.6184	-1.0071	-2.5186	-0.9189	578.3643	-1.0071	-0.9189	
+draw	0.9961	0.6825	0.8725	0.0231	2.3108	590.6112	0.2217	1.0413	
+
+
+burnIn   <= 99900,   maxState  = 999000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmc	-1.3112	0.6177	-1.0386	-2.5168	-0.9189	769.3649	-1.0386	-0.9189	
+draw	1.0503	0.6944	0.9782	3.1565E-3	2.2876	901	0.135	1.094	
+-->
+
+<!--
+library(truncnorm)
+
+sample <- rtruncnorm(n = 1000000, a = 0, mean = 0.5, sd = sqrt(1/1))
+mean(sample)
+sqrt(var(sample))
+
+## 1.008
+## 0.697
+
+sample <- rtruncnorm(n = 1000000, b = 0, mean = 0.5, sd = sqrt(1/2))
+mean(sample)
+sqrt(var(sample))
+
+## -0.4161785
+## 0.3441607
+-->

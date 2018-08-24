@@ -38,19 +38,17 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
+public class KDENumericalDensityPlot extends NumericalDensityPlot {
     private final static boolean DEBUG = false;
 
-    public KDENumericalDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD) {
-        super(data, minimumBinCount, traceD); // TODO Remove when all linked together
+    protected static final int DEFAULT_KDE_BINS = 5000;
 
-//        kde = new GammaKDEDistribution(data);
-//
-//        System.err.println("Making KDE with " + minimumBinCount + " points");
-//
-//        Variate xData = getXCoordinates(minimumBinCount);
-//        Variate yData = getYCoordinates(xData);
-//        setData(xData, yData);
+    public KDENumericalDensityPlot(List<Double> data) {
+        super(data, DEFAULT_KDE_BINS);
+    }
+
+    public KDENumericalDensityPlot(List<Double> data, int minimumBinCount) {
+        super(data, minimumBinCount);
     }
 
     private KernelDensityEstimatorDistribution getKDE(Double[] samples) {
@@ -60,7 +58,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
         switch (type) {
             case GAUSSIAN: return new NormalKDEDistribution(samples);
             case GAMMA: return new GammaKDEDistribution(samples);
-            case LOGTRANSFORMEDGAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
+            case LOG_TRANSFORMED_GAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
             default:
                 throw new RuntimeException("Unknown type");
         }
@@ -172,6 +170,14 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
             points[i] = kde.pdf(xData.get(i));
         }
         return new Variate.D(points);
+    }
+
+    protected double getQuantile(double y) {
+        return kde.quantile(y);
+    }
+
+    protected double getDensity(double x) {
+        return kde.pdf(x);
     }
 
     private KernelDensityEstimatorDistribution kde;

@@ -88,11 +88,11 @@ public class TreeStatApp extends SingleDocApplication {
                     "<p>Department of Computer Science, University of Auckland<br>" +
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
                     "<p>Visit the BEAST page:<br>" +
-                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
+                    "<a href=\"http://beast.community\">http://beast.community</a></p>" +
                     "</center></html>";
 
-            String websiteURLString = "http://beast.bio.ed.ac.uk/";
-            String helpURLString = "http://beast.bio.ed.ac.uk/TreeStat/";
+            String websiteURLString = "http://beast.community";
+            String helpURLString = "http://beast.community/TreeStat";
 
             TreeStatApp app = new TreeStatApp(nameString, aboutString, icon,
                     websiteURLString, helpURLString);

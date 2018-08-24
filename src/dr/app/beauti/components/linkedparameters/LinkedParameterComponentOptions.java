@@ -26,9 +26,6 @@
 package dr.app.beauti.components.linkedparameters;
 
 import dr.app.beauti.options.*;
-import dr.app.beauti.priorsPanel.PriorsPanel;
-import dr.app.beauti.types.PriorScaleType;
-import dr.app.beauti.types.PriorType;
 
 import java.util.*;
 

@@ -79,7 +79,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         RandomLocalClockModel branchRateModel = new RandomLocalClockModel(treeModel, meanRateParameter,
                 rateIndicatorParameter, ratesParameter, false, 0.5);
 
-        SumStatistic rateChanges = new SumStatistic("rateChangeCount", true);
+        SumStatistic rateChanges = new SumStatistic("rateChangeCount", true, null);
         rateChanges.addStatistic(rateIndicatorParameter);
 
         RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatisticParser.MEAN);

@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -55,7 +55,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     public static final double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
 //    public IntegratedMultivariateTraitLikelihood(String traitName,
-//                                                 MultivariateTraitTree treeModel,
+//                                                 MutableTreeModel treeModel,
 //                                                 MultivariateDiffusionModel diffusionModel,
 //                                                 CompoundParameter traitParameter,
 //                                                 List<Integer> missingIndices,
@@ -69,7 +69,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //    }
 //
 //    public IntegratedMultivariateTraitLikelihood(String traitName,
-//                                                 MultivariateTraitTree treeModel,
+//                                                 MutableTreeModel treeModel,
 //                                                 MultivariateDiffusionModel diffusionModel,
 //                                                 CompoundParameter traitParameter,
 //                                                 Parameter deltaParameter,
@@ -86,7 +86,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected final CacheHelper cacheHelper;
 
     public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 MultivariateTraitTree treeModel,
+                                                 MutableTreeModel treeModel,
                                                  MultivariateDiffusionModel diffusionModel,
                                                  CompoundParameter traitParameter,
                                                  Parameter deltaParameter,
@@ -154,7 +154,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
 //    public IntegratedMultivariateTraitLikelihood(String traitName,
-//                                                 MultivariateTraitTree treeModel,
+//                                                 MutableTreeModel treeModel,
 //                                                 MultivariateDiffusionModel diffusionModel,
 //                                                 CompoundParameter traitParameter,
 //                                                 Parameter deltaParameter,
@@ -511,7 +511,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         areStatesRedrawn = false;
     }
 
-    void postOrderTraverse(MultivariateTraitTree treeModel, NodeRef node, double[][] precisionMatrix,
+    void postOrderTraverse(MutableTreeModel treeModel, NodeRef node, double[][] precisionMatrix,
                            double logDetPrecisionMatrix, boolean cacheOuterProducts) {
 
         final int thisNumber = node.getNumber();
@@ -1198,7 +1198,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                                      double conditionalRootPrecision);
 
 
-    private void preOrderTraverseSample(MultivariateTraitTree treeModel, NodeRef node, int parentIndex, double[][] treePrecision,
+    private void preOrderTraverseSample(MutableTreeModel treeModel, NodeRef node, int parentIndex, double[][] treePrecision,
                                         double[][] treeVariance) {
         //  System.err.println("preOrderTraverseSample got called!!");
         //  System.exit(-1);
@@ -1373,6 +1373,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         public void store() {
             // if (cacheBranches) {
+            if(storedMeanCache.length != meanCache.length)
+                storedMeanCache = new double[meanCache.length];
             System.arraycopy(meanCache, 0, storedMeanCache, 0, meanCache.length);
             // }
         }

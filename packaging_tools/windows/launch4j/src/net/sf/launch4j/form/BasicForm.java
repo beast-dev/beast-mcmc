@@ -229,7 +229,6 @@ public abstract class BasicForm extends JPanel
       _errorTitleField.setToolTipText(Messages.getString("errorTitleTip"));
       jpanel1.add(_errorTitleField,cc.xywh(4,24,7,1));
 
-      _downloadUrlLabel.setIcon(loadImage("images/asterix.gif"));
       _downloadUrlLabel.setName("downloadUrlLabel");
       _downloadUrlLabel.setText(Messages.getString("downloadUrl"));
       jpanel1.add(_downloadUrlLabel,cc.xy(2,26));

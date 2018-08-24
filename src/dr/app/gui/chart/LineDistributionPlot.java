@@ -52,14 +52,15 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
     /**
      * Paint actual plot
      */
+    @Override
     public void paintPlot(Graphics2D g2, double xScale, double yScale,
-                          double xOffset, double yOffset) {
+                          double xOffset, double yOffset, int plotNumber, int plotCount) {
 
         if (gradients == null || intercepts == null) {
             return;
         }
 
-        super.paintPlot(g2, xScale, yScale, xOffset, yOffset);
+        super.paintPlot(g2, xScale, yScale, xOffset, yOffset, plotNumber, plotCount);
 
         if (!isCalibrated) {
             x1 = xAxis.getMinAxis();
@@ -91,6 +92,7 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
+    @Override
     protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         // do nothing because paintPlot is overridden
 	}

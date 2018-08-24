@@ -27,6 +27,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
+import dr.evolution.util.Taxa;
 import dr.math.distributions.Distribution;
 
 import java.io.Serializable;
@@ -64,10 +65,10 @@ public class Parameter implements Serializable {
     public final boolean isHierarchical;
     public final boolean isCMTCRate;
     public final boolean isNonNegative;
-    public final boolean isMaintainedSum;
     public final boolean isZeroOne;
     public final boolean isCached;
     public final boolean isAdaptiveMultivariateCompatible;
+    public boolean isMaintainedSum;
     public boolean isCalibratedYule = false;
 //    public final double lower;
 //    public final double upper;
@@ -78,7 +79,10 @@ public class Parameter implements Serializable {
 
     public final boolean isPriorFixed;
     public PriorType priorType;
+
     private Parameter parent;
+
+    private Taxa taxonSet = null;
 
     public double getInitial() {
         return initial;
@@ -92,6 +96,7 @@ public class Parameter implements Serializable {
     private boolean isFixed;
     private double initial;
     public double maintainedSum;
+    public double dimension;
     public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;
@@ -129,12 +134,15 @@ public class Parameter implements Serializable {
 
         private PartitionOptions options = null;
 
+        private Taxa taxonSet = null;
+
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private boolean isPriorFixed = false;
 
         private boolean isAdaptiveMultivariateCompatible = false;
 
         private double maintainedSum = 1.0;
+        private double dimension = 1;
         private double initial = Double.NaN;
         //        private double upper = Double.NaN;
 //        private double lower = Double.NaN;
@@ -178,6 +186,7 @@ public class Parameter implements Serializable {
             isPriorFixed = source.isPriorFixed;
             isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
+            dimension = source.dimension;
             maintainedSum = source.maintainedSum;
             isTruncated = source.isTruncated;
             truncationUpper = source.truncationUpper;
@@ -202,6 +211,11 @@ public class Parameter implements Serializable {
 
         public Builder initial(double initial) {
             this.initial = initial;
+            return this;
+        }
+
+        public Builder dimension(int dimension) {
+            this.dimension = dimension;
             return this;
         }
 
@@ -236,6 +250,10 @@ public class Parameter implements Serializable {
             return this;
         }
 
+        public Builder taxonSet(Taxa taxonSet) {
+            this.taxonSet = taxonSet;
+            return this;
+        }
         public Builder prior(PriorType priorType) {
             this.priorType = priorType;
             return this;
@@ -368,6 +386,7 @@ public class Parameter implements Serializable {
         scaleType = builder.scaleType;
         initial = builder.initial;
         maintainedSum = builder.maintainedSum;
+        dimension = builder.dimension;
         taxaId = builder.taxaId;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
@@ -384,6 +403,8 @@ public class Parameter implements Serializable {
         isPriorFixed = builder.isPriorFixed;
         isAdaptiveMultivariateCompatible = builder.isAdaptiveMultivariateCompatible;
 
+        taxonSet = builder.taxonSet;
+        
 //        upper = builder.upper;
 //        lower = builder.lower;
         isTruncated = builder.isTruncated;
@@ -404,6 +425,10 @@ public class Parameter implements Serializable {
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++
+    public String getPrefix() {
+        return prefix;
+    }
+
     public void setPrefix(String prefix) {
         this.prefix = prefix;
     }
@@ -443,7 +468,7 @@ public class Parameter implements Serializable {
 
     public String getDescription() {
         if (taxaId != null && options != null) {
-            return description + " on tree " + options.getName();
+            return description + " " + taxaId + " on tree " + options.getName();
         }
         return description;
     }
@@ -474,6 +499,15 @@ public class Parameter implements Serializable {
         this.options = options;
     }
 
+    public Taxa getTaxonSet() {
+        return taxonSet;
+    }
+
+    public void setTaxonSet(Taxa taxonSet) {
+        this.taxonSet = taxonSet;
+    }
+
+
     public void setPriorEdited(boolean priorEdited) {
         this.priorEdited = priorEdited;
     }
@@ -498,7 +532,7 @@ public class Parameter implements Serializable {
     public double getLowerBound() {
         double lower = Double.NEGATIVE_INFINITY;
 
-        if (priorType == PriorType.UNIFORM_PRIOR) {
+        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.DISCRETE_UNIFORM_PRIOR) {
             lower = uniformLower;
         }
 
@@ -522,7 +556,7 @@ public class Parameter implements Serializable {
             }
         }
 
-        if (priorType == PriorType.UNIFORM_PRIOR) {
+        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.DISCRETE_UNIFORM_PRIOR) {
             upper = uniformUpper;
         }
 
@@ -543,7 +577,7 @@ public class Parameter implements Serializable {
         }
     }
 
-    public boolean isMeanInRealSpace() {
+    public boolean isInRealSpace() {
         return meanInRealSpace;
     }
 

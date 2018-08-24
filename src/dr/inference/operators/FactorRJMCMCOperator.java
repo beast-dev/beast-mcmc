@@ -25,13 +25,14 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     private double[] separator;
     SimpleMCMCOperator loadingsOperator;
     SimpleMCMCOperator factorOperator;
-    BitFlipOperator sparsityOperator;
+    SimpleMCMCOperator sparsityOperator;
     SimpleMCMCOperator NOp;
     AdaptableSizeFastMatrixParameter storedFactors;
     AdaptableSizeFastMatrixParameter storedLoadings;
     AdaptableSizeFastMatrixParameter storedCutoffs;
     AdaptableSizeFastMatrixParameter storedLoadingsSparsity;
     MatrixSizePrior rowPrior;
+    LatentFactorModelPrecisionGibbsOperator precisionGibbsOperator;
 
     private final int BASE_SIZE = 1000;
     private final double MIN_WEIGHT = .01;
@@ -40,7 +41,13 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     public static final boolean DEBUG = false;
 
 
-    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm, DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior, SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator, BitFlipOperator sparsityOperator, SimpleMCMCOperator NOp, MatrixSizePrior rowPrior) {
+    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors,
+                                AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs,
+                                AdaptableSizeFastMatrixParameter loadingsSparsity, AbstractModelLikelihood lfm,
+                                DeterminentalPointProcessPrior sparsityPrior, Likelihood loadingsPrior,
+                                SimpleMCMCOperator loadingsOperator, SimpleMCMCOperator factorOperator,
+                                SimpleMCMCOperator sparsityOperator, SimpleMCMCOperator NOp, MatrixSizePrior rowPrior,
+                                LatentFactorModelPrecisionGibbsOperator precisionGibbsOperator) {
         setWeight(weight);
         this.factors = factors;
         this.loadings = loadings;
@@ -66,6 +73,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         this.sparsityOperator = sparsityOperator;
         this.rowPrior = rowPrior;
         this.loadingsPrior = loadingsPrior;
+        this.precisionGibbsOperator = precisionGibbsOperator;
         storeDimensions();
     }
 
@@ -121,6 +129,13 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 
         double random = MathUtils.nextDouble();
         double from1 = 0;
+
+
+//        System.out.println("Before");
+//        System.out.println(lfm.getLogLikelihood() * (1 - sizeParam));
+//        System.out.println(rowPrior.getSizeLogLikelihood());
+
+
         double initialLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getSizeLogLikelihood();
         boolean increment;
 
@@ -200,6 +215,13 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 //            outpu += " ";
 //        }
 //        System.out.println(outpu);
+
+
+//        System.out.println("After");
+//        System.out.println(lfm.getLogLikelihood() * (1 - sizeParam));
+//        System.out.println(rowPrior.getSizeLogLikelihood());
+
+
         double finalLikelihood = lfm.getLogLikelihood() * (1 - sizeParam) + rowPrior.getSizeLogLikelihood();
 //        try {
 //            iterate();
@@ -243,6 +265,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         if(random < test && (!allRowZero || !increment)){
             if (DEBUG) {
                 System.out.println("accepted!\n" + test);
+                System.out.println(random);
+                System.out.println(test);
             }
             lfm.acceptModelState();
             lfm.makeDirty();
@@ -287,6 +311,8 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                 loadingsSparsity.storeParameterValues();
             if(cutoffs != null)
                 cutoffs.storeParameterValues();
+            lfm.acceptModelState();
+            lfm.storeModelState();
             if (DEBUG) {
                 System.out.println("rejected!\n" + test);
             }
@@ -299,8 +325,10 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             factorOperator.setPathParameter(sizeParam);
         if(loadingsOperator instanceof GibbsOperator)
             loadingsOperator.setPathParameter(sizeParam);
+        if(precisionGibbsOperator != null)
+            precisionGibbsOperator.setPathParameter(sizeParam);
 //        if(separator == null){
-            separator = new double[3];
+            separator = new double[4];
             double foWeight = 0;
             if(factorOperator != null)
                 foWeight = factors.getColumnDimension() * chainLength;
@@ -324,12 +352,17 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             ) * chainLength;
         double negWeight = 0;
         if(NOp !=null)
-            negWeight = (loadings.getRowDimension() * loadings.getColumnDimension()) * chainLength;;
+            negWeight = (loadings.getRowDimension() * loadings.getColumnDimension()) * chainLength;
+        double precWeight = 0;
+        if(precisionGibbsOperator != null){
+            precWeight = chainLength;
+        }
 
-            double total = foWeight + loWeight + sparoWeight + negWeight;
+            double total = foWeight + loWeight + sparoWeight + negWeight + precWeight;
             separator[0] = foWeight / total;
             separator[1] = (foWeight + loWeight) / total;
             separator[2] = (foWeight + loWeight + sparoWeight) / total;
+            separator[3] = (foWeight + loWeight + sparoWeight + negWeight)/total;
 //        }
         for (int i = 0; i < total; i++) {
             double rand = MathUtils.nextDouble();
@@ -383,7 +416,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
 //                    sparsityPrior.makeDirty();
                 }
             }
-            else {
+            else if (rand < separator[3]){
                 lfm.storeModelState();
                 if (loadingsPrior instanceof AbstractModelLikelihood)
                     ((AbstractModelLikelihood) loadingsPrior).storeModelState();
@@ -403,12 +436,18 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
                         ((AbstractModelLikelihood) loadingsPrior).acceptModelState();
                 }
             }
+            else{
+                if(precisionGibbsOperator != null)
+                    precisionGibbsOperator.doOperation();
+            }
 
         }
         if(factorOperator != null)
             factorOperator.setPathParameter(1);
         if(loadingsOperator instanceof GibbsOperator)
          loadingsOperator.setPathParameter(1);
+        if(precisionGibbsOperator != null)
+            precisionGibbsOperator.setPathParameter(1);
     }
 
     private void storeDimensions(){
@@ -473,10 +512,5 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
             if(cutoffs != null)
                 cutoffs.setParameterValue(i, storedCutoffs.getParameterValue(i));
         }
-    }
-
-    @Override
-    public int getStepCount() {
-        return 0;
     }
 }

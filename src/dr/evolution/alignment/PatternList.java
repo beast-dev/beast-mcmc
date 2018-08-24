@@ -63,11 +63,26 @@ public interface PatternList extends TaxonList, Identifiable {
     int[] getPattern(int patternIndex);
 
     /**
+     * Gets the pattern as an array of state frequency vectors (one per sequence)
+     *
+     * @param patternIndex the index of the pattern to return
+     * @return the site pattern at patternIndex
+     */
+    double[][] getUncertainPattern(int patternIndex);
+
+    /**
      * @param taxonIndex   the taxon
      * @param patternIndex the pattern
      * @return state at (taxonIndex, patternIndex)
      */
     int getPatternState(int taxonIndex, int patternIndex);
+
+    /**
+     * @param taxonIndex   the taxon
+     * @param patternIndex the pattern
+     * @return state frequency vector at (taxonIndex, patternIndex)
+     */
+    double[] getUncertainPatternState(int taxonIndex, int patternIndex);
 
     /**
      * Gets the weight of a site pattern
@@ -97,6 +112,12 @@ public interface PatternList extends TaxonList, Identifiable {
      * @return are unique?
      */
     boolean areUnique();
+
+    /**
+     * Do the patterns contain any uncertain states?
+     * @return are uncertain?
+     */
+    boolean areUncertain();
 
     /**
      * Helper routines for pattern lists.

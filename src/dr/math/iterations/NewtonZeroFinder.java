@@ -25,6 +25,7 @@
 
 package dr.math.iterations;
 
+import dr.math.MathUtils;
 import dr.math.functionEval.DrMath;
 import dr.math.functionEval.FunctionDerivative;
 import dr.math.interfaces.OneVariableFunction;
@@ -89,7 +90,7 @@ public void initializeIterations()
 	{
 		if ( ++n > getMaximumIterations() )
 			break;
-		result += Math.random();
+		result += MathUtils.nextDouble();
 	}
 }
 /**

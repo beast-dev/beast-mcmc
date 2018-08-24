@@ -135,7 +135,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 					"Couldn't find another proposal with a decent likelihood.");
 		}
 
-		double ran = Math.random() * sum;
+		double ran = MathUtils.nextDouble() * sum;
 		int index = 0;
 		while (ran > 0.0) {
 			ran -= probabilities.get(index);
@@ -215,7 +215,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 					"Couldn't find another proposal with a decent likelihood.");
 		}
 
-		double ran = Math.random() * sum;
+		double ran = MathUtils.nextDouble() * sum;
 		int index = 0;
 		while (ran > 0.0) {
 			ran -= probabilities.get(index);

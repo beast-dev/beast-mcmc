@@ -32,6 +32,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -82,6 +83,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
+    private static final String RESOURCE_AUTO_PROPERTY = "beagle.resource.auto";
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
@@ -315,6 +317,59 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 throw new RuntimeException("Pattern state count (" + stateCount
                         + ") does not match substitution model state count (" + stateCount2 + ")");
             }
+
+            if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+
+            // start auto resource selection
+            String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+
+                long benchmarkFlags = 0;
+
+                if (this.rescalingScheme == PartialsRescalingScheme.NONE) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_NONE.getMask();
+                } else if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_ALWAYS.getMask();
+                } else {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
+                }
+
+                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for  analysis or partition... ");
+
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails = 
+                                                    BeagleFactory.getBenchmarkedResourceDetails(
+                                                                                tipCount,
+                                                                                compactPartialsCount,
+                                                                                stateCount,
+                                                                                patternCount,
+                                                                                categoryCount,
+                                                                                resourceList,
+                                                                                preferenceFlags,
+                                                                                requirementFlags,
+                                                                                1, // eigenModelCount,
+                                                                                1, // partitionCount,
+                                                                                0, // calculateDerivatives,
+                                                                                benchmarkFlags);
+
+
+                logger.info(" Benchmark results, from fastest to slowest:");
+
+                for (BenchmarkedResourceDetails benchmarkedResource : benchmarkedResourceDetails) {
+                    logger.info(benchmarkedResource.toString());
+                }
+
+                resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
+            }
+            // end auto resource selection
 
             instanceCount++;
 
@@ -668,18 +723,18 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         fireModelChanged();
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
+            if (object instanceof TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                if (((TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes
                     // are flagged for updating (this will result in everything
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
                     updateRestrictedNodePartials = true;
 
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
 //                    System.err.println("Full tree update event - these events currently aren't used\n" +

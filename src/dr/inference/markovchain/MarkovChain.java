@@ -1,7 +1,7 @@
 /*
  * MarkovChain.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,6 +34,7 @@ import dr.inference.operators.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -143,11 +144,15 @@ public final class MarkovChain implements Serializable {
             }
             throw new IllegalArgumentException(message);
         } else if (currentScore == Double.POSITIVE_INFINITY || Double.isNaN(currentScore)) {
-            String message = "A likelihood returned with a numerical error";
+            String message = "A likelihood returned with a numerical error (" + currentScore + ")";
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
             } else {
                 message += ".";
+                Set<Likelihood> lSet = likelihood.getLikelihoodSet();
+                for (Likelihood l : lSet) {
+                    message += "\n  " + l.prettyName() + " = " + l.getLogLikelihood();
+                }
             }
             throw new IllegalArgumentException(message);
         }
@@ -274,6 +279,22 @@ public final class MarkovChain implements Serializable {
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
                     if (!(mcmcOperator instanceof GibbsIndependentNormalDistributionOperator) && !(mcmcOperator instanceof GibbsIndependentGammaOperator) && !(mcmcOperator instanceof GibbsIndependentCoalescentOperator) && !(mcmcOperator instanceof GibbsIndependentJointNormalGammaOperator)) {
+                        if (DEBUG) {
+                            if (likelihood instanceof CompoundLikelihood) {
+                                CompoundLikelihood cpl = (CompoundLikelihood) likelihood;
+                                System.out.println("\nDEBUG CompoundLikelihood:");
+                                for (Likelihood l : cpl.getLikelihoods()) {
+                                    if (l instanceof CompoundLikelihood) {
+                                        CompoundLikelihood l2 = (CompoundLikelihood)l;
+                                        for (Likelihood lTwo : l2.getLikelihoods()) {
+                                            System.out.println("\t" + lTwo.prettyName() + " = " + lTwo.getLogLikelihood());
+                                        }
+                                    }
+                                    System.out.println(l.prettyName() + " = " + l.getLogLikelihood());
+                                }
+                                System.out.println("Total likelihood = " + cpl.getLogLikelihood() + "\n");
+                            }
+                        }
                         Logger.getLogger("error").severe("State " + currentState + ": A Gibbs operator, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
                     }
                 }
@@ -285,6 +306,23 @@ public final class MarkovChain implements Serializable {
                                 ((CompoundLikelihood)likelihood).getDiagnosis());
                     } else {
                         Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error.");
+                    }
+
+                    if (DEBUG) {
+                        if (likelihood instanceof CompoundLikelihood) {
+                            CompoundLikelihood cpl = (CompoundLikelihood) likelihood;
+                            System.out.println("\nDEBUG CompoundLikelihood:");
+                            for (Likelihood l : cpl.getLikelihoods()) {
+                                if (l instanceof CompoundLikelihood) {
+                                    CompoundLikelihood l2 = (CompoundLikelihood) l;
+                                    for (Likelihood lTwo : l2.getLikelihoods()) {
+                                        System.out.println("\t" + lTwo.prettyName() + " = " + lTwo.getLogLikelihood());
+                                    }
+                                }
+                                System.out.println(l.prettyName() + " = " + l.getLogLikelihood());
+                            }
+                            System.out.println("Total likelihood = " + cpl.getLogLikelihood() + "\n");
+                        }
                     }
 
                     // If the user has chosen to ignore this error then we transform it
@@ -343,7 +381,7 @@ public final class MarkovChain implements Serializable {
             } else {
                 if (DEBUG) {
                     System.out.println("** Move rejected: new score = " + score
-                            + ", old score = " + oldScore);
+                            + ", old score = " + oldScore + " (logr = " + logr[0] + ")");
                 }
 
                 mcmcOperator.reject();

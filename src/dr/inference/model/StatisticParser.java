@@ -36,13 +36,14 @@ import dr.xml.*;
 public class StatisticParser extends dr.xml.AbstractXMLObjectParser {
 	
 	public final static String STATISTIC = "statistic";
+	public final static String NAME = "name";
 
 	public String getParserName() { return STATISTIC; }
 
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		final StatisticList statList = (StatisticList)xo.getChild(StatisticList.class);
-		final String name = xo.getStringAttribute("name");
+		final String name = xo.getStringAttribute(NAME);
 		final Statistic stat = statList.getStatistic(name);
 		if (stat == null) {
 			StringBuffer buffer = new StringBuffer("Unknown statistic name, " + name + "\n");
@@ -69,7 +70,7 @@ public class StatisticParser extends dr.xml.AbstractXMLObjectParser {
 	public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 	
 	private final XMLSyntaxRule[] rules = {
-		new StringAttributeRule("name", "The name of the statistic you wish to extract from the given object"),
+		new StringAttributeRule(NAME, "The name of the statistic you wish to extract from the given object"),
 		new ElementRule(StatisticList.class)
 	};
 }

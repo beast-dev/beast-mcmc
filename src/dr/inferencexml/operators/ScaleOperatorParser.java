@@ -43,6 +43,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
     public static final String DEGREES_OF_FREEDOM = "df";
     public static final String INDICATORS = "indicators";
     public static final String PICKONEPROB = "pickoneprob";
+    public static final String IGNORE_BOUNDS = "ignoreBounds";
 
     public String getParserName() {
         return SCALE_OPERATOR;
@@ -53,6 +54,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         final boolean scaleAll = xo.getAttribute(SCALE_ALL, false);
         final boolean scaleAllInd = xo.getAttribute(SCALE_ALL_IND, false);
         final int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
+        final boolean ignoreBounds = xo.getAttribute(IGNORE_BOUNDS, false);
 
         final CoercionMode mode = CoercionMode.parseMode(xo);
 
@@ -65,12 +67,42 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
 
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         Bounds<Double> bounds = parameter.getBounds();
+
+        Boolean negativeSpace = null;
+
         for (int dim = 0; dim < parameter.getDimension(); dim++) {
-            if (bounds.getLowerLimit(dim) < 0.0) {
-                throw new XMLParseException("Scale operator can only be used on parameters with a lower bound of zero (" + parameter.getId() + ")");
-            }
-            if (!Double.isInfinite(bounds.getUpperLimit(dim))) {
-                throw new XMLParseException("Scale operator can't be used on parameters with a finite upper bound (use a RandomWalk) (" + parameter.getId() + ")");
+
+            if (parameter.getParameterValue(dim) < 0.0) {
+                // the parameter is in negative space
+
+                if (negativeSpace != null && !negativeSpace) {
+                    throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
+                }
+
+                negativeSpace = true;
+
+                if (bounds.getUpperLimit(dim) > 0.0) {
+                    throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
+                }
+                if (!ignoreBounds && !Double.isInfinite(bounds.getLowerLimit(dim))) {
+                    throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
+                }
+            } else if (parameter.getParameterValue(dim) > 0.0) {
+                if (negativeSpace != null && negativeSpace) {
+                    throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
+                }
+
+                negativeSpace = false;
+
+                if (bounds.getLowerLimit(dim) < 0.0) {
+                    throw new XMLParseException("Scale operator can only be used on parameters constrained to be strictly positive or negative (" + parameter.getId() + ")");
+                }
+                if (!ignoreBounds && !Double.isInfinite(bounds.getUpperLimit(dim))) {
+                    throw new XMLParseException("Scale operator can only be used on parameters with an infinite upper or lower bound (use a RandomWalk) (" + parameter.getId() + ")");
+                }
+            } else {
+                // disallow zero starting values
+                throw new XMLParseException("Scale operator can only be used on parameters where all elements are strictly positive or negative (" + parameter.getId() + ")");
             }
         }
 
@@ -118,6 +150,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(DEGREES_OF_FREEDOM, true),
+            AttributeRule.newBooleanRule(IGNORE_BOUNDS, true),
 
             new ElementRule(Parameter.class),
             new ElementRule(INDICATORS,

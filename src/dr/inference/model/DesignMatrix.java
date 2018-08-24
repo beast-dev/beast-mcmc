@@ -56,8 +56,12 @@ public class DesignMatrix extends MatrixParameter {
         standardizationKnown = false;
     }
 
+    protected double getRawParameterValue(int row, int col) {
+        return super.getParameterValue(row, col);
+    }
+
     public double getParameterValue(int row, int col) {
-        double value = super.getParameterValue(row, col);
+        double value = getRawParameterValue(row, col);
         if (dynamicStandardization) {
             if (!standardizationKnown) {
                 computeStandarization();

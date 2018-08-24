@@ -315,10 +315,5 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	public String getPerformanceSuggestion() {
 		return null;
 	}// END: getPerformanceSuggestion
-
-	@Override
-	public int getStepCount() {
-		return realizationCount;
-	}// END: getStepCount
-
+	
 }// END: class

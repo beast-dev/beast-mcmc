@@ -69,7 +69,6 @@ import net.sf.launch4j.Util;
 import net.sf.launch4j.binding.Binding;
 import net.sf.launch4j.binding.BindingException;
 import net.sf.launch4j.binding.InvariantViolationException;
-import net.sf.launch4j.config.Config;
 import net.sf.launch4j.config.ConfigPersister;
 import net.sf.launch4j.config.ConfigPersisterException;
 
@@ -226,7 +225,7 @@ public class MainFrame extends JFrame {
 	}
 
 	private void showConfigName(File config) {
-		setTitle(Main.getName() + " - " 	+ (config != null ? config.getName()
+		setTitle(Main.getName() + " - " + (config != null ? config.getName()
 						: Messages.getString("MainFrame.untitled")));
 	}
 
@@ -309,8 +308,8 @@ public class MainFrame extends JFrame {
 				ConfigPersister.getInstance().getConfig().checkInvariants();
 				Builder b = new Builder(log);
 				_outfile = b.build();
-				setRunEnabled(ConfigPersister.getInstance().getConfig()
-						.getHeaderType() == Config.GUI_HEADER	// TODO fix console app test
+				setRunEnabled(ConfigPersister.getInstance().getConfig().isGuiApplication()
+						// TODO fix console app test
 						&& (Util.WINDOWS_OS || !ConfigPersister.getInstance()
 												.getConfig().isDontWrapJar()));
 			} catch (InvariantViolationException ex) {

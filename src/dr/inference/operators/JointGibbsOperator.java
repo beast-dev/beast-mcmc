@@ -41,10 +41,5 @@ public class JointGibbsOperator extends JointOperator implements GibbsOperator {
         super(weight, 1);
     }
 
-
-    @Override
-    public int getStepCount() {
-        return 1;
-    }
 }
 

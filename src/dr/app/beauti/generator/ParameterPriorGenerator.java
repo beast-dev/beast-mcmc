@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -39,7 +40,6 @@ import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -57,15 +57,13 @@ public class ParameterPriorGenerator extends Generator {
     /**
      * Write the priors for each parameter
      *
-     * @param useStarBEAST
      * @param writer       the writer
      */
-    public void writeParameterPriors(XMLWriter writer, boolean useStarBEAST) {
+    public void writeParameterPriors(XMLWriter writer) {
         boolean first = true;
 
-        Map<Taxa, Boolean> taxonSetsMono = useStarBEAST ? options.speciesSetsMono : options.taxonSetsMono;
 
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : taxonSetsMono.entrySet()) {
+        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
@@ -81,34 +79,20 @@ public class ParameterPriorGenerator extends Generator {
 
         List<Parameter> parameters = options.selectParameters();
 
-        if (useStarBEAST) {
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
+
+        for (Parameter parameter : parameters) {
+            if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
+                    parameter.priorType == PriorType.NONE_FIXED ||
+                    parameter.priorType == PriorType.NONE_STATISTIC)) {
+                if (parameter.isCached) {
+                    writeCachedParameterPrior(parameter, writer);
+                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                    writeParameterPrior(parameter, writer);
                 }
             }
-
-        } else {
-
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
-                        parameter.priorType == PriorType.NONE_FIXED ||
-                        parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
-                }
-            }
-
         }
+
     }
 
     private void writeCachedParameterPrior(Parameter parameter, XMLWriter writer) {
@@ -127,19 +111,39 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        if (parameter.priorType != PriorType.NONE_FIXED && parameter.isTruncated) {
-            // if there is a truncation then put it at the top so it short-circuits any other prior
-            // calculations
+        if (parameter.priorType == PriorType.NONE_FIXED) {
+            return;
+        }
 
-            // todo: We should switch this to truncatedDistribution so that the density is normalized correctly
+        boolean isTruncated = parameter.isTruncated;
+        if (isTruncated) {
+            Attribute[] attributes = null;
 
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+            if (!Double.isInfinite(parameter.truncationLower)) {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                    };
+                }
+            } else {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    // both are infinite so there is no trunction
+                    isTruncated = false;
+                }
+            }
+
+            if (isTruncated) {
+                writer.writeOpenTag(PriorParsers.TRUNCATED, attributes);
+            }
         }
 
         switch (parameter.priorType) {
@@ -147,6 +151,15 @@ public class ParameterPriorGenerator extends Generator {
                 break;
             case NONE_IMPROPER:
                 writer.writeComment("Improper uniform prior: " + parameter.getName());
+                break;
+            case DISCRETE_UNIFORM_PRIOR:
+                writer.writeOpenTag(PriorParsers.DISCRETE_UNIFORM_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.DISCRETE_UNIFORM_PRIOR);
                 break;
             case UNIFORM_PRIOR:
                 if (parameter.isPriorImproper()) {
@@ -190,13 +203,23 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
             case LOGNORMAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
-                                new Attribute.Default<Boolean>(PriorParsers.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace())
-                        });
+                if (parameter.isInRealSpace()) {
+                    writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                    new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev),
+                                    new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
+                            });
+                } else {
+                    // if the log normal parameters are not set in real space then the parameter use the mu
+                    // and sigma parameters (the mean and stdev of the underlying normal).
+                    writer.writeOpenTag(PriorParsers.LOG_NORMAL_PRIOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(PriorParsers.MU, "" + parameter.mean),
+                                    new Attribute.Default<String>(PriorParsers.SIGMA, "" + parameter.stdev),
+                                    new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset),
+                            });
+                }
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.LOG_NORMAL_PRIOR);
                 break;
@@ -252,17 +275,44 @@ public class ParameterPriorGenerator extends Generator {
                 // Find correct tree for this rate parameter
 
                 PartitionTreeModel treeModel = null;
-                for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                    if (pcm.getClockRateParameter() == parameter) {
-                        for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
-                            treeModel = pd.getPartitionTreeModel();
-                            break;
+
+                if (parameter.getTaxonSet() != null) {
+                    treeModel = options.taxonSetsTreeModel.get(parameter.getTaxonSet());
+                } else {
+                    for (PartitionClockModel pcm : options.getPartitionClockModels()) {
+                        if (pcm.performModelAveraging()) {
+                            treeModel = pcm.getPartitionTreeModel();
+                        } else if (pcm.getClockRateParameter() == parameter) {
+                            for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
+                                treeModel = pd.getPartitionTreeModel();
+                                break; // todo - This breaks after the first iteration. Why a loop?
+                            }
                         }
                     }
                 }
                 if (treeModel == null) {
                     throw new IllegalArgumentException("No tree model found for clock model");
                 }
+
+                PartitionClockModel pcm = (PartitionClockModel)parameter.getOptions();
+                if (pcm.getClockType() == ClockType.FIXED_LOCAL_CLOCK) {
+                    if (parameter.getTaxonSet() != null) {
+                        writer.writeIDref("taxa", parameter.getTaxonSet().getId());
+                    } else {
+                        writer.writeOpenTag("taxa");
+                        writer.writeIDref("taxa", "taxa");
+                        writer.writeOpenTag("exclude");
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                writer.writeIDref("taxa", taxonSet.getId());
+                            }
+                        }
+                        writer.writeCloseTag("exclude");
+                        writer.writeCloseTag("taxa");
+
+                    }
+                }
+
                 writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
                 break;
@@ -271,12 +321,6 @@ public class ParameterPriorGenerator extends Generator {
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
             case DIRICHLET_PRIOR:
-                // at the moment I don't think we want anything other than Dirichlet(1, ..., 1)
-//                int dimensions = parameter.getParameterDimensionWeights().length;
-//                String counts = "1.0";
-//                for (int i = 1; i < dimensions; i++) {
-//                    counts += " 1.0";
-//                }
                 writer.writeOpenTag(PriorParsers.DIRICHLET_PRIOR,
                         new Attribute[]{
                                 new Attribute.Default<String>(PriorParsers.ALPHA, "1.0"),
@@ -289,6 +333,11 @@ public class ParameterPriorGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
+
+        if (isTruncated) {
+            writer.writeCloseTag(PriorParsers.TRUNCATED);
+        }
+
     }
 
     private void writeParameterIdref(XMLWriter writer, Parameter parameter) {

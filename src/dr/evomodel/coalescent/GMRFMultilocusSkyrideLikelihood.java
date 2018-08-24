@@ -99,6 +99,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skygrid");
+        if (treeList.size() > 1) {
+            this.addKeyword("multilocus");
+        }
 
         this.popSizeParameter = popParameter;
         this.groupSizeParameter = groupParameter;
@@ -202,6 +208,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            List<Parameter> betaList) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+
+        // adding the key word to the the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("skygrid");
+        if (treeList.size() > 1) {
+            this.addKeyword("multilocus");
+        }
 
         this.gridPoints = specGridPoints.getParameterValues();
         this.numGridPoints = gridPoints.length;
@@ -923,7 +936,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                 if (covariates != null) {
                     if (beta.size() != covariates.size()) {
-                        throw new RuntimeException("beta.size() != covariates.size()");
+                        throw new RuntimeException("beta.size(" + beta.size() + ") != covariates.size(" + covariates.size() + ")");
                     }
 
                     for (int k = 0; k < beta.size(); ++k) {
@@ -934,7 +947,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                         if ((J != covariate.getRowDimension()) ||
                                 (N != covariate.getColumnDimension())) { // Note: XML current has covariates transposed
-                            throw new RuntimeException("Incorrect dimensions in " + covariate.getId());
+                            throw new RuntimeException("Incorrect dimensions in " + covariate.getId() + " (r=" + covariate.getRowDimension() +
+                                    ",c=" + covariate.getColumnDimension()+ ")");
                         }
 
                         for (int i = 0; i < N; ++i) {

@@ -49,6 +49,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -62,6 +63,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
+    private static final String RESOURCE_AUTO_PROPERTY = "beagle.resource.auto";
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
@@ -280,6 +282,59 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+
+            // start auto resource selection
+            String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+
+                long benchmarkFlags = 0;
+
+                if (this.rescalingScheme == PartialsRescalingScheme.NONE) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_NONE.getMask();
+                } else if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_ALWAYS.getMask();
+                } else {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
+                }
+
+                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
+
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails = 
+                                                    BeagleFactory.getBenchmarkedResourceDetails(
+                                                                                tipCount,
+                                                                                compactPartialsCount,
+                                                                                stateCount,
+                                                                                patternCount,
+                                                                                categoryCount,
+                                                                                resourceList,
+                                                                                preferenceFlags,
+                                                                                requirementFlags,
+                                                                                1, // eigenModelCount,
+                                                                                1, // partitionCount,
+                                                                                0, // calculateDerivatives,
+                                                                                benchmarkFlags);
+
+
+                logger.info(" Benchmark results, from fastest to slowest:");
+
+                for (BenchmarkedResourceDetails benchmarkedResource : benchmarkedResourceDetails) {
+                    logger.info(benchmarkedResource.toString());
+                }
+
+                resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
+            }
+            // end auto resource selection
+
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
                     partialBufferHelper.getBufferCount(),
@@ -321,12 +376,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
-            if (patternList instanceof UncertainSiteList) {
+            if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+
+            if (patternList.areUncertain() && !useAmbiguities) {
+                logger.info("  WARNING: Uncertain site patterns will be ignored.");
+            }
 
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
@@ -377,6 +436,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+
+        instanceCount++;
     }
 
     @Override
@@ -397,6 +458,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public int getTraitDim() {
         return patternCount;
+    }
+
+    @Override
+    public RateRescalingScheme getRateRescalingScheme() {
+        return RateRescalingScheme.NONE;
     }
 
     public PatternList getPatternList() {
@@ -457,19 +523,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                    int nodeIndex) {
         double[] partials = new double[patternCount * stateCount * categoryCount];
 
-        boolean[] stateSet;
-
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
-
+            
             if (patternList instanceof UncertainSiteList) {
                 ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
                 v += stateCount;
                 // TODO Add this functionality to SimpleSiteList to avoid if statement here
-            } else {
+            } else if (patternList.areUncertain()) {
 
+                double[] prob = patternList.getUncertainPatternState(sequenceIndex, i);
+                System.arraycopy(prob, 0, partials, v, stateCount);
+                v += stateCount;
+
+            } else {
                 int state = patternList.getPatternState(sequenceIndex, i);
-                stateSet = dataType.getStateSet(state);
+                boolean[] stateSet = dataType.getStateSet(state);
 
                 for (int j = 0; j < stateCount; j++) {
                     if (stateSet[j]) {
@@ -537,18 +606,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         beagle.setTipStates(nodeIndex, states);
     }
-
-
-    //    public void setStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:setStates");
-//        beagle.setTipStates(tipIndex, states);
-//        makeDirty();
-//    }
-//
-//    public void getStates(int tipIndex, int[] states) {
-//        System.err.println("BTL:getStates");
-//        beagle.getTipStates(tipIndex, states);
-//    }
 
     /**
      * Calculate the log likelihood of the current state.
@@ -885,6 +942,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
         // Callback not necessary
+    }
+
+    @Override
+    public int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

@@ -196,4 +196,3 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
 
 }
-

@@ -25,6 +25,7 @@
 
 package dr.geo;
 
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 
 import javax.swing.*;
@@ -136,7 +137,7 @@ public class VisualizeBrownianBridge2D extends JComponent {
         AffineTransform transform = getFullTransform();
 
         for (int r = 0; r < getTrials(); r++) {
-            Color c = new Color((float) Math.random(), (float) Math.random(), (float) Math.random());
+            Color c = new Color((float) MathUtils.nextDouble(), (float) MathUtils.nextDouble(), (float)  MathUtils.nextDouble());
 
             for (int s = 0; s < start.length; s++) {
                 List<SpaceTime> points = null;

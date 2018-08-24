@@ -26,7 +26,7 @@
 package dr.app.beauti.components.hpm;
 
 import dr.app.beauti.options.*;
-import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.priorspanel.PriorsPanel;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 

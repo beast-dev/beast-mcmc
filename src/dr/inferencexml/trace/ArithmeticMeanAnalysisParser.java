@@ -111,7 +111,7 @@ public class ArithmeticMeanAnalysisParser extends AbstractXMLObjectParser {
             }
 
             // Get samples and perform analysis
-            List<Double> sample = traces.getValues(traceIndex);
+            List<Double> sample = (List)traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), (int)burnin, analysisType, bootstrapLength);

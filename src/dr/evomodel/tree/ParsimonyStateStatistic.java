@@ -41,7 +41,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: ParsimonyStateStatistic.java,v 1.11 2005/07/11 14:06:25 rambaut Exp $
  */
-public class ParsimonyStateStatistic extends Statistic.Abstract implements TreeStatistic {
+public class ParsimonyStateStatistic extends TreeStatistic {
 
     public ParsimonyStateStatistic(String name, Tree tree, TaxonList stateTaxa, TaxonList mrcaTaxa) throws TreeUtils.MissingTaxonException {
 

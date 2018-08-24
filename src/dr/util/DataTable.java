@@ -47,7 +47,11 @@ public interface DataTable<T> {
 
     public class Double implements DataTable<double[]> {
 
-        private Double(Reader source, boolean hasColumnLabels, boolean hasRowLabels) throws IOException {
+        private Double(Reader source, boolean hasColumnLabels, boolean hasRowLabels, boolean isCSV) throws IOException {
+            this(source, hasColumnLabels, hasRowLabels, false, isCSV);
+        }
+
+        private Double(Reader source, boolean hasColumnLabels, boolean hasRowLabels, boolean includeFirstColumnLabel, boolean isCSV) throws IOException {
             BufferedReader reader = new BufferedReader(source);
 
             String line = reader.readLine();
@@ -57,18 +61,23 @@ public interface DataTable<T> {
 
             int columnCount = -1;
 
+            String delim = (isCSV ? "," : "\t");
+
             if (hasColumnLabels) {
                 List<String> columnLabels = new ArrayList<String>();
 
-                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+                StringTokenizer tokenizer = new StringTokenizer(line, delim);
 
-                if (hasRowLabels && !line.startsWith("\t")) {
+                if (hasRowLabels && !line.startsWith(delim)) {
                     // potentially the first token is the name of the row labels
-                    String name = tokenizer.nextToken();
+                    String name = tokenizer.nextToken().trim();
+                    if (includeFirstColumnLabel) {
+                        columnLabels.add(name);
+                    }
                 }
 
                 while (tokenizer.hasMoreTokens()) {
-                    String label = tokenizer.nextToken();
+                    String label = tokenizer.nextToken().trim();
                     columnLabels.add(label);
                 }
 
@@ -86,7 +95,7 @@ public interface DataTable<T> {
             int rowIndex = 1;
 
             while (line != null) {
-                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+                StringTokenizer tokenizer = new StringTokenizer(line, delim);
 
                 if (columnCount == -1) {
                     columnCount = tokenizer.countTokens();
@@ -96,7 +105,7 @@ public interface DataTable<T> {
                 }
 
                 if (hasRowLabels) {
-                    String label = tokenizer.nextToken();
+                    String label = tokenizer.nextToken().trim();
                     rowLabels.add(label);
                 }
 
@@ -115,7 +124,7 @@ public interface DataTable<T> {
 
                     columnIndex ++;
                 }
-                if (columnIndex != columnCount) {
+                if (columnIndex != columnCount - (includeFirstColumnLabel ? 1 : 0)) {
                     throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
                             ", expecting " + columnCount + " but actually " + columnIndex);
                 }
@@ -174,18 +183,32 @@ public interface DataTable<T> {
         private double[][] data;
 
         public static DataTable<double []> parse(Reader source) throws IOException {
-            return new DataTable.Double(source, true, true);
+            return new DataTable.Double(source, true, true, false);
+        }
+
+        public static DataTable<double []> parse(Reader source, boolean isCSV) throws IOException {
+            return new DataTable.Double(source, true, true, isCSV);
         }
 
         public static DataTable<double []> parse(Reader source, boolean columnLabels, boolean rowLabels) throws IOException {
-            return new DataTable.Double(source, columnLabels, rowLabels);
+            return new DataTable.Double(source, columnLabels, rowLabels, false);
+        }
+
+        public static DataTable<double []> parse(Reader source, boolean columnLabels, boolean rowLabels, boolean isCSV) throws IOException {
+            return new DataTable.Double(source, columnLabels, rowLabels, isCSV);
         }
     }
 
     class Text implements DataTable<String[]> {
 
-        private Text(Reader source, boolean hasColumnLabels, boolean hasRowLabels) throws IOException {
+        private Text(Reader source, boolean hasColumnLabels, boolean hasRowLabels, boolean isCSV) throws IOException {
+            this(source, hasColumnLabels, hasRowLabels, false, isCSV);
+        }
+
+        private Text(Reader source, boolean hasColumnLabels, boolean hasRowLabels, boolean includeFirstColumnLabel, boolean isCSV) throws IOException {
             BufferedReader reader = new BufferedReader(source);
+
+            String delim = (isCSV ? "," : "\t");
 
             String line = reader.readLine();
             if (line == null) {
@@ -197,15 +220,18 @@ public interface DataTable<T> {
             if (hasColumnLabels) {
                 List<String> columnLabels = new ArrayList<String>();
 
-                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+                StringTokenizer tokenizer = new StringTokenizer(line, delim);
 
-                if (hasRowLabels && !line.startsWith("\t")) {
+                if (hasRowLabels && !line.startsWith(delim)) {
                     // potentially the first token is the name of the row labels
-                    String name = tokenizer.nextToken();
+                    String name = tokenizer.nextToken().trim();
+                    if (includeFirstColumnLabel) {
+                        columnLabels.add(name);
+                    }
                 }
 
                 while (tokenizer.hasMoreTokens()) {
-                    String label = tokenizer.nextToken();
+                    String label = tokenizer.nextToken().trim();
                     columnLabels.add(label);
                 }
 
@@ -222,7 +248,7 @@ public interface DataTable<T> {
             int rowIndex = 1;
 
             while (line != null) {
-                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+                StringTokenizer tokenizer = new StringTokenizer(line, delim);
 
                 if (columnCount == -1) {
                     columnCount = tokenizer.countTokens();
@@ -232,7 +258,7 @@ public interface DataTable<T> {
                 }
 
                 if (hasRowLabels) {
-                    String label = tokenizer.nextToken();
+                    String label = tokenizer.nextToken().trim();
                     rowLabels.add(label);
                 }
 
@@ -244,7 +270,7 @@ public interface DataTable<T> {
 
                     columnIndex ++;
                 }
-                if (columnIndex != columnCount) {
+                if (columnIndex != columnCount - (includeFirstColumnLabel ? 1 : 0)) {
                     throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
                             ", expecting " + columnCount + " but actually " + columnIndex);
                 }
@@ -303,11 +329,23 @@ public interface DataTable<T> {
         private String[][] data;
 
         public static DataTable<String []> parse(Reader source) throws IOException {
-            return new DataTable.Text(source, true, true);
+            return new DataTable.Text(source, true, true, false);
+        }
+
+        public static DataTable<String []> parse(Reader source, boolean isCSV) throws IOException {
+            return new DataTable.Text(source, true, true, isCSV);
         }
 
         public static DataTable<String []> parse(Reader source, boolean columnLabels, boolean rowLabels) throws IOException {
-            return new DataTable.Text(source, columnLabels, rowLabels);
+            return new DataTable.Text(source, columnLabels, rowLabels, false);
+        }
+
+        public static DataTable<String []> parse(Reader source, boolean columnLabels, boolean rowLabels, boolean isCSV) throws IOException {
+            return new DataTable.Text(source, columnLabels, rowLabels, isCSV);
+        }
+
+        public static DataTable<String []> parse(Reader source, boolean columnLabels, boolean rowLabels, boolean firstColumnLabel, boolean isCSV) throws IOException {
+            return new DataTable.Text(source, columnLabels, rowLabels, firstColumnLabel, isCSV);
         }
     }
 

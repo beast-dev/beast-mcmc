@@ -60,7 +60,7 @@ public interface Parameter extends Statistic, Variable<Double> {
     void setParameterValue(int dim, double value);
 
     /**
-     * sets the scalar value in the given dimensin of this parameter to val, without firing any events
+     * sets the scalar value in the given dimension of this parameter to val, without firing any events
      *
      * @param dim   the index of the dimension to set
      * @param value the value to set
@@ -69,7 +69,7 @@ public interface Parameter extends Statistic, Variable<Double> {
 
 
     /**
-     * sets the scalar value in the given dimensin of this parameter to val,
+     * sets the scalar value in the given dimension of this parameter to val,
      * and notifies that values in all dimension have been changed
      *
      * @param dim   the index of the dimension to set
@@ -97,7 +97,7 @@ public interface Parameter extends Statistic, Variable<Double> {
     void removeParameterListener(VariableListener listener);
 
     /**
-     * stores the state of this parameter for subsquent restore
+     * stores the state of this parameter for subsequent restore
      */
     void storeParameterValues();
 
@@ -149,7 +149,7 @@ public interface Parameter extends Statistic, Variable<Double> {
      * @param index Index of the dimension to add
      * @param value value to save at end of new array
      */
-    public void addDimension(int index, double value);
+    void addDimension(int index, double value);
 
     /**
      * Removes the specified dimension from parameter
@@ -157,21 +157,21 @@ public interface Parameter extends Statistic, Variable<Double> {
      * @param index Index of dimension to lose
      * @return the value of the dimension removed
      */
-    public double removeDimension(int index);
+    double removeDimension(int index);
 
-    public void fireParameterChangedEvent();
+    void fireParameterChangedEvent();
 
-    public void fireParameterChangedEvent(int index, Parameter.ChangeType type);
+    void fireParameterChangedEvent(int index, Parameter.ChangeType type);
 
     boolean isUsed();
 
-    public final static Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
-    public final static Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
+    Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
+    Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
 
     /**
      * Abstract base class for parameters
      */
-    public abstract class Abstract extends Statistic.Abstract implements Parameter, Reportable {
+    abstract class Abstract extends Statistic.Abstract implements Parameter, Reportable {
 
         protected Abstract() {
             FULL_PARAMETER_SET.add(this);
@@ -187,13 +187,12 @@ public interface Parameter extends Statistic, Variable<Double> {
         // **************************************************************
 
 
-        public void sendState(int toRank) {
+        void sendState(int toRank) {
             double[] value = getParameterValues();
             MPIServices.sendDoubleArray(value, toRank);
         }
 
-
-        public void receiveState(int fromRank) {
+        void receiveState(int fromRank) {
             final int length = getDimension();
             double[] values = MPIServices.receiveDoubleArray(fromRank, length);
             for (int i = 0; i < length; i++)
@@ -376,7 +375,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         /**
-         * stores the state of this parameter for subsquent restore
+         * stores the state of this parameter for subsequent restore
          */
         public void storeVariableValues() {
             storeParameterValues();
@@ -411,7 +410,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         protected abstract void adoptValues(Parameter source);
 
         public String toString() {
-            StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
+            StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
             Bounds bounds = null;
             try {
                 bounds = getBounds();
@@ -451,8 +450,14 @@ public interface Parameter extends Statistic, Variable<Double> {
                 sb.append(String.valueOf(getParameterValue(i)));
 
                 if (bounds != null) {
-                    sb.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
-                    sb.append(", ").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                    sb.append("[");
+                    try {
+                        sb.append(String.valueOf(bounds.getLowerLimit(i)));
+                        sb.append(", ").append(String.valueOf(bounds.getUpperLimit(i)));
+                    } catch (NullPointerException npe) {
+                        sb.append("no bounds");
+                    }
+                    sb.append("]");
                 }
 
                 if (i < getDimension() - 1) {
@@ -492,6 +497,11 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public Default(int dimension) {
             this(dimension, 1.0);
+        }
+
+        public Default(String id, double initialValue) {
+            this(initialValue);
+            setId(id);
         }
 
         public Default(double initialValue) {

@@ -164,8 +164,18 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return out;
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
+    }
+
     public int getPatternState(int taxonIndex, int patternIndex){
         return taxonIndex;
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        throw new UnsupportedOperationException("uncertain patterns not implemented yet");
     }
 
     public double getPatternWeight(int patternIndex){
@@ -184,6 +194,11 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     @Override
     public boolean areUnique() {
+        return false;
+    }
+
+    @Override
+    public boolean areUncertain() {
         return false;
     }
 

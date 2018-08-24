@@ -39,6 +39,7 @@ import dr.xml.*;
 public class TaxaParser extends AbstractXMLObjectParser {
 
     public static final String TAXA = "taxa";
+    public static final String EXCLUDE = "exclude";
 
     public String getParserName() { return TAXA; }
 
@@ -66,30 +67,31 @@ public class TaxaParser extends AbstractXMLObjectParser {
 
         Taxa taxonList = new Taxa();
 
-        for (int i = 0; i < xo.getChildCount(); i++) {
-            Object child = xo.getChild(i);
-            if (child instanceof Taxon) {
-                Taxon taxon = (Taxon)child;
-                taxonList.addTaxon(taxon);
-            } else if (child instanceof TaxonList) {
-                TaxonList taxonList1 = (TaxonList)child;
-                for (int j = 0; j < taxonList1.getTaxonCount(); j++) {
-                    taxonList.addTaxon(taxonList1.getTaxon(j));
-                }
-            } else {
-                throwUnrecognizedElement(xo);
+        for (Taxon taxon : xo.getAllChildren(Taxon.class)) {
+            taxonList.addTaxon(taxon);
+        }
+        
+        for (Taxa taxa : xo.getAllChildren(Taxa.class)) {
+            taxonList.addTaxa(taxa);
+        }
+
+        for (XMLObject cxo : xo.getAllChildren(EXCLUDE)) {
+            for (Taxa exclude : cxo.getAllChildren(Taxa.class)) {
+                taxonList.removeTaxa(exclude);
             }
         }
+
         return taxonList;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-        new OrRule(
-            new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
-            new ElementRule(Taxon.class, 1, Integer.MAX_VALUE)
-        )
+            new OrRule(
+                    new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
+                    new ElementRule(Taxon.class, 1, Integer.MAX_VALUE)
+            ),
+            new ElementRule("exclude", Taxa.class, "taxa to exclude", 0, Integer.MAX_VALUE)
     };
 
     public String getParserDescription() {

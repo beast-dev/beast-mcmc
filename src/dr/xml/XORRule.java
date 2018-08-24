@@ -113,8 +113,20 @@ public class XORRule implements XMLSyntaxRule {
 		return buffer.toString();
 	}
 
+    /**
+     * Describes the rule.
+     */
+    public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
+        StringBuffer buffer = new StringBuffer(prefix + "One of:\n");
+        for (XMLSyntaxRule rule : rules) {
+            buffer.append(rule.markdownRuleString(handler, prefix + "    "));
+        }
+        buffer.append("\n");
+        return buffer.toString();
+    }
 
-	/**
+
+    /**
 	 * Describes the rule.
 	 */
 	public String ruleString(XMLObject xo) {

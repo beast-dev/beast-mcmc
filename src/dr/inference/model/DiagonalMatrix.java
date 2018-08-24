@@ -34,33 +34,30 @@ public class DiagonalMatrix extends MatrixParameter
     private Parameter diagonalParameter;
 
     public DiagonalMatrix(Parameter param) {
-//        super();
         super(MATRIX_PARAMETER);
         addParameter(param);
         diagonalParameter = param;
-
-//        diagonalParameter.addVariableListener(this);
     }
 
-    public static DiagonalMatrix buildIdentityTimesElementMatrix(int dim, double value) {
-        Parameter param = new Parameter.Default(dim, value);
-        param.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, dim));
-        return new DiagonalMatrix(param);
-    }
-//	public DiagonalMatrix(String name, Parameter parameter) {
-//		Parameter.Default(name, parameters);
-//	}
-
+//    public static DiagonalMatrix buildIdentityTimesElementMatrix(int dim, double value) {
+//        Parameter param = new Parameter.Default(dim, value);
+//        param.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, dim));
+//        return new DiagonalMatrix(param);
+//    }
 
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == diagonalParameter) {
-//            fireParameterChangedEvent();
             fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
         } else {
-//        System.err.println(variable.getClass().getCanonicalName() + " : " + variable.getId());
             throw new IllegalArgumentException("Unknown variable");
         }
 
+    }
+
+    public String getDimensionName(int dim) {
+        int row = dim / diagonalParameter.getDimension();
+        int col = dim % diagonalParameter.getDimension();
+        return getId() + "." + row + "." + col;
     }
 
     public Parameter getDiagonalParameter() { return diagonalParameter; }
@@ -84,8 +81,7 @@ public class DiagonalMatrix extends MatrixParameter
         for (int i = 0; i < diagonalParameter.getDimension(); i++) {
             {
                 if (diagonalParameter.getValue(i) == 0) {
-                    System.err.print("Diagonal matrix is not of full rank.\n");
-                    System.exit(1);
+                    throw new RuntimeException("Diagonal matrix is not of full rank");
                 } else {
                     setParameterValue(i, 1 / diagonalParameter.getParameterValue(i));
                 }
@@ -101,91 +97,79 @@ public class DiagonalMatrix extends MatrixParameter
         return getParameterValue(i / diagonalParameter.getDimension(), i % diagonalParameter.getDimension());
     }
 
-    public MatrixParameter preMultiply(MatrixParameter right) {
-        if (right.getRowDimension() != this.getColumnDimension()) {
-            throw new RuntimeException("Incompatible Dimensions: " + right.getRowDimension() + " does not equal " + this.getColumnDimension() + ".\n");
-        }
-        MatrixParameter answer = new MatrixParameter(null);
-        answer.setDimensions(right.getRowDimension(), right.getColumnDimension());
-        for (int i = 0; i < right.getRowDimension(); i++) {
-            for (int j = 0; j < right.getColumnDimension(); j++) {
-                answer.setParameterValueQuietly(i, j, right.getParameterValue(i, j) * getParameterValue(i));
-            }
-
-        }
-        return answer;
-    }
-
-    public MatrixParameter preMultiplyInPlace(MatrixParameter right, MatrixParameter answer) {
-        if (right.getRowDimension() != this.getColumnDimension()) {
-            throw new RuntimeException("Incompatible Dimensions: " + right.getRowDimension() + " does not equal " + this.getColumnDimension() + ".\n");
-        }
-//        MatrixParameter answer=new MatrixParameter(null);
+//    public MatrixParameter preMultiply(MatrixParameter right) {
+//        if (right.getRowDimension() != this.getColumnDimension()) {
+//            throw new RuntimeException("Incompatible Dimensions: " + right.getRowDimension() + " does not equal " + this.getColumnDimension() + ".\n");
+//        }
+//        MatrixParameter answer = new MatrixParameter(null);
 //        answer.setDimensions(right.getRowDimension(), right.getColumnDimension());
-        for (int i = 0; i < right.getRowDimension(); i++) {
-            for (int j = 0; j < right.getColumnDimension(); j++) {
-                answer.setParameterValueQuietly(i, j, right.getParameterValue(i, j) * getParameterValue(i));
-            }
-
-        }
-        return answer;
-    }
-
-
-    public MatrixParameter postMultiply(MatrixParameter left) {
-        if (left.getColumnDimension() != this.getRowDimension()) {
-            throw new RuntimeException("Incompatible Dimensions: " + this.getColumnDimension() + " does not equal " + left.getRowDimension() + ".\n");
-        }
-        MatrixParameter answer = new MatrixParameter(null);
-        answer.setDimensions(left.getRowDimension(), left.getColumnDimension());
-        for (int i = 0; i < left.getRowDimension(); i++) {
-            for (int j = 0; j < left.getColumnDimension(); j++) {
-                answer.setParameterValueQuietly(i, j, left.getParameterValue(i, j) * getParameterValue(j));
-            }
-
-        }
-        return answer;
-    }
-
-    public MatrixParameter postMultiplyInPlace(MatrixParameter left, MatrixParameter answer) {
-        if (left.getColumnDimension() != this.getRowDimension()) {
-            throw new RuntimeException("Incompatible Dimensions: " + this.getColumnDimension() + " does not equal " + left.getRowDimension() + ".\n");
-        }
-//        MatrixParameter answer=new MatrixParameter(null);
+//        for (int i = 0; i < right.getRowDimension(); i++) {
+//            for (int j = 0; j < right.getColumnDimension(); j++) {
+//                answer.setParameterValueQuietly(i, j, right.getParameterValue(i, j) * getParameterValue(i));
+//            }
+//
+//        }
+//        return answer;
+//    }
+//
+//    public MatrixParameter preMultiplyInPlace(MatrixParameter right, MatrixParameter answer) {
+//        if (right.getRowDimension() != this.getColumnDimension()) {
+//            throw new RuntimeException("Incompatible Dimensions: " + right.getRowDimension() + " does not equal " + this.getColumnDimension() + ".\n");
+//        }
+////        MatrixParameter answer=new MatrixParameter(null);
+////        answer.setDimensions(right.getRowDimension(), right.getColumnDimension());
+//        for (int i = 0; i < right.getRowDimension(); i++) {
+//            for (int j = 0; j < right.getColumnDimension(); j++) {
+//                answer.setParameterValueQuietly(i, j, right.getParameterValue(i, j) * getParameterValue(i));
+//            }
+//
+//        }
+//        return answer;
+//    }
+//
+//
+//    public MatrixParameter postMultiply(MatrixParameter left) {
+//        if (left.getColumnDimension() != this.getRowDimension()) {
+//            throw new RuntimeException("Incompatible Dimensions: " + this.getColumnDimension() + " does not equal " + left.getRowDimension() + ".\n");
+//        }
+//        MatrixParameter answer = new MatrixParameter(null);
 //        answer.setDimensions(left.getRowDimension(), left.getColumnDimension());
-        for (int i = 0; i < left.getRowDimension(); i++) {
-            for (int j = 0; j < left.getColumnDimension(); j++) {
-                answer.setParameterValueQuietly(i, j, left.getParameterValue(i, j) * getParameterValue(j));
-            }
-
-        }
-        return answer;
-    }
+//        for (int i = 0; i < left.getRowDimension(); i++) {
+//            for (int j = 0; j < left.getColumnDimension(); j++) {
+//                answer.setParameterValueQuietly(i, j, left.getParameterValue(i, j) * getParameterValue(j));
+//            }
+//
+//        }
+//        return answer;
+//    }
+//
+//    public MatrixParameter postMultiplyInPlace(MatrixParameter left, MatrixParameter answer) {
+//        if (left.getColumnDimension() != this.getRowDimension()) {
+//            throw new RuntimeException("Incompatible Dimensions: " + this.getColumnDimension() + " does not equal " + left.getRowDimension() + ".\n");
+//        }
+////        MatrixParameter answer=new MatrixParameter(null);
+////        answer.setDimensions(left.getRowDimension(), left.getColumnDimension());
+//        for (int i = 0; i < left.getRowDimension(); i++) {
+//            for (int j = 0; j < left.getColumnDimension(); j++) {
+//                answer.setParameterValueQuietly(i, j, left.getParameterValue(i, j) * getParameterValue(j));
+//            }
+//
+//        }
+//        return answer;
+//    }
 
     public MatrixParameter add(MatrixParameter Right) {
-        if (this.getColumnDimension() != Right.getColumnDimension() || this.getRowDimension() != Right.getRowDimension()) {
-            throw new RuntimeException("You cannot add a " + getRowDimension() + " by " + getColumnDimension() + " matrix to a " + Right.getRowDimension() + " by " + Right.getColumnDimension() + " matrix.");
-        }
+
         MatrixParameter answer = new MatrixParameter(null);
         answer.setDimensions(this.getRowDimension(), this.getColumnDimension());
-        for (int i = 0; i < this.getRowDimension(); i++) {
-            for (int j = 0; j < this.getColumnDimension(); j++) {
-                if (i == j) {
-                    answer.setParameterValueQuietly(i, j, this.getParameterValue(i, j) + Right.getParameterValue(i, j));
-                } else {
-                    answer.setParameterValueQuietly(i, j, Right.getParameterValue(i, j));
-                }
-            }
-        }
-        return answer;
+        return addInPlace(Right, answer);
     }
 
     public MatrixParameter addInPlace(MatrixParameter Right, MatrixParameter answer) {
         if (this.getColumnDimension() != Right.getColumnDimension() || this.getRowDimension() != Right.getRowDimension()) {
             throw new RuntimeException("You cannot add a " + getRowDimension() + " by " + getColumnDimension() + " matrix to a " + Right.getRowDimension() + " by " + Right.getColumnDimension() + " matrix.");
         }
-//        MatrixParameter answer=new MatrixParameter(null);
-//        setDimensions(this.getRowDimension(), this.getColumnDimension());
+
         for (int i = 0; i < this.getRowDimension(); i++) {
             for (int j = 0; j < this.getColumnDimension(); j++) {
                 if (i == j) {
@@ -207,8 +191,6 @@ public class DiagonalMatrix extends MatrixParameter
     }
 
     public MatrixParameter productInPlace(double a, MatrixParameter answer) {
-//        MatrixParameter answer=new MatrixParameter(null);
-//        answer.setDimensions(this.getRowDimension(), this.getColumnDimension());
         for (int i = 0; i < this.getRowDimension(); i++) {
             answer.setParameterValueQuietly(i, i, a * this.getParameterValue(i, i));
 
@@ -224,11 +206,13 @@ public class DiagonalMatrix extends MatrixParameter
         return product;
     }
 
-    public void setParameterValue(int i, double j)
-    {diagonalParameter.setParameterValue(i,j);}
+    public void setParameterValue(int i, double j) {
+        diagonalParameter.setParameterValue(i, j);
+    }
 
-    public void setParameterValueQuietly(int i, double j)
-    {diagonalParameter.setParameterValueQuietly(i,j);}
+    public void setParameterValueQuietly(int i, double j) {
+        diagonalParameter.setParameterValueQuietly(i, j);
+    }
 
     public int getColumnDimension() {
         return diagonalParameter.getDimension();

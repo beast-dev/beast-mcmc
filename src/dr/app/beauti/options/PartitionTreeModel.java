@@ -55,8 +55,10 @@ public class PartitionTreeModel extends PartitionOptions {
     private boolean hasNodeCalibrations = false;
 
 
-    public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {
-        super(options, partition.getName());
+    public PartitionTreeModel(BeautiOptions options, String name) {
+        super(options, name);
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -76,6 +78,8 @@ public class PartitionTreeModel extends PartitionOptions {
         isNewick = source.isNewick;
 //        initialRootHeight = source.initialRootHeight;
         ploidyType = source.ploidyType;
+
+        initModelParametersAndOpererators();
     }
 
     public void initModelParametersAndOpererators() {
@@ -93,6 +97,9 @@ public class PartitionTreeModel extends PartitionOptions {
         createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
                 "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
+        // This scale operator is used instead of the up/down if the rate is fixed.
+        new Operator.Builder("treeModel.allInternalNodeHeights", "Scales all internal node heights in tree", getParameter("treeModel.allInternalNodeHeights"), OperatorType.SCALE_ALL, 0.75, rateWeights).build(operators);
+
         createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
                 OperatorType.SUBTREE_SLIDE, 1.0, treeWeights);
         createOperator("narrowExchange", "Tree", "Performs local rearrangements of the tree", "tree",
@@ -102,8 +109,13 @@ public class PartitionTreeModel extends PartitionOptions {
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
 
+        double weight = Math.max(options.taxonList.getTaxonCount(), 30);
         createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount() < treeWeights ? treeWeights : options.taxonList.getTaxonCount());
+                OperatorType.SUBTREE_LEAP, 1.0, weight);
+
+        weight = Math.max(weight / 10, 3);
+        createOperator("subtreeJump", "Tree", "Performs the subtree-jump rearrangement of the tree", "tree",
+                OperatorType.SUBTREE_JUMP, 1.0, weight);
 
     }
 
@@ -111,6 +123,8 @@ public class PartitionTreeModel extends PartitionOptions {
     public List<Parameter> selectParameters(List<Parameter> parameters) {
 //        setAvgRootAndRate();
 
+        // Don't add these to the parameter list (as they don't appear in the table), but call
+        // get parameter so their id prefix can be set.
         getParameter("tree");
         getParameter("treeModel.internalNodeHeights");
         getParameter("treeModel.allInternalNodeHeights");
@@ -123,12 +137,9 @@ public class PartitionTreeModel extends PartitionOptions {
             rootHeightParameter.isTruncated = true;
         }
 
-        if (options.useStarBEAST) {
-            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION;
-        } else {
-            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
-            parameters.add(rootHeightParameter);
-        }
+        rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
+        parameters.add(rootHeightParameter);
+
         return parameters;
     }
 
@@ -154,6 +165,7 @@ public class PartitionTreeModel extends PartitionOptions {
         operators.add(getOperator("uniformHeights"));
 
         operators.add(getOperator("subtreeLeap"));
+        operators.add(getOperator("subtreeJump"));
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {
             // do nothing
@@ -186,6 +198,7 @@ public class PartitionTreeModel extends PartitionOptions {
             getOperator("uniformHeights").setUsed(branchesInUse);
 
             getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
+            getOperator("subtreeJump").setUsed(newTreeOperatorsInUse);
         }
         return operators;
     }

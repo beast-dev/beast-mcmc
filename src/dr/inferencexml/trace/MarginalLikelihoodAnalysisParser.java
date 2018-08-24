@@ -110,7 +110,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
 
             int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);
 
-            List<Double> sample = traces.getValues(traceIndex);
+            List<Double> sample = (List)traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), (int)burnin, analysisType, bootstrapLength);

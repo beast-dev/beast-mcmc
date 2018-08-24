@@ -390,6 +390,59 @@ public class ElementRule implements XMLSyntaxRule {
 		}
 	}
 
+	public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
+		if (c != null) {
+			String markdown = prefix + "* " + handler.getHTMLForClass(c);
+			if (max > 1) {
+				markdown += " elements (";
+				if (min == 0) {
+					markdown += "zero";
+				} else if (min == 1) {
+					markdown += "one";
+				} else if (min == max) {
+					markdown += "exactly " + min;
+				}
+				if (max != min) {
+					if (max < Integer.MAX_VALUE) {
+						markdown += " to " + max;
+					} else {
+						markdown += " or more";
+					}
+				}
+			} else {
+				markdown += " element (";
+				if (min == 0) {
+					markdown += "zero or one";
+				} else {
+					markdown += "exactly one";
+				}
+			}
+			markdown += ")\n";
+
+			if (hasDescription()) {
+				markdown += ": " + getDescription() + "\n\n";
+			} else {
+				markdown += "\n";
+			}
+			return markdown;
+
+		} else {
+			StringBuffer buffer = new StringBuffer(prefix + "* Element named <code>&lt;" + name + "&gt;</code>\n");
+			if (hasDescription()) {
+				buffer.append(": ").append(getDescription()).append("\n\n");
+			} else {
+				buffer.append("\n");
+			}
+			if (rules.length > 0) {
+				buffer.append(prefix + "    Containing:\n\n");
+			}
+			for (XMLSyntaxRule rule : rules) {
+				buffer.append(rule.markdownRuleString(handler, prefix + "    "));
+			}
+			return buffer.toString();
+		}
+	}
+
 	/**
 	 * @return a string describing the rule.
 	 */

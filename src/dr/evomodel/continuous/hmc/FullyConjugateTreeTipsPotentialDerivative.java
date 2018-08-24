@@ -29,18 +29,29 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
-public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider {
+public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider, Reportable {
 
     private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
     private final Parameter traitParameter;
+    private final Parameter mask;
 
-    public FullyConjugateTreeTipsPotentialDerivative(FullyConjugateMultivariateTraitLikelihood treeLikelihood){
+    public FullyConjugateTreeTipsPotentialDerivative(FullyConjugateMultivariateTraitLikelihood treeLikelihood,
+                                                     Parameter mask){
         this.treeLikelihood = treeLikelihood;
         traitParameter = treeLikelihood.getTraitParameter();
+        this.mask = mask;
+
+        if (mask != null) {
+            if (traitParameter.getDimension() != mask.getDimension()) {
+                throw new IllegalArgumentException("Trait and mask parameters have differing dimension");
+            }
+        }
     }
 
     @Override
@@ -79,20 +90,26 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
 
                 double sum = 0.0;
                 for (int k = 0; k < dimTraits; ++k) {
-                    sum += (mean[k] - traitParameter.getParameterValue(i * dimTraits + k)) * scale * precisionMatrix[j][k];
+                    sum += (mean[k] - traitParameter.getParameterValue(i * dimTraits + k)) *
+                             scale * precisionMatrix[j][k];
                 }
                 derivative[i * dimTraits + j] = sum;
             }
         }
 
-//        for (int i = 0; i < dimTraits; i++) { // This only works for IDENTITY matrices
-//            for (int j = 0; j < ntaxa; j++) {
-//                derivative[j * dimTraits + i] -= (traitParameter.getParameterValue(j * dimTraits + i) - mean[j][i]) * precfactor[j];
-//                /* Sign change */
-//            }
-//
-//        }
+        if (mask != null) {
+            for (int i = 0; i < mask.getDimension(); ++i) {
+                if (mask.getParameterValue(i) == 0.0) {
+                    derivative[i] = 0.0;
+                }
+            }
+        }
 
         return derivative;
+    }
+
+    @Override
+    public String getReport() {
+        return (new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).toString();
     }
 }

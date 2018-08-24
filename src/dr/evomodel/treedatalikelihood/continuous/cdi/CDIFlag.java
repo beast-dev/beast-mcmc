@@ -57,7 +57,7 @@ public enum CDIFlag {
     private final long mask;
     private final String meaning;
 
-    private CDIFlag(long mask, String meaning) {
+    CDIFlag(long mask, String meaning) {
         this.mask = mask;
         this.meaning = meaning;
     }
@@ -77,11 +77,9 @@ public enum CDIFlag {
     public static String toString(long bits) {
         StringBuilder sb = new StringBuilder();
         CDIFlag[] flags = values();
-        int len = flags.length;
 
-        for(int i = 0; i < len; ++i) {
-            CDIFlag flag = flags[i];
-            if(flag.isSet(bits)) {
+        for (CDIFlag flag : flags) {
+            if (flag.isSet(bits)) {
                 sb.append(" ").append(flag.name());
             }
         }

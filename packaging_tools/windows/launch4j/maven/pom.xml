@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.sf.launch4j</groupId>
 	<artifactId>launch4j</artifactId>
-	<version>3.8.0</version>
+	<version>${launch4j.version}</version>
 	<name>Launch4j</name>
 	<description>Cross-platform Java executable wrapper for creating lightweight Windows native EXEs. Provides advanced JRE search, application startup configuration and better user experience.</description>
 	<url>http://sourceforge.net/projects/launch4j/</url>
@@ -43,8 +43,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<versionNumber>3.8.0.0</versionNumber>
-		<version>3.8</version>
+		<versionNumber>${launch4j.version}.0.0</versionNumber>
+		<version>${launch4j.version}</version>
 	</properties>
 
 	<dependencies>
@@ -238,6 +238,7 @@
 								<descriptor>assembly/assemble-linux.xml</descriptor>
 								<descriptor>assembly/assemble-win32.xml</descriptor>
 								<descriptor>assembly/assemble-mac.xml</descriptor>
+								<descriptor>assembly/assemble-osx.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>
@@ -359,13 +360,6 @@
 				</plugins>
 			</build>
 		</profile>
-		<!-- Macosx-x86 10.8 Profile -->
-		<profile>
-			<id>macosx-x86-10.8</id>
-			<properties>
-				<bin.dir>bin-macosx-x86-10.8</bin.dir>
-			</properties>
-		</profile>
 		<!-- Macosx-x86 Profile -->
 		<profile>
 			<id>macosx-x86</id>
@@ -418,7 +412,7 @@
 										<productVersion>${versionNumber}</productVersion>
 										<txtProductVersion>${version}</txtProductVersion>
 										<fileDescription>Cross-platform Java application wrapper</fileDescription>
-										<copyright>Copyright (C) 2004, 2014 Grzegorz Kowal</copyright>
+										<copyright>Copyright (C) 2004, 2017 Grzegorz Kowal</copyright>
 										<productName>launch4j</productName>
 										<companyName>http://launch4j.sourceforge.net/</companyName>
 										<internalName>GUI launcher</internalName>

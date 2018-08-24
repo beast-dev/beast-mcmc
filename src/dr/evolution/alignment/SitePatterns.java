@@ -87,11 +87,15 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      */
     protected int[][] patterns;
 
+    protected double[][][] uncertainPatterns;
+
     protected int from, to, every;
 
     protected boolean strip = true;  // Strip out completely ambiguous sites
 
     protected boolean unique = true; // Compress into weighted list of unique patterns
+
+    private boolean uncertainSites = false;
 
     /**
      * Constructor
@@ -258,6 +262,12 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         invariantCount = 0;
 
+        uncertainSites = siteList.areUncertain();
+
+        if (uncertainSites) {
+            uncertainPatterns = new double[siteCount][][];
+        }
+
         if (constantSiteCounts != null) {
             if (constantSiteCounts.length != siteList.getStateCount()) {
                 throw new IllegalArgumentException("Constant site count array length doesn't equal the number of states");
@@ -267,7 +277,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                 for (int j = 0; j < siteList.getPatternLength(); j++) {
                     pattern[j] = i;
                 }
-                addPattern(pattern, constantSiteCounts[i]);
+                addPattern(pattern, constantSiteCounts[i], null);
             }
         }
 
@@ -275,13 +285,18 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         for (int i = from; i <= to; i += every) {
             int[] pattern = siteList.getSitePattern(i);
+            double[][] probs = null;
+
+            if (uncertainSites) {
+                probs = siteList.getUncertainSitePattern(i);
+            }
 
             if (!strip || !isInvariant(pattern) ||
                     (!isGapped(pattern) &&
                             !isAmbiguous(pattern) &&
                             !isUnknown(pattern))) {
 
-                sitePatternIndices[site] = addPattern(pattern);
+                sitePatternIndices[site] = addPattern(pattern, probs);
 
             }  else {
                 sitePatternIndices[site] = -1;
@@ -313,6 +328,12 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         sitePatternIndices = new int[siteCount];
         weights = new double[siteCount];
 
+        uncertainSites = siteList.areUncertain();
+
+        if (uncertainSites) {
+            uncertainPatterns = new double[siteCount][][];
+        }
+
         invariantCount = 0;
         int[] pattern;
 
@@ -328,7 +349,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                                 !isUnknown(pattern))
                         ) {
 
-                    sitePatternIndices[site] = addPattern(pattern);
+                    double[][] probs = null;
+                    if (uncertainSites) {
+                        probs = siteList.getUncertainSitePattern(i);
+                    }
+                    sitePatternIndices[site] = addPattern(pattern, probs);
 
                 }  else {
                     sitePatternIndices[site] = -1;
@@ -344,8 +369,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      *
      * @return the index of the pattern in the pattern list
      */
-    private int addPattern(int[] pattern) {
-        return addPattern(pattern, 1);
+    private int addPattern(int[] pattern, double[][] uncertainty) {
+        return addPattern(pattern, 1, uncertainty);
     }
 
     /**
@@ -353,7 +378,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      *
      * @return the index of the pattern in the pattern list
      */
-    private int addPattern(int[] pattern, int weight) {
+    private int addPattern(int[] pattern, int weight, double[][] uncertainty) {
 
         for (int i = 0; i < patternCount; i++) {
 
@@ -371,6 +396,24 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         int index = patternCount;
         patterns[index] = pattern;
         weights[index] = weight;
+
+        if (uncertainSites) {
+
+            if (uncertainty == null) {
+                uncertainPatterns[index] = new double[pattern.length][];
+                for (int taxon = 0; taxon < pattern.length; ++taxon) {
+                    double[] prob = new double[getDataType().getStateCount()];
+                    int[] possibleStates = getDataType().getStates(pattern[taxon]);
+                    for (int state : possibleStates) {
+                        prob[state] = 1.0;
+                    }
+                    uncertainPatterns[index][taxon] = prob;
+                }
+            } else {
+                uncertainPatterns[index] = uncertainty;
+            }
+        }
+
         patternCount++;
 
         return index;
@@ -479,6 +522,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         return sitePatternIndice >= 0 ? patterns[sitePatternIndice] : null;
     }
 
+    @Override
+    public double[][] getUncertainSitePattern(int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainSitePattern not implemented yet");
+    }
+
     /**
      * Gets the pattern index at a particular site
      *
@@ -495,6 +543,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         final int sitePatternIndice = sitePatternIndices[siteIndex];
         // is that right?
         return sitePatternIndice >= 0 ? patterns[sitePatternIndice][taxonIndex] : getDataType().getGapState();
+    }
+
+    @Override
+    public double[] getUncertainState(int taxonIndex, int siteIndex) {
+        throw new UnsupportedOperationException("getUncertainState not implemented yet");
     }
 
     // **************************************************************
@@ -535,11 +588,21 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         return patterns[patternIndex];
     }
 
+    @Override
+    public double[][] getUncertainPattern(int patternIndex) {
+        throw new UnsupportedOperationException("getUncertainPattern not implemented yet");
+    }
+
     /**
      * @return state at (taxonIndex, patternIndex)
      */
     public int getPatternState(int taxonIndex, int patternIndex) {
         return patterns[patternIndex][taxonIndex];
+    }
+
+    @Override
+    public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+        return uncertainPatterns[patternIndex][taxonIndex];
     }
 
     /**
@@ -574,6 +637,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     @Override
     public boolean areUnique() {
         return unique;
+    }
+
+    @Override
+    public boolean areUncertain() {
+        return uncertainSites;
     }
 
     // **************************************************************

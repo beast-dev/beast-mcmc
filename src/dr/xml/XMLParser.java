@@ -44,21 +44,23 @@ public class XMLParser {
     public static final String ID = XMLObject.ID;
     public static final String IDREF = "idref";
     public static final String CONCURRENT = "concurrent";
+    public static final String VERSION = "version";
 
     private Vector<Thread> threads = new Vector<Thread>();
     protected boolean strictXML;
     protected boolean parserWarnings;
 
-    public XMLParser(boolean parserWarnings, boolean strictXML) {
+    // The software version
+    private final Version version;
+
+    public XMLParser(boolean verbose, boolean parserWarnings, boolean strictXML, Version version) {
+        this.verbose = verbose;
         this.parserWarnings = parserWarnings;
         this.strictXML = strictXML;
         addXMLObjectParser(new ArrayParser(), false);
         addXMLObjectParser(Report.PARSER, false);
-    }
 
-    public XMLParser(boolean verbose, boolean parserWarnings, boolean strictXML) {
-        this(parserWarnings, strictXML);
-        this.verbose = verbose;
+        this.version = version;
     }
 
     public void addXMLObjectParser(XMLObjectParser parser) {
@@ -161,6 +163,13 @@ public class XMLParser {
 
         Element e = document.getDocumentElement();
         if (e.getTagName().equals("beast")) {
+            // If the 'version' is attribute is present then check it is not an more recent version...
+            if (e.hasAttribute(VERSION)) {
+                String xmlVersion = e.getAttribute(VERSION);
+                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion())) {
+                   throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
+                }
+            }
 
             concurrent = false;
             root = (XMLObject) convert(e, null, null, run, true);

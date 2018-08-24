@@ -26,6 +26,7 @@
 package dr.util;
 
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,16 @@ public interface Transform {
      * @return the transformed values
      */
     double[] inverse(double[] values, int from, int to);
+
+    /**
+     * overloaded transformation that takes and returns an array of doubles
+     * @param values evaluation points
+     * @param from start transformation at this index
+     * @param to end transformation at this index
+     * @param sum fixed sum of values that needs to be enforced
+     * @return the transformed values
+     */
+    double[] inverse(double[] values, int from, int to, double sum);
 
     double updateGradientLogDensity(double gradient, double value);
 
@@ -117,6 +128,10 @@ public interface Transform {
                 result[i] = inverse(values[i]);
             }
             return result;
+        }
+
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Fixed sum cannot be enforced for a univariate transformation.");
         }
 
         public abstract double gradientInverse(double value);
@@ -173,6 +188,9 @@ public interface Transform {
         }
     }
 
+    abstract class MultivariableTransformWithParameter extends MultivariableTransform {
+        abstract public Parameter getParameter();
+    }
 
     class LogTransform extends UnivariableTransform {
 
@@ -199,8 +217,18 @@ public interface Transform {
 
     class LogConstrainedSumTransform extends MultivariableTransform {
 
+        //private double fixedSum;
+
         public LogConstrainedSumTransform() {
         }
+
+        /*public LogConstrainedSumTransform(double fixedSum) {
+            this.fixedSum = fixedSum;
+        }
+
+        public double getConstrainedSum() {
+            return this.fixedSum;
+        }*/
 
         public double[] transform(double[] values, int from, int to) {
             double[] transformedValues = new double[to - from + 1];
@@ -223,7 +251,30 @@ public interface Transform {
                 newSum += transformedValues[counter];
                 counter++;
             }
-            for (int i = 0; i < sum; i++) {
+            /*for (int i = 0; i < sum; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }*/
+            for (int i = 0; i < transformedValues.length; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }
+            return transformedValues;
+        }
+
+        //inverse transformation assumes a given sum provided as an argument
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            //double sum = (double)(to - from + 1);
+            double[] transformedValues = new double[to - from + 1];
+            int counter = 0;
+            double newSum = 0.0;
+            for (int i = from; i <= to; i++) {
+                transformedValues[counter] = Math.exp(values[i]);
+                newSum += transformedValues[counter];
+                counter++;
+            }
+            /*for (int i = 0; i < sum; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }*/
+            for (int i = 0; i < transformedValues.length; i++) {
                 transformedValues[i] = (transformedValues[i] / newSum) * sum;
             }
             return transformedValues;
@@ -271,7 +322,7 @@ public interface Transform {
 
             //add draw for normal distribution to transformed elements
             for (int i = 0; i < transformedValues.length; i++) {
-                transformedValues[i] += 0.20 * Math.random();
+                transformedValues[i] += 0.20 * MathUtils.nextDouble();
             }
 
             //perform inverse transformation
@@ -354,7 +405,7 @@ public interface Transform {
         }
     }
 
-    class NegateTranform extends UnivariableTransform {
+    class NegateTransform extends UnivariableTransform {
 
         public double transform(double value) {
             return -value;
@@ -378,6 +429,49 @@ public interface Transform {
 
         public double getLogJacobian(double value) {
             return 0.0;
+        }
+    }
+
+    class PowerTransform extends UnivariableTransform{
+        private double power;
+
+        PowerTransform(){
+            this.power = 2;
+        }
+
+        PowerTransform(double power){
+            this.power = power;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "Power Transform";
+        }
+
+        @Override
+        public double transform(double value) {
+            return Math.pow(value, power);
+        }
+
+        @Override
+        public double inverse(double value) {
+            return Math.pow(value, 1 / power);
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            throw new RuntimeException("not implemented yet");
+//            return 0;
+        }
+
+        @Override
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            throw new RuntimeException("not implemented yet");
         }
     }
 
@@ -499,7 +593,90 @@ public interface Transform {
         private final UnivariableTransform inner;
     }
 
-    class Collection extends MultivariableTransform {
+
+    class Array extends MultivariableTransformWithParameter {
+
+          private final List<Transform> array;
+          private final Parameter parameter;
+
+          public Array(List<Transform> array, Parameter parameter) {
+              this.parameter = parameter;
+              this.array = array;
+
+//              if (parameter.getDimension() != array.size()) {
+//                  throw new IllegalArgumentException("Dimension mismatch");
+//              }
+          }
+
+          public Parameter getParameter() { return parameter; }
+
+          @Override
+          public double[] transform(double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).transform(values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public double[] inverse(double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).inverse(values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public double[] inverse(double[] values, int from, int to, double sum) {
+              throw new RuntimeException("Not yet implemented.");
+          }
+
+          @Override
+          public double[] gradientInverse(double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).gradientInverse(values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public double[] updateGradientLogDensity(double[] gradient, double[] values, int from, int to) {
+
+              final double[] result = values.clone();
+
+              for (int i = from; i < to; ++i) {
+                  result[i] = array.get(i).updateGradientLogDensity(gradient[i], values[i]);
+              }
+              return result;
+          }
+
+          @Override
+          public String getTransformName() {
+              return "array";
+          }
+
+          @Override
+          public double getLogJacobian(double[] values, int from, int to) {
+
+              double sum = 0.0;
+
+              for (int i = from; i < to; ++i) {
+                  sum += array.get(i).getLogJacobian(values[i]);
+              }
+              return sum;
+          }
+    }
+
+    class Collection extends MultivariableTransformWithParameter {
 
         private final List<ParsedTransform> segments;
         private final Parameter parameter;
@@ -527,11 +704,10 @@ public interface Transform {
                 contiguous.add(new ParsedTransform(NONE, current, parameter.getDimension()));
             }
 
-
-            System.err.println("Segments:");
-            for (ParsedTransform transform : contiguous) {
-                System.err.println(transform.transform.getTransformName() + " " + transform.start + " " + transform.end);
-            }
+//            System.err.println("Segments:");
+//            for (ParsedTransform transform : contiguous) {
+//                System.err.println(transform.transform.getTransformName() + " " + transform.start + " " + transform.end);
+//            }
 //            System.exit(-1);
 
             return contiguous;
@@ -569,6 +745,11 @@ public interface Transform {
                 }
             }
             return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not yet implemented.");
         }
 
         @Override
@@ -646,6 +827,7 @@ public interface Transform {
         public int start; // zero-indexed
         public int end; // zero-indexed, i.e, i = start; i < end; ++i
         public int every = 1;
+        public double fixedSum = 0.0;
         public List<Parameter> parameters = null;
 
         public ParsedTransform() {
@@ -664,12 +846,13 @@ public interface Transform {
             clone.start = start;
             clone.end = end;
             clone.every = every;
+            clone.fixedSum = fixedSum;
             clone.parameters = parameters;
             return clone;
         }
 
         public boolean equivalent(ParsedTransform other) {
-            if (start == other.start && end == other.end && every == other.every && parameters == parameters) {
+            if (start == other.start && end == other.end && every == other.every && parameters == other.parameters) {
                 return true;
             } else {
                 return false;
@@ -689,7 +872,8 @@ public interface Transform {
 
     NoTransform NONE = new NoTransform();
     LogTransform LOG = new LogTransform();
-    NegateTranform NEGATE = new NegateTranform();
+    NegateTransform NEGATE = new NegateTransform();
+    Compose LOG_NEGATE = new Compose(new LogTransform(), new NegateTransform());
     LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
     LogitTransform LOGIT = new LogitTransform();
     FisherZTransform FISHER_Z = new FisherZTransform();
@@ -697,10 +881,12 @@ public interface Transform {
     enum Type {
         NONE("none", new NoTransform()),
         LOG("log", new LogTransform()),
-        NEGATE("negate", new NegateTranform()),
+        NEGATE("negate", new NegateTransform()),
+        LOG_NEGATE("log-negate", new Compose(new LogTransform(), new NegateTransform())),
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
-        FISHER_Z("fisherZ",new FisherZTransform());
+        FISHER_Z("fisherZ",new FisherZTransform()),
+        POWER("power", new PowerTransform());
 
         Type(String name, Transform transform) {
             this.name = name;

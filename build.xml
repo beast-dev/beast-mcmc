@@ -1,7 +1,7 @@
 <!--
   ~ build.xml
   ~
-  ~ Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+  ~ Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
   ~
   ~ This file is part of BEAST.
   ~ See the NOTICE file distributed with this work for additional
@@ -24,14 +24,14 @@
   -->
 
 <!-- Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build. -->
-<project basedir="." default="build" name="BEAST">
+<project basedir="." default="dist" name="BEAST">
     <description>
         Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build.
         $Id$
     </description>
 
     <property name="JDK_SOURCE_VERSION" value="1.6"/>
-    <property name="JDK_TARGET_VERSION" value="1.7"/>
+    <property name="JDK_TARGET_VERSION" value="1.6"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -62,11 +62,6 @@
     <!-- clean previous build, and then compile Java source code, and Juint test -->
     <target name="test" depends="clean,compile-all,junit"
             description="Clean and Build all run-time stuff with unit test">
-    </target>
-
-    <!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
-    <target name="build" depends="clean,compile-all,dist-all"
-            description="Clean and Build all and distribute jar">
     </target>
 
     <!-- compile Java source code -->
@@ -111,11 +106,11 @@
             <!-- complie JUnit test classes -->
             <include name="test/dr/**"/>
         </javac>
-        <echo message="Successfully complied."/>
+        <echo message="Successfully compiled."/>
     </target>
 
     <!-- make the beast.jar and beauti.jar -->
-    <target name="dist-all" depends="compile-all" description="create BEAST + BEAUTI jar">
+    <target name="dist" depends="compile-all" description="create BEAST + BEAUTI jar">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
@@ -257,6 +252,11 @@
 
     </target>
 
+    <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
+    <target name="copy_trace_jar" depends="dist" >
+        <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
     <!-- run beast.jar -->
     <target name="run_BEAST">
         <java jar="${dist}/beast.jar" fork="true"/>
@@ -268,7 +268,7 @@
     </target>
 
     <!-- run beast.jar -->
-    <target name="dist_test_jar" depends="dist-all">
+    <target name="dist_test_jar" depends="dist">
         <jar jarfile="${dist}/beastTest.jar">
             <fileset dir="${build}">
                 <include name="test/dr/**/*.class"/>
@@ -319,9 +319,12 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.9pre20161007"/>
+    <property name="version" value="1.10.1"/>
+    <property name="jvm_version" value="1.7+"/>
 
-    <property name="version_number" value="1.9.0"/>
+    <property name="version_number" value="1.10.1"/>
+    <property name="copyright" value="Copyright 2002-2018"/>
+
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAUti_name" value="BEAUti"/>
@@ -343,7 +346,7 @@
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                   or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows" depends="build"
+    <target name="windows" depends="dist"
             description="release Windows version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
 
         <delete dir="${Windows_package_dir}"/>
@@ -358,7 +361,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Windows_package_dir}/examples">
-            <fileset dir="examples/release"/>
+            <fileset dir="examples"/>
         </copy>
         <copy todir="${Windows_package_dir}/native">
             <fileset dir="native">
@@ -430,14 +433,14 @@
                     productVersion="${version}.0"
                     txtProductVersion="${version}"/>	-->
 
-        <zip destfile="${Windows_dir}/${BEAST_name} v${version}.zip">
+        <zip destfile="${release_dir}/${BEAST_name} v${version}.zip">
             <zipfileset dir="${Windows_package_dir}" prefix="${BEAST_name} v${version}"/>
         </zip>
 
         <echo message="Windows version release is finished."/>
     </target>
 
-    <target name="linux" depends="build"
+    <target name="linux" depends="dist"
             description="release Linux/Unix version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
         <delete dir="${Linux_package_dir}"/>
         <!-- Create the release directory -->
@@ -452,7 +455,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Linux_package_dir}/examples">
-            <fileset dir="examples/release"/>
+            <fileset dir="examples"/>
         </copy>
         <copy todir="${Linux_package_dir}/native">
             <fileset dir="native">
@@ -466,9 +469,6 @@
         <copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
         <!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->
-        <copy todir="${Linux_package_dir}/lib">
-            <fileset dir="${Linux_dir}/lib"/>
-        </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
@@ -486,7 +486,10 @@
         <echo message="Linux/Unix version release is finished."/>
     </target>
 
-    <target name="mac" depends="build"
+    <!-- this will only work on Andrew's computer -->
+    <property name="AppleSigner" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
+
+    <target name="mac" depends="dist"
             description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
         <delete dir="${Mac_package_dir}"/>
         <!-- Create the release directory -->
@@ -501,7 +504,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Mac_package_dir}/examples">
-            <fileset dir="examples/release"/>
+            <fileset dir="examples"/>
         </copy>
         <copy todir="${Mac_package_dir}/native">
             <fileset dir="native">
@@ -511,14 +514,14 @@
 
         <copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
+        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->                                             
         <copy todir="${Mac_package_dir}/lib">
             <fileset dir="${Mac_dir}/lib"/>
         </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
-        <taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
+        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
 
         <!-- create a jar bundle for the mac -->
         <jarbundler dir="${Mac_package_dir}"
@@ -527,14 +530,15 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
-                    jvmversion="1.6+"
-                    vmoptions="-d64 -Xmx2048M"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M"
                     arguments="-window -working -options"
+                    highresolutioncapable="true"
                     version="${version}"
-                    copyright="${BEAST_name} v${version}, Copyright 2002-2016, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                    copyright="${BEAST_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
                     bundleid="dr.app.beast">
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
+            <!--<javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>-->
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
                 <include name="**/beast-beagle.jar"/>
@@ -544,17 +548,27 @@
             </jarfileset>
         </jarbundler>
 
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
+        </exec>
+
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_BEAST"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
-                    jvmversion="1.6+"
-                    vmoptions="-d64 -Xmx2048M"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M"
                     arguments=""
                     version="${version}"
-                    copyright="${BEAUti_name} v${version}, Copyright 2002-2016, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    highresolutioncapable="true"
+                    copyright="${BEAUti_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
                     bundleid="dr.app.beauti">
             <documenttype name="BEAUti document"
                           extensions="beauti bti"
@@ -567,11 +581,20 @@
                 <include name="**/quaqua.jar"/>
             </jarfileset>
             <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="libquaqua*.jnilib"/>
+                <include name="libquaqua*.*"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT"/>
+            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
         </jarbundler>
+
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
+        </exec>
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${LogCombiner_name} v${version}"
@@ -579,18 +602,28 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
-                    jvmversion="1.6+"
-                    vmoptions="-d64 -Xmx2048M"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M"
+                    highresolutioncapable="true"
                     arguments=""
                     version="${version}"
-                    copyright="${LogCombiner_name} v${version}, Copyright 2002-2016, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    copyright="${LogCombiner_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
                     bundleid="dr.app.tools.logcombiner">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
+            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
         </jarbundler>
+
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
+        </exec>
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeAnnotator_name} v${version}"
@@ -598,18 +631,28 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
-                    jvmversion="1.6+"
-                    vmoptions="-d64 -Xmx4096M"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx4096M"
+                    highresolutioncapable="true"
                     arguments=""
                     version="${version}"
-                    copyright="${TreeAnnotator_name} v${version}, Copyright 2002-2016, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    copyright="${TreeAnnotator_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
                     bundleid="dr.app.tools.treeannotator">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
+            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
         </jarbundler>
+
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
+        </exec>
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeStat_name} v${version}"
@@ -617,18 +660,28 @@
                     stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
 					useJavaXKey="true"
                     icon="${common_dir}/icons/TreeStat.icns"
-                    jvmversion="1.6+"
-                    vmoptions="-d64 -Xmx1024M"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx1024M"
+                    highresolutioncapable="true"
                     arguments=""
                     version="${version}"
-                    copyright="${TreeStat_name} v${version}, Copyright 2002-2016, Alexei Drummond and Andrew Rambaut"
+                    copyright="${TreeStat_name} v${version}, ${copyright}, Alexei J. Drummond and Andrew Rambaut"
                     bundleid="dr.app.treestat">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
+            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
         </jarbundler>
+
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${TreeStat_name} v${version}.app"/>
+        </exec>
 
         <echo message="Building disk image."/>
 
@@ -640,11 +693,20 @@
             <arg value="${Mac_package_dir}"/>
             <arg value="-volname"/>
             <arg value="${BEAST_name} v${version}"/>
-            <arg value="${Mac_dir}/${BEAST_name} v${version}.dmg"/>
+            <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
         </exec>
+
+        <exec executable="codesign">
+            <arg value="-s"/>
+            <arg value="${AppleSigner}"/>
+            <arg value="-v"/>
+            <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
+        </exec>
+
 
         <echo message="Mac version release is finished."/>
     </target>
 
+    <target name="build" depends="mac, windows, linux" description="build all the executables" />
 
 </project>

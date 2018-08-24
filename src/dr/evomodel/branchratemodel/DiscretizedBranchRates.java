@@ -122,6 +122,15 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         this.normalize = normalize;
 
         this.treeModel = tree;
+
+        // adding the key word to the tree means the keyword will be logged in the
+        // header of the tree file.
+        treeModel.addKeyword("discretized_branch_rates");
+
+        // adding the key word to the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("discretized_branch_rates");
+
         this.distributionModel = model;
         this.normalizeBranchRateTo = normalizeBranchRateTo;
 

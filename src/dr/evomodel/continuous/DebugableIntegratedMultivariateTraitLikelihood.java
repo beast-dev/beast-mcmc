@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -49,7 +49,7 @@ import java.util.Set;
 public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugateMultivariateTraitLikelihood {
 
     public DebugableIntegratedMultivariateTraitLikelihood(String traitName,
-                                                          MultivariateTraitTree treeModel,
+                                                          MutableTreeModel treeModel,
                                                           MultivariateDiffusionModel diffusionModel,
                                                           CompoundParameter traitParameter,
                                                           List<Integer> missingIndices,

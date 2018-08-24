@@ -66,7 +66,7 @@ public class DistanceMatrixInsertionTest extends JPanel {
         super(new GridLayout(1,0));
 
         //no additional parsers, we don't need BEAGLE at the moment just yet
-        XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML);
+        XMLParser parser = new BeastParser(new String[]{beastXMLFileName}, null, VERBOSE, PARSER_WARNINGS, STRICT_XML, null);
         try {
             FileReader fileReader = new FileReader(beastXMLFileName);
 

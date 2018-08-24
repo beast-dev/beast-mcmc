@@ -105,8 +105,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //                delayRescalingUntilUnderflow);
 
         boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
+        boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() ) {
+        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {
             DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                     treeModel,
                     patternLists,
@@ -225,6 +226,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     branchModel = new HomogeneousBranchModel(substitutionModel, rootFreqModel);
                 }
                 branchModels.add(branchModel);
+
+                BranchRateModel branchRateModel = (BranchRateModel) cxo.getChild(BranchRateModel.class);
+                if (branchRateModel != null) {
+                    throw new XMLParseException("Partitions are not currently allowed their own BranchRateModel in TreeDataLikelihood object '"+xo.getId());
+                }
             }
         }
 
@@ -236,7 +242,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         if (branchRateModel == null) {
-            branchRateModel = new DefaultBranchRateModel();
+            throw new XMLParseException("BranchRateModel missing from TreeDataLikelihood object '"+xo.getId());
+            // branchRateModel = new DefaultBranchRateModel();
         }
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
@@ -247,7 +254,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
                 throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
-                        "BeagleDataLikelihood object '"+xo.getId());
+                        "TreeDataLikelihood object '"+xo.getId());
 
         }
         if (xo.hasAttribute(DELAY_SCALING)) {
@@ -287,17 +294,18 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
 
             // really it should be this set of elements or the PARTITION elements
-            new ElementRule(PatternList.class, true),
-            new ElementRule(SiteRateModel.class, true),
-            new ElementRule(FrequencyModel.class, true),
-            new ElementRule(BranchModel.class, true),
-
-            new ElementRule(PARTITION, new XMLSyntaxRule[] {
+            new OrRule(new AndRule(new XMLSyntaxRule[]{
+                    new ElementRule(PatternList.class, true),
+                    new ElementRule(SiteRateModel.class, true),
+                    new ElementRule(FrequencyModel.class, true),
+                    new ElementRule(BranchModel.class, true)})
+                    ,
+                    new ElementRule(PARTITION, new XMLSyntaxRule[] {
                     new ElementRule(PatternList.class),
                     new ElementRule(SiteRateModel.class),
                     new ElementRule(FrequencyModel.class, true),
                     new ElementRule(BranchModel.class, true)
-            }, true),
+            }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),

@@ -49,12 +49,12 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
 
     //for GTR extension
     public static final String GTR_MODEL = GTRParser.GTR_MODEL;
-    public static final String A_TO_C = GTR.A_TO_C;
-    public static final String A_TO_G = GTR.A_TO_G;
-    public static final String A_TO_T = GTR.A_TO_T;
-    public static final String C_TO_G = GTR.C_TO_G;
-    public static final String C_TO_T = GTR.C_TO_T;
-    public static final String G_TO_T = GTR.G_TO_T;
+    public static final String A_TO_C = GTRParser.A_TO_C;
+    public static final String A_TO_G = GTRParser.A_TO_G;
+    public static final String A_TO_T = GTRParser.A_TO_T;
+    public static final String C_TO_G = GTRParser.C_TO_G;
+    public static final String C_TO_T = GTRParser.C_TO_T;
+    public static final String G_TO_T = GTRParser.G_TO_T;
 
 
     public String getParserName() {

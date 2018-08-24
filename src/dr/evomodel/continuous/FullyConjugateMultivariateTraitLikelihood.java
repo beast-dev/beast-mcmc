@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -52,7 +52,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         implements ConjugateWishartStatisticsProvider, GibbsSampleFromTreeInterface, Reportable {
 
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-//                                                     MultivariateTraitTree treeModel,
+//                                                     MutableTreeModel treeModel,
 //                                                     MultivariateDiffusionModel diffusionModel,
 //                                                     CompoundParameter traitParameter,
 //                                                     Parameter deltaParameter,
@@ -79,7 +79,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //
 //
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-//                                                     MultivariateTraitTree treeModel,
+//                                                     MutableTreeModel treeModel,
 //                                                     MultivariateDiffusionModel diffusionModel,
 //                                                     CompoundParameter traitParameter,
 //                                                     Parameter deltaParameter,
@@ -106,7 +106,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 //    }
 
     public FullyConjugateMultivariateTraitLikelihood(String traitName,
-                                                     MultivariateTraitTree treeModel,
+                                                     MutableTreeModel treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
                                                      CompoundParameter traitParameter,
                                                      Parameter deltaParameter,
@@ -236,7 +236,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     @Override
-    public MatrixParameterInterface getPrecisionParamter() {
+    public MatrixParameterInterface getPrecisionParameter() {
         return diffusionModel.getPrecisionParameter();
     }
 
@@ -254,12 +254,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
-        if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
+        if(variable==traitParameter
+                &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)
+                ){
             dimKnown = false;
             dim = traitParameter.getParameter(0).getDimension();
             numData = dim / getDimTrait();
             meanCache = new double[dim * treeModel.getNodeCount()];
-            storedMeanCache = new double[meanCache.length];
+//            storedMeanCache = new double[meanCache.length];
             drawnStates = new double[dim * treeModel.getNodeCount()];
         }
         PostPreKnown=false;
@@ -268,6 +270,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     @Override
     public void storeState() {
+        storedNumData = numData;
+        storedDim = dim;
         super.storeState();
         storedPostPreKnown=PostPreKnown;
         storedDimKnown=dimKnown;
@@ -282,6 +286,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     @Override
     public void restoreState() {
+        dim = storedDim;
+        numData = storedNumData;
+        drawnStates = new double[dim * treeModel.getNodeCount()];
         super.restoreState();
         PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
@@ -620,6 +627,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     private boolean dimKnown=false;
     private boolean storedDimKnown=false;
+    private int storedDim;
+    private int storedNumData;
 
     protected boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;

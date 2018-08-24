@@ -38,6 +38,7 @@ import java.util.ArrayList;
  *
  * @version $Id: SubtreeSlide.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  */
+@Deprecated
 public class SubtreeSlide {
 
 	public SubtreeSlide(double size, boolean gaussian) {

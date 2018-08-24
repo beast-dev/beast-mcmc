@@ -58,10 +58,10 @@ public class FrequencySet<T>
 	}
 
 
-    protected Integer getFrequency(Object b) {
-        Bin bin = hash.get(b.toString());
+    protected int getFrequency(T b) {
+        Bin bin = binMap.get(b);
         if( bin == null ) {
-            return null;
+            return 0;
         }
         return bin.frequency;
     }
@@ -98,28 +98,32 @@ public class FrequencySet<T>
      */
 	public void add(T object, int frequency) {
 
-		Bin bin = hash.get(object.toString());
+		Bin bin = binMap.get(object);
 		if (bin != null) {
 			bin.frequency += 1;
 		} else {
 			bin = new Bin(object, frequency);
-			hash.put(object.toString(), bin);
+			binMap.put(object, bin);
 			size += 1;
 			sorted = false;
 		}
 	}
 
+	public Set<T> getKeySet() {
+		return binMap.keySet();
+	}
+
 	/** The frequencySets are equal if their inner sets are equal */
 	@Override
     public boolean equals(Object obj) {
-		return (obj instanceof FrequencySet) && set.equals(((FrequencySet)obj).set);
+		return (obj instanceof FrequencySet) && binMap.keySet().equals(((FrequencySet)obj).binMap.keySet());
 	}
 
 	/** sort by descending frequency */
 	private void sortByFrequency() {
 
 		list.clear();
-		for (Bin bin : hash.values()) {
+		for (Bin bin : binMap.values()) {
 			list.add(bin);
 		}
 
@@ -132,8 +136,7 @@ public class FrequencySet<T>
 	//
 
 	private List<Bin> list = new ArrayList<Bin>();
-	private Hashtable<String, Bin> hash = new Hashtable<String, Bin>();
-	private HashSet set = new HashSet();
+	private Map<T, Bin> binMap = new HashMap<T, Bin>();
 	private boolean sorted = false;
 	private int size = 0;
 

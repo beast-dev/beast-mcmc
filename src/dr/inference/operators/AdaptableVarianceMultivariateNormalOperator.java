@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -74,6 +74,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private final Parameter parameter;
     private final Transform[] transformations;
     private final int[] transformationSizes;
+    private final double[] transformationSums;
     private final int dim;
     // private final double constantFactor;
     private double[] oldMeans, newMeans;
@@ -86,7 +87,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[] epsilon;
     private double[][] proposal;
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor, double[][] inMatrix,
+    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor, double[][] inMatrix,
                                                        double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
 
         super(mode);
@@ -94,6 +95,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         this.parameter = parameter;
         this.transformations = transformations;
         this.transformationSizes = transformationSizes;
+        this.transformationSums = transformationSums;
         this.beta = beta;
         this.iterations = 0;
         this.updates = 0;
@@ -138,9 +140,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         }
     }
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor,
+    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor,
                                                        MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
-        this(parameter, transformations, transformationSizes, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
+        this(parameter, transformations, transformationSizes, transformationSums, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -415,7 +417,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
             if (MULTI) {
                 if (transformationSizes[i] > 1) {
-                    double[] temp = transformations[i].inverse(transformedX, currentIndex, currentIndex + transformationSizes[i] - 1);
+                    double[] temp = transformations[i].inverse(transformedX, currentIndex, currentIndex + transformationSizes[i] - 1, transformationSums[i]);
                     for (int k = 0; k < temp.length; k++) {
                         parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
                     }
@@ -641,7 +643,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 burnin = xo.getIntegerAttribute(BURNIN);
             }
             if (burnin > initial || burnin < 0) {
-                throw new XMLParseException("burnin must be smaller than the initial period");
+                throw new XMLParseException("Burn-in must be smaller than the initial period.");
             }
 
             if (xo.hasAttribute(UPDATE_EVERY)) {
@@ -649,21 +651,26 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
 
             if (every <= 0) {
-                throw new XMLParseException("covariance matrix needs to be updated at least every single iteration");
+                throw new XMLParseException("Covariance matrix needs to be updated at least every single iteration.");
             }
 
             if (scaleFactor <= 0.0) {
-                throw new XMLParseException("scaleFactor must be greater than 0.0");
+                throw new XMLParseException("ScaleFactor must be greater than zero.");
             }
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
             Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
-            boolean oldXML = pt.parameters == null;
+            boolean oldXML;
+            if (pt == null) {
+                throw new XMLParseException("No valid transformations have been provided in the XML file.");
+            }
+            oldXML = pt.parameters == null;
 
             Parameter parameter;
             Transform[] transformations;
             int[] transformationSizes;
+            double[] transformationSums;
 
             int transformationSizeCounter = 0;
 
@@ -677,6 +684,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
                 List<Transform> transformList = new ArrayList<Transform>();
                 List<Integer> transformCountList = new ArrayList<Integer>();
+                List<Double> transformSumList = new ArrayList<Double>();
 
                 for (Object co : xo.getChildren()) {
                     if (co instanceof Parameter) {
@@ -685,6 +693,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         Parameter param = (Parameter) co;
                         allParameters.addParameter(param);
                         transformCountList.add(param.getDimension());
+                        transformSumList.add(0.0);
                     } else if (co instanceof Transform.ParsedTransform) {
                         Transform.ParsedTransform parsedTransform = (Transform.ParsedTransform)co;
 
@@ -696,6 +705,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                             dim += param.getDimension();
                         }
                         transformCountList.add(dim);
+                        transformSumList.add(parsedTransform.fixedSum);
                     } else {
                         throw new XMLParseException("Unknown element in " + AVMVN_OPERATOR);
                     }
@@ -704,6 +714,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 parameter = allParameters;
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
+                transformationSums = new double[parameter.getDimension()];
 
                 /*transformations = transformList.toArray(transformations);
                 for (int i = 0; i < transformCountList.size(); i++) {
@@ -723,12 +734,15 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         for (int j = 0; j < transformCountList.get(i); j++) {
                             transformations[index] = transformList.get(i);
                             transformationSizes[index] = 1;
+                            transformationSums[index] = transformSumList.get(i);
                             index++;
                             transformationSizeCounter++;
                         }
                     } else {
+                        //log constrained sum transformation
                         transformations[index] = transformList.get(i);
                         transformationSizes[index] = transformCountList.get(i);
+                        transformationSums[index] = transformSumList.get(i);
                         index++;
                         transformationSizeCounter++;
                     }
@@ -744,6 +758,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
                 transformations = new Transform[parameter.getDimension()];
                 transformationSizes = new int[parameter.getDimension()];
+                transformationSums = new double[parameter.getDimension()];
 
                 for (int i = 0; i < xo.getChildCount(); i++) {
                     Object child = xo.getChild(i);
@@ -757,6 +772,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
+                            //transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            transformationSums[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
                                 System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }
@@ -765,6 +782,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                             for (int j = thisObject.start; j < thisObject.end; ++j) {
                                 transformations[transformationSizeCounter] = thisObject.transform;
                                 transformationSizes[transformationSizeCounter] = 1;
+                                transformationSums[transformationSizeCounter] = thisObject.fixedSum;
                                 if (DEBUG) {
                                     System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
                                 }
@@ -782,15 +800,18 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
             int temp[] = new int[transformationSizeCounter];
             Transform tempTransform[] = new Transform[transformationSizeCounter];
+            double[] tempSum = new double[transformationSizeCounter];
             for (int i = 0; i < temp.length; i++) {
                 temp[i] = transformationSizes[i];
                 tempTransform[i] = transformations[i];
+                tempSum[i] = transformationSums[i];
                 if (transformationSizes[i] == 0 || temp[i] == 0) {
                     throw new XMLParseException("Transformation size 0 encountered");
                 }
             }
             transformationSizes = temp;
             transformations = tempTransform;
+            transformationSums = tempSum;
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();
@@ -820,6 +841,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 for (int i = 0; i < transformationSizes.length; i++) {
                     System.err.print(transformationSizes[i] + " ");
                 }
+                System.err.println("\nChecking transformation sum contents");
+                for (int i = 0; i < transformationSums.length; i++) {
+                    System.err.print(transformationSums[i] + " ");
+                }
                 System.err.println();
             }
 
@@ -840,7 +865,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             boolean skipRankCheck = xo.getAttribute(SKIP_RANK_CHECK, false);
 
-            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, transformationSizes, scaleFactor, varMatrix, weight, beta, initial, burnin, every,
+            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, transformationSizes, transformationSums, scaleFactor, varMatrix, weight, beta, initial, burnin, every,
                     mode, !formXtXInverse, skipRankCheck);
         }
 

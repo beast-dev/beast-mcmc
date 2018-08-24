@@ -36,6 +36,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     public static String SUM_STATISTIC = "sumStatistic";
     public static String SUM = "sum";
     public static String ELEMENTWISE = "elementwise";
+    public static String CONSTANT = "constant";
     public static String ABSOLUTE = "absolute";
 
     public String[] getParserNames() {
@@ -58,15 +59,33 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
             name = xo.getAttribute(XMLParser.ID, xo.getId());
         }
 
-        final SumStatistic sumStatistic = new SumStatistic(name, elementwise, absolute);
+        double[] constants = null;
+        if (xo.hasAttribute(CONSTANT)) {
+            constants = xo.getDoubleArrayAttribute(CONSTANT);
+        }
+
+        if (constants != null && constants.length != 1 && elementwise) {
+            throw new XMLParseException("The constant given to " + getParserName() + " should be a single value if element-wise is being used.");
+        }
+
+        final SumStatistic sumStatistic = new SumStatistic(name, elementwise, constants, absolute);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            final Statistic statistic = (Statistic) xo.getChild(i);
+            Object child = xo.getChild(i);
+            if (child instanceof Statistic) {
+                try {
+                    Statistic statistic = (Statistic)child;
 
-            try {
-                sumStatistic.addStatistic(statistic);
-            } catch (IllegalArgumentException iae) {
-                throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
+                    if (constants != null && constants.length != 1 && constants.length != statistic.getDimension()) {
+                        throw new XMLParseException("The constants given to " + getParserName() + " is not of the same dimension as the statistics");
+                    }
+
+                    sumStatistic.addStatistic(statistic);
+                } catch (IllegalArgumentException iae) {
+                    throw new XMLParseException("Statistic added to " + getParserName() + " element is not of the same dimension");
+                }
+            } else {
+                throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
             }
         }
 
@@ -78,7 +97,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element returns a statistic that is the element-wise sum of the child statistics.";
+        return "This element returns a statistic that is the sum of the child statistics.";
     }
 
     public Class getReturnType() {
@@ -92,6 +111,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(ELEMENTWISE, true),
             AttributeRule.newStringRule(Statistic.NAME, true),
-            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+            new ElementRule(Statistic.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(ABSOLUTE, true)
     };
 }

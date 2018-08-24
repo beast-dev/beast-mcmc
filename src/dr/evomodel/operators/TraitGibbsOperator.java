@@ -25,7 +25,7 @@
 
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
@@ -59,7 +59,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     public static final String NODE_LABEL = "taxon";
     public static final String ROOT_PRIOR = "rootPrior";
 
-    private final MultivariateTraitTree treeModel;
+    private final MutableTreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final SampledMultivariateTraitLikelihood traitModel;
     private final int dim;
@@ -357,7 +357,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             return operator;
         }
 
-        private Taxon getTaxon(MultivariateTraitTree treeModel, String taxonLabel) throws XMLParseException {
+        private Taxon getTaxon(MutableTreeModel treeModel, String taxonLabel) throws XMLParseException {
             // Get taxon node from tree
             int index = treeModel.getTaxonIndex(taxonLabel);
             if (index == -1) {

@@ -27,37 +27,63 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.RateRescalingScheme;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
- * Created by msuchard on 9/14/16.
+ * @author Marc A. Suchard
  */
 
 public interface ContinuousRateTransformation {
 
     double getNormalization();
 
-    class Default implements ContinuousRateTransformation {
+    RateRescalingScheme getRateRescalingScheme();
 
+    class Default extends AbstractModel implements ContinuousRateTransformation {
         private final Tree tree;
-        private final boolean scaleByTime;
-        private final boolean useTreeLength;
+
+        private final RateRescalingScheme scheme;
 
         public Default(Tree tree, boolean scaleByTime, boolean useTreeLength) {
+            super("ContinuousRateTransformation");
             this.tree = tree;
-            this.scaleByTime = scaleByTime;
-            this.useTreeLength = useTreeLength;
+
+            scheme = scaleByTime ?
+                    (useTreeLength ?
+                            RateRescalingScheme.TREE_LENGTH :
+                            RateRescalingScheme.TREE_HEIGHT) :
+                    RateRescalingScheme.NONE;
+
+        }
+
+        private static final boolean DEBUG = false;
+
+        public RateRescalingScheme getRateRescalingScheme() {
+            return scheme;
         }
 
         @Override
-        public double getNormalization() {
-            if (!scaleByTime) {
-                return 1.0;
-            } else {
-                return (useTreeLength ?
-                        (1.0 / getTreeLength()) :
-                        (1.0 / tree.getNodeHeight(tree.getRoot()))
-                );
+        public double getNormalization() { // TODO Cache
+
+            double norm = 1.0;
+            switch (scheme) {
+                case TREE_LENGTH:
+                    norm = 1.0 / getTreeLength();
+                    break;
+                case TREE_HEIGHT:
+                    norm = 1.0 / tree.getNodeHeight(tree.getRoot());
+                    break;
             }
+
+            if (DEBUG) {
+                System.out.println("CRT.gN = " + norm);
+            }
+
+            return norm;
         }
 
         private double getTreeLength() {
@@ -70,6 +96,30 @@ public interface ContinuousRateTransformation {
             }
             return treeLength;
         }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+        
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
+        }
     }
 }
- // TODO I suspect this class should be a Model and store/restore treeLength

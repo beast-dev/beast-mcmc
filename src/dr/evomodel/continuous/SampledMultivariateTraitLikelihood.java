@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -44,7 +44,7 @@ import java.util.List;
 public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTraitLikelihood {
 
     public SampledMultivariateTraitLikelihood(String traitName,
-                                              MultivariateTraitTree treeModel,
+                                              MutableTreeModel treeModel,
                                               MultivariateDiffusionModel diffusionModel,
                                               CompoundParameter traitParameter,
                                               List<Integer> missingIndices,

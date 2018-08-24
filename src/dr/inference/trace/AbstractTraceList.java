@@ -52,9 +52,13 @@ public abstract class AbstractTraceList extends FilteredTraceList {
         int start = (int) (getBurnIn() / getStepSize());
 
         Trace trace = getTrace(index);
-        List values = trace.getValues(start, trace.getValueCount(), super.filtered);
-        TraceCorrelation traceCorrelation = new TraceCorrelation(values, trace.getTraceType(), getStepSize());
-        trace.setTraceStatistics(traceCorrelation);
+        List<Double> values = trace.getValues(start, trace.getValueCount(), super.filtered);
+
+        if (trace.getTraceType() == TraceType.CATEGORICAL) {
+            trace.setTraceStatistics(new TraceCorrelation(values, trace.getCategoryLabelMap(), trace.getCategoryOrder(), getStepSize(), trace.isConstant()));
+        } else {
+            trace.setTraceStatistics(new TraceCorrelation(values, trace.getTraceType(), getStepSize(), trace.isConstant()));
+        }
 
 //        System.out.println("index = " + index + " :  " + trace.getName() + "     " + trace.getTraceType());
     }

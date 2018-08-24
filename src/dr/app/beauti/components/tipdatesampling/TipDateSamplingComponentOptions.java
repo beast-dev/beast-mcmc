@@ -150,7 +150,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 Taxon taxon = taxa.getTaxon(i);
                 Date date = taxon.getDate();
-                if (date.getPrecision() > 0.0) {
+                if (date.getUncertainty() > 0.0) {
                     precisionTaxonList.addTaxon(taxon);
                 }
 

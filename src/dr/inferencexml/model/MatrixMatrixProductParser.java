@@ -35,7 +35,7 @@ import dr.xml.*;
  * Created by max on 10/22/14.
  */
 public class MatrixMatrixProductParser extends AbstractXMLObjectParser {
-    final static String MATRIX_MATRIX_PRODUCT = "MatrixMatrixProduct";
+    final static String MATRIX_MATRIX_PRODUCT = "matrixMatrixProduct";
     final static String LEFT="left";
     final static String RIGHT="right";
     final static String IN_PLACE="InPlace";

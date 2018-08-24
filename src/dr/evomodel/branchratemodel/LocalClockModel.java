@@ -198,6 +198,10 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         return rate;
     }
 
+    /**
+     * Set up the map from node to clock.
+     * @param tree
+     */
     private void setupNodeClocks(final Tree tree) {
         if (updateNodeClocks) {
             nodeClockMap.clear();
@@ -213,6 +217,14 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
 
     }
 
+    /**
+     * Traverse the tree getting bitsets for each node based on the tips below. If this
+     * bitset is in the localCladeClocks map then set that clock for all the nodes below.
+     * Pre-order traversal so shallowest clades are set first.
+     * @param tree
+     * @param node
+     * @param tips
+     */
     private void setupRateParameters(Tree tree, NodeRef node, BitSet tips) {
         LocalClock clock;
 
@@ -231,7 +243,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         }
 
         if (clock != null) {
-            setNodeClock(tree, node, clock, clock.getStemProportion(), clock.excludeClade());
+            setNodeClock(tree, node, clock, clock.excludeClade());
         }
     }
 
@@ -257,23 +269,30 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         }
 
         if (clock != null) {
-            setNodeClock(tree, node, clock, clock.getStemProportion(), clock.excludeClade());
+            setNodeClock(tree, node, clock, clock.excludeClade());
             return true;
         }
 
         return false;
     }
 
-    private void setNodeClock(Tree tree, NodeRef node, LocalClock localClock, double stemProportion, boolean excludeClade) {
+    /**
+     * Traverse down the clade, associating all the nodes with the specified clock.
+     * @param tree
+     * @param node
+     * @param localClock
+     * @param excludeClade
+     */
+    private void setNodeClock(Tree tree, NodeRef node, LocalClock localClock, boolean excludeClade) {
 
         if (!tree.isExternal(node) && !excludeClade) {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef child = tree.getChild(node, i);
-                setNodeClock(tree, child, localClock, 1.0, false);
+                setNodeClock(tree, child, localClock, false);
             }
         }
 
-        if (stemProportion > 0.0 && !nodeClockMap.containsKey(node)) {
+        if (!nodeClockMap.containsKey(node)) {
             nodeClockMap.put(node, localClock);
         }
     }

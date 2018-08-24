@@ -132,13 +132,13 @@ public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
         List<BranchModel> branchModels = xo.getAllChildren(BranchModel.class);
-        if (branchModels == null) {
+        if (branchModels.size() == 0) {
             if (DEBUG) {
                 System.out.println("branchModels == null");
             }
             branchModels = new ArrayList<BranchModel>();
             List<SubstitutionModel> substitutionModels = xo.getAllChildren(SubstitutionModel.class);
-            if (substitutionModels == null) {
+            if (substitutionModels.size() == 0) {
                 if (DEBUG) {
                     System.out.println("substitutionModels == null");
                 }

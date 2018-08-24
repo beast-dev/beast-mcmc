@@ -38,6 +38,7 @@ import java.io.FileReader;
  * @author Alexei Drummond
  * @author Korbinian Strimmer
  */
+@Deprecated
 public class TreeMetrics {
 
 	/**

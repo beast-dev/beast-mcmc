@@ -31,20 +31,24 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.util.DataTable;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
@@ -52,8 +56,11 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -75,6 +82,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
     protected BeautiFrame frame = null;
     protected BeautiOptions options = null;
+
+    ImportTaxonSetsAction importTaxonSetsAction = new ImportTaxonSetsAction();
 
     //    private TaxonList taxa = null;
     protected JTable taxonSetsTable = null;
@@ -138,6 +147,16 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         JScrollPane scrollPane1 = new JScrollPane(taxonSetsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        JToolBar toolBar1 = new JToolBar();
+        toolBar1.setFloatable(false);
+        toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder());
+
+        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JButton button = new JButton(importTaxonSetsAction);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
 
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTaxonSetAction);
@@ -213,9 +232,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         }
 
         JPanel buttonPanel = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected "
-                + TAXA.toLowerCase() + " in the " + TAXON.toLowerCase(),
+                        + TAXA.toLowerCase() + " in the " + TAXON.toLowerCase(),
                 excludeTaxonAction, excludeIcon, "Exclude selected " + TAXA.toLowerCase()
-                + " from the " + TAXON.toLowerCase(), BoxLayout.Y_AXIS);
+                        + " from the " + TAXON.toLowerCase(), BoxLayout.Y_AXIS);
 
         taxonSetEditingPanel = new JPanel();
         taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(""));
@@ -223,11 +242,11 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setLayout(new GridBagLayout());
 
         excludedTaxaSearchField.setColumns(12);
-        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+//        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
         excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
         excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
         includedTaxaSearchField.setColumns(12);
-        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+//        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
         includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
         includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
 
@@ -351,6 +370,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
+        add(toolBar1, BorderLayout.NORTH);
         add(panel3, BorderLayout.CENTER);
 
 //		taxonSetsTable.addMouseListener(new MouseAdapter() {
@@ -364,32 +384,32 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 //		});
 
         includedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                selectIncludedTaxa(includedTaxaSearchField.getText());
-            }
+                                                                      public void changedUpdate(DocumentEvent e) {
+                                                                          selectIncludedTaxa(includedTaxaSearchField.getText());
+                                                                      }
 
-            public void removeUpdate(DocumentEvent e) {
-                selectIncludedTaxa(includedTaxaSearchField.getText());
-            }
+                                                                      public void removeUpdate(DocumentEvent e) {
+                                                                          selectIncludedTaxa(includedTaxaSearchField.getText());
+                                                                      }
 
-            public void insertUpdate(DocumentEvent e) {
-                selectIncludedTaxa(includedTaxaSearchField.getText());
-            }
-        }
+                                                                      public void insertUpdate(DocumentEvent e) {
+                                                                          selectIncludedTaxa(includedTaxaSearchField.getText());
+                                                                      }
+                                                                  }
         );
         excludedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                selectExcludedTaxa(excludedTaxaSearchField.getText());
-            }
+                                                                      public void changedUpdate(DocumentEvent e) {
+                                                                          selectExcludedTaxa(excludedTaxaSearchField.getText());
+                                                                      }
 
-            public void removeUpdate(DocumentEvent e) {
-                selectExcludedTaxa(excludedTaxaSearchField.getText());
-            }
+                                                                      public void removeUpdate(DocumentEvent e) {
+                                                                          selectExcludedTaxa(excludedTaxaSearchField.getText());
+                                                                      }
 
-            public void insertUpdate(DocumentEvent e) {
-                selectExcludedTaxa(excludedTaxaSearchField.getText());
-            }
-        }
+                                                                      public void insertUpdate(DocumentEvent e) {
+                                                                          selectExcludedTaxa(excludedTaxaSearchField.getText());
+                                                                      }
+                                                                  }
         );
 
 
@@ -608,8 +628,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             addTaxonSetAction.setEnabled(options.hasData());
         }
 
-//        taxonSetsTableSelectionChanged(); // These 2 lines code massed up table selection
-//        taxonSetsTableModel.fireTableDataChanged();
+        taxonSetsTableModel.fireTableDataChanged();
     }
 
     public void getOptions(BeautiOptions options) {
@@ -748,7 +767,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             taxonSetEditingPanel.setEnabled(false);
         } else {
             taxonSetEditingPanel.setEnabled(true);
-            taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(TAXON + ": " + currentTaxonSet.getId()));
+            taxonSetEditingPanel.setBorder(new TitledBorder(null, TAXON + ": " + currentTaxonSet.getId(), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.ABOVE_TOP));
         }
     }
 
@@ -774,6 +793,95 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 //            }
         }
     }
+
+    public void importTaxonSets() {
+
+        File[] files = frame.selectImportFiles("Import Taxon Set File...", false, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat")});
+
+        DataTable<String[]> dataTable;
+
+        if (files != null && files.length != 0) {
+            try {
+                // Load the file as a table
+                dataTable = DataTable.Text.parse(new FileReader(files[0]), false, true, false, false);
+
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+                return;
+            }
+        } else {
+            return;
+        }
+
+        String[] taxonNames = dataTable.getRowLabels();
+
+        if (dataTable.getColumnCount() == 0) {
+            String name = files[0].getName();
+            int lastDot = name.lastIndexOf('.');
+            if (lastDot >= 1) {
+                name = name.substring(0, lastDot);
+            }
+
+            Taxa taxa = new Taxa();
+
+            // Only one column so assume the entire set is defined in this file.
+            for (String taxonName : taxonNames) {
+                final int index = options.taxonList.getTaxonIndex(taxonName);
+                if (index >= 0) {
+                    taxa.addTaxon(options.taxonList.getTaxon(index));
+                }
+            }
+            taxa.setId(name);
+            options.taxonSets.add(taxa);
+            options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+        } else {
+            // assume column one is the taxon labels and column two is the set names
+            String[] taxonSetNames = dataTable.getColumn(0);
+
+            Map<String, Taxa> taxonSets = new HashMap<String, Taxa>();
+
+            int i = 0;
+            for (String taxonName : taxonNames) {
+                final int index = options.taxonList.getTaxonIndex(taxonName);
+                if (index >= 0) {
+                    Taxa taxa = taxonSets.get(taxonSetNames[i]);
+                    if (taxa == null) {
+                        taxa = new Taxa();
+                        taxa.setId(taxonSetNames[i]);
+                        taxonSets.put(taxonSetNames[i], taxa);
+                    }
+                    taxa.addTaxon(options.taxonList.getTaxon(index));
+                }
+                i++;
+            }
+
+            for (Taxa taxa : taxonSets.values()) {
+                options.taxonSets.add(taxa);
+                options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+                options.taxonSetsMono.put(taxa, false);
+                options.taxonSetsIncludeStem.put(taxa, false);
+                options.taxonSetsHeights.put(taxa, 0.0);
+            }
+        }
+
+        taxonSetsTableModel.fireTableDataChanged();
+    }
+
 
     /**
      * Returns true if taxa are all found in availableTaxa
@@ -1037,6 +1145,22 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             excludeSelectedTaxa();
         }
     };
+
+    public class ImportTaxonSetsAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 8514706149822252033L;
+
+        public ImportTaxonSetsAction() {
+            super("Import Taxon Sets");
+            setToolTipText("Use this tool to import the taxon sets from a file");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            importTaxonSets();
+        }
+    }
 
     class TaxaTableModel extends AbstractTableModel {
 

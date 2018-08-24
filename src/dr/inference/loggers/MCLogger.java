@@ -25,12 +25,16 @@
 
 package dr.inference.loggers;
 
+import dr.util.Keywordable;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A class for a general purpose logger.
@@ -53,7 +57,7 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
+    public MCLogger(LogFormatter formatter, long logEvery, boolean performanceReport, int performanceReportDelay) {
 
         addFormatter(formatter);
         this.logEvery = logEvery;
@@ -67,7 +71,7 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
+    public MCLogger(LogFormatter formatter, long logEvery, boolean performanceReport) {
         this(formatter, logEvery, performanceReport, 0);
     }
 
@@ -76,7 +80,7 @@ public class MCLogger implements Logger {
      *
      * @param logEvery logging frequency
      */
-    public MCLogger(String fileName, int logEvery, boolean performanceReport, int performanceReportDelay) throws IOException {
+    public MCLogger(String fileName, long logEvery, boolean performanceReport, int performanceReportDelay) throws IOException {
         this(new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport, performanceReportDelay);
     }
 
@@ -95,7 +99,7 @@ public class MCLogger implements Logger {
      *
      * @param logEvery logging frequency
      */
-    public MCLogger(int logEvery) {
+    public MCLogger(long logEvery) {
         this(new TabDelimitedFormatter(System.out), logEvery, true, 0);
     }
 
@@ -107,11 +111,11 @@ public class MCLogger implements Logger {
         return title;
     }
 
-    public int getLogEvery() {
+    public long getLogEvery() {
         return logEvery;
     }
 
-    public void setLogEvery(int logEvery) {
+    public void setLogEvery(long logEvery) {
         this.logEvery = logEvery;
     }
 
@@ -130,6 +134,10 @@ public class MCLogger implements Logger {
     }
 
     public final void addColumn(LogColumn column) {
+
+        if (column instanceof Keywordable) {
+            keywords.addAll(((Keywordable)column).getKeywords());
+        }
 
         columns.add(column);
     }
@@ -193,6 +201,14 @@ public class MCLogger implements Logger {
         if (title != null) {
             logHeading(title);
         }
+        if (keywords.size() > 0) {
+            StringBuffer sb = new StringBuffer("keywords:");
+            for (String keyword: keywords) {
+                sb.append(" ");
+                sb.append(keyword);
+            }
+            logHeading(sb.toString());
+        }
 
         if (logEvery > 0) {
             final int columnCount = getColumnCount();
@@ -212,6 +228,7 @@ public class MCLogger implements Logger {
         // just to prevent overriding of the old 32 bit signature
     }
 
+    @Override
     public void log(long state) {
 
         if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
@@ -239,14 +256,19 @@ public class MCLogger implements Logger {
 
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    String hpm = formatter.format(hoursPerMillionStates);
-                    if (hpm.equals("0")) {
-                        // test cases can run fast :)
-                        hpm = formatter.format(1000 * hoursPerMillionStates);
-                        values[columnCount + 1] = hpm + " hours/billion states";
-                    } else {
-                        values[columnCount + 1] = hpm + " hours/million states";
+                    String timePerMillion = formatter.format(hoursPerMillionStates);
+                    String units = " hours/million states";
+                    if (hoursPerMillionStates < 0.1) {
+                        double minutesPerMillionStates = hoursPerMillionStates * 60;
+                        timePerMillion = formatter.format(minutesPerMillionStates);
+                        units = " minutes/million states";
+                        if (minutesPerMillionStates < 0.1) {
+                            double secondsPerMillionStates = minutesPerMillionStates * 60;
+                            timePerMillion = formatter.format(secondsPerMillionStates);
+                            units = " seconds/million states";
+                        }
                     }
+                    values[columnCount + 1] = timePerMillion + units;
 
                 } else {
                     values[columnCount + 1] = "-";
@@ -271,9 +293,11 @@ public class MCLogger implements Logger {
 
     private String title = null;
 
-    private ArrayList<LogColumn> columns = new ArrayList<LogColumn>();
+    private Set<String> keywords = new HashSet<String>();
 
-    protected int logEvery = 0;
+    private List<LogColumn> columns = new ArrayList<LogColumn>();
+
+    protected long logEvery = 0;
 
     public List<LogFormatter> getFormatters() {
         return formatters;

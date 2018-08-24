@@ -47,6 +47,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         rejecting,
         reflecting,
         absorbing,
+        log,
         logit
     }
 
@@ -54,13 +55,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         this(parameter, null, windowSize, bc, weight, mode);
     }
 
-    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition bc,
-                              double weight, CoercionMode mode) {
-        this(parameter, updateIndex, windowSize, bc, weight, mode, null, null);
-    }
-
     public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition boundaryCondition,
-                              double weight, CoercionMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
+                              double weight, CoercionMode mode) {
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
@@ -75,9 +71,6 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
             }
             updateMapSize=updateMap.size();
         }
-
-        this.lowerOperatorBound = lowerOperatorBound;
-        this.upperOperatorBound = upperOperatorBound;
     }
 
     /**
@@ -114,8 +107,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         double oldValue = parameter.getParameterValue(dim);
 
         final Bounds<Double> bounds = parameter.getBounds();
-        final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(dim) : Math.max(bounds.getLowerLimit(dim), lowerOperatorBound));
-        final double upper = (upperOperatorBound == null ? bounds.getUpperLimit(dim) : Math.min(bounds.getUpperLimit(dim), upperOperatorBound));
+        final double lower = bounds.getLowerLimit(dim);
+        final double upper = bounds.getUpperLimit(dim);
 
         if (boundaryCondition == BoundaryCondition.logit) {
             // scale oldValue to [0,1]
@@ -125,9 +118,21 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
             // parameter takes new value scaled back into interval [lower, upper]
             parameter.setParameterValue(dim, (x2 * (upper - lower)) + lower);
-
+            
             // HR is the ratio of Jacobians for the before and after values in interval [0,1]
             return Transform.LOGIT.getLogJacobian(x1) - Transform.LOGIT.getLogJacobian(x2);
+
+        } else if (boundaryCondition == BoundaryCondition.log) {
+            // offset oldValue to [0,+Inf]
+            double x1 = oldValue - lower;
+            // logit transform it, add the draw, inverse transform it
+            double x2 = Transform.LOG.inverse(Transform.LOG.transform(x1) + draw);
+
+            // parameter takes new value tranlated back into interval [lower, +Inf]
+            parameter.setParameterValue(dim, x2 + lower);
+
+            // HR is the ratio of Jacobians for the before and after values
+            return Transform.LOG.getLogJacobian(x1) - Transform.LOG.getLogJacobian(x2);
 
         } else {
             double newValue = oldValue + draw;
@@ -146,7 +151,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
 }
 
-    public double reflectValue(double value, double lower, double upper) {
+    public static double reflectValue(double value, double lower, double upper) {
 
         double newValue = value;
 
@@ -270,7 +275,4 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     private List<Integer> updateMap = null;
     private int updateMapSize;
     private final BoundaryCondition boundaryCondition;
-
-    private final Double lowerOperatorBound;
-    private final Double upperOperatorBound;
 }

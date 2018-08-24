@@ -69,7 +69,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());
 
-    private JComboBox skyGridPointsCombo = new JComboBox(new Integer[]{10, 20, 50, 100});
+    private WholeNumberField skyGridPointsField = new WholeNumberField(2, Integer.MAX_VALUE);
     private RealNumberField skyGridInterval = new RealNumberField(0.0, Double.MAX_VALUE);
 
 //    private JComboBox skyGridCombo = new JComboBox(EnumSet.range())
@@ -96,7 +96,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         this.partitionTreePrior = parTreePrior;
         this.treesPanel = parent;
 
-        setTreePriorChoices(false, false, false);
+        setTreePriorChoices(false, false);
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(new ItemListener() {
@@ -110,6 +110,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         });
 
         PanelUtils.setupComponent(parameterizationCombo);
+        parameterizationCombo.setToolTipText("<html>" +
+                "Select the parameterization of growth rate to use for<br>" +
+                "the parametric coalescent model. This does not affect<br>" +
+                "nature of the model but may assist with mixing.<html>");
         parameterizationCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
@@ -125,6 +129,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        });
 
         PanelUtils.setupComponent(groupCountField);
+        groupCountField.setToolTipText("<html>" +
+                "Set the number of groups to be used in the Skyline model<br>" +
+                "It will affect the resolution of the reconstruction. This<br>" +
+                "should be set at fewer than the number of nodes in the<br>" +
+                "tree.<html>");
         groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
                 // move to here?
@@ -133,6 +142,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         });
 
         PanelUtils.setupComponent(skyGridInterval);
+        skyGridInterval.setToolTipText("<html>" +
+                "This sets the time interval over which the change-points<br>" +
+                "of the Skygrid are placed. It is measured relative to the<br>" +
+                "most recent tip and should be commensurate with the predicted<br>" +
+                "age of the tree.<html>");
         skyGridInterval.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
             }
@@ -163,21 +177,31 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         });
 
-        PanelUtils.setupComponent(skyGridPointsCombo);
-        skyGridPointsCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent itemEvent) {
-                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
+//        PanelUtils.setupComponent(skyGridPointsCombo);
+//        skyGridPointsCombo.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent itemEvent) {
+//                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
+//                parent.fireTreePriorsChanged();
+//            }
+//        });
+        PanelUtils.setupComponent(skyGridPointsField);
+        skyGridPointsField.setToolTipText("<html>" +
+                "This sets number of population size parameters for<br>" +
+                "the Skygrid. This determines the number of transition-points<br>" +
+                "at which the population size changes. The last one spans to<br>" +
+                "infinite time.<html>");
+        skyGridPointsField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
             }
         });
 
         PanelUtils.setupComponent(populationSizeCombo);
         populationSizeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
-            }
-        }
+                                                public void itemStateChanged(ItemEvent ev) {
+                                                    partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
+                                                    parent.fireTreePriorsChanged();
+                                                }
+                                            }
         );
 
 //        PanelUtils.setupComponent(calibrationCorrectionCombo);
@@ -211,22 +235,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        scrollPane.setOpaque(true);
         String calYule = "Heled J, Drummond AJ (2011), Syst Biol, doi: 10.1093/sysbio/syr087 [Calibrated Yule]";
         String citation;
-
-        if (treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE
-                || treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE_CALIBRATION
-                || treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_BIRTH_DEATH) { //*BEAST
-            addComponentWithLabel("Species Tree Prior:", treePriorCombo);
-            addComponentWithLabel("Population Size Model:", populationSizeCombo);
-            addLabel("Note: *BEAST only needs to select the prior for species tree.");
-
-            if (treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-//                addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
-                citation = calYule;
-                addComponentWithLabel("Citation:", citationText);
-                citationText.setText(citation);
-            }
-
-        } else { // non *BEAST
 
             String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
 
@@ -285,10 +293,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                     break;
 
                 case SKYGRID:
+                    skyGridPointsField.setColumns(6);
+                    addComponentWithLabel("Number of parameters:", skyGridPointsField);
                     skyGridInterval.setColumns(6);
-                    addComponentWithLabel("# parameters ( = # grid-points + 1):", skyGridPointsCombo);
-                    addComponentWithLabel("Time at last point:", skyGridInterval);
-                    addLabel("It is advisable to set this cut-off time commensurate with the expected root height for optimal model interpretability.");
+                    addComponentWithLabel("Time at last transition point:", skyGridInterval);
                     treesPanel.linkTreePriorCheck.setSelected(true);
                     treesPanel.linkTreePriorCheck.setEnabled(false);
                     treesPanel.updateShareSameTreePriorChanged();
@@ -336,20 +344,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
             addComponentWithLabel("Citation:", citationText);
             citationText.setText(citation);
-        }
-//        getOptions();
-//
-//        treesPanel.treeModelPanels.get(treesPanel.currentTreeModel).setOptions();
+
         for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
             if (model != null) {
                 treesPanel.treeModelPanels.get(model).setOptions();
                 treesPanel.treeModelPanels.get(model).setupPanel();
             }
         }
-
-//        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
-
-//        fireTableDataChanged();
 
         validate();
         repaint();
@@ -375,16 +376,24 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
-        skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
+//        skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
+        skyGridPointsField.setValue(partitionTreePrior.getSkyGridCount());
 
         double initialCutOff = partitionTreePrior.getOptions().getPartitionTreeModels().get(0).getInitialRootHeight();
         final double arbitraryScalar = 1.0;
         initialCutOff = roundToSignificantFigures(arbitraryScalar * initialCutOff, 2);
 
-        skyGridInterval.setValue(
-                partitionTreePrior.getSkyGridInterval() == -1.0 ?
-                        initialCutOff : partitionTreePrior.getSkyGridInterval()
-        );
+        skyGridInterval.setAllowEmpty(true);
+
+        if (Double.isNaN(partitionTreePrior.getSkyGridInterval())) {
+            if (initialCutOff > 0.0) {
+                skyGridInterval.setValue(initialCutOff);
+            } else {
+                skyGridInterval.setText((Double)null);
+            }
+        } else {
+            skyGridInterval.setValue(partitionTreePrior.getSkyGridInterval());
+        }
 
         populationSizeCombo.setSelectedItem(partitionTreePrior.getPopulationSizeModel());
 
@@ -425,8 +434,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
             Double interval = skyGridInterval.getValue();
-            // TODO is != null check necessary like above?
-            partitionTreePrior.setSkyGridInterval(interval);
+            if (interval != null) {
+                partitionTreePrior.setSkyGridInterval(interval);
+            } else {
+                partitionTreePrior.setSkyGridInterval(Double.NaN);
+            }
+            partitionTreePrior.setSkyGridCount(skyGridPointsField.getValue());
         } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH) {
 //            Double samplingProportion = samplingProportionField.getValue();
 //            if (samplingProportion != null) {
@@ -451,38 +464,32 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        treePriorCombo.addItem(TreePriorType.CONSTANT);
 //    }
 
-    public void setTreePriorChoices(boolean isStartBEAST, boolean isMultiLocus, boolean isTipCalibrated) {
+    public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
         TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
         treePriorCombo.removeAllItems();
 
-        if (isStartBEAST) {
-            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH)) {
-                treePriorCombo.addItem(treePriorType);
-            }
 
-        } else {
-
-            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
-                treePriorCombo.addItem(treePriorType);
-            }
-
-            // REMOVED due to unresolved issues with model
-            // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
-
-
-            // would be much better to disable these rather than removing them
-            if (isMultiLocus) {
-                treePriorCombo.removeItem(TreePriorType.SKYLINE);
-            }
-
-            if (isTipCalibrated) {
-                // remove models that require contemporaneous tips...
-                treePriorCombo.removeItem(TreePriorType.YULE);
-                treePriorCombo.removeItem(TreePriorType.YULE_CALIBRATION);
-                treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-                treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
-            }
+        for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
+            treePriorCombo.addItem(treePriorType);
         }
+
+        // REMOVED due to unresolved issues with model
+        // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
+
+
+        // would be much better to disable these rather than removing them
+        if (isMultiLocus) {
+            treePriorCombo.removeItem(TreePriorType.SKYLINE);
+        }
+
+        if (isTipCalibrated) {
+            // remove models that require contemporaneous tips...
+            treePriorCombo.removeItem(TreePriorType.YULE);
+            treePriorCombo.removeItem(TreePriorType.YULE_CALIBRATION);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
+        }
+
         // this makes sure treePriorCombo selects correct prior
         treePriorCombo.setSelectedItem(type);
         if (treePriorCombo.getSelectedItem() == null) {

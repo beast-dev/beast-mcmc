@@ -26,7 +26,6 @@
 package dr.evomodel.tree;
 
 import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -128,7 +127,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
 //        System.err.println(") new tree = " + currentTreeIndex);
 
-        fireModelChanged(new TreeModel.TreeChangedEvent());
+        fireModelChanged(new TreeChangedEvent());
     }
 
     public NodeRef getRoot() {

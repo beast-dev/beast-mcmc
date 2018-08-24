@@ -27,11 +27,14 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.oldevomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.*;
@@ -52,8 +55,8 @@ import dr.xml.XMLParser;
 import java.util.List;
 
 /**
- * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Alexei Drummond
  */
 public class ClockModelGenerator extends Generator {
 
@@ -64,114 +67,124 @@ public class ClockModelGenerator extends Generator {
     /**
      * Write the relaxed clock branch rates block.
      *
-     * @param model  PartitionClockModel
+     * @param clockModel  PartitionClockModel
      * @param writer the writer
      */
-    public void writeBranchRatesModel(PartitionClockModel model, XMLWriter writer) {
-
-        setModelPrefix(model.getPrefix());
+    public void writeBranchRatesModel(PartitionClockModel clockModel, XMLWriter writer) {
 
         Attribute[] attributes;
-        String treePrefix;
-        List<PartitionTreeModel> activeTrees = options.getPartitionTreeModels(options.getDataPartitions(model));
 
-        switch (model.getClockType()) {
+        PartitionTreeModel treeModel = clockModel.getPartitionTreeModel();
+
+        String treePrefix = treeModel.getPrefix();
+        String prefix = clockModel.getPrefix();
+        String tag;
+//        List<PartitionTreeModel> activeTrees = options.getPartitionTreeModels(options.getDataPartitions(clockModel));
+
+        switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
+                tag = StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES;
                 writer.writeComment("The strict clock (Uniform rates across branches)");
 
                 writer.writeOpenTag(
-                        StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
-                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + BranchRateModel.BRANCH_RATES)}
+                        tag,
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES)}
                 );
-                writeParameter("rate", "clock.rate", model, writer);
-                writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
+                writeParameter("rate", "clock.rate", clockModel, writer);
+                writer.writeCloseTag(tag);
 
-                for (PartitionTreeModel tree : activeTrees) {
-                    treePrefix = tree.getPrefix();
+                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
 
-                    PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
-                    if (clockTree == null) {
-                        throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName()
-                                + ", tree model = " + tree.getName());
-                    }
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("mode", "mean"),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix)
-                            + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
-                }
                 break;
 
             case UNCORRELATED:
-                writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )");
 
-                String branchRateElementName = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                if (clockModel.performModelAveraging()) {
+                    tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
 
-                if (model.isContinuousQuantile()) {
+                    writer.writeComment("Bayesian Model Averaging (BMA) of the available relaxed clock models as described by" +
+                            " Li & Drummond (2012) MBE 29:751-61.");
+                    //Bayesian Model Averaging uses the continuous quantile implementation by default
                     writer.writeComment("  Continuous quantile implementation (Li & Drummond (2012) Mol Biol Evol 29:751-61)");
-                    branchRateElementName = ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES;
-                }
 
-                for (PartitionTreeModel tree : activeTrees) {
-                    treePrefix = tree.getPrefix();
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID,
+                                    prefix  + BranchRateModel.BRANCH_RATES)};
+                    writer.writeOpenTag(tag, attributes);
+                    // tree
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
-                    PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
-                    if (clockTree == null) {
-                        throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName()
-                                + ", tree model = " + tree.getName());
+                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                            new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
+                    writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
+                    writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
+                    writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag("distribution");
+
+                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                    writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
+                    writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
+                    writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag("distribution");
+
+                    writer.writeOpenTag("distribution");
+                    writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                    writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
+                    writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                    writer.writeCloseTag("distribution");
+
+                    writer.writeOpenTag(MixtureModelBranchRatesParser.DISTRIBUTION_INDEX);
+                    writeParameter(clockModel.getParameter("branchRates.distributionIndex"), -1, writer);
+                    writer.writeCloseTag(MixtureModelBranchRatesParser.DISTRIBUTION_INDEX);
+
+                    writer.writeOpenTag(MixtureModelBranchRatesParser.RATE_CATEGORY_QUANTILES);
+                    writeParameter(clockModel.getParameter("branchRates.quantiles"), -1, writer);
+                    writer.writeCloseTag(MixtureModelBranchRatesParser.RATE_CATEGORY_QUANTILES);
+                    writer.writeCloseTag(tag);
+
+                    writeMeanRateStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
+
+                    writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+
+                } else {
+                    tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+
+                    writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )");
+
+                    if (clockModel.isContinuousQuantile()) {
+                        writer.writeComment("  Continuous quantile implementation (Li & Drummond (2012) Mol Biol Evol 29:751-61)");
+                        tag = ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES;
                     }
 
-                    //if (options.isFixedSubstitutionRate()) {
-                    //    attributes = new Attribute[]{
-                    //            new Attribute.Default<String>(XMLParser.ID, BranchRateModel.BRANCH_RATES),
-                    //            new Attribute.Default<Double>(DiscretizedBranchRatesParser.NORMALIZED_MEAN, options.getMeanSubstitutionRate())
-                    //    };
-                    //} else {
-                    attributes = new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix)
-                            + BranchRateModel.BRANCH_RATES)};
-                    //}
-                    writer.writeOpenTag(branchRateElementName, attributes);
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID,
+                                    prefix  + BranchRateModel.BRANCH_RATES)};
+                    writer.writeOpenTag(tag, attributes);
                     // tree
                     writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
                     writer.writeOpenTag("distribution");
 
-                    switch (model.getClockDistributionType()) {
+                    switch (clockModel.getClockDistributionType()) {
 
                         case LOGNORMAL:
                             writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
                                     new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
 
-                            if (activeTrees.indexOf(tree) < 1) {
-                                writeParameter("mean", ClockType.UCLD_MEAN, model, writer);
-                                writeParameter("stdev", ClockType.UCLD_STDEV, model, writer);
-                            } else {
-                                writeParameterRef("mean", modelPrefix + ClockType.UCLD_MEAN, writer);
-                                writeParameterRef("stdev", modelPrefix + ClockType.UCLD_STDEV, writer);
-                            }
+                            writeParameter("mean", ClockType.UCLD_MEAN, clockModel, writer);
+                            writeParameter("stdev", ClockType.UCLD_STDEV, clockModel, writer);
 
                             writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
                             break;
                         case GAMMA:
                             writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
 
-                            if (activeTrees.indexOf(tree) < 1) {
-                                writeParameter("mean", ClockType.UCGD_MEAN, model, writer);
-                                writeParameter("shape", ClockType.UCGD_SHAPE, model, writer);
-                            } else {
-                                writeParameterRef("mean", modelPrefix + ClockType.UCGD_MEAN, writer);
-                                writeParameterRef("shape", modelPrefix + ClockType.UCGD_SHAPE, writer);
-                            }
+                            writeParameter("mean", ClockType.UCGD_MEAN, clockModel, writer);
+                            writeParameter("shape", ClockType.UCGD_SHAPE, clockModel, writer);
 
                             writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
                             break;
@@ -181,11 +194,7 @@ public class ClockModelGenerator extends Generator {
                         case EXPONENTIAL:
                             writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
-                            if (activeTrees.indexOf(tree) < 1) {
-                                writeParameter("mean", ClockType.UCED_MEAN, model, writer);
-                            } else {
-                                writeParameterRef("mean", modelPrefix + ClockType.UCED_MEAN, writer);
-                            }
+                            writeParameter("mean", ClockType.UCED_MEAN, clockModel, writer);
 
                             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
                             break;
@@ -193,61 +202,24 @@ public class ClockModelGenerator extends Generator {
 
                     writer.writeCloseTag("distribution");
 
-                    if (model.isContinuousQuantile()) {
+                    if (clockModel.isContinuousQuantile()) {
                         writer.writeOpenTag(ContinuousBranchRatesParser.RATE_QUANTILES);
-                        writeParameter(clockTree.getParameter("branchRates.quantiles"), -1, writer);
+                        writeParameter(clockModel.getParameter("branchRates.quantiles"), -1, writer);
                         writer.writeCloseTag(ContinuousBranchRatesParser.RATE_QUANTILES);
-                        writer.writeCloseTag(branchRateElementName);
+                        writer.writeCloseTag(tag);
                     } else {
                         writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                        writeParameter(clockTree.getParameter("branchRates.categories"), -1, writer);
+                        writeParameter(clockModel.getParameter("branchRates.categories"), -1, writer);
                         writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                        writer.writeCloseTag(branchRateElementName);
+                        writer.writeCloseTag(tag);
                     }
 
-                      writer.writeText("");
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("mode", "mean"),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(branchRateElementName, options.noDuplicatedPrefix(modelPrefix, treePrefix)
-                            + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+                    writeMeanRateStatistic(writer, tag, prefix, treePrefix);
 
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(branchRateElementName, options.noDuplicatedPrefix(modelPrefix, treePrefix)
-                            + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+                    writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
 
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(branchRateElementName, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
+                    writeCovarianceStatistic(writer, tag, prefix, treePrefix);
+
                 }
 
                 break;
@@ -255,23 +227,16 @@ public class ClockModelGenerator extends Generator {
             case AUTOCORRELATED:
                 writer.writeComment("The autocorrelated relaxed clock (Rannala & Yang, 2007)");
 
-                for (PartitionTreeModel tree : activeTrees) {
-                    treePrefix = tree.getPrefix();
+                tag = ACLikelihoodParser.AC_LIKELIHOOD;
 
-                    PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
-                    if (clockTree == null) {
-                        throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName()
-                                + ", tree model = " + tree.getName());
-                    }
+                attributes = new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES),
+                        new Attribute.Default<String>("episodic", "false"),
+                        new Attribute.Default<String>("logspace", "true"),
+                };
 
-                    attributes = new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES),
-                            new Attribute.Default<String>("episodic", "false"),
-                            new Attribute.Default<String>("logspace", "true"),
-                    };
-
-                    writer.writeOpenTag(ACLikelihoodParser.AC_LIKELIHOOD, attributes);
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                writer.writeOpenTag(tag, attributes);
+                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
 //                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
 //                        Parameter parameter = tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
@@ -279,104 +244,60 @@ public class ClockModelGenerator extends Generator {
 //                        parameter.initial = model.getRate();
 //                    }
 
-                    writer.writeOpenTag(RateEvolutionLikelihood.RATES,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-                                    new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-                                    new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-                            });
-                    writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
-                                    + TreeModelParser.NODE_RATES), true);
-                    writer.writeCloseTag(RateEvolutionLikelihood.RATES);
+                writer.writeOpenTag(RateEvolutionLikelihood.RATES,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+                        });
+                writer.writeTag(ParameterParser.PARAMETER,
+                        new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "."
+                                + TreeModelParser.NODE_RATES), true);
+                writer.writeCloseTag(RateEvolutionLikelihood.RATES);
 
-                    writer.writeOpenTag(RateEvolutionLikelihood.ROOTRATE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
-                                    new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
-                                    new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
-                            });
-                    writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
-                                    + RateEvolutionLikelihood.ROOTRATE), true);
-                    writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
-                    //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
-                    //                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
-                    writeParameter("variance", "branchRates.var", clockTree, writer);
+                writer.writeOpenTag(RateEvolutionLikelihood.ROOTRATE,
+                        new Attribute[]{
+                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
+                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
+                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
+                        });
+                writer.writeTag(ParameterParser.PARAMETER,
+                        new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL + "."
+                                + RateEvolutionLikelihood.ROOTRATE), true);
+                writer.writeCloseTag(RateEvolutionLikelihood.ROOTRATE);
+                //                writeParameterRef("rates", treePrefix + "treeModel.nodeRates", writer);
+                //                writeParameterRef(RateEvolutionLikelihood.ROOTRATE, treePrefix + "treeModel.rootRate", writer);
+                writeParameter("variance", "branchRates.var", treeModel, writer);
 
-                    writer.writeCloseTag(ACLikelihoodParser.AC_LIKELIHOOD);
+                writer.writeCloseTag(tag);
 
 //                    if (model.isEstimatedRate()) {//TODO
-                        writer.writeText("");
-                        writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL
-                                        + "." + "allRates")});
-                        writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
-                                + TreeModelParser.NODE_RATES);
-                        writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
-                                + RateEvolutionLikelihood.ROOTRATE);
-                        writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+                writer.writeText("");
+                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                        new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treePrefix + TreeModel.TREE_MODEL
+                                + "." + "allRates")});
+                writer.writeIDref(ParameterParser.PARAMETER, treePrefix + TreeModel.TREE_MODEL + "."
+                        + TreeModelParser.NODE_RATES);
+                writer.writeIDref(ParameterParser.PARAMETER, treePrefix + TreeModel.TREE_MODEL + "."
+                        + RateEvolutionLikelihood.ROOTRATE);
+                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 //                    }
 
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("mode", "mean"),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
 
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+                writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
 
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, modelPrefix + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
-                }
-
-                break;
+                writeCovarianceStatistic(writer, tag, prefix, treePrefix);
 
             case RANDOM_LOCAL_CLOCK: // 1 random local clock CANNOT have different tree models
                 writer.writeComment("The random local clock model (Drummond & Suchard, 2010)");
 
-                if (activeTrees == null || activeTrees.size() != 1) {
-                    throw new IllegalArgumentException("A single random local clock cannot be applied to multiple trees.");
-                }
-                treePrefix = activeTrees.get(0).getPrefix();
+                tag = RandomLocalClockModelParser.LOCAL_BRANCH_RATES;
 
                 writer.writeOpenTag(
-                        RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
+                        tag,
                         new Attribute[]{
-                                // 1 random local clock CANNOT have different tree models,
-                                // so use modelPrefix not noDuplicatedPrefix(modelPrefix, treePrefix)
-                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + BranchRateModel.BRANCH_RATES),
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES),
                                 new Attribute.Default<String>("ratesAreMultipliers", "false")
                         }
                 );
@@ -384,163 +305,130 @@ public class ClockModelGenerator extends Generator {
 
                 writer.writeOpenTag("rates");
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
-                                (XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".relativeRates")
+                                (XMLParser.ID, prefix + ClockType.LOCAL_CLOCK + ".relativeRates")
                         , true);
                 writer.writeCloseTag("rates");
                 writer.writeOpenTag("rateIndicator");
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
-                                (XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".changes")
+                                (XMLParser.ID, prefix + ClockType.LOCAL_CLOCK + ".changes")
                         , true);
                 writer.writeCloseTag("rateIndicator");
 
-                writeParameter("clockRate", "clock.rate", model, writer);
+                writeParameter("clockRate", "clock.rate", clockModel, writer);
 
-                writer.writeCloseTag(RandomLocalClockModelParser.LOCAL_BRANCH_RATES);
+                writer.writeCloseTag(tag);
 
                 writer.writeText("");
                 writer.writeOpenTag(
                         SumStatisticParser.SUM_STATISTIC,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + "rateChanges"),
-                                new Attribute.Default<String>("name", modelPrefix + "rateChangeCount"),
+                                new Attribute.Default<String>(XMLParser.ID, prefix + "rateChanges"),
+                                new Attribute.Default<String>("name", prefix + "rateChangeCount"),
                                 new Attribute.Default<String>("elementwise", "true"),
                         }
                 );
-                writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + ClockType.LOCAL_CLOCK + ".changes");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.LOCAL_CLOCK + ".changes");
                 writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
-                writer.writeText("");
+                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
 
-                writer.writeOpenTag(
-                        RateStatisticParser.RATE_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                new Attribute.Default<String>("mode", "mean"),
-                                new Attribute.Default<String>("internal", "true"),
-                                new Attribute.Default<String>("external", "true")
-                        }
-                );
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, modelPrefix + BranchRateModel.BRANCH_RATES);
-                writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+                writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
 
-                writer.writeText("");
-                writer.writeOpenTag(
-                        RateStatisticParser.RATE_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                new Attribute.Default<String>("internal", "true"),
-                                new Attribute.Default<String>("external", "true")
-                        }
-                );
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, modelPrefix + BranchRateModel.BRANCH_RATES);
-                writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
-
-                writer.writeText("");
-                writer.writeOpenTag(
-                        RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-                                new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
-                        }
-                );
-                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, modelPrefix + BranchRateModel.BRANCH_RATES);
-                writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
+                writeCovarianceStatistic(writer, tag, prefix, treePrefix);
 
                 break;
 
             case FIXED_LOCAL_CLOCK:
                 writer.writeComment("The a priori local clock model (Yoder & Yang, 2000)");
 
-                for (PartitionTreeModel tree : activeTrees) {
-                    treePrefix = tree.getPrefix();
+                tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
 
-                    PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
-                    if (clockTree == null) {
-                        throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName()
-                                + ", tree model = " + tree.getName());
+                writer.writeOpenTag(
+                        tag,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchRateModel.BRANCH_RATES)                        }
+                );
+
+                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+
+                writeParameter(LocalClockModelParser.RATE, "clock.rate", clockModel, writer);
+
+                for (Taxa taxonSet : options.taxonSets) {
+                    if (options.taxonSetsMono.get(taxonSet)) {
+                        String parameterName = taxonSet.getId() + ".rate";
+                        writer.writeOpenTag(
+                                LocalClockModelParser.CLADE,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("includeStem", options.taxonSetsIncludeStem.get(taxonSet).toString())
+                                }
+                        );
+                        writeParameter(parameterName, clockModel, writer);
+                        writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
+                        writer.writeCloseTag(LocalClockModelParser.CLADE);
                     }
-
-                    writer.writeOpenTag(
-                            LocalClockModelParser.LOCAL_CLOCK_MODEL,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + BranchRateModel.BRANCH_RATES)                        }
-                    );
-
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-
-                    writeParameter(LocalClockModelParser.RATE, "clock.rate", model, writer);
-
-                    for (Taxa taxonSet : options.taxonSets) {
-                        if (options.taxonSetsMono.get(taxonSet)) {
-                            String parameterName = taxonSet.getId() + ".rate";
-                            writer.writeOpenTag(
-                                    LocalClockModelParser.CLADE,
-                                    new Attribute[]{
-                                            new Attribute.Default<String>("includeStem", options.taxonSetsIncludeStem.get(taxonSet).toString())
-                                    }
-                            );
-                            writeParameter(parameterName, model, writer);
-                            writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
-                            writer.writeCloseTag(LocalClockModelParser.CLADE);
-                        }
-                    }
-
-                    writer.writeCloseTag(LocalClockModelParser.LOCAL_CLOCK_MODEL);
-
-                    writer.writeText("");
-
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
-                                    new Attribute.Default<String>("mode", "mean"),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, modelPrefix + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
-
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateStatisticParser.RATE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
-                                    new Attribute.Default<String>("internal", "true"),
-                                    new Attribute.Default<String>("external", "true")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, modelPrefix + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
-
-                    writer.writeText("");
-                    writer.writeOpenTag(
-                            RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
-                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
-                            }
-                    );
-                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, modelPrefix + BranchRateModel.BRANCH_RATES);
-                    writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
                 }
+
+                writer.writeCloseTag(tag);
+
+                writeMeanRateStatistic(writer, tag, prefix, treePrefix);
+
+                writeCoefficientOfVariationStatistic(writer, tag, prefix, treePrefix);
+
+                writeCovarianceStatistic(writer, tag, prefix, treePrefix);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
+    }
+
+    private void writeMeanRateStatistic(XMLWriter writer, String tag, String prefix, String treePrefix) {
+        writer.writeText("");
+        writer.writeOpenTag(
+                RateStatisticParser.RATE_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + "meanRate"),
+                        new Attribute.Default<String>("name", prefix + "meanRate"),
+                        new Attribute.Default<String>("mode", "mean"),
+                        new Attribute.Default<String>("internal", "true"),
+                        new Attribute.Default<String>("external", "true")
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(tag, prefix
+                + BranchRateModel.BRANCH_RATES);
+        writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+    }
+
+    private void writeCovarianceStatistic(XMLWriter writer, String tag, String prefix, String treePrefix) {
+        writer.writeText("");
+        writer.writeOpenTag(
+                RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + "covariance"),
+                        new Attribute.Default<String>("name", prefix + "covariance")
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(tag, prefix + BranchRateModel.BRANCH_RATES);
+        writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
+    }
+
+    private void writeCoefficientOfVariationStatistic(XMLWriter writer, String tag, String prefix, String treePrefix) {
+        writer.writeText("");
+        writer.writeOpenTag(
+                RateStatisticParser.RATE_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                        new Attribute.Default<String>("name", prefix + RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                        new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                        new Attribute.Default<String>("internal", "true"),
+                        new Attribute.Default<String>("external", "true")
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(tag, prefix + BranchRateModel.BRANCH_RATES);
+        writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
     }
 
     /**
@@ -560,9 +448,13 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                tag = model.isContinuousQuantile() ?
-                        ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
-                        DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                if (model.performModelAveraging()) {
+                    tag = MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES;
+                } else {
+                    tag = model.isContinuousQuantile() ?
+                            ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                            DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                }
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;
 
@@ -592,7 +484,7 @@ public class ClockModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
-        String parameterName = options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus";
+        String parameterName = options.useNuRelativeRates() ? "allNus" : "allMus";
 
         Parameter allMus = model.getParameter(parameterName);
         if (allMus.getSubParameters().size() > 1) {
@@ -618,26 +510,30 @@ public class ClockModelGenerator extends Generator {
 
 
     public String getClockRateString(PartitionClockModel model) {
-        setModelPrefix(model.getPrefix());
+        String prefix = model.getPrefix();
+
+        if (model.performModelAveraging()) {
+            return prefix + "meanRate";
+        }
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:
             case RANDOM_LOCAL_CLOCK:
             case FIXED_LOCAL_CLOCK:
-                return modelPrefix + "clock.rate";
+                return prefix + "clock.rate";
 
             case UNCORRELATED:
                 switch (model.getClockDistributionType()) {
 
                     case LOGNORMAL:
-                        return modelPrefix + ClockType.UCLD_MEAN;
+                        return prefix + ClockType.UCLD_MEAN;
                     case GAMMA:
-                        return modelPrefix + ClockType.UCGD_MEAN;
+                        return prefix + ClockType.UCGD_MEAN;
                     case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
 //                        return null;
                     case EXPONENTIAL:
-                        return modelPrefix + ClockType.UCED_MEAN;
+                        return prefix + ClockType.UCED_MEAN;
                 }
 
             case AUTOCORRELATED:
@@ -651,31 +547,36 @@ public class ClockModelGenerator extends Generator {
     }
 
     public void writeLog(PartitionClockModel model, XMLWriter writer) {
-        setModelPrefix(model.getPrefix());
+        String prefix = model.getPrefix();
 
-        if (options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allNus");
-            }
+                // The mu's are the more relevent parameter and allow comparisons with the old parameterization
+                // It would be confusing to log the nus and mus.
+//                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
 
-            // todo write mu s here as statistics (or per-partition rates?).
+                for (Parameter parameter : allNus.getSubParameters()) {
+                    String name = parameter.getName();
+                    writer.writeIDref(StatisticParser.STATISTIC, name.substring(0, name.lastIndexOf(".")) + ".mu");
+                }
+            }
 
         } else {
             Parameter allMus = model.getParameter("allMus");
             if (allMus.getSubParameters().size() > 1) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allMus");
             }
         }
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:
             case RANDOM_LOCAL_CLOCK:
-                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "clock.rate");
                 break;
 
             case FIXED_LOCAL_CLOCK:
-                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "clock.rate");
                 for (Taxa taxonSet : options.taxonSets) {
                     if (options.taxonSetsMono.get(taxonSet)) {
                         String parameterName = taxonSet.getId() + ".rate";
@@ -685,21 +586,37 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                switch (model.getClockDistributionType()) {
-                    case LOGNORMAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                        break;
-                    case GAMMA:
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SHAPE);
-                        break;
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+
+                if (model.performModelAveraging()) {
+
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
+
+                    writer.writeIDref(ParameterParser.PARAMETER, "branchRates.distributionIndex");
+                    writer.writeIDref(ParameterParser.PARAMETER, "branchRates.quantiles");
+
+                } else {
+
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_MEAN);
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCLD_STDEV);
+                            break;
+                        case GAMMA:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_MEAN);
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCGD_SHAPE);
+                            break;
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
 //                        break;
-                    case EXPONENTIAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                        break;
+                        case EXPONENTIAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.UCED_MEAN);
+                            break;
+                    }
+
                 }
 
             case AUTOCORRELATED:
@@ -713,42 +630,33 @@ public class ClockModelGenerator extends Generator {
     }
 
     public void writeLogStatistic(PartitionClockModel model, XMLWriter writer) {
-        setModelPrefix(model.getPrefix());
+        String prefix = model.getPrefix();
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
-                }
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + "meanRate");
                 break;
 
             case UNCORRELATED:
             case FIXED_LOCAL_CLOCK:
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
-                }
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + "meanRate");
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + RateStatisticParser.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, prefix + "covariance");
                 break;
 
             case AUTOCORRELATED:
-// TODO
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
-                    writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "branchRates.var");
-                    writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "treeModel.rootRate");
-                }
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + "meanRate");
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + RateStatisticParser.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, prefix + "covariance");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "branchRates.var");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "treeModel.rootRate");
                 break;
 
             case RANDOM_LOCAL_CLOCK:
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "rateChanges");
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
-                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
-                    writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
-                }
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + "meanRate");
+                writer.writeIDref(RateStatisticParser.RATE_STATISTIC, prefix + RateStatisticParser.COEFFICIENT_OF_VARIATION);
+                writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, prefix + "covariance");
                 break;
 
             default:

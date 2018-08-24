@@ -185,7 +185,16 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     					parent = System.getProperty("user.dir");
     				}
 
-    				file = new File(parent, name);
+                    final String fileNamePrefix = System.getProperty("file.name.prefix");
+                    final String fileSeparator = System.getProperty("file.separator");
+                    if (fileNamePrefix != null) {
+                        if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
+                            throw new XMLParseException("The specified file name prefix is illegal.");
+                        }
+                        file = new File(parent, fileNamePrefix+name);
+                    } else {
+                        file = new File(parent, name);
+                    }
 
     				fileName = file.getAbsolutePath();
 
@@ -201,7 +210,7 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     				LogFileTraces traces = new LogFileTraces(fileName, file);
     				traces.loadTraces();
                 
-    				int burnin = 0;
+    				long burnin = 0;
                 
     				traces.setBurnIn(burnin);
 

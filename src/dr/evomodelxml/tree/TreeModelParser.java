@@ -68,6 +68,19 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
 
+    public static ElementRule nodeTraitsRule = new ElementRule(NODE_TRAITS,
+            new XMLSyntaxRule[]{
+                    AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
+                    AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root trait is included in the parameter"),
+                    AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node traits (minus the root) are included in the parameter"),
+                    AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node traits are included in the parameter"),
+                    AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
+                    AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
+                    AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
+                    AttributeRule.newBooleanRule(AS_MATRIX, true, "Whether to return parameter as a matrix"),
+                    new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
+            }, 0, Integer.MAX_VALUE);
+
     public TreeModelParser() {
         rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
@@ -85,18 +98,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                                 AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
                                 new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
                         }, 0, Integer.MAX_VALUE),
-                new ElementRule(NODE_TRAITS,
-                        new XMLSyntaxRule[]{
-                                AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
-                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root trait is included in the parameter"),
-                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node traits (minus the root) are included in the parameter"),
-                                AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node traits are included in the parameter"),
-                                AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
-                                AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
-                                AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
-                                AttributeRule.newBooleanRule(AS_MATRIX, true, "Whether to return parameter as a matrix"),
-                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                        }, 0, Integer.MAX_VALUE),
+                nodeTraitsRule,
                 new ElementRule(NODE_RATES,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root rate is included in the parameter"),
@@ -166,7 +168,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                     Taxon taxon = treeModel.getTaxon(index);
 
-                    setPrecisionBounds(newParameter, taxon);
+                    setUncertaintyBounds(newParameter, taxon);
 
                 } else if (cxo.getName().equals(LEAF_HEIGHTS)) {
                     // get a set of leaf height parameters out as a compound parameter...
@@ -186,7 +188,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                         leafHeights.addParameter(newParameter);
 
-                        setPrecisionBounds(newParameter, taxon);
+                        setUncertaintyBounds(newParameter, taxon);
                     }
 
                     ParameterParser.replaceParameter(cxo, leafHeights);
@@ -222,28 +224,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                 } else if (cxo.getName().equals(NODE_TRAITS)) {
 
-                    boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
-                    boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
-                    boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
-                    boolean fireTreeEvents = cxo.getAttribute(FIRE_TREE_EVENTS, false);
-                    boolean asMatrix = cxo.getAttribute(AS_MATRIX, false);
-                    String name = cxo.getAttribute(NAME, "trait");
-                    int dim = cxo.getAttribute(MULTIVARIATE_TRAIT, 1);
-
-                    double[] initialValues = null;
-                    if (cxo.hasAttribute(INITIAL_VALUE)) {
-                        initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
-                    }
-
-                    if (!rootNode && !internalNodes && !leafNodes) {
-                        throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
-                    }
-
-                    Parameter newParameter = asMatrix ?
-                            treeModel.createNodeTraitsParameterAsMatrix(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents) :
-                            treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents);
-
-                    ParameterParser.replaceParameter(cxo, newParameter);
+                    parseNodeTraits(cxo, treeModel);
 
                 } else if (cxo.getName().equals(LEAF_TRAIT)) {
 
@@ -279,28 +260,51 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
             }
         }
-
-        // AR this is doubling up the number of bounds on each node.
-//        treeModel.setupHeightBounds();
-        //System.err.println("done constructing treeModel");
-
-        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
+        
+//        Logger.getLogger("dr.evomodel").info("  initial tree topology = " + TreeUtils.uniqueNewick(treeModel, treeModel.getRoot()));
+        Logger.getLogger("dr.evomodel").info("  taxon count = " + treeModel.getExternalNodeCount());
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;
     }
 
-    private void setPrecisionBounds(Parameter newParameter, Taxon taxon) {
+    public static void parseNodeTraits(XMLObject cxo, TreeModel treeModel) throws XMLParseException {
+
+        boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
+        boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
+        boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
+        boolean fireTreeEvents = cxo.getAttribute(FIRE_TREE_EVENTS, false);
+        boolean asMatrix = cxo.getAttribute(AS_MATRIX, false);
+        String name = cxo.getAttribute(NAME, "trait");
+        int dim = cxo.getAttribute(MULTIVARIATE_TRAIT, 1);
+
+        double[] initialValues = null;
+        if (cxo.hasAttribute(INITIAL_VALUE)) {
+            initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
+        }
+
+        if (!rootNode && !internalNodes && !leafNodes) {
+            throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
+        }
+
+        Parameter newParameter = asMatrix ?
+                treeModel.createNodeTraitsParameterAsMatrix(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents) :
+                treeModel.createNodeTraitsParameter(name, dim, initialValues, rootNode, internalNodes, leafNodes, fireTreeEvents);
+
+        ParameterParser.replaceParameter(cxo, newParameter);
+    }
+
+    private void setUncertaintyBounds(Parameter newParameter, Taxon taxon) {
         Date date = taxon.getDate();
         if (date != null) {
-            double precision = date.getPrecision();
-            if (precision > 0.0) {
+            double uncertainty = date.getUncertainty();
+            if (uncertainty > 0.0) {
                 // taxon date not specified to exact value so add appropriate bounds
                 double upper = Taxon.getHeightFromDate(date);
                 double lower = Taxon.getHeightFromDate(date);
                 if (date.isBackwards()) {
-                    upper += precision;
+                    upper += uncertainty;
                 } else {
-                    lower -= precision;
+                    lower -= uncertainty;
                 }
 
                 // set the bounds for the given precision

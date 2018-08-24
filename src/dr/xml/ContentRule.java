@@ -71,6 +71,13 @@ public class ContentRule implements XMLSyntaxRule {
 	/**
 	 * @return a string describing the rule.
 	 */
+	public String markdownRuleString(XMLDocumentationHandler handler, String prefix) {
+		return prefix + ": " + htmlDescription + "\n";
+	}
+
+	/**
+	 * @return a string describing the rule.
+	 */
 	public String ruleString(XMLObject xo) { return null; }
 
 	/**

@@ -26,6 +26,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -33,13 +34,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.CommonCitations;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Marc A. Suchard
@@ -51,7 +45,7 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
         this(scale, null);
     }
 
-    public ProgressiveScalarTreeTransform(TreeModel tree, Parameter scale) {
+    public ProgressiveScalarTreeTransform(MutableTreeModel tree, Parameter scale) {
         this(scale, new TrialTreeParameterModel(tree, scale, false, false, TreeTrait.Intent.BRANCH));
     }
 

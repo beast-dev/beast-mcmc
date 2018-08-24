@@ -32,6 +32,8 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -43,9 +45,7 @@ import java.util.TreeSet;
 public class TraitData implements Serializable {
     private static final long serialVersionUID = -9152518508699327745L;
 
-    public static final String TRAIT_SPECIES = "species";
-
-    public static enum TraitType {
+    public enum TraitType {
         DISCRETE,
         INTEGER,
         CONTINUOUS;
@@ -61,6 +61,8 @@ public class TraitData implements Serializable {
     private String name;
 
     protected final BeautiOptions options;
+
+    private List<Predictor> predictorList = new ArrayList<Predictor>();
 
     public TraitData(BeautiOptions options, String name, String fileName, TraitType traitType) {
         this.options = options;
@@ -126,6 +128,10 @@ public class TraitData implements Serializable {
         this.name = name;
     }
 
+    public Set<String> getStatesOfTrait() {
+        return getStatesListOfTrait(options.taxonList, getName());
+    }
+
     public Set<String> getStatesOfTrait(Taxa taxonList) {
         return getStatesListOfTrait(taxonList, getName());
     }
@@ -168,6 +174,42 @@ public class TraitData implements Serializable {
         }
 
         return -1;
+    }
+
+    public void addPredictor(Predictor predictor) {
+        predictorList.add(predictor);
+    }
+
+    public void removePredictor(Predictor predictor) {
+        predictorList.remove(predictor);
+    }
+
+    /**
+     * Returns the number of included predictors (counting origin and destination ones separately)
+     * @return
+     */
+    public int getIncludedPredictorCount() {
+        int count = 0;
+        for (Predictor predictor : getPredictors()) {
+            if (predictor.isIncluded()) {
+                count +=  1 + (predictor.getType() == Predictor.Type.BOTH_VECTOR ? 1 : 0);
+            }
+        }
+        return count;
+    }
+
+    public List<Predictor> getIncludedPredictors() {
+        List<Predictor> includedPredictors = new ArrayList<Predictor>();
+        for (Predictor predictor : getPredictors()) {
+            if (predictor.isIncluded()) {
+                includedPredictors.add(predictor);
+            }
+        }
+        return includedPredictors;
+    }
+
+    public List<Predictor> getPredictors() {
+        return predictorList;
     }
 
     public String toString() {

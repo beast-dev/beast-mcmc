@@ -41,6 +41,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
     public static final String TO = "to";
     public static final String EVERY = "every";
     public static final String BUILD = "build";
+    private static final String SIGNAL_DEPENDENTS = "signalDependents";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -78,9 +79,13 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
         }
 
         if (mask.getDimension() != parameter.getDimension())
-            throw new XMLParseException("dim(" + parameter.getId() + ") != dim(" + mask.getId() + ")");
+            throw new XMLParseException("dim(" + parameter.getId() + ":" + parameter.getDimension()
+                    + ") != dim(" + mask.getId() + ":" + mask.getDimension() + ")");
 
-        MaskedParameter maskedParameter = new MaskedParameter(parameter);
+        boolean signal = xo.getAttribute(SIGNAL_DEPENDENTS, true);
+
+        MaskedParameter maskedParameter = new MaskedParameter(parameter,
+                signal ? MaskedParameter.Signaling.NORMAL : MaskedParameter.Signaling.NO_DEPENDENT);
         boolean ones = !xo.getAttribute(COMPLEMENT, false);
         maskedParameter.addMask(mask, ones);
 
@@ -102,6 +107,7 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(FROM, true),
             AttributeRule.newIntegerRule(TO, true),
             AttributeRule.newIntegerRule(EVERY, true),
+            AttributeRule.newBooleanRule(SIGNAL_DEPENDENTS, true),
     };
 
     public String getParserDescription() {

@@ -1,0 +1,246 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">10</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">2</attr>
+		</taxon>
+		<taxon id="C">
+			<attr name="X">3</attr>
+		</taxon>
+	</taxa>
+
+	<taxa id="ancestors">
+		<taxon id="mrcaAB">
+			<attr name="X">5</attr>
+			<!-- <attr name="pseudoBranchLength">100.0</attr> -->
+		</taxon>
+		<taxon id="mrcaABC">
+			<attr name="X">10</attr>
+			<!-- <attr name="pseudoBranchLength">100.0</attr> -->
+		</taxon>
+	</taxa>
+
+	<newick id="tree">
+		((A:1,B:1):1,C:2);
+	</newick>
+
+	<treeModel id="treeModel">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+	<ancestralTraitTreeModel id="ancestralTraitTreeModel">
+		<treeModel idref="treeModel"/>
+		<ancestor>
+			<taxon idref="mrcaAB"/>
+			<parameter id="pseudoBranchLengthAB" value="0.01" lower="0.0"/>
+			<mrca>
+				<taxon idref="A"/>
+				<taxon idref="B"/>
+			</mrca>
+		</ancestor>
+		<ancestor>
+			<taxon idref="mrcaABC"/>
+			<parameter id="pseudoBranchLengthABC" value="0.01" lower="0.0"/>
+			<mrca>
+				<taxon idref="A"/>
+				<taxon idref="B"/>
+				<taxon idref="C"/>
+			</mrca>
+		</ancestor>
+
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
+			<parameter id="leafAndAncestorTraits"/>
+		</nodeTraits>
+	</ancestralTraitTreeModel>
+
+	<restrictedPartials id="restrictedPartials1">
+		<treeModel idref="treeModel"/>
+		<mrca>
+			<taxon idref="A"/>
+			<taxon idref="B"/>
+		</mrca>
+		<meanParameter>
+			<parameter value="5.0"/>
+		</meanParameter>
+		<priorSampleSize>
+			<parameter value="100.0"/>
+		</priorSampleSize>
+	</restrictedPartials>
+
+	<restrictedPartials id="restrictedPartials2">
+		<treeModel idref="treeModel"/>
+		<mrca>
+			<taxon idref="A"/>
+			<taxon idref="B"/>
+			<taxon idref="C"/>
+		</mrca>
+		<meanParameter>
+			<parameter value="10.0"/>
+		</meanParameter>
+		<priorSampleSize>
+			<parameter value="100.0"/>
+		</priorSampleSize>
+	</restrictedPartials>
+
+    <multivariateDiffusionModel id="diffusionModel">
+		<precisionMatrix>
+			<matrixParameter id="precisionMatrix">
+				<parameter id="prec.col1" value="1.0"/>
+			</matrixParameter>
+		</precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<multivariateTraitLikelihood id="oldVanillaLikelihood" traitName="X" integrateInternalTraits="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="100000.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</multivariateTraitLikelihood>
+
+	<report>
+		Old vanilla =
+		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
+	</report>
+
+	<multivariateTraitLikelihood id="oldRestrictedLikelihood" traitName="X" integrateInternalTraits="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="100000.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+        <restrictedPartials idref="restrictedPartials1"/>
+        <restrictedPartials idref="restrictedPartials2"/>
+	</multivariateTraitLikelihood>
+
+	<report>
+		Old restricted =
+		<multivariateTraitLikelihood idref="oldRestrictedLikelihood"/>
+	</report>
+
+	<traitDataLikelihood id="newVanillaLikelihood" traitName="X" forceFullPrecision="false">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="100000.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</traitDataLikelihood>
+
+	<report>
+		New vanilla =
+		<traitDataLikelihood idref="newVanillaLikelihood"/>
+	</report>
+
+	<traitDataLikelihood id="newRestrictedLikelihood" traitName="X">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<ancestralTraitTreeModel idref="ancestralTraitTreeModel"/>
+		<traitParameter>
+			<parameter idref="leafAndAncestorTraits"/>
+		</traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="100000.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</traitDataLikelihood>
+
+	<report>
+		New restricted =
+		<traitDataLikelihood idref="newRestrictedLikelihood"/>
+	</report>
+
+	<operators id="operators">
+ 		<scaleOperator scaleFactor="0.75" weight="1">
+ 			<parameter idref="pseudoBranchLengthAB"/>
+ 		</scaleOperator>
+
+		<uniformOperator weight="1">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
+
+		<subtreeSlide size="65.0" gaussian="true" weight="15">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+
+		<narrowExchange weight="15">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+
+
+	</operators>
+
+	<mcmc id="mcmc" chainLength="1000">
+		<posterior id="posterior">
+			<traitDataLikelihood idref="newRestrictedLikelihood"/>
+		</posterior>
+		<operators idref="operators"/>
+		<log logEvery="10">
+			<posterior idref="posterior"/>
+		</log>
+		<logTree logEvery="10" nexusFormat="true" fileName="testRestrictedTraitLikelihood.trees">
+			<traitDataLikelihood idref="newRestrictedLikelihood"/>
+			<treeModel idref="ancestralTraitTreeModel"/>
+		</logTree>
+	</mcmc>
+
+
+</beast>
+
+<!--
+# R script
+library(mvtnorm)
+
+-->
+

@@ -25,10 +25,10 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.app.util.Arguments;
-import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
@@ -49,6 +49,8 @@ import org.jdom.Element;
 import org.apache.commons.math.stat.ranking.NaturalRanking;
 
 import java.util.*;
+
+import static java.lang.Double.NaN;
 
 /**
  * @author Marc Suchard
@@ -166,7 +168,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }
 
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
-            MultivariateTraitTree tree = traitLikelihood.getTreeModel();
+            MutableTreeModel tree = traitLikelihood.getTreeModel();
             BranchRateModel branchRates = traitLikelihood.getBranchRateModel();
 
             String traitName = traitLikelihood.getTraitName();
@@ -248,8 +250,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
                             double time;
                             if (stateString != null) {
-                                time = history.getStateTime(stateString);
-//                            System.out.println("tine before = "+(timeUp - timeLow)+", time after= "+time);
+                                if (!history.returnMismatch()){
+                                    time = history.getStateTime(stateString);
+                                } else {
+                                    time = NaN;
+                                }
+                              //System.out.println("time before = "+(timeUp - timeLow)+", time after= "+time);
                             } else {
                                 time = timeUp - timeLow;
                             }
@@ -267,7 +273,11 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                             if (useGreatCircleDistances && (trait.length == 2)) { // Great Circle distance
                                 double distance;
                                 if (stateString != null) {
-                                    distance = history.getStateGreatCircleDistance(stateString);
+                                    if (!history.returnMismatch()){
+                                        distance = history.getStateGreatCircleDistance(stateString);
+                                    } else {
+                                        distance = NaN;
+                                    }
                                 } else {
                                     distance = getGreatCircleDistance(traitLow, traitUp);
                                 }
@@ -290,10 +300,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                     if (stateString != null) {
                                         double[] stateTimeDistance = getStateTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, precision, branchRates, true);
                                         if (stateTimeDistance[0] > 0) {
-                                            maxDistanceFromRootCumulative = tempDistanceFromRootLow * (stateTimeDistance[0] / timeFromRoot);
-                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
-                                            maxBranchDistanceFromRoot = stateTimeDistance[1];
-                                            maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            if (!history.returnMismatch()){
+                                                maxDistanceFromRootCumulative = tempDistanceFromRootLow * (stateTimeDistance[0] / timeFromRoot);
+                                                maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
+                                                maxBranchDistanceFromRoot = stateTimeDistance[1];
+                                                maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            } else {
+                                                maxDistanceFromRootCumulative = NaN;
+                                                maxDistanceOverTimeFromRootWA = NaN;
+                                                maxBranchDistanceFromRoot = NaN;
+                                                maxBranchDistanceOverTimeFromRootWA = NaN;
+                                            }
                                         }
                                     } else {
                                         maxDistanceFromRootCumulative = tempDistanceFromRootLow;
@@ -317,7 +334,11 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                             } else {
                                 double distance;
                                 if (stateString != null) {
-                                    distance = history.getStateNativeDistance(stateString);
+                                    if (!history.returnMismatch()){
+                                        distance = history.getStateNativeDistance(stateString);
+                                    } else {
+                                        distance = NaN;
+                                    }
                                 } else {
                                     distance = getNativeDistance(traitLow, traitUp);
                                 }
@@ -337,10 +358,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                     if (stateString != null) {
                                         double[] stateTimeDistance = getStateTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, precision, branchRates, false);
                                         if (stateTimeDistance[0] > 0) {
-                                            maxDistanceFromRootCumulative = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
-                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
-                                            maxBranchDistanceFromRoot = stateTimeDistance[1];
-                                            maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            if (!history.returnMismatch()){
+                                                maxDistanceFromRootCumulative = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
+                                                maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
+                                                maxBranchDistanceFromRoot = stateTimeDistance[1];
+                                                maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            } else {
+                                                maxDistanceFromRootCumulative = NaN;
+                                                maxDistanceOverTimeFromRootWA = NaN;
+                                                maxBranchDistanceFromRoot = NaN;
+                                                maxBranchDistanceOverTimeFromRootWA = NaN;
+                                            }
                                         }
                                     } else {
                                         maxDistanceFromRootCumulative = tempDistanceFromRoot;
@@ -571,6 +599,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public History setUpHistory(String historyString, int nodeState, int parentNodeState, double timeLow, double timeUp){
         double[] heights;
         String[] states;
+        boolean mismatch = false;
         if (historyString.equals("{}")){
             heights = new double[]{timeUp,timeLow};
             states = new String[]{getState(nodeState)};
@@ -604,16 +633,21 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
             //sanity check
             if (!jumpStrings[0][1].equals(getState(parentNodeState))){
-                System.out.println(jumpStrings[0][1]+"\t"+getState(parentNodeState));
-                System.err.println("mismatch in jump history and parent node state");
-                System.exit(-1);
+//                System.out.println(jumpStrings[0][1]+"\t"+getState(parentNodeState));
+                System.err.println("mismatch in jump history and parent node state, continuous diffusion statistic will return NaN");
+                mismatch = true;
+//                System.exit(-1);
             }
 
             //sanity check
             states[numberOfJumps] = jumpStrings[numberOfJumps-1][2];
             if (!jumpStrings[numberOfJumps-1][2].equals(getState(nodeState))){
-                System.err.println("mismatch in jump history and node state");
-                System.exit(-1);
+//                System.out.println(getState(parentNodeState));
+//                System.out.println(getState(nodeState));
+//                System.out.println(historyString);
+                System.err.println("mismatch in jump history and node state, continuous diffusion statistic will return NaN");
+                mismatch = true;
+//                System.exit(-1);
             }
 
             heights[0] = timeUp;
@@ -625,7 +659,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 //            System.out.print(heights[q] +"\t"+ states[q] +"\t");
 //        }
 //        System.out.println(heights[states.length]+"\r");
-        return new History(heights,states);
+        return new History(heights,states,mismatch);
     }
 
     private String getState(int stateInt){
@@ -639,7 +673,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return returnString;
     }
 
-    public double[] getStateTimeAndDistanceFromRoot(MultivariateTraitTree tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, double[] precision, BranchRateModel branchRates, boolean useGreatCircleDistance){
+    public double[] getStateTimeAndDistanceFromRoot(MutableTreeModel tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, double[] precision, BranchRateModel branchRates, boolean useGreatCircleDistance){
 
         NodeRef nodeOfInterest = node;
 
@@ -679,7 +713,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return timeDistance;
     }
 
-    public double[] getTimeAndDistanceFromRoot(MultivariateTraitTree tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, boolean useGreatCircleDistance){
+    public double[] getTimeAndDistanceFromRoot(MutableTreeModel tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, boolean useGreatCircleDistance){
 
         NodeRef nodeOfInterest = node;
         double[] timeDistance = new double[]{0,0};
@@ -713,7 +747,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     }
 
 
-    public boolean inClade(MultivariateTraitTree tree, NodeRef node, TaxonList taxonList) throws TreeUtils.MissingTaxonException {
+    public boolean inClade(MutableTreeModel tree, NodeRef node, TaxonList taxonList) throws TreeUtils.MissingTaxonException {
 
         Set leafSubSet;
         leafSubSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
@@ -1187,10 +1221,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         private double[] historyHeights;
         private String[] historyStates;
         private double[][] historyTraits;
+        private boolean mismatch;
 
-        public History(double historyHeights[], String historyStates[]) {
+        public History(double historyHeights[], String historyStates[], boolean mismatch) {
             this.historyHeights = historyHeights;
             this.historyStates = historyStates;
+            this.mismatch = mismatch;
         }
 
         public void truncateUpper(double time) {
@@ -1252,6 +1288,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 }
             }
             return time;
+        }
+
+        public boolean returnMismatch(){
+            return mismatch;
         }
 
         private void setTraitsforHeights(double[] traitUp,  double[] traitLow, double[] precisionArray, double rate, boolean trueNoise){

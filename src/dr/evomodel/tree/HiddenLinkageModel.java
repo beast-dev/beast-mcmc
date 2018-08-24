@@ -112,6 +112,11 @@ public class HiddenLinkageModel extends TipStatesModel implements PatternList
 		return false;
 	}
 
+	@Override
+	public boolean areUncertain() {
+		return false;
+	}
+
 	/*
          * Initializes a likelihoodCore to calculate likelihoods for
          * the tips
@@ -483,6 +488,11 @@ public class HiddenLinkageModel extends TipStatesModel implements PatternList
 		return data.getAlignment().getPattern(patternIndex);
 	}
 
+	@Override
+	public double[][] getUncertainPattern(int patternIndex) {
+		return new double[0][];
+	}
+
 	public int getPatternCount() {
 		return data.getAlignment().getPatternCount();
 	}
@@ -496,6 +506,11 @@ public class HiddenLinkageModel extends TipStatesModel implements PatternList
 			return data.getAlignment().getPatternState(taxonIndex, patternIndex);
 
 		return 0;
+	}
+
+	@Override
+	public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+		return new double[0];
 	}
 
 	public double getPatternWeight(int patternIndex) {

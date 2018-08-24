@@ -94,7 +94,7 @@ public interface Alignment extends SequenceList, SiteList
 			return getSequenceCount();
 		}
 
-		/** 
+		/**
 		 * Gets the pattern as an array of state numbers (one per sequence) 
 		 * @return the pattern at patternIndex
 		 */
@@ -102,11 +102,21 @@ public interface Alignment extends SequenceList, SiteList
 			return getSitePattern(patternIndex);
 		}
 
-		/** 
+		@Override
+		public double[][] getUncertainPattern(int patternIndex) {
+			return getUncertainSitePattern(patternIndex);
+		}
+
+		/**
 		 * @return state at (taxonIndex, patternIndex) 
 		 */
 		public int getPatternState(int taxonIndex, int patternIndex) {
 			return getState(taxonIndex, patternIndex);
+		}
+
+		@Override
+		public double[] getUncertainPatternState(int taxonIndex, int patternIndex) {
+			return getUncertainPatternState(taxonIndex, patternIndex);
 		}
 
 		/** 

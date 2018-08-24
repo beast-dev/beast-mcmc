@@ -13,7 +13,7 @@ import dr.xml.XMLSyntaxRule;
  * Created by max on 11/30/15.
  */
 public class ElementWiseMatrixMultiplicationParser extends AbstractXMLObjectParser {
-    public final static String ELEMENT_WISE_MATRIX_MULTIPLICATION_PARAMETER="ElementWiseMatrixMultiplicationParameter";
+    public final static String ELEMENT_WISE_MATRIX_MULTIPLICATION_PARAMETER="elementWiseMatrixMultiplicationParameter";
     public final static String NAME="name";
 
     @Override

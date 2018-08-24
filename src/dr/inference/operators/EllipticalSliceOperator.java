@@ -189,56 +189,80 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return r;
     }
 
-    public static void transformPoint(double[] x, boolean translationInvariant, boolean rotationInvariant, int dim) {
-
-        if (dim != 2) {
-            throw new IllegalArgumentException("Not yet implemented");
-        }
-
-        if (translationInvariant) {
-
-            double[] mean = new double[dim];
-            int k = 0;
-            for (int i = 0; i < x.length / dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    mean[j] += x[k];
-                    ++k;
-                }
-            }
-
+    private static void translate(double[] x, int dim) {
+        double[] mean = new double[dim];
+        int k = 0;
+        for (int i = 0; i < x.length / dim; ++i) {
             for (int j = 0; j < dim; ++j) {
-                mean[j] /= (x.length / dim);
-            }
-
-            k = 0;
-            for (int i = 0; i < x.length / dim; ++i) {
-                for (int j = 0; j < dim; ++j) {
-                    x[k] -= mean[j];
-                    ++k;
-                }
+                mean[j] += x[k];
+                ++k;
             }
         }
 
-        if (rotationInvariant) {
+        for (int j = 0; j < dim; ++j) {
+            mean[j] /= (x.length / dim);
+        }
 
-            final double theta = -Math.atan2(x[1], x[0]); // TODO Compute norm and avoid transcendentals
+        k = 0;
+        for (int i = 0; i < x.length / dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                x[k] -= mean[j];
+                ++k;
+            }
+        }
+    }
+
+//    private static void rotate2d(double[] x) {
+//        final double theta = -Math.atan2(x[1], x[0]); // TODO Compute norm and avoid transcendentals
+//        final double sin = Math.sin(theta);
+//        final double cos = Math.cos(theta);
+//
+//        int k = 0;
+//        for (int i = 0; i < x.length / 2; ++i) {
+//            double newX = x[k + 0] * cos - x[k + 1] * sin;
+//            double newY = x[k + 1] * cos + x[k + 0] * sin;
+//            x[k + 0] = newX;
+//            x[k + 1] = newY;
+//            k += 2;
+//        }
+//    }
+
+    private static void rotateNd(double[] x, int dim) {
+
+        for (int d = 1; d < dim; ++d) {
+
+            final double theta = -Math.atan2(x[d], x[0]); // TODO Compute norm and avoid transcendentals
             final double sin = Math.sin(theta);
             final double cos = Math.cos(theta);
 
-//            System.err.println(theta + " " + sin + " " + cos);
-
             int k = 0;
             for (int i = 0; i < x.length / dim; ++i) {
-//                System.err.print(x[k + 0] + ":" + x[k + 1] + " -> ");
-                double newX = x[k + 0] * cos - x[k + 1] * sin;
-                double newY = x[k + 1] * cos + x[k + 0] * sin;
+                double newX = x[k + 0] * cos - x[k + d] * sin;
+                double newY = x[k + d] * cos + x[k + 0] * sin;
                 x[k + 0] = newX;
-                x[k + 1] = newY;
-//                System.err.println(x[k + 0] + ":" + x[k + 1]);
-                k += 2;
+                x[k + d] = newY;
+                k += dim;
             }
-//            System.err.println("");
-//            System.exit(-1);
+        }
+    }
+
+    private static void rotate(double[] x, int dim) {
+
+//        if (dim == 2) {
+//            rotate2d(x);
+//        } else {
+            rotateNd(x, dim);
+//        }
+    }
+
+    public static void transformPoint(double[] x, boolean translationInvariant, boolean rotationInvariant, int dim) {
+
+        if (translationInvariant) {
+            translate(x, dim);
+        }
+
+        if (rotationInvariant) {
+            rotate(x, dim);
         }
     }
 
@@ -262,69 +286,17 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
         setAllParameterValues(x);
 
-////        boolean switchSign = x[0] > 0.0;
-//        for (int i = 0; i < x.length; ++i) {
-////            if (switchSign) {
-////                x[i] *= -1;
-////            }
-//            variable.setParameterValueQuietly(i, x[i]);
-//        }
-
         if (signalConstituentParameters) {
             variable.fireParameterChangedEvent();
         } else {
-            ((CompoundParameter)variable).fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
+            variable.fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
         }
     }
-//
-//        if(!(variable instanceof CompoundParameter))
-//        {variable.setParameterValueNotifyChangedAll(0, x[0]);
-//        for (int i = 1; i < x.length; ++i) {
-//            variable.setParameterValueQuietly(i, x[i]);
-//        }}
-//        else{
-//            if(!drawByRow) {
-//                ((CompoundParameter) variable).setParameterValueNotifyChangedAll(0, current, x[0]);
-//                for (int i = 1; i < x.length; ++i) {
-//                    ((CompoundParameter) variable).setParameterValueQuietly(i, current, x[i]);
-//                }
-//            }
-//            else{
-//                for (int i = 0; i < x.length; i++) {
-//                    ((CompoundParameter) variable).setParameterValue(current, i, x[i]);
-//                }
-//            }
-//        }
-
 
     private void drawFromSlice(Likelihood likelihood, double cutoffDensity) {
-        // Do nothing
+
         double[] x = variable.getParameterValues();
         double[] nu = (double[]) gaussianProcess.nextRandom();
-
-//        double[] x;
-//        if(!(variable instanceof CompoundParameter))
-//            x = variable.getParameterValues();
-//        else{
-//            if(drawByRow){
-//                current=MathUtils.nextInt(((CompoundParameter) variable).getParameter(0).getDimension());
-//                x=new double[((CompoundParameter) variable).getParameterCount()];
-//                for (int i = 0; i <x.length ; i++) {
-//                    x[i]=((CompoundParameter) variable).getParameter(i).getParameterValue(current);
-//                }
-//            }
-//            else {
-//                current = MathUtils.nextInt(((CompoundParameter) variable).getParameterCount());
-//                x=((CompoundParameter) variable).getParameter(current).getParameterValues();
-//            }
-//
-//        }
-
-//        double[] nu;
-//        if(normalPrior!=null)
-//            nu = normalPrior.nextMultivariateNormal();
-//        else
-//            nu = treePrior.nextRandomFast(0);
 
         double phi;
         Interval phiInterval;
@@ -357,7 +329,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     private void drawFromSlice(CompoundLikelihood likelihood, double cutoffDensity) {
-        // Do nothing
+
         double[] x = variable.getParameterValues();
         double[] nu = (double[]) gaussianProcess.nextRandom();
 

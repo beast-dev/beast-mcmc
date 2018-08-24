@@ -41,7 +41,7 @@ public class MarginalLikelihoodAnalysis {
 
     private final String traceName;
     private final List<Double> sample;
-    private final int burnin;
+    private final long burnin;
     private final String analysisType; // "harmonic" for harmonic mean, "smoothed" for smoothed harmonic mean, "aicm" for AICM, "arithmetic" for arithmetic mean 
     private final int bootstrapLength;
 
@@ -58,7 +58,7 @@ public class MarginalLikelihoodAnalysis {
         return traceName;
     }
 
-    public int getBurnin() {
+    public long getBurnin() {
         return burnin;
     }
 
@@ -71,7 +71,7 @@ public class MarginalLikelihoodAnalysis {
      * @param analysisType
      * @param bootstrapLength a value of zero will turn off bootstrapping
      */
-    public MarginalLikelihoodAnalysis(List<Double> sample, String traceName, int burnin, String analysisType, int bootstrapLength) {
+    public MarginalLikelihoodAnalysis(List<Double> sample, String traceName, long burnin, String analysisType, int bootstrapLength) {
         this.sample = sample;
         this.traceName = traceName;
         this.burnin = burnin;

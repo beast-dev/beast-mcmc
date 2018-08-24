@@ -470,7 +470,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
     }
 
-    private static final boolean MINIMAL_EVALUATION = false;
+    private static final boolean MINIMAL_EVALUATION = true;
 
     private double pathParameter = 1.0;
     private final Parameter variable;

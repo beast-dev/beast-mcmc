@@ -142,7 +142,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     }// END: Constructor
 
-    @Override
+    @Deprecated
     public boolean cacheInfinitesimalMatrices() {
         return this.cacheQMatrices;
     }
@@ -169,7 +169,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
+    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
         return getMatrixBufferCount() + getEigenIndex(branchIndex);
     }
 
@@ -178,7 +178,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
+    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
         return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex);
     }
 
@@ -187,7 +187,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getInfinitesimalMatrixBufferCount() {
+    public int getCachedMatrixBufferCount() {
         return 2 * getEigenBufferCount();
     }
 

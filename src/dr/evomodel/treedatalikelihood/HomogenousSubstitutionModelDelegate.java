@@ -88,7 +88,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     }// END: Constructor
 
-    @Override
+    @Deprecated
     public boolean cacheInfinitesimalMatrices() {
         return this.cacheQMatrices;
     }
@@ -109,17 +109,17 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
+    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
         return matrixBufferHelper.getBufferCount() + getEigenIndex(0);
     }
 
     @Override
-    public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
+    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
         return matrixBufferHelper.getBufferCount() + getEigenBufferCount() + getEigenIndex(0);
     }
 
     @Override
-    public int getInfinitesimalMatrixBufferCount() {
+    public int getCachedMatrixBufferCount() {
         return 2 * getEigenBufferCount();
     }
 
@@ -168,7 +168,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
             double[] infinitesimalMatrix = new double[stateCount * stateCount];
             double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
             substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(0), infinitesimalMatrix, 0.0);
+            beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(0), infinitesimalMatrix, 0.0);
             for (int l = 0; l < stateCount; l++) {
                 for (int j = 0; j < stateCount; j++) {
                     double sumOverState = 0.0;
@@ -178,7 +178,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                     infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
                 }
             }
-            beagle.setTransitionMatrix(getSquaredInfinitesimalMatrixBufferIndex(0), infinitesimalMatrixSquared, 0.0);
+            beagle.setTransitionMatrix(getSecondOrderDifferentialMatrixBufferIndex(0), infinitesimalMatrixSquared, 0.0);
         }
     }
 

@@ -296,8 +296,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                firstDervIndices[u]  = evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
-                secondDeriveIndices[u] = evolutionaryProcessDelegate.getSquaredInfinitesimalMatrixBufferIndex(nodeNum);
+                firstDervIndices[u]  = evolutionaryProcessDelegate.getFirstOrderDifferentialMatrixBufferIndex(nodeNum);
+                secondDeriveIndices[u] = evolutionaryProcessDelegate.getSecondOrderDifferentialMatrixBufferIndex(nodeNum);
                 u++;
             }
         }

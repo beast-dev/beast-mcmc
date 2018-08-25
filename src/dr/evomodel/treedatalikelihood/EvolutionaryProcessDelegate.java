@@ -48,6 +48,10 @@ public interface EvolutionaryProcessDelegate {
 
     int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex);
 
+    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[][] differentialMatrix);
+
+    void cacheSecondOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[][] differentialMatrix);
+
     int getCachedMatrixBufferCount();
 
     int getSubstitutionModelCount();

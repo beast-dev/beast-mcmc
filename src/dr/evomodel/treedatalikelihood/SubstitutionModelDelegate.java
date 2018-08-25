@@ -177,6 +177,16 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex);
     }
 
+    @Override
+    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[][] differentialMatrix) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void cacheSecondOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[][] differentialMatrix) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     private int getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
         return getMatrixBufferCount() + getEigenBufferCount() + eigenIndex;
     }

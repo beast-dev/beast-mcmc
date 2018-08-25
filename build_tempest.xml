@@ -95,7 +95,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.5.1" />
+    <property name="version" value="1.5.2" />
     <property name="packaging_tools" value="packaging_tools" />
     <property name="release_dir" value="release_tempest" />
     <property name="name" value="TempEst" />
@@ -198,7 +198,8 @@
                         arguments=""
                         vmoptions="-Xmx1024M"
                         version="${version}"
-                        copyright="${name} v${version}, Copyright 2006-2017, Andrew Rambaut"
+                        highresolutioncapable="true"
+                        copyright="${name} v${version}, Copyright 2006-2018, Andrew Rambaut"
                         bundleid="tempest" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

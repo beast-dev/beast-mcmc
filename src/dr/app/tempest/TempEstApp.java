@@ -38,7 +38,7 @@ import java.awt.*;
  */
 public class TempEstApp extends MultiDocApplication {
     private final static Version version = new Version() {
-        private static final String VERSION = "1.5.1";
+        private static final String VERSION = "1.5.2";
 
         public String getVersion() {
             return VERSION;
@@ -49,7 +49,7 @@ public class TempEstApp extends MultiDocApplication {
         }
 
         public String getDateString() {
-            return "2003-2017";
+            return "2003-2018";
         }
 
         public String getBuildString() {

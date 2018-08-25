@@ -487,8 +487,8 @@ public class TreeIntervals implements IntervalList {
      */
     private boolean intervalsKnown = false;
     private boolean storedIntervalsKnown;
-	
-	private double multifurcationLimit = -1.0;
+
+    private double multifurcationLimit = -1.0;
 
     private static final boolean superStore = true;
 }

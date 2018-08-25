@@ -144,8 +144,10 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
 
-        createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
+        /*createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);*/
+        createParameterLognormalPrior("yule.birthRate", "Yule speciation process birth rate",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
 
         createNonNegativeParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.01, 0.0, 100000.0);

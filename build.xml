@@ -320,10 +320,10 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10.0"/>
-    <property name="jvm_version" value="1.6+"/>
+    <property name="version" value="1.10.1"/>
+    <property name="jvm_version" value="1.7+"/>
 
-    <property name="version_number" value="1.10.0"/>
+    <property name="version_number" value="1.10.1"/>
     <property name="copyright" value="Copyright 2002-2018"/>
 
     <property name="release_dir" value="release"/>
@@ -470,9 +470,6 @@
         <copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
         <!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->
-        <copy todir="${Linux_package_dir}/lib">
-            <fileset dir="${Linux_dir}/lib"/>
-        </copy>
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
@@ -535,7 +532,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-d64 -Xmx2048M"
+                    vmoptions="-Xmx2048M"
                     arguments="-window -working -options"
                     highresolutioncapable="true"
                     version="${version}"
@@ -568,7 +565,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-d64 -Xmx2048M"
+                    vmoptions="-Xmx2048M"
                     arguments=""
                     version="${version}"
                     highresolutioncapable="true"
@@ -607,7 +604,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-d64 -Xmx2048M"
+                    vmoptions="-Xmx2048M"
                     highresolutioncapable="true"
                     arguments=""
                     version="${version}"
@@ -636,7 +633,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-d64 -Xmx4096M"
+                    vmoptions="-Xmx4096M"
                     highresolutioncapable="true"
                     arguments=""
                     version="${version}"
@@ -665,7 +662,7 @@
 					useJavaXKey="true"
                     icon="${common_dir}/icons/TreeStat.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-d64 -Xmx1024M"
+                    vmoptions="-Xmx1024M"
                     highresolutioncapable="true"
                     arguments=""
                     version="${version}"

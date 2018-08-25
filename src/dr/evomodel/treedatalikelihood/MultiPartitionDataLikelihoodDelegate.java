@@ -70,6 +70,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
+    private static final String RESOURCE_AUTO_PROPERTY = "beagle.resource.auto";
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
@@ -353,6 +354,48 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 // when using non-CPU preferences or prioritising non-CPU resource
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
             }
+
+            // start auto resource selection
+            String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+
+                long benchmarkFlags = 0;
+
+                if (this.rescalingScheme == PartialsRescalingScheme.NONE) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_NONE.getMask();
+                } else if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_ALWAYS.getMask();
+                } else {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
+                }
+
+                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis... ");
+
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails = 
+                                                    BeagleFactory.getBenchmarkedResourceDetails(
+                                                                                tipCount,
+                                                                                compactPartialsCount,
+                                                                                stateCount,
+                                                                                totalPatternCount,
+                                                                                categoryCount,
+                                                                                resourceList,
+                                                                                preferenceFlags,
+                                                                                requirementFlags,
+                                                                                1, // eigenModelCount,
+                                                                                partitionCount,
+                                                                                0, // calculateDerivatives,
+                                                                                benchmarkFlags);
+
+
+                logger.info(" Benchmark results, from fastest to slowest:");
+
+                for (BenchmarkedResourceDetails benchmarkedResource : benchmarkedResourceDetails) {
+                    logger.info(benchmarkedResource.toString());
+                }
+
+                resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
+            }
+            // end auto resource selection
 
             //TODO: check getBufferCount() calls with Daniel
             //TODO: should we multiple getBufferCount() by the number of partitions?
@@ -737,6 +780,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 if (categoryRates == null) {
                     // If this returns null then there was a numerical error calculating the category rates
                     // (probably a very small alpha) so reject the move.
+
+                    // mark model updates as completed before returning
+                    updateSubstitutionModels(false);
+                    updateSiteRateModels(false);
+
                     return Double.NEGATIVE_INFINITY;
                 }
 

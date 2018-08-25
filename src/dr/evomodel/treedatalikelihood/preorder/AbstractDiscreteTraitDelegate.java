@@ -88,8 +88,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     public void simulate(final int[] operations, final int operationCount,
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes
-        this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
-        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
+        this.simulateRoot(rootNodeNumber);
+        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
 
         double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
         getPatternGradientHessian(tree, patternGradient, null);
@@ -284,6 +284,27 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return gradient.clone();
     }
 
+    protected double[] getInfinitesimalMatrix(int branchIndex) {
+        double[] infinitesimalMatrix = new double[stateCount * stateCount];
+        evolutionaryProcessDelegate.getSubstitutionModel(branchIndex).getInfinitesimalMatrix(infinitesimalMatrix);
+        return infinitesimalMatrix;
+    }
+
+    protected double[] getInfinitesimalMatrixSquared(int branchIndex) {
+        double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
+        double[] infinitesimalMatrix = getInfinitesimalMatrix(branchIndex);
+        for (int l = 0; l < stateCount; l++) {
+            for (int j = 0; j < stateCount; j++) {
+                double sumOverState = 0.0;
+                for (int k = 0; k < stateCount; k++) {
+                    sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
+                }
+                infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
+            }
+        }
+        return infinitesimalMatrixSquared;
+    }
+
     private void getPatternGradientHessian(Tree tree, double[] patternGradient, double[] patternDiagonalHessian) {
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
@@ -294,6 +315,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
             if (!tree.isRoot(tree.getNode(nodeNum))) {
+                evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, nodeNum, getInfinitesimalMatrix(nodeNum));
+                if (patternDiagonalHessian != null) {
+                    evolutionaryProcessDelegate.cacheSecondOrderDifferentialMatrix(beagle, nodeNum, getInfinitesimalMatrixSquared(nodeNum));
+                }
+
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
                 firstDervIndices[u]  = evolutionaryProcessDelegate.getFirstOrderDifferentialMatrixBufferIndex(nodeNum);

@@ -142,11 +142,6 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     }// END: Constructor
 
-    @Deprecated
-    public boolean cacheInfinitesimalMatrices() {
-        return this.cacheQMatrices;
-    }
-
     @Override
     public boolean canReturnComplexDiagonalization() {
         for (SubstitutionModel model : substitutionModelList) {

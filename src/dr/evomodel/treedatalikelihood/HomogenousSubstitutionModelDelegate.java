@@ -88,11 +88,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     }// END: Constructor
 
-    @Deprecated
-    public boolean cacheInfinitesimalMatrices() {
-        return this.cacheQMatrices;
-    }
-
     @Override
     public boolean canReturnComplexDiagonalization() {
         return substitutionModel.canReturnComplexDiagonalization();

@@ -239,25 +239,6 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     ed.getEigenVectors(),
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
-
-            // TODO Why is this here?  Are these matrices only needed right before `beagle.calculateEdgeDerivative()` is called?
-//            if (cacheQMatrices) {
-//                final int stateCount = substitutionModel.getDataType().getStateCount();
-//                double[] infinitesimalMatrix = new double[stateCount * stateCount];
-//                double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-//                substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-//                beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndexByEigenIndex(i), infinitesimalMatrix, 0.0);
-//                for (int l = 0; l < stateCount; l++) {
-//                    for (int j = 0; j < stateCount; j++) {
-//                        double sumOverState = 0.0;
-//                        for (int k = 0; k < stateCount; k++) {
-//                            sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-//                        }
-//                        infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-//                    }
-//                }
-//                beagle.setTransitionMatrix(getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(i), infinitesimalMatrixSquared, 0.0);
-//            }
         }
     }
 

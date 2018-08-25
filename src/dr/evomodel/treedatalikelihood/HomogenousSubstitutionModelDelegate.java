@@ -47,7 +47,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
-    private final boolean cacheQMatrices;
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -56,11 +55,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param branchModel Describes which substitution models use on each branch
      */
     public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, 0, false);
-    }
-
-    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
-        this(tree, branchModel, partitionNumber, false);
+        this(tree, branchModel, 0);
     }
 
     /**
@@ -70,7 +65,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param branchModel Describes which substitution models use on each branch
      * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
      */
-    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, boolean cacheQMatrices) {
+    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
 
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
@@ -83,8 +78,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
         // two matrices for each node less the root
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
-
-        this.cacheQMatrices = cacheQMatrices;
 
     }// END: Constructor
 
@@ -166,25 +159,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 ed.getEigenVectors(),
                 ed.getInverseEigenVectors(),
                 ed.getEigenValues());
-
-        // TODO Why is this here?  Are these matrices only needed right before `beagle.calculateEdgeDerivative()` is called?
-//        if (cacheQMatrices) {
-//            final int stateCount = substitutionModel.getDataType().getStateCount();
-//            double[] infinitesimalMatrix = new double[stateCount * stateCount];
-//            double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-//            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-//            beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(0), infinitesimalMatrix, 0.0);
-//            for (int l = 0; l < stateCount; l++) {
-//                for (int j = 0; j < stateCount; j++) {
-//                    double sumOverState = 0.0;
-//                    for (int k = 0; k < stateCount; k++) {
-//                        sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-//                    }
-//                    infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-//                }
-//            }
-//            beagle.setTransitionMatrix(getSecondOrderDifferentialMatrixBufferIndex(0), infinitesimalMatrixSquared, 0.0);
-//        }
     }
 
     @Override

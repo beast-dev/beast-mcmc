@@ -114,25 +114,13 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[][] differentialMatrix) {
-        double[] cacheMatrix = convertDifferentialMatrixToArray(differentialMatrix);
-        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), cacheMatrix, 0.0);
-    }
-
-    private double[] convertDifferentialMatrixToArray(double[][] differentialMatrix) {
-        final int stateCount = substitutionModel.getDataType().getStateCount();
-        assert(differentialMatrix.length == stateCount * stateCount);
-        double[] cacheMatrix = new double[stateCount * stateCount];
-        for (int i = 0; i < stateCount; i++) {
-            System.arraycopy(differentialMatrix[i], 0, cacheMatrix, i * stateCount, stateCount);
-        }
-        return cacheMatrix;
+    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMatrix) {
+        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMatrix, 0.0);
     }
 
     @Override
-    public void cacheSecondOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[][] differentialMatrix) {
-        double[] cacheMatrix = convertDifferentialMatrixToArray(differentialMatrix);
-        beagle.setTransitionMatrix(getSecondOrderDifferentialMatrixBufferIndex(branchIndex), cacheMatrix, 0.0);
+    public void cacheSecondOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMatrix) {
+        beagle.setTransitionMatrix(getSecondOrderDifferentialMatrixBufferIndex(branchIndex), differentialMatrix, 0.0);
     }
 
     @Override

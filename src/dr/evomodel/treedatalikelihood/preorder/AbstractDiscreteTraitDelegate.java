@@ -42,7 +42,7 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
+public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
         implements TreeTrait.TraitInfo<double[]> {
 
     public AbstractDiscreteTraitDelegate(String name,
@@ -284,30 +284,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return gradient.clone();
     }
 
-    protected void cacheInfinitesimalMatrix(boolean cacheSquaredMatrix) {
-        for (int i = 0; i < evolutionaryProcessDelegate.getSubstitutionModelCount(); i++) {
-            double[] infinitesimalMatrix = new double[stateCount * stateCount];
-            SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
-            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, infinitesimalMatrix);
-            if (cacheSquaredMatrix) {
-                double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-                for (int l = 0; l < stateCount; l++) {
-                    for (int j = 0; j < stateCount; j++) {
-                        double sumOverState = 0.0;
-                        for (int k = 0; k < stateCount; k++) {
-                            sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-                        }
-                        infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-                    }
-                }
-                evolutionaryProcessDelegate.cacheSecondOrderDifferentialMatrix(beagle, i, infinitesimalMatrixSquared);
-
-            }
-        }
-
-
-    }
+    abstract protected void cacheDifferentialMassMatrix(boolean cacheSquaredMatrix);
 
     private void getPatternGradientHessian(Tree tree, double[] patternGradient, double[] patternDiagonalHessian) {
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
@@ -316,7 +293,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
         final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
 
-        cacheInfinitesimalMatrix(patternDiagonalHessian != null);
+        cacheDifferentialMassMatrix(patternDiagonalHessian != null);
 
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
@@ -506,17 +483,17 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private final BeagleDataLikelihoodDelegate likelihoodDelegate;
-    private final Beagle beagle;
-    private final EvolutionaryProcessDelegate evolutionaryProcessDelegate;
-    private final SiteRateModel siteRateModel;
-    private final PatternList patternList;
+    protected final BeagleDataLikelihoodDelegate likelihoodDelegate;
+    protected final Beagle beagle;
+    protected EvolutionaryProcessDelegate evolutionaryProcessDelegate;
+    protected final SiteRateModel siteRateModel;
+    protected final PatternList patternList;
 
-    private final int patternCount;
-    private final int stateCount;
-    private final int categoryCount;
-    private final int preOrderPartialOffset;
-    private final int preOrderScaleBufferOffset;
+    protected final int patternCount;
+    protected final int stateCount;
+    protected final int categoryCount;
+    protected int preOrderPartialOffset;
+    protected int preOrderScaleBufferOffset;
 
 //    private final double[] postOrderPartial;
 //    private final double[] preOrderPartial;
@@ -529,11 +506,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 //    private final double[] grandNumeratorIncrementLowerBound;
 //    private final double[] grandNumeratorIncrementUpperBound;
 
-    private final double[] gradient;
+    protected final double[] gradient;
 
-    private static final boolean COUNT_TOTAL_OPERATIONS = true;
-    private long simulateCount = 0;
-    private long getTraitCount = 0;
-    private long updatePrePartialCount = 0;
+    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
+    protected long simulateCount = 0;
+    protected long getTraitCount = 0;
+    protected long updatePrePartialCount = 0;
 }
 

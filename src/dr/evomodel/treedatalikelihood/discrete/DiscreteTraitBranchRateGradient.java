@@ -88,7 +88,7 @@ public class DiscreteTraitBranchRateGradient
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
-            ProcessSimulationDelegate gradientDelegate = new AbstractDiscreteTraitDelegate(traitName,
+            ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchRateDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);

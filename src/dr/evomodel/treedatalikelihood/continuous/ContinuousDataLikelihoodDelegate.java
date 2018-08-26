@@ -753,7 +753,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 
-        cdi.updatePostOrderPartials(operations, operationCount, computeWishartStatistics);
+        ContinuousDiffusionIntegrator.SpecialStatistics statistics = (computeWishartStatistics) ?
+                ContinuousDiffusionIntegrator.SpecialStatistics.RESIDUALS_AND_WISHART :
+                ContinuousDiffusionIntegrator.SpecialStatistics.RESIDUALS; // TODO None?
+
+        cdi.updatePostOrderPartials(operations, operationCount, statistics);
 
         double[] logLikelihoods = new double[numTraits];
 

@@ -78,10 +78,16 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
 
-    void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
+    void updatePostOrderPartials(final int[] operations, int operationCount, SpecialStatistics statistics);
 
     @SuppressWarnings("unused")
     void updatePreOrderPartials(final int[] operations, int operationCount);
+
+    enum SpecialStatistics {
+        NONE,
+        RESIDUALS,
+        RESIDUALS_AND_WISHART;
+    }
 
     InstanceDetails getDetails();
 
@@ -480,7 +486,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
+        public void updatePostOrderPartials(final int[] operations, int operationCount,
+                                            final SpecialStatistics statistics) {
 
             if (DEBUG) {
                 System.err.println("Post-order operations:");
@@ -499,7 +506,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         operations[offset + 2],
                         operations[offset + 3],
                         operations[offset + 4],
-                        incrementOuterProducts
+                        statistics
                 );
 
                 offset += ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
@@ -712,8 +719,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 final int iMatrix,
                 final int jBuffer,
                 final int jMatrix,
-                final boolean incrementOuterProducts
-        ) {
+                final SpecialStatistics statistics) {
+
             // Determine buffer offsets
             int kbo = dimPartial * kBuffer;
             int ibo = dimPartial * iBuffer;
@@ -840,7 +847,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         System.err.println("\t\tremainder: " + remainder);
                     }
 
-                    if (incrementOuterProducts) {
+                    if (statistics == SpecialStatistics.RESIDUALS_AND_WISHART) {
                         int opo = dimTrait * dimTrait * trait;
 
 //                        final double remainderPrecision = pip * pjp / (pip + pjp);

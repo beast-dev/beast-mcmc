@@ -230,10 +230,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final int iMatrix,
             final int jBuffer,
             final int jMatrix,
-            final boolean incrementOuterProducts
-    ) {
+            final SpecialStatistics statistics) {
 
-        if (incrementOuterProducts) {
+        if (statistics == SpecialStatistics.RESIDUALS_AND_WISHART) {
             throw new RuntimeException("Outer-products are not supported.");
         }
 

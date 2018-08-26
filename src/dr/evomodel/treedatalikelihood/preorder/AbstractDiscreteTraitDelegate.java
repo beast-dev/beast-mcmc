@@ -284,27 +284,6 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return gradient.clone();
     }
 
-//    protected double[] getInfinitesimalMatrix(int branchIndex) {
-//        double[] infinitesimalMatrix = new double[stateCount * stateCount];
-//        evolutionaryProcessDelegate.getSubstitutionModel(branchIndex).getInfinitesimalMatrix(infinitesimalMatrix);
-//        return infinitesimalMatrix;
-//    }
-//
-//    protected double[] getInfinitesimalMatrixSquared(int branchIndex) {
-//        double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-//        double[] infinitesimalMatrix = getInfinitesimalMatrix(branchIndex);
-//        for (int l = 0; l < stateCount; l++) {
-//            for (int j = 0; j < stateCount; j++) {
-//                double sumOverState = 0.0;
-//                for (int k = 0; k < stateCount; k++) {
-//                    sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-//                }
-//                infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-//            }
-//        }
-//        return infinitesimalMatrixSquared;
-//    }
-
     protected void cacheInfinitesimalMatrix(boolean cacheSquaredMatrix) {
         for (int i = 0; i < evolutionaryProcessDelegate.getSubstitutionModelCount(); i++) {
             double[] infinitesimalMatrix = new double[stateCount * stateCount];

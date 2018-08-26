@@ -178,12 +178,12 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int eigenIndex, double[] differentialMatrix) {
+    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
         throw new RuntimeException("Not yet implemented");
     }
 
     @Override
-    public void cacheSecondOrderDifferentialMatrix(Beagle beagle, int eigenIndex, double[] differentialMatrix) {
+    public void cacheSecondOrderDifferentialMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
         throw new RuntimeException("Not yet implemented");
     }
 

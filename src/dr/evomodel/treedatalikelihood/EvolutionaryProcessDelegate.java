@@ -48,9 +48,9 @@ public interface EvolutionaryProcessDelegate {
 
     int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex);
 
-    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMatrix);
+    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int eigenIndex, double[] differentialMatrix);
 
-    void cacheSecondOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMatrix);
+    void cacheSecondOrderDifferentialMatrix(Beagle beagle, int eigenIndex, double[] differentialMatrix);
 
     int getCachedMatrixBufferCount();
 

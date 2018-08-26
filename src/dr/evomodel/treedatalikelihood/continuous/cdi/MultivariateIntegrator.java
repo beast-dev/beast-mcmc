@@ -232,7 +232,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final int jMatrix,
             final SpecialStatistics statistics) {
 
-        if (statistics == SpecialStatistics.RESIDUALS_AND_WISHART) {
+        if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
             throw new RuntimeException("Outer-products are not supported.");
         }
 
@@ -656,10 +656,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                           boolean incrementOuterProducts) {
+                                           SpecialStatistics statistics) {
+
         assert(logLikelihoods.length == numTraits);
 
-        assert (!incrementOuterProducts);
+        assert (!(statistics == SpecialStatistics.REMAINDERS_AND_WISHART));
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

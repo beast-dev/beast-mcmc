@@ -754,15 +754,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         ContinuousDiffusionIntegrator.SpecialStatistics statistics = (computeWishartStatistics) ?
-                ContinuousDiffusionIntegrator.SpecialStatistics.RESIDUALS_AND_WISHART :
-                ContinuousDiffusionIntegrator.SpecialStatistics.RESIDUALS; // TODO None?
+                ContinuousDiffusionIntegrator.SpecialStatistics.REMAINDERS_AND_WISHART :
+                (computeRemainders) ?
+                        ContinuousDiffusionIntegrator.SpecialStatistics.REMAINDERS :
+                        ContinuousDiffusionIntegrator.SpecialStatistics.NONE;
 
         cdi.updatePostOrderPartials(operations, operationCount, statistics);
 
         double[] logLikelihoods = new double[numTraits];
 
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
-                logLikelihoods, computeWishartStatistics);
+                logLikelihoods, statistics);
 
         if (computeWishartStatistics) {
             cdi.getWishartStatistics(degreesOfFreedom, outerProducts);
@@ -916,6 +918,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private boolean computeWishartStatistics = false;
 
+    private boolean computeRemainders = true;
+
     @Override
     public WishartSufficientStatistics getWishartStatistics() {
         return wishartStatistics;
@@ -923,6 +927,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     void setComputeWishartStatistics(boolean computeWishartStatistics) {
         this.computeWishartStatistics = computeWishartStatistics;
+    }
+
+    void setComputeRemainders(boolean computeRemainders) {
+        this.computeRemainders = computeRemainders;
     }
 
     @Override

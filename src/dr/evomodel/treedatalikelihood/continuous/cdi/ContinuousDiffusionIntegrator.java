@@ -85,8 +85,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     enum SpecialStatistics {
         NONE,
-        RESIDUALS,
-        RESIDUALS_AND_WISHART;
+        REMAINDERS,
+        REMAINDERS_AND_WISHART;
     }
 
     InstanceDetails getDetails();
@@ -106,7 +106,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //                                         int updateCount);
 
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
-                                    boolean incrementOuterProducts);
+                                    SpecialStatistics statistics);
 
 //    int getPartialBufferCount();
 
@@ -391,7 +391,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                               boolean incrementOuterProducts) {
+                                               SpecialStatistics statistics) {
+
             assert(logLikelihoods.length == numTraits);
 
             if (DEBUG) {
@@ -433,7 +434,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 logLikelihoods[trait] = logLike + remainder;
 
-                if (incrementOuterProducts) {
+                if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
                     int opo = dimTrait * dimTrait * trait;
 
                     for (int g = 0; g < dimTrait; ++g) {
@@ -459,8 +460,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("rootScalar: " + rootScalar);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
-                    if (incrementOuterProducts) {
-                        System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
+                    if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
+                        System.err.println("Outer-products:" + wrap(outerProducts,
+                                dimTrait * dimTrait * trait, dimTrait, dimTrait));
                     }
                     System.err.println("");
                 }
@@ -847,7 +849,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         System.err.println("\t\tremainder: " + remainder);
                     }
 
-                    if (statistics == SpecialStatistics.RESIDUALS_AND_WISHART) {
+                    if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
                         int opo = dimTrait * dimTrait * trait;
 
 //                        final double remainderPrecision = pip * pjp / (pip + pjp);

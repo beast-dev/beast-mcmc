@@ -44,7 +44,7 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
             double[] infinitesimalMatrix = new double[stateCount * stateCount];
             SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
             substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, infinitesimalMatrix);
+            evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, infinitesimalMatrix);
             if (cacheSquaredMatrix) {
                 double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
                 for (int l = 0; l < stateCount; l++) {
@@ -56,7 +56,7 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
                         infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
                     }
                 }
-                evolutionaryProcessDelegate.cacheSecondOrderDifferentialMatrix(beagle, i, infinitesimalMatrixSquared);
+                evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, infinitesimalMatrixSquared);
             }
         }
     }

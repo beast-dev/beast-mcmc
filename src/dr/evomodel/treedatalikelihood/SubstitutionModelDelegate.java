@@ -164,7 +164,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
+    public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
         return getMatrixBufferCount() + getEigenIndex(branchIndex);
     }
 
@@ -173,17 +173,22 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
+    public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
         return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex);
     }
 
     @Override
-    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+    public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
         throw new RuntimeException("Not yet implemented");
     }
 
     @Override
-    public void cacheSecondOrderDifferentialMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+    public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
         throw new RuntimeException("Not yet implemented");
     }
 
@@ -192,8 +197,8 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getCachedMatrixBufferCount() {
-        return 2 * getEigenBufferCount();
+    public int getCachedMatrixBufferCount(BeagleDataLikelihoodDelegate.PreOrderSettings settings) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

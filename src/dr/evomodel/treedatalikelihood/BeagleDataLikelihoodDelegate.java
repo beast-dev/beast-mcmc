@@ -191,7 +191,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             if (settings.usePreOrder){
                 numPartials += nodeCount;
                 numScaleBuffers += nodeCount - 1; // don't need to rescale at root
-                numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount();
+                numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount(settings);
             }
 
             // Attempt to get the resource order from the System Property

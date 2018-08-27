@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 
 /**
  * Implementations of this interface are used to delegate control of substitution
@@ -44,15 +45,17 @@ public interface EvolutionaryProcessDelegate {
 
     int getMatrixBufferCount();
 
-    int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex);
+    int getInfinitesimalMatrixBufferIndex(int branchIndex);
 
-    int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex);
+    int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex);
 
-    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
+    void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
 
-    void cacheSecondOrderDifferentialMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
+    void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
 
-    int getCachedMatrixBufferCount();
+    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix);
+
+    int getCachedMatrixBufferCount(PreOrderSettings settings);  //TODO: cache them by same memory space?
 
     int getSubstitutionModelCount();
 

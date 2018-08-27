@@ -89,6 +89,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static final boolean DEBUG = false;
 
+    public static class PreOrderSettings {
+        boolean usePreOrder;
+        boolean branchRateDerivative;
+        boolean branchInfinitesimalDerivative;
+
+        public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative) {
+            this.usePreOrder = usePreOrder;
+            this.branchRateDerivative = branchRateDerivative;
+            this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
+        }
+
+        public static PreOrderSettings getDefault () {
+            return new PreOrderSettings(false, false, false);
+        }
+    }
+
     /**
      *
      * @param tree Used for configuration - shouldn't be watched for changes
@@ -96,7 +112,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @param patternList List of patterns
      * @param siteRateModel Specifies rates per site
      * @param useAmbiguities Whether to respect state ambiguities in data
-     * @param usePreOrder Whether to consider pre-order partials
+     * @param settings pre-order settings
      */
     public BeagleDataLikelihoodDelegate(Tree tree,
                                         PatternList patternList,
@@ -105,7 +121,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                         boolean useAmbiguities,
                                         PartialsRescalingScheme rescalingScheme,
                                         boolean delayRescalingUntilUnderflow,
-                                        boolean usePreOrder) {
+                                        PreOrderSettings settings) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
@@ -169,11 +185,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             int numPartials = partialBufferHelper.getBufferCount();
             int numScaleBuffers = scaleBufferHelper.getBufferCount();
             int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
-            this.usePreOrder = false;
+            this.settings = settings;
 
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
-            if (usePreOrder){
-                this.usePreOrder = true;
+            if (settings.usePreOrder){
                 numPartials += nodeCount;
                 numScaleBuffers += nodeCount - 1; // don't need to rescale at root
                 numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount();
@@ -354,7 +369,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
 
             //add in logger info for preOrder traversal
-            logger.info("  " + (usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
+            logger.info("  " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
@@ -939,7 +954,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     public final boolean isUsePreOrder(){
-        return this.usePreOrder;
+        return this.settings.usePreOrder;
     }
 
     public final EvolutionaryProcessDelegate getEvolutionaryProcessDelegate(){
@@ -1105,8 +1120,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private boolean initialEvaluation = true;
 
     /**
-     * Flag to specify that the preOrder partials are used
+     * PreOrder related settings
      */
-    private boolean usePreOrder = true;
+    private PreOrderSettings settings;
 
 }

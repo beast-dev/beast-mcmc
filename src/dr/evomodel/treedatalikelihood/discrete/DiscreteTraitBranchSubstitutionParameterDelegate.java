@@ -1,5 +1,5 @@
 /*
- * DiscreteTraitBranchRateDelegate.java
+ * DiscreteTraitBranchSubstitutionParameterDelegate.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,7 +25,9 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
@@ -34,31 +36,23 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelegate {
-    public DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
+    public DiscreteTraitBranchSubstitutionParameterDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, likelihoodDelegate);
     }
 
+    @Override
     protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix) {
-        for (int i = 0; i < evolutionaryProcessDelegate.getSubstitutionModelCount(); i++) {
-            double[] infinitesimalMatrix = new double[stateCount * stateCount];
-            SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
-            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, infinitesimalMatrix);
-            if (cacheSquaredMatrix) {
-                double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-                for (int l = 0; l < stateCount; l++) {
-                    for (int j = 0; j < stateCount; j++) {
-                        double sumOverState = 0.0;
-                        for (int k = 0; k < stateCount; k++) {
-                            sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-                        }
-                        infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-                    }
-                }
-                evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, infinitesimalMatrixSquared);
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModelForBranch(i);
+                assert(substitutionModel instanceof ParameterReplaceableSubstitutionModel);
+                ParameterReplaceableSubstitutionModel parameterReplaceableSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
+
+                double[] differentialMassMatrix = parameterReplaceableSubstitutionModel.getDifferentialMassMatrix(tree.getBranchLength(node) * tree.getNodeRate(node), parameterReplaceableSubstitutionModel.getReplaceableParameter());
+                evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);
             }
         }
     }
-
 }

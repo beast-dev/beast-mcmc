@@ -284,7 +284,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return gradient.clone();
     }
 
-    abstract protected void cacheDifferentialMassMatrix(boolean cacheSquaredMatrix);
+    abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
 
     private void getPatternGradientHessian(Tree tree, double[] patternGradient, double[] patternDiagonalHessian) {
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
@@ -293,7 +293,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
         final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
 
-        cacheDifferentialMassMatrix(patternDiagonalHessian != null);
+        cacheDifferentialMassMatrix(tree, patternDiagonalHessian != null);
 
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {

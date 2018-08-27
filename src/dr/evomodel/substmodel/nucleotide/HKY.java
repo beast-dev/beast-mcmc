@@ -322,7 +322,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
     }
 
     @Override
-    public double[][] getDifferentialMassMatrix(double time, Parameter parameter) {
+    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
         if (parameter == kappaParameter) {
             EigenDecomposition eigenDecomposition = getEigenDecomposition();
             double[] eigenValues = eigenDecomposition.getEigenValues();
@@ -367,7 +367,12 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
             getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
 
-            return differentialMassMatrix.getArrays();
+            double[] outputArray = new double[stateCount * stateCount];
+            for (int i = 0; i < stateCount; i++) {
+                System.arraycopy(differentialMassMatrix.getArrays()[i], 0, outputArray, i * stateCount, stateCount);
+            }
+
+            return outputArray;
 
         } else {
             throw new RuntimeException("Not yet implemented");

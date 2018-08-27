@@ -49,6 +49,10 @@ public interface EvolutionaryProcessDelegate {
 
     int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex);
 
+    int getFirstOrderDifferentialMatrixBufferIndex(PreOrderSettings settings, int branchIndex);
+
+    int getSecondOrderDifferentialMatrixBufferIndex(PreOrderSettings settings, int branchIndex);
+
     void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
 
     void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);

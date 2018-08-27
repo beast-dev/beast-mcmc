@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 
 import java.io.Serializable;
 
@@ -106,6 +107,33 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         return matrixBufferHelper.getBufferCount() + getEigenBufferCount() + getEigenIndex(0);
     }
 
+    private int getInfinitesimalMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchRateDerivative) {
+            return 2 * getEigenBufferCount();
+        } else {
+            return 0;
+        }
+    }
+
+    private int getDifferentialMassMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchInfinitesimalDerivative) {
+            return 2 * (nodeCount - 1);
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public int getFirstOrderDifferentialMatrixBufferIndex(PreOrderSettings settings, int branchIndex) {
+        int bufferIndex = matrixBufferHelper.getBufferCount() + getInfinitesimalMatrixBufferCount(settings) + branchIndex;
+        return bufferIndex;
+    }
+
+    @Override
+    public int getSecondOrderDifferentialMatrixBufferIndex(PreOrderSettings settings, int branchIndex) {
+        return getFirstOrderDifferentialMatrixBufferIndex(settings, branchIndex) + nodeCount - 1;
+    }
+
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
         assert(bufferIndex == 0);
@@ -124,14 +152,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public int getCachedMatrixBufferCount(BeagleDataLikelihoodDelegate.PreOrderSettings settings) {
-        int matrixBufferCount = 0;
-        if (settings.branchRateDerivative) {
-            matrixBufferCount += 2 * getEigenBufferCount();
-        }
-        if (settings.branchInfinitesimalDerivative) {
-            matrixBufferCount += 2 * (nodeCount - 1);
-        }
+    public int getCachedMatrixBufferCount(PreOrderSettings settings) {
+        int matrixBufferCount = getInfinitesimalMatrixBufferCount(settings) + getDifferentialMassMatrixBufferCount(settings);
         return matrixBufferCount;
     }
 

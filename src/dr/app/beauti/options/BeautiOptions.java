@@ -1355,6 +1355,10 @@ public class BeautiOptions extends ModelOptions {
         return !useClassicOperatorsAndPriors() || !NEW_GTR_PARAMETERIZATION;
     }
 
+    public boolean usePInvRandomWalk() {
+        return !useClassicOperatorsAndPriors() || !LOGIT_PINV_KERNEL;
+    }
+
     public boolean useNewFrequenciesPrior() {
         return !useClassicOperatorsAndPriors() || !FREQUENCIES_DIRICHLET_PRIOR;
     }

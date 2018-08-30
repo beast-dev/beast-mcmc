@@ -208,7 +208,8 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperator("expansion.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
 //        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
         createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
-        createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        //createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        createOperator("expansion.ancestralProportion", OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
         createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
         createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
         createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);

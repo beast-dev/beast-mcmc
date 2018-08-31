@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.evomodel.treedatalikelihood.PostOrderStatistics;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
@@ -230,9 +231,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final int iMatrix,
             final int jBuffer,
             final int jMatrix,
-            final SpecialStatistics statistics) {
+            final PostOrderStatistics.Continuous statistics) {
 
-        if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
+        if (statistics == PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART) {
             throw new RuntimeException("Outer-products are not supported.");
         }
 
@@ -656,11 +657,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                           SpecialStatistics statistics) {
+                                           PostOrderStatistics.Continuous statistics) {
 
         assert(logLikelihoods.length == numTraits);
 
-        assert (!(statistics == SpecialStatistics.REMAINDERS_AND_WISHART));
+        assert (!(statistics == PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART));
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

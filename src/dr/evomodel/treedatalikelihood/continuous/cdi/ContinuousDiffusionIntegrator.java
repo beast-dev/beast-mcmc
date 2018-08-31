@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.evomodel.treedatalikelihood.PostOrderStatistics;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
@@ -78,16 +79,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
 
-    void updatePostOrderPartials(final int[] operations, int operationCount, SpecialStatistics statistics);
+    void updatePostOrderPartials(final int[] operations, int operationCount, PostOrderStatistics.Continuous statistics);
 
     @SuppressWarnings("unused")
     void updatePreOrderPartials(final int[] operations, int operationCount);
-
-    enum SpecialStatistics {
-        NONE,
-        REMAINDERS,
-        REMAINDERS_AND_WISHART;
-    }
 
     InstanceDetails getDetails();
 
@@ -106,7 +101,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //                                         int updateCount);
 
     void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
-                                    SpecialStatistics statistics);
+                                    PostOrderStatistics.Continuous statistics);
 
 //    int getPartialBufferCount();
 
@@ -391,7 +386,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                               SpecialStatistics statistics) {
+                                               PostOrderStatistics.Continuous statistics) {
 
             assert(logLikelihoods.length == numTraits);
 
@@ -434,7 +429,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 logLikelihoods[trait] = logLike + remainder;
 
-                if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
+                if (statistics == PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART) {
                     int opo = dimTrait * dimTrait * trait;
 
                     for (int g = 0; g < dimTrait; ++g) {
@@ -460,7 +455,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("rootScalar: " + rootScalar);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
-                    if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
+                    if (statistics == PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART) {
                         System.err.println("Outer-products:" + wrap(outerProducts,
                                 dimTrait * dimTrait * trait, dimTrait, dimTrait));
                     }
@@ -489,7 +484,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void updatePostOrderPartials(final int[] operations, int operationCount,
-                                            final SpecialStatistics statistics) {
+                                            final PostOrderStatistics.Continuous statistics) {
 
             if (DEBUG) {
                 System.err.println("Post-order operations:");
@@ -721,7 +716,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 final int iMatrix,
                 final int jBuffer,
                 final int jMatrix,
-                final SpecialStatistics statistics) {
+                final PostOrderStatistics.Continuous statistics) {
 
             // Determine buffer offsets
             int kbo = dimPartial * kBuffer;
@@ -849,7 +844,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         System.err.println("\t\tremainder: " + remainder);
                     }
 
-                    if (statistics == SpecialStatistics.REMAINDERS_AND_WISHART) {
+                    if (statistics == PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART) {
                         int opo = dimTrait * dimTrait * trait;
 
 //                        final double remainderPrecision = pip * pjp / (pip + pjp);

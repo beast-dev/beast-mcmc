@@ -239,6 +239,23 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     protected void acceptState() {
     } // nothing to do
 
+    double executePostOrderComputation() throws DataLikelihoodDelegate.LikelihoodException {
+
+        treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+
+        final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
+        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalMatrixUpdateCount += branchOperations.size();
+            totalOperationCount += nodeOperations.size();
+        }
+
+        final NodeRef root = treeModel.getRoot();
+
+        return likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+    }
+
     /**
      * Calculate the log likelihood of the data for the current tree.
      *
@@ -251,20 +268,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         long underflowCount = 0;
 
         do {
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-            final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
-
-            if (COUNT_TOTAL_OPERATIONS) {
-                totalMatrixUpdateCount += branchOperations.size();
-                totalOperationCount += nodeOperations.size();
-            }
-
-            final NodeRef root = treeModel.getRoot();
-
             try {
-                logL = likelihoodDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+                logL = executePostOrderComputation();
 
                 done = true;
             } catch (DataLikelihoodDelegate.LikelihoodException e) {

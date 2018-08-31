@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.*;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.PostOrderStatistics;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
@@ -60,6 +61,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations);
 
     int getSingleOperationSize();
+
+    PostOrderStatistics getRequiredStatistics();
 
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
@@ -192,6 +195,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             this.likelihoodDelegate = likelihoodDelegate;
 
             diffusionModel.addModelListener(this);
+        }
+
+        @Override
+        public PostOrderStatistics getRequiredStatistics() {
+            return PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART;
         }
 
         @Override

@@ -176,7 +176,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             } else if (precisionType == PrecisionType.FULL) {
 
                 if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                    if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                    if (diffusionProcessDelegate.hasDiagonalActualization()) {
                         base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
                                 precisionType,
                                 numTraits,
@@ -547,15 +547,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                     cMissing[cTrait] = offset + cTrait;
                 }
 
-                for (int m = 0; m < offsetNotMissing2; ++m) {
-                    cNotMissing[m] = notMissingIndices[m];
-                }
+                System.arraycopy(notMissingIndices, 0, cNotMissing, 0, offsetNotMissing2);
 
                 offsetNotMissing2 += dimTip;
 
-                for (int m = offsetNotMissing2; m < notMissingIndices.length; ++m) {
-                    cNotMissing[m - dimTip] = notMissingIndices[m];
-                }
+                System.arraycopy(notMissingIndices, offsetNotMissing2, cNotMissing, offsetNotMissing2 - dimTip,
+                        notMissingIndices.length - offsetNotMissing2);
 
                 ConditionalVarianceAndTransform cVariance = new ConditionalVarianceAndTransform(
                         new Matrix(jointVariance), cMissing, cNotMissing);
@@ -578,9 +575,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             if (notMissingIndices[offsetNotMissing + cTrait] < offset + dimTrait) dimTip++;
         }
         int[] cMissing = new int[dimTip];
-        for (int cTrait = 0; cTrait < dimTip; ++cTrait) {
-            cMissing[cTrait] = notMissingIndices[offsetNotMissing + cTrait];
-        }
+        System.arraycopy(notMissingIndices, offsetNotMissing + 0, cMissing, 0, dimTip);
         offsetNotMissing += dimTrait;
         return cMissing;
     }
@@ -753,11 +748,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 
-        ContinuousDiffusionIntegrator.SpecialStatistics statistics = (computeWishartStatistics) ?
-                ContinuousDiffusionIntegrator.SpecialStatistics.REMAINDERS_AND_WISHART :
+        PostOrderStatistics.Continuous statistics = (computeWishartStatistics) ?
+                PostOrderStatistics.Continuous.REMAINDERS_AND_WISHART :
                 (computeRemainders) ?
-                        ContinuousDiffusionIntegrator.SpecialStatistics.REMAINDERS :
-                        ContinuousDiffusionIntegrator.SpecialStatistics.NONE;
+                        PostOrderStatistics.Continuous.REMAINDERS :
+                        PostOrderStatistics.Continuous.NONE;
 
         cdi.updatePostOrderPartials(operations, operationCount, statistics);
 
@@ -925,11 +920,11 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return wishartStatistics;
     }
 
-    void setComputeWishartStatistics(boolean computeWishartStatistics) {
+    public void setComputeWishartStatistics(boolean computeWishartStatistics) {
         this.computeWishartStatistics = computeWishartStatistics;
     }
 
-    void setComputeRemainders(boolean computeRemainders) {
+    public void setComputeRemainders(boolean computeRemainders) {
         this.computeRemainders = computeRemainders;
     }
 

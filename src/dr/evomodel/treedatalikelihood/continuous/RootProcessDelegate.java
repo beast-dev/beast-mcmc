@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
+import dr.evomodel.treedatalikelihood.PostOrderStatistics;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.AbstractModel;
@@ -44,7 +45,7 @@ public interface RootProcessDelegate extends Model {
     int getExtraMatrixBufferCount();
 
     void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike,
-                                    ContinuousDiffusionIntegrator.SpecialStatistics statistics);
+                                    PostOrderStatistics.Continuous statistics);
 
     double getPseudoObservations();
 
@@ -95,7 +96,7 @@ public interface RootProcessDelegate extends Model {
         @Override
         public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
                                                final double[] logLike,
-                                               final ContinuousDiffusionIntegrator.SpecialStatistics statistics) {
+                                               final PostOrderStatistics.Continuous statistics) {
 
             if (updatePrior) {
                 setRootPartial(cdi);

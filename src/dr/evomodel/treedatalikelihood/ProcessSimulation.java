@@ -73,9 +73,11 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
     
     public final void cacheSimulatedTraits(final NodeRef node) {
 
-        treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
-
         if (!validSimulation) {
+
+            PostOrderStatistics statistics = simulationDelegate.getRequiredStatistics();
+            statistics.executePostOrder(treeDataLikelihood);
+
             simulateTraits(node);
             validSimulation = true;
         }

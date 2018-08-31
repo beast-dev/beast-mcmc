@@ -4,6 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.PostOrderStatistics;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
@@ -31,6 +32,11 @@ public class WrappedTipFullConditionalDistributionDelegate extends
 
     public static String getName(String name) {
         return NAME_PREFIX + "." + name;
+    }
+
+    @Override
+    public PostOrderStatistics getRequiredStatistics() {
+        return PostOrderStatistics.Continuous.MINIMAL;
     }
 
     @Override

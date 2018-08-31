@@ -85,6 +85,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     }
 
     @Override
+    public PostOrderStatistics getRequiredStatistics() {
+        return PostOrderStatistics.Discrete.FULL;
+    }
+
+    @Override
     public void simulate(final int[] operations, final int operationCount,
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes

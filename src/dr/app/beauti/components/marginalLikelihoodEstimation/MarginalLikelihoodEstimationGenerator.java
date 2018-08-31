@@ -343,7 +343,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 }
                         );
                         writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-                        writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
+                        writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "exponentialReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
@@ -382,7 +382,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 }
                         );
                         writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-                        writer.writeIDref(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
+                        writer.writeIDref(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "logisticReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
@@ -421,7 +421,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 }
                         );
                         writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-                        writer.writeIDref(ExpansionModelParser.EXPANSION_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
+                        writer.writeIDref(ExpansionModelParser.EXPANSION_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "expansionReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);

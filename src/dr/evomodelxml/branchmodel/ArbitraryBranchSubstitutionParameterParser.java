@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.branchmodel;
 
-import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
+import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameter;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser {
+public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjectParser {
 
     public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="branchSubstitutionParameterBranchModel";
     private static final String SINGLE_RATE="single_rate_subsitution_model";
@@ -60,10 +60,10 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
 
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
-        BranchSpecificRateBranchModel rateBranchModel = null;
+        ArbitraryBranchSubstitutionParameter branchParameterModel = null;
         if (branchParameter == null || branchParameter.getDimension() == 1) {
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
-            rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
+            branchParameterModel = new ArbitraryBranchSubstitutionParameter(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
         } else{
             final int numBranch = tree.getNodeCount() - 1;
             if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
@@ -82,11 +82,11 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
                 }
             }
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
-            rateBranchModel = new BranchSpecificRateBranchModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
+            branchParameterModel = new ArbitraryBranchSubstitutionParameter(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
                     substitutionModelProvider, branchParameter, tree);
         }
 
-        return rateBranchModel;
+        return branchParameterModel;
     }
 
     @Override

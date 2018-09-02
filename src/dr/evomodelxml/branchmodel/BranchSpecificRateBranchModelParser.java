@@ -26,12 +26,12 @@
 package dr.evomodelxml.branchmodel;
 
 import dr.evomodel.branchmodel.BranchSpecificRateBranchModel;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser {
 
-    public static final String BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL="branchSpecificRateBranchModel";
+    public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="branchSubstitutionParameterBranchModel";
     private static final String SINGLE_RATE="single_rate_subsitution_model";
 
     @Override
@@ -56,18 +56,18 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
         if (!(substitutionModel instanceof ParameterReplaceableSubstitutionModel)) {
             throw new RuntimeException("The substitution model is not parameter replaceable!");
         }
-        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
+        Parameter branchParameter = (Parameter) xo.getChild(Parameter.class);
 
 
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
         BranchSpecificRateBranchModel rateBranchModel = null;
-        if (branchRates == null || branchRates.getRateParameter().getDimension() == 1) {
+        if (branchParameter == null || branchParameter.getDimension() == 1) {
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
-            rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, substitutionModelProvider);
+            rateBranchModel = new BranchSpecificRateBranchModel(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
         } else{
             final int numBranch = tree.getNodeCount() - 1;
-            if (!(branchRates.getRateParameter().getDimension() == numBranch && branchRates.getRateParameter() instanceof CompoundParameter)) {
-                throw new RuntimeException("rateParameter miss-specified.");
+            if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
+                throw new RuntimeException("branchSubstitutionParameter miss-specified.");
             }
             //TODO: more generic SubstitutionModel construction
             List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
@@ -76,13 +76,14 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
                 if (!tree.isRoot(tree.getNode(nodeNum))) {
                     substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                             ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(),
-                            ((CompoundParameter) branchRates.getRateParameter()).getParameter(v)));
+                            ((CompoundParameter) branchParameter).getParameter(v)));
 //                            new HKY(((CompoundParameter) branchRates.getRateParameter()).getParameter(v), substitutionModel.getFrequencyModel()));
                     v++;
                 }
             }
-            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(branchRates, substitutionModelList, tree);
-            rateBranchModel = new BranchSpecificRateBranchModel(BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL, substitutionModelProvider);
+            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
+            rateBranchModel = new BranchSpecificRateBranchModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
+                    substitutionModelProvider, branchParameter, tree);
         }
 
         return rateBranchModel;
@@ -93,7 +94,7 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
         return new XMLSyntaxRule[]{
                 new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
                 new ElementRule(TreeModel.class, "The tree."),
-                new ElementRule("rateRule", ArbitraryBranchRates.class, "Branch-specific rates.", true)
+                new ElementRule(Parameter.class, "Substitution Parameters.")
         };
     }
 
@@ -109,6 +110,6 @@ public class BranchSpecificRateBranchModelParser extends AbstractXMLObjectParser
 
     @Override
     public String getParserName() {
-        return BRANCH_SPECIFIC_SUBSTITUTION_RATE_MODEL;
+        return ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL;
     }
 }

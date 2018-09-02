@@ -44,8 +44,8 @@ import java.util.logging.Logger;
  */
 public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjectParser {
 
-    public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="branchSubstitutionParameterBranchModel";
-    private static final String SINGLE_RATE="single_rate_subsitution_model";
+    public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="arbitraryBranchSubstitutionParameter";
+    private static final String SINGLE_RATE="singleSubstitutionParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -105,7 +105,7 @@ public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjec
 
     @Override
     public Class getReturnType() {
-        return BranchSpecificSubstitutionModelProvider.class;
+        return ArbitraryBranchSubstitutionParameter.class;
     }
 
     @Override

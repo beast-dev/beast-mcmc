@@ -1,7 +1,7 @@
 /*
  * MarginalLikelihoodEstimationGenerator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -42,6 +42,7 @@ import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.substmodel.GTRParser;
 import dr.inference.mcmc.MarginalLikelihoodEstimator;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.PathLikelihood;
@@ -607,27 +608,67 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             case GTR:
                                 if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                                     for (int i = 1; i <= codonPartitionCount; i++) {
+                                        if (beautiOptions.useNewGTR()) {
+                                            String customNames = model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_C;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_G;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_T;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_G;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_T;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.G_TO_T;
+
+                                            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                    new Attribute[]{
+                                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES),
+                                                            new Attribute.Default<Integer>("dimension", 6),
+                                                            new Attribute.Default<String>("parameterNames", customNames),
+                                                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                    });
+                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES);
+                                            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                        } else {
+                                            for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                        new Attribute[]{
+                                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                                new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + rateName),
+                                                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                        });
+                                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if (beautiOptions.useNewGTR()) {
+                                        String customNames = model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_C;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_G;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_T;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_G;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_T;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.G_TO_T;
+
+                                        writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + PartitionSubstitutionModel.GTR_RATES),
+                                                        new Attribute.Default<Integer>("dimension", 6),
+                                                        new Attribute.Default<String>("parameterNames", customNames),
+                                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + PartitionSubstitutionModel.GTR_RATES);
+                                        writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    } else {
                                         for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
                                             writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                                     new Attribute[]{
                                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + rateName),
+                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + rateName),
                                                             new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                                     });
-                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                         }
-                                    }
-                                } else {
-                                    for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
-                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                                new Attribute[]{
-                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + rateName),
-                                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                                });
-                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
-                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                     }
                                 }
                                 if (codonPartitionCount > 1) {
@@ -1102,17 +1143,40 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
     }
 
     private void writeRelativeRates(XMLWriter writer, PartitionSubstitutionModel model, int codonPartitionCount) {
-        for (int i = 1; i <= codonPartitionCount; i++) {
-            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+
+        if (beautiOptions.useNuRelativeRates()) {
+
+            String customNames = "";
+            for (int i = 1; i <= codonPartitionCount; i++) {
+                customNames += model.getPrefix(i) + "nu ";
+            }
+
+            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                     new Attribute[]{
                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
-                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10)),
-                            new Attribute.Default<String>("upperLimit", "" + (double)(codonPartitionCount))
+                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + "allNus"),
+                            new Attribute.Default<Integer>("dimension", codonPartitionCount),
+                            new Attribute.Default<String>("parameterNames", customNames),
+                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                     });
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "allNus");
+            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+        } else {
+
+            for (int i = 1; i <= codonPartitionCount; i++) {
+                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
+                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10)),
+                                new Attribute.Default<String>("upperLimit", "" + (double) (codonPartitionCount))
+                        });
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
+                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+            }
         }
+
     }
 
     private void writeCoalescentEventsStatistic(XMLWriter writer) {

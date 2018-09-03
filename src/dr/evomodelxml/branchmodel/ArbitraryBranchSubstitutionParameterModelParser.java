@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.branchmodel;
 
-import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameter;
+import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameterModel;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -42,14 +42,14 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjectParser {
+public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXMLObjectParser {
 
     public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="arbitraryBranchSubstitutionParameter";
     private static final String SINGLE_RATE="singleSubstitutionParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Logger.getLogger("dr.evomodel").info("\nUsing branch-specific rate branch model.");
+        Logger.getLogger("dr.evomodel").info("\nUsing branch-specific substitution parameter branch model.");
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
@@ -60,10 +60,10 @@ public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjec
 
 
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
-        ArbitraryBranchSubstitutionParameter branchParameterModel = null;
+        ArbitraryBranchSubstitutionParameterModel branchParameterModel = null;
         if (branchParameter == null || branchParameter.getDimension() == 1) {
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
-            branchParameterModel = new ArbitraryBranchSubstitutionParameter(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
+            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
         } else{
             final int numBranch = tree.getNodeCount() - 1;
             if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
@@ -82,7 +82,7 @@ public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjec
                 }
             }
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
-            branchParameterModel = new ArbitraryBranchSubstitutionParameter(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
+            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
                     substitutionModelProvider, branchParameter, tree);
         }
 
@@ -105,7 +105,7 @@ public class ArbitraryBranchSubstitutionParameterParser extends AbstractXMLObjec
 
     @Override
     public Class getReturnType() {
-        return ArbitraryBranchSubstitutionParameter.class;
+        return ArbitraryBranchSubstitutionParameterModel.class;
     }
 
     @Override

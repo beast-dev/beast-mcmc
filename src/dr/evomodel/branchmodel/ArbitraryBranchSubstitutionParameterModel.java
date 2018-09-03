@@ -41,17 +41,17 @@ import java.util.List;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class ArbitraryBranchSubstitutionParameter extends AbstractModel implements BranchModel {
+public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel implements BranchModel {
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
     private final Parameter substitutionParameter;
     private final TreeModel tree;
 
 
-    public ArbitraryBranchSubstitutionParameter(String name,
-                                                BranchSpecificSubstitutionModelProvider substitutionModelProvider,
-                                                Parameter substitutionParameter,
-                                                TreeModel tree) {
+    public ArbitraryBranchSubstitutionParameterModel(String name,
+                                                     BranchSpecificSubstitutionModelProvider substitutionModelProvider,
+                                                     Parameter substitutionParameter,
+                                                     TreeModel tree) {
         super(name);
         this.substitutionModelProvider = substitutionModelProvider;
         this.substitutionParameter = substitutionParameter;

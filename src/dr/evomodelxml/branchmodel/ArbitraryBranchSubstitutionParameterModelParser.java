@@ -65,21 +65,18 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
             branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
         } else{
-            final int numBranch = tree.getNodeCount() - 1;
-            if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
+            final int numNode = tree.getNodeCount();
+            if (!(branchParameter.getDimension() == numNode && branchParameter instanceof CompoundParameter)) {
                 throw new RuntimeException("branchSubstitutionParameter miss-specified.");
             }
             //TODO: more generic SubstitutionModel construction
             List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
-            int v = 0;
             for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
-                if (!tree.isRoot(tree.getNode(nodeNum))) {
-                    substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
-                            ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(),
-                            ((CompoundParameter) branchParameter).getParameter(v)));
-//                            new HKY(((CompoundParameter) branchRates.getRateParameter()).getParameter(v), substitutionModel.getFrequencyModel()));
-                    v++;
-                }
+
+                substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
+                        ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(),
+                        ((CompoundParameter) branchParameter).getParameter(nodeNum)));
+
             }
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
             branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,

@@ -56,8 +56,15 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
         this.substitutionModelProvider = substitutionModelProvider;
         this.substitutionParameter = substitutionParameter;
         this.tree = tree;
+
+        for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {
+            addModel(substitutionModel);
+        }
     }
 
+    public Parameter getSubstitutionParameter() {
+        return substitutionParameter;
+    }
 
     @Override
     public Mapping getBranchModelMapping(NodeRef branch) {

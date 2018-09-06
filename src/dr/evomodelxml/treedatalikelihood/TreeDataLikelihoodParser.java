@@ -112,7 +112,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-//        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {///XJ: need to change this back
+//        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {///TODO: XJ: need to change this back
         if (false) {
             DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                     treeModel,
@@ -163,10 +163,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
-        boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, false);
-        boolean branchInfitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
-        assert(usePreOrder == (branchRateDerivative || branchInfitesimalDerivative));
-        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfitesimalDerivative);
+        boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
+        boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
+        if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
+            throw new RuntimeException("Need to specify derivative types.");
+        }
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative);
 
         // TreeDataLikelihood doesn't currently support Instances defined from the command line
 //        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);

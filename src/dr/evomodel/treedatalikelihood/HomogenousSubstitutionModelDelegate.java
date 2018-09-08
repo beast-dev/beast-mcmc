@@ -49,6 +49,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
+    private final PreOrderSettings settings;
+
     /**
      * A class which handles substitution models including epoch models where multiple
      * substitution models on a branch are convolved.
@@ -56,7 +58,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param branchModel Describes which substitution models use on each branch
      */
     public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, 0);
+        this(tree, branchModel, 0, PreOrderSettings.getDefault());
+    }
+
+    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
+        this(tree, branchModel, partitionNumber, PreOrderSettings.getDefault());
     }
 
     /**
@@ -65,8 +71,9 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param tree
      * @param branchModel Describes which substitution models use on each branch
      * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
+     * @param settings PreOrder derivative settings
      */
-    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
+    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, PreOrderSettings settings) {
 
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
@@ -79,6 +86,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
         // two matrices for each node less the root
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
+
+        this.settings = settings;
 
     }// END: Constructor
 
@@ -148,7 +157,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-
+        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(settings, branchIndex), differentialMassMatrix, 0.0);
     }
 
     @Override

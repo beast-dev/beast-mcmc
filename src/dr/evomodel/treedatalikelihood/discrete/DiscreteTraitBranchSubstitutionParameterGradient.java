@@ -42,7 +42,11 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
+
+import static dr.math.MachineAccuracy.SQRT_EPSILON;
 
 /**
  * @author Marc A. Suchard
@@ -171,11 +175,76 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         return columns;
     }
 
+    protected MultivariateFunction numeric1 = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            for (int i = 0; i < argument.length; ++i) {
+                branchSubstitutionParameter.setParameterValue(i, argument[i]);
+            }
+
+//            treeDataLikelihood.makeDirty();
+            return treeDataLikelihood.getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return branchSubstitutionParameter.getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
+    protected boolean valuesAreSufficientlyLarge(double[] vector) {
+        for (double x : vector) {
+            if (Math.abs(x) < SQRT_EPSILON * 1.2) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public String getReport() {
+        double[] savedValues = branchSubstitutionParameter.getParameterValues();
+        double[] testGradient = null;
+        double[] testHessian = null;
+
+        boolean largeEnoughValues = valuesAreSufficientlyLarge(branchSubstitutionParameter.getParameterValues());
+
+        if (DEBUG && largeEnoughValues) {
+            testGradient = NumericalDerivative.gradient(numeric1, branchSubstitutionParameter.getParameterValues());
+        }
+
+        if (DEBUG && useHessian && largeEnoughValues) {
+            testHessian = NumericalDerivative.diagonalHessian(numeric1, branchSubstitutionParameter.getParameterValues());
+        }
+
+
+        for (int i = 0; i < savedValues.length; ++i) {
+            branchSubstitutionParameter.setParameterValue(i, savedValues[i]);
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append("Gradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
+
+        if (testGradient != null && largeEnoughValues) {
+            sb.append("Gradient numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+        } else {
+            sb.append("Gradient mumeric: too close to 0");
+        }
+        sb.append("\n");
+
         return sb.toString();
     }
 }

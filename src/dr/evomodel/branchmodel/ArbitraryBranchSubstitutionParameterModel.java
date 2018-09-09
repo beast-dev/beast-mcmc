@@ -60,6 +60,8 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
         for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {
             addModel(substitutionModel);
         }
+
+        addVariable(substitutionParameter);
     }
 
     public Parameter getSubstitutionParameter() {

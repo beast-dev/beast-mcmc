@@ -29,6 +29,7 @@ import beagle.Beagle;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 import dr.evolution.tree.Tree;
 import dr.util.Timer;
 
@@ -48,7 +49,8 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
     public static final boolean MEASURE_RUN_TIME = false;
-    private final boolean cacheQMatrices;
+//    private final boolean cacheQMatrices;
+    private final PreOrderSettings settings;
 
     public double updateTime;
     public double convolveTime;
@@ -77,7 +79,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
      * @param branchModel Describes which substitution models use on each branch
      */
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT, false);
+        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT, PreOrderSettings.getDefault());
     }
 
     /**
@@ -88,15 +90,19 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
      * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
      */
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
-        this(tree, branchModel, partitionNumber, BUFFER_POOL_SIZE_DEFAULT, false);
+        this(tree, branchModel, partitionNumber, BUFFER_POOL_SIZE_DEFAULT, PreOrderSettings.getDefault());
     }
 
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, int bufferPoolSize){
-        this(tree, branchModel, partitionNumber, bufferPoolSize, false);
+        this(tree, branchModel, partitionNumber, bufferPoolSize, PreOrderSettings.getDefault());
+    }
+
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, PreOrderSettings settings) {
+        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT, settings);
     }
 
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, int bufferPoolSize,
-                                     boolean cacheQMatrices) {
+                                     PreOrderSettings settings) {
 
         if (MEASURE_RUN_TIME) {
             updateTime = 0;
@@ -138,7 +144,8 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     + reserveBufferIndex);
         }
 
-        this.cacheQMatrices = cacheQMatrices;
+//        this.cacheQMatrices = cacheQMatrices;
+        this.settings = settings;
 
     }// END: Constructor
 

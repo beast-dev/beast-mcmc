@@ -186,12 +186,13 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
-        throw new RuntimeException("Not yet implemented");
+        int bufferIndex = matrixBufferHelper.getBufferCount() + getInfinitesimalMatrixBufferCount(settings) + branchIndex;
+        return bufferIndex;
     }
 
     @Override
     public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
-        throw new RuntimeException("Not yet implemented");
+        return getFirstOrderDifferentialMatrixBufferIndex(branchIndex) + nodeCount - 1;
     }
 
     @Override
@@ -206,7 +207,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-        throw new RuntimeException("Not yet implemented");
+        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix, 0.0);
     }
 
     private int getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
@@ -214,8 +215,25 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getCachedMatrixBufferCount(BeagleDataLikelihoodDelegate.PreOrderSettings settings) {
-        throw new RuntimeException("Not yet implemented");
+    public int getCachedMatrixBufferCount(PreOrderSettings settings) {
+        int matrixBufferCount = getInfinitesimalMatrixBufferCount(settings) + getDifferentialMassMatrixBufferCount(settings);
+        return matrixBufferCount;
+    }
+
+    private int getInfinitesimalMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchRateDerivative) {
+            return 2 * getEigenBufferCount();
+        } else {
+            return 0;
+        }
+    }
+
+    private int getDifferentialMassMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchInfinitesimalDerivative) {
+            return 2 * (nodeCount - 1);
+        } else {
+            return 0;
+        }
     }
 
     @Override

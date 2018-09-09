@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -37,8 +38,14 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
  * @author Marc A. Suchard
  */
 public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
-    public DiscreteTraitBranchSubstitutionParameterDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+    private BranchRateModel branchRateModel;
+
+    public DiscreteTraitBranchSubstitutionParameterDelegate(String name,
+                                                            Tree tree,
+                                                            BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                            BranchRateModel branchRateModel) {
         super(name, tree, likelihoodDelegate);
+        this.branchRateModel = branchRateModel;
     }
 
     @Override
@@ -50,7 +57,7 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
                 assert(substitutionModel instanceof ParameterReplaceableSubstitutionModel);
                 ParameterReplaceableSubstitutionModel parameterReplaceableSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
 
-                double[] differentialMassMatrix = parameterReplaceableSubstitutionModel.getDifferentialMassMatrix(tree.getBranchLength(node) * tree.getNodeRate(node), parameterReplaceableSubstitutionModel.getReplaceableParameter());
+                double[] differentialMassMatrix = parameterReplaceableSubstitutionModel.getDifferentialMassMatrix(tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node), parameterReplaceableSubstitutionModel.getReplaceableParameter());
                 evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);
             }
         }

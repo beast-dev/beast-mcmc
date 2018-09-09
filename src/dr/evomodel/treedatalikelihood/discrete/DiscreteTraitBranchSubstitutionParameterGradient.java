@@ -86,7 +86,8 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         if (test == null) {
             ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
-                    likelihoodDelegate);
+                    likelihoodDelegate,
+                    treeDataLikelihood.getBranchRateModel());
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

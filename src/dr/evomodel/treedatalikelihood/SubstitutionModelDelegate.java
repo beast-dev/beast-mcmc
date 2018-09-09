@@ -178,12 +178,12 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
-    public int getFirstOrderDifferentialMatrixBufferIndex(BeagleDataLikelihoodDelegate.PreOrderSettings settings, int branchIndex) {
+    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
         throw new RuntimeException("Not yet implemented");
     }
 
     @Override
-    public int getSecondOrderDifferentialMatrixBufferIndex(BeagleDataLikelihoodDelegate.PreOrderSettings settings, int branchIndex) {
+    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
         throw new RuntimeException("Not yet implemented");
     }
 

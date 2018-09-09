@@ -133,14 +133,14 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public int getFirstOrderDifferentialMatrixBufferIndex(PreOrderSettings settings, int branchIndex) {
+    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
         int bufferIndex = matrixBufferHelper.getBufferCount() + getInfinitesimalMatrixBufferCount(settings) + branchIndex;
         return bufferIndex;
     }
 
     @Override
-    public int getSecondOrderDifferentialMatrixBufferIndex(PreOrderSettings settings, int branchIndex) {
-        return getFirstOrderDifferentialMatrixBufferIndex(settings, branchIndex) + nodeCount - 1;
+    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
+        return getFirstOrderDifferentialMatrixBufferIndex(branchIndex) + nodeCount - 1;
     }
 
     @Override
@@ -157,7 +157,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(settings, branchIndex), differentialMassMatrix, 0.0);
+        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix, 0.0);
     }
 
     @Override

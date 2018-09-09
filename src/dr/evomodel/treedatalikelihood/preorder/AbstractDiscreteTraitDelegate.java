@@ -300,14 +300,22 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                firstDervIndices[u]  = evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
-                secondDeriveIndices[u] = evolutionaryProcessDelegate.getInfinitesimalSquaredMatrixBufferIndex(nodeNum);
+                firstDervIndices[u]  = getFirstDerivativeMatrixBufferIndex(nodeNum);
+                secondDeriveIndices[u] = getSecondDerivativeMatrixBufferIndex(nodeNum);
                 u++;
             }
         }
         beagle.calculateEdgeDerivative(postBufferIndices, preBufferIndices, getPostOrderPartialIndex(rootNumber),
                 firstDervIndices, secondDeriveIndices, 0, 0, 0, new int[]{Beagle.NONE},
                 tree.getNodeCount() - 1, patternGradient, patternDiagonalHessian);
+    }
+
+    protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
+        return evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
+    }
+
+    protected int getSecondDerivativeMatrixBufferIndex(int nodeNum) {
+        return evolutionaryProcessDelegate.getInfinitesimalSquaredMatrixBufferIndex(nodeNum);
     }
 
 //    private double[] getTrait(Tree tree, NodeRef node, MatrixChoice matrixChoice) {

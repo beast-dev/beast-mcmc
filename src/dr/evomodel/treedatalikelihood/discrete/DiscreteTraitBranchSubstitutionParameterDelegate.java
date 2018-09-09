@@ -55,4 +55,14 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
             }
         }
     }
+
+    @Override
+    protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
+        return evolutionaryProcessDelegate.getFirstOrderDifferentialMatrixBufferIndex(nodeNum);
+    }
+
+    @Override
+    protected int getSecondDerivativeMatrixBufferIndex(int nodeNum) {
+        return evolutionaryProcessDelegate.getSecondOrderDifferentialMatrixBufferIndex(nodeNum);
+    }
 }

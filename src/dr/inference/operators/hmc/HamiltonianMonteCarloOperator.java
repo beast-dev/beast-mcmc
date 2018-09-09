@@ -27,9 +27,11 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
+import dr.inference.operators.GeneralOperator;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.inference.operators.PathDependent;
@@ -41,7 +43,8 @@ import dr.util.Transform;
  * @author Marc A. Suchard
  */
 
-public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator implements PathDependent {
+public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
+        implements GeneralOperator, PathDependent {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -56,7 +59,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
                                          double randomStepCountFraction) {
         this(mode, weight, gradientProvider,
                 parameter, transform, mask,
-                new Options(stepSize, nSteps, randomStepCountFraction, 0, 0),
+                new Options(stepSize, nSteps, randomStepCountFraction,
+                        0, 0, 0),
                 MassPreconditioner.Type.NONE
         );
     }
@@ -118,6 +122,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
 
     @Override
     public double doOperation() {
+        throw new RuntimeException("Should not be executed");
+    }
+
+    @Override
+    public double doOperation(Likelihood joint) {
+
+        if (shouldCheckGradient()) {
+            checkGradient(joint);
+        }
 
         if (shouldUpdatePreconditioning()) {
             preconditioning.updateMass();
@@ -135,6 +148,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         if (gradientProvider instanceof PathGradient) {
             ((PathGradient) gradientProvider).setPathParameter(beta);
         }
+    }
+
+    private boolean shouldCheckGradient() {
+        return getCount() < runtimeOptions.gradientCheckCount;
+    }
+
+    private void checkGradient(Likelihood joint) {
+        joint.getLogLikelihood();
+        // TODO
     }
 
     double[] mask(double[] vector) {
@@ -174,14 +196,16 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator imp
         final double randomStepCountFraction;
         final int preconditioningUpdateFrequency;
         final int preconditioningDelay;
+        final int gradientCheckCount;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency,
-                       int preconditioningDelay) {
+                       int preconditioningDelay, int gradientCheckCount) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
             this.preconditioningDelay = preconditioningDelay;
+            this.gradientCheckCount = gradientCheckCount;
         }
     }
 

@@ -54,6 +54,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+    private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     private final static String MASK = "mask";
 
     @Override
@@ -120,8 +121,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             }
         }
 
+        int gradientCheckCount = xo.getAttribute(GRADIENT_CHECK_COUNT, 0);
+
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
-                stepSize, nSteps, randomStepFraction, preconditioningUpdateFrequency, preconditioningDelay
+                stepSize, nSteps, randomStepFraction,
+                preconditioningUpdateFrequency, preconditioningDelay, gradientCheckCount
         );
 
         if (runMode == 0) {

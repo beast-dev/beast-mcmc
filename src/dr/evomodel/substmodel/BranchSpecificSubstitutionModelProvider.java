@@ -88,7 +88,6 @@ public interface BranchSpecificSubstitutionModelProvider {
     class Default extends Base implements BranchSpecificSubstitutionModelProvider {
 
         private final CompoundParameter branchParameter;
-        private final List<SubstitutionModel> substitutionModelList;
         private final TreeModel tree;
 
         public Default(CompoundParameter branchParameter, List<SubstitutionModel> substitutionModelList,

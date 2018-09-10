@@ -197,12 +197,12 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        throw new RuntimeException("Not yet implemented");
+        beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(bufferIndex), differentialMatrix, 0.0);
     }
 
     @Override
     public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
-        throw new RuntimeException("Not yet implemented");
+        beagle.setTransitionMatrix(getInfinitesimalSquaredMatrixBufferIndex(bufferIndex), differentialMatrix, 0.0);
     }
 
     @Override

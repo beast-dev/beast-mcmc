@@ -45,16 +45,19 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
     private final Parameter substitutionParameter;
+    private final Parameter rootParameter;
     private final TreeModel tree;
 
 
     public ArbitraryBranchSubstitutionParameterModel(String name,
                                                      BranchSpecificSubstitutionModelProvider substitutionModelProvider,
                                                      Parameter substitutionParameter,
+                                                     Parameter rootParameter,
                                                      TreeModel tree) {
         super(name);
         this.substitutionModelProvider = substitutionModelProvider;
         this.substitutionParameter = substitutionParameter;
+        this.rootParameter = rootParameter;
         this.tree = tree;
 
         for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {

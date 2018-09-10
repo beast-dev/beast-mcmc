@@ -63,24 +63,36 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
         ArbitraryBranchSubstitutionParameterModel branchParameterModel = null;
         if (branchParameter == null || branchParameter.getDimension() == 1) {
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
-            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, tree);
+            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, null, tree);
         } else{
-            final int numNode = tree.getNodeCount();
-            if (!(branchParameter.getDimension() == numNode && branchParameter instanceof CompoundParameter)) {
+            final int numBranch = tree.getNodeCount() - 1;
+            if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
                 throw new RuntimeException("branchSubstitutionParameter miss-specified.");
             }
+
+            if (tree.getRoot().getNumber() != tree.getNodeCount() - 1) {
+                    throw new RuntimeException("Root node number is not the maximum.");
+            }
+
             //TODO: more generic SubstitutionModel construction
             List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
-            for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum){
+            for (int nodeNum = 0; nodeNum < tree.getNodeCount() - 1; ++nodeNum){
 
                 substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                         ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(),
                         ((CompoundParameter) branchParameter).getParameter(nodeNum)));
 
             }
+
+            Parameter rootParameter = new Parameter.Default((String) null,
+                    ((CompoundParameter) branchParameter).getParameter(0).getParameterValue(0),
+                    ((CompoundParameter) branchParameter).getParameter(0).getBounds().getLowerLimit(0),
+                    ((CompoundParameter) branchParameter).getParameter(0).getBounds().getUpperLimit(0));
+            substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
+                    ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(), rootParameter));
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
             branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
-                    substitutionModelProvider, branchParameter, tree);
+                    substitutionModelProvider, branchParameter, rootParameter, tree);
         }
 
         return branchParameterModel;

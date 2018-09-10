@@ -35,6 +35,10 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
  * @author Marc A. Suchard
  */
 public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelegate {
+
+    public static String GRADIENT_TRAIT_NAME = "BranchRateGradient";
+    public static String HESSIAN_TRAIT_NAME = "BranchRateHessian";
+
     public DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, likelihoodDelegate);
     }
@@ -59,6 +63,18 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
                 evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, infinitesimalMatrixSquared);
             }
         }
+    }
+
+    public static String getName(String name) {
+        return GRADIENT_TRAIT_NAME;
+    }
+
+    protected String getGradientTraitName() {
+        return GRADIENT_TRAIT_NAME;
+    }
+
+    protected String getHessianTraitName() {
+        return HESSIAN_TRAIT_NAME;
     }
 
 }

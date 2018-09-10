@@ -38,7 +38,10 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
  * @author Marc A. Suchard
  */
 public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
+
     private BranchRateModel branchRateModel;
+    public static String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
+    public static String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
     public DiscreteTraitBranchSubstitutionParameterDelegate(String name,
                                                             Tree tree,
@@ -71,5 +74,17 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
     @Override
     protected int getSecondDerivativeMatrixBufferIndex(int nodeNum) {
         return evolutionaryProcessDelegate.getSecondOrderDifferentialMatrixBufferIndex(nodeNum);
+    }
+
+    protected String getGradientTraitName() {
+        return GRADIENT_TRAIT_NAME;
+    }
+
+    protected String getHessianTraitName() {
+        return HESSIAN_TRAIT_NAME;
+    }
+
+    public static String getName(String name) {
+        return GRADIENT_TRAIT_NAME;
     }
 }

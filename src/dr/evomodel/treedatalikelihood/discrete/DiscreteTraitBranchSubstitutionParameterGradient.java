@@ -80,7 +80,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         this.branchModel = substitutionParameterModel;
         this.useHessian = useHessian;
 
-        String name = AbstractDiscreteTraitDelegate.getName(traitName);
+        String name = DiscreteTraitBranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {

@@ -45,6 +45,9 @@ import java.util.List;
 public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
         implements TreeTrait.TraitInfo<double[]> {
 
+    public static String GRADIENT_TRAIT_NAME = "Gradient";
+    public static String HESSIAN_TRAIT_NAME = "Hessian";
+
     public AbstractDiscreteTraitDelegate(String name,
                                          Tree tree,
                                          BeagleDataLikelihoodDelegate likelihoodDelegate) {
@@ -127,13 +130,21 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         throw new RuntimeException("Not used with BEAGLE");
     }
 
+    protected String getGradientTraitName() {
+        return GRADIENT_TRAIT_NAME;
+    }
+
+    protected String getHessianTraitName() {
+        return HESSIAN_TRAIT_NAME;
+    }
+
     @Override
     protected void constructTraits(Helper treeTraitHelper) {
 //        treeTraitHelper.addTrait(factory(this));
         treeTraitHelper.addTrait(new TreeTrait.DA() {
             @Override
             public String getTraitName() {
-                return "Gradient";
+                return getGradientTraitName();
             }
 
             @Override
@@ -155,7 +166,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         treeTraitHelper.addTrait(new TreeTrait.DA() {
             @Override
             public String getTraitName() {
-                return "Hessian";
+                return getHessianTraitName();
             }
 
             @Override
@@ -176,7 +187,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
     }
 
     public static String getName(String name) {
-        return "Gradient";
+        return GRADIENT_TRAIT_NAME;
     }
 
     @Override

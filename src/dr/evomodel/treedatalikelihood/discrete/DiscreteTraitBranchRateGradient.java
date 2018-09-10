@@ -35,7 +35,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
@@ -84,7 +83,7 @@ public class DiscreteTraitBranchRateGradient
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
 
-        String name = AbstractDiscreteTraitDelegate.getName(traitName);
+        String name = DiscreteTraitBranchRateDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
@@ -125,7 +124,7 @@ public class DiscreteTraitBranchRateGradient
         double[] result = new double[tree.getNodeCount() - 1];
 
         //Do single call to traitProvider with node == null (get full tree)
-        double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait("Hessian").getTrait(tree, null);
+        double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait(DiscreteTraitBranchRateDelegate.HESSIAN_TRAIT_NAME).getTrait(tree, null);
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
         int v = 0;

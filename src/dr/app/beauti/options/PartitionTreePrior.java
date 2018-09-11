@@ -229,7 +229,8 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
         createScaleOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
-        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        //createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
         createScaleOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB, demoTuning, demoWeights);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA, demoTuning, 1);

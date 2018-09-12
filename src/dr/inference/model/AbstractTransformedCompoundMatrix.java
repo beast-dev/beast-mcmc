@@ -35,7 +35,7 @@ import dr.util.Transform;
 abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter {
 
     protected final Parameter diagonalParameter;
-    protected final Parameter offDiagonalParameter;
+    public final Parameter offDiagonalParameter;
 
     protected final int dim;
 
@@ -45,7 +45,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         dim = diagonalParameter.getDimension();
         offDiagonalParameter = offDiagonal;
         addParameter(diagonalParameter);
-        addParameter(offDiagonal);
+        addParameter(offDiagonalParameter);
     }
 
     AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal, Transform.MultivariableTransform transform, Boolean inverse) {
@@ -54,7 +54,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         dim = diagonalParameter.getDimension();
         offDiagonalParameter = new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
-        addParameter(offDiagonal);
+        addParameter(offDiagonalParameter);
     }
 
     @Override

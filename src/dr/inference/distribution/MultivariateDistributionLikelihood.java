@@ -801,7 +801,8 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             XMLObject cxo = xo.getChild(DATA);
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof Parameter) {
-                    likelihood.addData((Parameter) cxo.getChild(j));
+                    CompoundSymmetricMatrix covMatrix = (CompoundSymmetricMatrix) cxo.getChild(0);
+                    likelihood.addData(covMatrix.offDiagonalParameter);
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
                 }

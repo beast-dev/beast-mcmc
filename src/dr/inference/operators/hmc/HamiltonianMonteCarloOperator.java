@@ -32,6 +32,8 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.inference.operators.PathDependent;
@@ -49,9 +51,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
     final LeapFrogEngine leapFrogEngine;
+    private final Parameter parameter;
     final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
     private final double[] mask;
+
+    private final static double TOLERANCE = 1E-6;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter mask,
@@ -87,6 +92,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                 new LeapFrogEngine.Default(parameter,
                         getDefaultInstabilityHandler(), preconditioning));
 
+        this.parameter = parameter;
         this.mask = buildMask(maskParameter);
     }
 
@@ -154,9 +160,40 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    private void checkGradient(Likelihood joint) {
-        joint.getLogLikelihood();
-        // TODO
+    private void checkGradient(final Likelihood joint) {
+
+        if (parameter.getDimension() != gradientProvider.getDimension()) {
+            throw new RuntimeException("Unequal dimensions");
+        }
+
+        MultivariateFunction numeric = new MultivariateFunction() {
+
+            @Override
+            public double evaluate(double[] argument) {
+                ReadableVector.Utils.setParameter(argument, parameter);
+                return joint.getLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() { return parameter.getDimension(); }
+
+            @Override
+            public double getLowerBound(int n) { return parameter.getBounds().getLowerLimit(n); }
+
+            @Override
+            public double getUpperBound(int n) { return parameter.getBounds().getUpperLimit(n); }
+        };
+
+        double[] numericGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
+        double[] gradient = gradientProvider.getGradientLogDensity();
+
+        if (!MathUtils.isClose(gradient, numericGradient, TOLERANCE)) {
+
+            String sb = "Gradients do not match:\n" +
+                    "\tAnalytic: " + new WrappedVector.Raw(gradient) + "\n" +
+                    "\tNumeric : " + new WrappedVector.Raw(numericGradient) + "\n";
+            throw new RuntimeException(sb);
+        }
     }
 
     double[] mask(double[] vector) {
@@ -347,8 +384,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                             final ReadableVector momentum,
                             final double functionalStepSize);
 
-        void setParameter(double[] position);
-
         double[] getLastGradient();
         double[] getLastPosition();
 
@@ -410,12 +445,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             }
 
             public void setParameter(double[] position) {
-
-                final int dim = position.length;
-                for (int j = 0; j < dim; ++j) {
-                    parameter.setParameterValueQuietly(j, position[j]);
-                }
-                parameter.fireParameterChangedEvent();  // Does not seem to work with MaskedParameter
+                ReadableVector.Utils.setParameter(position, parameter); // May not work with MaskedParameter?
             }
         }
 

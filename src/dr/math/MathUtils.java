@@ -461,4 +461,14 @@ public class MathUtils {
 			random.setRandomState(rngState);
 		}
 	}
+
+	public static boolean isClose(double[] x, double[] y, double tolerance) {
+		if (x.length != y.length) return false;
+
+		for (int i = 0, dim = x.length; i < dim; ++i) {
+			if (Math.abs(x[i] - y[i]) > tolerance) return false;
+		}
+
+		return true;
+	}
 }

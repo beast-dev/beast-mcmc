@@ -131,6 +131,8 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
     @Override
     public double[] getGradientLogDensity() {
 
+        treeDataLikelihood.makeDirty(); // TODO Remove after we figure out why this is necessary
+
         double[] result = new double[rateParameter.getDimension()];
 
         // TODO Do single call to traitProvider with node == null (get full tree)

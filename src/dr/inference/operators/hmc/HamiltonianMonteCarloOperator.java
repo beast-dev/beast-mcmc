@@ -56,7 +56,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     private final Options runtimeOptions;
     private final double[] mask;
 
-    private final static double TOLERANCE = 1E-6;
+    private final static double TOLERANCE = 1E-3;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter mask,
@@ -88,7 +88,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,
-                        getDefaultInstabilityHandler(),preconditioning) :
+                        getDefaultInstabilityHandler(), preconditioning) :
                 new LeapFrogEngine.Default(parameter,
                         getDefaultInstabilityHandler(), preconditioning));
 
@@ -214,7 +214,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         assert (mask == null || mask.length == vector.getDim());
 
         if (mask != null) {
-            for (int i = 0;i < vector.getDim(); ++i) {
+            for (int i = 0; i < vector.getDim(); ++i) {
                 vector.set(i, vector.get(i) * mask[i]);
             }
         }
@@ -384,6 +384,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                             final ReadableVector momentum,
                             final double functionalStepSize);
 
+        void setParameter(double[] position);
+
         double[] getLastGradient();
         double[] getLastPosition();
 
@@ -425,7 +427,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
                 final int dim = momentum.length;
                 for (int i = 0; i < dim; ++i) {
-                    momentum[i] += functionalStepSize  * gradient[i];
+                    momentum[i] += functionalStepSize * gradient[i];
                     instabilityHandler.checkValue(momentum[i]);
                 }
 
@@ -463,7 +465,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
             @Override
             public double getParameterLogJacobian() {
-                return transform.getLogJacobian(unTransformedPosition,0, unTransformedPosition.length);
+                return transform.getLogJacobian(unTransformedPosition, 0, unTransformedPosition.length);
             }
 
             @Override

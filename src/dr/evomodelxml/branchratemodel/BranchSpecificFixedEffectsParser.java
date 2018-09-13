@@ -53,6 +53,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
     private static final String FIXED_EFFECTS = "fixedEffects";
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
+    private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
 
     public String getParserName() {
         return FIXED_EFFECTS;
@@ -76,6 +77,11 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
         categories.add(cladeModel);
 
         List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+
+        boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
+        if (timeDependentEffect) {
+            values.add(new ContinuousBranchValueProvider.MidPoint());
+        }
 
         Transform transform = (Transform)
                 xo.getChild(Transform.class);

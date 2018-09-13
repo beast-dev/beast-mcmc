@@ -43,7 +43,7 @@ public interface ContinuousBranchValueProvider {
 
             assert (tree.getRoot() != node);
 
-            double midPoint = tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node);
+            final double midPoint = (tree.getNodeHeight(tree.getParent(node)) + tree.getNodeHeight(node)) * 0.5;
 
             return transform(midPoint);
         }

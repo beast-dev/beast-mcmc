@@ -35,7 +35,7 @@ import dr.util.Transform;
 abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter {
 
     protected final Parameter diagonalParameter;
-    public final Parameter offDiagonalParameter;
+    protected final Parameter offDiagonalParameter;
 
     protected final int dim;
 

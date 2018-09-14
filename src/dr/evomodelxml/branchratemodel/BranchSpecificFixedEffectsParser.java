@@ -54,6 +54,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
     private static final String FIXED_EFFECTS = "fixedEffects";
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
     private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
+    private static final String CATEGORY = "category";
 
     public String getParserName() {
         return FIXED_EFFECTS;
@@ -67,14 +68,17 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
         boolean includeIntercept = xo.getAttribute(INCLUDE_INTERCEPT, true);
 
-        CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
-                new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel,
-                        new Parameter.Default(treeModel.getNodeCount() -1));
-
-        parseCladeCategories(xo, cladeModel);
-
         List<CountableBranchCategoryProvider> categories = new ArrayList<CountableBranchCategoryProvider>();
-        categories.add(cladeModel);
+
+        for (XMLObject xoc : xo.getAllChildren(CATEGORY)) {
+            CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
+                    new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel,
+                            new Parameter.Default(treeModel.getNodeCount() -1));
+
+            parseCladeCategories(xoc, cladeModel);
+
+            categories.add(cladeModel);
+        }
 
         List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
 

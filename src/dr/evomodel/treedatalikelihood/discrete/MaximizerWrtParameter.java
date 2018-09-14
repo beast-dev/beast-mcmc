@@ -125,7 +125,11 @@ public class MaximizerWrtParameter implements Reportable {
         time += endTime - startTime;
         minimumValue = function.valueAt(minimumPoint);
 
-        setParameter(new WrappedVector.Raw(minimumPoint), parameter);
+        if (transform != null) {
+            setParameter(new WrappedVector.Raw(transform.inverse(minimumPoint, 0, minimumPoint.length)), parameter);
+        } else {
+            setParameter(new WrappedVector.Raw(minimumPoint), parameter);
+        }
     }
 
     @Override

@@ -46,7 +46,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
     private final static String N_STEPS = "nSteps";
     private final static String STEP_SIZE = "stepSize";
-    private final static String DRAW_VARIANCE = "drawVariance";
     private final static String MODE = "mode";
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
@@ -148,7 +147,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
-            AttributeRule.newDoubleRule(DRAW_VARIANCE, true), // TODO Deprecate
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),

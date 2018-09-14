@@ -8,12 +8,12 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
+import dr.xml.AttributeParser;
+import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
+import java.io.StringReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +84,21 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
+        String s = "<beast>\n" +
+                "    <conjugateRootPrior>\n" +
+                "        <meanParameter>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"-3.0 -1.0 1.0\"/>\n" +
+                "        </meanParameter>\n" +
+                "        <priorSampleSize>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
+                "        </priorSampleSize>\n" +
+                "    </conjugateRootPrior>\n" +
+                "</beast>";
+        XMLParser parser = new XMLParser(true, true, true, null);
+        parser.addXMLObjectParser(new AttributeParser());
+        parser.addXMLObjectParser(new ParameterParser());
+        parser.parse(new StringReader(s), true);
+        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
 //        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model

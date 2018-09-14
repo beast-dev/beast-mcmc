@@ -17,8 +17,11 @@ import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.inference.model.*;
 import dr.math.MathUtils;
+import dr.xml.AttributeParser;
+import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
+import java.io.StringReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +96,21 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
+        String s = "<beast>\n" +
+                "    <conjugateRootPrior>\n" +
+                "        <meanParameter>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5\"/>\n" +
+                "        </meanParameter>\n" +
+                "        <priorSampleSize>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
+                "        </priorSampleSize>\n" +
+                "    </conjugateRootPrior>\n" +
+                "</beast>";
+        XMLParser parser = new XMLParser(true, true, true, null);
+        parser.addXMLObjectParser(new AttributeParser());
+        parser.addXMLObjectParser(new ParameterParser());
+        parser.parse(new StringReader(s), true);
+        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
 //        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model
@@ -111,6 +129,21 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         diffusionModelFactor = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameterFactor);
 
         // Root prior
+        String sFactor = "<beast>\n" +
+                "    <conjugateRootPrior>\n" +
+                "        <meanParameter>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"-1.0 2.0\"/>\n" +
+                "        </meanParameter>\n" +
+                "        <priorSampleSize>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
+                "        </priorSampleSize>\n" +
+                "    </conjugateRootPrior>\n" +
+                "</beast>";
+        XMLParser parserFactor = new XMLParser(true, true, true, null);
+        parserFactor.addXMLObjectParser(new AttributeParser());
+        parserFactor.addXMLObjectParser(new ParameterParser());
+        parserFactor.parse(new StringReader(sFactor), true);
+        rootPriorFactor = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parserFactor.getRoot(), 2);
 //        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
 
         // Error model

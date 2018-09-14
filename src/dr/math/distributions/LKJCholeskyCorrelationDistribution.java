@@ -50,7 +50,7 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
         this.correlationToCholeskyTransform = new CorrelationToCholesky(dim);
     }
 
-    public double logPdf(double[] x) { //x must be vechu(chol), so the V matrix.
+    public double logPdf(double[] x) { //x needs to be vechu(chol)
 
         assert (x.length == upperTriangularSize(dim));
         double[] vechuCholesky = correlationToCholeskyTransform.transform(x, 0, x.length);
@@ -105,7 +105,7 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
     }
 
     @Override
-    public double[] getGradientLogDensity(Object x) { //here x needs to be cholesky. well when the method was called,
+    public double[] getGradientLogDensity(Object x) { //todo: omit transformation when the input is cholesky factor.
 
         double[] cholesky = correlationToCholeskyTransform.transform((double[]) x, 0, ((double[]) x).length);
         return gradLogPdf(cholesky);

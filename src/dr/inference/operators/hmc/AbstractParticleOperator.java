@@ -46,6 +46,8 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
 
+    private static final boolean CHECK_MATRIX_ILL_CONDITIONED = false;
+
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              double weight, Options runtimeOptions, Parameter mask) {
@@ -90,6 +92,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         double hastingsRatio = integrateTrajectory(position);
 
         setParameter(position, parameter);
+
+        if (CHECK_MATRIX_ILL_CONDITIONED & getCount() % 100 == 0){
+            productProvider.getTimeScaleEigen();
+        }
 
         return hastingsRatio;
     }

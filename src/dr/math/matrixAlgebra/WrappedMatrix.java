@@ -25,9 +25,13 @@
 
 package dr.math.matrixAlgebra;
 
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Variable;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
+
+import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
 
 /**
  * @author Marc A. Suchard
@@ -48,15 +52,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
     abstract class Base implements WrappedMatrix {
 
         final public String toString() {
-            StringBuilder sb = new StringBuilder("[ ");
-            if (getDim() > 0) {
-                sb.append(get(0));
-            }
-            for (int i = 1; i < getDim(); ++i) {
-                sb.append(", ").append(get(i));
-            }
-            sb.append(" ]");
-            return sb.toString();
+            return makeString(this);
         }
     }
 
@@ -120,12 +116,12 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
 
         @Override
         public int getMajorDim() {
-            return matrix.getNumCols();
+            return matrix.getNumRows();
         }
 
         @Override
         public int getMinorDim() {
-            return matrix.getNumRows();
+            return matrix.getNumCols();
         }
 
         @Override
@@ -227,6 +223,54 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
     }
 
+    final class Parameter extends Abstract {
+
+        private final Variable<Double> variable;
+
+        public Parameter(Variable<Double> variable, int offset, int dimMajor, int dimMinor) {
+            super(null, offset, dimMajor, dimMinor);
+
+            assert (variable.getSize() == dimMajor * dimMinor);
+
+            this.variable = variable;
+        }
+
+        @Override
+        final public double get(final int i, final int j) { return variable.getValue(offset + i * dimMajor + j); }
+
+        @Override
+        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
+
+        @Override
+        public void set(int i, int j, double x) { variable.setValue(offset + i * dimMajor + j, x); }
+
+        @Override
+        public double get(int i) { return variable.getValue(i); }
+    }
+
+    final class MatrixParameter extends Abstract {
+
+        private final MatrixParameterInterface matrix;
+
+        public MatrixParameter(MatrixParameterInterface matrix) {
+            super(null, 0, matrix.getRowDimension(), matrix.getColumnDimension());
+
+            this.matrix = matrix;
+        }
+
+        @Override
+        public void set(int i, int j, double x) { matrix.setParameterValue(i, j, x); }
+
+        @Override
+        public double get(int i, int j) { return matrix.getParameterValue(i, j); }
+
+        @Override
+        public double get(int i) { return matrix.getParameterValue(i); }
+
+        @Override
+        public void set(int i, double x) { matrix.setParameterValue(i, x); }
+    }
+
     final class Indexed extends Abstract {
 
         final private int[] indicesMajor;
@@ -256,6 +300,18 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
     }
 
     final class Utils {
+
+        public static String makeString(ReadableMatrix matrix) {
+            StringBuilder sb = new StringBuilder("[ ");
+            if (matrix.getDim() > 0) {
+                sb.append(matrix.get(0));
+            }
+            for (int i = 1; i < matrix.getDim(); ++i) {
+                sb.append(", ").append(matrix.get(i));
+            }
+            sb.append(" ]");
+            return sb.toString();
+        }
 
         public static void gatherRowsAndColumns(final WrappedMatrix source, final WrappedMatrix destination,
                                                 final int[] rowIndices, final int[] colIndices) {

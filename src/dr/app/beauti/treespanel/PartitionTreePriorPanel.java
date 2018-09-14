@@ -96,7 +96,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         this.partitionTreePrior = parTreePrior;
         this.treesPanel = parent;
 
-        setTreePriorChoices(false, false, false);
+        setTreePriorChoices(false, false);
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(new ItemListener() {
@@ -197,11 +197,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(populationSizeCombo);
         populationSizeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
-            }
-        }
+                                                public void itemStateChanged(ItemEvent ev) {
+                                                    partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
+                                                    parent.fireTreePriorsChanged();
+                                                }
+                                            }
         );
 
 //        PanelUtils.setupComponent(calibrationCorrectionCombo);
@@ -235,22 +235,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        scrollPane.setOpaque(true);
         String calYule = "Heled J, Drummond AJ (2011), Syst Biol, doi: 10.1093/sysbio/syr087 [Calibrated Yule]";
         String citation;
-
-        if (treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE
-                || treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE_CALIBRATION
-                || treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_BIRTH_DEATH) { //*BEAST
-            addComponentWithLabel("Species Tree Prior:", treePriorCombo);
-            addComponentWithLabel("Population Size Model:", populationSizeCombo);
-            addLabel("Note: *BEAST only needs to select the prior for species tree.");
-
-            if (treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-//                addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
-                citation = calYule;
-                addComponentWithLabel("Citation:", citationText);
-                citationText.setText(citation);
-            }
-
-        } else { // non *BEAST
 
             String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
 
@@ -360,20 +344,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
             addComponentWithLabel("Citation:", citationText);
             citationText.setText(citation);
-        }
-//        getOptions();
-//
-//        treesPanel.treeModelPanels.get(treesPanel.currentTreeModel).setOptions();
+
         for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
             if (model != null) {
                 treesPanel.treeModelPanels.get(model).setOptions();
                 treesPanel.treeModelPanels.get(model).setupPanel();
             }
         }
-
-//        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
-
-//        fireTableDataChanged();
 
         validate();
         repaint();
@@ -487,38 +464,32 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        treePriorCombo.addItem(TreePriorType.CONSTANT);
 //    }
 
-    public void setTreePriorChoices(boolean isStartBEAST, boolean isMultiLocus, boolean isTipCalibrated) {
+    public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
         TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
         treePriorCombo.removeAllItems();
 
-        if (isStartBEAST) {
-            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.SPECIES_YULE, TreePriorType.SPECIES_BIRTH_DEATH)) {
-                treePriorCombo.addItem(treePriorType);
-            }
 
-        } else {
-
-            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
-                treePriorCombo.addItem(treePriorType);
-            }
-
-            // REMOVED due to unresolved issues with model
-            // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
-
-
-            // would be much better to disable these rather than removing them
-            if (isMultiLocus) {
-                treePriorCombo.removeItem(TreePriorType.SKYLINE);
-            }
-
-            if (isTipCalibrated) {
-                // remove models that require contemporaneous tips...
-                treePriorCombo.removeItem(TreePriorType.YULE);
-                treePriorCombo.removeItem(TreePriorType.YULE_CALIBRATION);
-                treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-                treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
-            }
+        for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
+            treePriorCombo.addItem(treePriorType);
         }
+
+        // REMOVED due to unresolved issues with model
+        // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
+
+
+        // would be much better to disable these rather than removing them
+        if (isMultiLocus) {
+            treePriorCombo.removeItem(TreePriorType.SKYLINE);
+        }
+
+        if (isTipCalibrated) {
+            // remove models that require contemporaneous tips...
+            treePriorCombo.removeItem(TreePriorType.YULE);
+            treePriorCombo.removeItem(TreePriorType.YULE_CALIBRATION);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
+        }
+
         // this makes sure treePriorCombo selects correct prior
         treePriorCombo.setSelectedItem(type);
         if (treePriorCombo.getSelectedItem() == null) {

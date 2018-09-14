@@ -36,6 +36,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
+import dr.evomodelxml.tree.TreeLengthStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.MicrosatellitePatternParser;
 import dr.evoxml.UPGMATreeParser;
@@ -87,7 +88,7 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + OldCoalescentSimulatorParser.ROOT_HEIGHT), true);
+                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.ROOT_HEIGHT), true);
         writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 
 
@@ -183,6 +184,14 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE);
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
+
+        writer.writeComment("Statistic for sum of the branch lengths of the tree (tree length)");
+        writer.writeTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + "treeLength"),
+                }, false);
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+        writer.writeCloseTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC);
 
         if (model.hasTipCalibrations()) {
             writer.writeComment("Statistic for time of most recent common ancestor of tree");

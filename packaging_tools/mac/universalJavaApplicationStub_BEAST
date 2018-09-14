@@ -767,6 +767,7 @@ exec "${JAVACMD}" \
 		-splash:"${ResourcesFolder}/${JVMSplashFile}" \
 		-Xdock:icon="${ResourcesFolder}/${CFBundleIconFile}" \
 		-Xdock:name="${CFBundleName}" \
+		-Djava.library.path="$JAVAROOT" \
 		${JVMOptions:+"${JVMOptions[@]}" }\
 		${JVMDefaultOptions:+$JVMDefaultOptions }\
 		"${JVMMainClass}"\

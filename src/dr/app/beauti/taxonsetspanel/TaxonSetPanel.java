@@ -242,11 +242,11 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setLayout(new GridBagLayout());
 
         excludedTaxaSearchField.setColumns(12);
-        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+//        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
         excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
         excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
         includedTaxaSearchField.setColumns(12);
-        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+//        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
         includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
         includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
 

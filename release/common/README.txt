@@ -1,4 +1,4 @@
-            	BEAST v1.10 VEME2017 2002-2017
+            	BEAST v1.10 VEME2017 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 24 Aug 2017
+Last updated: a.rambaut@ed.ac.uk - 10 June 2018
 
 Contents:
 1) INTRODUCTION
@@ -189,13 +189,15 @@ viewed in a new program called 'FigTree' which is available from:
 ___________________________________________________________________________
 6) NATIVE LIBRARIES
 
-Some of the core of the BEAST program has been converted into 'C' and can
-be compiled into native code. This involves compiling the source code in
-'/native' into a shared library that Java can find and use. We have
-compiled this library for Mac OS X, Windows and Linux on x86 machines. BEAST
-should automatically find these libraries and use them. If a suitable version
-of this library is not found then BEAST will use a Java version of the core
-which will be slower.
+BEAST uses the BEAGLE library to provide fast, native, likelihood 
+calculations. This library is distributed independently and should
+be installed prior to using BEAST.
+
+BEAGLE can be downloaded from here:
+<https://github.com/beagle-dev/beagle-lib>
+
+Further information about using BEAGLE with BEAST can be found here:
+<http://beast.community/beagle>
 
 ___________________________________________________________________________
 7) SUPPORT & LINKS

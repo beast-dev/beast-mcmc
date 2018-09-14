@@ -153,7 +153,7 @@ public class RepeatedMeasuresTraitDataModel extends
 
         @Override
         public Class getReturnType() {
-            return RepeatedMeasuresTraitLikelihood.class;
+            return RepeatedMeasuresTraitDataModel.class;
         }
 
         @Override

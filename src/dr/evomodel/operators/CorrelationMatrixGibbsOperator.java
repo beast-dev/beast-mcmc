@@ -42,7 +42,8 @@ import dr.xml.*;
 
 
 /**
- * @author Marc Suchard
+ * @author Zhenyu Zhang
+ * @author Marc A. Suchard
  */
 public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
@@ -50,7 +51,6 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     public static final String TREE_MODEL = "treeModel";
     public static final String DISTRIBUTION = "distribution";
     public static final String PRIOR = "prior";
-//    private static final String WORKING = "workingDistribution";
 
     private final ConjugateWishartStatisticsProvider conjugateWishartProvider;
     private final MatrixParameterInterface inverseCorrelation;
@@ -67,11 +67,6 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
 
     private boolean wishartIsModel = false;
     private WishartGammalDistributionModel priorModel = null;
-
-    // TODO I think all you need (to start) is:
-    // TODO (1) a ConjugateWishartStatisticsProvider
-    // TODO (2) a correlation matrix (MatrixParameterInterface)
-    // TODO (3) the diagonal terms (Parameter)
 
     private class Statistics {
         final double degreesOfFreedom;
@@ -107,7 +102,6 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     private void normalizeToGetInverseCorrelation(double[][] precisionMatrix) {
 
         double[][] covarianceMatrix = new SymmetricMatrix(precisionMatrix).inverse().toComponents();
-//        double[][] correlation = new double[dim][dim];
         double[] covarianceSqrtDiagonals = new double[dim];
 
         for (int i = 0; i < dim; i++) {
@@ -169,7 +163,7 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         for (int i = 0; i < dim; i++) {
             double g = GammaDistribution.nextGamma((dim + 1) / 2.0,
                     1.0);
-            scalarMatrix[i] = Math.sqrt(inverseCorrelation.getParameterValue(i, i)/(2.0 * g));
+            scalarMatrix[i] = Math.sqrt(inverseCorrelation.getParameterValue(i, i) / (2.0 * g));
         }
 
         return scalarMatrix;
@@ -179,7 +173,6 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
     private void rescaleOuterProduct(double[] outerProduct) {
 
         double[] scalarMatrix = getDiagRescaleMatrix();
-        System.err.println("scalar matrix    = " + new Vector(scalarMatrix));
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
@@ -196,8 +189,6 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         rescaleOuterProduct(outerProducts);
-
-        System.err.println("OP rescaled    = " + new Vector(outerProducts));
 
         final double df = sufficientStatistics.getDf();
 
@@ -227,7 +218,8 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         try {
             S2 = new SymmetricMatrix(S);
             if (priorInverseScaleMatrix != null) {
-                S2 = priorInverseScaleMatrix.add(S2); //todo zy: new inverse scale matrix = prior inverse scale + outer product. S2 in add(S2) is the outer produt
+                S2 = priorInverseScaleMatrix.add(S2); //todo zy: new inverse scale matrix = prior inverse scale +
+                // outer product. S2 in add(S2) is the outer produt
 
             }
             inverseS2 = (SymmetricMatrix) S2.inverse();
@@ -286,7 +278,8 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-            ConjugateWishartStatisticsProvider ws = (ConjugateWishartStatisticsProvider) xo.getChild(ConjugateWishartStatisticsProvider.class);
+            ConjugateWishartStatisticsProvider ws = (ConjugateWishartStatisticsProvider) xo.getChild
+                    (ConjugateWishartStatisticsProvider.class);
 
             MultivariateDistributionLikelihood prior;
             MatrixParameterInterface precMatrix;

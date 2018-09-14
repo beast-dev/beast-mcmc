@@ -1,7 +1,7 @@
 /*
- * GibbsOperator.java
+ * CountableBranchCategoryProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,22 +23,33 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.evomodel.branchratemodel;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 /**
- * An interface for a Gibbs operator.
- *
- * @author Roald Forsberg
+ * @author Marc A. Suchard
+ * @author Philippe Lemey
+ * @author Xiang Ji
  */
-public interface GibbsOperator extends MCMCOperator, PathDependent {
+public interface ContinuousBranchValueProvider {
 
-   /**
-	* @return the number of steps the operator performs in one go.
-	*/
-//	long getStepCount();
+    double getBranchValue(final Tree tree, final NodeRef node);
 
-    /**
-     * Set the path parameter for sampling from power-posterior
-     */
-    //void setPathParameter(double beta);
+    class MidPoint implements ContinuousBranchValueProvider {
+
+        @Override
+        public double getBranchValue(Tree tree, NodeRef node) {
+
+            assert (tree.getRoot() != node);
+
+            double midPoint = tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node);
+
+            return transform(midPoint);
+        }
+
+        double transform(double x) {
+            return Math.log(x);
+        }
+    }
 }

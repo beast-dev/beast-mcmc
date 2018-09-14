@@ -101,7 +101,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 partitionTreeModel.setPloidyType((PloidyType) ploidyTypeCombo.getSelectedItem());
             }
         });
-        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
+        if (options.isEBSPSharingSamePrior()) {
             ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }
 
@@ -223,7 +223,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         removeAll();
 
-        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
+        if (options.isEBSPSharingSamePrior()) {
             addComponentWithLabel("Ploidy type:", ploidyTypeCombo);
         }
 

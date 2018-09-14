@@ -28,7 +28,7 @@ package dr.inference.operators;
 /**
  * @author Guy Baele
  */
-public interface PathDependentOperator {
+public interface PathDependent {
 
     /**
      * Set the path parameter for sampling from power-posterior

@@ -27,7 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -38,21 +38,30 @@ import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.C
 /**
  * @author Marc A. Suchard
  */
-public class ConjugateRootTraitPrior {
-
+public class ConjugateRootTraitPrior extends AbstractModel {
 
     private static final String PRIOR_SAMPLE_SIZE = AbstractMultivariateTraitLikelihood.PRIOR_SAMPLE_SIZE;
 
-    private final double[] mean;
-    private final double pseudoObservations;
+    private final Parameter mean;
+    private final Parameter pseudoObservations;
 
-    private ConjugateRootTraitPrior(double[] mean, double pseudoObservations) {
+    private ConjugateRootTraitPrior(Parameter mean,
+                                    Parameter pseudoObservations) {
+        super("ConjugateRootTraitPrior");
         this.mean = mean;
         this.pseudoObservations = pseudoObservations;
+
+        addVariable(mean);
+        addVariable(pseudoObservations);
     }
 
-    public double[] getMean() { return mean; }
-    public double getPseudoObservations() { return pseudoObservations; }
+    public double[] getMean() {
+        return mean.getParameterValues();
+    }
+
+    public double getPseudoObservations() {
+        return pseudoObservations.getParameterValue(0);
+    }
 
     public static ConjugateRootTraitPrior parseConjugateRootTraitPrior(XMLObject xo,
                                                                        final int dim) throws XMLParseException {
@@ -63,14 +72,13 @@ public class ConjugateRootTraitPrior {
                 .getChild(Parameter.class);
 
         if (meanParameter.getDimension() != dim) {
-            throw new XMLParseException("Root prior mean dimension ("  + meanParameter.getDimension() +
+            throw new XMLParseException("Root prior mean dimension (" + meanParameter.getDimension() +
                     ") does not match trait diffusion dimension (" + dim + ")");
         }
 
         Parameter sampleSizeParameter = (Parameter) cxo.getChild(PRIOR_SAMPLE_SIZE).getChild(Parameter.class);
 
-        return new ConjugateRootTraitPrior(meanParameter.getParameterValues(),
-                sampleSizeParameter.getParameterValue(0));
+        return new ConjugateRootTraitPrior(meanParameter, sampleSizeParameter);
     }
 
     public static final XMLSyntaxRule[] rules = {
@@ -80,11 +88,23 @@ public class ConjugateRootTraitPrior {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
     };
 
-    public ConjugateRootTraitPrior(double[] mean, double pseudoObservations, boolean test) {
-        if (!test) {
-            throw new RuntimeException("This constructor should only be called in a testing environement.");
-        }
-        this.mean = mean;
-        this.pseudoObservations = pseudoObservations;
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        throw new IllegalArgumentException("No submodels");
     }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        fireModelChanged(variable);
+    }
+
+    @Override
+    protected void storeState() { }
+
+    @Override
+    protected void restoreState() { }
+
+    @Override
+    protected void acceptState() { }
 }

@@ -152,6 +152,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         rootProcessDelegate = new RootProcessDelegate.FullyConjugate(rootPrior, precisionType, numTraits,
                 partialBufferCount, matrixBufferCount);
 
+        addModel(rootProcessDelegate);
+
         partialBufferCount += rootProcessDelegate.getExtraPartialBufferCount();
         matrixBufferCount += rootProcessDelegate.getExtraMatrixBufferCount();
 
@@ -271,8 +273,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
             setAllTipData(dataModel.bufferTips());
 
-            rootProcessDelegate.setRootPartial(cdi);
-
             updateDiffusionModel = true;
 
         } catch (TaxonList.MissingTaxonException mte) {
@@ -359,12 +359,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());
 
-        for (int tip = 0; tip < tipCount; ++tip){
-            double [] partial = dataModel.getTipPartial(tip, false);
-            WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-            for (int row = 0; row < dimTrait; ++row){
-                for (int col = 0; col < dimTrait; ++col){
-                    jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+        if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
+            for (int tip = 0; tip < tipCount; ++tip) {
+                double[] partial = dataModel.getTipPartial(tip, false);
+                WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+                for (int row = 0; row < dimTrait; ++row) {
+                    for (int col = 0; col < dimTrait; ++col) {
+                        jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+                    }
                 }
             }
         }
@@ -721,6 +723,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         if (updateDiffusionModel) {
             diffusionProcessDelegate.setDiffusionModels(cdi, flip);
+            updateDiffusionModel = false;
         }
 
         if (branchUpdateCount > 0) {
@@ -773,8 +776,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             logL += d;
         }
 
-        updateDiffusionModel = false;
-
         return logL;
     }
 
@@ -822,6 +823,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             }
 
         } else if (model instanceof BranchRateModel) {
+            fireModelChanged();
+        } else if (model == rootProcessDelegate) {
             fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
@@ -928,7 +931,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         ProcessSimulationDelegate gradientDelegate = new TipGradientViaFullConditionalDelegate(traitName,
                 (MutableTreeModel) getCallbackLikelihood().getTree(),
                 getDiffusionModel(),
-                (ContinuousTraitDataModel) getDataModel(), getRootPrior(),
+                getDataModel(), getRootPrior(),
                 getRateTransformation(), this);
 
         TreeTraitProvider traitProvider = new ProcessSimulation(getCallbackLikelihood(), gradientDelegate);

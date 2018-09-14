@@ -36,8 +36,8 @@ public class WrappedTipFullConditionalDistributionDelegate extends
     @Override
     protected void constructTraits(Helper treeTraitHelper) {
 
-        TreeTrait<List<WrappedMeanPrecision>> baseTrait =
-                new TreeTrait<List<WrappedMeanPrecision>>() {
+        TreeTrait<List<WrappedNormalSufficientStatistics>> baseTrait =
+                new TreeTrait<List<WrappedNormalSufficientStatistics>>() {
 
             public String getTraitName() {
                 return getName(name);
@@ -49,7 +49,7 @@ public class WrappedTipFullConditionalDistributionDelegate extends
 
             public Class getTraitClass() { return List.class; }
 
-            public List<WrappedMeanPrecision> getTrait(Tree t, NodeRef node) {
+            public List<WrappedNormalSufficientStatistics> getTrait(Tree t, NodeRef node) {
                 assert (tree == t);
 
                 return getTraitForNode(node);
@@ -67,17 +67,17 @@ public class WrappedTipFullConditionalDistributionDelegate extends
         treeTraitHelper.addTrait(baseTrait);
     }
 
-    private static String formatted(List<WrappedMeanPrecision> statistics) {
+    private static String formatted(List<WrappedNormalSufficientStatistics> statistics) {
 
         StringBuilder sb = new StringBuilder();
-        for (WrappedMeanPrecision stat : statistics) {
+        for (WrappedNormalSufficientStatistics stat : statistics) {
             sb.append(stat.toString()).append(";\t");
         }
 
         return sb.toString();
     }
 
-    protected List<WrappedMeanPrecision> getTraitForNode(NodeRef node) {
+    protected List<WrappedNormalSufficientStatistics> getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;
         assert dimPartial > 0;
@@ -92,7 +92,7 @@ public class WrappedTipFullConditionalDistributionDelegate extends
         final int index = (node == null) ? -1 : likelihoodDelegate.getActiveNodeIndex(node.getNumber());
         cdi.getPreOrderPartial(index, partial);
 
-        List<WrappedMeanPrecision> statistics = new ArrayList<WrappedMeanPrecision>();
+        List<WrappedNormalSufficientStatistics> statistics = new ArrayList<WrappedNormalSufficientStatistics>();
 
         for (int n = 0; n < numberOfNodes; ++n) {
 
@@ -101,7 +101,7 @@ public class WrappedTipFullConditionalDistributionDelegate extends
 
             assert (numTraits == 1); // TODO Generalize
             
-            statistics.add(new WrappedMeanPrecision(
+            statistics.add(new WrappedNormalSufficientStatistics(
                     partial, mapped, dimTrait, Pd, likelihoodDelegate.getPrecisionType())
             );
         }

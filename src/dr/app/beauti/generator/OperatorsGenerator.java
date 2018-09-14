@@ -195,6 +195,9 @@ public class OperatorsGenerator extends Generator {
             case SUBTREE_LEAP:
                 writeSubtreeLeapOperator(operator, prefix, writer);
                 break;
+            case SUBTREE_JUMP:
+                writeSubtreeJumpOperator(operator, prefix, writer);
+                break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, prefix, writer);
                 break;
@@ -219,9 +222,6 @@ public class OperatorsGenerator extends Generator {
                 break;
             case SKY_GRID_GIBBS_OPERATOR:
                 writeSkyGridGibbsOperator(operator, prefix, writer);
-                break;
-            case NODE_REHIGHT:
-                writeSpeciesTreeOperator(operator, writer);
                 break;
             case ADAPTIVE_MULTIVARIATE:
                 writeAdaptiveMultivariateOperator(operator, writer);
@@ -541,6 +541,18 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
+    private void writeSubtreeJumpOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(SubtreeJumpOperatorParser.SUBTREE_JUMP,
+                new Attribute[]{
+                // not tuneable at the moment.
+//                        new Attribute.Default<Double>("size", operator.getTuning()),
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(SubtreeJumpOperatorParser.SUBTREE_JUMP);
+    }
+
     private void writeSubtreeSlideOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE,
                 new Attribute[]{
@@ -551,15 +563,6 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
-    }
-
-    private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT,
-                new Attribute[]{getWeightAttribute(operator.getWeight())}
-        );
-        writer.writeIDref(TraitData.TRAIT_SPECIES, TraitData.TRAIT_SPECIES);
-        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, Generator.SP_TREE);
-        writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
     private void writeUpDownOperator(String opTag, Operator operator, XMLWriter writer) {
@@ -622,7 +625,7 @@ public class OperatorsGenerator extends Generator {
                             constrainedList.add(parameter);
                         } else {
                             System.out.println("Parameter " + parameter + " should likely be equipped with a Dirichlet prior.");
-                            System.out.println("Use of a Dirichlet prior for frequencies is set to: " + BeautiOptions.FREQUENCIES_DIRICHLET_PRIOR);
+                            System.out.println("Use of a Dirichlet prior for frequencies is set to: " + options.useNewFrequenciesPrior());
                             throw new UnsupportedOperationException("Parameter " + parameter.getName() + " with unidentified transformation.");
                         }
                     }

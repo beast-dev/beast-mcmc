@@ -134,6 +134,10 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     @Override
     public double doOperation(Likelihood joint) {
 
+        if (shouldCheckStepSize()) {
+            checkStepSize();
+        }
+
         if (shouldCheckGradient()) {
             checkGradient(joint);
         }
@@ -154,6 +158,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         if (gradientProvider instanceof PathGradient) {
             ((PathGradient) gradientProvider).setPathParameter(beta);
         }
+    }
+
+    private boolean shouldCheckStepSize() {
+        return getCount() < 1;
+    }
+
+    private void checkStepSize() {
+        // TODO Find workable starting step-size
     }
 
     private boolean shouldCheckGradient() {
@@ -489,7 +501,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                 unTransformedPosition = transform.inverse(position, 0, position.length);
                 super.setParameter(unTransformedPosition);
             }
-
         }
     }
 }

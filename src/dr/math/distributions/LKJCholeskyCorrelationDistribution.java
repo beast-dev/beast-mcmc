@@ -26,6 +26,7 @@
 package dr.math.distributions;
 
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.util.CorrelationToCholesky;
 
 import static dr.math.matrixAlgebra.WrappedMatrix.WrappedUpperTriangularMatrix.fillDiagonal;
 
@@ -37,20 +38,23 @@ import static dr.math.matrixAlgebra.WrappedMatrix.WrappedUpperTriangularMatrix.f
 public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution {
 
     public static final String TYPE = "LKJCholeskyCorrelation";
+    private CorrelationToCholesky correlationToCholeskyTransform;
 
     public LKJCholeskyCorrelationDistribution(int dim, double shape) {
         super(dim, shape);
+        this.correlationToCholeskyTransform = new CorrelationToCholesky(dim);
     }
 
     public LKJCholeskyCorrelationDistribution(int dim) { // returns a non-informative (uniform) density
         super(dim);
+        this.correlationToCholeskyTransform = new CorrelationToCholesky(dim);
     }
 
-    public double logPdf(double[] x) {
+    public double logPdf(double[] x) { //x needs to be vechu(chol)
 
         assert (x.length == upperTriangularSize(dim));
-
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(x, dim);
+        double[] vechuCholesky = correlationToCholeskyTransform.transform(x, 0, x.length);
+        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(vechuCholesky, dim);
         return logPdf(L);
     }
 
@@ -66,12 +70,12 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
         return logDensity;
     }
 
-    private double[] gradLogPdf(double[] x) {
+    private double[] gradLogPdf(double[] vechuCholesky) {
 
-        assert (x.length == upperTriangularSize(dim));
+        assert (vechuCholesky.length == upperTriangularSize(dim));
 
-        WrappedMatrix.WrappedUpperTriangularMatrix L = fillDiagonal(x, dim);
-        return gradLogPdf(L, shape);
+        WrappedMatrix.WrappedUpperTriangularMatrix vechCholesky = fillDiagonal(vechuCholesky, dim);
+        return gradLogPdf(vechCholesky, shape);
     }
 
     private static double[] gradLogPdf(WrappedMatrix L, double shape) {
@@ -101,9 +105,10 @@ public class LKJCholeskyCorrelationDistribution extends AbstractLKJDistribution 
     }
 
     @Override
-    public double[] getGradientLogDensity(Object x) {
-        return gradLogPdf((double[]) x);
-    }
+    public double[] getGradientLogDensity(Object x) { //todo: omit transformation when the input is cholesky factor.
 
+        double[] cholesky = correlationToCholeskyTransform.transform((double[]) x, 0, ((double[]) x).length);
+        return gradLogPdf(cholesky);
+    }
 }
 

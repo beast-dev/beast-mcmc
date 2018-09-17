@@ -50,7 +50,7 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
     }
 
     private static Transform.MultivariableTransform getTransformation(int dim, Boolean isCholesky) {
-        return isCholesky ? new CorrelationToCholesky(dim) : new Transform.NoTransformMultivariable();
+        return isCholesky ? new CorrelationToCholesky(dim) : null;
     }
 
     @Override

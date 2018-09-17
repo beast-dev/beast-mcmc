@@ -48,11 +48,13 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         addParameter(offDiagonal);
     }
 
-    AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal, Transform.MultivariableTransform transform, Boolean inverse) {
+    AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal,
+                                      Transform.MultivariableTransform transform, Boolean inverse) {
         super(MATRIX_PARAMETER);
         diagonalParameter = diagonals;
         dim = diagonalParameter.getDimension();
-        offDiagonalParameter = new TransformedMultivariateParameter(offDiagonal, transform, inverse);
+        offDiagonalParameter =
+                (transform == null) ? offDiagonal: new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
         addParameter(offDiagonal);
     }

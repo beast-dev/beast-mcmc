@@ -57,6 +57,7 @@ public class PriorParsers {
     public static final String LAPLACE_PRIOR = "laplacePrior";
     public static final String BETA_PRIOR = "betaPrior";
     public static final String CAUCHY_PRIOR = "cauchyPrior";
+    public static final String GUMBEL_PRIOR = "gumbelPrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
@@ -76,7 +77,6 @@ public class PriorParsers {
     public static final String ALPHA = "alpha";
     public static final String COUNTS = "counts";
     public static final String SUMS_TO = "sumsTo";
-
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.
@@ -945,6 +945,47 @@ public class PriorParsers {
         };
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a Cauchy distribution.";
+        }
+
+        public Class getReturnType() {
+            return DistributionLikelihood.class;
+        }
+    };
+    
+    public static XMLObjectParser GUMBEL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return GUMBEL_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final double shape = xo.getDoubleAttribute(SHAPE);
+            final double scale = xo.getDoubleAttribute(SCALE);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new Gumbel2Distribution(shape, scale));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(SHAPE),
+                AttributeRule.newDoubleRule(SCALE),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a Gumbel type II distribution.";
         }
 
         public Class getReturnType() {

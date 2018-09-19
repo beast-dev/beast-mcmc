@@ -39,6 +39,7 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
     public static final String NAME = "LKJTransform";
     public static final String DIMENSION = "dimension";
     private static final String CHOLESKY = "cholesky";
+    public static final String WITH_DIAGONALS = "withDiagonals";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -68,8 +69,30 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
         }
 
         // Compose
-        return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
+        // return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
+        boolean withDiag = xo.getAttribute(WITH_DIAGONALS, false);
 
+        if (!withDiag) {
+            return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
+        } else {
+
+            LKJCholeskyTransformConstrainedWithDiag LKJwithLOG;
+
+            if (cholesky) {
+                LKJwithLOG = new LKJCholeskyTransformConstrainedWithDiag(dim);
+            } else {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            for (int i = 0; i < dim; i++) {
+                transforms.add(Transform.LOG);
+            }
+
+            Transform.Array fisherZTransformsWithNull = new Transform.Array(transforms, null);
+            Transform jointTrans = new Transform.ComposeMultivariable(fisherZTransformsWithNull, LKJwithLOG);
+
+            return jointTrans;
+        }
     }
 
     @Override

@@ -147,7 +147,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         }
 
         try {
-            return leapFrog(joint);
+            return leapFrog();
         } catch (NumericInstabilityException e) {
             return Double.NEGATIVE_INFINITY;
         }
@@ -335,7 +335,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         int nStepsThisLeap = getNumberOfSteps();
 
         for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
-            
+
             leapFrogEngine.updatePosition(position, momentum, stepSize);
 
             if (i < (nStepsThisLeap - 1)) {

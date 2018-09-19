@@ -161,7 +161,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     }
 
     private boolean shouldCheckStepSize() {
-        return getCount() < 1;
+        return getCount() < 1 && getMode() == CoercionMode.COERCION_ON;
     }
 
     private void checkStepSize() {

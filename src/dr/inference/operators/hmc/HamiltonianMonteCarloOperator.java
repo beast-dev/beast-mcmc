@@ -314,7 +314,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return energy / 2.0;
     }
 
-    private double leapFrog(Likelihood joint) throws NumericInstabilityException {
+    private double leapFrog() throws NumericInstabilityException {
 
         if (DEBUG) {
             if (count % 5 == 0) {
@@ -335,11 +335,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         int nStepsThisLeap = getNumberOfSteps();
 
         for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
-
-            if (shouldCheckGradient()) {
-                checkGradient(joint);
-            }
-
+            
             leapFrogEngine.updatePosition(position, momentum, stepSize);
 
             if (i < (nStepsThisLeap - 1)) {

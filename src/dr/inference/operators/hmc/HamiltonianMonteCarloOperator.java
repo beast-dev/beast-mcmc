@@ -165,7 +165,41 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     }
 
     private void checkStepSize() {
-        // TODO Find workable starting step-size
+
+        final int maxIterations = 10; // TODO Move magic numbers
+        final double reductionFactor = 0.1;
+
+        double[] initialPosition = parameter.getParameterValues();
+
+        int iterations = 0;
+        boolean acceptableSize = false;
+
+        while (!acceptableSize && iterations < maxIterations) {
+
+            try {
+                leapFrog();
+                double logLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
+
+                if (!Double.isNaN(logLikelihood) && !Double.isInfinite(logLikelihood)) {
+                    acceptableSize = true;
+                }
+            } catch (AssertionError error) {
+                // Do nothing
+            } catch (Exception exception) {
+                // Do nothing
+            }
+
+            if (!acceptableSize) {
+                stepSize *= reductionFactor;
+            }
+
+            ReadableVector.Utils.setParameter(initialPosition, parameter);  // Restore initial position
+            ++iterations;
+        }
+
+        if (!acceptableSize) {
+            throw new RuntimeException("Unable to find acceptable initial HMC step-size");
+        }
     }
 
     private boolean shouldCheckGradient() {

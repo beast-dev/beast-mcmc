@@ -384,22 +384,22 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             double detj = 0;
             double detk = 0;
             if (!(ci.getReturnCode() == NOT_OBSERVED)) {
-                deti = Math.log(ci.getDeterminant()); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
+                deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
             }
             if (!(cj.getReturnCode() == NOT_OBSERVED)) {
-                detj = Math.log(cj.getDeterminant());
+                detj = cj.getLogDeterminant();
             }
             if (!(ck.getReturnCode() == NOT_OBSERVED)) {
-                detk = Math.log(ck.getDeterminant());
+                detk = ck.getLogDeterminant();
             }
             remainder += -0.5 * (deti + detj + detk);
 
             // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
 
             if (DEBUG) {
-                System.err.println("\t\t\tdeti = " + Math.log(ci.getDeterminant()));
-                System.err.println("\t\t\tdetj = " + Math.log(cj.getDeterminant()));
-                System.err.println("\t\t\tdetk = " + Math.log(ck.getDeterminant()));
+                System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
+                System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
+                System.err.println("\t\t\tdetk = " + ck.getLogDeterminant());
                 System.err.println("\t\tremainder: " + remainder);
             }
 

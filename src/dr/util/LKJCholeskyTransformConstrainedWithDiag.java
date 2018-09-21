@@ -17,7 +17,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
         double[] choleskyFactor = subsetCholeskyOrCPCs(values);
         double[] diagonals = subsetDiagonals(values);
-        double[] CPCs = super.transform(choleskyFactor, 0, dim);
+        double[] CPCs = super.transform(choleskyFactor, 0, CPCdimension);
 
         return pasteTogether(CPCs, diagonals);
     }
@@ -69,7 +69,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
     private double[][] appendZeros(double[][] jacobian) {
 
-        assert jacobian.length == 3;
+        assert jacobian.length == CPCdimension;
         int length = dim * (dim - 1) / 2 + dim;
         double[][] appendedJacobian = new double[length][length];
 

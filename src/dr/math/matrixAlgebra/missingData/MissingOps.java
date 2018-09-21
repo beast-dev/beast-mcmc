@@ -333,20 +333,20 @@ public class MissingOps {
             double eps = SingularOps.singularThreshold(svd);
 
             int dim = 0;
-            double det = 1;
+            double logDet = 0;
             for (int i = 0; i < values.length; ++i) {
                 final double lambda = values[i];
-                if (lambda > 100000 * eps) {
-                    det *= lambda;
+                if (lambda > 1000 * eps) {
+                    logDet += Math.log(lambda);
                     ++dim;
                 }
             }
 
             if (!invert) {
-                det = 1.0 / det;
+                logDet = -logDet;
             }
 
-            result = new InversionResult(dim == source.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, det);
+            result = new InversionResult(dim == source.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, logDet, true);
         }
 
         return result;
@@ -388,7 +388,7 @@ public class MissingOps {
             solver.solve(B, X);
 
             int dim = 0;
-            double det = 1;
+            double logDet = 0;
 
             if (getDeterminant) {
 //                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
@@ -402,14 +402,14 @@ public class MissingOps {
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda > 100000 * eps) {
-                        det *= lambda;
+                    if (lambda > 1000 * eps) {
+                        logDet += Math.log(lambda);
                         ++dim;
                     }
                 }
             }
 
-            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, det);
+            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, logDet, true);
         }
 
         return result;

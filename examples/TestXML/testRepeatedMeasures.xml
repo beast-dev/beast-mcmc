@@ -66,6 +66,11 @@
 		</conjugateRootPrior>
 	</traitDataLikelihood>
 
+	<traitLogger id="traitLog" traitName="X" nodes="root">
+		<traitDataLikelihood idref="traitLikelihood"/>
+		<treeModel idref="treeModel"/>
+	</traitLogger>
+
 	<!--<multivariateWishartPrior id="precisionPrior" df="2">-->
 		<!--<scaleMatrix>-->
 			<!--<matrixParameter>-->
@@ -138,6 +143,7 @@
 			<likelihood idref="traitLikelihood"/>
 			<parameter idref="gamma"/>
 			<matrixParameter idref="precisionMatrix"/>
+			<traitLogger idref="traitLog"/>
 		</log>
 	</mcmc>
 

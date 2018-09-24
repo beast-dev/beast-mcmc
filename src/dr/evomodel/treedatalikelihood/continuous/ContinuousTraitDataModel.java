@@ -39,6 +39,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
     private final List<Integer> missingIndices;
     private final List<Integer> originalMissingIndices;
+//    private final List<Boolean> missingIndicatorList;
 
     final int numTraits;
     final int dimTrait;
@@ -75,6 +76,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public CompoundParameter getParameter() { return parameter; }
 
     public List<Integer> getMissingIndices() { return missingIndices; }
+
+    public boolean[] getMissingIndicators() {return null; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 

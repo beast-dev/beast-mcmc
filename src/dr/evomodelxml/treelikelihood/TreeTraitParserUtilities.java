@@ -234,16 +234,16 @@ public class TreeTraitParserUtilities {
     public class TraitsAndMissingIndices {
         public CompoundParameter traitParameter;
         public List<Integer> missingIndices;
-        public boolean[] missingIndicator;
+        public boolean[] missingIndicators;
         public String traitName;
         public Parameter sampleMissingParameter;
         public boolean useMissingIndices;
 
-        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, boolean[] missingIndicator, String traitName,
+        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, boolean[] missingIndicators, String traitName,
                                 Parameter sampleMissingParameter, boolean useMissingIndices) {
             this.traitParameter = traitParameter;
             this.missingIndices = missingIndices;
-            this.missingIndicator = missingIndicator;
+            this.missingIndicators = missingIndicators;
             this.traitName = traitName;
             this.sampleMissingParameter = sampleMissingParameter;
             this.useMissingIndices = useMissingIndices;

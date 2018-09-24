@@ -45,7 +45,7 @@ public class RepeatedMeasuresTraitDataModel extends
 
     private final String traitName;
     private final Parameter samplingPrecision;
-    private final boolean[] missingIndicators;
+
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
@@ -54,10 +54,9 @@ public class RepeatedMeasuresTraitDataModel extends
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           Parameter samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+        super(name, parameter, missingIndices, missingIndicators, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.traitName = name;
         this.samplingPrecision = samplingPrecision;
-        this.missingIndicators = missingIndicators;
         addVariable(samplingPrecision);
 //        addVariable(missingIndicators);
 
@@ -69,8 +68,6 @@ public class RepeatedMeasuresTraitDataModel extends
         }
     }
 
-    @Override
-    public boolean[] getMissingIndicators() {return missingIndicators; }
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
@@ -131,7 +128,7 @@ public class RepeatedMeasuresTraitDataModel extends
                             treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             List<Integer> missingIndices = returnValue.missingIndices;
-            boolean[] missingIndicators = returnValue.missingIndicator;
+            boolean[] missingIndicators = returnValue.missingIndicators;
 
             Parameter samplingPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
 

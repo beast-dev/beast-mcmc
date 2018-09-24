@@ -39,7 +39,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
     private final List<Integer> missingIndices;
     private final List<Integer> originalMissingIndices;
-//    private final List<Boolean> missingIndicatorList;
+    private final boolean[] missingIndicators;
 
     final int numTraits;
     final int dimTrait;
@@ -48,12 +48,15 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
                                     List<Integer> missingIndices,
+                                    boolean[] missingIndicators,
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
         this.originalMissingIndices = missingIndices;
+//        TODO: only initialize missingIndicators if useMissingIndices = true
         this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<Integer>());
+        this.missingIndicators = missingIndicators;
         addVariable(parameter);
 
         this.dimTrait = dimTrait;
@@ -77,7 +80,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public List<Integer> getMissingIndices() { return missingIndices; }
 
-    public boolean[] getMissingIndicators() {return null; }
+    public boolean[] getMissingIndicators() {return missingIndicators; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
@@ -179,7 +182,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
                 partial[offset + j] = p.getParameterValue(pIndex);
 
-                final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
+//                final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
+                final boolean missing = missingIndices != null && missingIndicators[missingIndex] == true;
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);

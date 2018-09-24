@@ -270,7 +270,7 @@ public class MissingOps {
         }
     }
 
-    public static double invertAndGetDeterminant(DenseMatrix64F mat, DenseMatrix64F result) {
+    public static double invertAndGetDeterminant(DenseMatrix64F mat, DenseMatrix64F result, boolean log) {
 
         final int numCol = mat.getNumCols();
         final int numRow = mat.getNumRows();
@@ -286,9 +286,11 @@ public class MissingOps {
                 result.set(0, 1.0D / mat.get(0));
             }
 
-            return numCol >= 2 ?
+            double det = numCol >= 2 ?
                     UnrolledDeterminantFromMinor.det(mat) :
                     mat.get(0);
+            return log ? Math.log(det) : det;
+
         } else {
 
             LUDecompositionAlt_D64 alg = new LUDecompositionAlt_D64();
@@ -303,8 +305,23 @@ public class MissingOps {
 
             solver.invert(result);
 
-            return alg.computeDeterminant().real;
+            return log ? computeLogDeterminant(alg) : alg.computeDeterminant().real;
 
+        }
+    }
+
+    private static double computeLogDeterminant(LUDecompositionAlt_D64 alg) {
+        int n = alg.getLU().getNumCols();
+        if (n != alg.getLU().getNumRows()) {
+            throw new IllegalArgumentException("Must be a square matrix.");
+        } else {
+            double logDet = 0;
+            double[] dataLU = alg.getLU().getData();
+            for(int i = 0; i < n * n; i += n + 1) {
+                logDet += Math.log(Math.abs(dataLU[i]));
+            }
+
+            return logDet;
         }
     }
 
@@ -419,21 +436,21 @@ public class MissingOps {
 
         final int dim = source.getMajorDim();
         final int finiteCount = countFiniteNonZeroDiagonals(source);
-        double det = 0;
+        double logDet = 0;
 
         if (finiteCount == dim) {
 
             DenseMatrix64F result = new DenseMatrix64F(dim, dim);
             DenseMatrix64F copyOfSource = copy(source);
             if (getDeterminant) {
-                det = invertAndGetDeterminant(copyOfSource, result);
+                logDet = invertAndGetDeterminant(copyOfSource, result, true);
             } else {
                 CommonOps.invert(copyOfSource, result);
             }
 
             copy(result, destination);
 
-            return new InversionResult(FULLY_OBSERVED, dim, det);
+            return new InversionResult(FULLY_OBSERVED, dim, logDet, true);
         }
 
         return null;
@@ -443,15 +460,15 @@ public class MissingOps {
 
         final int dim = source.getNumCols();
         final int finiteCount = countFiniteNonZeroDiagonals(source);
-        double det = 0;
+        double logDet = 0;
 
         if (finiteCount == dim) {
             if (getDeterminant) {
-                det = invertAndGetDeterminant(source, destination);
+                logDet = invertAndGetDeterminant(source, destination, true);
             } else {
                 CommonOps.invert(source, destination);
             }
-            return new InversionResult(FULLY_OBSERVED, dim, det);
+            return new InversionResult(FULLY_OBSERVED, dim, logDet, true);
         } else {
             if (finiteCount == 0) {
                 Arrays.fill(destination.getData(), 0);
@@ -465,14 +482,14 @@ public class MissingOps {
 
                 final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
                 if (getDeterminant) {
-                    det = invertAndGetDeterminant(subSource, inverseSubSource);
+                    logDet = invertAndGetDeterminant(subSource, inverseSubSource, true);
                 } else {
                     CommonOps.invert(subSource, inverseSubSource);
                 }
 
                 scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
 
-                return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
+                return new InversionResult(PARTIALLY_OBSERVED, finiteCount, logDet, true);
             }
         }
     }

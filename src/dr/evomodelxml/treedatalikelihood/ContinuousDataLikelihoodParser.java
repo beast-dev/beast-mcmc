@@ -269,6 +269,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
                     new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
             }, true),
+            new ElementRule(OPTIMAL_TRAITS, new XMLSyntaxRule[]{
+                    new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
+            }, true),
+            new ElementRule(STRENGTH_OF_SELECTION_MATRIX,
+                    new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}),
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
@@ -276,6 +281,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
             AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
+            AttributeRule.newBooleanRule(FORCE_DRIFT, true),
+            AttributeRule.newBooleanRule(FORCE_OU, true),
             TreeTraitParserUtilities.jitterRules(true),
     };
 

@@ -344,16 +344,17 @@ public class MissingOps {
 //            }
 
             SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(source.getNumRows(), source.getNumCols(), false, false, false);
-            if (!svd.decompose(source)) throw new RuntimeException("SVD decomposition failed");
+            if (!svd.decompose(source)) {
+                if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, 0);
+                throw new RuntimeException("SVD decomposition failed");
+            }
             double[] values = svd.getSingularValues();
-
-            double eps = SingularOps.singularThreshold(svd);
 
             int dim = 0;
             double logDet = 0;
-            for (int i = 0; i < values.length; ++i) {
+            for (int i = 0; i < values.length; i++) {
                 final double lambda = values[i];
-                if (lambda > 1000 * eps) {
+                if (lambda > 0.0) {
                     logDet += Math.log(lambda);
                     ++dim;
                 }
@@ -412,14 +413,17 @@ public class MissingOps {
 //                double[] values = svd.getSingularValues();
 
                 SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
-                if (!svd.decompose(A)) throw new RuntimeException("SVD decomposition failed");
+                if (!svd.decompose(A)) {
+                    if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, 0);
+                    throw new RuntimeException("SVD decomposition failed");
+                }
                 double[] values = svd.getSingularValues();
 
-                double eps = SingularOps.singularThreshold(svd);
+//                double eps = SingularOps.singularThreshold(svd);
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda > 1000 * eps) {
+                    if (lambda > 0.0) {
                         logDet += Math.log(lambda);
                         ++dim;
                     }

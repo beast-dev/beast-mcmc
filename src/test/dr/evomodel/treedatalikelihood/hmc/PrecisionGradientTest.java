@@ -77,7 +77,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        format.setMaximumFractionDigits(2);
+        format.setMaximumFractionDigits(1);
 
         dim = 6;
 

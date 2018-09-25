@@ -101,7 +101,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
         List<Integer> missingIndices;
-        boolean[] missingIndicators;
 //        Parameter sampleMissingParameter = null;
         ContinuousTraitPartialsProvider dataModel;
         boolean useMissingIndices = true;
@@ -113,7 +112,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                     utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             missingIndices = returnValue.missingIndices;
-            missingIndicators = returnValue.missingIndicators;
 //            sampleMissingParameter = returnValue.sampleMissingParameter;
             traitName = returnValue.traitName;
             useMissingIndices = returnValue.useMissingIndices;
@@ -133,9 +131,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
             dataModel = new ContinuousTraitDataModel(traitName,
                     traitParameter,
-                    missingIndices,
-                    missingIndicators,
-                    useMissingIndices,
+                    missingIndices, useMissingIndices,
                     dim, precisionType);
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);

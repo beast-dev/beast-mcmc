@@ -46,19 +46,16 @@ public class RepeatedMeasuresTraitDataModel extends
     private final String traitName;
     private final Parameter samplingPrecision;
 
-
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
                                           List<Integer> missingIndices,
-                                          boolean[] missingIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           Parameter samplingPrecision) {
-        super(name, parameter, missingIndices, missingIndicators, useMissingIndices, dimTrait, PrecisionType.FULL);
+        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.traitName = name;
         this.samplingPrecision = samplingPrecision;
         addVariable(samplingPrecision);
-//        addVariable(missingIndicators);
 
         samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 samplingPrecision.getDimension()));
@@ -67,7 +64,6 @@ public class RepeatedMeasuresTraitDataModel extends
             throw new RuntimeException("Currently only implemented for diagonal deflation");
         }
     }
-
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
@@ -128,7 +124,6 @@ public class RepeatedMeasuresTraitDataModel extends
                             treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             List<Integer> missingIndices = returnValue.missingIndices;
-            boolean[] missingIndicators = returnValue.missingIndicators;
 
             Parameter samplingPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
 
@@ -140,7 +135,6 @@ public class RepeatedMeasuresTraitDataModel extends
                     traitName,
                     traitParameter,
                     missingIndices,
-                    missingIndicators,
                     true,
                     diffusionModel.getPrecisionParameter().getRowDimension(),
                     samplingPrecision

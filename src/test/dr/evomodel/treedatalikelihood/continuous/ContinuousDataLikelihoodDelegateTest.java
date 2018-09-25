@@ -65,16 +65,11 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
 
         List<Integer> missingIndices = new ArrayList<Integer>();
-        boolean[] missingIndicators = new boolean[18];
         traitParameter.setParameterValue(2, 0);
         missingIndices.add(3);
-        missingIndicators[3] = true;
         missingIndices.add(4);
-        missingIndicators[4] = true;
         missingIndices.add(5);
-        missingIndicators[5] = true;
         missingIndices.add(7);
-        missingIndicators[7] = true;
 
         //// Standard Model //// ***************************************************************************************
 
@@ -95,9 +90,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
-                missingIndices,
-                missingIndicators,
-                true,
+                missingIndices, true,
                 3, precisionType);
 
         //// Factor Model //// *****************************************************************************************

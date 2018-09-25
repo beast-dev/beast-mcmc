@@ -49,6 +49,7 @@ public class RepeatedMeasuresTraitDataModel extends
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
                                           List<Integer> missingIndices,
+                                          boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           Parameter samplingPrecision) {
@@ -131,10 +132,17 @@ public class RepeatedMeasuresTraitDataModel extends
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
                     xo.getChild(MultivariateDiffusionModel.class);
 
+            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
+            for (int i:missingIndices){
+                missingIndicators[i] = true;
+            }
+
+
             return new RepeatedMeasuresTraitDataModel(
                     traitName,
                     traitParameter,
                     missingIndices,
+                    missingIndicators,
                     true,
                     diffusionModel.getPrecisionParameter().getRowDimension(),
                     samplingPrecision

@@ -273,7 +273,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
             }, true),
             new ElementRule(STRENGTH_OF_SELECTION_MATRIX,
-                    new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),

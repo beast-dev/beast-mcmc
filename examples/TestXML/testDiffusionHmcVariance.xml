@@ -130,7 +130,12 @@
 	<operators id="bmOperators.correlation.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
  			drawVariance="1.0">
- 			<gradient idref="precisionCorrelationGradient"/>
+            <jointGradient>
+                <gradient>
+                    <distributionLikelihood idref="prior.cholesky"/>
+                </gradient>
+                <gradient idref="precisionCorrelationGradient"/>
+            </jointGradient>
 			<parameter idref="variance.correlation"/>
             <LKJTransform dimension = "4"/>
  		</hamiltonianMonteCarloOperator>
@@ -143,7 +148,6 @@
         </randomWalkOperator>
 	</operators>
 
-<!--
 	<mcmc id="mcmc.correlation.hmcVanilla" chainLength="100000" autoOptimize="false">
 		<posterior>
             <prior>
@@ -175,10 +179,8 @@
             <matrixParameter idref="variance.correlation"/>
 		</log>
 	</mcmc>
- -->
 
 
-<!--
 	<mcmc id="mcmc.correlation.randomWalk" chainLength="1000000" autoOptimize="false">
 		<posterior>
             <prior>
@@ -238,7 +240,6 @@
     <report>
         <maximizeWrtParameter idref="maximize.correlation"/>
     </report>
--->
 
 <!--
 burnIn   <= 100000,   maxState  = 1000000
@@ -300,7 +301,6 @@ Count: 1131
         </randomWalkOperator>
 	</operators>
 
-<!--
 	<mcmc id="mcmc.diagonal.randomWalk" chainLength="1000000" autoOptimize="false">
 		<posterior>
             <prior>
@@ -332,7 +332,6 @@ Count: 1131
                 <matrixParameter idref="variance.diagonal"/>
 		</log>
 	</mcmc>
- -->
 
 
 	<mcmc id="mcmc.diagonal.hmcVanilla" chainLength="100000" autoOptimize="false">
@@ -367,7 +366,6 @@ Count: 1131
 		</log>
 	</mcmc>
 
-<!--
 	<report>
 		<property name="timer">
 			<object idref="mcmc.diagonal.randomWalk"/>
@@ -397,7 +395,6 @@ Count: 1131
     <report>
         <maximizeWrtParameter idref="maximize.diagonal"/>
     </report>
- -->
 
 <!--
 

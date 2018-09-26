@@ -172,10 +172,14 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                               final double edgeLength,
                               final int scaledOffsetDiagonal,
                               final int scaledOffset) {
-        double[] diagonalActualizations = new double[dimTrait * dimTrait];
-        computeDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
-                diagonalActualizations, 0);
-        transformDiagonalMatrixBack(diagonalActualizations, actualizations, scaledOffset, rotation, 0);
+        if (edgeLength == 0.0) {
+            unwrapIdentity(actualizations, scaledOffset, dimTrait);
+        } else {
+            double[] diagonalActualizations = new double[dimTrait * dimTrait];
+            computeDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
+                    diagonalActualizations, 0);
+            transformDiagonalMatrixBack(diagonalActualizations, actualizations, scaledOffset, rotation, 0);
+        }
     }
 
     @Override

@@ -137,6 +137,18 @@ public class MissingOps {
         System.arraycopy(source.getData(), 0, destination, offset, source.getNumElements());
     }
 
+    public static void unwrapIdentity(final double[] destination, final int offset, final int dim) {
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < i; j++) {
+                destination[offset + i * dim + j] = 0.0;
+            }
+            destination[offset + i * dim + i] = 1.0;
+            for (int j = i + 1; j < dim; j++) {
+                destination[offset + i * dim + j] = 0.0;
+            }
+        }
+    }
+
     public static boolean anyDiagonalInfinities(DenseMatrix64F source) {
         boolean anyInfinities = false;
         for (int i = 0; i < source.getNumCols() && !anyInfinities; ++i) {

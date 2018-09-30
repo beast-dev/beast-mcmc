@@ -17,7 +17,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
         double[] choleskyFactor = subsetCholeskyOrCPCs(values);
         double[] diagonals = subsetDiagonals(values);
-        double[] CPCs = super.transform(choleskyFactor, 0, dim);
+        double[] CPCs = super.transform(choleskyFactor, 0, CPCdimension);
 
         return pasteTogether(CPCs, diagonals);
     }
@@ -43,19 +43,24 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
     @Override
     public double[][] computeJacobianMatrixInverse(double[] values) {
 
-        double[] choleskyFactor = subsetCholeskyOrCPCs(values);
+        double[] CPCs = subsetCholeskyOrCPCs(values);
+        double[][] jacobian = super.computeJacobianMatrixInverse(CPCs);
+        return appendIdentityMatrix(jacobian);
+    }
 
-        double[][] jacobian = super.computeJacobianMatrixInverse(choleskyFactor);
+    public double[] getGradientLogJacobianInverse(double[] values) {
 
-        return appendZeros(jacobian);
+        double[] CPCs = subsetCholeskyOrCPCs(values);
+        double[] gradientLogJacobianInverse = super.getGradientLogJacobianInverse(CPCs);
+        return pasteTogether(gradientLogJacobianInverse, new double[dim]);
     }
 
     private double[] subsetCholeskyOrCPCs(double[] values) { //todo: to ensure Cholesky factor comes first in "values"
 
         assert values.length == dim * (dim + 1) / 2;
-        double[] choleskyFactor = new double[CPCdimension];
-        System.arraycopy(values, 0, choleskyFactor, 0, CPCdimension);
-        return choleskyFactor;
+        double[] choleskyOrCPC = new double[CPCdimension];
+        System.arraycopy(values, 0, choleskyOrCPC, 0, CPCdimension);
+        return choleskyOrCPC;
     }
 
     private double[] subsetDiagonals(double[] values) { //todo: to ensure Cholesky factor comes first in "values"
@@ -66,17 +71,18 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
         return diagonals;
     }
 
+    private double[][] appendIdentityMatrix(double[][] jacobian) {
 
-    private double[][] appendZeros(double[][] jacobian) {
-
-        assert jacobian.length == 3;
-        int length = dim * (dim - 1) / 2 + dim;
+        assert jacobian.length == CPCdimension;
+        int length = CPCdimension + dim;
         double[][] appendedJacobian = new double[length][length];
 
         for (int i = 0; i < length; i++) {
             for (int j = 0; j < length; j++) {
-                if (i >= dim || j >= dim) {
-                    appendedJacobian[i][j] = 0;
+                if (i >= CPCdimension || j >= CPCdimension) {
+                    if(i == j){
+                        appendedJacobian[i][j] = 1;
+                    }
                 } else {
                     appendedJacobian[i][j] = jacobian[i][j];
                 }

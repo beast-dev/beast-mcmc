@@ -253,6 +253,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 double[] gradient = new double[dim * dim];
 
                 for (int i = 0; i < dim * dim; ++i) {
+
+                    if (vecV[i] == 0) throw new RuntimeException("starting with zero variance is not allowed.");
                     gradient[i] = -lhs[i] * vecP[i] / vecV[i];
                 }
 

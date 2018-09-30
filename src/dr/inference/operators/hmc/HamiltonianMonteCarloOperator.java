@@ -54,9 +54,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     private final Parameter parameter;
     final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
-    private final double[] mask;
+    private static double[] mask = new double[0];
 
-    private final static double TOLERANCE = 1E-3;
+    private final static double TOLERANCE = 1E-2;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter mask,
@@ -242,7 +242,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         }
     }
 
-    double[] mask(double[] vector) {
+    static double[] mask(double[] vector) {
 
         assert (mask == null || mask.length == vector.length);
 
@@ -526,6 +526,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
                 gradient = transform.updateGradientLogDensity(gradient, unTransformedPosition,
                         0, unTransformedPosition.length);
+                mask(gradient);
 
                 super.updateMomentum(position, momentum, gradient, functionalStepSize);
             }

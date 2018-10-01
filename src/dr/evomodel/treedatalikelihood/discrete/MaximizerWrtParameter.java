@@ -64,7 +64,7 @@ public class MaximizerWrtParameter implements Reportable {
         int numberIterations;
         boolean startAtCurrentState;
         boolean printToScreen;
-        
+
         public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen) {
             this.numberIterations = numberIterations;
             this.startAtCurrentState = startAtCurrentState;
@@ -107,7 +107,10 @@ public class MaximizerWrtParameter implements Reportable {
         if (settings.startAtCurrentState) {
             x0 = parameter.getParameterValues();
 
-// PB: I don't think that this is needed.
+            if (transform != null) {
+                x0 = transform.transform(x0, 0, x0.length);
+            }
+// PB: I don't think that this is needed. XJ: bug fixed, should be transform instead of inverse, sorry.
 //            if (transform != null) {
 //                x0 = transform.inverse(x0, 0, x0.length);
 //            }
@@ -183,11 +186,8 @@ public class MaximizerWrtParameter implements Reportable {
                 double[] result = gradient.getGradientLogDensity();
 
                 if (transform != null) {
-//                    double[] differential = transform.gradient(argument, 0, argument.length);
-//                    for (int i = 0; i < result.length; ++i) {
-//                        result[i] *= differential[i];
-//                    }
-                    result = transform.updateGradientInverse(result, argument, 0, argument.length);
+
+                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
 
                 }
                 for (int i = 0; i < result.length; ++i) {

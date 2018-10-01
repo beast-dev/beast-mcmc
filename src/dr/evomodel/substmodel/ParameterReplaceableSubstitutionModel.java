@@ -1,7 +1,7 @@
 /*
- * GradientProvider2.java
+ * ParameterReplaceableSubstitutionModel.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,17 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.model;
+package dr.evomodel.substmodel;
+
+import dr.inference.model.Parameter;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface HessianProvider extends GradientProvider{
-
-//    int getDimension();
-
-    double[] getDiagonalHessianLogDensity(Object x);
-
-    double[][] getHessianLogDensity(Object x);
+public interface ParameterReplaceableSubstitutionModel extends SubstitutionModel {
+    SubstitutionModel replaceParameter(Parameter parameter);
 }

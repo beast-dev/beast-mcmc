@@ -2,11 +2,13 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.Transform;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,7 +23,152 @@ public interface BranchSpecificFixedEffects {
 
     Parameter getFixedEffectsParameter();
 
-    class Default extends AbstractModel implements BranchSpecificFixedEffects {
+    double[] getDifferential(double rate, final Tree tree, final NodeRef node);
+
+    int getDimension();
+
+    abstract class Base extends AbstractModel implements BranchSpecificFixedEffects {
+
+        public Base(String name) {
+            super("Base");
+        }
+
+        public double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
+            double[] result = getDesignVector(tree, node);
+            final double multiplier = rate / getEffect(tree, node);
+            for (int i = 0; i < result.length; i++) {
+                result[i] *= multiplier;
+            }
+            return result;
+        }
+    }
+
+    class None extends Base implements BranchSpecificFixedEffects {
+
+        private final Parameter location;
+        private final static double[] design = new double[] { 1.0 };
+
+        public None(Parameter location) {
+            super("No effects");
+            this.location = location;
+
+            addVariable(location);
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            // Do nothing
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            if (variable == location) {
+                fireModelChanged();
+            }
+        }
+
+        @Override
+        protected void storeState() { }
+
+        @Override
+        protected void restoreState() { }
+
+        @Override
+        protected void acceptState() { }
+
+        @Override
+        public double getEffect(Tree tree, NodeRef node) {
+            return location.getParameterValue(0);
+        }
+
+        @Override
+        public double[] getDesignVector(Tree tree, NodeRef node) {
+            return design.clone();
+        }
+
+        @Override
+        public Parameter getFixedEffectsParameter() {
+            return location;
+        }
+
+        @Override
+        public int getDimension() {
+            return 1;
+        }
+    }
+
+    class Transformed extends Base implements BranchSpecificFixedEffects {
+
+        private final BranchSpecificFixedEffects effects;
+        private final Transform transform;
+
+        public Transformed(BranchSpecificFixedEffects effects, Transform transform) {
+            super("With transform");
+            this.effects = effects;
+            this.transform = transform;
+            addModel((Model) effects);
+        }
+
+        @Override
+        public double[] getDifferential(double rate, final Tree tree, final NodeRef node) {
+            double[] result = super.getDifferential(rate, tree, node);
+            final double multiplier = transform.gradient(getEffect(tree, node));
+            for (int i = 0; i < result.length; i++) {
+                result[i] *= multiplier;
+            }
+            return result;
+         }
+
+        @Override
+        public int getDimension() {
+            return effects.getDimension();
+        }
+
+        @Override
+        public double getEffect(Tree tree, NodeRef node) {
+            double transformedEffect = effects.getEffect(tree, node);
+            return transform.inverse(transformedEffect);
+        }
+
+        @Override
+        public double[] getDesignVector(Tree tree, NodeRef node) {
+            return effects.getDesignVector(tree, node);
+        }
+
+        @Override
+        public Parameter getFixedEffectsParameter() {
+            return effects.getFixedEffectsParameter();
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            fireModelChanged();
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            if (variable == effects.getFixedEffectsParameter()) {
+                fireModelChanged();
+            }
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
+        }
+    }
+
+    class Default extends Base implements BranchSpecificFixedEffects, Citable {
 
         private final Parameter coefficients;
         private final List<CountableBranchCategoryProvider> categoryProviders;
@@ -50,6 +197,7 @@ public interface BranchSpecificFixedEffects {
 
             addModels(categoryProviders);
             addModels(valueProviders);
+            addVariable(coefficients);
         }
 
         @Override
@@ -78,7 +226,9 @@ public interface BranchSpecificFixedEffects {
 
             for (CountableBranchCategoryProvider categoryProvider : categoryProviders) {
                 int category = categoryProvider.getBranchCategory(tree, node);
-                design[category + offset] = 1.0;
+                if (category != 0) {
+                    design[(category - 1) + offset] = 1.0;
+                }
             }
             offset += categoryProviders.size();
 
@@ -98,10 +248,19 @@ public interface BranchSpecificFixedEffects {
         public Parameter getFixedEffectsParameter() { return coefficients; }
 
         @Override
+        public int getDimension() {
+            return dim;
+        }
+
+        @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) { }
 
         @Override
-        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            if (variable == getFixedEffectsParameter()) {
+                fireModelChanged();
+            }
+        }
 
         @Override
         protected void storeState() { }
@@ -134,5 +293,29 @@ public interface BranchSpecificFixedEffects {
                 }
             }
         }
+
+        @Override
+        public Citation.Category getCategory() {
+            return Citation.Category.MOLECULAR_CLOCK;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Location-scale relaxed clock";
+        }
+
+        @Override
+        public List<Citation> getCitations() {
+            return Collections.singletonList(CITATION);
+        }
+
+        public static Citation CITATION = new Citation(
+                new Author[]{
+                        new Author("X", "Ji"),
+                        new Author("P", "Lemey"),
+                        new Author("MA", "Suchard")
+                },
+                Citation.Status.IN_PREPARATION
+        );
     }
 }

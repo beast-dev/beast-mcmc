@@ -25,7 +25,9 @@
 
 package dr.math.distributions;
 
+import java.util.Arrays;
 import dr.inference.model.GradientProvider;
+import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
@@ -37,7 +39,7 @@ import org.ejml.data.DenseMatrix64F;
  * @author Marc Suchard
  */
 public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator,
-        GradientProvider {
+        GradientProvider, HessianProvider {
 
     public static final String TYPE = "MultivariateNormal";
 
@@ -200,6 +202,64 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
 
         return gradient;
+    }
+
+    public double[][] hessianLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return hessianLogPdf(x, mean, singlePrecision);
+        } else {
+            return hessianLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[][] hessianLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            hessian[i][i] = -singlePrecision;
+        }
+        return hessian;
+    }
+
+    public static double[][] hessianLogPdf(double[] x, double[] mean, double[][] precision) {
+
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                hessian[i][j] = -precision[i][j];
+            }
+        }
+        return hessian;
+    }
+
+    public double[] diagonalHessianLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return diagonalHessianLogPdf(x, mean, singlePrecision);
+        } else {
+            return diagonalHessianLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[] diagonalHessianLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[] hessian = new double[dim];
+        Arrays.fill(hessian, -singlePrecision);
+
+        return hessian;
+    }
+
+    public static double[] diagonalHessianLogPdf(double[] x, double[] mean, double[][] precision) {
+        final int dim = x.length;
+        final double[] hessian = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            hessian[i] = -precision[i][i];
+        }
+
+        return hessian;
     }
 
     // scale only modifies precision
@@ -462,5 +522,15 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     @Override
     public double[][] getPrecisionMatrix() {
         return precision;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object x) {
+        return diagonalHessianLogPdf((double[]) x);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        return hessianLogPdf((double[]) x);
     }
 }

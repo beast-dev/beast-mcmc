@@ -27,55 +27,75 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
+import dr.evomodel.treedatalikelihood.discrete.HyperParameterBranchRateGradient;
+import dr.evomodel.treedatalikelihood.discrete.NewLocationGradient;
+import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
-/**
- * @author Marc A. Suchard
- * @author Xiang Ji
- */
+public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
-public class NodeHeightGradientParser extends AbstractXMLObjectParser {
+    private static final String NAME = "locationScaleGradient";
+    private static final String LOCATION = "location";
+    private static final String SCALE = "scale";
 
-    private static final String NAME = "nodeHeightGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String USE_HESSIAN = "useHessian";
 
     public String getParserName(){ return NAME; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
+        boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
+
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+//        final Parameter locationScaleParameter = (Parameter) xo.getChild(Parameter.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
         if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
-
-            Parameter branchRates = null;
-            if (branchRateModel instanceof ArbitraryBranchRates) {
-                branchRates = ((ArbitraryBranchRates) branchRateModel).getRateParameter();
-            }
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
             if (delegate instanceof ContinuousDataLikelihoodDelegate) {
 
-//                ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-//                return new NodeHeightGradient(traitName, treeDataLikelihood, continuousData, branchRates);
-
                 throw new XMLParseException("Not yet implemented! ");
+
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                return new NodeHeightGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates);
+
+                if (xo.hasChildNamed(LOCATION)) {
+                    Object locationObject = xo.getElementFirstChild(LOCATION);
+                    BranchSpecificFixedEffects location = null;
+
+                    if (locationObject instanceof Parameter) {
+                        location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
+                    } else if (locationObject instanceof BranchSpecificFixedEffects) {
+                        location = (BranchSpecificFixedEffects) locationObject;
+                    } else {
+                        throw new XMLParseException("Poorly formed");
+                    }
+
+                    return new NewLocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
+
+                } else if (xo.hasChildNamed(SCALE)) {
+
+                    Parameter scale = (Parameter) xo.getElementFirstChild(SCALE);
+                    return new ScaleGradient(traitName, treeDataLikelihood, beagleData, scale, useHessian);
+
+                } else {
+                    throw new XMLParseException("Poorly formed");
+                }
             } else {
                 throw new XMLParseException("Unknown likelihood delegate type");
             }
@@ -92,7 +112,20 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
+
             new ElementRule(TreeDataLikelihood.class),
+
+            new XORRule(
+                new ElementRule(LOCATION, new XMLSyntaxRule[]{
+                        new XORRule(
+                                new ElementRule(BranchSpecificFixedEffects.class),
+                                new ElementRule(Parameter.class)
+                        )
+                }),
+                new ElementRule(SCALE, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class),
+                })
+            ),
     };
 
     @Override
@@ -102,6 +135,6 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return NodeHeightGradientForDiscreteTrait.class;
+        return HyperParameterBranchRateGradient.class;
     }
 }

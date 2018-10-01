@@ -37,6 +37,7 @@ import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -146,7 +147,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
                 assert (statisticsForNode.size() == nTraits);
 
                 final double rate = branchRateModel.getBranchRate(tree, node);
-                final double differential = branchRateModel.getBranchRateDifferential(rate);
+                final double differential = branchRateModel.getBranchRateDifferential(tree, node);
                 final double scaling = differential / rate;
 
                 double gradient = 0.0;

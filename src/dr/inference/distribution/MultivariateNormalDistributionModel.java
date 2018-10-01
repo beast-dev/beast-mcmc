@@ -38,7 +38,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
  */
 
 public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
 
     public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
@@ -191,4 +191,15 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         return distribution.getGradientLogDensity(x);
     }
 
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object x) {
+        checkDistribution();
+        return distribution.getDiagonalHessianLogDensity(x);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        checkDistribution();
+        return distribution.getHessianLogDensity(x);
+    }
 }

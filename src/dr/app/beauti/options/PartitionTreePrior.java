@@ -78,6 +78,9 @@ public class PartitionTreePrior extends PartitionOptions {
         this.skylineGroupCount = source.skylineGroupCount;
         this.skylineModel = source.skylineModel;
         this.skyrideSmoothing = source.skyrideSmoothing;
+        this.skyGridCount = source.skyGridCount;
+        this.skyGridInterval = source.skyGridInterval;
+
         this.extendedSkylineModel = source.extendedSkylineModel;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.populationSizeModel = source.populationSizeModel;

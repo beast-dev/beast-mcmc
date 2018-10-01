@@ -132,7 +132,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public void setDimension(int dim) {
-        throw new RuntimeException();
+        throw new UnsupportedOperationException();
     }
 
     public void addBounds(Bounds<Double> boundary) {

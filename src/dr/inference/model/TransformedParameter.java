@@ -161,6 +161,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
     }
 
+    public boolean check() {
+        return parameter.check();
+    }
+
     public Bounds<Double> getBounds() {
         return transformedBounds;
 //        throw new RuntimeException("Should not call getBounds() on transformed parameter");

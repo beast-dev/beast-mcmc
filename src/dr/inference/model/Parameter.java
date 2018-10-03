@@ -124,6 +124,11 @@ public interface Parameter extends Statistic, Variable<Double> {
     boolean isWithinBounds();
 
     /**
+     * @return true if the parameter is acceptable
+     */
+    boolean check();
+
+    /**
      * Can be called before store is called. If it results in new
      * dimensions, then the value of the first dimension is copied into the new dimensions.
      *
@@ -319,6 +324,10 @@ public interface Parameter extends Statistic, Variable<Double> {
                     return false;
                 }
             }
+            return true;
+        }
+
+        public boolean check() {
             return true;
         }
 

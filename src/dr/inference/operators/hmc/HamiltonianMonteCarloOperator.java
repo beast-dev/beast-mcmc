@@ -57,16 +57,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     protected final double[] mask;
     protected final Transform transform;
 
-    private final static double TOLERANCE = 1E-3;
-
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                   Parameter parameter, Transform transform, Parameter mask,
                                   double stepSize, int nSteps,
-                                  double randomStepCountFraction) {
+                                  double randomStepCountFraction,
+                                  double gradientCheckTolerance) {
         this(mode, weight, gradientProvider,
                 parameter, transform, mask,
                 new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0),
+                        0, 0, 0, gradientCheckTolerance),
                 MassPreconditioner.Type.NONE
         );
     }
@@ -252,7 +251,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
             double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
 
-            if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, TOLERANCE)) {
+            if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, runtimeOptions.gradientCheckTolerance)) {
 
                 String sb = "Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientOriginal) + "\n" +
@@ -269,7 +268,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             double[] analyticalGradientTransformed = transform.updateGradientLogDensity(analyticalGradientOriginal,
                     parameter.getParameterValues(), 0, parameter.getParameterValues().length);
 
-            if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, TOLERANCE)) {
+            if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, runtimeOptions.gradientCheckTolerance)) {
                 String sb = "Transformed Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
                         "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n";
@@ -317,15 +316,17 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         final int preconditioningUpdateFrequency;
         final int preconditioningDelay;
         final int gradientCheckCount;
+        final double gradientCheckTolerance;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency,
-                       int preconditioningDelay, int gradientCheckCount) {
+                       int preconditioningDelay, int gradientCheckCount, double gradientCheckTolerance) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
             this.preconditioningDelay = preconditioningDelay;
             this.gradientCheckCount = gradientCheckCount;
+            this.gradientCheckTolerance = gradientCheckTolerance;
         }
     }
 

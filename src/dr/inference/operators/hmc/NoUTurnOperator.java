@@ -98,7 +98,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
 //        final double[][] mass = massProvider.getMass();
-        final WrappedVector initialMomentum = mask(preconditioning.drawInitialMomentum());
+        final WrappedVector initialMomentum = mask(preconditioning.drawInitialMomentum(), mask);
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
@@ -220,10 +220,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                         final WrappedVector momentum,
                         final double stepSize) throws NumericInstabilityException {
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
         leapFrogEngine.updatePosition(position, momentum, stepSize);
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition) {

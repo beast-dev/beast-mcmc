@@ -54,14 +54,15 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     private final Parameter parameter;
     final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
-    private static double[] mask = new double[0];
+    protected final double[] mask;
+    protected final Transform transform;
 
-    private final static double TOLERANCE = 1E-2;
+    private final static double TOLERANCE = 1E-3;
 
     HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                         Parameter parameter, Transform transform, Parameter mask,
-                                         double stepSize, int nSteps,
-                                         double randomStepCountFraction) {
+                                  Parameter parameter, Transform transform, Parameter mask,
+                                  double stepSize, int nSteps,
+                                  double randomStepCountFraction) {
         this(mode, weight, gradientProvider,
                 parameter, transform, mask,
                 new Options(stepSize, nSteps, randomStepCountFraction,
@@ -70,7 +71,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         );
     }
 
-    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight,
+                                         GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
@@ -80,20 +82,18 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         setTargetAcceptanceProbability(0.8); // Stan default
 
         this.gradientProvider = gradientProvider;
-
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
-
         this.preconditioning = preconditioningType.factory(gradientProvider, transform);
+        this.parameter = parameter;
+        this.mask = buildMask(maskParameter);
+        this.transform = transform;
 
         this.leapFrogEngine = (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,
-                        getDefaultInstabilityHandler(), preconditioning) :
+                        getDefaultInstabilityHandler(), preconditioning, mask) :
                 new LeapFrogEngine.Default(parameter,
-                        getDefaultInstabilityHandler(), preconditioning));
-
-        this.parameter = parameter;
-        this.mask = buildMask(maskParameter);
+                        getDefaultInstabilityHandler(), preconditioning, mask));
     }
 
     @Override
@@ -139,7 +139,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         }
 
         if (shouldCheckGradient()) {
-            checkGradient(joint);
+            checkGradient(joint, transform);
+
         }
 
         if (shouldUpdatePreconditioning()) {
@@ -206,7 +207,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    private void checkGradient(final Likelihood joint) {
+    public void checkGradient(final Likelihood joint, Transform transform) {
 
         if (parameter.getDimension() != gradientProvider.getDimension()) {
             throw new RuntimeException("Unequal dimensions");
@@ -216,33 +217,69 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
             @Override
             public double evaluate(double[] argument) {
-                ReadableVector.Utils.setParameter(argument, parameter);
-                return joint.getLogLikelihood();
+
+                if (transform == null) {
+
+                    ReadableVector.Utils.setParameter(argument, parameter);
+                    return joint.getLogLikelihood();
+                } else {
+
+                    double[] untransformedValue = transform.inverse(argument, 0, argument.length);
+                    ReadableVector.Utils.setParameter(untransformedValue, parameter);
+                    return joint.getLogLikelihood() - transform.getLogJacobian(untransformedValue, 0, untransformedValue.length);
+                }
             }
 
             @Override
-            public int getNumArguments() { return parameter.getDimension(); }
+            public int getNumArguments() {
+                return parameter.getDimension();
+            }
 
             @Override
-            public double getLowerBound(int n) { return parameter.getBounds().getLowerLimit(n); }
+            public double getLowerBound(int n) {
+                return parameter.getBounds().getLowerLimit(n);
+            }
 
             @Override
-            public double getUpperBound(int n) { return parameter.getBounds().getUpperLimit(n); }
+            public double getUpperBound(int n) {
+                return parameter.getBounds().getUpperLimit(n);
+            }
         };
 
-        double[] numericGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
-        double[] gradient = gradientProvider.getGradientLogDensity();
+        double[] analyticalGradientOriginal = gradientProvider.getGradientLogDensity();
 
-        if (!MathUtils.isClose(gradient, numericGradient, TOLERANCE)) {
+        if (transform == null) {
 
-            String sb = "Gradients do not match:\n" +
-                    "\tAnalytic: " + new WrappedVector.Raw(gradient) + "\n" +
-                    "\tNumeric : " + new WrappedVector.Raw(numericGradient) + "\n";
-            throw new RuntimeException(sb);
+            double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
+
+            if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, TOLERANCE)) {
+
+                String sb = "Gradients do not match:\n" +
+                        "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientOriginal) + "\n" +
+                        "\tNumeric : " + new WrappedVector.Raw(numericGradientOriginal) + "\n";
+                throw new RuntimeException(sb);
+            }
+
+        } else {
+
+            double[] transformedParameter = transform.transform(parameter.getParameterValues(), 0,
+                    parameter.getParameterValues().length);
+            double[] numericGradientTransformed = NumericalDerivative.gradient(numeric, transformedParameter);
+
+            double[] analyticalGradientTransformed = transform.updateGradientLogDensity(analyticalGradientOriginal,
+                    parameter.getParameterValues(), 0, parameter.getParameterValues().length);
+
+            if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, TOLERANCE)) {
+                String sb = "Transformed Gradients do not match:\n" +
+                        "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
+                        "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n";
+                throw new RuntimeException(sb);
+            }
         }
     }
 
-    static double[] mask(double[] vector) {
+
+    static double[] mask(double[] vector, double[] mask) {
 
         assert (mask == null || mask.length == vector.length);
 
@@ -255,7 +292,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return vector;
     }
 
-    WrappedVector mask(WrappedVector vector) {
+    static WrappedVector mask(WrappedVector vector, double[] mask) {
 
         assert (mask == null || mask.length == vector.getDim());
 
@@ -317,20 +354,21 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     private double leapFrog() throws NumericInstabilityException {
 
         if (DEBUG) {
-            if (count % 5 == 0) {
+            if (count % 1 == 0) {
                 System.err.println("HMC step size: " + stepSize);
             }
             ++count;
         }
 
         final double[] position = leapFrogEngine.getInitialPosition();
-        final WrappedVector momentum = mask(preconditioning.drawInitialMomentum());
+        final WrappedVector momentum = mask(preconditioning.drawInitialMomentum(), mask);
 
         final double prop = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
 
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
+
 
         int nStepsThisLeap = getNumberOfSteps();
 
@@ -340,12 +378,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
             if (i < (nStepsThisLeap - 1)) {
                 leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                        mask(gradientProvider.getGradientLogDensity()), stepSize);
+                        mask(gradientProvider.getGradientLogDensity(), mask), stepSize);
             }
         }
 
         leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity()), stepSize / 2);
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
 
         final double res = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -433,6 +471,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         void setParameter(double[] position);
 
         double[] getLastGradient();
+
         double[] getLastPosition();
 
         class Default implements LeapFrogEngine {
@@ -441,14 +480,18 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             final private InstabilityHandler instabilityHandler;
             final private MassPreconditioner preconditioning;
 
+            final double[] mask;
+
             double[] lastGradient;
             double[] lastPosition;
 
             protected Default(Parameter parameter, InstabilityHandler instabilityHandler,
-                              MassPreconditioner preconditioning) {
+                              MassPreconditioner preconditioning,
+                              double[] mask) {
                 this.parameter = parameter;
                 this.instabilityHandler = instabilityHandler;
                 this.preconditioning = preconditioning;
+                this.mask = mask;
             }
 
             @Override
@@ -462,10 +505,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             }
 
             @Override
-            public double[] getLastGradient() { return lastGradient; }
+            public double[] getLastGradient() {
+                return lastGradient;
+            }
 
             @Override
-            public double[] getLastPosition() { return lastPosition; }
+            public double[] getLastPosition() {
+                return lastPosition;
+            }
 
             @Override
             public void updateMomentum(double[] position, double[] momentum, double[] gradient,
@@ -504,8 +551,9 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
             private WithTransform(Parameter parameter, Transform transform,
                                   InstabilityHandler instabilityHandler,
-                                  MassPreconditioner preconditioning) {
-                super(parameter, instabilityHandler, preconditioning);
+                                  MassPreconditioner preconditioning,
+                                  double[] mask) {
+                super(parameter, instabilityHandler, preconditioning, mask);
                 this.transform = transform;
             }
 
@@ -526,8 +574,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
                 gradient = transform.updateGradientLogDensity(gradient, unTransformedPosition,
                         0, unTransformedPosition.length);
-                mask(gradient);
-
+                mask(gradient, mask);
                 super.updateMomentum(position, momentum, gradient, functionalStepSize);
             }
 

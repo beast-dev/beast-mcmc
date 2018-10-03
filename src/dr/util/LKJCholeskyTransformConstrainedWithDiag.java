@@ -2,11 +2,13 @@ package dr.util;
 
 public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransformConstrained {
 
-    protected int CPCdimension;
+    private int CPCdimension;
+    private final int totalDimension;
 
     public LKJCholeskyTransformConstrainedWithDiag(int dim) {
         super(dim);
         this.CPCdimension = dim * (dim - 1) / 2;
+        this.totalDimension = dim * (dim + 1) / 2;
     }
 
     @Override
@@ -28,16 +30,16 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of " +
                 "values.";
-        assert values.length == dim * (dim + 1) / 2 : "The transform function can only be applied to CPCs appended " +
+        assert values.length == totalDimension : "The transform function can only be applied to CPCs appended " +
                 "with diagonals";
-        for (int k = 0; k < dim * (dim - 1) / 2; k++) {
+        for (int k = 0; k < CPCdimension; k++) {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
 
         double[] CPCs = subsetCholeskyOrCPCs(values);
         double[] diagonals = subsetDiagonals(values);
-
-        return pasteTogether(CPCs, diagonals);
+        double[] choleskyFactor = super.inverse(CPCs, 0, CPCs.length);
+        return pasteTogether(choleskyFactor, diagonals);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
     private double[] subsetCholeskyOrCPCs(double[] values) { //todo: to ensure Cholesky factor comes first in "values"
 
-        assert values.length == dim * (dim + 1) / 2;
+        assert values.length == totalDimension;
         double[] choleskyOrCPC = new double[CPCdimension];
         System.arraycopy(values, 0, choleskyOrCPC, 0, CPCdimension);
         return choleskyOrCPC;
@@ -65,7 +67,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
     private double[] subsetDiagonals(double[] values) { //todo: to ensure Cholesky factor comes first in "values"
 
-        assert values.length == dim * (dim + 1) / 2;
+        assert values.length == totalDimension;
         double[] diagonals = new double[dim];
         System.arraycopy(values, CPCdimension, diagonals, 0, dim);
         return diagonals;

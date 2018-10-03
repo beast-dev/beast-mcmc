@@ -68,18 +68,17 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
 //                    new CorrelationToCholesky(dim));
         }
 
-        // Compose
-        // return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
         boolean withDiag = xo.getAttribute(WITH_DIAGONALS, false);
 
         if (!withDiag) {
+
             return new Transform.ComposeMultivariable(fisherZTransforms, LKJTransform);
         } else {
 
-            LKJCholeskyTransformConstrainedWithDiag LKJwithLOG;
+            LKJCholeskyTransformConstrainedWithDiag LKJwithNULL;
 
             if (cholesky) {
-                LKJwithLOG = new LKJCholeskyTransformConstrainedWithDiag(dim);
+                LKJwithNULL = new LKJCholeskyTransformConstrainedWithDiag(dim);
             } else {
                 throw new RuntimeException("Not yet implemented");
             }
@@ -88,8 +87,8 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
                 transforms.add(Transform.LOG);
             }
 
-            Transform.Array fisherZTransformsWithNull = new Transform.Array(transforms, null);
-            Transform jointTrans = new Transform.ComposeMultivariable(fisherZTransformsWithNull, LKJwithLOG);
+            Transform.Array fisherZTransformsWithLOG = new Transform.Array(transforms, null);
+            Transform jointTrans = new Transform.ComposeMultivariable(fisherZTransformsWithLOG, LKJwithNULL);
 
             return jointTrans;
         }

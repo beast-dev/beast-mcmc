@@ -100,6 +100,13 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return offDiagonalParameter;
     }
 
+    public Parameter getUntransformedOffDiagonalParameter() {
+        if (offDiagonalParameter instanceof TransformedMultivariateParameter) {
+            return ((TransformedMultivariateParameter) offDiagonalParameter).getUntransformedParameter();
+        }
+        return offDiagonalParameter;
+    }
+
     abstract double[] updateGradientDiagonal(double[] gradient);
 
     abstract double[] updateGradientOffDiagonal(double[] gradient);
@@ -131,4 +138,3 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
 }
-

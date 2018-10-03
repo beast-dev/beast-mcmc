@@ -139,7 +139,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         }
 
         if (shouldCheckGradient()) {
-            checkGradient(joint, transform);
+            checkGradient(joint);
 
         }
 
@@ -207,7 +207,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    public void checkGradient(final Likelihood joint, Transform transform) {
+    public void checkGradient(final Likelihood joint) {
 
         if (parameter.getDimension() != gradientProvider.getDimension()) {
             throw new RuntimeException("Unequal dimensions");

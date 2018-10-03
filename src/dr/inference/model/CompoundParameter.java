@@ -143,9 +143,11 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         } //else {
         IntersectionBounds newBounds = new IntersectionBounds(getDimension());
         newBounds.addBounds(bounds);
+        newBounds.addBounds(boundary);
 
 //        }
-        ((IntersectionBounds) bounds).addBounds(boundary);
+//        ((IntersectionBounds) bounds).addBounds(boundary);
+        bounds = newBounds;
     }
 
     public Bounds<Double> getBounds() {

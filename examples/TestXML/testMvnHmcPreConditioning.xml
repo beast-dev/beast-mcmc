@@ -1,0 +1,390 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+	<parameter id="draw" value="1 2 3 4 5 6 7 8 9 10"/>
+
+	<multivariateNormalDistributionModel id="normal">
+		<meanParameter>
+   			<parameter id="mu" value="10 9 8 7 6 5 4 3 2 1"/>
+ 		</meanParameter>
+ 		<precisionParameter>
+ 			<matrixParameter>
+				<parameter value="2.56080650520739 2.29971059339517 -1.46660288265402 1.94190906373727 -1.47304986640106 5.73800481230492 -3.42757214050313 1.38023505531852 2.73594002861004 -3.88504322712838"/>
+				<parameter value="2.29971059339518 80.3047433837855 1.01632761670971 -1.66635185586538 -3.70292357072299 5.57429824130936 -1.31196260543776 0.999168419650946 0.26013592123774 -1.58516840021119"/>
+				<parameter value="-1.46660288265402 1.01632761670972 2.44068583707679 -2.7029300146619 0.454881999216938 -4.08661873902925 3.09561015291054 -0.713982045506212 -2.57817702989478 3.48581769961422"/>
+				<parameter value="1.94190906373727 -1.66635185586539 -2.7029300146619 3.91944768125092 0.102373615297518 4.54144965091747 -3.81651071938563 1.2354165922108 3.42456159270693 -4.06119610981782"/>
+				<parameter value="-1.47304986640107 -3.70292357072298 0.45488199921694 0.102373615297515 2.29448363698785 -4.24678026314519 1.7145273004787 -0.583492825470015 -0.895196661522286 2.04308202306436"/>
+				<parameter value="5.73800481230492 5.57429824130934 -4.08661873902926 4.54144965091748 -4.24678026314519 14.5517828152262 -8.49510747026092 2.76990421051643 6.39908007303101 -9.70153620301488"/>
+				<parameter value="-3.42757214050312 -1.31196260543774 3.09561015291055 -3.81651071938563 1.71452730047869 -8.49510747026091 5.75534895313463 -1.78599943198344 -4.58901183630936 6.4226816885871"/>
+				<parameter value="1.38023505531852 0.99916841965094 -0.713982045506215 1.2354165922108 -0.583492825470015 2.76990421051643 -1.78599943198345 1.07899333583511 1.54942829225465 -1.86555949224669"/>
+				<parameter value="2.73594002861004 0.260135921237729 -2.57817702989479 3.42456159270693 -0.895196661522284 6.399080073031 -4.58901183630936 1.54942829225465 3.94719781846939 -5.16104006099744"/>
+				<parameter value="-3.88504322712838 -1.58516840021118 3.48581769961422 -4.06119610981782 2.04308202306436 -9.70153620301487 6.4226816885871 -1.86555949224668 -5.16104006099744 7.52787509173555"/>
+			</matrixParameter>
+			<!--<matrixParameter>-->
+				<!--<parameter value="2.56080650520739 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 800.3047433837855 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 2.44068583707679 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 3.91944768125092 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 0.0 0.58152262581522 0.0 0.0 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 0.0 0.0 14.5517828152262 0.0 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 0.0 0.0 0.0 5.75534895313463 0.0 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.07899333583511 0.0 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 3.94719781846939 0.0"/>-->
+				<!--<parameter value="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 7.52787509173555"/>-->
+			<!--</matrixParameter>-->
+		</precisionParameter>
+	</multivariateNormalDistributionModel>
+
+	<multivariateDistributionLikelihood id="distribution">
+		<distribution>
+			<multivariateNormalDistributionModel idref="normal"/>
+		</distribution>
+		<data>
+			<parameter idref="draw"/>
+ 		</data>
+	</multivariateDistributionLikelihood>
+
+	<operators id="operators.rw">
+
+        <randomWalkOperator windowSize="0.75" weight="1">
+            <parameter idref="draw"/>
+        </randomWalkOperator>
+
+	</operators>
+
+	<operators id="operators.hmc">
+
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+ 			drawVariance="1.0" autoOptimize="true">
+ 			<gradient>
+				<distributionLikelihood idref="distribution"/>
+			</gradient>
+			<parameter idref="draw"/>
+ 		</hamiltonianMonteCarloOperator>
+
+	</operators>
+
+	<operators id="operators.hmc.diagonalPreconditioning">
+
+		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+									   drawVariance="1.0" autoOptimize="true" preconditioning="diagonal" preconditioningUpdateFrequency="1">
+			<hessian>
+				<distributionLikelihood idref="distribution"/>
+			</hessian>
+			<parameter idref="draw"/>
+		</hamiltonianMonteCarloOperator>
+
+	</operators>
+
+    <operators id="operators.hmc.fullPreconditioning">
+
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" preconditioning="full" preconditioningUpdateFrequency="1">
+            <hessian>
+                <distributionLikelihood idref="distribution"/>
+            </hessian>
+            <parameter idref="draw"/>
+        </hamiltonianMonteCarloOperator>
+
+    </operators>
+
+    <operators id="operators.hmc.secantPreconditioning">
+
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" preconditioning="secant" preconditioningUpdateFrequency="1">
+            <gradient>
+                <distributionLikelihood idref="distribution"/>
+            </gradient>
+            <parameter idref="draw"/>
+        </hamiltonianMonteCarloOperator>
+
+    </operators>
+
+    <operators id="operators.hmc.adaptivePreconditioning">
+
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.2" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="true" preconditioning="secant" preconditioningUpdateFrequency="1">
+            <gradient>
+                <distributionLikelihood idref="distribution"/>
+            </gradient>
+            <parameter idref="draw"/>
+        </hamiltonianMonteCarloOperator>
+
+    </operators>
+
+    <mcmc id="mcmc.hmc.adaptivePreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.adaptivePreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.adaptivePreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.adaptivePreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcAdaptivePreconditioning.log">
+            <likelihood idref="likelihood.hmc.adaptivePreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.adaptivePreconditioning"/>
+        </property>
+    </report>
+
+    <mcmc id="mcmc.hmc.secantPreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.secantPreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.secantPreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.secantPreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcSecantPreconditioning.log">
+            <likelihood idref="likelihood.hmc.secantPreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.secantPreconditioning"/>
+        </property>
+    </report>
+
+    <mcmc id="mcmc.hmc.fullPreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.fullPreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.fullPreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.fullPreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcFullPreconditioning.log">
+            <likelihood idref="likelihood.hmc.fullPreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.fullPreconditioning"/>
+        </property>
+    </report>
+
+    <mcmc id="mcmc.hmc.diagonalPreconditioning" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc.diagonalPreconditioning">
+                <distributionLikelihood idref="distribution"/>
+                <dummyLikelihood>
+                    <distributionLikelihood idref="distribution"/>
+                    <parameter idref="draw"/>
+                </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc.diagonalPreconditioning"/>
+        <log logEvery="100000">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmc.diagonalPreconditioning"/>
+            </column>
+            <column label="Draw" sf="6" width="12">
+                <parameter idref="draw"/>
+            </column>
+        </log>
+        <log logEvery="1" fileName="testMvnHmcDiagonalPreconditioning.log">
+            <likelihood idref="likelihood.hmc.diagonalPreconditioning"/>
+            <parameter idref="draw"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <object idref="mcmc.hmc.diagonalPreconditioning"/>
+        </property>
+    </report>
+
+    <mcmc id="mcmc.hmc" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.hmc"/>
+		<log logEvery="100000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>
+		</log>
+		<log logEvery="1" fileName="testMvnHmc.log">
+			<likelihood idref="likelihood.hmc"/>
+			<parameter idref="draw"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.hmc"/>
+		</property>
+	</report>
+<!--&lt;!&ndash;-->
+
+	<mcmc id="mcmc.rw" chainLength="50000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.rw">
+	            <distributionLikelihood idref="distribution"/>
+            	<dummyLikelihood>
+					<distributionLikelihood idref="distribution"/>
+					<parameter idref="draw"/>
+	            </dummyLikelihood>
+            </likelihood>
+        </posterior>
+        <operators idref="operators.rw"/>
+		<log logEvery="100000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.rw"/>
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="draw"/>
+			</column>
+		</log>
+		<log logEvery="10" fileName="testMvnRw.log">
+			<likelihood idref="likelihood.rw"/>
+			<parameter idref="draw"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.rw"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>
+	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcDiagonalPreconditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcFullPreconditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcSecantPreconditioning.log" stdError="true"/>
+    <traceAnalysis fileName="testMvnHmcAdaptivePreconditioning.log" stdError="true"/>
+ <!--&ndash;&gt;-->
+
+</beast>
+
+<!--
+burnIn   <= 5000,   maxState  = 50000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.rw	-16.0945	2.1704	-15.8664	-20.0656	-12.154	83.4986	-16.8124	-14.072	*
+draw1	11.764	2.7146	11.5364	6.9715	17.4992	36.2864	8.9083	12.3051	*
+draw2	9.0137	0.1045	9.017	8.8121	9.201	155.5755	8.9439	9.0686
+draw3	8.1436	2.0487	8.2531	4.2136	12.1339	23.894	6.6299	9.2961	*
+draw4	7.9467	2.2325	7.9126	3.2038	11.8998	9.3025	6.2193	9.2626	*
+draw5	3.5699	2.9813	3.6747	-1.6196	8.6342	5.6168	2.381	7.0602	*
+draw6	2.4763	1.7916	2.1653	-0.4031	5.452	5.9902	-0.0333	2.5047	*
+draw7	3.3042	2.7037	2.9839	-1.0544	8.1646	22.6146	-0.1909	3.9814	*
+draw8	2.524	2.5843	2.4492	-2.3678	7.3511	20.5954	0.3993	3.8447	*
+draw9	1.6367	3.6526	1.0195	-3.7749	9.8375	6.5894	-2.5336	1.9528	*
+draw10	-0.0185	1.9969	-0.1403	-3.1322	5.0719	10.5621	-1.335	1.0148	*
+
+ * WARNING: The results of this MCMC analysis may be invalid as
+            one or more statistics had very low effective sample sizes (ESS)
+
+burnIn   <= 5000,   maxState  = 50000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmc	-16.1506	2.3589	-15.7961	-20.7617	-12.1075	3751.8881	-16.5384	-13.6212
+draw1	10.0859	3.532	10.0968	3.1685	16.9705	1249.4532	7.732	12.532
+draw2	9.0006	0.1304	9.0005	8.7474	9.2655	45001	8.9173	9.0899
+draw3	7.9772	2.0839	7.9902	3.9268	12.1116	2660.8093	6.6554	9.4432
+draw4	7.0403	2.273	7.0665	2.5371	11.4359	1783.9265	5.4815	8.5436
+draw5	5.8959	3.0582	5.87	-0.0797	11.9513	1332.6163	3.7737	7.872
+draw6	4.9244	2.7683	4.9025	-0.4675	10.3887	1160.4657	3.0067	6.732
+draw7	4.0721	3.0642	4.0722	-1.919	10.0189	2010.1346	1.9737	6.0924
+draw8	2.9555	2.5807	2.975	-2.2001	7.9385	1654.9758	1.4763	4.9259
+draw9	2.0649	3.5311	2.0958	-4.7574	9.0497	1326.7315	-0.1524	4.6628
+draw10	0.979	2.5	0.967	-3.9226	5.8305	1681.2325	-0.8103	2.5525
+
+
+burnIn   <= 5000,   maxState  = 50000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmc.diagonalPreconditioning	-16.0695	2.2943	-15.7448	-20.6459	-12.1662	9773.83	-16.5011	-13.6748
+draw1	9.9204	3.4961	9.9412	3.0638	16.7003	3420.4884	7.4794	12.2032
+draw2	8.9993	0.1175	8.9989	8.7776	9.2407	8234.3892	8.9271	9.0849
+draw3	7.9966	2.0932	7.9935	3.8879	12.0606	11978.5869	6.5627	9.3884
+draw4	6.9592	2.3053	6.9602	2.363	11.3138	4548.3727	5.2951	8.4274
+draw5	6.1162	3.1252	6.1356	-0.1525	12.0941	2647.6115	4.1631	8.3346
+draw6	5.0994	2.7949	5.0896	-0.3989	10.5821	2090.7082	3.0863	6.8349
+draw7	4.0038	3.0861	4.0001	-2.2166	9.8319	4127.3789	2.0459	6.2032
+draw8	3.0437	2.5576	3.0577	-1.9573	8.0566	6287.063	1.4409	4.8602
+draw9	1.9453	3.5442	1.9399	-5.0622	8.81	4663.3346	-0.1609	4.596
+draw10	1.006	2.5259	1.0015	-3.9055	5.9842	4036.9718	-0.5799	2.8157
+
+
+burnIn   <= 5000,   maxState  = 50000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmc.fullPreconditioning	-16.15	2.3201	-15.7988	-20.8097	-12.3054	2422.1202	-16.6432	-13.7821
+draw1	9.958	3.5893	9.9407	3.1319	17.1008	45001	7.7612	12.6684
+draw2	9	0.1285	9	8.7437	9.2535	31243.6448	8.9211	9.0932
+draw3	8.0107	2.0965	8.0227	3.7604	11.9755	13420.7175	6.512	9.3454
+draw4	6.9957	2.2916	7.0129	2.4399	11.4152	25376.7761	5.3303	8.427
+draw5	5.9882	3.1587	5.9962	-0.127	12.1522	45001	3.7349	8.0398
+draw6	4.9928	2.8525	5.0045	-0.4825	10.5258	45001	3.0153	6.9472
+draw7	3.9861	3.1086	4.0016	-2.2547	9.9521	20325.3406	2.0379	6.2406
+draw8	3.0312	2.5877	3.0297	-2.0038	8.0956	25483.3632	1.2619	4.7467
+draw9	2.0187	3.5284	2.0298	-4.9974	8.8993	45001	-0.3462	4.4101
+draw10	1.0006	2.4913	1.0038	-3.8274	5.966	33402.3034	-0.559	2.7943
+
+
+burnIn   <= 5000,   maxState  = 50000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood.hmc.secantPreconditioning	-16.0917	2.3003	-15.7681	-20.6549	-12.2366	2467.2612	-16.6718	-13.8201
+draw1	9.9899	3.5008	9.9844	3.1754	16.9122	32928.8295	7.818	12.4991
+draw2	8.9998	0.1267	8.9998	8.7556	9.2527	34647.9169	8.92	9.0891
+draw3	7.9923	2.0872	7.9851	3.922	12.1316	12517.8147	6.5243	9.2907
+draw4	6.9953	2.3023	6.9993	2.4616	11.5277	26692.9611	5.4606	8.5335
+draw5	5.972	3.1306	5.9672	-0.0414	12.1973	45001	3.6469	7.8277
+draw6	4.9792	2.8112	4.9808	-0.7143	10.3438	45001	3.2432	6.9156
+draw7	4.0128	3.0769	3.998	-2.0921	9.9318	19001.6271	1.8468	5.9863
+draw8	3.0105	2.5665	3.0149	-2.0447	8.0105	23713.0919	1.2392	4.694
+draw9	2.019	3.5667	2.0086	-5.1678	8.8182	45001	-0.3573	4.4604
+draw10	0.9788	2.5042	0.9778	-3.931	5.9261	28234.2678	-0.4781	2.854
+
+-->

@@ -106,18 +106,18 @@
     <!-- ************************************************** -->
     <!-- Correlation -->
 
-    <!-- <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation" traitName="simTrait"> -->
-    <!--     <wishartStatistics  traitName="simTrait"> -->
-    <!--         <traitDataLikelihood idref="bmLikelihood"/> -->
-    <!--     </wishartStatistics> -->
-    <!--     <traitDataLikelihood idref="bmLikelihood"/> -->
-    <!--     <compoundSymmetricMatrix idref="precisionMatrix"/> -->
-    <!-- </precisionGradient> -->
-
-    <precisionGradient id="precisionCorrelationGradientPreOrder" parameter="precisionCorrelation" traitName="simTrait">
+    <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation" traitName="simTrait">
+        <wishartStatistics  traitName="simTrait">
+            <traitDataLikelihood idref="bmLikelihood"/>
+        </wishartStatistics>
         <traitDataLikelihood idref="bmLikelihood"/>
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>
+
+    <!-- <precisionGradient id="precisionCorrelationGradientPreOrder" parameter="precisionCorrelation" traitName="simTrait"> -->
+    <!--     <traitDataLikelihood idref="bmLikelihood"/> -->
+    <!--     <compoundSymmetricMatrix idref="precision.correlation"/> -->
+    <!-- </precisionGradient> -->
 
     <LKJCorrelationPrior id="prior.cholesky" shapeParameter="1.0" dimension="4">
 		<data>
@@ -128,7 +128,12 @@
 	<operators id="bmOperators.correlation.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
  			drawVariance="1.0">
- 			<gradient idref="precisionCorrelationGradientPreOrder"/>
+            <jointGradient>
+                <gradient>
+                    <distributionLikelihood idref="prior.cholesky"/>
+                </gradient>
+                <gradient idref="precisionCorrelationGradient"/>
+            </jointGradient>
 			<parameter idref="precision.correlation"/>
             <LKJTransform dimension = "4"/>
  		</hamiltonianMonteCarloOperator>

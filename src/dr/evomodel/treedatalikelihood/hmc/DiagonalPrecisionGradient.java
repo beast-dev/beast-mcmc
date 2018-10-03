@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
@@ -51,6 +52,11 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient {
     @Override
     public int getDimension() {
         return getDimensionDiagonal();
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix.getDiagonalParameter();
     }
 
     @Override

@@ -102,6 +102,6 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return BranchRateGradient.class;
+        return NodeHeightGradientForDiscreteTrait.class;
     }
 }

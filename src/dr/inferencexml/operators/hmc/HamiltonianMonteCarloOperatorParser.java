@@ -31,6 +31,7 @@ import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.NoUTurnOperator;
 import dr.util.Transform;
 import dr.xml.*;
@@ -50,6 +51,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
+    private final static String PRECONDITIONING = "preconditioning";
+    private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+    private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
 
     @Override
     public String getParserName() {
@@ -64,19 +68,31 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         return mode;
     }
 
+    private MassPreconditioner.Type parsePreconditioning(XMLObject xo) throws XMLParseException {
+
+        return MassPreconditioner.Type.parseFromString(
+                xo.getAttribute(PRECONDITIONING, MassPreconditioner.Type.NONE.getName())
+        );
+    }
+
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         int nSteps = xo.getIntegerAttribute(N_STEPS);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
-        double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int runMode = parseRunMode(xo);
+
+        MassPreconditioner.Type preconditioningType = parsePreconditioning(xo);
 
         double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
         if (randomStepFraction > 1) {
             throw new XMLParseException("Random step count fraction must be < 1.0");
         }
+
+        int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 0);
+
+        int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
 
@@ -93,13 +109,16 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
 
+        HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
+                stepSize, nSteps, randomStepFraction, preconditioningUpdateFrequency, preconditioningDelay
+        );
 
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
-                    stepSize, nSteps, drawVariance, randomStepFraction);
+                    runtimeOptions, preconditioningType);
         } else {
             return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
-                    stepSize, nSteps, drawVariance);
+                    stepSize, nSteps);
         }
     }
 
@@ -112,8 +131,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
-            AttributeRule.newDoubleRule(DRAW_VARIANCE),
+            AttributeRule.newDoubleRule(DRAW_VARIANCE, true), // TODO Deprecate
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             new ElementRule(Parameter.class),

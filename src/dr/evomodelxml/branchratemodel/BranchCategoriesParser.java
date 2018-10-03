@@ -39,7 +39,7 @@ public class BranchCategoriesParser extends AbstractXMLObjectParser {
 
     private static final String BRANCH_CATEGORIES = "branchCategories";
     static final String CATEGORY = "category";
-    static final String ALLOCATION = "rateCategories";
+    private static final String ALLOCATION = "rateCategories";
 
     public static final String RANDOMIZE = "randomize";
 
@@ -59,7 +59,8 @@ public class BranchCategoriesParser extends AbstractXMLObjectParser {
             parseCladeCategories(xo, cm);
             cladeModel = cm;
         } else {
-            CountableBranchCategoryProvider.IndependentBranchCategoryModel cm = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, allocationParameter);
+            CountableBranchCategoryProvider.IndependentBranchCategoryModel cm =
+                    new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, allocationParameter);
             cm.randomize();
             cladeModel = cm;
         }
@@ -67,7 +68,8 @@ public class BranchCategoriesParser extends AbstractXMLObjectParser {
         return cladeModel;
     }
 
-    static void parseCladeCategories(XMLObject xo, CountableBranchCategoryProvider.CladeBranchCategoryModel cm) throws XMLParseException {
+    static void parseCladeCategories(XMLObject xo, CountableBranchCategoryProvider.CladeBranchCategoryModel cm)
+            throws XMLParseException {
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
             if (xo.getChild(i) instanceof XMLObject) {

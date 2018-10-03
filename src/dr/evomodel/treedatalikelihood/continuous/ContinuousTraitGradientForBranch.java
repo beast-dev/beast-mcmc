@@ -217,7 +217,7 @@ public interface ContinuousTraitGradientForBranch {
                                   DenseMatrix64F gradQ, DenseMatrix64F gradN) {
 
             final double rate = branchRateModel.getBranchRate(tree, node);
-            final double differential = branchRateModel.getBranchRateDifferential(rate);
+            final double differential = branchRateModel.getBranchRateDifferential(tree, node);
             final double scaling = differential / rate;
 
             // Q_i w.r.t. rate

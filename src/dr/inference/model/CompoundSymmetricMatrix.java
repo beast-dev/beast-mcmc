@@ -155,7 +155,7 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
             return gradient;
         } else {
             CorrelationToCholesky transform = new CorrelationToCholesky(dim);
-            return transform.updateGradientInverse(gradient,
+            return transform.updateGradientInverseUnWeightedLogDensity(gradient,
                     ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
                     0, gradient.length);
         }

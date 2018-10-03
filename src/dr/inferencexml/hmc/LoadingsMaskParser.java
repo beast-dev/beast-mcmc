@@ -2,7 +2,6 @@ package dr.inferencexml.hmc;
 
 import dr.inference.hmc.MaskedGradient;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.TransposedMatrixParameter;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -28,12 +27,12 @@ public class LoadingsTransformParser extends AbstractXMLObjectParser {
 
         List<Transform> transforms = new ArrayList<Transform>();
 
-        for (int col = 0; col < nCols; ++col) {
-            for (int row = 0; row < nRows; ++row) {
-                if (row != col) {
-                    transforms.add(Transform.NONE);
-                } else {
+        for (int row = 0; row < nRows; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                if (row == col) {
                     transforms.add(Transform.LOG);
+                } else {
+                    transforms.add(Transform.NONE);
                 }
             }
         }

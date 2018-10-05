@@ -44,6 +44,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     final int dimTrait;
     private final PrecisionType precisionType;
 
+    private final boolean[] missingVector;
+
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
                                     List<Integer> missingIndices,
@@ -58,6 +60,15 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.dimTrait = dimTrait;
         this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
         this.precisionType = precisionType;
+
+        boolean[] missingVector = null;
+        if (useMissingIndices == true){
+            missingVector = new boolean[parameter.getDimension()];
+            for (int index : missingIndices){
+                missingVector[index] = true;
+            }
+        }
+        this.missingVector = missingVector;
     }
 
     public boolean bufferTips() { return true; }
@@ -75,6 +86,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public CompoundParameter getParameter() { return parameter; }
 
     public List<Integer> getMissingIndices() { return missingIndices; }
+
+    private boolean[] getMissingVector() {return missingVector; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
@@ -176,7 +189,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
                 partial[offset + j] = p.getParameterValue(pIndex);
 
-                final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
+                final boolean missing = missingVector != null && missingVector[missingIndex];
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);

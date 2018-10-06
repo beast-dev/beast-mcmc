@@ -339,10 +339,12 @@
     <property name="Mac_dir" value="${release_dir}/Mac"/>
     <property name="Linux_dir" value="${release_dir}/Linux"/>
     <property name="Windows_dir" value="${release_dir}/Windows"/>
+    <property name="Windows_launchers_dir" value="${release_dir}/Windows_Launchers"/>
 
     <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_name} v${version}"/>
     <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_name}v${version}"/>
     <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_name} v${version}"/>
+    <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_name} v${version}"/>
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                   or install it in the default directory and change the location of launch4j.dir -->
@@ -399,6 +401,14 @@
                   productVersion="${version_number}.0"
                   txtProductVersion="${version}"/>
 
+        <!-- BEAST v?.?.?.exe -->
+        <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
+                  outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
         <!-- TreeAnnotator v?.?.?.exe -->
         <launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
                   jar="${dist}/beast.jar"
@@ -439,6 +449,104 @@
         </zip>
 
         <echo message="Windows version release is finished."/>
+    </target>
+
+    <target name="windows_launchers" depends="dist"
+            description="release Windows (launchers) version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
+
+        <delete dir="${Windows_launchers_package_dir}"/>
+        <!-- Create the release directory -->
+        <mkdir dir="${Windows_launchers_package_dir}"/>
+
+        <property name="launch4j.dir" location="${Windows_launchers_dir}/launch4j"/>
+        <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
+                 classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar"/>
+
+        <copy todir="${Windows_launchers_package_dir}/doc">
+            <fileset dir="${common_dir}/doc"/>
+        </copy>
+        <copy todir="${Windows_launchers_package_dir}/examples">
+            <fileset dir="examples"/>
+        </copy>
+        <copy todir="${Windows_launchers_package_dir}/native">
+            <fileset dir="native">
+                <exclude name="deprecated/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${Windows_launchers_package_dir}/bin">
+            <fileset dir="${Windows_dir}/scripts"/>
+        </copy>
+        <copy file="${dist}/beauti.jar" todir="${Windows_launchers_package_dir}/lib"/>
+        <copy file="${dist}/beast.jar" todir="${Windows_launchers_package_dir}/lib"/>
+        <!--
+        <copy todir="${Windows_package_dir}/lib">
+            <fileset dir="${Windows_dir}/lib"/>
+        </copy>
+        -->
+        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Windows_launchers_package_dir}"/>
+        <copy file="${common_dir}/README.txt" todir="${Windows_launchers_package_dir}"/>
+
+        <!-- BEAUTi v?.?.?.exe -->
+        <launch4j configFile="${Windows_launchers_dir}/BEAUti_launch4j.xml"
+                  outfile="${Windows_launchers_package_dir}/${BEAUti_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- BEAST v?.?.?.exe -->
+        <launch4j configFile="${Windows_launchers_dir}/BEAST_launch4j.xml"
+                  outfile="${Windows_launchers_package_dir}/${BEAST_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- BEAST v?.?.?.exe -->
+        <launch4j configFile="${Windows_launchers_dir}/BEAST_launch4j.xml"
+                  outfile="${Windows_launchers_package_dir}/${BEAST_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- TreeAnnotator v?.?.?.exe -->
+        <launch4j configFile="${Windows_launchers_dir}/TreeAnnotator_launch4j.xml"
+                  outfile="${Windows_launchers_package_dir}/${TreeAnnotator_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- LogCombiner v?.?.?.exe -->
+        <launch4j configFile="${Windows_launchers_dir}/LogCombiner_launch4j.xml"
+                  outfile="${Windows_launchers_package_dir}/${LogCombiner_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <launch4j configFile="${Windows_launchers_dir}/TreeStat_launch4j.xml"
+                  outfile="${Windows_launchers_package_dir}/${TreeStat_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- LogAnalyser v?.?.?.exe
+          <launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
+                    jar="${dist}/beast.jar"
+                    outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
+                    fileVersion="${version}.0"
+                    txtFileVersion="${version}"
+                    productVersion="${version}.0"
+                    txtProductVersion="${version}"/>	-->
+
+        <zip destfile="${release_dir}/${BEAST_name} v${version}_launchers.zip">
+            <zipfileset dir="${Windows_launchers_package_dir}" prefix="${BEAST_name} v${version}"/>
+        </zip>
+
+        <echo message="Windows launchers version release is finished."/>
     </target>
 
     <target name="linux" depends="dist"

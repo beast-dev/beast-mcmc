@@ -5,6 +5,7 @@
   	<mainClass>dr.app.tools.LogAnalyser</mainClass>
   	<cp>./lib/beast.jar</cp>
   </classPath>
+  <dontWrapJar>true</dontWrapJar>
   <jre>
     <minVersion>1.6.0</minVersion>
     <initialHeapSize>256</initialHeapSize>

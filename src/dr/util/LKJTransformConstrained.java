@@ -214,7 +214,7 @@ public class LKJTransformConstrained extends LKJCholeskyTransformConstrained {
     public double[] inverseRecursion(double[] values, int from, int to) {
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
         assert dimVector * (dimVector - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
-        for (int k = 0; k < dimVector; k++) {
+        for (int k = 0; k < dim; k++) {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
 

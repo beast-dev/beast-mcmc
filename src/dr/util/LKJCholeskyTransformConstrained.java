@@ -46,7 +46,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     // values = CPCs
     @Override
     protected double[] inverse(double[] values) {
-        for (int k = 0; k < dimVector; k++) {
+        for (int k = 0; k < dim; k++) {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
 

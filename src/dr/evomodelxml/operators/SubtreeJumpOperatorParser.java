@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeJumpOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.CoercableMCMCOperator;
@@ -83,7 +84,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubtreeJumpOperator.class;
+        return FixedHeightSubtreePruneRegraftOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

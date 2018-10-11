@@ -1,5 +1,5 @@
 /*
- * SubtreeJumpOperator.java
+ * FixedHeightSubtreePruneRegraftOperator.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -30,16 +30,19 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
-import dr.inference.operators.*;
-import dr.math.distributions.NormalDistribution;
+import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.CoercionMode;
+import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implements the Subtree Jump move.
+ * A tunable version of the fixed height subtree prune regraft move.
  *
  * @author Andrew Rambaut
+ * @author Luiz Max Carvalho
  * @version $Id$
  */
 public class SubtreeJumpOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
@@ -47,10 +50,10 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     private double size = 1.0;
     private double accP = 0.234;
     private boolean uniform = false;
-    
+
     private final TreeModel tree;
     private final CoercionMode mode;
-    
+
 
     /**
      * Constructor
@@ -225,13 +228,13 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     	return originalIndex;
     }
 
-    public static double [] normLog(double[] x, double epsilon){ 
+    public static double [] normLog(double[] x, double epsilon){
     	/* x is a vector of log values
     	 * @return its normalised version y (sum(y) = 1) */
-    	    	
+
     	/* sorting only makes sense for very large n*/
     	//    	double[] sortedX = x;
-    	//    	java.util.Arrays.sort(sortedX);  
+    	//    	java.util.Arrays.sort(sortedX);
     	//    	double maxVal = sortedX[sortedX.length];
 
     	double maxVal = Double.NEGATIVE_INFINITY;
@@ -284,7 +287,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     }
 
     public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double prob = Utils.getAcceptanceProbability(this);
         double targetProb = getTargetAcceptanceProbability();
 
         if (size <=0) {

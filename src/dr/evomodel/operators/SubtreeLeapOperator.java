@@ -48,6 +48,7 @@ import java.util.Map;
  * uniformly.
  *
  * @author Andrew Rambaut
+ * @author Luiz Max Carvalho
  * @version $Id$
  */
 public class SubtreeLeapOperator extends AbstractTreeOperator implements CoercableMCMCOperator {

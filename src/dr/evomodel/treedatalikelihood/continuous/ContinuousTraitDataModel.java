@@ -87,7 +87,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public List<Integer> getMissingIndices() { return missingIndices; }
 
-    private boolean[] getMissingVector() {return missingVector; }
+    public boolean[] getMissingVector() {return missingVector; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 

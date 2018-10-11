@@ -109,7 +109,7 @@ public interface GammaGibbsProvider {
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
         private final TreeTrait tipTrait;
-        private final List<Integer> missingIndices;
+        private final boolean[] missingVector;
 
         private double tipValues[];
 
@@ -121,7 +121,7 @@ public interface GammaGibbsProvider {
             this.traitParameter = dataModel.getParameter();
             this.precisionParameter = dataModel.getSamplingPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
-            this.missingIndices = dataModel.getMissingIndices();
+            this.missingVector = dataModel.getMissingVector();
         }
 
         @Override
@@ -136,7 +136,7 @@ public interface GammaGibbsProvider {
             for (int taxon = 0; taxon < taxonCount; ++taxon) {
 
                 int offset = traitDim * taxon;
-                if (missingIndices == null || !missingIndices.contains(dim + offset)){
+                if (missingVector == null || !missingVector[dim + offset]){
                     double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
                     double tipValue = tipValues[taxon * traitDim + dim];
 

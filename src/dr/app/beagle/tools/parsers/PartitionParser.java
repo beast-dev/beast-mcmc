@@ -32,9 +32,11 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evoxml.util.DataTypeUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -53,6 +55,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
     public static final String FROM = "from";
     public static final String TO = "to";
     public static final String EVERY = "every";
+    public static final String DATA_TYPE = "dataType";
 	
 	@Override
 	public String getParserName() {
@@ -75,6 +78,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
         int from = 0;
         int to = -1;
         int every = xo.getAttribute(EVERY, 1);
+        DataType dataType = null;
 		
 		if (xo.hasAttribute(FROM)) {
 			from = xo.getIntegerAttribute(FROM) - 1;
@@ -119,8 +123,12 @@ public class PartitionParser extends AbstractXMLObjectParser {
 			branchModel = new HomogeneousBranchModel(substitutionModel);
 		
 		}
-		
-		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every);
+
+		if (xo.hasAttribute(DATA_TYPE)){
+			dataType = DataTypeUtils.getDataType(xo);
+		}
+
+		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every, dataType);
 
 		if (rootSequence != null) {
 				partition.setRootSequence(rootSequence);
@@ -145,6 +153,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 								"Determines how many sites are selected. A value of 3 will select every third site starting from <b>"
 										+ FROM
 										+ "</b>, default is 1 (every site)"), //
+				AttributeRule.newStringRule(DataType.DATA_TYPE, true),
 				new ElementRule(TreeModel.class), //
 				new XORRule(new ElementRule(BranchModel.class),
 						new ElementRule(SubstitutionModel.class), false), //

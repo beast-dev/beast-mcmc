@@ -120,7 +120,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 
 		FrequencyModel freqModel;
 
-		List<FrequencyModel> freqModels = new ArrayList<>();
+		List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
 		for (int i = 0; i < xo.getChildCount(); i++) {
 			Object cxo = xo.getChild(i);
 			if (cxo instanceof FrequencyModel) {

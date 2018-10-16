@@ -45,6 +45,9 @@ import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 import dr.xml.XORRule;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Filip Bielejec
  * @version $Id$
@@ -105,10 +108,40 @@ public class PartitionParser extends AbstractXMLObjectParser {
 					"Illegal 'every' attribute in patterns element");
 		}// END: every check
 
+		if (xo.hasAttribute(DATA_TYPE)){
+			dataType = DataTypeUtils.getDataType(xo);
+		}
+
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 		
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
-		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+
+		//FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+
+		FrequencyModel freqModel;
+
+		List<FrequencyModel> freqModels = new ArrayList<>();
+		for (int i = 0; i < xo.getChildCount(); i++) {
+			Object cxo = xo.getChild(i);
+			if (cxo instanceof FrequencyModel) {
+				freqModels.add((FrequencyModel) cxo);
+			}
+		}
+
+		if(freqModels.size()==1){
+			freqModel = freqModels.get(0);
+		}else{
+			double [] freqParameter = new double[freqModels.size()*freqModels.get(0).getFrequencyCount()];
+			int index = 0;
+			for(int i = 0; i < freqModels.size(); i++){
+				for(int j = 0; j < freqModels.get(i).getFrequencyCount(); j++){
+					freqParameter[index] = (freqModels.get(i).getFrequency(j))/freqModels.size();
+					index++;
+				}
+			}
+			freqModel = new FrequencyModel(dataType, freqParameter);
+		}
+
 		Sequence rootSequence = (Sequence) xo.getChild(Sequence.class);
 		
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
@@ -122,10 +155,6 @@ public class PartitionParser extends AbstractXMLObjectParser {
 			SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 			branchModel = new HomogeneousBranchModel(substitutionModel);
 		
-		}
-
-		if (xo.hasAttribute(DATA_TYPE)){
-			dataType = DataTypeUtils.getDataType(xo);
 		}
 
 		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every, dataType);
@@ -159,7 +188,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 						new ElementRule(SubstitutionModel.class), false), //
 				new ElementRule(GammaSiteRateModel.class), //
 				new ElementRule(BranchRateModel.class, true), //
-				new ElementRule(FrequencyModel.class), //
+				new ElementRule(FrequencyModel.class, 1, Integer.MAX_VALUE), //
 				new ElementRule(Sequence.class, true) //
 		};
 		

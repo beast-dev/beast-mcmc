@@ -39,6 +39,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     public static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
     public static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
     public static final String STARTING_VALUE = "startingValue";
+    private static final String SIGNAL_COMPONENTS = "signalComponents";
 
     public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
         this(id, rowDimension, colDimension, startingValue, true);
@@ -58,6 +59,37 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         this.signalComponents = signalComponents;
     }
+
+    public FastMatrixParameter(MatrixParameterInterface original, boolean signalComponents) {
+        this(original.getId(), original.getRowDimension(), original.getColumnDimension(), 0.0, signalComponents);
+
+//        setProxyParameterNames(original);
+
+        for (int row = 0; row < original.getRowDimension(); ++row) {
+            for (int col = 0; col < original.getColumnDimension(); ++col) {
+                setParameterValueQuietly(row, col, original.getParameterValue(row, col));
+            }
+        }
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+    }
+
+//    private void setProxyParameterNames(MatrixParameterInterface original) {
+//        proxyParameterNames = new ArrayList<String>(original.getColumnDimension());
+//
+//        for (int col = 0; col < original.getColumnDimension(); ++col) {
+//            proxyParameterNames.add(original.getParameter(col).getParameterName());
+//        }
+//    }
+//
+//    private List<String> proxyParameterNames;
+//
+//    private String getProxyParameterName(int column) {
+//        if (proxyParameterNames != null) {
+//            return proxyParameterNames.get(column);
+//        } else {
+//            return getId();
+//        }
+//    }
 
     public Parameter getParameter(int index) {
         if (proxyList == null) {
@@ -132,6 +164,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         @Override
         public String getParameterName() {
             return getId();
+//            return matrix.getProxyParameterName(column);
         }
 
         @Override
@@ -299,13 +332,25 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final String name = xo.hasId() ? xo.getId() : null;
-            final double startingValue = xo.hasAttribute(STARTING_VALUE) ? xo.getDoubleAttribute(STARTING_VALUE) : 1;
+            final MatrixParameterInterface original = (MatrixParameterInterface)
+                    xo.getChild(MatrixParameterInterface.class);
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
+            final boolean signalComponents = xo.getAttribute(SIGNAL_COMPONENTS, true);
 
-            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, startingValue);
+            if (original != null) {
+                if (original.getRowDimension() != rowDimension || original.getColumnDimension() != colDimension) {
+                    throw new XMLParseException("Unable to cast matrixParameter to fastMatrixParameter");
+                }
 
-            return matrixParameter;
+                return new FastMatrixParameter(original, signalComponents);
+
+            } else {
+
+                final double startingValue = xo.getAttribute(STARTING_VALUE, 1.0);
+                return new FastMatrixParameter(name, rowDimension, colDimension, startingValue, signalComponents);
+
+            }
         }
 
         //************************************************************************
@@ -321,10 +366,12 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+//                new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
                 AttributeRule.newIntegerRule(ROW_DIMENSION, false),
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, false),
                 AttributeRule.newDoubleRule(STARTING_VALUE, true),
+                AttributeRule.newBooleanRule(SIGNAL_COMPONENTS, true),
+                new ElementRule(MatrixParameterInterface.class, true),
         };
 
         public Class getReturnType() {

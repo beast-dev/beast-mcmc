@@ -27,6 +27,7 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -43,7 +44,6 @@ import dr.xml.Reportable;
  *
  * This is similar to work by Jeff Thorne and colleagues:
  *
- * Thorne, Kishino, & Painter (1998) Estimating the Rate of Evolution of the Rate of Molecular Evolution. Mol. Biol. Evol. 15:1647–1657.
  *
  * And more recently Didelot et al (2018) BioRxiv
  *
@@ -66,12 +66,21 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
 
         updateNode = new boolean[treeModel.getNodeCount()];
         branchLengths = new double[treeModel.getNodeCount()];
+
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             updateNode[i] = true;
 
             if (!dataTree.isRoot(dataTree.getNode(i))) {
                 // Adding a small epsilon to avoid zeros.
                 branchLengths[i] = dataTree.getBranchLength(dataTree.getNode(i)) * sequenceLength + 1.0E-8;
+            }
+        }
+
+        distanceMatrix = new double[treeModel.getExternalNodeCount()][];
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            distanceMatrix[i] = new double[treeModel.getExternalNodeCount()];
+            for (int j = i + 1; j < treeModel.getExternalNodeCount(); j++) {
+                distanceMatrix[i][j] = distanceMatrix[j][i] = TreeUtils.getPathLength(dataTree, dataTree.getNode(i), dataTree.getNode(j));
             }
         }
 
@@ -248,6 +257,19 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         return logL;
     }
 
+    private void calculateLogLikelihood(NodeRef node) {
+        NodeRef c1 = treeModel.getChild(node, 0);
+        if (!treeModel.isExternal(c1)) {
+            calculateLogLikelihood(c1);
+        }
+        NodeRef c2 = treeModel.getChild(node, 1);
+        if (!treeModel.isExternal(c2)) {
+            calculateLogLikelihood(c2);
+        }
+
+
+    }
+
     public final Model getModel() {
         return this;
     }
@@ -286,6 +308,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     private final int sequenceLength;
 
     private final double[] branchLengths;
+    private final double[][] distanceMatrix;
 
     private final GammaDistribution gamma;
 

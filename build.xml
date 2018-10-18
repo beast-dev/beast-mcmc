@@ -320,10 +320,10 @@
     <!--
     <property name="version" value="1.9"/>
      -->
-    <property name="version" value="1.10.1"/>
+    <property name="version" value="1.10.2"/>
     <property name="jvm_version" value="1.7+"/>
 
-    <property name="version_number" value="1.10.1"/>
+    <property name="version_number" value="1.10.2"/>
     <property name="copyright" value="Copyright 2002-2018"/>
 
     <property name="release_dir" value="release"/>
@@ -374,10 +374,11 @@
         </copy>
         <copy file="${dist}/beauti.jar" todir="${Windows_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Windows_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Windows_package_dir}/lib"/> -->
+        <!--
         <copy todir="${Windows_package_dir}/lib">
             <fileset dir="${Windows_dir}/lib"/>
         </copy>
+        -->
         <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Windows_package_dir}"/>
         <copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
 

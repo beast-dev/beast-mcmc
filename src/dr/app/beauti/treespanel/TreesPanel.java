@@ -178,7 +178,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         } else {
             options.unLinkTreePriors(currentTreeModel);
         }
-        setCurrentModelAndPrior(currentTreeModel); // this is important to make panel refreshing
+        updateTreePriorBorder();
 
         fireTreePriorsChanged();
     }

@@ -101,9 +101,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
+
                 if (treePriorCombo.getSelectedItem() != null) {
-                    partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
                     setupPanel();
+
+                    partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
                     parent.fireTreePriorsChanged();
                 }
             }
@@ -214,9 +216,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        );
 //	        samplingProportionField.addKeyListener(keyListener);
 
-        // need it not setupPanel(), because it contains required setSelectedItem()
-        // to make Tree prior panel displayed properly when link/unlink tree prior
         setOptions();
+        setupPanel();
     }
 
     private void setupPanel() {
@@ -236,114 +237,114 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         String calYule = "Heled J, Drummond AJ (2011), Syst Biol, doi: 10.1093/sysbio/syr087 [Calibrated Yule]";
         String citation;
 
-            String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
+        String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
 
-            addComponentWithLabel("Tree Prior:", treePriorCombo);
+        addComponentWithLabel("Tree Prior:", treePriorCombo);
 
-            if (!treesPanel.linkTreePriorCheck.isEnabled()) {
-                treesPanel.updateLinkTreePriorEnablility();
-            }
+        if (!treesPanel.linkTreePriorCheck.isEnabled()) {
+            treesPanel.updateLinkTreePriorEnablility();
+        }
 
-            switch ((TreePriorType) treePriorCombo.getSelectedItem()) {
-                case CONSTANT:
-                    citation = citationCoalescent;
-                    break;
+        switch ((TreePriorType) treePriorCombo.getSelectedItem()) {
+            case CONSTANT:
+                citation = citationCoalescent;
+                break;
 
-                case EXPONENTIAL:
-                case LOGISTIC:
-                case EXPANSION:
-                    addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-                    partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+            case EXPONENTIAL:
+            case LOGISTIC:
+            case EXPANSION:
+                addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+                partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
 
-                    citation = //citationCoalescent +  "\n" +
-                            "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
+                citation = //citationCoalescent +  "\n" +
+                        "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
 //                        + "\nDrummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
-                    break;
+                break;
 
-                case SKYLINE:
-                    groupCountField.setColumns(6);
-                    addComponentWithLabel("Number of groups:", groupCountField);
-                    addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+            case SKYLINE:
+                groupCountField.setColumns(6);
+                addComponentWithLabel("Number of groups:", groupCountField);
+                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 
-                    citation = //citationCoalescent + "\n" +
-                            "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
-                    break;
+                citation = //citationCoalescent + "\n" +
+                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
+                break;
 
-                case EXTENDED_SKYLINE:
-                    addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
-                    treesPanel.linkTreePriorCheck.setSelected(true);
-                    treesPanel.linkTreePriorCheck.setEnabled(false);
-                    treesPanel.updateShareSameTreePriorChanged();
+            case EXTENDED_SKYLINE:
+                addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
+                treesPanel.linkTreePriorCheck.setSelected(true);
+                treesPanel.linkTreePriorCheck.setEnabled(false);
+                treesPanel.updateShareSameTreePriorChanged();
 
-                    citation = //citationCoalescent + "\n" +
-                            "Heled J, Drummond AJ (2008) BMC Evol Biol 8, 289 [Extended Skyline Coalescent].";
-                    break;
+                citation = //citationCoalescent + "\n" +
+                        "Heled J, Drummond AJ (2008) BMC Evol Biol 8, 289 [Extended Skyline Coalescent].";
+                break;
 
-                case GMRF_SKYRIDE:
-                    addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-                    treesPanel.linkTreePriorCheck.setSelected(true);
-                    treesPanel.linkTreePriorCheck.setEnabled(false);
-                    //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-                    addLabel("<html>For the Skyride, tree model/tree prior combination not implemented by BEAST. "
-                            + "The Skyride is only available for a single tree<br>model partition in this release. "
-                            + "Please try the Skygrid or link all tree models." + "</html>");
+            case GMRF_SKYRIDE:
+                addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+                treesPanel.linkTreePriorCheck.setSelected(true);
+                treesPanel.linkTreePriorCheck.setEnabled(false);
+                //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+                addLabel("<html>For the Skyride, tree model/tree prior combination not implemented by BEAST. "
+                        + "The Skyride is only available for a single tree<br>model partition in this release. "
+                        + "Please try the Skygrid or link all tree models." + "</html>");
 
-                    citation = //citationCoalescent + "\n" +
-                            "Minin VN, Bloomquist EW, Suchard MA (2008) Mol Biol Evol 25, 1459-1471 [Skyride Coalescent].";
-                    break;
+                citation = //citationCoalescent + "\n" +
+                        "Minin VN, Bloomquist EW, Suchard MA (2008) Mol Biol Evol 25, 1459-1471 [Skyride Coalescent].";
+                break;
 
-                case SKYGRID:
-                    skyGridPointsField.setColumns(6);
-                    addComponentWithLabel("Number of parameters:", skyGridPointsField);
-                    skyGridInterval.setColumns(6);
-                    addComponentWithLabel("Time at last transition point:", skyGridInterval);
-                    treesPanel.linkTreePriorCheck.setSelected(true);
-                    treesPanel.linkTreePriorCheck.setEnabled(false);
-                    treesPanel.updateShareSameTreePriorChanged();
+            case SKYGRID:
+                skyGridPointsField.setColumns(6);
+                addComponentWithLabel("Number of parameters:", skyGridPointsField);
+                skyGridInterval.setColumns(6);
+                addComponentWithLabel("Time at last transition point:", skyGridInterval);
+                treesPanel.linkTreePriorCheck.setSelected(true);
+                treesPanel.linkTreePriorCheck.setEnabled(false);
+                treesPanel.updateShareSameTreePriorChanged();
 
-                    citation = //citationCoalescent + "\n" +
-                            "Gill MS, Lemey P, Faria NR, Rambaut A, Shapiro B, Suchard MA (2013) Mol Biol Evol 30, 713-724 [SkyGrid Coalescent].";
-                    break;
+                citation = //citationCoalescent + "\n" +
+                        "Gill MS, Lemey P, Faria NR, Rambaut A, Shapiro B, Suchard MA (2013) Mol Biol Evol 30, 713-724 [SkyGrid Coalescent].";
+                break;
 
-                case YULE:
-                    citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
-                            "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
-                    break;
+            case YULE:
+                citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
+                        "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
+                break;
 
-                case YULE_CALIBRATION:
+            case YULE_CALIBRATION:
 //                    addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
-                    citation = calYule;
-                    break;
+                citation = calYule;
+                break;
 
-                case BIRTH_DEATH:
-                    citation = BirthDeathModelParser.getCitation();
-                    break;
+            case BIRTH_DEATH:
+                citation = BirthDeathModelParser.getCitation();
+                break;
 
-                case BIRTH_DEATH_INCOMPLETE_SAMPLING:
-                    citation = BirthDeathModelParser.getCitationRHO();
-                    break;
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+                citation = BirthDeathModelParser.getCitationRHO();
+                break;
 
-                case BIRTH_DEATH_SERIAL_SAMPLING:
-                    citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
-                    break;
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+                citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
+                break;
 
-                case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-                    citation = BirthDeathSerialSamplingModelParser.getCitationRT();
-                    break;
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
+                break;
 
-                default:
-                    throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
-            }
+            default:
+                throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
+        }
 
-            if (treesPanel.options.maximumTipHeight > 0)
-                citation = citation
+        if (treesPanel.options.maximumTipHeight > 0)
+            citation = citation
 //                    + "\n" +
 //                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
-                        + "\n" +
-                        "Drummond AJ, Nicholls GK, Rodrigo AG, Solomon W (2002) Genetics 161, 1307-1320 [Serially Sampled Data].";
+                    + "\n" +
+                    "Drummond AJ, Nicholls GK, Rodrigo AG, Solomon W (2002) Genetics 161, 1307-1320 [Serially Sampled Data].";
 
-            addComponentWithLabel("Citation:", citationText);
-            citationText.setText(citation);
+        addComponentWithLabel("Citation:", citationText);
+        citationText.setText(citation);
 
         for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
             if (model != null) {
@@ -357,6 +358,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     }
 
     public void setOptions() {
+
+        if (settingOptions) {
+            // make sure we don't go all recursive
+            return;
+        }
 
         if (partitionTreePrior == null) {
             return;
@@ -449,20 +455,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //            }
         }
 
-//        partitionTreePrior.setParameterization(parameterizationCombo.getSelectedIndex());
-//        partitionTreePrior.setSkylineModel(bayesianSkylineCombo.getSelectedIndex());
-//        partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type) extendedBayesianSkylineCombo.getSelectedItem()).toString());
-//
-//        partitionTreePrior.setSkyrideSmoothing(gmrfBayesianSkyrideCombo.getSelectedIndex());
-        // the taxon list may not exist yet... this should be set when generating...
-//        partitionTreePrior.skyrideIntervalCount = partitionTreePrior.taxonList.getTaxonCount() - 1;
-
     }
-
-//    public void setMicrosatelliteTreePrior() {
-//        treePriorCombo.removeAllItems();
-//        treePriorCombo.addItem(TreePriorType.CONSTANT);
-//    }
 
     public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
         TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();

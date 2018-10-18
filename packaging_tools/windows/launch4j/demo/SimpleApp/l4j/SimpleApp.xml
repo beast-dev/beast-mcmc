@@ -1,6 +1,7 @@
 <launch4jConfig>
   <headerType>gui</headerType>
-  <jar>../SimpleApp.jar</jar>
+  <jar>SimpleApp.jar</jar>
+  <dontWrapJar>true</dontWrapJar>
   <outfile>../SimpleApp.exe</outfile>
   <errTitle>SimpleApp</errTitle>
   <chdir>.</chdir>

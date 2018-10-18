@@ -113,9 +113,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     private JLabel includedTaxaLabel = new JLabel();
     protected JComboBox includedTaxonSetsComboBox = null;
     protected boolean includedSelectionChanging = false;
-
-    protected static int taxonSetCount = 0;
-
+    
     public TaxonSetPanel() {
     }
 
@@ -674,7 +672,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         private static final long serialVersionUID = 20273987098143413L;
 
         public void actionPerformed(ActionEvent ae) {
-            taxonSetCount++;
+            int taxonSetCount = options.taxonSets.size();
 
             String newTaxonSetName = "untitled" + taxonSetCount;
             Taxa newTaxonSet = new Taxa(newTaxonSetName); // cannot use currentTaxonSet

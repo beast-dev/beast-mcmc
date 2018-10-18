@@ -292,8 +292,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood i
         }
 
         for (int i = 0; i < locationLabels.length; i++) {
-            if (locationsParameter.getParameter(i).getParameterName() != null &&
-                    locationsParameter.getParameter(i).getParameterName().compareTo(locationLabels[i]) != 0) {
+            if (locationsParameter.getParameter(i).getParameterName().compareTo(locationLabels[i]) != 0) {
                 throw new RuntimeException("Mismatched trait parameter name (" + locationsParameter.getParameter(i).getParameterName() +
                         ") and data dimension name (" + locationLabels[i] + ")");
             }

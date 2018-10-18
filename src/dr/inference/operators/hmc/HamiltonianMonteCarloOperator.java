@@ -206,7 +206,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    public void checkGradient(final Likelihood joint) {
+    private void checkGradient(final Likelihood joint) {
 
         if (parameter.getDimension() != gradientProvider.getDimension()) {
             throw new RuntimeException("Unequal dimensions");
@@ -304,8 +304,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return vector;
     }
 
-    private long count = 0;
-
     private static final boolean DEBUG = false;
 
     public static class Options {
@@ -355,10 +353,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     private double leapFrog() throws NumericInstabilityException {
 
         if (DEBUG) {
-            if (count % 1 == 0) {
-                System.err.println("HMC step size: " + stepSize);
-            }
-            ++count;
+            System.err.println("HMC step size: " + stepSize);
         }
 
         final double[] position = leapFrogEngine.getInitialPosition();

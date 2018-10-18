@@ -107,7 +107,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             // stop timer
             String name = derivativeList.get(0).getLikelihood().getId();
             System.err.println(name);
-            System.err.println(hessian.toString());
+            System.err.println(hessian);
         }
 
         for (int i = 1; i < size; i++) {
@@ -118,7 +118,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             if (DEBUG) {
                 String name = derivativeList.get(i).getLikelihood().getId();
                 System.err.println(name);
-                System.err.println(temp.toString());
+                System.err.println(temp);
             }
 
             for (int j = 0; j < temp[0].length; j++) {

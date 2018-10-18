@@ -12,12 +12,12 @@ public class TransformedTreeTraitProvider implements TreeTraitProvider {
                                         Transform transform) {
 
         for (TreeTrait trait : treeTraitProvider.getTreeTraits()) {
-            if (trait instanceof TreeTrait.D) {
-                transformedTreeTraits.addTrait(createD((TreeTrait.D) trait, transform));
-            } else if (trait instanceof TreeTrait.DA) {
-                transformedTreeTraits.addTrait(createDA((TreeTrait.DA) trait, transform));
+            if (trait.getTraitClass() == Double.class) {
+                transformedTreeTraits.addTrait(createD(trait, transform));
+            } else if (trait.getTraitClass() == double[].class) {
+                transformedTreeTraits.addTrait(createDA(trait, transform));
             } else {
-                throw new java.lang.IllegalArgumentException("Not transformable trait: " + trait.getTraitName());
+                throw new IllegalArgumentException("Not transformable trait: " + trait.getTraitName());
             }
         }
     }
@@ -32,7 +32,7 @@ public class TransformedTreeTraitProvider implements TreeTraitProvider {
         return transformedTreeTraits.getTreeTrait(key);
     }
 
-    private TreeTrait.D createD(final TreeTrait.D originalTrait, final Transform transform) {
+    private TreeTrait.D createD(final TreeTrait originalTrait, final Transform transform) {
 
         return new TreeTrait.D() {
             @Override
@@ -47,7 +47,7 @@ public class TransformedTreeTraitProvider implements TreeTraitProvider {
 
             @Override
             public Double getTrait(Tree tree, NodeRef node) {
-                return transform.transform(originalTrait.getTrait(tree, node));
+                return transform.transform((Double) originalTrait.getTrait(tree, node));
             }
 
             @Override
@@ -57,7 +57,7 @@ public class TransformedTreeTraitProvider implements TreeTraitProvider {
         };
     }
 
-    private TreeTrait.DA createDA(final TreeTrait.DA originalTrait, final Transform transform) {
+    private TreeTrait.DA createDA(final TreeTrait originalTrait, final Transform transform) {
 
         return new TreeTrait.DA() {
             @Override
@@ -72,7 +72,7 @@ public class TransformedTreeTraitProvider implements TreeTraitProvider {
 
             @Override
             public double[] getTrait(Tree tree, NodeRef node) {
-                double[] raw = originalTrait.getTrait(tree, node);
+                double[] raw = (double[]) originalTrait.getTrait(tree, node);
                 return transform.transform(raw, 0, raw.length);
             }
 

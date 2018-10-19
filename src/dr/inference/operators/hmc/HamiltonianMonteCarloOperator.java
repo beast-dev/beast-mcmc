@@ -246,6 +246,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         };
 
         double[] analyticalGradientOriginal = gradientProvider.getGradientLogDensity();
+        double[] restoredParameterValue = parameter.getParameterValues();
 
         if (transform == null) {
 
@@ -275,6 +276,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                 throw new RuntimeException(sb);
             }
         }
+
+        ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
     }
 
 

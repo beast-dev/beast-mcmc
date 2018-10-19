@@ -158,8 +158,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         double[]         gradient  = new double[getDimension()];
         final double[][] gradArray = new double[getDimension()][tree.getExternalNodeCount()];
 
-        ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
-        ReadableMatrix loadings = ReadableMatrix.Utils.transposeProxy(
+        final ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
+        final ReadableMatrix loadings = ReadableMatrix.Utils.transposeProxy(
                 new WrappedMatrix.MatrixParameter(factorAnalysisLikelihood.getLoadings()));
 
         if (DEBUG) {
@@ -461,7 +461,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         int start = 0;
 
         for (int task = 0; task < threadCount && start < taxonCount; ++task) {
-            tasks.add(new TaskIndices(start, Math.min(start + length, taxonCount)));
+            tasks.add(new TaskIndices(start, Math.min(start + length, taxonCount), task));
             start += length;
         }
 
@@ -471,10 +471,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private class TaskIndices {
         int start;
         int stop;
+        int task;
 
-        TaskIndices(int start, int stop) {
+        TaskIndices(int start, int stop, int task) {
             this.start = start;
             this.stop = stop;
+            this.task = task;
         }
 
         public String toString() {

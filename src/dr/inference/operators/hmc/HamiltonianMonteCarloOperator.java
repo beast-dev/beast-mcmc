@@ -65,7 +65,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         this(mode, weight, gradientProvider,
                 parameter, transform, mask,
                 new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0, gradientCheckTolerance),
+                        0, 0, 0, gradientCheckTolerance,
+                        10, 0.1),
                 MassPreconditioner.Type.NONE
         );
     }
@@ -166,15 +167,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
 
     private void checkStepSize() {
 
-        final int maxIterations = 10; // TODO Move magic numbers
-        final double reductionFactor = 0.1;
-
         double[] initialPosition = parameter.getParameterValues();
 
         int iterations = 0;
         boolean acceptableSize = false;
 
-        while (!acceptableSize && iterations < maxIterations) {
+        while (!acceptableSize && iterations < runtimeOptions.checkStepSizeMaxIterations) {
 
             try {
                 leapFrog();
@@ -190,7 +188,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             }
 
             if (!acceptableSize) {
-                stepSize *= reductionFactor;
+                stepSize *= runtimeOptions.checkStepSizeMaxIterations;
             }
 
             ReadableVector.Utils.setParameter(initialPosition, parameter);  // Restore initial position
@@ -318,9 +316,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         final int preconditioningDelay;
         final int gradientCheckCount;
         final double gradientCheckTolerance;
+        final int checkStepSizeMaxIterations;
+        final double checkStepSizeReductionFactor;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency,
-                       int preconditioningDelay, int gradientCheckCount, double gradientCheckTolerance) {
+                       int preconditioningDelay, int gradientCheckCount, double gradientCheckTolerance,
+                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
@@ -328,6 +329,8 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             this.preconditioningDelay = preconditioningDelay;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
+            this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
+            this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
         }
     }
 

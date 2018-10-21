@@ -55,6 +55,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     private final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
+    private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
+    private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String MASK = "mask";
 
     @Override
@@ -123,9 +125,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         int gradientCheckCount = xo.getAttribute(GRADIENT_CHECK_COUNT, 0);
         double gradientCheckTolerance = xo.getAttribute(GRADIENT_CHECK_TOLERANCE, 1E-3);
+        int maxIterations = xo.getAttribute(MAX_ITERATIONS, 10);
+        double reductionFactor = xo.getAttribute(REDUCTION_FACTOR, 0.1);
+
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
-                preconditioningUpdateFrequency, preconditioningDelay, gradientCheckCount,gradientCheckTolerance
+                preconditioningUpdateFrequency, preconditioningDelay, gradientCheckCount, gradientCheckTolerance,
+                maxIterations, reductionFactor
         );
 
         if (runMode == 0) {

@@ -315,6 +315,22 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return temp;
     }
 
+    private static double[] join(double[][] array) {
+
+        int nRows = array.length;
+        int nCols = array[0].length;
+        double[] result = array[0];
+
+        for (int row = 1; row < nRows; ++row) {
+            double[] temp = array[row];
+            for (int col = 0; col < nCols; ++col) {
+                result[col] += temp[col];
+            }
+        }
+
+        return result;
+    }
+
     @Override
     public String getReport() {
         return getReport(getGradientLogDensity());

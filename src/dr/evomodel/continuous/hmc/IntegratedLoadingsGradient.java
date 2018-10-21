@@ -155,8 +155,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     @Override
     public double[] getGradientLogDensity() {
 
+        final double[][] gradArray;
         double[]         gradient  = new double[getDimension()];
-        final double[][] gradArray = new double[getDimension()][tree.getExternalNodeCount()];
 
         final ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
         final ReadableMatrix loadings = ReadableMatrix.Utils.transposeProxy(
@@ -186,24 +186,27 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
         if (pool == null) {
+            gradArray = new double[getDimension()][tree.getExternalNodeCount()];
             for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
-                computeGradientForOneTaxon(taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
+                computeGradientForOneTaxon(0, taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
             }
         } else {
             if (SMART_POOL) {
+                gradArray = new double[getDimension()][taskIndices.size()];
                 for (final TaskIndices indices : taskIndices) {
                     calls.add(Executors.callable(
                             new Runnable() {
                                 @Override
                                 public void run() {
                                     for (int taxon = indices.start; taxon < indices.stop; ++taxon) {
-                                        computeGradientForOneTaxon(taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
+                                        computeGradientForOneTaxon(indices.task, taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
                                     }
                                 }
                             }
                     ));
                 }
             } else {
+                gradArray = new double[getDimension()][tree.getExternalNodeCount()];
                 for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
                     final int t = taxon;
 
@@ -211,7 +214,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                             new Runnable() {
                                 @Override
                                 public void run() {
-                                    computeGradientForOneTaxon(t, loadings, gamma, allStatistics.get(t), gradArray);
+                                    computeGradientForOneTaxon(t,t, loadings, gamma, allStatistics.get(t), gradArray);
                                 }
                             }
                     ));
@@ -230,7 +233,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     }
 
 
-    private void computeGradientForOneTaxon(final int taxon,
+    private void computeGradientForOneTaxon(final int index,
+                                            final int taxon,
                                             final ReadableMatrix loadings,
                                             final ReadableVector gamma,
                                             final WrappedNormalSufficientStatistics statistic,
@@ -290,7 +294,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             for (int factor = 0; factor < dimFactors; ++factor) {
                 for (int trait = 0; trait < dimTrait; ++trait) {
                     if (!missing[taxon * dimTrait + trait]) {
-                        gradArray[factor * dimTrait + trait][taxon] +=
+                        gradArray[factor * dimTrait + trait][index] +=
                                 (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                         * gamma.get(trait);
 

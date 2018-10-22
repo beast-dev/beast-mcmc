@@ -22,8 +22,6 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 
 import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider.castTreeTrait;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
@@ -36,24 +34,20 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.weightedAverage;
 public class IntegratedLoadingsGradient implements GradientWrtParameterProvider, Reportable {
 
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
-
     private final TreeDataLikelihood treeDataLikelihood;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
     private final int dimTrait;
     private final int dimFactors;
     private final Tree tree;
     private final Likelihood likelihood;
-    private final int threadCount;
-
     private final Parameter data;
-
     private final boolean[] missing;
-
-    private static final boolean SMART_POOL = true;
+    private final TaxonTaskPool taxonTaskPool;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood) {
+                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                       int threadCount) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
@@ -79,15 +73,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         likelihoodList.add(factorAnalysisLikelihood);
         this.likelihood = new CompoundLikelihood(likelihoodList);
 
-        if (SMART_POOL) {
-            this.threadCount = 5; //TODO how to choose threadCount?
-//            setupParallelServices(tree.getExternalNodeCount(), threadCount);
-        } else {
-            this.threadCount = 1;
-        }
-
         this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
-
     }
 
     private boolean[] getMissing(List<Integer> missingIndices, int length) {
@@ -156,8 +142,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     @Override
     public double[] getGradientLogDensity() {
 
-        final double[][] gradArray;
-        double[]         gradient  = new double[getDimension()];
+        final double[][] gradients = new double[taxonTaskPool.getNumThreads()][getDimension()];
 
         final ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
         final ReadableMatrix loadings = ReadableMatrix.Utils.transposeProxy(
@@ -181,22 +166,21 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         // (K x N)(N x P)(P x P) - (K x N)(N x K)(K x P)(P x P)
         // sum_{N} (K x 1)(1 x P)(P x P) - (K x K)(K x P)(P x P)
-        final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(tree, null);
+        
+        final List<WrappedNormalSufficientStatistics> allStatistics =
+                fullConditionalDensity.getTrait(tree, null); // TODO Need to test if faster to load inside loop
+
         assert (allStatistics.size() == tree.getExternalNodeCount());
-
-        gradArray = new double[taxonTaskPool.getNumThreads()][getDimension()];
-
 
         taxonTaskPool.fork(new TaxonTaskPool.TaxonCallable() {
             @Override
             public void execute(int taxon, int thread) {
-                computeGradientForOneTaxon(thread, taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
+                computeGradientForOneTaxon(thread, taxon, loadings, gamma, allStatistics.get(taxon), gradients);
             }
         });
 
 
-        gradient = join(gradArray);
-        return gradient;
+        return join(gradients);
     }
 
 
@@ -220,9 +204,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         }
 
 //        final List<WrappedNormalSufficientStatistics> statistics =
-//                fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
+//                fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon)); // TODO Suspect faster here
 
-//        for (WrappedNormalSufficientStatistics statistic : statistics) {
+//        for (WrappedNormalSufficientStatistics statistic : statistics) {  // TODO Maybe need to re-enable
 
             final ReadableVector meanFactor = statistic.getMean();
             final WrappedMatrix precisionFactor = statistic.getPrecision();
@@ -269,21 +253,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 }
             }
 //        }
-    }
-
-
-    public double[] colSum(double [][] array){
-
-        int size = array[0].length;
-        double temp[] = new double[size];
-
-        for (int i = 0; i < size; i++){
-            for (int j = 0; j < array.length; j++){
-                temp[i] += array[j][i];
-            }
-        }
-
-        return temp;
     }
 
     private static double[] join(double[][] array) {
@@ -372,6 +341,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private static final boolean NUMERICAL_CHECK = true;
 
     private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
+    private static final String THREAD_COUNT = "threadCount";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -393,12 +363,15 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate =
                     (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
 
+            int threadCount = xo.getAttribute(THREAD_COUNT, 1);
+
             // TODO Check dimensions, parameters, etc.
 
             return new IntegratedLoadingsGradient(
                     treeDataLikelihood,
                     continuousDataLikelihoodDelegate,
-                    factorAnalysis);
+                    factorAnalysis,
+                    threadCount);
         }
 
         @Override
@@ -424,9 +397,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 new ElementRule(IntegratedFactorAnalysisLikelihood.class),
                 new ElementRule(TreeDataLikelihood.class),
+                AttributeRule.newIntegerRule(THREAD_COUNT, true),
         };
     };
-
-    private final TaxonTaskPool taxonTaskPool;
-
 }

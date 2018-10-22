@@ -38,9 +38,9 @@ public class TaxonTaskPool {
         this.pool = setupParallelServices(threadCount);
     }
 
-//    public ExecutorService getPool() { return pool; }
+    public ExecutorService getPool() { return pool; }
 
-//    public List<TaxonTaskIndices> getIndices() { return indices; }
+    public List<TaxonTaskIndices> getIndices() { return indices; }
 
     public int getNumThreads() { return indices.size(); }
 

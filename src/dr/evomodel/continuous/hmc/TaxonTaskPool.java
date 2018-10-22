@@ -2,6 +2,7 @@ package dr.evomodel.continuous.hmc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,7 +44,6 @@ public class TaxonTaskPool {
 
     public int getNumThreads() { return indices.size(); }
 
-
     private List<TaxonTaskIndices> setupTasks(int taxonCount, int threadCount) {
         List<TaxonTaskIndices> tasks = new ArrayList<TaxonTaskIndices>(threadCount);
 
@@ -73,5 +73,43 @@ public class TaxonTaskPool {
         }
 
         return pool;
+    }
+
+    interface TaxonCallable {
+        void execute(int taxon, int thread);
+    }
+
+    public void fork(final TaxonCallable runnable) {
+        if (indices.size() == 1) {
+
+            final TaxonTaskIndices index = indices.get(0);
+            for (int taxon = index.start; taxon < index.stop; ++taxon) {
+                runnable.execute(taxon, 0);
+            }
+
+        } else {
+
+            List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
+
+            for (final TaxonTaskIndices indexSet : indices) {
+
+                calls.add(Executors.callable(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                for (int taxon = indexSet.start; taxon < indexSet.stop; ++taxon) {
+                                    runnable.execute(taxon, indexSet.task);
+                                }
+                            }
+                        }
+                ));
+            }
+
+            try {
+                pool.invokeAll(calls);
+            } catch (InterruptedException exception) {
+                exception.printStackTrace();
+            }
+        }
     }
 }

@@ -184,6 +184,13 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(tree, null);
         assert (allStatistics.size() == tree.getExternalNodeCount());
 
+//        taxonTaskPool.fork(new TaxonTaskPool.TaxonCallable() {
+//            @Override
+//            public void execute(int taxon, int thread) {
+//                computeGradientForOneTaxon(taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
+//            }
+//        });
+
         List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
         if (taxonTaskPool.getPool() == null) {

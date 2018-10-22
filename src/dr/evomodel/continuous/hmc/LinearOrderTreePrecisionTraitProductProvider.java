@@ -47,8 +47,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 		
         this.roughTimeGuess = roughTimeGuess;
         this.eigenvalueReplicates = eigenvalueReplicates;
-        
-        setupParallelServices(tree.getExternalNodeCount(), threadCount);
+
+        this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
     }
     
     @Override
@@ -60,7 +60,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         final double[] result = new double[vector.getDimension()];
 
-        if (pool == null) { // single-threaded
+        if (taxonTaskPool.getPool() == null) { // single-threaded
 
             final List<WrappedNormalSufficientStatistics> allStatistics;
             if (NEW_DATA) {
@@ -91,7 +91,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
             if (SMART_POOL) {
 
-                for (final TaskIndices indices : taskIndices) {
+                for (final TaxonTaskPool.TaxonTaskIndices indices : taxonTaskPool.getIndices()) {
                     calls.add(Executors.callable(
                             new Runnable() {
                                 @Override
@@ -120,7 +120,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
             }
 
             try {
-                pool.invokeAll(calls);
+                taxonTaskPool.getPool().invokeAll(calls);
             } catch (InterruptedException exception) {
                 exception.printStackTrace();
             }
@@ -298,54 +298,11 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     @SuppressWarnings("unchecked")
-    public static TreeTrait<List<WrappedNormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
+    static TreeTrait<List<WrappedNormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
         return trait;
     }
 
-    private void setupParallelServices(int taxonCount, int threadCount) {
-        if (threadCount > 0) {
-            pool = Executors.newFixedThreadPool(threadCount);
-        } else if (threadCount < 0) {
-            pool = Executors.newCachedThreadPool();
-        } else {
-            pool = null;
-        }
-
-        taskIndices = (pool != null) ? setupTasks(taxonCount, threadCount) : null;
-    }
-
-    private List<TaskIndices> setupTasks(int taxonCount, int threadCount) {
-        List<TaskIndices> tasks = new ArrayList<TaskIndices>(threadCount);
-
-        int length = taxonCount / threadCount;
-        if (taxonCount % threadCount != 0) ++length;
-
-        int start = 0;
-
-        for (int task = 0; task < threadCount && start < taxonCount; ++task) {
-            tasks.add(new TaskIndices(start, Math.min(start + length, taxonCount)));
-            start += length;
-        }
-
-        return tasks;
-    }
-
-    private class TaskIndices {
-        int start;
-        int stop;
-
-        TaskIndices(int start, int stop) {
-            this.start = start;
-            this.stop = stop;
-        }
-
-        public String toString() {
-            return start + " " + stop;
-        }
-    }
-
-    private ExecutorService pool = null;
-    private List<TaskIndices> taskIndices = null;
+    private final TaxonTaskPool taxonTaskPool;
 
     private final double[][] delta;
     private final double roughTimeGuess;

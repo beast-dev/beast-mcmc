@@ -187,13 +187,13 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
         if (taxonTaskPool.getPool() == null) {
-            gradArray = new double[getDimension()][tree.getExternalNodeCount()];
+            gradArray = new double[getDimension()][tree.getExternalNodeCount()]; // TODO Transpose
             for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
                 computeGradientForOneTaxon(0, taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
             }
         } else {
             if (SMART_POOL) {
-                gradArray = new double[getDimension()][taxonTaskPool.getNumThreads()];
+                gradArray = new double[getDimension()][taxonTaskPool.getNumThreads()]; // TODO Remove code duplication
                 for (final TaxonTaskPool.TaxonTaskIndices indices : taxonTaskPool.getIndices()) {
                     calls.add(Executors.callable(
                             new Runnable() {
@@ -207,7 +207,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     ));
                 }
             } else {
-                gradArray = new double[getDimension()][tree.getExternalNodeCount()];
+                gradArray = new double[getDimension()][tree.getExternalNodeCount()]; // TODO Remove code duplication
                 for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
                     final int t = taxon;
 
@@ -295,7 +295,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             for (int factor = 0; factor < dimFactors; ++factor) {
                 for (int trait = 0; trait < dimTrait; ++trait) {
                     if (!missing[taxon * dimTrait + trait]) {
-                        gradArray[factor * dimTrait + trait][index] +=
+                        gradArray[factor * dimTrait + trait][index] += // TODO Transpose
                                 (mean.get(factor) * y.get(trait) - product.get(factor, trait))
                                         * gamma.get(trait);
 

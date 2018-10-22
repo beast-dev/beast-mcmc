@@ -23,7 +23,6 @@ import org.ejml.data.DenseMatrix64F;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider.castTreeTrait;
@@ -82,10 +81,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         if (SMART_POOL) {
             this.threadCount = 3; //TODO how to choose threadCount?
-            setupParallelServices(tree.getExternalNodeCount(), threadCount);
+//            setupParallelServices(tree.getExternalNodeCount(), threadCount);
         } else {
             this.threadCount = 0;
         }
+
+        this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
 
     }
 
@@ -185,15 +186,15 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
-        if (pool == null) {
+        if (taxonTaskPool.getPool() == null) {
             gradArray = new double[getDimension()][tree.getExternalNodeCount()];
             for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
                 computeGradientForOneTaxon(0, taxon, loadings, gamma, allStatistics.get(taxon), gradArray);
             }
         } else {
             if (SMART_POOL) {
-                gradArray = new double[getDimension()][taskIndices.size()];
-                for (final TaskIndices indices : taskIndices) {
+                gradArray = new double[getDimension()][taxonTaskPool.getNumThreads()];
+                for (final TaxonTaskPool.TaxonTaskIndices indices : taxonTaskPool.getIndices()) {
                     calls.add(Executors.callable(
                             new Runnable() {
                                 @Override
@@ -222,7 +223,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
             }
             try {
-                pool.invokeAll(calls);
+                taxonTaskPool.getPool().invokeAll(calls);
             } catch (InterruptedException exception) {
                 exception.printStackTrace();
             }
@@ -460,50 +461,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         };
     };
 
-    private void setupParallelServices(int taxonCount, int threadCount) {
-        if (threadCount > 0) {
-            pool = Executors.newFixedThreadPool(threadCount);
-        } else if (threadCount < 0) {
-            pool = Executors.newCachedThreadPool();
-        } else {
-            pool = null;
-        }
+    private final TaxonTaskPool taxonTaskPool;
 
-        taskIndices = (pool != null) ? setupTasks(taxonCount, threadCount) : null;
-    }
-
-    private List<TaskIndices> setupTasks(int taxonCount, int threadCount) {
-        List<TaskIndices> tasks = new ArrayList<TaskIndices>(threadCount);
-
-        int length = taxonCount / threadCount;
-        if (taxonCount % threadCount != 0) ++length;
-
-        int start = 0;
-
-        for (int task = 0; task < threadCount && start < taxonCount; ++task) {
-            tasks.add(new TaskIndices(start, Math.min(start + length, taxonCount), task));
-            start += length;
-        }
-
-        return tasks;
-    }
-
-    private class TaskIndices {
-        int start;
-        int stop;
-        int task;
-
-        TaskIndices(int start, int stop, int task) {
-            this.start = start;
-            this.stop = stop;
-            this.task = task;
-        }
-
-        public String toString() {
-            return start + " " + stop;
-        }
-    }
-
-    private ExecutorService pool = null;
-    private List<TaskIndices> taskIndices = null;
 }

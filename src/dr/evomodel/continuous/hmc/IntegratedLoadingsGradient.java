@@ -195,7 +195,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         });
 
 
-        gradient = colSum(gradArray);
+        gradient = join(gradArray);
         return gradient;
     }
 

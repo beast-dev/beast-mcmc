@@ -1,5 +1,8 @@
 package dr.evomodel.continuous.hmc;
 
+import dr.evolution.tree.Tree;
+import dr.xml.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -30,12 +33,15 @@ public class TaxonTaskPool {
         }
     }
 
-    final private ExecutorService pool;
+    private ExecutorService pool = null;
     final private List<TaxonTaskIndices> indices;
+    final private int taxonCount;
+    final private int threadCount;
 
-    TaxonTaskPool(int taxonCount, int threadCount) {
+    public TaxonTaskPool(int taxonCount, int threadCount) {
         this.indices = setupTasks(taxonCount, Math.abs(threadCount));
-        this.pool = setupParallelServices(threadCount);
+        this.taxonCount = taxonCount;
+        this.threadCount = threadCount;
     }
 
     public ExecutorService getPool() { return pool; }
@@ -43,6 +49,8 @@ public class TaxonTaskPool {
     public List<TaxonTaskIndices> getIndices() { return indices; }
 
     public int getNumThreads() { return indices.size(); }
+
+    public int getNumTaxon() { return taxonCount; }
 
     private List<TaxonTaskIndices> setupTasks(int taxonCount, int threadCount) {
         List<TaxonTaskIndices> tasks = new ArrayList<TaxonTaskIndices>(threadCount);
@@ -75,7 +83,7 @@ public class TaxonTaskPool {
         return pool;
     }
 
-    interface TaxonCallable {
+    public interface TaxonCallable {
         void execute(int taxon, int thread);
     }
 
@@ -88,6 +96,10 @@ public class TaxonTaskPool {
             }
 
         } else {
+
+            if (pool == null) {
+                pool = setupParallelServices(threadCount);
+            }
 
             List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
@@ -112,4 +124,43 @@ public class TaxonTaskPool {
             }
         }
     }
+
+    private static final String PARSER_NAME = "taxonTaskPool";
+    private static final String THREAD_COUNT = "threadCount";
+
+    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+         @Override
+         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+             Tree tree = (Tree) xo.getChild(Tree.class);
+             int threadCount = xo.getAttribute(THREAD_COUNT, 1);
+             return new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
+         }
+
+         @Override
+         public XMLSyntaxRule[] getSyntaxRules() {
+             return rules;
+         }
+
+         @Override
+         public String getParserDescription() {
+             return "A thread pool for per-taxon specific operations";
+         }
+
+         @Override
+         public Class getReturnType() {
+             return TaxonTaskPool.class;
+         }
+
+         @Override
+         public String getParserName() {
+             return PARSER_NAME;
+         }
+
+         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+                 AttributeRule.newIntegerRule(THREAD_COUNT, true),
+                 new ElementRule(Tree.class),
+         };
+     };
 }

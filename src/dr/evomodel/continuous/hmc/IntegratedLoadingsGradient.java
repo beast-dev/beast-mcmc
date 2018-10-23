@@ -47,7 +47,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                        IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                       int threadCount) {
+                                       TaxonTaskPool taxonTaskPool) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
@@ -73,7 +73,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         likelihoodList.add(factorAnalysisLikelihood);
         this.likelihood = new CompoundLikelihood(likelihoodList);
 
-        this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
+        this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool :
+                new TaxonTaskPool(tree.getExternalNodeCount(), 1);
+
+        if (this.taxonTaskPool.getNumTaxon() != tree.getExternalNodeCount()) {
+            throw new IllegalArgumentException("Incorrectly specified TaxonTaskPool");
+        }
     }
 
     private boolean[] getMissing(List<Integer> missingIndices, int length) {
@@ -341,7 +346,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private static final boolean NUMERICAL_CHECK = true;
 
     private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
-    private static final String THREAD_COUNT = "threadCount";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -363,7 +367,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate =
                     (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
 
-            int threadCount = xo.getAttribute(THREAD_COUNT, 1);
+            TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
 
             // TODO Check dimensions, parameters, etc.
 
@@ -371,7 +375,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     treeDataLikelihood,
                     continuousDataLikelihoodDelegate,
                     factorAnalysis,
-                    threadCount);
+                    taxonTaskPool);
         }
 
         @Override
@@ -397,7 +401,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 new ElementRule(IntegratedFactorAnalysisLikelihood.class),
                 new ElementRule(TreeDataLikelihood.class),
-                AttributeRule.newIntegerRule(THREAD_COUNT, true),
+                new ElementRule(TaxonTaskPool.class, true),
         };
     };
 }

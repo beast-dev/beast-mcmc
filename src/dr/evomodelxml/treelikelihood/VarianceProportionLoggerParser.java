@@ -7,7 +7,11 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treelikelihood.utilities.VarianceProportionStatistic;
+import dr.inference.model.MatrixInverseStatistic;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
 import dr.inference.model.VarianceStatistic;
+import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 public class VarianceProportionLoggerParser extends AbstractXMLObjectParser {
@@ -17,6 +21,9 @@ public class VarianceProportionLoggerParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
         RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel) xo.getChild(RepeatedMeasuresTraitDataModel.class);
         MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+//        MatrixInverseStatistic diffusionVariance = (MatrixInverseStatistic) xo.getChild(MatrixInverseStatistic.class);
+//        MatrixParameter diffusionPrecision = (MatrixParameter) xo.getChild(MatrixParameter.class);
+//        Parameter samplingPrecision = (Parameter) xo.getChild(Parameter.class);
         TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel);
     }

@@ -71,16 +71,21 @@
 		<treeModel idref="treeModel"/>
 	</traitLogger>
 
+
+	<matrixInverse id="diffVariance">
+		<matrixParameter idref="precisionMatrix"/>
+	</matrixInverse>
+
 	<varianceProportionStatistic id="varianceLog">
 		<traitDataLikelihood idref="traitLikelihood"/>
 		<treeModel idref = "treeModel"/>
 		<repeatedMeasuresModel idref = "repeatedMeasures"/>
 		<multivariateDiffusionModel idref = "diffusionModel"/>
+		<!--<matrixParameter idref="precisionMatrix"/>-->
+		<!--<matrixInverse idref="diffVariance"/>-->
+		<!--<parameter idref="gamma"/>-->
 	</varianceProportionStatistic>
 
-	<matrixInverse id="diffVariance">
-		<matrixParameter idref="precisionMatrix"/>
-	</matrixInverse>
 
 	<multivariateWishartPrior id="precisionPrior" df="2">
 		<scaleMatrix>

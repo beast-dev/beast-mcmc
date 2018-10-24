@@ -25,51 +25,47 @@
 
 package dr.evomodel.treelikelihood.utilities;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
-import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import dr.math.matrixAlgebra.Matrix;
 
 /**
- * A utility class to format traits on a tree in a LogColumn-based file.  This class takes an array of TraitProvider
- * and its package location is bound to move
+ * A Statistic class that computes the expected proportion of the variance in the data due to diffusion on the tree
+ * versus sampling error.
  *
- * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 
-public class VarianceProportionStatistic extends Statistic.Abstract {
+public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener{
 
 
     public static final String VARIANCE_PROPORTION_STAT = "varianceProportionStatistic";
 
     private Tree tree;
-    private RepeatedMeasuresTraitDataModel dataModel;
     private MultivariateDiffusionModel diffusionModel;
     private TreeDataLikelihood treeLikelihood;
+    private Parameter samplingPrecision;
+    private Parameter diffusionPrecision;
     private double[] diffusionProportion;
-    private boolean proportionKnown = false;
 
 
-    public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood, RepeatedMeasuresTraitDataModel dataModel, MultivariateDiffusionModel diffusionModel) {
+    public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
+                                       RepeatedMeasuresTraitDataModel dataModel,
+                                       MultivariateDiffusionModel diffusionModel) {
         this.tree = tree;
-        this.dataModel = dataModel;
         this.treeLikelihood = treeLikelihood;
         this.diffusionModel = diffusionModel;
+        this.samplingPrecision = dataModel.getSamplingPrecision();
+        this.diffusionPrecision = diffusionModel.getPrecisionParameter();
         this.diffusionProportion = getDiffusionProportion();
-//        diffusionProportion.addParameterListener(this);
+        samplingPrecision.addParameterListener(this);
+        diffusionPrecision.addParameterListener(this);
+        //TODO: find parameters for tree branch lengths and add them to parameter listener
+        //TODO: implement method for scaling tree by root height in getDiffusionVariance()
+        //TODO: implement proportionKnown boolean variable that changes to false when one of the parameters changes
 
     }
 
@@ -77,16 +73,17 @@ public class VarianceProportionStatistic extends Statistic.Abstract {
     private double[] getDiffusionProportion(){
         double[] diffusionVariance = getDiffusionVariance();
         double[] sampleVariance = getSampleVariance();
-        int dim = dataModel.getTraitDimension();
+        int dim = samplingPrecision.getDimension();
         double[] diffusionProportion = new double[dim];
-        for (int i = 0; i <= dim - 1; i++){
+        for (int i = 0; i < dim; i++){
             diffusionProportion[i] = diffusionVariance[i] / (sampleVariance[i] + diffusionVariance[i]);
         }
         return diffusionProportion;
     }
 
     private double[] getDiffusionVariance() {
-        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree, treeLikelihood.getBranchRateModel(),
+        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree,
+                treeLikelihood.getBranchRateModel(),
                 1.0, Double.POSITIVE_INFINITY);
         Matrix diffusivityMatrix = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
         int n = treeVariance.length;
@@ -112,18 +109,14 @@ public class VarianceProportionStatistic extends Statistic.Abstract {
     
     private double[] getSampleVariance(){
         int n = tree.getExternalNodeCount();
-        int dim = dataModel.getTraitDimension();
-        double[] samplingPrecision = dataModel.getSamplingPrecision().getParameterValues();
+        int dim = samplingPrecision.getDimension();
+        double[] samplingPrecisionVals = samplingPrecision.getParameterValues();
         double[] sampleVariance = new double[dim];
         for (int i = 0; i <= dim - 1; i++){
-            sampleVariance[i] = (n - 1) / (n * samplingPrecision[i]);
+            sampleVariance[i] = (n - 1) / (n * samplingPrecisionVals[i]);
         }
         return sampleVariance;
     }
-
-//    private double getSamplingVariance(double[][] treeVariance){
-//
-//    }
 
 
     @Override
@@ -133,14 +126,14 @@ public class VarianceProportionStatistic extends Statistic.Abstract {
 
     @Override
     public double getStatisticValue(int dim) {
-        if (!proportionKnown){
+        if (dim == 0){
             diffusionProportion = getDiffusionProportion();
-//            proportionKnown = true;
         }
         return diffusionProportion[dim];
     }
 
-    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        proportionKnown = false;
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+
     }
 }

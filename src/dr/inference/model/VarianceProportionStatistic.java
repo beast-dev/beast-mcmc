@@ -42,9 +42,8 @@ import dr.xml.*;
 
 public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener {
 
-
-    public static final String VARIANCE_PROPORTION_STAT = "varianceProportionStatistic";
     public static final String PARSER_NAME = "varianceProportionStatistic";
+    public static final String SCALE_BY_HEIGHT = "scaleByTreeHeight";
 
     private Tree tree;
     private MultivariateDiffusionModel diffusionModel;
@@ -52,28 +51,30 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private Parameter samplingPrecision;
     private Parameter diffusionPrecision;
     private double[] diffusionProportion;
+    private boolean scaleByHeight;
 
 
     public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
-                                       MultivariateDiffusionModel diffusionModel) {
+                                       MultivariateDiffusionModel diffusionModel,
+                                       boolean scaleByHeight) {
         this.tree = tree;
         this.treeLikelihood = treeLikelihood;
         this.diffusionModel = diffusionModel;
         this.samplingPrecision = dataModel.getSamplingPrecision();
         this.diffusionPrecision = diffusionModel.getPrecisionParameter();
-        this.diffusionProportion = getDiffusionProportion();
+        this.diffusionProportion = getDiffusionProportion(scaleByHeight);
+        this.scaleByHeight = scaleByHeight;
         samplingPrecision.addParameterListener(this);
         diffusionPrecision.addParameterListener(this);
         //TODO: find parameters for tree branch lengths and add them to parameter listener
-        //TODO: implement method for scaling tree by root height in getDiffusionVariance()
         //TODO: implement proportionKnown boolean variable that changes to false when one of the parameters changes
 
     }
 
 
-    private double[] getDiffusionProportion() {
-        double[] diffusionVariance = getDiffusionVariance();
+    private double[] getDiffusionProportion(boolean scaleByHeight) {
+        double[] diffusionVariance = getDiffusionVariance(scaleByHeight);
         double[] sampleVariance = getSampleVariance();
         int dim = samplingPrecision.getDimension();
         double[] diffusionProportion = new double[dim];
@@ -83,10 +84,15 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         return diffusionProportion;
     }
 
-    private double[] getDiffusionVariance() {
+    private double[] getDiffusionVariance(boolean scaleByHeight) {
+        double normalization = 1.0;
+        if (scaleByHeight){
+            normalization = 1 / tree.getNodeHeight(tree.getRoot());
+        }
+        //TODO: implement more efficient method for computing treeVariance
         double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree,
                 treeLikelihood.getBranchRateModel(),
-                1.0, Double.POSITIVE_INFINITY);
+                normalization, Double.POSITIVE_INFINITY);
         Matrix diffusivityMatrix = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
         int n = treeVariance.length;
         int dim = diffusivityMatrix.rows();
@@ -129,7 +135,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     @Override
     public double getStatisticValue(int dim) {
         if (dim == 0) {
-            diffusionProportion = getDiffusionProportion();
+            diffusionProportion = getDiffusionProportion(scaleByHeight);
         }
         return diffusionProportion[dim];
     }
@@ -144,16 +150,25 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             Tree tree = (Tree) xo.getChild(Tree.class);
-            RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel) xo.getChild(RepeatedMeasuresTraitDataModel.class);
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+            RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
+                    xo.getChild(RepeatedMeasuresTraitDataModel.class);
+            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
+                    xo.getChild(MultivariateDiffusionModel.class);
 //        MatrixInverseStatistic diffusionVariance = (MatrixInverseStatistic) xo.getChild(MatrixInverseStatistic.class);
 //        MatrixParameter diffusionPrecision = (MatrixParameter) xo.getChild(MatrixParameter.class);
 //        Parameter samplingPrecision = (Parameter) xo.getChild(Parameter.class);
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-            return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel);
+            final boolean scaleByHeight;
+            if (xo.hasAttribute(SCALE_BY_HEIGHT)){
+                scaleByHeight = xo.getBooleanAttribute(SCALE_BY_HEIGHT);
+            } else{
+                scaleByHeight = false;
+            }
+            return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel, scaleByHeight);
         }
 
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                AttributeRule.newStringRule(SCALE_BY_HEIGHT, true),
                 new ElementRule(Tree.class),
                 new ElementRule(TreeDataLikelihood.class),
                 new ElementRule(RepeatedMeasuresTraitDataModel.class),
@@ -167,7 +182,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         @Override
         public String getParserDescription() {
-            return "This element returns a statistic that ";
+            return "This element returns a statistic that computes proportion of variance due to diffusion on the tree";
         }
 
         @Override

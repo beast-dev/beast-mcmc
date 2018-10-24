@@ -76,14 +76,11 @@
 		<matrixParameter idref="precisionMatrix"/>
 	</matrixInverse>
 
-	<varianceProportionStatistic id="varianceLog">
+	<varianceProportionStatistic id="varianceLog" scaleByTreeHeight="true">
 		<traitDataLikelihood idref="traitLikelihood"/>
 		<treeModel idref = "treeModel"/>
 		<repeatedMeasuresModel idref = "repeatedMeasures"/>
 		<multivariateDiffusionModel idref = "diffusionModel"/>
-		<!--<matrixParameter idref="precisionMatrix"/>-->
-		<!--<matrixInverse idref="diffVariance"/>-->
-		<!--<parameter idref="gamma"/>-->
 	</varianceProportionStatistic>
 
 

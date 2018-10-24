@@ -34,14 +34,15 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.Parameter;
-import dr.xml.Reportable;
+import dr.inference.model.*;
+import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import dr.math.matrixAlgebra.Matrix;
+
 /**
  * A utility class to format traits on a tree in a LogColumn-based file.  This class takes an array of TraitProvider
  * and its package location is bound to move
@@ -49,24 +50,29 @@ import dr.math.matrixAlgebra.Matrix;
  * @author Marc A. Suchard
  */
 
-public class VarianceProportionLogger implements Loggable, Reportable {
+public class VarianceProportionStatistic extends Statistic.Abstract {
 
+
+    public static final String VARIANCE_PROPORTION_STAT = "varianceProportionStatistic";
 
     private Tree tree;
     private RepeatedMeasuresTraitDataModel dataModel;
     private MultivariateDiffusionModel diffusionModel;
     private TreeDataLikelihood treeLikelihood;
-//    private final double[] diffusionProportion;
+    private double[] diffusionProportion;
+    private boolean proportionKnown = false;
 
 
-    public VarianceProportionLogger(Tree tree, TreeDataLikelihood treeLikelihood, RepeatedMeasuresTraitDataModel dataModel, MultivariateDiffusionModel diffusionModel) {
+    public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood, RepeatedMeasuresTraitDataModel dataModel, MultivariateDiffusionModel diffusionModel) {
         this.tree = tree;
         this.dataModel = dataModel;
         this.treeLikelihood = treeLikelihood;
         this.diffusionModel = diffusionModel;
-//        this.diffusionProportion = getDiffusionProportion();
+        this.diffusionProportion = getDiffusionProportion();
+//        diffusionProportion.addParameterListener(this);
 
     }
+
 
     private double[] getDiffusionProportion(){
         double[] diffusionVariance = getDiffusionVariance();
@@ -121,24 +127,20 @@ public class VarianceProportionLogger implements Loggable, Reportable {
 
 
     @Override
-    public LogColumn[] getColumns() {
-        int dim = dataModel.getTraitDimension();
-        LogColumn[] columns = new LogColumn[dim];
-        double[] diffusionProportion = getDiffusionProportion();
-        for (int i = 0; i <= dim - 1; i++){
-            int index = i;
-            columns[i] = new LogColumn.Abstract(String.format("varianceProp.%d", index + 1)) {
-                @Override
-                protected String getFormattedValue() {
-                    return Double.toString(getDiffusionProportion()[index]);
-                }
-            };
-        }
-        return columns;
+    public int getDimension() {
+        return diffusionProportion.length;
     }
 
     @Override
-    public String getReport() {
-        return null;
+    public double getStatisticValue(int dim) {
+        if (!proportionKnown){
+            diffusionProportion = getDiffusionProportion();
+//            proportionKnown = true;
+        }
+        return diffusionProportion[dim];
+    }
+
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        proportionKnown = false;
     }
 }

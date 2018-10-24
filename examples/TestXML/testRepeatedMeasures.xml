@@ -71,24 +71,28 @@
 		<treeModel idref="treeModel"/>
 	</traitLogger>
 
-	<varianceProportionLogger id="varianceLog">
+	<varianceProportionStatistic id="varianceLog">
 		<traitDataLikelihood idref="traitLikelihood"/>
 		<treeModel idref = "treeModel"/>
 		<repeatedMeasuresModel idref = "repeatedMeasures"/>
 		<multivariateDiffusionModel idref = "diffusionModel"/>
-	</varianceProportionLogger>
+	</varianceProportionStatistic>
 
-	<!--<multivariateWishartPrior id="precisionPrior" df="2">-->
-		<!--<scaleMatrix>-->
-			<!--<matrixParameter>-->
-				<!--<parameter value="1 0"/>-->
-				<!--<parameter value="0 1"/>-->
-			<!--</matrixParameter>-->
-		<!--</scaleMatrix>-->
-		<!--<data>-->
-			<!--<matrixParameter idref="precisionMatrix"/>-->
-		<!--</data>-->
-	<!--</multivariateWishartPrior>-->
+	<matrixInverse id="diffVariance">
+		<matrixParameter idref="precisionMatrix"/>
+	</matrixInverse>
+
+	<multivariateWishartPrior id="precisionPrior" df="2">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1 0"/>
+				<parameter value="0 1"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<matrixParameter idref="precisionMatrix"/>
+		</data>
+	</multivariateWishartPrior>
 
 	<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
 		<parameter idref="gamma"/>
@@ -109,12 +113,12 @@
 			</prior>
 		</normalGammaPrecisionGibbsOperator>
 
-		<!--<precisionGibbsOperator weight="1">-->
-			<!--<wishartStatistics  traitName="X">-->
-				<!--<traitDataLikelihood idref="traitLikelihood"/>-->
-			<!--</wishartStatistics>-->
-			<!--<multivariateWishartPrior idref="precisionPrior"/>-->
-		<!--</precisionGibbsOperator>-->
+		<precisionGibbsOperator weight="1">
+			<wishartStatistics  traitName="X">
+				<traitDataLikelihood idref="traitLikelihood"/>
+			</wishartStatistics>
+			<multivariateWishartPrior idref="precisionPrior"/>
+		</precisionGibbsOperator>
 	</operators>
 
 	<report>
@@ -151,7 +155,8 @@
 			<parameter idref="gamma"/>
 			<matrixParameter idref="precisionMatrix"/>
 			<traitLogger idref="traitLog"/>
-			<variancePorportionLogger idref="varianceLog"/>
+			<variancePorportionStatistic idref="varianceLog"/>
+			<matrixInverse idref="diffVariance"/>
 		</log>
 	</mcmc>
 

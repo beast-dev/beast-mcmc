@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treelikelihood.utilities;
+package dr.inference.model;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
@@ -31,6 +31,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
+import dr.xml.*;
 
 /**
  * A Statistic class that computes the expected proportion of the variance in the data due to diffusion on the tree
@@ -39,10 +40,11 @@ import dr.math.matrixAlgebra.Matrix;
  * @author Gabriel Hassler
  */
 
-public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener{
+public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener {
 
 
     public static final String VARIANCE_PROPORTION_STAT = "varianceProportionStatistic";
+    public static final String PARSER_NAME = "varianceProportionStatistic";
 
     private Tree tree;
     private MultivariateDiffusionModel diffusionModel;
@@ -70,12 +72,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
 
-    private double[] getDiffusionProportion(){
+    private double[] getDiffusionProportion() {
         double[] diffusionVariance = getDiffusionVariance();
         double[] sampleVariance = getSampleVariance();
         int dim = samplingPrecision.getDimension();
         double[] diffusionProportion = new double[dim];
-        for (int i = 0; i < dim; i++){
+        for (int i = 0; i < dim; i++) {
             diffusionProportion[i] = diffusionVariance[i] / (sampleVariance[i] + diffusionVariance[i]);
         }
         return diffusionProportion;
@@ -89,30 +91,30 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         int n = treeVariance.length;
         int dim = diffusivityMatrix.rows();
         double diagonalSum = 0;
-        double offDiagonalSum= 0;
-        for (int i = 0; i <= n - 1; i++){
+        double offDiagonalSum = 0;
+        for (int i = 0; i <= n - 1; i++) {
             diagonalSum = diagonalSum + treeVariance[i][i];
         }
-        for (int i = 0; i <= n - 2; i++){
+        for (int i = 0; i <= n - 2; i++) {
             for (int j = i + 1; j <= n - 1; j++)
                 offDiagonalSum = offDiagonalSum + treeVariance[i][j];
         }
         offDiagonalSum = offDiagonalSum * 2;
-        double diffusionScalar =  diagonalSum / n - (diagonalSum + offDiagonalSum) / (n * n);
+        double diffusionScalar = diagonalSum / n - (diagonalSum + offDiagonalSum) / (n * n);
 
         double[] diffusionVariance = new double[dim];
-        for (int i = 0; i <= dim - 1; i++){
+        for (int i = 0; i <= dim - 1; i++) {
             diffusionVariance[i] = diffusionScalar * diffusivityMatrix.component(i, i);
         }
         return diffusionVariance;
     }
-    
-    private double[] getSampleVariance(){
+
+    private double[] getSampleVariance() {
         int n = tree.getExternalNodeCount();
         int dim = samplingPrecision.getDimension();
         double[] samplingPrecisionVals = samplingPrecision.getParameterValues();
         double[] sampleVariance = new double[dim];
-        for (int i = 0; i <= dim - 1; i++){
+        for (int i = 0; i <= dim - 1; i++) {
             sampleVariance[i] = (n - 1) / (n * samplingPrecisionVals[i]);
         }
         return sampleVariance;
@@ -126,7 +128,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public double getStatisticValue(int dim) {
-        if (dim == 0){
+        if (dim == 0) {
             diffusionProportion = getDiffusionProportion();
         }
         return diffusionProportion[dim];
@@ -136,4 +138,46 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
 
     }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            Tree tree = (Tree) xo.getChild(Tree.class);
+            RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel) xo.getChild(RepeatedMeasuresTraitDataModel.class);
+            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+//        MatrixInverseStatistic diffusionVariance = (MatrixInverseStatistic) xo.getChild(MatrixInverseStatistic.class);
+//        MatrixParameter diffusionPrecision = (MatrixParameter) xo.getChild(MatrixParameter.class);
+//        Parameter samplingPrecision = (Parameter) xo.getChild(Parameter.class);
+            TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+            return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel);
+        }
+
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(Tree.class),
+                new ElementRule(TreeDataLikelihood.class),
+                new ElementRule(RepeatedMeasuresTraitDataModel.class),
+                new ElementRule(MultivariateDiffusionModel.class)
+        };
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "This element returns a statistic that ";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return VarianceProportionStatistic.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return PARSER_NAME;
+        }
+    };
 }

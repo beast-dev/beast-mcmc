@@ -71,6 +71,13 @@
 		<treeModel idref="treeModel"/>
 	</traitLogger>
 
+	<varianceProportionLogger id="varianceLog">
+		<traitDataLikelihood idref="traitLikelihood"/>
+		<treeModel idref = "treeModel"/>
+		<repeatedMeasuresModel idref = "repeatedMeasures"/>
+		<multivariateDiffusionModel idref = "diffusionModel"/>
+	</varianceProportionLogger>
+
 	<!--<multivariateWishartPrior id="precisionPrior" df="2">-->
 		<!--<scaleMatrix>-->
 			<!--<matrixParameter>-->
@@ -115,7 +122,7 @@
 		<traitDataLikelihood idref="traitLikelihood"/>
 	</report>
 
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<gammaPrior idref="gammaPrior"/>
@@ -137,13 +144,14 @@
 				<matrixParameter idref="precisionMatrix"/>
 			</column>
 		</log>
-		<log id="fileLog" logEvery="1000" fileName="precision_log.log">
+		<log id="fileLog" logEvery="100" fileName="precision_log.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="traitLikelihood"/>
 			<parameter idref="gamma"/>
 			<matrixParameter idref="precisionMatrix"/>
 			<traitLogger idref="traitLog"/>
+			<variancePorportionLogger idref="varianceLog"/>
 		</log>
 	</mcmc>
 

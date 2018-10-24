@@ -1,4 +1,4 @@
-                    BEAST v1.10.1 2002-2018
+                    BEAST v1.10.2 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,8 +17,18 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 8th August 2018
+Last updated: a.rambaut@ed.ac.uk - 6th October 2018
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
+
+================================================================================
+
+Version 1.10.2  released 6th October 2018
+
+	Bug Fixes:
+		Issue 1026: Check LogCombiner & TreeAnnotator use longs for state numbers
+	    Issue 1020: GSS has a problem with novel GTR parameterization
+		Issue 1014: Unable to open BEAUti setting file with some tree priors
+	    Issue 1010: BEAUti puts tmrca priors on the <taxa> ID rather than on the tmrcaStatistic ID
 
 ================================================================================
 

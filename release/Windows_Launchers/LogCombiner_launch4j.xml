@@ -1,0 +1,21 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <icon>../common/icons/utility.ico</icon>
+  <classPath>
+  	<mainClass>dr.app.tools.LogCombiner</mainClass>
+  	<cp>./lib/beast.jar</cp>
+  </classPath>
+  <dontWrapJar>true</dontWrapJar>
+  <jre>
+    <minVersion>1.6.0</minVersion>
+    <initialHeapSize>256</initialHeapSize>
+    <maxHeapSize>2048</maxHeapSize>
+  </jre>    
+  <versionInfo>
+    <fileDescription>LogCombiner</fileDescription>    
+        <copyright>2002-2018</copyright>
+    <productName>LogCombiner</productName>
+    <internalName>LogCombiner</internalName>
+    <originalFilename>LogCombiner.exe</originalFilename>    
+  </versionInfo>
+</launch4jConfig>

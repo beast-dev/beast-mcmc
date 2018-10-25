@@ -34,6 +34,8 @@ import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
+import java.util.List;
+
 /**
  * A Statistic class that computes the expected proportion of the variance in the data due to diffusion on the tree
  * versus sampling error.
@@ -53,8 +55,13 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private Parameter diffusionPrecision;
     private double[] diffusionProportion;
     private boolean scaleByHeight;
+    private double[] treeSums = new double[2]; // Array that stores [diagonalSum, totalSum] of tree variance matrix
+    private double[] diffusionVariance;
+    private double[] samplingVariance;
+    private int[] observedCounts;
 
-    private boolean statisticKnown = false;
+    private boolean treeKnown = false;
+    private boolean varianceKnown = false;
 
 
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
@@ -66,32 +73,67 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionModel = diffusionModel;
         this.samplingPrecision = dataModel.getSamplingPrecision();
         this.diffusionPrecision = diffusionModel.getPrecisionParameter();
-        this.diffusionProportion = getDiffusionProportion(scaleByHeight);
         this.scaleByHeight = scaleByHeight;
 
-        tree.addModelListener(this);
+        this.observedCounts = getObservedCounts(dataModel);
 
+        int dim = samplingPrecision.getDimension();
+        this.diffusionVariance = new double[dim];
+        this.samplingVariance = new double[dim];
+        this.diffusionProportion = new double[dim];
+
+        updateTreeSums();
+        updateDiffusionVariance();
+        updateSamplingVariance();
+        updateDiffusionProportion();
+
+        tree.addModelListener(this);
         samplingPrecision.addParameterListener(this);
         diffusionPrecision.addParameterListener(this);
 
-        //TODO: find parameters for tree branch lengths and add them to parameter listener
-        //TODO: implement proportionKnown boolean variable that changes to false when one of the parameters changes
+    }
+
+    private int[] getObservedCounts(RepeatedMeasuresTraitDataModel dataModel){
+
+        List<Integer> missingInds = dataModel.getMissingIndices();
+        int n = tree.getExternalNodeCount();
+        int dim = dataModel.getTraitDimension();
+        int[] observedCounts = new int[dim];
+
+        for (int i = 0; i < dim; i++){
+            observedCounts[i] = n;
+        }
+
+        int threshold = n;
+        int currentDim = 0;
+
+        for (int index : missingInds){
+
+            if (index >= threshold){
+                threshold += n;
+                currentDim += 1;
+            }
+
+            observedCounts[currentDim] -= 1;
+        }
+
+        return observedCounts;
 
     }
 
-
-    private double[] getDiffusionProportion(boolean scaleByHeight) {
-        double[] diffusionVariance = getDiffusionVariance(scaleByHeight);
-        double[] sampleVariance = getSampleVariance();
+    private void updateDiffusionProportion() {
         int dim = samplingPrecision.getDimension();
         double[] diffusionProportion = new double[dim];
         for (int i = 0; i < dim; i++) {
-            diffusionProportion[i] = diffusionVariance[i] / (sampleVariance[i] + diffusionVariance[i]);
+            double diffusionComponent = diffusionVariance[i] * (treeSums[0] / observedCounts[i]
+                    + treeSums[1] / (observedCounts[i] * observedCounts[i]));
+            double samplingComponent = samplingVariance[i] * (observedCounts[i] - 1) / observedCounts[i];
+            diffusionProportion[i] = diffusionComponent / (diffusionComponent + samplingComponent);
         }
-        return diffusionProportion;
     }
 
-    private double[] getDiffusionVariance(boolean scaleByHeight) {
+    private void updateTreeSums(){
+        assert (treeSums.length == 2);
 
         double normalization = 1.0;
         if (scaleByHeight){
@@ -101,39 +143,44 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree,
                 treeLikelihood.getBranchRateModel(),
                 normalization, Double.POSITIVE_INFINITY);
-        Matrix diffusivityMatrix = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+
         int n = treeVariance.length;
-        int dim = diffusivityMatrix.rows();
+
         double diagonalSum = 0;
         double offDiagonalSum = 0;
 
-        for (int i = 0; i <= n - 1; i++) {
+        for (int i = 0; i < n; i++) {
             diagonalSum = diagonalSum + treeVariance[i][i];
         }
 
-        for (int i = 0; i <= n - 2; i++) {
-            for (int j = i + 1; j <= n - 1; j++)
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
                 offDiagonalSum = offDiagonalSum + treeVariance[i][j];
+            }
         }
         offDiagonalSum = offDiagonalSum * 2;
-        double diffusionScalar = diagonalSum / n - (diagonalSum + offDiagonalSum) / (n * n);
-
-        double[] diffusionVariance = new double[dim];
-        for (int i = 0; i <= dim - 1; i++) {
-            diffusionVariance[i] = diffusionScalar * diffusivityMatrix.component(i, i);
-        }
-        return diffusionVariance;
+        treeSums[0] = diagonalSum;
+        treeSums[1] = diagonalSum + offDiagonalSum;
     }
 
-    private double[] getSampleVariance() {
-        int n = tree.getExternalNodeCount();
+    private void updateDiffusionVariance() {
+
+        Matrix diffusivityMatrix = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+        int dim = diffusivityMatrix.rows();
+
+        for (int i = 0; i < dim; i++) {
+            diffusionVariance[i] = diffusivityMatrix.component(i, i);
+        }
+    }
+
+    private void updateSamplingVariance() {
+
         int dim = samplingPrecision.getDimension();
         double[] samplingPrecisionVals = samplingPrecision.getParameterValues();
-        double[] sampleVariance = new double[dim];
-        for (int i = 0; i <= dim - 1; i++) {
-            sampleVariance[i] = (n - 1) / (n * samplingPrecisionVals[i]);
+
+        for (int i = 0; i < dim; i++) {
+            samplingVariance[i] = 1 / samplingPrecisionVals[i];
         }
-        return sampleVariance;
     }
 
 
@@ -144,16 +191,38 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public double getStatisticValue(int dim) {
-        if (!statisticKnown) {
-            diffusionProportion = getDiffusionProportion(scaleByHeight);
-            statisticKnown = true;
+        boolean statisticKnown = true;
+
+        if (!treeKnown) {
+            updateTreeSums();
+            treeKnown = true;
+            statisticKnown = false;
         }
+
+        if (!varianceKnown){
+            updateDiffusionVariance();
+            updateSamplingVariance();
+            varianceKnown = true;
+            statisticKnown = false;
+        }
+
+        if (!statisticKnown){
+            updateDiffusionProportion();
+        }
+
         return diffusionProportion[dim];
     }
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        statisticKnown = false;
+        varianceKnown = false;
+    }
+
+    @Override
+    public void modelChangedEvent(Model model, Object object, int index) {
+        assert (model == tree);
+
+        treeKnown = false;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -210,12 +279,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         }
     };
 
-    @Override
-    public void modelChangedEvent(Model model, Object object, int index) {
-        assert (model == tree);
-
-        statisticKnown = false;
-    }
 
     @Override
     public void modelRestored(Model model) {

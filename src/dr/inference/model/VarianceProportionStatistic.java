@@ -27,6 +27,7 @@ package dr.inference.model;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.inference.model.*;
@@ -40,12 +41,12 @@ import dr.xml.*;
  * @author Gabriel Hassler
  */
 
-public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener {
+public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener, ModelListener {
 
     public static final String PARSER_NAME = "varianceProportionStatistic";
     public static final String SCALE_BY_HEIGHT = "scaleByTreeHeight";
 
-    private Tree tree;
+    private TreeModel tree;
     private MultivariateDiffusionModel diffusionModel;
     private TreeDataLikelihood treeLikelihood;
     private Parameter samplingPrecision;
@@ -53,8 +54,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private double[] diffusionProportion;
     private boolean scaleByHeight;
 
+    private boolean statisticKnown = false;
 
-    public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
+
+    public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
                                        MultivariateDiffusionModel diffusionModel,
                                        boolean scaleByHeight) {
@@ -65,8 +68,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionPrecision = diffusionModel.getPrecisionParameter();
         this.diffusionProportion = getDiffusionProportion(scaleByHeight);
         this.scaleByHeight = scaleByHeight;
+
+        tree.addModelListener(this);
+
         samplingPrecision.addParameterListener(this);
         diffusionPrecision.addParameterListener(this);
+
         //TODO: find parameters for tree branch lengths and add them to parameter listener
         //TODO: implement proportionKnown boolean variable that changes to false when one of the parameters changes
 
@@ -85,6 +92,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
     private double[] getDiffusionVariance(boolean scaleByHeight) {
+
         double normalization = 1.0;
         if (scaleByHeight){
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
@@ -98,9 +106,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         int dim = diffusivityMatrix.rows();
         double diagonalSum = 0;
         double offDiagonalSum = 0;
+
         for (int i = 0; i <= n - 1; i++) {
             diagonalSum = diagonalSum + treeVariance[i][i];
         }
+
         for (int i = 0; i <= n - 2; i++) {
             for (int j = i + 1; j <= n - 1; j++)
                 offDiagonalSum = offDiagonalSum + treeVariance[i][j];
@@ -134,29 +144,33 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public double getStatisticValue(int dim) {
-        if (dim == 0) {
+        if (!statisticKnown) {
             diffusionProportion = getDiffusionProportion(scaleByHeight);
+            statisticKnown = true;
         }
         return diffusionProportion[dim];
     }
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-
+        statisticKnown = false;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            Tree tree = (Tree) xo.getChild(Tree.class);
+
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
             RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
                     xo.getChild(RepeatedMeasuresTraitDataModel.class);
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
                     xo.getChild(MultivariateDiffusionModel.class);
+
 //        MatrixInverseStatistic diffusionVariance = (MatrixInverseStatistic) xo.getChild(MatrixInverseStatistic.class);
 //        MatrixParameter diffusionPrecision = (MatrixParameter) xo.getChild(MatrixParameter.class);
 //        Parameter samplingPrecision = (Parameter) xo.getChild(Parameter.class);
+
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             final boolean scaleByHeight;
             if (xo.hasAttribute(SCALE_BY_HEIGHT)){
@@ -169,7 +183,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(SCALE_BY_HEIGHT, true),
-                new ElementRule(Tree.class),
+                new ElementRule(TreeModel.class),
                 new ElementRule(TreeDataLikelihood.class),
                 new ElementRule(RepeatedMeasuresTraitDataModel.class),
                 new ElementRule(MultivariateDiffusionModel.class)
@@ -195,4 +209,16 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             return PARSER_NAME;
         }
     };
+
+    @Override
+    public void modelChangedEvent(Model model, Object object, int index) {
+        assert (model == tree);
+
+        statisticKnown = false;
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+        // Do nothing
+    }
 }

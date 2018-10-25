@@ -42,7 +42,7 @@ import java.util.List;
 public class PriorParsers {
     public final static boolean DEBUG = false;
 
-    public static final String TRUNCATED = "trancated";
+    public static final String TRUNCATED = "truncated";
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";

@@ -343,6 +343,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
+                        new Arguments.Option("beagle_multipartition", "BEAGLE: use multipartition extensions if available"),
                         new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
@@ -554,6 +555,10 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_rescale")) {
             System.setProperty("beagle.rescale", Long.toString(arguments.getLongOption("beagle_rescale")));
+        }
+
+        if (arguments.hasOption("beagle_multipartition")) {
+            System.setProperty("beagle.multipartition.extensions", Boolean.TRUE.toString());
         }
 
         // ============= Other settings =============

@@ -93,6 +93,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     }
 
+    /**
+     * @return an array with the number of taxa with observed data for each trait
+     */
     private int[] getObservedCounts(RepeatedMeasuresTraitDataModel dataModel){
 
         List<Integer> missingInds = dataModel.getMissingIndices();
@@ -121,6 +124,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     }
 
+    /**
+     * recalculates the diffusionProportion statistic based on current parameters
+     */
     private void updateDiffusionProportion() {
         int dim = samplingPrecision.getDimension();
         double[] diffusionProportion = new double[dim];
@@ -132,6 +138,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         }
     }
 
+    /**
+     * recalculates the the sum of the diagonal elements and sum of all the elements of the tree variance
+     * matrix statistic based on current parameters
+     */
     private void updateTreeSums(){
         assert (treeSums.length == 2);
 
@@ -163,6 +173,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         treeSums[1] = diagonalSum + offDiagonalSum;
     }
 
+    /**
+     * recalculates the diffusionVariance variable, which stores the diagonal elements of the diffusion variance matrix,
+     * by inverting the current diffusion precision matrix
+     */
     private void updateDiffusionVariance() {
 
         Matrix diffusivityMatrix = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
@@ -173,6 +187,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         }
     }
 
+    /**
+     * recalculates the sampling variance for each trait based on the current sampling precision
+     */
     private void updateSamplingVariance() {
 
         int dim = samplingPrecision.getDimension();
@@ -191,22 +208,27 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public double getStatisticValue(int dim) {
-        boolean statisticKnown = true;
+        boolean needToUpdate = false;
 
         if (!treeKnown) {
+
             updateTreeSums();
             treeKnown = true;
-            statisticKnown = false;
+            needToUpdate = true;
+
         }
 
         if (!varianceKnown){
+
             updateDiffusionVariance();
             updateSamplingVariance();
             varianceKnown = true;
-            statisticKnown = false;
+            needToUpdate = true;
+
         }
 
-        if (!statisticKnown){
+        if (needToUpdate){
+
             updateDiffusionProportion();
         }
 

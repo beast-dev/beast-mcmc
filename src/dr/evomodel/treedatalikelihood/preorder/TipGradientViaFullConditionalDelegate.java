@@ -3,10 +3,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.MatrixParameterInterface;
 
@@ -17,7 +14,7 @@ public class TipGradientViaFullConditionalDelegate extends TipFullConditionalDis
 
     public TipGradientViaFullConditionalDelegate(String name, MutableTreeModel tree,
                                                  MultivariateDiffusionModel diffusionModel,
-                                                 ContinuousTraitDataModel dataModel,
+                                                 ContinuousTraitPartialsProvider dataModel,
                                                  ConjugateRootTraitPrior rootPrior,
                                                  ContinuousRateTransformation rateTransformation,
                                                  ContinuousDataLikelihoodDelegate likelihoodDelegate) {

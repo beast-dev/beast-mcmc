@@ -134,9 +134,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 //            	TODO: what about 'every'?
             	
             	int partitionSiteCount = (partition.to - partition.from) +1;
-            	
-//            	System.out.println("SCRAAAAAM:" + partitionSiteCount);
-            	
+
                 if (partition.getRootSequence().getLength() != 3 * partitionSiteCount && partition.getFreqModel().getDataType() instanceof Codons) {
 
                     throw new RuntimeException("Root codon sequence " + "for partition "+ (i+1) +" has "
@@ -158,9 +156,10 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
             partitionsList.add(partition);
         }// END: partitions loop
 
-        msg += "\n\t" + siteCount + ((siteCount > 1) ? " replications " : " replication");
+        msg += "\n\t" + partitionsList.size() + " partitions with a total of ";
+        msg += siteCount + ((siteCount > 1) ? " replications " : " replication");
         if (msg.length() > 0) {
-            Logger.getLogger("dr.app.beagle.tools").info("Using Beagle Sequence Simulator: " + msg);
+            Logger.getLogger("dr.app.beagle.tools").info("\nUsing Beagle Sequence Simulator: " + msg + "\n");
         }
 
         BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);

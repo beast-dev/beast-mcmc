@@ -38,6 +38,7 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
     public static final String DIAGONAL = "diagonal";
     public static final String OFF_DIAGONAL = "offDiagonal";
     public static final String AS_CORRELATION = "asCorrelation";
+    public static final String IS_CHOLESKY = "isCholesky";
 
     public String getParserName() {
         return MATRIX_PARAMETER;
@@ -53,7 +54,9 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
 
         boolean asCorrelation = xo.getAttribute(AS_CORRELATION, false);
 
-        return new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation);
+        boolean isCholesky = xo.getAttribute(IS_CHOLESKY, false);
+
+        return new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation, isCholesky);
     }
 
     //************************************************************************
@@ -73,7 +76,8 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(OFF_DIAGONAL,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            AttributeRule.newBooleanRule(AS_CORRELATION, true)
+            AttributeRule.newBooleanRule(AS_CORRELATION, true),
+            AttributeRule.newBooleanRule(IS_CHOLESKY, true)
     };
 
     public Class getReturnType() {

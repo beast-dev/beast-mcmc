@@ -56,7 +56,7 @@ public class BufferIndexHelper implements Serializable {
         doubleBufferCount = maxIndexValue - minIndexValue;
         indexOffsets = new int[doubleBufferCount];
         storedIndexOffsets = new int[doubleBufferCount];
-        flippedSinceLastReset = new boolean[doubleBufferCount];
+        indexOffsetsFlipped = new boolean[doubleBufferCount];
 
         this.constantOffset = bufferSetNumber * getBufferCount();
     }
@@ -68,10 +68,9 @@ public class BufferIndexHelper implements Serializable {
     public void flipOffset(int i) {
         assert(i >= minIndexValue) : "shouldn't be trying to flip the first 'static' indices";
 
-        final int index = i - minIndexValue;
-        if (!flippedSinceLastReset[index]) {
-            indexOffsets[index] = doubleBufferCount - indexOffsets[index];
-            flippedSinceLastReset[index] = true;
+        if (!indexOffsetsFlipped[i - minIndexValue]){ // only flip once before reject / accept
+            indexOffsets[i - minIndexValue] = doubleBufferCount - indexOffsets[i - minIndexValue];
+            indexOffsetsFlipped[i - minIndexValue] = true;
         }
     }
 
@@ -92,28 +91,23 @@ public class BufferIndexHelper implements Serializable {
     }
 
     public void storeState() {
+        Arrays.fill(indexOffsetsFlipped, false);
         System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
-
-        resetMultipleFlips();
     }
 
     public void restoreState() {
         int[] tmp = storedIndexOffsets;
         storedIndexOffsets = indexOffsets;
         indexOffsets = tmp;
-
-        resetMultipleFlips();
-    }
-
-    private void resetMultipleFlips() {
-        Arrays.fill(flippedSinceLastReset, false);
+        Arrays.fill(indexOffsetsFlipped, false);
     }
 
     private final int minIndexValue;
     private final int constantOffset;
     private final int doubleBufferCount;
-    private final boolean[] flippedSinceLastReset;
+    private final boolean[] indexOffsetsFlipped;
 
     private int[] indexOffsets;
     private int[] storedIndexOffsets;
-}
+
+}//END: class

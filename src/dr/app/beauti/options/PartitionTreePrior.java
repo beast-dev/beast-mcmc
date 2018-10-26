@@ -78,6 +78,9 @@ public class PartitionTreePrior extends PartitionOptions {
         this.skylineGroupCount = source.skylineGroupCount;
         this.skylineModel = source.skylineModel;
         this.skyrideSmoothing = source.skyrideSmoothing;
+        this.skyGridCount = source.skyGridCount;
+        this.skyGridInterval = source.skyGridInterval;
+
         this.extendedSkylineModel = source.extendedSkylineModel;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.populationSizeModel = source.populationSizeModel;
@@ -112,7 +115,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterOneOverXPrior("expansion.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0);
         createParameterLaplacePrior("expansion.growthRate", "coalescent expansion growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 1.0);
+                PriorScaleType.GROWTH_RATE_SCALE, 0.1, 0.0, 1.0);
         createParameterGammaPrior("expansion.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, true);
         createZeroOneParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion", 0.1);
@@ -144,8 +147,10 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
 
-        createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
+        /*createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);*/
+        createParameterLognormalPrior("yule.birthRate", "Yule speciation process birth rate",
+                PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
 
         createNonNegativeParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.01, 0.0, 100000.0);
@@ -206,7 +211,8 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperator("expansion.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
 //        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
         createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
-        createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        //createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
+        createOperator("expansion.ancestralProportion", OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
         createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
         createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
         createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
@@ -226,7 +232,8 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
         createScaleOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
-        createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        //createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
         createScaleOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB, demoTuning, demoWeights);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA, demoTuning, 1);

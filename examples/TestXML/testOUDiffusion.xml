@@ -62,10 +62,21 @@
 			</strictClockBranchRates>
 		</optimalTraits>
         <strengthOfSelectionMatrix>
-            <matrixParameter id="strengthOfSelectionMatrix">
-				<parameter id="alpha.col1" value="1.0 0.1"/>
-				<parameter id="alpha.col2" value="0.1 2.0"/>
-            </matrixParameter>
+            <compoundEigenMatrix id="attenuation.matrix">
+                <eigenValues>
+                    <parameter id="attenuation.values" value="0.1 0.2" />
+                </eigenValues>
+                <eigenVectors>
+                    <matrixParameter id="attenuation.vectors">
+                        <parameter id="attVec.col1" value="0.1"/>
+                        <parameter id="attVec.col2" value="0.2"/>
+                    </matrixParameter>
+                </eigenVectors>
+            </compoundEigenMatrix>
+            <!-- <matrixParameter id="strengthOfSelectionMatrix"> -->
+				<!-- <parameter id="alpha.col1" value="1.0 0.1"/> -->
+				<!-- <parameter id="alpha.col2" value="0.2 2.0"/> -->
+            <!-- </matrixParameter> -->
         </strengthOfSelectionMatrix>
      	<conjugateRootPrior>
             <meanParameter>
@@ -122,7 +133,7 @@
             <matrixParameter idref="precisionMatrix"/>
 			<parameter idref="meanRoot"/>
 			<parameter idref="sampleSizeRoot"/>
-            <matrixParameter idref="strengthOfSelectionMatrix"/>
+            <matrixParameter idref="attenuation.matrix"/>
 		</log>
 
 		<logTree logEvery="1" nexusFormat="true" fileName="testOU.trees">

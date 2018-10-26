@@ -33,6 +33,8 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.io.Serializable;
 
@@ -117,7 +119,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         }
 
         cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                diffusionModel.getPrecisionParameter().getParameterValues(),
+                diffusionModel.getPrecisionmatrixAsVector(),
                 Math.log(diffusionModel.getDeterminantPrecisionMatrix())
 
         );
@@ -157,7 +159,9 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public boolean hasDiagonalActualization() { return false; }
+    public boolean hasDiagonalActualization() {
+        return false;
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -188,5 +192,10 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     @Override
     protected void acceptState() {
 
+    }
+
+    @Override
+    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
+        CommonOps.scale(scalar, gradient);
     }
 }

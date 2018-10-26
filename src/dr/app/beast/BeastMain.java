@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -339,7 +339,6 @@ public class BeastMain {
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
-                        new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
@@ -368,12 +367,20 @@ public class BeastMain {
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
                         new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
+                        new Arguments.Option("force_resume", "Force resuming from a dumped state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
+
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
+            arguments.addOption("beagle_auto",
+                "BEAGLE: automatically select fastest resource for analysis",
+                "beagle_info");
+        };
 
         int argumentCount = 0;
 
@@ -497,8 +504,11 @@ public class BeastMain {
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
 
         // if any beagle flag is specified then use beagle...
-        boolean useBeagle = !arguments.hasOption("beagle_off");
+        //final boolean useBeagle = true;
 
+        if (arguments.hasOption("beagle_auto")) {
+            System.setProperty("beagle.resource.auto", Boolean.TRUE.toString());
+        }
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
         }
@@ -586,6 +596,10 @@ public class BeastMain {
             System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
         }
 
+        if (arguments.hasOption("force_resume")) {
+            System.setProperty("force.resume", Boolean.TRUE.toString());
+        }
+
         if (arguments.hasOption("citations_file")) {
             String debugStateFile = arguments.getStringOption("citations_file");
             System.setProperty("citations.filename", debugStateFile);
@@ -667,7 +681,7 @@ public class BeastMain {
             dialog.setAllowOverwrite(allowOverwrite);
             dialog.setSeed(seed);
 
-            dialog.setUseBeagle(useBeagle);
+            //dialog.setUseBeagle(useBeagle);
 
             if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
                 dialog.setPreferBeagleGPU();
@@ -690,28 +704,25 @@ public class BeastMain {
             seed = dialog.getSeed();
             threadCount = dialog.getThreadPoolSize();
 
-            useBeagle = dialog.useBeagle();
-            if (useBeagle) {
-                beagleShowInfo = dialog.showBeagleInfo();
-                if (dialog.preferBeagleCPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-                }
-                if (dialog.preferBeagleSSE()) {
-                    beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
-                } else {
-                    beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-                }
-                if (dialog.preferBeagleGPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
-                }
-                if (dialog.preferBeagleDouble()) {
-                    beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-                }
-                if (dialog.preferBeagleSingle()) {
-                    beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
-                }
-                System.setProperty("beagle.scaling", dialog.scalingScheme());
+            beagleShowInfo = dialog.showBeagleInfo();
+            if (dialog.preferBeagleCPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
+            if (dialog.preferBeagleSSE()) {
+                beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+            } else {
+                beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+            if (dialog.preferBeagleGPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+            }
+            if (dialog.preferBeagleDouble()) {
+                beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+            }
+            if (dialog.preferBeagleSingle()) {
+                beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+            }
+            System.setProperty("beagle.scaling", dialog.scalingScheme());
 
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
@@ -721,13 +732,11 @@ public class BeastMain {
 
         }
 
-        if (useBeagle) {
-            BeagleInfo.printVersionInformation();
+        BeagleInfo.printVersionInformation();
 
-            if (BeagleInfo.getVersion().startsWith("1.")) {
-                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
-            }
+        if (BeagleInfo.getVersion().startsWith("1.")) {
+            System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
+                    "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
         }
 
         if (beagleShowInfo) {
@@ -784,9 +793,7 @@ public class BeastMain {
             System.setProperty("log.allow.overwrite", "true");
         }
 
-        if (useBeagle) {
-            additionalParsers.add("beagle");
-        }
+        additionalParsers.add("beagle");
 
         if (beagleFlags != 0) {
             System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));

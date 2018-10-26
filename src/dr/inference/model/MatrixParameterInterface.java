@@ -62,4 +62,6 @@ public interface MatrixParameterInterface extends Parameter {
     void setAllParameterValuesQuietly(double[] values, int offset);
 
     String toSymmetricString();
+
+    boolean isConstrainedSymmetric();
 }

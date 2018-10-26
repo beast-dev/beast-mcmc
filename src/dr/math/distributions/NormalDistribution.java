@@ -140,6 +140,10 @@ public class NormalDistribution implements Distribution, RandomGenerator {
         return (m - x) / (sd * sd);
     }
 
+    public static double hessianLogPdf(double x, double m, double sd) {
+        return - 1.0 / (sd * sd);
+    }
+
     /**
      * cumulative density function
      *

@@ -33,7 +33,7 @@ import dr.math.distributions.GammaDistribution;
 /**
  * Created by max on 6/12/14.
  */
-public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator {
+public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator implements PathDependent, GibbsOperator {
     //    private double[] FacXLoad;
 //    private double[] residual;
     private LatentFactorModel LFM;

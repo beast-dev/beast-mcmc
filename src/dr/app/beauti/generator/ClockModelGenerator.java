@@ -484,7 +484,7 @@ public class ClockModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
-        String parameterName = !options.classicOperatorsAndPriors && BeautiOptions.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus";
+        String parameterName = options.useNuRelativeRates() ? "allNus" : "allMus";
 
         Parameter allMus = model.getParameter(parameterName);
         if (allMus.getSubParameters().size() > 1) {
@@ -549,12 +549,12 @@ public class ClockModelGenerator extends Generator {
     public void writeLog(PartitionClockModel model, XMLWriter writer) {
         String prefix = model.getPrefix();
 
-        if (!options.classicOperatorsAndPriors && BeautiOptions.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
-                // The mu's are the more relevent parameter and allow comparisons with the old parameterization
-                // It would be confusing to log the nus and mus.
-//                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
+                // The mu's are the more relevant parameter and allow comparisons with the old parameterization
+                // May be confusing to log the nus and mus, but necessary for use with generalized stepping-stone sampling
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
 
                 for (Parameter parameter : allNus.getSubParameters()) {
                     String name = parameter.getName();

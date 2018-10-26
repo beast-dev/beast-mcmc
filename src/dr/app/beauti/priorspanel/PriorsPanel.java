@@ -195,7 +195,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
             public void actionPerformed(ActionEvent actionEvent) {
-                options.classicOperatorsAndPriors = classicPriorsCheck.isSelected();
+                options.useClassicOperatorsAndPriors = classicPriorsCheck.isSelected();
                 priorTableModel.fireTableDataChanged();
                 frame.setAllOptions();
             }
@@ -204,7 +204,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         classicPriorsCheck = new JCheckBox(classicPriorsAction);
         classicPriorsCheck.setVisible(true);
         classicPriorsCheck.setEnabled(true);
-        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8.4) prior and operator combinations.</html>");
+        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8 style) prior and operator combinations.</html>");
 
 
         setOpaque(false);
@@ -679,11 +679,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
                 if (options.treeModelOptions.isNodeCalibrated(parameter)) {
                     List<PartitionTreeModel> treeModels;
-                    if (options.useStarBEAST) {
-                        treeModels = options.getPartitionTreeModels();
-                    } else {
-                        treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
-                    }
+                    treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
 
                     for (PartitionTreeModel treeModel : treeModels) {
                         treeModel.setNodeCalibrations(true);

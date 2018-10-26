@@ -26,6 +26,8 @@
 package dr.app.util;
 
 import java.util.StringTokenizer;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 public class Arguments {
 
@@ -195,6 +197,14 @@ public class Arguments {
     public Arguments(Option[] options, boolean caseSensitive) {
         this.options = options;
         this.caseSensitive = caseSensitive;
+    }
+
+    public void addOption(String label, String description, String positionLabel) {
+        ArrayList<Option> optionsList = new ArrayList<Option>(Arrays.asList(this.options));
+        optionsList.add(findOption(positionLabel), new Arguments.Option(label, description));
+
+        this.options = new Option[optionsList.size()];
+        optionsList.toArray(this.options);                            ;
     }
 
     /**
@@ -487,7 +497,7 @@ public class Arguments {
 
             if (arguments[i].length() - 1 >= label.length()) {
                 if (arguments[i].startsWith(ARGUMENT_CHARACTER)) {
-//					String l = arguments[i].substring(1, label.length() + 1);
+//                  String l = arguments[i].substring(1, label.length() + 1);
 //                                                String l = arguments[i];
                     String l = arguments[i].substring(1, arguments[i].length());
                     if ((!caseSensitive && label.equalsIgnoreCase(l)) || label.equals(l)) {

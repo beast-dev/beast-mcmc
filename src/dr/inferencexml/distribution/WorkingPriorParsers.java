@@ -37,6 +37,7 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.StringTokenizer;
 
 /**
  * @author Guy Baele
@@ -461,20 +462,36 @@ public class WorkingPriorParsers {
 
                     //dimension > 1
                     LogitTransformedNormalKDEDistribution[] arrayKDE = new LogitTransformedNormalKDEDistribution[dimension];
+                    String[] newParameterName = new String[dimension];
+
+                    upperlimit = dimension;
+
+                    if (xo.hasAttribute("parameterNames")) {
+                        String temp = (String)xo.getAttribute("parameterNames");
+                        StringTokenizer token = new StringTokenizer(temp);
+                        for (int i = 0; i < dimension; i++) {
+                            newParameterName[i] = token.nextToken();
+                        }
+                    } else {
+                        for (int i = 0; i < dimension; i++) {
+                            newParameterName[i] = parameterName + (i+1);
+                        }
+                    }
 
                     for (int i = 0; i < dimension; i++) {
+
                         //look for parameterName1, parameterName2, ... if necessary
-                        String newParameterName = parameterName + (i+1);
+                        //String newParameterName = parameterName + (i+1);
                         int traceIndexParameter = -1;
                         for (int j = 0; j < traces.getTraceCount(); j++) {
                             String traceName = traces.getTraceName(j);
-                            if (traceName.trim().equals(newParameterName)) {
+                            if (traceName.trim().equals(newParameterName[i])) {
                                 traceIndexParameter = j;
                             }
                         }
 
                         if (traceIndexParameter == -1) {
-                            throw new XMLParseException("LogitTransformedNormalKDEDistribution: Column '" + newParameterName + "' can not be found for " + getParserName() + " element.");
+                            throw new XMLParseException("LogitTransformedNormalKDEDistribution: Column '" + newParameterName[i] + "' can not be found for " + getParserName() + " element.");
                         }
 
                         Double[] parameterSamples = new Double[traces.getStateCount()];

@@ -57,15 +57,13 @@ public class ParameterPriorGenerator extends Generator {
     /**
      * Write the priors for each parameter
      *
-     * @param useStarBEAST
      * @param writer       the writer
      */
-    public void writeParameterPriors(XMLWriter writer, boolean useStarBEAST) {
+    public void writeParameterPriors(XMLWriter writer) {
         boolean first = true;
 
-        Map<Taxa, Boolean> taxonSetsMono = useStarBEAST ? options.speciesSetsMono : options.taxonSetsMono;
 
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : taxonSetsMono.entrySet()) {
+        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
@@ -81,34 +79,20 @@ public class ParameterPriorGenerator extends Generator {
 
         List<Parameter> parameters = options.selectParameters();
 
-        if (useStarBEAST) {
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
+
+        for (Parameter parameter : parameters) {
+            if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
+                    parameter.priorType == PriorType.NONE_FIXED ||
+                    parameter.priorType == PriorType.NONE_STATISTIC)) {
+                if (parameter.isCached) {
+                    writeCachedParameterPrior(parameter, writer);
+                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                    writeParameterPrior(parameter, writer);
                 }
             }
-
-        } else {
-
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
-                        parameter.priorType == PriorType.NONE_FIXED ||
-                        parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
-                }
-            }
-
         }
+
     }
 
     private void writeCachedParameterPrior(Parameter parameter, XMLWriter writer) {
@@ -127,19 +111,39 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        if (parameter.priorType != PriorType.NONE_FIXED && parameter.isTruncated) {
-            // if there is a truncation then put it at the top so it short-circuits any other prior
-            // calculations
+        if (parameter.priorType == PriorType.NONE_FIXED) {
+            return;
+        }
 
-            // todo: We should switch this to truncatedDistribution so that the density is normalized correctly
+        boolean isTruncated = parameter.isTruncated;
+        if (isTruncated) {
+            Attribute[] attributes = null;
 
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+            if (!Double.isInfinite(parameter.truncationLower)) {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                    };
+                }
+            } else {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    // both are infinite so there is no trunction
+                    isTruncated = false;
+                }
+            }
+
+            if (isTruncated) {
+                writer.writeOpenTag(PriorParsers.TRUNCATED, attributes);
+            }
         }
 
         switch (parameter.priorType) {
@@ -329,6 +333,11 @@ public class ParameterPriorGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
+
+        if (isTruncated) {
+            writer.writeCloseTag(PriorParsers.TRUNCATED);
+        }
+
     }
 
     private void writeParameterIdref(XMLWriter writer, Parameter parameter) {

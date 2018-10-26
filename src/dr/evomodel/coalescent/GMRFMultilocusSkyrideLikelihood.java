@@ -873,7 +873,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
     }
 
-
     class SkygridCovariateHelper extends SkygridHelper {
 
         public SkygridCovariateHelper() {
@@ -906,7 +905,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                 if (covariates != null) {
                     if (beta.size() != covariates.size()) {
-                        throw new RuntimeException("beta.size() != covariates.size()");
+                        throw new RuntimeException("beta.size(" + beta.size() + ") != covariates.size(" + covariates.size() + ")");
                     }
 
                     for (int k = 0; k < beta.size(); ++k) {
@@ -917,7 +916,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                         if ((J != covariate.getRowDimension()) ||
                                 (N != covariate.getColumnDimension())) { // Note: XML current has covariates transposed
-                            throw new RuntimeException("Incorrect dimensions in " + covariate.getId());
+                            throw new RuntimeException("Incorrect dimensions in " + covariate.getId() + " (r=" + covariate.getRowDimension() +
+                                    ",c=" + covariate.getColumnDimension()+ ")");
                         }
 
                         for (int i = 0; i < N; ++i) {

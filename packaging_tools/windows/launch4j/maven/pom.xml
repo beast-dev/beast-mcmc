@@ -236,9 +236,9 @@
 						<configuration>
 							<descriptors>
 								<descriptor>assembly/assemble-linux.xml</descriptor>
+								<descriptor>assembly/assemble-linux64.xml</descriptor>
 								<descriptor>assembly/assemble-win32.xml</descriptor>
 								<descriptor>assembly/assemble-mac.xml</descriptor>
-								<descriptor>assembly/assemble-osx.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>

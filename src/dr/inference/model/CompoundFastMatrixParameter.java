@@ -26,7 +26,6 @@
 package dr.inference.model;
 
 import dr.xml.*;
-import mpi.MPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -169,6 +168,11 @@ public class CompoundFastMatrixParameter extends CompoundParameter implements Ma
     @Override
     public String toSymmetricString() {
         return MatrixParameter.toSymmetricString(this);
+    }
+
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
     }
 
     public final static String COMPOUND_FAST_MATRIX_PARAMETER = "compoundFastMatrixParameter";

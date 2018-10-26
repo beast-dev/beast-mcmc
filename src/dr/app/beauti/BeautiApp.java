@@ -170,43 +170,64 @@ public class BeautiApp extends MultiDocApplication {
             System.setProperty("swing.aatext", "true");
 
             System.setProperty("apple.awt.graphics.UseQuartz", "true");
-            System.setProperty("apple.awt.antialiasing","true");
-            System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");
+            System.setProperty("apple.awt.antialiasing", "true");
+            System.setProperty("apple.awt.rendering", "VALUE_RENDER_QUALITY");
 
-            System.setProperty("apple.laf.useScreenMenuBar","true");
-            System.setProperty("apple.awt.draggableWindowBackground","true");
-            System.setProperty("apple.awt.showGrowBox","true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.draggableWindowBackground", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
 
-            try {
-                // set the Quaqua Look and Feel in the UIManager
-                javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-                    public void run() {
-                        try {
+//            int javaVersion = Integer.parseInt(System.getProperty("java.version").split("\\.")[0]);
+//
+//            System.out.println("Java version: " + javaVersion);
+//
+//
+//            if (javaVersion < 10) {
+//                try {
+//                    // set the Quaqua Look and Feel in the UIManager
+//                    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+//                        public void run() {
+//                            try {
+//                                System.setProperty(
+//                                        "Quaqua.design", "Sierra"
+//                                );
+//
 //                                try {
 //                                    // We need to do this using dynamic class loading to avoid other platforms
 //                                    // having to link to this class. If the Quaqua library is not on the classpath
 //                                    // it simply won't be used.
 //                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-//                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
 //
+////                                Method method = qm.getMethod("setIncludedUIs", Set.class);
+////                                Set<String> includes = new HashSet<String>();
+//////                                includes.add("ColorChooser");
+//////                                includes.add("FileChooser");
+////                                includes.add("Button");
+////                                includes.add("SplitPane");
+////                                includes.add("Table");
+////                                includes.add("Panel");
+////                                method.invoke(null, includes);
+//
+//                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
 //                                    Set<String> excludes = new HashSet<String>();
-//                                    excludes.add("Button");
-//                                    excludes.add("ToolBar");
+//                                    excludes.add("RootPane");
+////                                excludes.add("Table");
+//                                    excludes.add("TextField");
 //                                    method.invoke(null, excludes);
 //
+//                                } catch (Throwable e) {
 //                                }
-//                                catch (Throwable e) {
-//                                }
-
-                            //set the Quaqua Look and Feel in the UIManager
-                            UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
-                            lafLoaded = true;
-                        } catch (Exception e) {
-                        }
-                    }
-                });
-            } catch (Exception e) {
-            }
+//
+//                                //set the Quaqua Look and Feel in the UIManager
+//                                UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
+//                                lafLoaded = true;
+//                            } catch (Exception e) {
+//                            }
+//                        }
+//                    });
+//                } catch (Exception e) {
+//                }
+//            }
 
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
             UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));

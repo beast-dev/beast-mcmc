@@ -34,8 +34,8 @@ public class ConditionalVarianceAndTransform {
 
     public ConditionalVarianceAndTransform(final Matrix variance, final int[] missingIndices, final int[] notMissingIndices) {
 
-        assert (missingIndices.length + notMissingIndices.length == variance.rows());
-        assert (missingIndices.length + notMissingIndices.length == variance.columns());
+//        assert (missingIndices.length + notMissingIndices.length == variance.rows());
+//        assert (missingIndices.length + notMissingIndices.length == variance.columns());
 
         this.missingIndices = missingIndices;
         this.notMissingIndices = notMissingIndices;

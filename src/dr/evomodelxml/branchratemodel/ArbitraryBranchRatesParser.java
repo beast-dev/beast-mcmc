@@ -26,6 +26,7 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -63,9 +64,14 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         boolean centerAtOne = xo.getAttribute(CENTER_AT_ONE, true);
         boolean exp = xo.getAttribute(EXP, false);
 
-        Parameter locationParameter = null;
+        BranchSpecificFixedEffects locationParameter = null;
         if (xo.hasChildNamed(LOCATION)) {
-            locationParameter = (Parameter) xo.getElementFirstChild(LOCATION);
+            Object locationObject = xo.getElementFirstChild(LOCATION);
+            if ( locationObject instanceof BranchSpecificFixedEffects) {
+                locationParameter = (BranchSpecificFixedEffects) locationObject;
+            } else {
+                locationParameter = new BranchSpecificFixedEffects.None((Parameter) locationObject);
+            }
         }
 
         Parameter scaleParameter = null;

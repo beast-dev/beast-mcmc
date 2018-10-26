@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
@@ -140,6 +141,15 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Vk = wrap(prePartials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+
+            if (allZeroDiagonals(Vj)) {
+
+                final DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
+
+                assert (!allZeroDiagonals(Pj));
+
+                safeInvert(Pj, Vj, false);
+            }
 
             // B. Inflate variance along sibling branch using matrix inversion
 //                final DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
@@ -758,6 +768,23 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         if (DEBUG) {
             System.err.println("End");
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Derivation Functions
+    ///////////////////////////////////////////////////////////////////////////
+
+    public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+
+        final DenseMatrix64F Pi = statistics.getParent().getRawPrecision();
+        final DenseMatrix64F Vdi = statistics.getBranch().getRawVariance();
+
+        DenseMatrix64F VdPi = matrix0;
+        DenseMatrix64F temp = matrix1;
+
+        CommonOps.mult(Vdi, Pi, VdPi);
+        CommonOps.mult(gradient, VdPi, temp);
+        CommonOps.multTransA(VdPi, temp, gradient);
     }
 
     double[] inverseDiffusions;

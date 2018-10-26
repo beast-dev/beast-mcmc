@@ -6,13 +6,12 @@ import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.TruncatedNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 /**
  * Created by max on 2/4/16.
  */
-public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements PathDependentOperator, GibbsOperator{
+public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements PathDependent, GibbsOperator{
     Likelihood prior;
     LatentFactorModelInterface LFM;
     double[][] precisionArray;

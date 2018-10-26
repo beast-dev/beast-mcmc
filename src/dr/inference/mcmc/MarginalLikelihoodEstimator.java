@@ -103,8 +103,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
 
             for (int i = 0; i < schedule.getOperatorCount(); ++i) {
                 MCMCOperator operator = schedule.getOperator(i);
-                if (operator instanceof PathDependentOperator) {
-                    ((PathDependentOperator)operator).setPathParameter(pathParameter);
+                if (operator instanceof PathDependent) {
+                    ((PathDependent)operator).setPathParameter(pathParameter);
                 }
             }
 

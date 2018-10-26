@@ -73,6 +73,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String STANDARDIZE_TRAITS = "standardizeTraits";
     public static final String RECIPROCAL_RATES = "reciprocalRates";
     public static final String PRIOR_SAMPLE_SIZE = "priorSampleSize";
+    public static final String PRIOR_PRECISION = "priorPrecision";
     public static final String RANDOM_SAMPLE = "randomSample";
     public static final String IGNORE_PHYLOGENY = "ignorePhylogeny";
     public static final String ASCERTAINMENT = "ascertainedTaxon";

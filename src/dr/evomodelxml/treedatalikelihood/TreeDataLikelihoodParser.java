@@ -95,15 +95,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
         }
 
-//        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-//                treeModel,
-//                patternLists.get(0),
-//                branchModel,
-//                siteRateModel,
-//                useAmbiguities,
-//                scalingScheme,
-//                delayRescalingUntilUnderflow);
-
         // will currently recommend true if using GPU, CUDA or OpenCL.
         boolean useBeagle3Extensions = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
 

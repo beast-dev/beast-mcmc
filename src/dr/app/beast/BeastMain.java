@@ -343,7 +343,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
-                        new Arguments.Option("beagle_multipartition", "BEAGLE: use multipartition extensions if available"),
+                        new Arguments.StringOption("beagle_multipartition", new String[]{"auto", "on", "off"},
+                                false, "BEAGLE: use multipartition extensions if available (default auto)"),
                         new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
@@ -379,8 +380,8 @@ public class BeastMain {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
         if (versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1) {
             arguments.addOption("beagle_auto",
-                "BEAGLE: automatically select fastest resource for analysis",
-                "beagle_info");
+                    "BEAGLE: automatically select fastest resource for analysis",
+                    "beagle_info");
         };
 
         int argumentCount = 0;
@@ -558,7 +559,12 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("beagle_multipartition")) {
-            System.setProperty("beagle.multipartition.extensions", Boolean.TRUE.toString());
+            // attempt to force the use/non-use of the multipartition extensions, otherwise auto
+            if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("on")) {
+                System.setProperty("beagle.multipartition.extensions", Boolean.TRUE.toString());
+            } else if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("off")) {
+                System.setProperty("beagle.multipartition.extensions", Boolean.FALSE.toString());
+            }
         }
 
         // ============= Other settings =============

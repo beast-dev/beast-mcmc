@@ -104,13 +104,22 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //                scalingScheme,
 //                delayRescalingUntilUnderflow);
 
-        boolean useBeagle3Extensions =
-                Boolean.parseBoolean(System.getProperty("beagle.multipartition.extensions", "false")) ||
-                Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS", "false"));
-        
+        // will currently recommend true if using GPU, CUDA or OpenCL.
+        boolean useBeagle3Extensions = patternLists.size() > 1 &&
+                MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
+
+        if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
+            useBeagle3Extensions = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));
+        }
+
+        if (System.getProperty("beagle.multipartition.extensions") != null &&
+                !System.getProperty("beagle.multipartition.extensions").equals("auto")) {
+            useBeagle3Extensions = Boolean.parseBoolean(System.getProperty("beagle.multipartition.extensions"));
+        }
+
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-        if ( useBeagle3Extensions && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {
+        if ( useBeagle3Extensions && !useJava) {
             DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                     treeModel,
                     patternLists,
@@ -304,11 +313,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(BranchModel.class, true)})
                     ,
                     new ElementRule(PARTITION, new XMLSyntaxRule[] {
-                    new ElementRule(PatternList.class),
-                    new ElementRule(SiteRateModel.class),
-                    new ElementRule(FrequencyModel.class, true),
-                    new ElementRule(BranchModel.class, true)
-            }, 1, Integer.MAX_VALUE)),
+                            new ElementRule(PatternList.class),
+                            new ElementRule(SiteRateModel.class),
+                            new ElementRule(FrequencyModel.class, true),
+                            new ElementRule(BranchModel.class, true)
+                    }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),

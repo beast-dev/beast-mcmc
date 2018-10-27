@@ -401,14 +401,6 @@
                   productVersion="${version_number}.0"
                   txtProductVersion="${version}"/>
 
-        <!-- BEAST v?.?.?.exe -->
-        <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
-                  outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
         <!-- TreeAnnotator v?.?.?.exe -->
         <launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
                   jar="${dist}/beast.jar"

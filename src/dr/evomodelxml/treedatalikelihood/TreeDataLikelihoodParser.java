@@ -105,8 +105,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //                delayRescalingUntilUnderflow);
 
         // will currently recommend true if using GPU, CUDA or OpenCL.
-        boolean useBeagle3Extensions = patternLists.size() > 1 &&
-                MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
+        boolean useBeagle3Extensions = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
 
         if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
             useBeagle3Extensions = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));

@@ -1,4 +1,4 @@
-                    BEAST v1.10.2 2002-2018
+                    BEAST v1.10.3 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 6th October 2018
+Last updated: a.rambaut@ed.ac.uk - 28th October 2018
 
 Contents:
 1) INTRODUCTION

@@ -527,7 +527,7 @@ public class BeastMain {
         if (!arguments.hasOption("beagle_SSE_off")) {
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
-        if (!arguments.hasOption("beagle_threading_off")) {
+        if (arguments.hasOption("beagle_threading_off")) {
             beagleFlags |= BeagleFlag.THREADING_NONE.getMask();
         }
 //        if (arguments.hasOption("beagle_double")) {

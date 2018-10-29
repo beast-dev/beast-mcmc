@@ -25,9 +25,7 @@
 
 package dr.evomodel.substmodel.codon;
 
-import dr.evomodel.substmodel.DefaultEigenSystem;
-import dr.evomodel.substmodel.EigenSystem;
-import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.*;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
@@ -46,7 +44,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
-public class GY94CodonModel extends AbstractCodonModel implements Citable {
+public class GY94CodonModel extends AbstractCodonModel implements Citable, ParameterReplaceableSubstitutionModel {
     /**
      * kappa
      */
@@ -241,4 +239,22 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
             11, 725, 736
     );
 
+    @Override
+    public Parameter getReplaceableParameter() {
+        return omegaParameter;
+    }
+
+    @Override
+    public SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter) {
+        if (oldParameter == omegaParameter) {
+            return new GY94CodonModel(codonDataType, newParameter, kappaParameter, freqModel);
+        } else {
+            throw new RuntimeException("Parameter not found in GY94Codon SubstitutionModel.");
+        }
+    }
+
+    @Override
+    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+        return new double[0]; // TODO: finish the matrix calculation
+    }
 }

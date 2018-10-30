@@ -25,7 +25,6 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
@@ -36,14 +35,11 @@ import dr.math.matrixAlgebra.WrappedMatrix;
  */
 public class DifferentiableSubstitutionModel{
 
-//    protected abstract WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter);
-
     public static double[] getDifferentialMassMatrix(double time,
                                               Parameter parameter,
                                               int stateCount,
                                               WrappedMatrix.ArrayOfArray differentialMassMatrix,
                                               EigenDecomposition eigenDecomposition) {
-//        EigenDecomposition eigenDecomposition = getEigenDecomposition();
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
         WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);

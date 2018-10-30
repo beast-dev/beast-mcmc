@@ -43,7 +43,8 @@
             <include name="dr/inference/loggers/**/*.class" />
             <include name="dr/inference/distribution/**/*.class" />
             <include name="dr/evomodel/branchratemodel/**/*.class" />
-             <include name="dr/evomodel/substmodel/**/*.class" />
+            <include name="dr/evomodel/branchmodel/**/*.class" />
+            <include name="dr/evomodel/substmodel/**/*.class" />
             <include name="dr/app/beagle/evomodel/substmodel/**/*.class" />
             <include name="dr/app/beagle/evomodel/branchmodel/**/*.class" />
             <include name="dr/inference/parallel/**/*.class**" />
@@ -105,8 +106,9 @@
          <include name="dr/app/bss/**" />
          <include name="dr/inference/model/**" />
          <include name="dr/inference/loggers/**" />
-          <include name="dr/inference/distribution/**" />
+         <include name="dr/inference/distribution/**" />
          <include name="dr/evomodel/branchratemodel/**" />
+         <include name="dr/evomodel/branchmodel/**" />
          <include name="dr/evomodel/substmodel/**" />
          <include name="dr/app/beagle/evomodel/substmodel/**" />
          <include name="dr/app/beagle/evomodel/branchmodel/**" />
@@ -149,7 +151,7 @@
       <echo message="Successfully compiled." />
    </target>
 
-    <property name="version" value="1.0" />
+    <property name="version" value="1.4" />
     <property name="release_dir" value="release_pibuss" />
     <property name="name" value="piBUSS" />
 
@@ -200,6 +202,7 @@
         <delete dir="${Linux_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Linux_package_dir}" />
+        <mkdir dir="${Linux_dir}/lib" />
 
         <copy todir="${Linux_package_dir}/bin">
             <fileset dir="${Linux_dir}/scripts"/>

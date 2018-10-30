@@ -30,6 +30,9 @@ import dr.inference.model.CompoundParameter;
 
 import java.util.List;
 
+import static dr.math.matrixAlgebra.missingData.MissingOps.blockUnwrap;
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
+
 /**
  * @author Marc A. Suchard
  * @author Paul Bastide
@@ -65,25 +68,24 @@ public class IntegratedProcessTraitDataModel extends
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
 
-        int dimMatrix = dimTrait * dimTrait;
         int dimTraitDouble = 2 * dimTrait;
         int dimPartialDouble = dimTraitDouble + precisionType.getMatrixLength(dimTraitDouble);
         double[] partialDouble = new double[dimPartialDouble];
 
-        // Traits [traitsPos, 0]
-        System.arraycopy(partial, 0, partialDouble, 0, dimTrait);
-        // Precision [precisionPos, 0]
-        System.arraycopy(partial, precisionType.getPrecisionOffset(dimTrait),
+        // Traits [0, traitsPosition]
+        System.arraycopy(partial, 0, partialDouble, dimTrait, dimTrait);
+        // Precision [0, 0; 0, precisionPosistion]
+        blockUnwrap(wrap(partial, precisionType.getPrecisionOffset(dimTrait), dimTrait, dimTrait),
                 partialDouble, precisionType.getPrecisionOffset(dimTraitDouble),
-                dimMatrix);
-        // Variance [variancePos, Inf]
-        System.arraycopy(partial, precisionType.getVarianceOffset(dimTrait),
-                partialDouble, precisionType.getVarianceOffset(dimTraitDouble),
-                dimMatrix);
-        int offsetVar = precisionType.getVarianceOffset(dimTraitDouble) + dimMatrix;
+                dimTrait, dimTrait, dimTraitDouble);
+        // Variance [Inf, 0; 0, variancePosisition]
+        int offsetVar = precisionType.getVarianceOffset(dimTraitDouble);
         for (int i = 0; i < dimTrait; i++) {
-            partialDouble[offsetVar + i * dimTrait + i] = Double.POSITIVE_INFINITY;
+            partialDouble[offsetVar + i * dimTraitDouble + i] = Double.POSITIVE_INFINITY;
         }
+        blockUnwrap(wrap(partial, precisionType.getVarianceOffset(dimTrait), dimTrait, dimTrait),
+                partialDouble, offsetVar,
+                dimTrait, dimTrait, dimTraitDouble);
 
         return partialDouble;
     }

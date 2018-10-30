@@ -16,9 +16,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
     private static boolean DEBUG = false;
 
-    public SafeMultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
-                                      int diffusionCount) {
-        super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
+    public SafeMultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
+                                      int bufferCount, int diffusionCount) {
+        super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         allocateStorage();
 
@@ -81,7 +81,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             System.err.println("Matrices (safe):");
         }
 
-        final int matrixSize = dimTrait * dimTrait;
+        final int matrixSize = dimProcess * dimProcess;
         final int unscaledOffset = matrixSize * precisionIndex;
 
         if (TIMING) {
@@ -290,10 +290,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         final DenseMatrix64F Pdi = wrap(precisions, imo, dimTrait, dimTrait); // TODO Only if needed
         final DenseMatrix64F Pdj = wrap(precisions, jmo, dimTrait, dimTrait); // TODO Only if needed
 
-        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
-
         if (DEBUG) {
-            System.err.println("variance diffusion: " + Vd);
+            System.err.println("variance diffusion: " + wrap(inverseDiffusions, precisionOffset, dimProcess, dimProcess));
             System.err.println("precisionOffset = " + precisionOffset);
             System.err.println("\tVdi: " + Vdi);
             System.err.println("\tVdj: " + Vdj);
@@ -546,7 +544,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                           boolean incrementOuterProducts) {
+                                           boolean incrementOuterProducts, boolean isIntegratedProcess) {
         assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
@@ -559,7 +557,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         int rootOffset = dimPartial * rootBufferIndex;
         int priorOffset = dimPartial * priorBufferIndex;
 
-        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
+        final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimProcess, dimProcess);
 //        final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
         // TODO For each trait in parallel
@@ -572,9 +570,19 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // TODO Block below is for the conjugate prior ONLY
             {
 
-                final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
-                CommonOps.mult(Pd, PPrior, PTmp);
-                PPrior.set(PTmp); // TODO What does this do?
+                if (!isIntegratedProcess) {
+                    final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
+                    CommonOps.mult(Pd, PPrior, PTmp);
+                    PPrior.set(PTmp); // TODO What does this do?
+                } else {
+                    DenseMatrix64F Pdbis = new DenseMatrix64F(dimTrait, dimTrait);
+                    blockUnwrap(Pd, Pdbis.data, 0, 0, 0, dimTrait);
+                    blockUnwrap(Pd, Pdbis.data, dimProcess, dimProcess, 0, dimTrait);
+
+                    final DenseMatrix64F PTmp = new DenseMatrix64F(dimTrait, dimTrait);
+                    CommonOps.mult(Pdbis, PPrior, PTmp);
+                    PPrior.set(PTmp);
+                }
             }
 
             final DenseMatrix64F VTotal = new DenseMatrix64F(dimTrait, dimTrait);

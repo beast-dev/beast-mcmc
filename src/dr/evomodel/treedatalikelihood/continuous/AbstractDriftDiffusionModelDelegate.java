@@ -44,7 +44,6 @@ import java.util.List;
  */
 public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
-    protected final int dim;
     private final List<BranchRateModel> branchRateModels;
 
     AbstractDriftDiffusionModelDelegate(Tree tree,
@@ -53,8 +52,6 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
                                         int partitionNumber) {
         super(tree, diffusionModel, partitionNumber);
         this.branchRateModels = branchRateModels;
-
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
 
         if (branchRateModels != null) {
 

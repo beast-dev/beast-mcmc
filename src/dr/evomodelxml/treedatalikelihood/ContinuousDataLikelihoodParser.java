@@ -103,7 +103,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 treeModel, scaleByTime, useTreeLength);
 
         final int dim = diffusionModel.getPrecisionmatrix().length;
-        ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dim);
 
         String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
         List<Integer> missingIndices;
@@ -151,6 +150,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
         }
 
+        ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());
+
         final boolean allowSingular;
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
 
@@ -185,7 +186,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         DiffusionProcessDelegate diffusionProcessDelegate;
         if ((optimalTraitsModels != null && elasticModel != null) || xo.getAttribute(FORCE_OU, false)) {
-            diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+            if (!integratedProcess) {
+                diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+            } else {
+                diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+            }
         } else {
             if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
                 diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);

@@ -137,6 +137,17 @@ public class MissingOps {
         System.arraycopy(source.getData(), 0, destination, offset, source.getNumElements());
     }
 
+    public static void blockUnwrap(final DenseMatrix64F block, final double[] destination,
+                                   final int destinationOffset,
+                                   final int offsetRow, final int offsetCol,
+                                   final int nCols) {
+        for (int i = 0; i < block.getNumRows(); i++) { // Rows
+            for (int j = 0; j < block.getNumCols(); j++) {
+                destination[destinationOffset + (i + offsetRow) * nCols + j + offsetCol] = block.get(i, j);
+            }
+        }
+    }
+
     public static boolean anyDiagonalInfinities(DenseMatrix64F source) {
         boolean anyInfinities = false;
         for (int i = 0; i < source.getNumCols() && !anyInfinities; ++i) {

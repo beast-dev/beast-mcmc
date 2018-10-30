@@ -169,57 +169,76 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                         precisionType,
                         numTraits,
                         dimTrait,
+                        dimTrait,
                         partialBufferCount,
                         matrixBufferCount
                 );
 
             } else if (precisionType == PrecisionType.FULL) {
 
-                if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                    if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
-                        base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
-                    } else {
-                        base = new SafeMultivariateActualizedWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount,
-                                ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
-                        );
-                    }
+                if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
+                    assert dimTrait % 2 == 0 : "dimTrait should be twice dimProcess.";
+                    base = new SafeMultivariateActualizedWithDriftIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait / 2,
+                            partialBufferCount,
+                            matrixBufferCount,
+                            ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                    );
                 } else {
-                    if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                        base = new SafeMultivariateWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
-                    } else {
-                        if (allowSingular) {
-                            base = new SafeMultivariateIntegrator(
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                            base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
+                                    dimTrait,
                                     dimTrait,
                                     partialBufferCount,
                                     matrixBufferCount
                             );
                         } else {
-                            base = new MultivariateIntegrator(
+                            base = new SafeMultivariateActualizedWithDriftIntegrator(
                                     precisionType,
                                     numTraits,
+                                    dimTrait,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount,
+                                    ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                            );
+                        }
+                    } else {
+                        if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
+                            base = new SafeMultivariateWithDriftIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
                                     dimTrait,
                                     partialBufferCount,
                                     matrixBufferCount
                             );
+                        } else {
+                            if (allowSingular) {
+                                base = new SafeMultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
+                            } else {
+                                base = new MultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
+                            }
                         }
                     }
                 }
@@ -758,7 +777,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         double[] logLikelihoods = new double[numTraits];
 
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
-                logLikelihoods, computeWishartStatistics);
+                logLikelihoods, computeWishartStatistics, diffusionProcessDelegate.isIntegratedProcess());
 
         if (computeWishartStatistics) {
             cdi.getWishartStatistics(degreesOfFreedom, outerProducts);

@@ -34,7 +34,6 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -292,6 +291,6 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable, Param
 
     @Override
     public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-        return DifferentiableSubstitutionModel.getDifferentialMassMatrix(time, parameter, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
+        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
     }
 }

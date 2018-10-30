@@ -25,7 +25,6 @@
 
 package dr.evomodel.substmodel;
 
-import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 
@@ -33,10 +32,9 @@ import dr.math.matrixAlgebra.WrappedMatrix;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class DifferentiableSubstitutionModel{
+public class DifferentiableSubstitutionModelUtil {
 
     public static double[] getDifferentialMassMatrix(double time,
-                                              Parameter parameter,
                                               int stateCount,
                                               WrappedMatrix.ArrayOfArray differentialMassMatrix,
                                               EigenDecomposition eigenDecomposition) {

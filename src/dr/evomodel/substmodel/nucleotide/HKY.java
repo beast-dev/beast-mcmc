@@ -29,7 +29,7 @@ import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
-import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
@@ -323,7 +323,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     @Override
     public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-        return DifferentiableSubstitutionModel.getDifferentialMassMatrix(time, parameter, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
+        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
     }
 
     protected WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter) {

@@ -323,6 +323,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     @Override
     public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+        //TODO: factor out the duplicated functions
         if (parameter == kappaParameter) {
             EigenDecomposition eigenDecomposition = getEigenDecomposition();
             double[] eigenValues = eigenDecomposition.getEigenValues();
@@ -334,8 +335,9 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
             final double normalization = setupMatrix();
             final double[] Q = new double[stateCount * stateCount];
             getInfinitesimalMatrix(Q);
-            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
-            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
+//            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
+//            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
+//            final double tmpMultiplier = normalizationGradient / normalization;
 
             final double[] rates = new double[6];
             Arrays.fill(rates, 0.0);
@@ -344,16 +346,15 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
             WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
             setupQMatrix(rates, pi, differentialMassMatrix.getArrays());
             makeValid(differentialMassMatrix.getArrays(), stateCount);
-
-            final double tmpMultiplier = normalizationGradient / normalization;
+            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix.getArrays(), pi);
 
             for (int i = 0; i < stateCount; i++) {
                 for (int j = 0; j < stateCount; j++) {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * tmpMultiplier);
+                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient);
                 }
             }
 
-            getTripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors);
+            getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
             for (int i = 0; i < stateCount; i++) {
                 for (int j = 0; j < stateCount; j++) {
@@ -365,7 +366,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
                 }
             }
 
-            getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
+            getTripleMatrixMultiplication(stateCount, eigenVectors, differentialMassMatrix, inverseEigenVectors);
 
             double[] outputArray = new double[stateCount * stateCount];
             for (int i = 0; i < stateCount; i++) {
@@ -379,7 +380,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
         }
     }
 
-    private void getTripleMatrixMultiplication(ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+    static public void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
 
         double[][] tmpMatrix = new double[stateCount][stateCount];
 

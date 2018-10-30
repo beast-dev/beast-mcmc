@@ -67,6 +67,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return versionNumbers.length != 0 && versionNumbers[0] >= 3;
     }
 
+    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
+    }
+
     public static boolean IS_MULTI_PARTITION_RECOMMENDED() {
         if (!IS_MULTI_PARTITION_COMPATIBLE()) {
             return false;
@@ -105,6 +110,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
+    private static final String THREAD_COUNT = "beagle.thread.count";
+
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -353,6 +360,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 forceVectorization = true;
             }
 
+            String tc = System.getProperty(THREAD_COUNT);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+                if (threadCount < 2) {
+                    threadCount = 1;
+                }
+            }
+
+
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
                     && !forceVectorization
             ) {
@@ -469,6 +485,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 }
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+            }
+
+            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
+                beagle.setCPUThreadCount(threadCount);
             }
 
             patternPartitions = new int[totalPatternCount];
@@ -1333,6 +1353,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;
     private boolean delayRescalingUntilUnderflow = true;
+
+    private int threadCount = 1;
 
     //allow per partition rescaling
     private boolean[] useScaleFactors;

@@ -29,10 +29,10 @@ import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
-import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
@@ -323,13 +323,11 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     @Override
     public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-        //TODO: factor out the duplicated functions
-        if (parameter == kappaParameter) {
-            EigenDecomposition eigenDecomposition = getEigenDecomposition();
-            double[] eigenValues = eigenDecomposition.getEigenValues();
-            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
-            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
+        return DifferentiableSubstitutionModel.getDifferentialMassMatrix(time, parameter, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
+    }
 
+    protected WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter) {
+        if (parameter == kappaParameter) {
             double[] pi = freqModel.getFrequencies();
 
             final double normalization = setupMatrix();
@@ -353,53 +351,91 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
                     differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient);
                 }
             }
-
-            getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
-
-            for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    if (i == j || eigenValues[i] == eigenValues[j]) {
-                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
-                    } else {
-                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
-                    }
-                }
-            }
-
-            getTripleMatrixMultiplication(stateCount, eigenVectors, differentialMassMatrix, inverseEigenVectors);
-
-            double[] outputArray = new double[stateCount * stateCount];
-            for (int i = 0; i < stateCount; i++) {
-                System.arraycopy(differentialMassMatrix.getArrays()[i], 0, outputArray, i * stateCount, stateCount);
-            }
-
-            return outputArray;
-
+            return differentialMassMatrix;
         } else {
             throw new RuntimeException("Not yet implemented");
         }
     }
 
-    static public void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+//    @Override
+//    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+//        //TODO: factor out the duplicated functions
+//        if (parameter == kappaParameter) {
+//            EigenDecomposition eigenDecomposition = getEigenDecomposition();
+//            double[] eigenValues = eigenDecomposition.getEigenValues();
+//            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
+//            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
+//
+//            double[] pi = freqModel.getFrequencies();
+//
+//            final double normalization = setupMatrix();
+//            final double[] Q = new double[stateCount * stateCount];
+//            getInfinitesimalMatrix(Q);
+////            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
+////            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
+////            final double tmpMultiplier = normalizationGradient / normalization;
+//
+//            final double[] rates = new double[6];
+//            Arrays.fill(rates, 0.0);
+//            rates[1] = rates[4] = 1.0 / normalization;
+//
+//            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
+//            setupQMatrix(rates, pi, differentialMassMatrix.getArrays());
+//            makeValid(differentialMassMatrix.getArrays(), stateCount);
+//            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix.getArrays(), pi);
+//
+//            for (int i = 0; i < stateCount; i++) {
+//                for (int j = 0; j < stateCount; j++) {
+//                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient);
+//                }
+//            }
+//
+//            getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
+//
+//            for (int i = 0; i < stateCount; i++) {
+//                for (int j = 0; j < stateCount; j++) {
+//                    if (i == j || eigenValues[i] == eigenValues[j]) {
+//                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
+//                    } else {
+//                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
+//                    }
+//                }
+//            }
+//
+//            getTripleMatrixMultiplication(stateCount, eigenVectors, differentialMassMatrix, inverseEigenVectors);
+//
+//            double[] outputArray = new double[stateCount * stateCount];
+//            for (int i = 0; i < stateCount; i++) {
+//                System.arraycopy(differentialMassMatrix.getArrays()[i], 0, outputArray, i * stateCount, stateCount);
+//            }
+//
+//            return outputArray;
+//
+//        } else {
+//            throw new RuntimeException("Not yet implemented");
+//        }
+//    }
 
-        double[][] tmpMatrix = new double[stateCount][stateCount];
-
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                for (int k = 0; k < stateCount; k++) {
-                    tmpMatrix[i][j] += middleMatrix.get(i, k) * rightMatrix.get(k, j);
-                }
-            }
-        }
-
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                double sumProduct = 0.0;
-                for (int k = 0; k < stateCount; k++) {
-                    sumProduct += leftMatrix.get(i, k) * tmpMatrix[k][j];
-                }
-                middleMatrix.set(i, j, sumProduct);
-            }
-        }
-    }
+//    static public void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+//
+//        double[][] tmpMatrix = new double[stateCount][stateCount];
+//
+//        for (int i = 0; i < stateCount; i++) {
+//            for (int j = 0; j < stateCount; j++) {
+//                for (int k = 0; k < stateCount; k++) {
+//                    tmpMatrix[i][j] += middleMatrix.get(i, k) * rightMatrix.get(k, j);
+//                }
+//            }
+//        }
+//
+//        for (int i = 0; i < stateCount; i++) {
+//            for (int j = 0; j < stateCount; j++) {
+//                double sumProduct = 0.0;
+//                for (int k = 0; k < stateCount; k++) {
+//                    sumProduct += leftMatrix.get(i, k) * tmpMatrix[k][j];
+//                }
+//                middleMatrix.set(i, j, sumProduct);
+//            }
+//        }
+//    }
 }

@@ -34,10 +34,10 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static dr.evomodel.substmodel.nucleotide.HKY.getTripleMatrixMultiplication;
 
 /**
  * Yang model of codon evolution
@@ -256,9 +256,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable, Param
         }
     }
 
-    @Override
-    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-        //TODO: factor out the duplicated functions
+    protected WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter) {
         if (parameter == omegaParameter) {
             final double kappa = getKappa();
             final double normalizingConstant = setupMatrix();
@@ -276,11 +274,6 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable, Param
                 }
             }
 
-            EigenDecomposition eigenDecomposition = getEigenDecomposition();
-            double[] eigenValues = eigenDecomposition.getEigenValues();
-            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
-            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
-
             WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
             setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix.getArrays());
             makeValid(differentialMassMatrix.getArrays(), stateCount);
@@ -291,30 +284,76 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable, Param
                     differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient);
                 }
             }
-
-            getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
-
-            for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    if (i == j || eigenValues[i] == eigenValues[j]) {
-                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
-                    } else {
-                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
-                    }
-                }
-            }
-
-            getTripleMatrixMultiplication(stateCount, eigenVectors, differentialMassMatrix, inverseEigenVectors);
-
-            double[] outputArray = new double[stateCount * stateCount];
-            for (int i = 0; i < stateCount; i++) {
-                System.arraycopy(differentialMassMatrix.getArrays()[i], 0, outputArray, i * stateCount, stateCount);
-            }
-
-            return outputArray;
-
-        }else {
-            throw new RuntimeException("Parameter gradient not yet implemented in GY94Codon SubstitutionModel.");
+            return differentialMassMatrix;
+        } else {
+            throw new RuntimeException("Not yet implemented");
         }
     }
+
+    @Override
+    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+        return DifferentiableSubstitutionModel.getDifferentialMassMatrix(time, parameter, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
+    }
+
+//    @Override
+//    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+//        //TODO: factor out the duplicated functions
+//        if (parameter == omegaParameter) {
+//            final double kappa = getKappa();
+//            final double normalizingConstant = setupMatrix();
+//            final double[] Q = new double[stateCount * stateCount];
+//            getInfinitesimalMatrix(Q);
+//            final double[] differentialRates = new double[rateCount];
+//            for (int i = 0; i < rateCount; i++) {
+//                switch (rateMap[i]) {
+//                    case 3:
+//                        differentialRates[i] = kappa / normalizingConstant;
+//                        break;// non-synonymous transition
+//                    case 4:
+//                        differentialRates[i] = 1.0 / normalizingConstant;
+//                        break;        // non-synonymous transversion
+//                }
+//            }
+//
+//            EigenDecomposition eigenDecomposition = getEigenDecomposition();
+//            double[] eigenValues = eigenDecomposition.getEigenValues();
+//            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
+//            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
+//
+//            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
+//            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix.getArrays());
+//            makeValid(differentialMassMatrix.getArrays(), stateCount);
+//            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix.getArrays(), freqModel.getFrequencies());
+//
+//            for (int i = 0; i < stateCount; i++) {
+//                for (int j = 0; j < stateCount; j++) {
+//                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient);
+//                }
+//            }
+//
+//            getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
+//
+//            for (int i = 0; i < stateCount; i++) {
+//                for (int j = 0; j < stateCount; j++) {
+//                    if (i == j || eigenValues[i] == eigenValues[j]) {
+//                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
+//                    } else {
+//                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
+//                    }
+//                }
+//            }
+//
+//            getTripleMatrixMultiplication(stateCount, eigenVectors, differentialMassMatrix, inverseEigenVectors);
+//
+//            double[] outputArray = new double[stateCount * stateCount];
+//            for (int i = 0; i < stateCount; i++) {
+//                System.arraycopy(differentialMassMatrix.getArrays()[i], 0, outputArray, i * stateCount, stateCount);
+//            }
+//
+//            return outputArray;
+//
+//        }else {
+//            throw new RuntimeException("Parameter gradient not yet implemented in GY94Codon SubstitutionModel.");
+//        }
+//    }
 }

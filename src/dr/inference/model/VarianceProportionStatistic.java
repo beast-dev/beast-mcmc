@@ -182,7 +182,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
         }
 
-        double[][] treeVariance = getTreeVariance();
+        double[][] treeVariance = getTreeVariance(normalization);
 
         int n = treeVariance.length;
 
@@ -298,10 +298,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     /**
      * @return the between taxa covariance matrix
      */
-    private double[][] getTreeVariance(){
+    private double[][] getTreeVariance(double normalization){
         int n = tree.getExternalNodeCount();
         double[][] treeVariance = new double[n][n];
-        postOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(),new postOrderTreeTracker(0, n));
+        postOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(),new postOrderTreeTracker(0, n),
+                normalization);
         return treeVariance;
     }
 
@@ -309,7 +310,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      * NOTE: this function implements a recursive algorithm that updates the treeVariance array in addition to
      * @return the location and dimension of the current block in the between taxa covariance matrix after
      */
-    private postOrderTreeTracker doTreeRecursion(double[][] treeVariance, NodeRef node, postOrderTreeTracker tracker){
+    private postOrderTreeTracker doTreeRecursion(double[][] treeVariance,
+                                                 NodeRef node,
+                                                 postOrderTreeTracker tracker,
+                                                 double normalization){
+
         int childCount = tree.getChildCount(node);
         assert (childCount == 2);
 
@@ -326,20 +331,22 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
             if (tree.isExternal(child)){
 
-                treeVariance[currentIndex][currentIndex] += tree.getBranchLength(child);
+                treeVariance[currentIndex][currentIndex] += tree.getBranchLength(child) * normalization;
                 currentIndex += 1;
 
 
             } else{
 
-                postOrderTreeTracker newTracker = doTreeRecursion(treeVariance, child, new postOrderTreeTracker(currentIndex, tracker.getDim()));
+                postOrderTreeTracker newTracker = doTreeRecursion(treeVariance, child,
+                        new postOrderTreeTracker(currentIndex, tracker.getDim()), normalization);
+
                 currentIndex += newTracker.getDim();
 
                 for (int i = newTracker.getStartIndex(); i < currentIndex; i++){
 
                     for (int j = i; j < currentIndex; j++){
 
-                        treeVariance[i][j] += tree.getBranchLength(child);
+                        treeVariance[i][j] += tree.getBranchLength(child) * normalization;
                     }
                 }
 
@@ -373,12 +380,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
             RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
                     xo.getChild(RepeatedMeasuresTraitDataModel.class);
+
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
                     xo.getChild(MultivariateDiffusionModel.class);
-
-//        MatrixInverseStatistic diffusionVariance = (MatrixInverseStatistic) xo.getChild(MatrixInverseStatistic.class);
-//        MatrixParameter diffusionPrecision = (MatrixParameter) xo.getChild(MatrixParameter.class);
-//        Parameter samplingPrecision = (Parameter) xo.getChild(Parameter.class);
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             final boolean scaleByHeight;

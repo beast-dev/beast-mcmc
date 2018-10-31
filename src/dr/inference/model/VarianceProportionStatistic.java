@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
@@ -128,8 +129,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      * recalculates the diffusionProportion statistic based on current parameters
      */
     private void updateDiffusionProportion() {
+
         int dim = samplingPrecision.getDimension();
         double[] diffusionProportion = new double[dim];
+
         for (int i = 0; i < dim; i++) {
             double diffusionComponent = diffusionVariance[i] * (treeSums[0] / observedCounts[i]
                     + treeSums[1] / (observedCounts[i] * observedCounts[i]));
@@ -150,9 +153,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
         }
         //TODO: implement more efficient method for computing treeVariance
-        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree,
-                treeLikelihood.getBranchRateModel(),
-                normalization, Double.POSITIVE_INFINITY);
+//        double[][] treeVariance = MultivariateTraitDebugUtilities.getTreeVariance(tree,
+//                treeLikelihood.getBranchRateModel(),
+//                normalization, Double.POSITIVE_INFINITY);
+
+        double[][] treeVariance = getTreeVariance();
 
         int n = treeVariance.length;
 
@@ -168,6 +173,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                 offDiagonalSum = offDiagonalSum + treeVariance[i][j];
             }
         }
+
         offDiagonalSum = offDiagonalSum * 2;
         treeSums[0] = diagonalSum;
         treeSums[1] = diagonalSum + offDiagonalSum;
@@ -208,6 +214,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public double getStatisticValue(int dim) {
+
         boolean needToUpdate = false;
 
         if (!treeKnown) {
@@ -264,11 +271,13 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             final boolean scaleByHeight;
+
             if (xo.hasAttribute(SCALE_BY_HEIGHT)){
                 scaleByHeight = xo.getBooleanAttribute(SCALE_BY_HEIGHT);
             } else{
                 scaleByHeight = false;
             }
+
             return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel, scaleByHeight);
         }
 
@@ -305,5 +314,58 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     @Override
     public void modelRestored(Model model) {
         // Do nothing
+    }
+
+    private double[][] getTreeVariance(){
+        int n = tree.getExternalNodeCount();
+        double[][] treeVariance = new double[n][n];
+        int[] x = doTreeRecursion(treeVariance, tree.getRoot(), new int[] {0, n});
+        return treeVariance;
+    }
+
+    private int[] doTreeRecursion(double[][] treeVariance, NodeRef node, int[] currentRange){
+        int childCount = tree.getChildCount(node);
+        assert (childCount == 2);
+
+        NodeRef[] childNodes = new NodeRef[childCount];
+        double[] branchLengths = new double[childCount];
+
+        for (int i = 0; i < childCount; i++){
+
+            childNodes[i] = tree.getChild(node, i);
+            branchLengths[i] = tree.getBranchLength(childNodes[i]);
+        }
+
+        int first = currentRange[0];
+        int last = currentRange[1];
+        int currentIndex = first;
+
+        for (NodeRef child : childNodes){
+
+            if (tree.isExternal(child)){
+
+                treeVariance[currentIndex][currentIndex] += tree.getBranchLength(child);
+                currentIndex += 1;
+
+            } else{
+
+                int[] bounds = doTreeRecursion(treeVariance, child, new int[] {currentIndex, last});
+
+                currentIndex += bounds[1] - bounds[0];
+
+                for (int i = bounds[0]; i < bounds[1]; i++){
+
+                    for (int j = i; j < bounds[1]; j++){
+
+                        treeVariance[i][j] += tree.getBranchLength(child);
+                    }
+                }
+
+            }
+
+        }
+
+        return new int[]{first, currentIndex};
+
     }
 }

@@ -10,10 +10,16 @@
 		<taxon id="C">
 			<attr name="X">-0.9 NA</attr>
 		</taxon>
+		<taxon id="D">
+			<attr name="X">-0.9 NA</attr>
+		</taxon>
+		<taxon id="E">
+			<attr name="X">-0.9 NA</attr>
+		</taxon>
 	</taxa>
 
 	<newick id="tree">
-		(A:2,(B:1,C:1):1);
+		((A:2,(B:1,C:1):1):2,(D:3, E:3):1);
 	</newick>
 
 	<treeModel id="treeModel">

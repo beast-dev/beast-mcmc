@@ -349,8 +349,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
-                        new Arguments.Option("beagle_CPU_threading", "BEAGLE: turn on auto threading for a CPU instance"),
-                        new Arguments.IntegerOption("beagle_CPU_thread_count", 2, Integer.MAX_VALUE, "BEAGLE: manually set number of threads for a CPU instance"),
+                        new Arguments.Option("beagle_threading_off", "BEAGLE: turn off auto threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_thread_count", 1, Integer.MAX_VALUE, "BEAGLE: manually set number of threads for a CPU instance"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
@@ -528,15 +528,18 @@ public class BeastMain {
         if (!arguments.hasOption("beagle_SSE_off")) {
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
-        if (arguments.hasOption("beagle_CPU_threading")) {
-            beagleFlags |= BeagleFlag.THREADING_CPP.getMask();
-        } else {
+        if (arguments.hasOption("beagle_threading_off")) {
             beagleFlags |= BeagleFlag.THREADING_NONE.getMask();
-        }
-        if (arguments.hasOption("beagle_CPU_thread_count")) {
-            beagleFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+        } else {
             beagleFlags |= BeagleFlag.THREADING_CPP.getMask();
-            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_CPU_thread_count")));
+        }
+        if (arguments.hasOption("beagle_thread_count")) {
+            int beagleThreadCount = arguments.getIntegerOption("beagle_thread_count");
+            if (beagleThreadCount == 1) {
+                beagleFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                beagleFlags |= BeagleFlag.THREADING_NONE.getMask();                
+            }
+            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
         }
 //        if (arguments.hasOption("beagle_double")) {
 //            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();

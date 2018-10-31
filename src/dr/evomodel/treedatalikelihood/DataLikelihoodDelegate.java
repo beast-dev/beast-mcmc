@@ -54,6 +54,8 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     RateRescalingScheme getRateRescalingScheme();
 
+    class DelegateTypeException extends Exception { }
+
     class LikelihoodException extends Exception { }
 
     class LikelihoodUnderflowException extends LikelihoodException { }

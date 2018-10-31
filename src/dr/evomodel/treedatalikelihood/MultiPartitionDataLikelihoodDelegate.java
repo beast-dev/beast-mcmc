@@ -77,6 +77,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             return false;
         }
 
+        String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+        if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+            return true;
+        }
+
         fetchBeagleSettings();
 
         int index = resourceOrder.size() > 0 ? instanceCount % resourceOrder.size() : 0;
@@ -96,8 +101,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                         (preferredOrder.get(index) & BeagleFlag.FRAMEWORK_OPENCL.getMask()) != 0)) {
             return true;
         }
+
         return false;
     }
+
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
@@ -165,12 +172,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                                                 List<SiteRateModel> siteRateModels,
                                                 boolean useAmbiguities,
                                                 PartialsRescalingScheme rescalingScheme,
-                                                boolean delayRescalingUntilUnderflow) {
+                                                boolean delayRescalingUntilUnderflow)
+                                                  throws DelegateTypeException {
 
         super("MultiPartitionDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
-
-        logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 multi-partition extensions");
 
         setId(patternLists.get(0).getId());
 
@@ -210,9 +216,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         assert(branchModels.size() == 1 || (branchModels.size() == patternLists.size()));
 
         this.branchModels.addAll(branchModels);
-        for (BranchModel branchModel : this.branchModels) {
-            addModel(branchModel);
-        }
 
         // SiteRateModels determine the rates per category (for site-heterogeneity models).
         // There can be either one per partition or one shared across all partitions
@@ -220,10 +223,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         this.siteRateModels.addAll(siteRateModels);
         this.categoryCount = this.siteRateModels.get(0).getCategoryCount();
-        for (SiteRateModel siteRateModel : this.siteRateModels) {
-            assert(siteRateModel.getCategoryCount() == categoryCount);
-            addModel(siteRateModel);
-        }
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
@@ -440,6 +439,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     logger.info(benchmarkedResource.toString());
                 }
 
+                long benchedFlags = benchmarkedResourceDetails.get(0).getBenchedFlags();
+                if ((benchedFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+                    throw new DelegateTypeException();
+                }
+
                 resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
             }
             // end auto resource selection
@@ -463,6 +467,22 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
+
+            long instanceFlags = instanceDetails.getFlags();
+            if ((instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+                throw new DelegateTypeException();
+            }
+
+            logger.info("\nUsing Multi-Partition Data Likelihood Delegate with BEAGLE 3 multi-partition extensions");
+
+            for (BranchModel branchModel : this.branchModels) {
+                addModel(branchModel);
+            }
+
+            for (SiteRateModel siteRateModel : this.siteRateModels) {
+                assert(siteRateModel.getCategoryCount() == categoryCount);
+                addModel(siteRateModel);
+            }
 
             if (instanceDetails != null) {
                 resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());

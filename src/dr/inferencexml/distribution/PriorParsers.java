@@ -42,6 +42,7 @@ import java.util.List;
 public class PriorParsers {
     public final static boolean DEBUG = false;
 
+    public static final String TRUNCATED = "trancated";
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
@@ -76,6 +77,44 @@ public class PriorParsers {
     public static final String COUNTS = "counts";
     public static final String SUMS_TO = "sumsTo";
 
+
+    /**
+     * A special parser that reads a convenient short form of priors on parameters.
+     */
+    public static XMLObjectParser TRUNCATED_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TRUNCATED;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double lower = xo.getAttribute(LOWER, Double.NEGATIVE_INFINITY);
+            double upper = xo.getAttribute(UPPER, Double.POSITIVE_INFINITY);
+
+            DistributionLikelihood dl = (DistributionLikelihood)xo.getChild(DistributionLikelihood.class);
+
+            return new DistributionLikelihood(new TruncatedDistribution(dl.getDistribution(), lower, upper));
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(LOWER, true),
+                AttributeRule.newDoubleRule(UPPER, true),
+                new ElementRule(DistributionLikelihood.class)
+        };
+
+        public String getParserDescription() {
+            return "Truncates the enclosed distribution to the given bounds.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.

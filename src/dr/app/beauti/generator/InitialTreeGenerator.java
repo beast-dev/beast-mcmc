@@ -84,7 +84,7 @@ public class InitialTreeGenerator extends Generator {
                         });
                 writer.writeOpenTag(RescaledTreeParser.RESCALED_TREE, attributes);
                 writeSourceTree(model, writer);
-                if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) {
+                if (options.taxonSets != null && options.taxonSets.size() > 0) {
                     for (Taxa taxa : options.taxonSets) {
                         Double height = options.taxonSetsHeights.get(taxa);
                         if (height != null) {
@@ -118,7 +118,7 @@ public class InitialTreeGenerator extends Generator {
                 }
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
-                if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
+                if (options.taxonSets != null && options.taxonSets.size() > 0) {
                     writeSubTree(simulatorId, taxaId, options.taxonList, model, writer);
                 } else {
                     writer.writeOpenTag(
@@ -184,7 +184,7 @@ public class InitialTreeGenerator extends Generator {
 
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
 
-        if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
+        if (options.taxonSets != null && options.taxonSets.size() > 0) {
             // *BEAST case is in STARBEASTGenerator.writeStartingTreeForCalibration(XMLWriter writer)
             writer.writeOpenTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -293,7 +293,7 @@ public class InitialTreeGenerator extends Generator {
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
         PartitionTreePrior prior = model.getPartitionTreePrior();
 
-        if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.useStarBEAST) {
+        if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT) {
             writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
         } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
             writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
@@ -311,7 +311,7 @@ public class InitialTreeGenerator extends Generator {
                 new Attribute[]{
 //                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
-                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.useTipDates)
                 }
         );
         writer.writeText(TreeUtils.newick(tree));
@@ -348,7 +348,7 @@ public class InitialTreeGenerator extends Generator {
 //                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Object>(DateParser.UNITS, options.units.toString()),
-                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.useTipDates)
                 }
         );
         writeSimpleNode(tree, tree.getRoot(), writer);

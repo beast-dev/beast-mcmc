@@ -257,7 +257,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         @Override
         public Class getReturnType() {
-            return ConjugateWishartStatisticsProvider.class;
+            return WishartStatisticsWrapper.class;
         }
 
         /**

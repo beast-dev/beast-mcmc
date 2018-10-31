@@ -306,6 +306,17 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
                 matrixBufferCount += substitutionModelDelegate.getMatrixBufferCount();
             }
 
+            if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+
             instanceCount++;
 
             beagle = BeagleFactory.loadBeagleInstance(

@@ -39,8 +39,7 @@ import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalPrecisionAndTransform;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform;
-import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -61,7 +60,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
-    private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
+    private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
 
     private int maxAttempts;
 
@@ -115,8 +114,8 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         final int pos = MathUtils.nextInt(treeModel.getExternalNodeCount());
         NodeRef node = treeModel.getExternalNode(pos);
 
-        final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(treeModel, node);
-        final WrappedMeanPrecision statistic = allStatistics.get(0);
+        final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(treeModel, node);
+        final WrappedNormalSufficientStatistics statistic = allStatistics.get(0);
 
         double logq = sampleNode(node, statistic);
         tipTraitParameter.fireParameterChangedEvent();
@@ -144,7 +143,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
     }
 
-    private double sampleNode(NodeRef node, WrappedMeanPrecision statistics) {
+    private double sampleNode(NodeRef node, WrappedNormalSufficientStatistics statistics) {
 
         final int thisNumber = node.getNumber();
 
@@ -269,7 +268,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
     @SuppressWarnings("unchecked")
-    private TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {
+    private TreeTrait<List<WrappedNormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
         return trait;
     }
 

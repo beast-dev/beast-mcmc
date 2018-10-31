@@ -48,6 +48,9 @@ public class SignTransformParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+        if (parameter == null) {  // TODO: generalize to multivariate or move out
+            return new Transform.LogTransform();
+        }
         Bounds<Double> bounds = parameter.getBounds();
 
         List<Transform> transforms = new ArrayList<Transform>();
@@ -87,7 +90,7 @@ public class SignTransformParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                new ElementRule(Parameter.class),
+                new ElementRule(Parameter.class, true),
                 AttributeRule.newIntegerRule(START, true),
                 AttributeRule.newIntegerRule(END, true),
         };

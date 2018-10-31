@@ -38,11 +38,19 @@ import dr.evomodel.substmodel.SubstitutionModel;
  */
 public interface EvolutionaryProcessDelegate {
 
+    boolean cacheInfinitesimalMatrices(); // TODO Remove!
+
     boolean canReturnComplexDiagonalization();
 
     int getEigenBufferCount();
 
     int getMatrixBufferCount();
+
+    int getInfinitesimalMatrixBufferIndex(int branchIndex); // TODO Rename?
+
+    int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex); // TODO Remove!
+
+    int getInfinitesimalMatrixBufferCount(); // TODO Rename?
 
     int getSubstitutionModelCount();
 

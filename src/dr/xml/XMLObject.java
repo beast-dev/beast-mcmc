@@ -314,6 +314,7 @@ public class XMLObject {
         return getBoolean(getAndTest(name));
     }
 
+
     /**
      * @return the named attribute as a double.
      */

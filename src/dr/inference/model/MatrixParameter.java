@@ -239,6 +239,11 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         return new MatrixParameter(null, parameter);
     }
 
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
+    }
+
     public void rowMultiply(double a, int row){
         rowMultiplyQuietly(a, row);
         fireParameterChangedEvent();

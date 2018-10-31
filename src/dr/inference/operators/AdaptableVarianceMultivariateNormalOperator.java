@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -239,6 +239,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 System.err.println("  AVMVN iterations > burnin");
             }
 
+            // TODO Beginning of adaptable covariance
+
             if (iterations > (burnin+1)) {
 
                 if (iterations % every == 0) {
@@ -308,6 +310,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
 
             }
+
+            // TODO End of adaptable covariance -- move into separate class
 
         } else if (iterations == 1) {
 
@@ -643,7 +647,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 burnin = xo.getIntegerAttribute(BURNIN);
             }
             if (burnin > initial || burnin < 0) {
-                throw new XMLParseException("burnin must be smaller than the initial period");
+                throw new XMLParseException("Burn-in must be smaller than the initial period.");
             }
 
             if (xo.hasAttribute(UPDATE_EVERY)) {
@@ -651,17 +655,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
 
             if (every <= 0) {
-                throw new XMLParseException("covariance matrix needs to be updated at least every single iteration");
+                throw new XMLParseException("Covariance matrix needs to be updated at least every single iteration.");
             }
 
             if (scaleFactor <= 0.0) {
-                throw new XMLParseException("scaleFactor must be greater than 0.0");
+                throw new XMLParseException("ScaleFactor must be greater than zero.");
             }
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
             Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
-            boolean oldXML = pt.parameters == null;
+            boolean oldXML;
+            if (pt == null) {
+                throw new XMLParseException("No valid transformations have been provided in the XML file.");
+            }
+            oldXML = pt.parameters == null;
 
             Parameter parameter;
             Transform[] transformations;
@@ -768,7 +776,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
-                            transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            //transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            transformationSums[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
                                 System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }

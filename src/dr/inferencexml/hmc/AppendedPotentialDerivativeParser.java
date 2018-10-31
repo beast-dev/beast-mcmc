@@ -27,6 +27,7 @@ package dr.inferencexml.hmc;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -97,7 +98,7 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
             likelihoodList.add(likelihood);
         }
 
-        return new CompoundGradient(gradList);
+        return new CompoundDerivative(gradList);
     }
 
     @Override
@@ -116,6 +117,6 @@ public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return CompoundGradient.class;
+        return CompoundDerivative.class;
     }
 }

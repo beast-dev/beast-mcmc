@@ -76,6 +76,11 @@ public class OldLinearOrderTreePrecisionTraitProductProvider extends TreePrecisi
         return 0.0; // TODO
     }
 
+    @Override
+    public double getTimeScaleEigen() {
+        return 0;
+    }
+
     @SuppressWarnings("unchecked")
     private TreeTrait<List<NormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
         return trait;

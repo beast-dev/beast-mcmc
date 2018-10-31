@@ -225,6 +225,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1),
                     new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
                     new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.SAVE_HISTORY, saveCompleteHistory ? "true" : "false"),
+                    new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.LOG_HISTORY, saveCompleteHistory ? "true" : "false"),
             };
         } else if (tag.equals(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD)) {
             attributes = new Attribute[]{

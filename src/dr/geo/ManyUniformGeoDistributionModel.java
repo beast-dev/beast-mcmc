@@ -74,7 +74,7 @@ public class ManyUniformGeoDistributionModel extends AbstractModelLikelihood {
 
     @Override
     public final double getLogLikelihood() {
-        if (allLikelihoodsKnown) {
+        if (!allLikelihoodsKnown) {
             logLikelihood = calculateLogLikelihood();
             allLikelihoodsKnown = true;
         }
@@ -148,6 +148,7 @@ public class ManyUniformGeoDistributionModel extends AbstractModelLikelihood {
                 likelihood[i] = distributions.get(i).logPdf(
                         parameters.get(i).getParameterValues()
                 );
+                likelihoodKnown[i] = true;
             }
             logLikelihood += likelihood[i];
         }

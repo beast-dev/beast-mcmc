@@ -151,4 +151,9 @@ public class CorrelationSymmetricMatrix extends MatrixParameter {
 
         return index;
     }
+
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return true;
+    }
 }

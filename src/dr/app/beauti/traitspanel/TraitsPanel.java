@@ -438,15 +438,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean addTrait(String traitName) {
-        return addTrait(null, traitName, false);
+        return addTrait(null, traitName);
     }
 
-    public boolean addTrait(String message, String traitName, boolean isSpeciesTrait) {
+    public boolean addTrait(String message, String traitName) {
         if (createTraitDialog == null) {
             createTraitDialog = new CreateTraitDialog(frame);
         }
 
-        createTraitDialog.setSpeciesTrait(isSpeciesTrait);
         createTraitDialog.setTraitName(traitName);
         createTraitDialog.setMessage(message);
 
@@ -473,19 +472,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         } else if (result == CreateTraitDialog.OK_IMPORT) {
             boolean done = frame.doImportTraits();
             if (done) {
-                if (isSpeciesTrait) {
-                    // check that we did indeed import a 'species' trait
-                    if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                        JOptionPane.showMessageDialog(this,
-                                "The imported trait file didn't contain a trait\n" +
-                                        "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
-                                        "Please edit it or select a different file.",
-                                "Reserved trait name",
-                                JOptionPane.WARNING_MESSAGE);
-
-                        return false;
-                    }
-                }
                 updateButtons();
             }
             return done;
@@ -548,10 +534,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void removeTrait(String traitName) {
-        if (options.useStarBEAST && traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used by *BEAST.\nTurn *BEAST off before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
         TraitData traitData = options.getTrait(traitName);
         if (options.getTraitPartitions(traitData).size() > 0) {
             JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
@@ -674,7 +656,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            return !options.useStarBEAST || !options.traits.get(row).getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString());
+            return true;
         }
 
         public String getColumnName(int column) {

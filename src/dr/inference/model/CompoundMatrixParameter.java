@@ -90,7 +90,7 @@ public class CompoundMatrixParameter extends MatrixParameter {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(MatrixParameter.class, 1, Integer.MAX_VALUE),
+                new ElementRule(MatrixParameterInterface.class, 1, Integer.MAX_VALUE),
         };
 
         public Class getReturnType() {

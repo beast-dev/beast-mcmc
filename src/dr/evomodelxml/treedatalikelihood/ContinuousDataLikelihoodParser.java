@@ -29,15 +29,19 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.continuous.*;
+import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
-import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
+import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
+import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -159,30 +163,24 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
         List<BranchRateModel> optimalTraitsModels = AbstractMultivariateTraitLikelihood.parseOptimalValuesModels(xo, diffusionModel);
 
-        MatrixParameterInterface strengthOfSelectionMatrixParam = null;
+        MultivariateElasticModel elasticModel = null;
         if (xo.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
             XMLObject cxo = xo.getChild(STRENGTH_OF_SELECTION_MATRIX);
+            MatrixParameterInterface strengthOfSelectionMatrixParam;
             strengthOfSelectionMatrixParam = (MatrixParameterInterface) cxo.getChild(MatrixParameterInterface.class);
-        }
-
-        DiagonalMatrix diagonalStrengthOfSelectionMatrixParam = null;
-        if (xo.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
-            XMLObject cxo = xo.getChild(STRENGTH_OF_SELECTION_MATRIX);
-            diagonalStrengthOfSelectionMatrixParam = (DiagonalMatrix) cxo.getChild(DiagonalMatrix.class);
+            if (strengthOfSelectionMatrixParam != null) {
+                elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
+            }
         }
 
         DiffusionProcessDelegate diffusionProcessDelegate;
-        if ((optimalTraitsModels != null && diagonalStrengthOfSelectionMatrixParam != null) || xo.getAttribute(FORCE_OU, false)) {
-            diffusionProcessDelegate = new DiagonalOrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, diagonalStrengthOfSelectionMatrixParam);
+        if ((optimalTraitsModels != null && elasticModel != null) || xo.getAttribute(FORCE_OU, false)) {
+            diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
         } else {
-            if ((optimalTraitsModels != null && strengthOfSelectionMatrixParam != null) || xo.getAttribute(FORCE_OU, false)) {
-                diffusionProcessDelegate = new OrnsteinUhlenbeckDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, strengthOfSelectionMatrixParam);
+            if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
+                diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
             } else {
-                if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
-                    diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
-                } else {
-                    diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
-                }
+                diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
             }
         }
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,

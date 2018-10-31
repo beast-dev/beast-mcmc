@@ -28,16 +28,20 @@ package dr.evomodel.substmodel.nucleotide;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
+import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 
 /**
@@ -47,7 +51,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class HKY extends BaseSubstitutionModel implements Citable {
+public class HKY extends BaseSubstitutionModel implements Citable, ParameterReplaceableSubstitutionModel {
 
     private Parameter kappaParameter = null;
 
@@ -294,5 +298,102 @@ public class HKY extends BaseSubstitutionModel implements Citable {
         oldHKY.getTransitionProbabilities(time,probs);
         System.out.println("old probs = "+new Vector(probs));
 
+    }
+
+    @Override
+    public Parameter getReplaceableParameter() {
+        return kappaParameter;
+    }
+
+    /**
+     * Generate a replicate of itself with new kappaParamter.
+     * @param oldParameter
+     * @param newParameter
+     */
+    @Override
+    public HKY replaceParameter(Parameter oldParameter, Parameter newParameter) {
+        if (oldParameter == kappaParameter) {
+            return new HKY(newParameter, freqModel);
+        } else if (oldParameter == freqModel.getFrequencyParameter()) {
+            return new HKY(kappaParameter, new FrequencyModel(freqModel.getDataType(), newParameter));
+        } else {
+            throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+        }
+    }
+
+    @Override
+    public double[][] getDifferentialMassMatrix(double time, Parameter parameter) {
+        if (parameter == kappaParameter) {
+            EigenDecomposition eigenDecomposition = getEigenDecomposition();
+            double[] eigenValues = eigenDecomposition.getEigenValues();
+            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
+            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
+
+            double[] pi = freqModel.getFrequencies();
+
+            final double normalization = setupMatrix();
+            final double[] Q = new double[stateCount * stateCount];
+            getInfinitesimalMatrix(Q);
+            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
+            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
+
+            final double[] rates = new double[6];
+            Arrays.fill(rates, 0.0);
+            rates[1] = rates[4] = 1.0 / normalization;
+
+            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
+            setupQMatrix(rates, pi, differentialMassMatrix.getArrays());
+            makeValid(differentialMassMatrix.getArrays(), stateCount);
+
+            final double tmpMultiplier = normalizationGradient / normalization;
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * tmpMultiplier);
+                }
+            }
+
+            getTripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors);
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    if (i == j || eigenValues[i] == eigenValues[j]) {
+                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
+                    } else {
+                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
+                    }
+                }
+            }
+
+            getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
+
+            return differentialMassMatrix.getArrays();
+
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
+    private void getTripleMatrixMultiplication(ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+
+        double[][] tmpMatrix = new double[stateCount][stateCount];
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                for (int k = 0; k < stateCount; k++) {
+                    tmpMatrix[i][j] += middleMatrix.get(i, k) * rightMatrix.get(k, j);
+                }
+            }
+        }
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                double sumProduct = 0.0;
+                for (int k = 0; k < stateCount; k++) {
+                    sumProduct += leftMatrix.get(i, k) * tmpMatrix[k][j];
+                }
+                middleMatrix.set(i, j, sumProduct);
+            }
+        }
     }
 }

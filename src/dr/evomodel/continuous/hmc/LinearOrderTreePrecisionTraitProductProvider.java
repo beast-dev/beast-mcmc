@@ -3,14 +3,11 @@ package dr.evomodel.continuous.hmc;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.preorder.WrappedMeanPrecision;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.ReadableMatrix;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +22,7 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.norm;
  */
 public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionTraitProductProvider {
 
-    private final TreeTrait<List<WrappedMeanPrecision>> fullConditionalDensity;
+    private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
 
     private static final boolean DEBUG = false;
     private static final boolean NEW_DATA = false; // Maybe not useful
@@ -50,11 +47,10 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 		
         this.roughTimeGuess = roughTimeGuess;
         this.eigenvalueReplicates = eigenvalueReplicates;
-        
-        setupParallelServices(tree.getExternalNodeCount(), threadCount);
+
+        this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
     }
-
-
+    
     @Override
     public double[] getProduct(Parameter vector) {
 
@@ -64,9 +60,9 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         final double[] result = new double[vector.getDimension()];
 
-        if (pool == null) { // single-threaded
+        if (taxonTaskPool.getPool() == null) { // single-threaded
 
-            final List<WrappedMeanPrecision> allStatistics;
+            final List<WrappedNormalSufficientStatistics> allStatistics;
             if (NEW_DATA) {
                 allStatistics = fullConditionalDensity.getTrait(tree, null);
                 assert (allStatistics.size() == tree.getExternalNodeCount());
@@ -74,11 +70,11 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
             for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
 
-                final WrappedMeanPrecision statistic;
+                final WrappedNormalSufficientStatistics statistic;
                 if (NEW_DATA) {
                     statistic = allStatistics.get(taxon);
                 } else {
-                    List<WrappedMeanPrecision> statistics = fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
+                    List<WrappedNormalSufficientStatistics> statistics = fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon));
                     assert (statistics.size() == 1);
                     statistic = statistics.get(0);
                 }
@@ -88,14 +84,14 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         } else {
 
-            final List<WrappedMeanPrecision> allStatistics = fullConditionalDensity.getTrait(tree, null);
+            final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(tree, null);
             assert (allStatistics.size() == tree.getExternalNodeCount());
 
             List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
             if (SMART_POOL) {
 
-                for (final TaskIndices indices : taskIndices) {
+                for (final TaxonTaskPool.TaxonTaskIndices indices : taxonTaskPool.getIndices()) {
                     calls.add(Executors.callable(
                             new Runnable() {
                                 @Override
@@ -124,7 +120,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
             }
 
             try {
-                pool.invokeAll(calls);
+                taxonTaskPool.getPool().invokeAll(calls);
             } catch (InterruptedException exception) {
                 exception.printStackTrace();
             }
@@ -138,7 +134,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     private void computeProductForOneTaxon(final int taxon,
-                                          final WrappedMeanPrecision statistic,
+                                          final WrappedNormalSufficientStatistics statistic,
                                           final double[] result) {
 
         final ReadableVector mean = statistic.getMean();
@@ -189,26 +185,55 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         }
         return getRoughLowerBoundforTravelTime();
     }
+
+    @Override
+    public double getTimeScaleEigen() {
+
+        double maxEigenValue;
+        double minEigenValue;
+
+        maxEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
+        minEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, true);
+
+        System.err.println("max eigen = " + maxEigenValue + "min eigen = " + minEigenValue + "condition number = " + maxEigenValue / minEigenValue);
+        return 0.0;
+    }
+
+    public double getTimeScale(double y) {
+
+        if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
+            return roughTimeGuess;
+        }
+        return getRoughLowerBoundforTravelTime();
+    }
     
     private double getMaxEigenvalueAsTravelTime() {
 
         // TODO Lots of bad magic numbers
-        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01)
-                *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01);
+        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01, false)
+                *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
     }
 
-    private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err) {
+    private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err, boolean inverseflag) {
 
-        double[] y0 = new double[matrix.length];
+        double[][] matrixForUse;
+
+        if (inverseflag) {
+            matrixForUse = (new SymmetricMatrix(matrix)).inverse().toComponents();
+        } else {
+            matrixForUse = (new SymmetricMatrix(matrix)).toComponents();
+        }
+
+        double[] y0 = new double[matrixForUse.length];
         ReadableVector diff;
         double maxEigenvalue = 10.0; // TODO Bad magic number
  
-        for (int i = 0; i < matrix.length; ++i) {
+        for (int i = 0; i < matrixForUse.length; ++i) {
             y0[i] = MathUtils.nextDouble();
         }
         WrappedVector y = new WrappedVector.Raw(y0);
 
-        final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrix);
+        final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrixForUse);
 
         for (int i = 0; i < numIterations; ++i) {
 
@@ -222,7 +247,13 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
                 break;
             }
         }
-        return maxEigenvalue;
+
+        if (inverseflag) {
+            return 1.0 / maxEigenvalue;
+        } else {
+            return maxEigenvalue;
+        }
+
     }
 
     private double getRoughLowerBoundforTravelTime() {
@@ -267,54 +298,11 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     @SuppressWarnings("unchecked")
-    private TreeTrait<List<WrappedMeanPrecision>> castTreeTrait(TreeTrait trait) {
+    static TreeTrait<List<WrappedNormalSufficientStatistics>> castTreeTrait(TreeTrait trait) {
         return trait;
     }
 
-    private void setupParallelServices(int taxonCount, int threadCount) {
-        if (threadCount > 0) {
-            pool = Executors.newFixedThreadPool(threadCount);
-        } else if (threadCount < 0) {
-            pool = Executors.newCachedThreadPool();
-        } else {
-            pool = null;
-        }
-
-        taskIndices = (pool != null) ? setupTasks(taxonCount, threadCount) : null;
-    }
-
-    private List<TaskIndices> setupTasks(int taxonCount, int threadCount) {
-        List<TaskIndices> tasks = new ArrayList<TaskIndices>(threadCount);
-
-        int length = taxonCount / threadCount;
-        if (taxonCount % threadCount != 0) ++length;
-
-        int start = 0;
-
-        for (int task = 0; task < threadCount && start < taxonCount; ++task) {
-            tasks.add(new TaskIndices(start, Math.min(start + length, taxonCount)));
-            start += length;
-        }
-
-        return tasks;
-    }
-
-    private class TaskIndices {
-        int start;
-        int stop;
-
-        TaskIndices(int start, int stop) {
-            this.start = start;
-            this.stop = stop;
-        }
-
-        public String toString() {
-            return start + " " + stop;
-        }
-    }
-
-    private ExecutorService pool = null;
-    private List<TaskIndices> taskIndices = null;
+    private final TaxonTaskPool taxonTaskPool;
 
     private final double[][] delta;
     private final double roughTimeGuess;

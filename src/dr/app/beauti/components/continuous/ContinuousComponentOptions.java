@@ -42,10 +42,13 @@ import java.util.Map;
 
 public class ContinuousComponentOptions implements ComponentOptions {
 
+    public static final boolean USE_ARBITRARY_BRANCH_RATE_MODEL = true;
+
     public final static String PRECISION_GIBBS_OPERATOR = "precisionGibbsOperator";
     public final static String HALF_DF = "halfDF";
     public final static String STDEV = "stdev";
     public final static String LAMBDA = "lambda";
+    public final static String DIFFUSION_RATES = "diffusion.rates";
     public final static String RRW_CATEGORIES = "rrwCategories";
     public final static String DRIFT_RATE = "driftRate";
 
@@ -60,8 +63,11 @@ public class ContinuousComponentOptions implements ComponentOptions {
             String prefix = partitionData.getName() + ".";
 
             if (!modelOptions.parameterExists(prefix + HALF_DF)) {
-                modelOptions.createParameterGammaPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
-                        PriorScaleType.NONE, 0.5, 0.001, 1000.0, false);
+//                modelOptions.createParameterGammaPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
+//                        PriorScaleType.NONE, 0.5, 0.001, 1000.0, false);
+                // responding to Issue #941 suggesting a exp(10) prior
+                modelOptions.createParameterExponentialPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
+                        PriorScaleType.NONE, 0.5, 10, 0.0, false);
                 modelOptions.createScaleOperator(prefix + HALF_DF, modelOptions.demoTuning, 1.0);
             }
 
@@ -79,13 +85,20 @@ public class ContinuousComponentOptions implements ComponentOptions {
                 modelOptions.createOperator(prefix + LAMBDA, OperatorType.RANDOM_WALK_ABSORBING, 0.3, 10.0, false);
             }
 
-            if (!modelOptions.parameterExists(prefix + "swap." + RRW_CATEGORIES)) {
-                modelOptions.createParameter(prefix + RRW_CATEGORIES, "relaxed random walk rate categories");
+            if (USE_ARBITRARY_BRANCH_RATE_MODEL) {
+                if (!modelOptions.parameterExists(prefix + DIFFUSION_RATES)) {
+                    modelOptions.createParameter(prefix + DIFFUSION_RATES, "relaxed random walk branch rates");
+                    modelOptions.createScaleOperator(prefix + DIFFUSION_RATES, "Performs a scale of RRW branch rates", 0.75, 30);
+                }
+            } else {
+                if (!modelOptions.parameterExists(prefix + RRW_CATEGORIES)) {
+                    modelOptions.createParameter(prefix + RRW_CATEGORIES, "relaxed random walk rate categories");
 
-                modelOptions.createOperator(prefix + "swap." + RRW_CATEGORIES, prefix + RRW_CATEGORIES, "Performs a swap of RRW rate categories",
-                        prefix + RRW_CATEGORIES, OperatorType.SWAP, 1, 30);
-                modelOptions.createOperator(prefix + "draw." + RRW_CATEGORIES, prefix + RRW_CATEGORIES, "Performs an integer uniform draw of RRW rate categories",
-                        prefix + RRW_CATEGORIES, OperatorType.INTEGER_UNIFORM, 1, 10);
+                    modelOptions.createOperator(prefix + "swap." + RRW_CATEGORIES, prefix + RRW_CATEGORIES, "Performs a swap of RRW rate categories",
+                            prefix + RRW_CATEGORIES, OperatorType.SWAP, 1, 30);
+                    modelOptions.createOperator(prefix + "draw." + RRW_CATEGORIES, prefix + RRW_CATEGORIES, "Performs an integer uniform draw of RRW rate categories",
+                            prefix + RRW_CATEGORIES, OperatorType.INTEGER_UNIFORM, 1, 10);
+                }
             }
 
             if (!modelOptions.parameterExists(prefix + DRIFT_RATE)) {
@@ -104,7 +117,9 @@ public class ContinuousComponentOptions implements ComponentOptions {
             String prefix = partitionData.getName() + ".";
 
             boolean isRRW = false;
-            if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
+            if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.CAUCHY_RRW) {
+                isRRW = true;
+            } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 ops.add(modelOptions.getOperator(prefix + HALF_DF));
                 isRRW = true;
             } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.LOGNORMAL_RRW) {
@@ -117,23 +132,36 @@ public class ContinuousComponentOptions implements ComponentOptions {
                 ops.add(modelOptions.getOperator(prefix + LAMBDA));
             }
             if (isRRW) {
-                ops.add(modelOptions.getOperator(prefix + "swap." + RRW_CATEGORIES));
-                ops.add(modelOptions.getOperator(prefix + "draw." + RRW_CATEGORIES));
+                if (USE_ARBITRARY_BRANCH_RATE_MODEL) {
+                    ops.add(modelOptions.getOperator(prefix + DIFFUSION_RATES));
+                } else {
+                    ops.add(modelOptions.getOperator(prefix + "swap." + RRW_CATEGORIES));
+                    ops.add(modelOptions.getOperator(prefix + "draw." + RRW_CATEGORIES));
+                }
             }
         }
     }
 
     public void selectParameters(ModelOptions modelOptions, List<Parameter> params) {
         for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
-            if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
-                params.add(modelOptions.getParameter(partitionData.getName() + "." + HALF_DF));
+            String prefix = partitionData.getName() + ".";
+
+            boolean isRRW = false;
+            if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.CAUCHY_RRW) {
+                isRRW = true;
+            } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
+                params.add(modelOptions.getParameter(prefix + HALF_DF));
             } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.LOGNORMAL_RRW) {
-                params.add(modelOptions.getParameter(partitionData.getName() + "." + STDEV));
+                params.add(modelOptions.getParameter(prefix + STDEV));
             } else if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
-                params.add(modelOptions.getParameter(partitionData.getName() + "." + DRIFT_RATE));
+                params.add(modelOptions.getParameter(prefix + DRIFT_RATE));
             }
             if (useLambda(partitionData.getPartitionSubstitutionModel())) {
-                params.add(modelOptions.getParameter(partitionData.getName() + "." + LAMBDA));
+                params.add(modelOptions.getParameter(prefix + LAMBDA));
+            }
+            if (isRRW && USE_ARBITRARY_BRANCH_RATE_MODEL) {
+                // don't put parameter in prior table as the prior is selected in the site model panel
+//                params.add(modelOptions.getParameter(prefix + DIFFUSION_RATES));
             }
         }
     }

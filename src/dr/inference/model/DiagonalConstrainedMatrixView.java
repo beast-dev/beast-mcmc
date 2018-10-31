@@ -162,6 +162,11 @@ public class DiagonalConstrainedMatrixView extends CompoundParameter implements 
     }
 
     @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
+    }
+
+    @Override
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == matrix) {
             fireParameterChangedEvent(index, type);

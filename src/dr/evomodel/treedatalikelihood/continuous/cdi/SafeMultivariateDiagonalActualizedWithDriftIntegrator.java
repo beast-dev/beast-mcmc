@@ -293,15 +293,37 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     /// Tree-traversal functions
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public void updatePreOrderPartial(
-            final int kBuffer, // parent
-            final int iBuffer, // node
-            final int iMatrix,
-            final int jBuffer, // sibling
-            final int jMatrix) {
+//    @Override
+//    public void updatePreOrderPartial(
+//            final int kBuffer, // parent
+//            final int iBuffer, // node
+//            final int iMatrix,
+//            final int jBuffer, // sibling
+//            final int jMatrix) {
+//
+//        throw new RuntimeException("Not yet implemented");
+//    }
 
-        throw new RuntimeException("Not yet implemented");
+    @Override
+    void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
+        final double[] diagQdj = vectorDiagQdj;
+        System.arraycopy(diagonalActualizations, jdo, diagQdj, 0, dimTrait);
+        diagonalProduct(Pjp, diagQdj, QjPjp);
+        diagonalDoubleProduct(Pjp, diagQdj, Pjp);
+    }
+
+    @Override
+    void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
+        final double[] diagQdi = vectorDiagQdi;
+        System.arraycopy(diagonalActualizations, ido, diagQdi, 0, dimTrait);
+        diagonalDoubleProduct(Vip, diagQdi, Vip);
+    }
+
+    @Override
+    void scaleAndDriftMean(int ibo, int imo, int ido) {
+        for (int g = 0; g < dimTrait; ++g) {
+            preOrderPartials[ibo + g] = diagonalActualizations[ido + g] * preOrderPartials[ibo + g] + displacements[ido + g];
+        }
     }
 
     public double[] getStationaryVariance(int precisionIndex) {
@@ -353,6 +375,25 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     private static void diagonalDoubleProduct(DenseMatrix64F source, double[] diagonalScales,
                                               DenseMatrix64F destination) {
         double[] scales = new double[diagonalScales.length * diagonalScales.length];
+        diagonalToMatrixDouble(diagonalScales, scales);
+
+        for (int i = 0; i < destination.data.length; ++i) {
+            destination.data[i] = scales[i] * source.data[i];
+        }
+    }
+
+    private static void diagonalToMatrixDouble(double[] diagonalScales, double[] scales) {
+        int dim = diagonalScales.length;
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                scales[i * dim + j] = diagonalScales[i] * diagonalScales[j];
+            }
+        }
+    }
+
+    private static void diagonalProduct(DenseMatrix64F source, double[] diagonalScales,
+                                        DenseMatrix64F destination) {
+        double[] scales = new double[diagonalScales.length * diagonalScales.length];
         diagonalToMatrix(diagonalScales, scales);
 
         for (int i = 0; i < destination.data.length; ++i) {
@@ -364,7 +405,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         int dim = diagonalScales.length;
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
-                scales[i * dim + j] = diagonalScales[i] * diagonalScales[j];
+                scales[i * dim + j] = diagonalScales[i];
             }
         }
     }

@@ -137,12 +137,9 @@ public class PartitionTreeModel extends PartitionOptions {
             rootHeightParameter.isTruncated = true;
         }
 
-        if (options.useStarBEAST) {
-            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION;
-        } else {
-            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
-            parameters.add(rootHeightParameter);
-        }
+        rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
+        parameters.add(rootHeightParameter);
+
         return parameters;
     }
 

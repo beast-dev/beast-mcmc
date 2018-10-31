@@ -26,6 +26,8 @@
 package dr.math.matrixAlgebra;
 
 
+import dr.inference.model.Variable;
+
 /**
  * @author Marc A. Suchard
  */
@@ -92,6 +94,26 @@ public interface WrappedVector extends ReadableVector, WritableVector {
         }
     }
 
+    final class Parameter extends Abstract {
+
+        private final Variable<Double> variable;
+
+        public Parameter(Variable<Double> variable) {
+            this(variable, 0, variable.getSize());
+        }
+
+        public Parameter(Variable<Double> variable, int offset, int dim) {
+            super(null, offset, dim);
+            this.variable = variable;
+        }
+
+        @Override
+        final public double get(final int i) { return variable.getValue(offset + i); }
+
+        @Override
+        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
+    }
+
     final class Indexed extends Abstract {
 
         final private int[] indices;
@@ -106,5 +128,16 @@ public interface WrappedVector extends ReadableVector, WritableVector {
 
         @Override
         final public void set(int i, double x) { buffer[offset + indices[i]] = x; }
+    }
+
+    final class Utils {
+
+        public static WrappedVector copy(ReadableVector vector) {
+            double[] buffer = new double[vector.getDim()];
+            for (int i = 0; i < buffer.length; ++i) {
+                buffer[i] = vector.get(i);
+            }
+            return new WrappedVector.Raw(buffer);
+        }
     }
 }

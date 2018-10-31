@@ -149,4 +149,50 @@ public class NumericalDerivative
 		
 		return result;
 	}
+
+	/**
+	 *
+	 * determine hessian
+	 *
+	 * @param f multivariate function
+	 * @param x argument vector
+	 * @return
+	 */
+	public static double[][] getNumericalHessian(MultivariateFunction f, double[] x) {
+		double[][] hessian = new double[f.getNumArguments()][f.getNumArguments()];
+		for (int i = 0; i < f.getNumArguments(); i++) {
+			double hi = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(x[i]) + 1.0);
+			double oldXi = x[i];
+			double f__ = f.evaluate(x);
+			x[i] = oldXi + hi;
+			double fp_ = f.evaluate(x);
+			x[i] = oldXi - hi;
+			double fm_ = f.evaluate(x);
+			x[i] = oldXi + 2.0 * hi;
+			double fpp = f.evaluate(x);
+			x[i] = oldXi - 2.0 * hi;
+			double fmm = f.evaluate(x);
+			hessian[i][i] = (-fpp + 16.0 * fp_ - 30.0 * f__ + 16.0 * fm_ - fmm) / (12.0 * hi * hi);
+			for (int j = i + 1; j < f.getNumArguments(); j++) {
+				double hj = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(x[j]) + 1.0);
+				double oldXj = x[j];
+				x[i] = oldXi + hi;
+				x[j] = oldXj + hj;
+				fpp = f.evaluate(x);
+				x[i] = oldXi + hi;
+				x[j] = oldXj - hj;
+				double fpm = f.evaluate(x);
+				x[i] = oldXi - hi;
+				x[j] = oldXj + hj;
+				double fmp = f.evaluate(x);
+				x[i] = oldXi - hi;
+				x[j] = oldXj - hj;
+				fmm = f.evaluate(x);
+				x[i] = oldXi;
+				x[j] = oldXj;
+				hessian[i][j] = hessian[j][i] = (fpp - fpm - fmp + fmm) / (4.0 * hi * hj);
+			}
+		}
+		return hessian;
+	}
 }

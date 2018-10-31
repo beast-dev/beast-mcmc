@@ -82,6 +82,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 if (model.getTraitData().getIncludedPredictors().size() < 1) {
                     throw new GeneratorException("The GLM model for trait, " + model.getTraitData().getName() + ", has no predictors included.");
                 }
+
+                for (Predictor predictor : model.getTraitData().getIncludedPredictors()) {
+                    if (predictor.isLogged() && predictor.hasZeroValues(true)) {
+                        throw new GeneratorException("The GLM predictor, " + predictor.getName() + ", for trait, " + model.getTraitData().getName() + ", has zero values and therefore should not be logged.");
+                    }
+                    if (predictor.isStandardized() && predictor.isBinary()) {
+                        throw new GeneratorException("The GLM predictor, " + predictor.getName() + ", for trait, " + model.getTraitData().getName() + ", is binary and therefore should not be standardized.");
+                    }
+                }
             }
         }
     }
@@ -513,9 +522,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
         }
 
+        boolean saveCompleteHistory = ancestralStatesOptions.isCompleteHistoryLogging(partition);
+
         writer.writeOpenTag(treeLikelihoodTag, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
                 new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                new Attribute.Default<Boolean>(MarkovJumpsTreeLikelihoodParser.USE_UNIFORMIZATION, true),
+                new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.SAVE_HISTORY, saveCompleteHistory ? "true" : "false"),
+                new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.LOG_HISTORY, saveCompleteHistory ? "true" : "false"),
         });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");

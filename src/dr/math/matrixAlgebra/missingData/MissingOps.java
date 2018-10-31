@@ -7,16 +7,17 @@ import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
 import org.ejml.alg.dense.misc.UnrolledInverseFromMinor;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
+import org.ejml.ops.SingularOps;
 
 import java.util.Arrays;
 
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.FULLY_OBSERVED;
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.PARTIALLY_OBSERVED;
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
+import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
 
 /**
  * @author Marc A. Suchard
@@ -44,6 +45,30 @@ public class MissingOps {
                                               final int dim) {
         double[] buffer = new double[dim * dim];
         return wrapDiagonal(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
+                                               final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapSpherical(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
+                                               final int dim,
+                                               final double[] buffer) {
+        fillSpherical(source, offset, dim, buffer);
+        DenseMatrix64F res = DenseMatrix64F.wrap(dim, dim, buffer);
+        CommonOps.transpose(res); // Column major.
+        return res;
+    }
+
+    private static void fillSpherical(final double[] source, final int offset,
+                               final int dim, final double[] buffer) {
+        for (int i = 0; i < dim; i++) {
+            System.arraycopy(source, offset + i * (dim - 1),
+                    buffer, i * dim, dim - 1);
+            buffer[(i + 1) * dim - 1] = projection(source, offset + i * (dim - 1), dim - 1);
+        }
     }
 
     public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
@@ -156,6 +181,17 @@ public class MissingOps {
             }
         }
         return count;
+    }
+
+    public static boolean allZeroDiagonals(DenseMatrix64F source) {
+        final int length = source.getNumCols();
+
+        for (int i = 0; i < length; ++i) {
+            if (source.unsafe_get(i,i) != 0.0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static void getFiniteDiagonalIndices(final DenseMatrix64F source, final int[] indices) {
@@ -280,28 +316,33 @@ public class MissingOps {
         if (finiteCount == 0) {
             result = new InversionResult(NOT_OBSERVED, 0, 0);
         } else {
-            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
-            solver.setA(source);
+//            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
+//            solver.setA(source);
+//
+//            SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+//            double[] values = svd.getSingularValues();
+//
+//            if (values == null) {
+//                throw new RuntimeException("Unable to perform SVD");
+//            }
 
-            SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+            SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(source.getNumRows(), source.getNumCols(), false, false, false);
+            if (!svd.decompose(source)) throw new RuntimeException("SVD decomposition failed");
             double[] values = svd.getSingularValues();
 
-
-            if (values == null) {
-                throw new RuntimeException("Unable to perform SVD");
-            }
+            double eps = SingularOps.singularThreshold(svd);
 
             int dim = 0;
             double det = 1;
             for (int i = 0; i < values.length; ++i) {
                 final double lambda = values[i];
-                if (lambda != 0.0) {
+                if (lambda > 100000 * eps) {
                     det *= lambda;
                     ++dim;
                 }
             }
 
-            if (invert) {
+            if (!invert) {
                 det = 1.0 / det;
             }
 
@@ -350,19 +391,25 @@ public class MissingOps {
             double det = 1;
 
             if (getDeterminant) {
-                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+//                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+//                double[] values = svd.getSingularValues();
+
+                SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
+                if (!svd.decompose(A)) throw new RuntimeException("SVD decomposition failed");
                 double[] values = svd.getSingularValues();
+
+                double eps = SingularOps.singularThreshold(svd);
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda != 0.0) {
+                    if (lambda > 100000 * eps) {
                         det *= lambda;
                         ++dim;
                     }
                 }
             }
 
-            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, 1 / det);
+            result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, det);
         }
 
         return result;
@@ -515,6 +562,31 @@ public class MissingOps {
             double sum = 0.0;
             for (int h = 0; h < dimTrait; ++h) {
                 sum += Vk.unsafe_get(g, h) * tmp[h];
+            }
+            mk.set(g, sum);
+        }
+    }
+
+    public static void weightedAverage(final ReadableVector mi,
+                                       final ReadableMatrix Pi,
+                                       final ReadableVector mj,
+                                       final ReadableMatrix Pj,
+                                       final WritableVector mk,
+                                       final ReadableMatrix Vk,
+                                       final int dimTrait) {
+        final double[] tmp = new double[dimTrait];
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            for (int h = 0; h < dimTrait; ++h) {
+                sum += Pi.get(g, h) * mi.get(h);
+                sum += Pj.get(g, h) * mj.get(h);
+            }
+            tmp[g] = sum;
+        }
+        for (int g = 0; g < dimTrait; ++g) {
+            double sum = 0.0;
+            for (int h = 0; h < dimTrait; ++h) {
+                sum += Vk.get(g, h) * tmp[h];
             }
             mk.set(g, sum);
         }
@@ -673,4 +745,17 @@ public class MissingOps {
     }
 
 
+    public static void add(ReadableMatrix p1,
+                           ReadableMatrix p2,
+                           WritableMatrix p12) {
+
+        assert (p1.getDim() == p2.getDim());
+        assert (p1.getDim() == p12.getDim());
+
+        final int dim = p12.getDim();
+
+        for (int i = 0; i < dim; ++i) {
+            p12.set(i, p1.get(i) + p2.get(i));
+        }
+    }
 }

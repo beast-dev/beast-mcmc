@@ -47,17 +47,23 @@ public class TraceDistribution {
     private FrequencyCounter<Integer> frequencyCounter;
 
     public TraceDistribution(List<Double> values, TraceType traceType) {
+        this(values, traceType, false);
+    }
+
+    public TraceDistribution(List<Double> values, TraceType traceType, boolean isConstant) {
         this.traceType = traceType;
+        this.isConstant = isConstant;
 
         assert traceType != TraceType.CATEGORICAL : "cant use this constructor with categorical data";
 
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder) {
+    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, boolean isConstant) {
         this.traceType = TraceType.CATEGORICAL;
         this.categoryLabelMap = categoryLabelMap;
         this.categoryOrder = categoryOrder;
+        this.isConstant = isConstant;
         initStatistics(values, 0.95);
     }
 
@@ -75,10 +81,6 @@ public class TraceDistribution {
 
     public TraceType getTraceType() {
         return traceType;
-    }
-
-    public boolean isMinEqualToMax() {
-        return minEqualToMax;
     }
 
     public int getSize() {
@@ -105,6 +107,9 @@ public class TraceDistribution {
         return geometricMean;
     }
 
+    public boolean isConstant() {
+        return isConstant;
+    }
 
     public double getMedian() {
         return median;
@@ -174,26 +179,37 @@ public class TraceDistribution {
         }
 
         size = values.length;
-        mean = DiscreteStatistics.mean(values);
-        stdError = DiscreteStatistics.stdev(values);
-        variance = DiscreteStatistics.variance(values);
 
-        minimum = Double.POSITIVE_INFINITY;
-        maximum = Double.NEGATIVE_INFINITY;
+        if (!isConstant) {
+            minimum = Double.POSITIVE_INFINITY;
+            maximum = Double.NEGATIVE_INFINITY;
 
-        for (double value : values) {
-            if (value < minimum) minimum = value;
-            if (value > maximum) maximum = value;
+            for (double value : values) {
+                if (value < minimum) minimum = value;
+                if (value > maximum) maximum = value;
+            }
+
+            if (maximum == minimum) {
+                isConstant = true;
+            }
         }
 
-        if (minimum > 0) {
-            geometricMean = DiscreteStatistics.geometricMean(values);
-            hasGeometricMean = true;
-        }
+        if (isConstant) {
+            mean = values[0];
+            stdError = 0;
+            variance = 0;
+            minimum = maximum = values[0];
 
-        if (maximum == minimum) {
-            minEqualToMax = false;
             return;
+        } else {
+            mean = DiscreteStatistics.mean(values);
+            stdError = DiscreteStatistics.stdev(values);
+            variance = DiscreteStatistics.variance(values);
+
+            if (minimum > 0) {
+                geometricMean = DiscreteStatistics.geometricMean(values);
+                hasGeometricMean = true;
+            }
         }
 
         int[] indices = new int[values.length];
@@ -207,7 +223,6 @@ public class TraceDistribution {
 //        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
 
-        minEqualToMax = true;
     }
 
     /**
@@ -227,7 +242,8 @@ public class TraceDistribution {
         hpdUpperCustom = hpd[1];
     }
 
-    protected boolean minEqualToMax = false;
+    private boolean isConstant;
+
     protected boolean hasGeometricMean = false;
 
     protected int size = 0;

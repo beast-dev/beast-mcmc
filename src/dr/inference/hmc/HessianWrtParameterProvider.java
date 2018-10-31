@@ -33,15 +33,17 @@ import dr.inference.model.Parameter;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface HessianWrtParameterProvider {
+public interface HessianWrtParameterProvider extends GradientWrtParameterProvider {
 
-    Likelihood getLikelihood();
+//    Likelihood getLikelihood();
 
-    Parameter getParameter();
+//    Parameter getParameter();
 
-    int getDimension();
+//    int getDimension();
 
     double[] getDiagonalHessianLogDensity();
+
+    double[][] getHessianLogDensity();
 
     class ParameterWrapper implements HessianWrtParameterProvider {
 
@@ -71,8 +73,18 @@ public interface HessianWrtParameterProvider {
         }
 
         @Override
+        public double[] getGradientLogDensity() {
+            return provider.getGradientLogDensity(parameter.getParameterValues());
+        }
+
+        @Override
         public double[] getDiagonalHessianLogDensity() {
             return provider.getDiagonalHessianLogDensity(parameter.getParameterValues());
+        }
+
+        @Override
+        public double[][] getHessianLogDensity() {
+            return provider.getHessianLogDensity(parameter.getParameterValues());
         }
     }
 

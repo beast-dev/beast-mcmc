@@ -30,7 +30,7 @@ package dr.inference.operators;
  *
  * @author Roald Forsberg
  */
-public interface GibbsOperator extends MCMCOperator, PathDependentOperator {
+public interface GibbsOperator extends MCMCOperator, PathDependent {
 
    /**
 	* @return the number of steps the operator performs in one go.

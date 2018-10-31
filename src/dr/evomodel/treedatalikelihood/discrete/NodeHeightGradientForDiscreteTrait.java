@@ -26,20 +26,11 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -54,62 +45,30 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Xiang Ji
  */
 
-public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterProvider, Reportable, Loggable {
+public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient
+        implements GradientWrtParameterProvider, Reportable, Loggable {
 
-    private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
-    private final TreeModel tree;
-    private final ArbitraryBranchRates branchRateModel;
     private final double[] nodeHeights;
+    private final TreeModel treeModel;
 
-    // TODO Refactor / remove code duplication with BranchRateGradient
-    // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradien
 
     public NodeHeightGradientForDiscreteTrait(String traitName,
                                               TreeDataLikelihood treeDataLikelihood,
                                               BeagleDataLikelihoodDelegate likelihoodDelegate,
                                               Parameter rateParameter) {
-        assert (treeDataLikelihood != null);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, rateParameter, false);
 
-        this.treeDataLikelihood = treeDataLikelihood;
-        this.tree = (TreeModel) treeDataLikelihood.getTree();
+        if (!(treeDataLikelihood.getTree() instanceof TreeModel)) {
+            throw new IllegalArgumentException("Must provide a TreeModel");
+        }
+        this.treeModel = (TreeModel) treeDataLikelihood.getTree();
+
         this.nodeHeights = new double[tree.getInternalNodeCount()];
-
-        BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
-        String name = AbstractDiscreteTraitDelegate.getName(traitName);
-        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
-
-        if (test == null) {
-            ProcessSimulationDelegate gradientDelegate = new AbstractDiscreteTraitDelegate(traitName,
-                    treeDataLikelihood.getTree(),
-                    likelihoodDelegate);
-            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
-            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
-        }
-
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
-        assert (treeTraitProvider != null);
-
-        int nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
-        if (nTraits != 1) {
-            throw new RuntimeException("Not yet implemented for >1 traits");
-        }
-    }
-
-    @Override
-    public Likelihood getLikelihood() {
-        return treeDataLikelihood;
     }
 
     @Override
     public Parameter getParameter() {
-        return tree.createNodeHeightsParameter(true, true, false);
-    }
-
-    @Override
-    public int getDimension() {
-        return tree.getInternalNodeCount();
+        return treeModel.createNodeHeightsParameter(true, true, false);
     }
 
     @Override
@@ -120,10 +79,7 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
 
         //Do single call to traitProvider with node == null (get full tree)
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
-
-//        if (DEBUG) {
-//            System.err.println(new WrappedVector.Raw(gradient));
-//        }
+        
 
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
             final NodeRef internalNode = tree.getInternalNode(i);
@@ -154,7 +110,7 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
 
             for (int i = 0; i < argument.length; ++i) {
                 NodeRef internalNode = tree.getInternalNode(i);
-                tree.setNodeHeight(internalNode, argument[i]);
+                treeModel.setNodeHeight(internalNode, argument[i]);
             }
 
             treeDataLikelihood.makeDirty();
@@ -177,17 +133,6 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
         }
     };
 
-    private boolean valuesAreSufficientlyLarge(double[] vector) {
-        for (double x : vector) {
-            if (x < SQRT_EPSILON * 1.2) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-
     @Override
     public String getReport() {
 
@@ -205,7 +150,7 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
 
         for (int i = 0; i < savedValues.length; ++i) {
             NodeRef internalNode = tree.getInternalNode(i);
-            tree.setNodeHeight(internalNode, savedValues[i]);
+            treeModel.setNodeHeight(internalNode, savedValues[i]);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -226,18 +171,5 @@ public class NodeHeightGradientForDiscreteTrait implements GradientWrtParameterP
 
     private static final boolean DEBUG = true;
 
-    @Override
-    public LogColumn[] getColumns() {
-
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new LogColumn.Default("gradient report", new Object() {
-            @Override
-            public String toString() {
-                return "\n" + getReport();
-            }
-        });
-
-        return columns;
-    }
 
 }

@@ -88,8 +88,6 @@ public class BeastGenerator extends Generator {
     private final OperatorsGenerator operatorsGenerator;
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
-    //    private final DiscreteTraitGenerator discreteTraitGenerator;
-    private final STARBEASTGenerator starBeastGenerator;
     private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
 
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
@@ -110,9 +108,6 @@ public class BeastGenerator extends Generator {
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
         logGenerator = new LogGenerator(options, components);
 
-        // this has moved into the component system...
-//        discreteTraitGenerator = new DiscreteTraitGenerator(options, components);
-        starBeastGenerator = new STARBEASTGenerator(options, components);
     }
 
     /**
@@ -159,7 +154,6 @@ public class BeastGenerator extends Generator {
 
             ids.add(TaxaParser.TAXA);
             ids.add(AlignmentParser.ALIGNMENT);
-            ids.add(TraitData.TRAIT_SPECIES);
 
             if (taxonList != null) {
                 if (taxonList.getTaxonCount() < 2) {
@@ -205,39 +199,6 @@ public class BeastGenerator extends Generator {
                             MESSAGE_CAL, BeautiFrame.TAXON_SETS);
                 }
                 ids.add(taxa.getId());
-            }
-
-            //++++++++++++++++ *BEAST ++++++++++++++++++
-            if (options.useStarBEAST) {
-                if (!options.traitExists(TraitData.TRAIT_SPECIES))
-                    throw new GeneratorException("A trait labelled \"species\" is required for *BEAST species designations." +
-                            "\nPlease create or import the species designations in the Traits table.", BeautiFrame.TRAITS);
-
-                //++++++++++++++++ Species Sets ++++++++++++++++++
-                // should be only 1 calibrated internal node with monophyletic at moment
-                if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-                    if (options.speciesSets.size() != 1 || !options.speciesSetsMono.get(options.speciesSets.get(0))) {
-                        throw new GeneratorException(MESSAGE_CAL_YULE, BeautiFrame.TAXON_SETS);
-                    }
-                }
-
-                for (Taxa species : options.speciesSets) {
-                    if (species.getTaxonCount() < 2) {
-                        throw new GeneratorException("Species set, " + species.getId() + ",\n should contain" +
-                                "at least two species. \nPlease go back to Species Sets panel to select included species.", BeautiFrame.TAXON_SETS);
-                    }
-                    if (ids.contains(species.getId())) {
-                        throw new GeneratorException("A species set has the same id," + species.getId() +
-                                MESSAGE_CAL, BeautiFrame.TAXON_SETS);
-                    }
-                    ids.add(species.getId());
-                }
-
-                int tId = options.starBEASTOptions.getEmptySpeciesIndex();
-                if (tId >= 0) {
-                    throw new GeneratorException("The taxon " + options.taxonList.getTaxonId(tId) +
-                            " has NULL value for \"species\" trait", BeautiFrame.TRAITS);
-                }
             }
 
             //++++++++++++++++ Traits ++++++++++++++++++
@@ -411,7 +372,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
         try {
-            if (taxonSets != null && taxonSets.size() > 0 && !options.useStarBEAST) {
+            if (taxonSets != null && taxonSets.size() > 0) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
             }
         } catch (Exception e) {
@@ -444,7 +405,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         try {
-            if (!options.samplePriorOnly) {
+            // Construct pattern lists even if sampling from a null alignment
+            //if (!options.samplePriorOnly) {
                 List<Microsatellite> microsatList = new ArrayList<Microsatellite>();
                 for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
                     if (partition.getTaxonList() != null) {
@@ -473,7 +435,7 @@ public class BeastGenerator extends Generator {
                         writer.writeText("");
                     }
                 }
-            }
+            //}
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Pattern lists generation has failed:\n" + e.getMessage());
@@ -518,7 +480,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Statistics ++++++++++++++++++
         try {
-            if (taxonSets != null && taxonSets.size() > 0 && !options.useStarBEAST) {
+            if (taxonSets != null && taxonSets.size() > 0) {
                 tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
             }
         } catch (Exception e) {
@@ -627,59 +589,6 @@ public class BeastGenerator extends Generator {
             throw new GeneratorException("Tree likelihood generation has failed:\n" + e.getMessage());
         }
 
-        //++++++++++++++++ *BEAST ++++++++++++++++++
-        if (options.useStarBEAST) {
-            //++++++++++++++++ species ++++++++++++++++++
-            try {
-                starBeastGenerator.writeSpecies(writer);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST species section generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ Species Sets ++++++++++++++++++
-            List<Taxa> speciesSets = options.speciesSets;
-            try {
-                if (speciesSets != null && speciesSets.size() > 0) {
-                    tmrcaStatisticsGenerator.writeTaxonSets(writer, speciesSets);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("Species sets generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ trees ++++++++++++++++++
-            try {
-                if (speciesSets != null && speciesSets.size() > 0) {
-                    starBeastGenerator.writeStartingTreeForCalibration(writer);
-                }
-
-                starBeastGenerator.writeSpeciesTree(writer, speciesSets != null && speciesSets.size() > 0);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST trees generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ Statistics ++++++++++++++++++
-            try {
-                if (speciesSets != null && speciesSets.size() > 0) {
-                    tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST TMRCA statistics generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ prior and likelihood ++++++++++++++++++
-            try {
-                starBeastGenerator.writeSTARBEAST(writer);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST trees section generation has failed:\n" + e.getMessage());
-            }
-
-        }
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
 
         //++++++++++++++++ Operators ++++++++++++++++++
@@ -752,7 +661,7 @@ public class BeastGenerator extends Generator {
             Taxon taxon = taxonList.getTaxon(i);
 
             boolean hasDate = false;
-            if (options.clockModelOptions.isTipCalibrated()) {
+            if (options.useTipDates) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
@@ -898,26 +807,13 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag("mcmc", attributes);
 
         if (options.hasData()) {
-            writer.writeOpenTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
+            writer.writeOpenTag(CompoundLikelihoodParser.JOINT, new Attribute.Default<String>(XMLParser.ID, "joint"));
         }
 
         // write prior block
         writer.writeOpenTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
-        if (options.useStarBEAST) { // species
-            // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.TRAIT_SPECIES + "." + COALESCENT);
-            // prior on population sizes
-//            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
-            writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
-//            } else {
-//                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
-//            }
-            // prior on species tree
-            writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
-        }
-
-        parameterPriorGenerator.writeParameterPriors(writer, options.useStarBEAST);
+        parameterPriorGenerator.writeParameterPriors(writer);
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
@@ -946,7 +842,7 @@ public class BeastGenerator extends Generator {
 
             writer.writeCloseTag(CompoundLikelihoodParser.LIKELIHOOD);
 
-            writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
+            writer.writeCloseTag(CompoundLikelihoodParser.JOINT);
         }
 
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");

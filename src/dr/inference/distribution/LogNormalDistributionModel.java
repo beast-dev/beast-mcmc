@@ -41,7 +41,7 @@ import org.w3c.dom.Element;
  */
 
 public class LogNormalDistributionModel extends AbstractModel implements
-        ParametricDistributionModel, GradientProvider {
+        ParametricDistributionModel, GradientProvider, HessianProvider {
 
     public enum Parameterization {
         MU_SIGMA,
@@ -367,8 +367,27 @@ public class LogNormalDistributionModel extends AbstractModel implements
     public int getDimension() { return 1; }
 
     @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        return getDerivativeLogDensity(obj, DerivativeType.HESSIAN);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        double[] diagonalHessian = getDiagonalHessianLogDensity(x);
+        double[][] result = new double[diagonalHessian.length][diagonalHessian.length];
+        for (int i = 0; i < diagonalHessian.length; i++) {
+            result[i][i] = diagonalHessian[i];
+        }
+        return result;
+    }
+
+    @Override
     public double[] getGradientLogDensity(Object obj) {
-        
+        return getDerivativeLogDensity(obj, DerivativeType.GRADIENT);
+    }
+
+    private double[] getDerivativeLogDensity(Object obj, DerivativeType derivativeType) {
+
         double[] x;
         if (obj instanceof double[]) {
             x = (double[]) obj;
@@ -379,11 +398,37 @@ public class LogNormalDistributionModel extends AbstractModel implements
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {
-            result[i] = (NormalDistribution.gradLogPdf(Math.log(x[i]), getMu(), getSigma()) - 1) / x[i];
+            //TODO: add offset back in here?
+//            result[i] = ( NormalDistribution.gradLogPdf(Math.log(x[i]), getMu(), getSigma()) - 1) / x[i];
+            result[i] = derivativeType.getDerivativeLogPdf(x[i], getMu(), getSigma());
         }
         return result;
     }
-    
+
+    private enum DerivativeType {
+        GRADIENT("gradient") {
+            @Override
+            public double getDerivativeLogPdf(double x, double m, double sd) {
+                return ( NormalDistribution.gradLogPdf(Math.log(x), m, sd) - 1.0) / x;
+            }
+        },
+        HESSIAN("hessian") {
+            @Override
+            public double getDerivativeLogPdf(double x, double m, double sd) {
+                final double logX = Math.log(x);
+                return ( NormalDistribution.hessianLogPdf(logX, m, sd) - NormalDistribution.gradLogPdf(logX, m, sd) + 1.0) / (x * x);
+            }
+        };
+
+        private String type;
+
+        DerivativeType(String type) {
+            this.type = type;
+        }
+
+        public abstract double getDerivativeLogPdf(double x, double m, double sd);
+    }
+
     // *****************************************************************
     // Interface DensityModel
     // *****************************************************************
@@ -391,7 +436,7 @@ public class LogNormalDistributionModel extends AbstractModel implements
     @Override
     public double logPdf(double[] x) {
 
-        return logPdf(x[0]);
+        return logPdf(x[0]); //TODO correct this?
     }
 
     @Override

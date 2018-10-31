@@ -25,15 +25,20 @@
 
 package dr.math.matrixAlgebra;
 
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Variable;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
+
+import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author Marc A. Suchard
  */
 
-public interface WrappedMatrix extends ReadableMatrix, WritableVector {
+public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableMatrix {
 
     void set(final int i, final int j, final double x);
 
@@ -48,15 +53,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
     abstract class Base implements WrappedMatrix {
 
         final public String toString() {
-            StringBuilder sb = new StringBuilder("[ ");
-            if (getDim() > 0) {
-                sb.append(get(0));
-            }
-            for (int i = 1; i < getDim(); ++i) {
-                sb.append(", ").append(get(i));
-            }
-            sb.append(" ]");
-            return sb.toString();
+            return makeString(this);
         }
     }
 
@@ -77,7 +74,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             return buffer;
         }
 
-        final public int getOffset() { return offset; }
+        final public int getOffset() {
+            return offset;
+        }
 
         final public int getMajorDim() {
             return dimMajor;
@@ -87,10 +86,12 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             return dimMinor;
         }
 
-        final public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() {
+            return getMajorDim() * getMinorDim();
+        }
     }
 
-    final class WrappedDenseMatrix extends Base  {
+    final class WrappedDenseMatrix extends Base {
 
         private final DenseMatrix64F matrix;
 
@@ -120,12 +121,12 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
 
         @Override
         public int getMajorDim() {
-            return matrix.getNumCols();
+            return matrix.getNumRows();
         }
 
         @Override
         public int getMinorDim() {
-            return matrix.getNumRows();
+            return matrix.getNumCols();
         }
 
         @Override
@@ -187,11 +188,17 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
         }
 
         @Override
-        public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() {
+            return getMajorDim() * getMinorDim();
+        }
 
         @Override
         public double[] getBuffer() {
             throw new RuntimeException("Not yet implemented");
+        }
+
+        public double[][] getArrays() {
+            return arrays;
         }
 
         @Override
@@ -227,6 +234,54 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
         }
     }
 
+    final class Parameter extends Abstract {
+
+        private final Variable<Double> variable;
+
+        public Parameter(Variable<Double> variable, int offset, int dimMajor, int dimMinor) {
+            super(null, offset, dimMajor, dimMinor);
+
+            assert (variable.getSize() == dimMajor * dimMinor);
+
+            this.variable = variable;
+        }
+
+        @Override
+        final public double get(final int i, final int j) { return variable.getValue(offset + i * dimMajor + j); }
+
+        @Override
+        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
+
+        @Override
+        public void set(int i, int j, double x) { variable.setValue(offset + i * dimMajor + j, x); }
+
+        @Override
+        public double get(int i) { return variable.getValue(i); }
+    }
+
+    final class MatrixParameter extends Abstract {
+
+        private final MatrixParameterInterface matrix;
+
+        public MatrixParameter(MatrixParameterInterface matrix) {
+            super(null, 0, matrix.getRowDimension(), matrix.getColumnDimension());
+
+            this.matrix = matrix;
+        }
+
+        @Override
+        public void set(int i, int j, double x) { matrix.setParameterValue(i, j, x); }
+
+        @Override
+        public double get(int i, int j) { return matrix.getParameterValue(i, j); }
+
+        @Override
+        public double get(int i) { return matrix.getParameterValue(i); }
+
+        @Override
+        public void set(int i, double x) { matrix.setParameterValue(i, x); }
+    }
+
     final class Indexed extends Abstract {
 
         final private int[] indicesMajor;
@@ -257,6 +312,18 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
 
     final class Utils {
 
+        public static String makeString(ReadableMatrix matrix) {
+            StringBuilder sb = new StringBuilder("[ ");
+            if (matrix.getDim() > 0) {
+                sb.append(matrix.get(0));
+            }
+            for (int i = 1; i < matrix.getDim(); ++i) {
+                sb.append(", ").append(matrix.get(i));
+            }
+            sb.append(" ]");
+            return sb.toString();
+        }
+
         public static void gatherRowsAndColumns(final WrappedMatrix source, final WrappedMatrix destination,
                                                 final int[] rowIndices, final int[] colIndices) {
 
@@ -266,7 +333,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
             for (int i = 0; i < rowLength; ++i) {
                 final int rowIndex = rowIndices[i];
                 for (int j = 0; j < colLength; ++j) {
-                    destination.set(i, j, source.get(rowIndex, colIndices[j]) );
+                    destination.set(i, j, source.get(rowIndex, colIndices[j]));
                 }
             }
         }
@@ -295,5 +362,146 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector {
                 }
             }
         }
+    }
+
+    final class WrappedUpperTriangularMatrix extends Abstract {
+        // Class of square upper triangular matrices
+        // Represented by an array of size dim*(dim+1)/2
+
+        public WrappedUpperTriangularMatrix(final double[] buffer, int dim) {
+            super(buffer, 0, dim, dim);
+            assert buffer.length == dim * (dim + 1) / 2;
+        }
+
+        public WrappedUpperTriangularMatrix(int dim) {
+            super(new double[dim * (dim + 1) / 2], 0, dim, dim);
+        }
+
+        @Override
+        final public double get(final int i) {
+            return buffer[offset + i];
+        }
+
+        @Override
+        final public void set(final int i, final double x) {
+            buffer[offset + i] = x;
+        }
+
+        @Override
+        final public double get(final int i, final int j) {
+            assert i <= j;
+            return buffer[offset + pos(i, j)];
+        }
+
+        @Override
+        final public void set(final int i, final int j, final double x) {
+            assert i <= j;
+            buffer[offset + pos(i, j)] = x;
+        }
+
+        private int pos(int i, int j) {
+            return i * (2 * dimMajor - i + 1) / 2 + (j - i);
+        }
+
+        final public SymmetricMatrix transposedProduct() {
+            SymmetricMatrix result = new SymmetricMatrix(dimMajor);
+            for (int i = 0; i < dimMajor; i++) {
+                for (int j = i; j < dimMajor; j++) {
+                    double coef = 0;
+                    for (int k = 0; k < i + 1; k++) {
+                        coef += this.get(k, i) * this.get(k, j);
+                    }
+                    result.setSymmetric(i, j, coef);
+                }
+            }
+            return result;
+        }
+
+        // Create the Cholesky of a correlation matrix (squared columns sum to 1)
+        public static WrappedMatrix.WrappedUpperTriangularMatrix fillDiagonal(double[] x, int dim) {
+            WrappedMatrix.WrappedStrictlyUpperTriangularMatrix V
+                    = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(x, dim);
+            WrappedMatrix.WrappedUpperTriangularMatrix W
+                    = new WrappedMatrix.WrappedUpperTriangularMatrix(dim);
+
+            for (int j = 0; j < dim; j++) {
+                double sum = 0;
+                for (int i = 0; i < j; i++) {
+                    double temp = V.get(i, j);
+                    W.set(i, j, temp);
+                    sum += temp * temp;
+                }
+                if (sum > 1.0) {
+                    assertEquals(sum, 1.0, 1E-6);
+                    sum = 1.0;
+                }
+                W.set(j, j, Math.sqrt(1 - sum));
+            }
+
+            return W;
+        }
+
+        @Override
+        final public int getDim() { return buffer.length; }
+    }
+
+    final class WrappedStrictlyUpperTriangularMatrix extends Abstract {
+        // Class of square strictly upper triangular matrices
+        // Represented by an array of size dim*(dim-1)/2
+
+        private final double diagonalValue; // value on the diagonal (default to 0)
+
+        public WrappedStrictlyUpperTriangularMatrix(final double[] buffer, int dim, double value) {
+            super(buffer, 0, dim, dim);
+            assert buffer.length == dim * (dim - 1) / 2;
+            diagonalValue = value;
+        }
+
+        public WrappedStrictlyUpperTriangularMatrix(final double[] buffer, int dim) {
+            super(buffer, 0, dim, dim);
+            assert buffer.length == dim * (dim - 1) / 2;
+            diagonalValue = 0.0;
+        }
+
+        public WrappedStrictlyUpperTriangularMatrix(int dim, double value) {
+            super(new double[dim * (dim - 1) / 2], 0, dim, dim);
+            diagonalValue = value;
+        }
+
+        public WrappedStrictlyUpperTriangularMatrix(int dim) {
+            super(new double[dim * (dim - 1) / 2], 0, dim, dim);
+            diagonalValue = 0.0;
+        }
+
+        @Override
+        final public double get(final int i) {
+            return buffer[offset + i];
+        }
+
+        @Override
+        final public void set(final int i, final double x) {
+            buffer[offset + i] = x;
+        }
+
+        @Override
+        final public double get(final int i, final int j) {
+            assert i <= j;
+            if (i == j) return diagonalValue;
+            return buffer[offset + pos(i, j)];
+        }
+
+        @Override
+        final public void set(final int i, final int j, final double x) {
+            assert i < j;
+            buffer[offset + pos(i, j)] = x;
+        }
+
+        @Override
+        final public int getDim() { return buffer.length; }
+
+        private int pos(int i, int j) {
+            return i * (2 * dimMajor - i - 1) / 2 + (j - i - 1);
+        }
+
     }
 }

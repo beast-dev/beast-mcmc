@@ -60,7 +60,7 @@ public interface SubstitutionProcess {
      *
      * @return the rates
      */
-    public void getInfinitesimalMatrix(double[] matrix);
+    void getInfinitesimalMatrix(double[] matrix);
 
     /**
      * @return the data type

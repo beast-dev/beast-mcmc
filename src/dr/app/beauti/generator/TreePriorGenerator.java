@@ -331,37 +331,9 @@ public class TreePriorGenerator extends Generator {
                 writer.writeCloseTag(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
 
                 break;
-
-            case SPECIES_BIRTH_DEATH:
-            case SPECIES_YULE:
-            case SPECIES_YULE_CALIBRATION:
-                writer.writeComment("A prior assumption that the population size has remained constant");
-                writer.writeComment("throughout the time spanned by the genealogy.");
-                if (nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION)
-                    writer.writeComment("Calibrated Yule: Heled J, Drummond AJ (2011), Syst Biol, doi: " +
-                            "10.1093/sysbio/syr087");
-
-                writer.writeOpenTag(
-                        ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + "constant"),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
-                        }
-                );
-
-                // initial value for pop mean is the same as what used to be the value for the population size
-                Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-                prior.getParameter("constant.popSize").setInitial(para.getInitial());
-
-                writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
-                writeParameter("constant.popSize", prior, writer);
-                writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
-                writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
-
-                break;
         }
 
-        if ((!options.useStarBEAST) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
+        if (nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
             // If the node height prior is not one of these two then we need to simulate a
             // random starting tree under a constant size coalescent.
             writer.writeComment("This is a simple constant population size coalescent model",
@@ -635,10 +607,6 @@ public class TreePriorGenerator extends Generator {
 
             case SKYGRID:
                 break;
-            case SPECIES_YULE:
-            case SPECIES_YULE_CALIBRATION:
-            case SPECIES_BIRTH_DEATH:
-                break;
 
             default:
                 // generate a coalescent process
@@ -663,9 +631,6 @@ public class TreePriorGenerator extends Generator {
 
         switch (treePrior) {
             case CONSTANT:
-            case SPECIES_YULE:
-            case SPECIES_BIRTH_DEATH:
-            case SPECIES_YULE_CALIBRATION:
                 writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, priorPrefix + "constant");
                 break;
             case EXPONENTIAL:
@@ -935,10 +900,6 @@ public class TreePriorGenerator extends Generator {
                 writeParameterRef(priorPrefix + BirthDeathEpidemiologyModelParser.RECOVERY_RATE, writer);
                 writeParameterRef(priorPrefix + BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, writer);
                 writeParameterRef(priorPrefix + BirthDeathEpidemiologyModelParser.ORIGIN, writer);
-            case SPECIES_YULE:
-            case SPECIES_BIRTH_DEATH:
-            case SPECIES_YULE_CALIBRATION:
-                break;
             default:
                 throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
         }
@@ -1041,11 +1002,6 @@ public class TreePriorGenerator extends Generator {
                 break;
             case EXTENDED_SKYLINE:
                 // only 1 coalescent, so write it separately after this method
-            case SPECIES_YULE:
-            case SPECIES_YULE_CALIBRATION:
-            case SPECIES_BIRTH_DEATH:
-                // do not need
-                break;
             default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);
         }
@@ -1083,11 +1039,6 @@ public class TreePriorGenerator extends Generator {
 //                break;
             case EXTENDED_SKYLINE:
                 // only 1 coalescent, so write it in writeEBSPVariableDemographicReference
-            case SPECIES_YULE:
-            case SPECIES_YULE_CALIBRATION:
-            case SPECIES_BIRTH_DEATH:
-                // do not need
-                break;
             default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prefix + COALESCENT);
         }

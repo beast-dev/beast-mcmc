@@ -98,7 +98,7 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        fireModelChanged(object, index);
     }
 
     @Override

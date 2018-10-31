@@ -29,7 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
@@ -45,9 +45,8 @@ import java.util.List;
 public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener, ModelListener {
 
 
-
     public static final String PARSER_NAME = "varianceProportionStatistic";
-    public static final String SCALE_BY_HEIGHT = "scaleByTreeHeight";
+    private static final String SCALE_BY_HEIGHT = "scaleByTreeHeight";
 
     private TreeModel tree;
     private MultivariateDiffusionModel diffusionModel;
@@ -84,10 +83,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionProportion = new double[dim];
         this.treeSums = new TreeVarianceSums(0, 0);
 
-        updateTreeSums();
-        updateDiffusionVariance();
-        updateSamplingVariance();
-        updateDiffusionProportion();
+//        updateTreeSums();    // Don't pay for what you may never use
+//        updateDiffusionVariance();
+//        updateSamplingVariance();
+//        updateDiffusionProportion();
 
         tree.addModelListener(this);
         samplingPrecision.addParameterListener(this);
@@ -103,18 +102,18 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         private double diagonalSum;
         private double totalSum;
 
-        private TreeVarianceSums(double diagonalSum, double totalSum){
+        private TreeVarianceSums(double diagonalSum, double totalSum) {
 
             this.diagonalSum = diagonalSum;
             this.totalSum = totalSum;
         }
 
-        private double getDiagonalSum(){
+        private double getDiagonalSum() {
             return this.diagonalSum;
         }
 
 
-        private double getTotalSum(){
+        private double getTotalSum() {
             return this.totalSum;
         }
 
@@ -124,23 +123,23 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     /**
      * @return an array with the number of taxa with observed data for each trait
      */
-    private int[] getObservedCounts(RepeatedMeasuresTraitDataModel dataModel){
+    private int[] getObservedCounts(RepeatedMeasuresTraitDataModel dataModel) {
 
         List<Integer> missingInds = dataModel.getMissingIndices();
         int n = tree.getExternalNodeCount();
         int dim = dataModel.getTraitDimension();
         int[] observedCounts = new int[dim];
 
-        for (int i = 0; i < dim; i++){
+        for (int i = 0; i < dim; i++) {
             observedCounts[i] = n;
         }
 
         int threshold = n;
         int currentDim = 0;
 
-        for (int index : missingInds){
+        for (int index : missingInds) {
 
-            if (index >= threshold){
+            if (index >= threshold) {
                 threshold += n;
                 currentDim += 1;
             }
@@ -157,7 +156,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      */
     private void updateDiffusionProportion() {
         int dim = samplingPrecision.getDimension();
-        double[] diffusionProportion = new double[dim];
 
         for (int i = 0; i < dim; i++) {
 
@@ -173,10 +171,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      * recalculates the the sum of the diagonal elements and sum of all the elements of the tree variance
      * matrix statistic based on current parameters
      */
-    private void updateTreeSums(){
+    private void updateTreeSums() {
 
         double normalization = 1.0;
-        if (scaleByHeight){
+        if (scaleByHeight) {
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
         }
 
@@ -248,7 +246,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         }
 
-        if (!varianceKnown){
+        if (!varianceKnown) {
 
             updateDiffusionVariance();
             updateSamplingVariance();
@@ -257,7 +255,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         }
 
-        if (needToUpdate){
+        if (needToUpdate) {
 
             updateDiffusionProportion();
         }
@@ -275,19 +273,19 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         int startIndex;
         int dim;
 
-        private PostOrderTreeTracker(int startIndex, int dim){
+        private PostOrderTreeTracker(int startIndex, int dim) {
 
             this.startIndex = startIndex;
             this.dim = dim;
 
         }
 
-        private int getStartIndex(){
+        private int getStartIndex() {
             return this.startIndex;
         }
 
 
-        private int getDim(){
+        private int getDim() {
             return this.dim;
         }
 
@@ -296,53 +294,54 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     /**
      * @return the between taxa covariance matrix
      */
-    private double[][] getTreeVariance(double normalization){
+    private double[][] getTreeVariance(double normalization) {
         int n = tree.getExternalNodeCount();
         double[][] treeVariance = new double[n][n];
-        PostOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(),new PostOrderTreeTracker(0, n),
+        PostOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(), new PostOrderTreeTracker(0, n),
                 normalization);
         return treeVariance;
     }
 
     /**
      * NOTE: this function implements a recursive algorithm that updates the treeVariance array in addition to
+     *
      * @return the location and dimension of the current block in the between taxa covariance matrix after
      */
     private PostOrderTreeTracker doTreeRecursion(double[][] treeVariance,
                                                  NodeRef node,
                                                  PostOrderTreeTracker tracker,
-                                                 double normalization){
+                                                 double normalization) {
 
         int childCount = tree.getChildCount(node);
         assert (childCount == 2);
 
         NodeRef[] childNodes = new NodeRef[childCount];
 
-        for (int i = 0; i < childCount; i++){
+        for (int i = 0; i < childCount; i++) {
 
             childNodes[i] = tree.getChild(node, i);
         }
 
         int currentIndex = tracker.getStartIndex();
 
-        for (NodeRef child : childNodes){
+        for (NodeRef child : childNodes) {
 
-            if (tree.isExternal(child)){
+            if (tree.isExternal(child)) {
 
                 treeVariance[currentIndex][currentIndex] += tree.getBranchLength(child) * normalization;
                 currentIndex += 1;
 
 
-            } else{
+            } else {
 
                 PostOrderTreeTracker newTracker = doTreeRecursion(treeVariance, child,
                         new PostOrderTreeTracker(currentIndex, tracker.getDim()), normalization);
 
                 currentIndex += newTracker.getDim();
 
-                for (int i = newTracker.getStartIndex(); i < currentIndex; i++){
+                for (int i = newTracker.getStartIndex(); i < currentIndex; i++) {
 
-                    for (int j = i; j < currentIndex; j++){
+                    for (int j = i; j < currentIndex; j++) {
 
                         treeVariance[i][j] += tree.getBranchLength(child) * normalization;
                     }
@@ -383,13 +382,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                     xo.getChild(MultivariateDiffusionModel.class);
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-            final boolean scaleByHeight;
-
-            if (xo.hasAttribute(SCALE_BY_HEIGHT)){
-                scaleByHeight = xo.getBooleanAttribute(SCALE_BY_HEIGHT);
-            } else{
-                scaleByHeight = false;
-            }
+            boolean scaleByHeight = xo.getAttribute(SCALE_BY_HEIGHT, false);
 
             return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel, scaleByHeight);
         }

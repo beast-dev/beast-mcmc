@@ -26,12 +26,10 @@
 package dr.inference.model;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
@@ -58,7 +56,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private Parameter diffusionPrecision;
     private double[] diffusionProportion;
     private boolean scaleByHeight;
-    private treeVarianceSums treeSums;
+    private TreeVarianceSums treeSums;
     private double[] diffusionVariance;
     private double[] samplingVariance;
     private int[] observedCounts;
@@ -84,7 +82,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionVariance = new double[dim];
         this.samplingVariance = new double[dim];
         this.diffusionProportion = new double[dim];
-        this.treeSums = new treeVarianceSums(0, 0);
+        this.treeSums = new TreeVarianceSums(0, 0);
 
         updateTreeSums();
         updateDiffusionVariance();
@@ -100,12 +98,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     /**
      * a class that stores the sum of the diagonal elements and all elements of a matrix
      */
-    private class treeVarianceSums {
+    private class TreeVarianceSums {
 
         private double diagonalSum;
         private double totalSum;
 
-        private treeVarianceSums(double diagonalSum, double totalSum){
+        private TreeVarianceSums(double diagonalSum, double totalSum){
 
             this.diagonalSum = diagonalSum;
             this.totalSum = totalSum;
@@ -272,12 +270,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     /**
      * class that stores where in the tree variance matrix the current block is
      */
-    private class postOrderTreeTracker{
+    private class PostOrderTreeTracker {
 
         int startIndex;
         int dim;
 
-        private postOrderTreeTracker(int startIndex, int dim){
+        private PostOrderTreeTracker(int startIndex, int dim){
 
             this.startIndex = startIndex;
             this.dim = dim;
@@ -301,7 +299,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private double[][] getTreeVariance(double normalization){
         int n = tree.getExternalNodeCount();
         double[][] treeVariance = new double[n][n];
-        postOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(),new postOrderTreeTracker(0, n),
+        PostOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(),new PostOrderTreeTracker(0, n),
                 normalization);
         return treeVariance;
     }
@@ -310,9 +308,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      * NOTE: this function implements a recursive algorithm that updates the treeVariance array in addition to
      * @return the location and dimension of the current block in the between taxa covariance matrix after
      */
-    private postOrderTreeTracker doTreeRecursion(double[][] treeVariance,
+    private PostOrderTreeTracker doTreeRecursion(double[][] treeVariance,
                                                  NodeRef node,
-                                                 postOrderTreeTracker tracker,
+                                                 PostOrderTreeTracker tracker,
                                                  double normalization){
 
         int childCount = tree.getChildCount(node);
@@ -337,8 +335,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
             } else{
 
-                postOrderTreeTracker newTracker = doTreeRecursion(treeVariance, child,
-                        new postOrderTreeTracker(currentIndex, tracker.getDim()), normalization);
+                PostOrderTreeTracker newTracker = doTreeRecursion(treeVariance, child,
+                        new PostOrderTreeTracker(currentIndex, tracker.getDim()), normalization);
 
                 currentIndex += newTracker.getDim();
 
@@ -354,7 +352,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         }
 
-        return new postOrderTreeTracker(tracker.getStartIndex(), currentIndex - tracker.getStartIndex());
+        return new PostOrderTreeTracker(tracker.getStartIndex(), currentIndex - tracker.getStartIndex());
 
     }
 

@@ -26,15 +26,12 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameterModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
@@ -62,6 +59,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected final boolean useHessian;
 
     protected final Parameter branchSubstitutionParameter;
+    private final TreeParameterModel parameterIndexHelper;
 
     private static final boolean DEBUG = true;
 
@@ -79,6 +77,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         this.branchSubstitutionParameter = branchSubstitutionParameter;
         this.branchModel = substitutionParameterModel;
         this.useHessian = useHessian;
+        this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, branchSubstitutionParameter, false);
 
         String name = DiscreteTraitBranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
@@ -137,7 +136,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                final int destinationIndex = getParameterIndexFromNode(node);
+                final int destinationIndex = parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber());
                 final double nodeResult = gradient[v] * getChainGradient(tree, node);
 //                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
 //                    System.err.println("Check Gradient calculation please.");
@@ -152,15 +151,6 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         }
 
         return result;
-    }
-
-    protected int getParameterIndexFromNode(NodeRef node) {
-        final int nodeNumber = node.getNumber();
-        if (tree.getRoot().getNumber() > nodeNumber) {
-            return nodeNumber;
-        } else {
-            return nodeNumber - 1;
-        }
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {

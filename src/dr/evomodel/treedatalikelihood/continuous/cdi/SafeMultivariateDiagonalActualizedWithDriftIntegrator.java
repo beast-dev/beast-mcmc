@@ -99,17 +99,6 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         scaleInv(inverseDiffusions, offset, scales, stationaryVariances, offset, matrixSize);
     }
 
-    private static void scale(final double[] source,
-                              final int sourceOffset,
-                              final double[] scales,
-                              final double[] destination,
-                              final int destinationOffset,
-                              final int length) {
-        for (int i = 0; i < length; ++i) {
-            destination[destinationOffset + i] = scales[i] * source[sourceOffset + i];
-        }
-    }
-
     static void scaleInv(final double[] source,
                          final int sourceOffset,
                          final double[] scales,
@@ -178,10 +167,12 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
         for (int up = 0; up < updateCount; ++up) {
 
+            final double edgeLength = edgeLengths[up];
+
             final int scaledOffset = matrixSize * probabilityIndices[up];
             final int scaledOffsetDiagonal = dimTrait * probabilityIndices[up];
 
-            computeVarianceBranch(unscaledOffset, scaledOffset, scaledOffsetDiagonal);
+            computeVarianceBranch(unscaledOffset, scaledOffset, scaledOffsetDiagonal, edgeLength);
 
             invertVector(variances, precisions, scaledOffset, dimTrait);
         }
@@ -248,21 +239,37 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         }
     }
 
-    void computeVarianceBranch(final int sourceOffset,
-                               final int destinationOffset,
-                               final int destinationOffsetDiagonal) {
-        double[] scales = new double[dimTrait * dimTrait];
-        scalingActualizationMatrix(diagonalActualizations, destinationOffsetDiagonal, dimTrait, scales);
-        scale(stationaryVariances, sourceOffset, scales, variances, destinationOffset, dimTrait * dimTrait);
+    void computeVarianceBranch(final int unscaledOffset,
+                               final int scaledOffset,
+                               final int scaledOffsetDiagonal,
+                               final double edgeLength) {
+        scalingActualizationMatrix(diagonalActualizations, scaledOffsetDiagonal,
+                stationaryVariances, unscaledOffset,
+                variances, scaledOffset,
+                dimTrait,
+                edgeLength,
+                inverseDiffusions,
+                unscaledOffset);
     }
 
-    private static void scalingActualizationMatrix(final double[] source,
-                                                   final int offset,
+    private static void scalingActualizationMatrix(final double[] diagonalActualizations,
+                                                   final int offsetActualization,
+                                                   final double[] stationaryVariances,
+                                                   final int offsetStationaryVariances,
+                                                   final double[] destination,
+                                                   final int destinationOffset,
                                                    final int dim,
-                                                   final double[] destination) {
+                                                   final double edgeLength,
+                                                   final double[] variance,
+                                                   final int varianceOffset) {
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
-                destination[i * dim + j] = 1 - source[offset + i] * source[offset + j];
+                double var = stationaryVariances[offsetStationaryVariances + i * dim + j];
+                if (Double.isInfinite(var)) {
+                    destination[destinationOffset + i * dim + j] = edgeLength * variance[varianceOffset + i * dim + j];
+                } else {
+                    destination[destinationOffset + i * dim + j] = var * (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]);
+                }
             }
         }
     }

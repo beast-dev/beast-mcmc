@@ -185,7 +185,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     @Override
     void computeVarianceBranch(final int sourceOffset,
                                final int destinationOffset,
-                               final int destinationOffsetDiagonal) {
+                               final int destinationOffsetDiagonal,
+                               final double edgeLength) {
         DenseMatrix64F actualization = wrap(actualizations, destinationOffset, dimTrait, dimTrait);
         DenseMatrix64F variance = wrap(stationaryVariances, sourceOffset, dimTrait, dimTrait);
         DenseMatrix64F temp = new DenseMatrix64F(dimTrait, dimTrait);

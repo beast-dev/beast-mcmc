@@ -485,6 +485,60 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         testCVariances(s, "cVar ", partials);
     }
 
+    public void testLikelihoodDiagonalOUBM() {
+        System.out.println("\nTest Likelihood using Diagonal OU / BM:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        DiagonalMatrix strengthOfSelectionMatrixParam
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.0, 50.0}));
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodDiagonalOU",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodDiagonalOU: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(s, "cMean ", partials);
+        testCVariances(s, "cVar ", partials);
+    }
+
     public void testLikelihoodFullOU() {
         System.out.println("\nTest Likelihood using Full OU:");
 

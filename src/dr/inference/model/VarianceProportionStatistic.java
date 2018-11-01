@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -422,5 +423,76 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         // Do nothing
     }
 
+    private static class BranchCumulant {
+        final int nTaxa;
+        final double sharedLength;
 
+        BranchCumulant(int nTaxa, double sharedLength) {
+            this.nTaxa = nTaxa;
+            this.sharedLength = sharedLength;
+        }
+    }
+
+    enum Accumulator {
+        OFF_DIAGONAL {
+            @Override
+            BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                      BranchCumulant cumulant1, double length1) {
+                return new BranchCumulant(
+                        cumulant0.nTaxa + cumulant1.nTaxa,
+                        cumulant0.sharedLength + cumulant1.sharedLength +
+                                (cumulant0.nTaxa - 1) * length0 +
+                                (cumulant1.nTaxa - 1) * length1
+                );
+            }
+        },
+        DIAGONAL  {
+            @Override
+            BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                      BranchCumulant cumulant1, double length1) {
+                return new BranchCumulant(
+                        cumulant0.nTaxa + cumulant1.nTaxa,
+                        cumulant0.sharedLength + cumulant1.sharedLength +
+                                cumulant0.nTaxa * length0 +
+                                cumulant1.nTaxa * length1
+                );
+            }
+        };
+
+        abstract BranchCumulant accumulate(BranchCumulant left, double leftLength,
+                                           BranchCumulant right, double rightLength);
+    }
+
+
+    private BranchCumulant postOrderAccumulation(Tree tree,
+                                                 NodeRef node,
+                                                 Accumulator accumulator) {
+        if (tree.isExternal(node)) {
+
+            return new BranchCumulant(1, 0);
+
+        } else {
+
+            NodeRef child0 = tree.getChild(node, 0);
+            NodeRef child1 = tree.getChild(node, 1);
+
+            BranchCumulant cumulant0 = postOrderAccumulation(tree, child0, accumulator);
+            BranchCumulant cumulant1 = postOrderAccumulation(tree, child1, accumulator);
+
+            return accumulator.accumulate(
+                    cumulant0, tree.getBranchLength(child0),
+                    cumulant1, tree.getBranchLength(child1)
+            );
+        }
+    }
+
+    private double getVarianceOffDiagonalSum(Tree tree) {
+        BranchCumulant cumulant = postOrderAccumulation(tree, tree.getRoot(), Accumulator.OFF_DIAGONAL);
+        return cumulant.sharedLength;
+    }
+
+    private double getVarianceDiagonalSum(Tree tree) {
+        BranchCumulant cumulant = postOrderAccumulation(tree, tree.getRoot(), Accumulator.DIAGONAL);
+        return cumulant.sharedLength;
+    }
 }

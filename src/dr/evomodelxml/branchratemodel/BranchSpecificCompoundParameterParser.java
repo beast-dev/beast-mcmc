@@ -46,8 +46,9 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         final int numNodes = treeModel.getNodeCount();
         for (int i = 0; i < numNodes - 1; i++) {
-            compoundParameter.addParameter(new Parameter.Default((String) null, parameter.getParameterValue(0),
-                    parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0)));
+            Parameter branchParameter = new Parameter.Default((String) parameter.getId() + String.valueOf(i + 1), parameter.getParameterValue(0),
+                    parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0));
+            compoundParameter.addParameter(branchParameter);
         }
         return compoundParameter;
     }

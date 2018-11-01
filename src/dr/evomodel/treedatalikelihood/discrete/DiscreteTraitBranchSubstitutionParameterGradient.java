@@ -155,7 +155,12 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     }
 
     protected int getParameterIndexFromNode(NodeRef node) {
-        return node.getNumber();
+        final int nodeNumber = node.getNumber();
+        if (tree.getRoot().getNumber() > nodeNumber) {
+            return nodeNumber;
+        } else {
+            return nodeNumber - 1;
+        }
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {

@@ -91,19 +91,24 @@ public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser 
 //                scalingScheme,
 //                delayRescalingUntilUnderflow);
 
-        DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                branchModels,
-                siteRateModels,
-                useAmbiguities,
-                scalingScheme,
-                delayRescalingUntilUnderflow);
+        try {
+            DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    useAmbiguities,
+                    scalingScheme,
+                    delayRescalingUntilUnderflow);
 
-        return new TreeDataLikelihood(
-                dataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            return new TreeDataLikelihood(
+                    dataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            throw new XMLParseException("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
+
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

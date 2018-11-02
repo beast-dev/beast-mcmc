@@ -121,6 +121,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     int getBufferCount();
 
+    int getDimTrait();
+
+    int getDimProcess();
+
     void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
 
     class Basic implements ContinuousDiffusionIntegrator {
@@ -141,6 +145,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public int getBufferCount() { return bufferCount; }
+
+        @Override
+        public int getDimTrait() { return dimTrait; }
+
+        @Override
+        public int getDimProcess() { return dimProcess; }
 
         @Override
         public String getReport() {

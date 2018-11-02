@@ -25,14 +25,18 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 /**
  * A simple OU diffusion model delegate with branch-specific drift and constant diffusion
@@ -103,21 +107,70 @@ public class IntegratedOUDiffusionModelDelegate extends OUDiffusionModelDelegate
     }
 
     @Override
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
+        double[] driftFull = super.getAccumulativeDrift(node, priorMean, cdi, dim);
+        assert dim % 2 == 0 : "dimTrait should be twice dimProcess.";
+        int dimProcess = dim / 2;
+        double[] drift = new double[dimProcess];
+        for (int i = 0; i < dimProcess; i++) {
+            drift[i] = driftFull[i] + driftFull[dimProcess + i];
+        }
+        return drift;
+    }
+
+    @Override
     public double[][] getJointVariance(final double priorSampleSize,
                                        final double[][] treeVariance, final double[][] treeSharedLengths,
                                        final double[][] traitVariance) {
-        throw new RuntimeException("Not yet implemented");
-    }
 
-    private double[][] getJointVarianceFull(final double priorSampleSize,
-                                            final double[][] treeVariance, final double[][] treeSharedLengths,
-                                            final double[][] traitVariance) {
-        throw new RuntimeException("Not yet implemented");
-    }
+        double[] eigVals = this.getEigenValuesStrengthOfSelection();
+        DenseMatrix64F V = wrap(this.getEigenVectorsStrengthOfSelection(), 0, dim, dim);
+        DenseMatrix64F Vinv = new DenseMatrix64F(dim, dim);
+        CommonOps.invert(V, Vinv);
 
-    private double[][] getJointVarianceDiagonal(final double priorSampleSize,
-                                                final double[][] treeVariance, final double[][] treeSharedLengths,
-                                                final double[][] traitVariance) {
-        throw new RuntimeException("Not yet implemented");
+        DenseMatrix64F transTraitVariance = new DenseMatrix64F(traitVariance);
+
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
+        CommonOps.mult(Vinv, transTraitVariance, tmp);
+        CommonOps.multTransB(tmp, Vinv, transTraitVariance);
+
+        // Computation of matrix
+        int ntaxa = tree.getExternalNodeCount();
+        double ti;
+        double tj;
+        double tij;
+        double ep;
+        double eq;
+        double var;
+        DenseMatrix64F varTemp = new DenseMatrix64F(dim, dim);
+        double[][] jointVariance = new double[dim * ntaxa][dim * ntaxa];
+        for (int i = 0; i < ntaxa; ++i) {
+            for (int j = 0; j < ntaxa; ++j) {
+                ti = treeSharedLengths[i][i];
+                tj = treeSharedLengths[j][j];
+                tij = treeSharedLengths[i][j];
+                for (int p = 0; p < dim; ++p) {
+                    for (int q = 0; q < dim; ++q) {
+                        ep = eigVals[p];
+                        eq = eigVals[q];
+                        var = tij / ep / eq;
+                        var += (1 - Math.exp(ep * tij)) * Math.exp(-ep * ti) / ep / ep / eq;
+                        var += (1 - Math.exp(eq * tij)) * Math.exp(-eq * tj) / ep / eq / eq;
+                        var -= (1 - Math.exp((ep + eq) * tij)) * Math.exp(-ep * ti) * Math.exp(-eq * tj) / ep / eq / (ep + eq);
+                        var += (1 - Math.exp(-ep * ti)) * (1 - Math.exp(-eq * tj)) / ep / eq / priorSampleSize;
+                        var += 1 / priorSampleSize;
+                        varTemp.set(p, q, var * transTraitVariance.get(p, q));
+                    }
+                }
+                CommonOps.mult(V, varTemp, tmp);
+                CommonOps.multTransB(tmp, V, varTemp);
+                for (int p = 0; p < dim; ++p) {
+                    for (int q = 0; q < dim; ++q) {
+                        jointVariance[i * dim + p][j * dim + q] = varTemp.get(p, q);
+                    }
+                }
+            }
+        }
+        return jointVariance;
     }
 }

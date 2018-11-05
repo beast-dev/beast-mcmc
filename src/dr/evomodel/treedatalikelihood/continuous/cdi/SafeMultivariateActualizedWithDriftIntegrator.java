@@ -275,7 +275,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         //// Variance XY
         DenseMatrix64F varianceXY = new DenseMatrix64F(dimProcess, dimProcess);
         // Variance 1
-        CommonOps.mult(stationaryVariance, temp3, varianceXY);
+        CommonOps.multTransB(stationaryVariance, temp3, varianceXY);
         // Variance 2
         CommonOps.mult(temp3, stationaryVariance, temp);
         CommonOps.multTransB(temp, actualization, temp2);

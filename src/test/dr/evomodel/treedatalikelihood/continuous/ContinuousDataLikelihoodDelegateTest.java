@@ -41,7 +41,9 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
     private MultivariateDiffusionModel diffusionModel;
     private ContinuousTraitPartialsProvider dataModel;
+    private ContinuousTraitPartialsProvider dataModelIntegrated;
     private ConjugateRootTraitPrior rootPrior;
+    private ConjugateRootTraitPrior rootPriorIntegrated;
 
     private MultivariateDiffusionModel diffusionModelFactor;
     private IntegratedFactorAnalysisLikelihood dataModelFactor;
@@ -111,7 +113,6 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         parser.addXMLObjectParser(new ParameterParser());
         parser.parse(new StringReader(s), true);
         rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
-//        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
@@ -160,6 +161,30 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 missingIndices,
                 loadingsMatrixParameters,
                 factorPrecisionParameters, 0.0);
+
+        //// Integrated Process //// ***********************************************************************************
+        // Data Model
+        dataModelIntegrated = new IntegratedProcessTraitDataModel("dataModelIntegrated",
+                traitParameter,
+                missingIndices, true,
+                dimTrait, precisionType);
+
+        // Root prior
+        String sI = "<beast>\n" +
+                "    <conjugateRootPrior>\n" +
+                "        <meanParameter>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"0.0 1.2 -0.5 -1.0 -3.0 2.5\"/>\n" +
+                "        </meanParameter>\n" +
+                "        <priorSampleSize>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
+                "        </priorSampleSize>\n" +
+                "    </conjugateRootPrior>\n" +
+                "</beast>";
+        XMLParser parserI = new XMLParser(true, true, true, null);
+        parserI.addXMLObjectParser(new AttributeParser());
+        parserI.addXMLObjectParser(new ParameterParser());
+        parserI.parse(new StringReader(sI), true);
+        rootPriorIntegrated = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parserI.getRoot(), 2 * dimTrait);
     }
 
     public void testLikelihoodBM() {
@@ -682,6 +707,64 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullDiagonalOU",
                 format.format(dataLikelihood.getLogLikelihood()),
                 format.format(dataLikelihoodDiagonal.getLogLikelihood()));
+    }
+
+    public void testLikelihoodFullIOU() {
+        System.out.println("\nTest Likelihood using Full IOU:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[3];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.5, 0.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 5, 0.1});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{0.0, 1.0, 10.0});
+        MatrixParameter strengthOfSelectionMatrixParam
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, true, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModelIntegrated, rootPriorIntegrated, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodFullOURelaxed",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodFullOURelaxed: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+//        new TreeTipGradient("" +
+//                "trait", dataLikelihood, likelihoodDelegate, null);
+//        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+//                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+//                TreeTraitLogger.NodeRestriction.EXTERNAL);
+//
+//        String moments = treeTraitLogger.getReport();
+//        double[] partials = parseVector(moments, "\t");
+//        testCMeans(s, "cMean ", partials);
+//        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodFullNonSymmetricOU() {

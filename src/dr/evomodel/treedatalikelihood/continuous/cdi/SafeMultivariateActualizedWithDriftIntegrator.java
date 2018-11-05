@@ -228,11 +228,10 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         DenseMatrix64F optVal = wrap(optimalRates, offset, dimProcess, 1);
         DenseMatrix64F displacement = new DenseMatrix64F(dimProcess, 1);
 
-        CommonOps.scale(branchLength, optVal);
         CommonOps.mult(inverseSelectionStrength, displacementOU, displacement);
-
-        CommonOps.addEquals(displacement, -1.0, optVal);
         CommonOps.scale(-1.0, displacement);
+
+        CommonOps.addEquals(displacement, branchLength, optVal);
 
         unwrap(displacement, displacements, pio + dimProcess);
     }

@@ -51,35 +51,35 @@
 		<optimalTraits>
 			<strictClockBranchRates>
 				<rate>
-					<parameter id="rate.1" value="1.0"/>
+					<parameter id="rate.1" value="-1.4"/>
 				</rate>
 			</strictClockBranchRates>
 			<strictClockBranchRates>
 				<rate>
-					<parameter id="rate.2" value="2.0"/>
+					<parameter id="rate.2" value="1.0"/>
 				</rate>
 			</strictClockBranchRates>
 		</optimalTraits>
         <strengthOfSelectionMatrix>
-            <compoundEigenMatrix id="attenuation.matrix">
-                <eigenValues>
-                    <parameter id="attenuation.values" value="0.1 0.2" />
-                </eigenValues>
-                <eigenVectors>
-                    <matrixParameter id="attenuation.vectors">
-                        <parameter id="attVec.col1" value="0.1"/>
-                        <parameter id="attVec.col2" value="0.2"/>
-                    </matrixParameter>
-                </eigenVectors>
-            </compoundEigenMatrix>
-            <!-- <matrixParameter id="strengthOfSelectionMatrix"> -->
-				<!-- <parameter id="alpha.col1" value="1.0 0.1"/> -->
-				<!-- <parameter id="alpha.col2" value="0.2 2.0"/> -->
-            <!-- </matrixParameter> -->
+            <!-- <compoundEigenMatrix id="attenuation.matrix"> -->
+            <!--     <eigenValues> -->
+            <!--         <parameter id="attenuation.values" value="0.1 0.2" /> -->
+            <!--     </eigenValues> -->
+            <!--     <eigenVectors> -->
+            <!--         <matrixParameter id="attenuation.vectors"> -->
+            <!--             <parameter id="attVec.col1" value="0.1"/> -->
+            <!--             <parameter id="attVec.col2" value="0.2"/> -->
+            <!--         </matrixParameter> -->
+            <!--     </eigenVectors> -->
+            <!-- </compoundEigenMatrix> -->
+            <matrixParameter id="attenuation.matrix">
+				<parameter id="alpha.col1" value="1.0 0.1"/>
+				<parameter id="alpha.col2" value="0.5 2.0"/>
+            </matrixParameter>
         </strengthOfSelectionMatrix>
      	<conjugateRootPrior>
             <meanParameter>
-                <parameter id="meanRoot"  value="0.0 0.0 -3.0 -1.0"/>
+                <parameter id="meanRoot"  value="-0.5 1.0 1.0 -2.0"/>
             </meanParameter>
             <priorSampleSize>
                 <parameter id="sampleSizeRoot" value="10.0"/>
@@ -87,10 +87,10 @@
         </conjugateRootPrior>
 	</traitDataLikelihood>
 
-	<!-- <report> -->
-	<!-- 	With OU likelihood = -->
-	<!-- 	<traitDataLikelihood idref="iouLikelihood"/> -->
-	<!-- </report> -->
+	<report>
+		With OU likelihood =
+		<traitDataLikelihood idref="iouLikelihood"/>
+	</report>
 
 	<operators id="iouOperators">
        <dirtyLikelihood weight="1">

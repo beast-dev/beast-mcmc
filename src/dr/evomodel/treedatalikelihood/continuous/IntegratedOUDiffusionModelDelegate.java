@@ -112,9 +112,7 @@ public class IntegratedOUDiffusionModelDelegate extends OUDiffusionModelDelegate
         assert dim % 2 == 0 : "dimTrait should be twice dimProcess.";
         int dimProcess = dim / 2;
         double[] drift = new double[dimProcess];
-        for (int i = 0; i < dimProcess; i++) {
-            drift[i] = driftFull[i] + driftFull[dimProcess + i];
-        }
+        System.arraycopy(driftFull, dimProcess, drift, 0, dimProcess);
         return drift;
     }
 

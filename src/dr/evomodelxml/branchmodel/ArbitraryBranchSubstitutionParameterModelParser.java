@@ -46,6 +46,7 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
 
     public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="arbitraryBranchSubstitutionParameter";
     private static final String SINGLE_RATE="singleSubstitutionParameter";
+    private static final String BRANCH_SPECIFIC_PARAMETER = "branchSpecificParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -57,6 +58,9 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
             throw new RuntimeException("The substitution model is not parameter replaceable!");
         }
         Parameter branchParameter = (Parameter) xo.getChild(Parameter.class);
+
+        XMLObject cxo = xo.getChild(BRANCH_SPECIFIC_PARAMETER);
+        Parameter oldParameter = (Parameter) cxo.getChild(Parameter.class);
 
 
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
@@ -79,7 +83,7 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
             for (int nodeNum = 0; nodeNum < tree.getNodeCount() - 1; ++nodeNum){
 
                 substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
-                        ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(),
+                        oldParameter,
                         ((CompoundParameter) branchParameter).getParameter(nodeNum)));
 
             }
@@ -89,7 +93,7 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
                     ((CompoundParameter) branchParameter).getParameter(0).getBounds().getLowerLimit(0),
                     ((CompoundParameter) branchParameter).getParameter(0).getBounds().getUpperLimit(0));
             substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
-                    ((ParameterReplaceableSubstitutionModel) substitutionModel).getReplaceableParameter(), rootParameter));
+                    oldParameter, rootParameter));
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
             branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
                     substitutionModelProvider, branchParameter, rootParameter, tree);
@@ -103,7 +107,8 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
         return new XMLSyntaxRule[]{
                 new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
                 new ElementRule(TreeModel.class, "The tree."),
-                new ElementRule(Parameter.class, "Substitution Parameters.")
+                new ElementRule(Parameter.class, "Substitution Parameters."),
+                new ElementRule(BRANCH_SPECIFIC_PARAMETER, Parameter.class, "The branch-specific substitution parameter.")
         };
     }
 

@@ -156,7 +156,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     }
 
     private DenseMatrix64F getInverseSelectionStrength(double[] diagonalMatrix, double[] rotationDouble) {
-        DenseMatrix64F matrix = wrapDiagonal(diagonalMatrix, 0, dimProcess);
+        DenseMatrix64F matrix = wrapDiagonalInverse(diagonalMatrix, 0, dimProcess);
         DenseMatrix64F rotation = wrap(rotationDouble, 0, dimProcess, dimProcess);
         transformMatrixBase(matrix, rotation);
         return matrix;

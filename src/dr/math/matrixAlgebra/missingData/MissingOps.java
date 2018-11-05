@@ -47,6 +47,30 @@ public class MissingOps {
         return wrapDiagonal(source, offset, dim, buffer);
     }
 
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim,
+                                              final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
+                                                     final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapDiagonalInverse(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
+                                                     final int dim,
+                                                     final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = 1 / source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
+    }
+
     public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
                                                final int dim) {
         double[] buffer = new double[dim * dim];
@@ -69,15 +93,6 @@ public class MissingOps {
                     buffer, i * dim, dim - 1);
             buffer[(i + 1) * dim - 1] = projection(source, offset + i * (dim - 1), dim - 1);
         }
-    }
-
-    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
-                                              final int dim,
-                                              final double[] buffer) {
-        for (int i = 0; i < dim; ++i) {
-            buffer[i * dim + i] = source[i];
-        }
-        return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
     public static DenseMatrix64F copy(ReadableMatrix source) {

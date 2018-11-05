@@ -224,6 +224,7 @@ public class SafeMultivariateActualizedWithDriftIntegratorTest {
                     precisionType,
                     numTraits,
                     dimTrait,
+                    dimTrait,
                     partialBufferCount,
                     matrixBufferCount,
                     test.isASymmetric()

@@ -47,6 +47,30 @@ public class MissingOps {
         return wrapDiagonal(source, offset, dim, buffer);
     }
 
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim,
+                                              final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
+                                                     final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapDiagonalInverse(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
+                                                     final int dim,
+                                                     final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = 1 / source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
+    }
+
     public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
                                                final int dim) {
         double[] buffer = new double[dim * dim];
@@ -69,15 +93,6 @@ public class MissingOps {
                     buffer, i * dim, dim - 1);
             buffer[(i + 1) * dim - 1] = projection(source, offset + i * (dim - 1), dim - 1);
         }
-    }
-
-    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
-                                              final int dim,
-                                              final double[] buffer) {
-        for (int i = 0; i < dim; ++i) {
-            buffer[i * dim + i] = source[i];
-        }
-        return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
     public static DenseMatrix64F copy(ReadableMatrix source) {
@@ -145,6 +160,17 @@ public class MissingOps {
             destination[offset + i * dim + i] = 1.0;
             for (int j = i + 1; j < dim; j++) {
                 destination[offset + i * dim + j] = 0.0;
+            }
+        }
+    }
+
+    public static void blockUnwrap(final DenseMatrix64F block, final double[] destination,
+                                   final int destinationOffset,
+                                   final int offsetRow, final int offsetCol,
+                                   final int nCols) {
+        for (int i = 0; i < block.getNumRows(); i++) { // Rows
+            for (int j = 0; j < block.getNumCols(); j++) {
+                destination[destinationOffset + (i + offsetRow) * nCols + j + offsetCol] = block.get(i, j);
             }
         }
     }

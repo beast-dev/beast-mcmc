@@ -20,9 +20,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     private static boolean DEBUG = false;
 
-    public MultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
-                                  int diffusionCount) {
-        super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
+    public MultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
+                                  int bufferCount, int diffusionCount) {
+        super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         assert precisionType == PrecisionType.FULL;
 
@@ -66,7 +66,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     double[] vector0;
 
     private void allocateStorage() {
-        inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
+        inverseDiffusions = new double[dimProcess * dimProcess * diffusionCount];
 
         vector0 = new double[dimTrait];
         matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -84,9 +84,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         assert (inverseDiffusions != null);
 
-        final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F precision = wrap(diffusions, offset, dimTrait, dimTrait);
-        DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
+        final int offset = dimProcess * dimProcess * precisionIndex;
+        DenseMatrix64F precision = wrap(diffusions, offset, dimProcess, dimProcess);
+        DenseMatrix64F variance = new DenseMatrix64F(dimProcess, dimProcess);
         CommonOps.invert(precision, variance);
         unwrap(variance, inverseDiffusions, offset);
 
@@ -657,10 +657,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                           boolean incrementOuterProducts) {
+                                           boolean incrementOuterProducts, boolean isIntegratedProcess) {
         assert(logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
+        assert(!isIntegratedProcess);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

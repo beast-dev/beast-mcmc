@@ -44,7 +44,7 @@ public interface RootProcessDelegate extends Model {
     int getExtraMatrixBufferCount();
 
     void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike,
-                                    boolean incrementOuterProducts);
+                                    boolean incrementOuterProducts, boolean isIntegratedProcess);
 
     double getPseudoObservations();
 
@@ -94,14 +94,16 @@ public interface RootProcessDelegate extends Model {
 
         @Override
         public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
-                                               final double[] logLike, boolean incrementOuterProducts) {
+                                               final double[] logLike, boolean incrementOuterProducts,
+                                               boolean isIntegratedProcess) {
 
             if (updatePrior) {
                 setRootPartial(cdi);
                 updatePrior = false;
             }
 
-            cdi.calculateRootLogLikelihood(rootBufferIndex, getPriorBufferIndex(), logLike, incrementOuterProducts);
+            cdi.calculateRootLogLikelihood(rootBufferIndex, getPriorBufferIndex(), logLike,
+                    incrementOuterProducts, isIntegratedProcess);
         }
 
         private void setRootPartial(ContinuousDiffusionIntegrator cdi) {

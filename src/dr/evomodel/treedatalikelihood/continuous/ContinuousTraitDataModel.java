@@ -28,7 +28,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -41,7 +42,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     final int numTraits;
     final int dimTrait;
-    private final PrecisionType precisionType;
+    final PrecisionType precisionType;
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,

@@ -13,9 +13,9 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
 
     private static boolean DEBUG = false;
 
-    public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
-                                               int diffusionCount) {
-        super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
+    public SafeMultivariateWithDriftIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
+                                               int bufferCount, int diffusionCount) {
+        super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         allocateStorage();
 

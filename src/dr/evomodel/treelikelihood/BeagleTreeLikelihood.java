@@ -341,6 +341,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 // non-CPU implementations don't have SSE so remove default preference for SSE
                 // when using non-CPU preferences or prioritising non-CPU resource
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
             }
 
             // start auto resource selection

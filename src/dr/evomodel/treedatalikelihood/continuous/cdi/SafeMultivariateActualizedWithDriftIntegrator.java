@@ -270,7 +270,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         CommonOps.mult(temp3, delta, temp2);
         addTrans(temp2, temp);
         // All
-        CommonOps.addEquals(varianceXX, temp);
+        CommonOps.addEquals(varianceXX, -1.0, temp);
 
         //// Variance XY
         DenseMatrix64F varianceXY = new DenseMatrix64F(dimProcess, dimProcess);

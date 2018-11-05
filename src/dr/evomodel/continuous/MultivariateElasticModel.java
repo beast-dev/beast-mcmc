@@ -147,7 +147,7 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
         AS_DIAGONAL {
             @Override
             public EigenDecomposition decomposeStrenghtOfSelection(MatrixParameterInterface AParam, int dim, boolean isSymmetric) {
-                return new EigenDecomposition(null,
+                return new EigenDecomposition(identityVector(dim),
                         null,
                         ((DiagonalMatrix) AParam).getDiagonalParameter().getParameterValues());
             }
@@ -210,6 +210,14 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
 //        abstract double[] eigenVectorsMatrix(MatrixParameterInterface AParam, EigenDecomposition eigDecompA);
     }
 
+
+    private static double[] identityVector(int dim){
+        double[] res = new double[dim * dim];
+        for (int i = 0; i < dim; i++) {
+            res[i * dim + i] = 1.0;
+        }
+        return res;
+    }
     // *****************************************************************
     // Interface Model
     // *****************************************************************

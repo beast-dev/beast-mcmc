@@ -33,6 +33,7 @@ import dr.inference.model.Parameter;
  */
 public interface ParameterReplaceableSubstitutionModel extends SubstitutionModel {
 
+    @Deprecated
     Parameter getReplaceableParameter();
 
     SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter);

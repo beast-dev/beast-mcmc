@@ -30,10 +30,8 @@ import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.model.*;
 
 import java.util.List;
 
@@ -44,14 +42,15 @@ import java.util.List;
 public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel implements BranchModel {
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
-    private final Parameter substitutionParameter;
+    private final CompoundParameter substitutionParameter;
     private final Parameter rootParameter;
     private final TreeModel tree;
+    private final TreeParameterModel parameterIndexHelper;
 
 
     public ArbitraryBranchSubstitutionParameterModel(String name,
                                                      BranchSpecificSubstitutionModelProvider substitutionModelProvider,
-                                                     Parameter substitutionParameter,
+                                                     CompoundParameter substitutionParameter,
                                                      Parameter rootParameter,
                                                      TreeModel tree) {
         super(name);
@@ -59,6 +58,7 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
         this.substitutionParameter = substitutionParameter;
         this.rootParameter = rootParameter;
         this.tree = tree;
+        this.parameterIndexHelper = new TreeParameterModel(tree, substitutionParameter, false);
 
         for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {
             addModel(substitutionModel);
@@ -69,6 +69,10 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
 
     public Parameter getSubstitutionParameter() {
         return substitutionParameter;
+    }
+
+    public Parameter getSubstitutionParameterForBranch(NodeRef branch) {
+        return substitutionParameter.getParameter(parameterIndexHelper.getParameterIndexFromNodeNumber(branch.getNumber()));
     }
 
     @Override

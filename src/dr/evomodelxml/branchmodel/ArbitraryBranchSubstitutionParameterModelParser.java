@@ -57,7 +57,7 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
         if (!(substitutionModel instanceof ParameterReplaceableSubstitutionModel)) {
             throw new RuntimeException("The substitution model is not parameter replaceable!");
         }
-        Parameter branchParameter = (Parameter) xo.getChild(Parameter.class);
+        CompoundParameter branchParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
 
         XMLObject cxo = xo.getChild(BRANCH_SPECIFIC_PARAMETER);
         Parameter oldParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -66,8 +66,9 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
         ArbitraryBranchSubstitutionParameterModel branchParameterModel = null;
         if (branchParameter == null || branchParameter.getDimension() == 1) {
-            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
-            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, null, tree);
+//            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
+//            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, null, tree);
+            throw new RuntimeException("Not yet supported.");
         } else{
             final int numBranch = tree.getNodeCount() - 1;
             if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
@@ -84,17 +85,17 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
 
                 substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                         oldParameter,
-                        ((CompoundParameter) branchParameter).getParameter(nodeNum)));
+                        branchParameter.getParameter(nodeNum)));
 
             }
 
             Parameter rootParameter = new Parameter.Default((String) null,
-                    ((CompoundParameter) branchParameter).getParameter(0).getParameterValue(0),
-                    ((CompoundParameter) branchParameter).getParameter(0).getBounds().getLowerLimit(0),
-                    ((CompoundParameter) branchParameter).getParameter(0).getBounds().getUpperLimit(0));
+                    branchParameter.getParameter(0).getParameterValue(0),
+                    branchParameter.getParameter(0).getBounds().getLowerLimit(0),
+                    branchParameter.getParameter(0).getBounds().getUpperLimit(0));
             substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                     oldParameter, rootParameter));
-            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default((CompoundParameter) branchParameter, substitutionModelList, tree);
+            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(branchParameter, substitutionModelList, tree);
             branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
                     substitutionModelProvider, branchParameter, rootParameter, tree);
         }
@@ -107,7 +108,7 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
         return new XMLSyntaxRule[]{
                 new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
                 new ElementRule(TreeModel.class, "The tree."),
-                new ElementRule(Parameter.class, "Substitution Parameters."),
+                new ElementRule(CompoundParameter.class, "Substitution Parameters."),
                 new ElementRule(BRANCH_SPECIFIC_PARAMETER, Parameter.class, "The branch-specific substitution parameter.")
         };
     }

@@ -391,6 +391,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
+            instanceFlags = instanceDetails.getFlags();
+
             if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
                 beagle.setCPUThreadCount(threadCount);
             }
@@ -466,7 +468,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
-        return TreeTraversal.TraversalType.POST_ORDER;
+        if ((instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+            return TreeTraversal.TraversalType.POST_ORDER;
+        } else {
+            return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
+        }
     }
 
     @Override
@@ -1024,6 +1030,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private int rescalingCountInner = 0;
 
     private int threadCount = 1;
+    private long instanceFlags;
 
     private boolean firstRescaleAttempt = false;
     private int rescalingMessageCount = 0;

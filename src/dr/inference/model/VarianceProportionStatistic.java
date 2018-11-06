@@ -155,7 +155,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         for (int i = 0; i < dim; i++) {
 
             double diffusionComponent = diffusionVariance[i] * (treeSums.getDiagonalSum() / observedCounts[i]
-                    + treeSums.getTotalSum() / (observedCounts[i] * observedCounts[i]));
+                    - treeSums.getTotalSum() / (observedCounts[i] * observedCounts[i]));
 
             double samplingComponent = samplingVariance[i] * (observedCounts[i] - 1) / observedCounts[i];
             diffusionProportion[i] = diffusionComponent / (diffusionComponent + samplingComponent);

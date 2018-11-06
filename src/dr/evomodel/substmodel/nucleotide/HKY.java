@@ -300,11 +300,6 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     }
 
-    @Override
-    public Parameter getReplaceableParameter() {
-        return kappaParameter;
-    }
-
     /**
      * Generate a replicate of itself with new kappaParamter.
      * @param oldParameter

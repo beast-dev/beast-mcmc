@@ -242,11 +242,6 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable, Param
     );
 
     @Override
-    public Parameter getReplaceableParameter() {
-        return omegaParameter;
-    }
-
-    @Override
     public SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter) {
         if (oldParameter == omegaParameter) {
             return new GY94CodonModel(codonDataType, newParameter, kappaParameter, freqModel);

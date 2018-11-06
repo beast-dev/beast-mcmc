@@ -25,7 +25,6 @@
 
 package dr.inference.model;
 
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -83,11 +82,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.samplingVariance = new double[dim];
         this.diffusionProportion = new double[dim];
         this.treeSums = new TreeVarianceSums(0, 0);
-
-//        updateTreeSums();    // Don't pay for what you may never use
-//        updateDiffusionVariance();
-//        updateSamplingVariance();
-//        updateDiffusionProportion();
 
         tree.addModelListener(this);
         samplingPrecision.addParameterListener(this);
@@ -179,25 +173,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
         }
 
-//        double[][] treeVariance = getTreeVariance(normalization);
-//
-//        int n = treeVariance.length;
-//
-//        double diagonalSum = 0;
-//        double offDiagonalSum = 0;
-//
-//        for (int i = 0; i < n; i++) {
-//            diagonalSum = diagonalSum + treeVariance[i][i];
-//        }
-//
-//        for (int i = 0; i < n; i++) {
-//            for (int j = i + 1; j < n; j++) {
-//                offDiagonalSum = offDiagonalSum + treeVariance[i][j];
-//            }
-//        }
-//
-//        offDiagonalSum = offDiagonalSum * 2;
-
         double diagonalSum = MultivariateTraitDebugUtilities.getVarianceDiagonalSum(tree,
                 treeLikelihood.getBranchRateModel(), normalization);
 
@@ -271,97 +246,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         return diffusionProportion[dim];
     }
 
-    //Post-Order Algorithm for Constructing between taxa tree covariance matrix
-
-    /**
-     * class that stores where in the tree variance matrix the current block is
-     */
-    private class PostOrderTreeTracker {
-
-        int startIndex;
-        int dim;
-
-        private PostOrderTreeTracker(int startIndex, int dim) {
-
-            this.startIndex = startIndex;
-            this.dim = dim;
-
-        }
-
-        private int getStartIndex() {
-            return this.startIndex;
-        }
-
-
-        private int getDim() {
-            return this.dim;
-        }
-
-    }
-
-    /**
-     * @return the between taxa covariance matrix
-     */
-    private double[][] getTreeVariance(double normalization) {
-        int n = tree.getExternalNodeCount();
-        double[][] treeVariance = new double[n][n];
-        PostOrderTreeTracker x = doTreeRecursion(treeVariance, tree.getRoot(), new PostOrderTreeTracker(0, n),
-                normalization);
-        return treeVariance;
-    }
-
-    /**
-     * NOTE: this function implements a recursive algorithm that updates the treeVariance array in addition to
-     *
-     * @return the location and dimension of the current block in the between taxa covariance matrix after
-     */
-    private PostOrderTreeTracker doTreeRecursion(double[][] treeVariance,
-                                                 NodeRef node,
-                                                 PostOrderTreeTracker tracker,
-                                                 double normalization) {
-
-        int childCount = tree.getChildCount(node);
-        assert (childCount == 2);
-
-        NodeRef[] childNodes = new NodeRef[childCount];
-
-        for (int i = 0; i < childCount; i++) {
-
-            childNodes[i] = tree.getChild(node, i);
-        }
-
-        int currentIndex = tracker.getStartIndex();
-
-        for (NodeRef child : childNodes) {
-
-            if (tree.isExternal(child)) {
-
-                treeVariance[currentIndex][currentIndex] += tree.getBranchLength(child) * normalization;
-                currentIndex += 1;
-
-
-            } else {
-
-                PostOrderTreeTracker newTracker = doTreeRecursion(treeVariance, child,
-                        new PostOrderTreeTracker(currentIndex, tracker.getDim()), normalization);
-
-                currentIndex += newTracker.getDim();
-
-                for (int i = newTracker.getStartIndex(); i < currentIndex; i++) {
-
-                    for (int j = i; j < currentIndex; j++) {
-
-                        treeVariance[i][j] += tree.getBranchLength(child) * normalization;
-                    }
-                }
-
-            }
-
-        }
-
-        return new PostOrderTreeTracker(tracker.getStartIndex(), currentIndex - tracker.getStartIndex());
-
-    }
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {

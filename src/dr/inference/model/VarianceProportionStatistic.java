@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
@@ -178,24 +179,31 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
         }
 
-        double[][] treeVariance = getTreeVariance(normalization);
+//        double[][] treeVariance = getTreeVariance(normalization);
+//
+//        int n = treeVariance.length;
+//
+//        double diagonalSum = 0;
+//        double offDiagonalSum = 0;
+//
+//        for (int i = 0; i < n; i++) {
+//            diagonalSum = diagonalSum + treeVariance[i][i];
+//        }
+//
+//        for (int i = 0; i < n; i++) {
+//            for (int j = i + 1; j < n; j++) {
+//                offDiagonalSum = offDiagonalSum + treeVariance[i][j];
+//            }
+//        }
+//
+//        offDiagonalSum = offDiagonalSum * 2;
 
-        int n = treeVariance.length;
+        double diagonalSum = MultivariateTraitDebugUtilities.getVarianceDiagonalSum(tree,
+                treeLikelihood.getBranchRateModel(), normalization);
 
-        double diagonalSum = 0;
-        double offDiagonalSum = 0;
+        double offDiagonalSum = MultivariateTraitDebugUtilities.getVarianceOffDiagonalSum(tree,
+                treeLikelihood.getBranchRateModel(), normalization);
 
-        for (int i = 0; i < n; i++) {
-            diagonalSum = diagonalSum + treeVariance[i][i];
-        }
-
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                offDiagonalSum = offDiagonalSum + treeVariance[i][j];
-            }
-        }
-
-        offDiagonalSum = offDiagonalSum * 2;
         treeSums.diagonalSum = diagonalSum;
         treeSums.totalSum = diagonalSum + offDiagonalSum;
     }

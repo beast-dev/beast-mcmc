@@ -67,7 +67,7 @@ public class MultivariateTraitDebugUtilities {
 
     public static void insertPrecision(Tree tree, NodeRef parent, NodeRef child, double[][] matrix, double normalization) {
         matrix[parent.getNumber()][child.getNumber()] =
-                           matrix[child.getNumber()][parent.getNumber()] =-1.0 / (tree.getBranchLength(child) * normalization);
+                matrix[child.getNumber()][parent.getNumber()] = -1.0 / (tree.getBranchLength(child) * normalization);
         recurseGraph(tree, child, matrix, normalization);
 
     }
@@ -214,12 +214,12 @@ public class MultivariateTraitDebugUtilities {
                 return new BranchCumulant(
                         cumulant0.nTaxa + cumulant1.nTaxa,
                         cumulant0.sharedLength + cumulant1.sharedLength +
-                                (cumulant0.nTaxa - 1) * length0 +
-                                (cumulant1.nTaxa - 1) * length1
+                                (cumulant0.nTaxa - 1) * cumulant0.nTaxa * length0 +
+                                (cumulant1.nTaxa - 1) * cumulant1.nTaxa * length1
                 );
             }
         },
-        DIAGONAL  {
+        DIAGONAL {
             @Override
             BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
                                       BranchCumulant cumulant1, double length1) {

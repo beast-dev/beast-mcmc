@@ -27,7 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameterModel;
+import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -41,7 +41,7 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
 public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
 
     private BranchRateModel branchRateModel;
-    private ArbitraryBranchSubstitutionParameterModel branchSubstitutionParameterModel;
+    private ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
     public static String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
     public static String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
@@ -49,10 +49,10 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
                                                             Tree tree,
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                             BranchRateModel branchRateModel,
-                                                            ArbitraryBranchSubstitutionParameterModel branchSubstitutionParameterModel) {
+                                                            ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel) {
         super(name, tree, likelihoodDelegate);
         this.branchRateModel = branchRateModel;
-        this.branchSubstitutionParameterModel = branchSubstitutionParameterModel;
+        this.arbitrarySubstitutionParameterBranchModel = arbitrarySubstitutionParameterBranchModel;
     }
 
     @Override
@@ -66,7 +66,7 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
 
                 double[] differentialMassMatrix = parameterReplaceableSubstitutionModel.getDifferentialMassMatrix(
                         tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node),
-                        branchSubstitutionParameterModel.getSubstitutionParameterForBranch(node));
+                        arbitrarySubstitutionParameterBranchModel.getSubstitutionParameterForBranch(node));
                 evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);
             }
         }

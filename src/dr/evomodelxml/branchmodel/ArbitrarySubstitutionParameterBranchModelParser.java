@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.branchmodel;
 
-import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameterModel;
+import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -42,9 +42,9 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXMLObjectParser {
+public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXMLObjectParser {
 
-    public static final String ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL="arbitraryBranchSubstitutionParameter";
+    public static final String ARBITRARY_SUBSTITUTION_PARAMETER_BRANCH_MODEL ="arbitrarySubstitutionParameterBranchModel";
     private static final String SINGLE_RATE="singleSubstitutionParameter";
     private static final String BRANCH_SPECIFIC_PARAMETER = "branchSpecificParameter";
 
@@ -64,10 +64,10 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
 
 
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
-        ArbitraryBranchSubstitutionParameterModel branchParameterModel = null;
+        ArbitrarySubstitutionParameterBranchModel branchParameterModel = null;
         if (branchParameter == null || branchParameter.getDimension() == 1) {
 //            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.None(substitutionModel);
-//            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(SINGLE_RATE, substitutionModelProvider, branchParameter, null, tree);
+//            branchParameterModel = new ArbitrarySubstitutionParameterBranchModel(SINGLE_RATE, substitutionModelProvider, branchParameter, null, tree);
             throw new RuntimeException("Not yet supported.");
         } else{
             final int numBranch = tree.getNodeCount() - 1;
@@ -96,7 +96,7 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
             substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                     oldParameter, rootParameter));
             substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(branchParameter, substitutionModelList, tree);
-            branchParameterModel = new ArbitraryBranchSubstitutionParameterModel(ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL,
+            branchParameterModel = new ArbitrarySubstitutionParameterBranchModel(ARBITRARY_SUBSTITUTION_PARAMETER_BRANCH_MODEL,
                     substitutionModelProvider, branchParameter, rootParameter, tree);
         }
 
@@ -120,11 +120,11 @@ public class ArbitraryBranchSubstitutionParameterModelParser extends AbstractXML
 
     @Override
     public Class getReturnType() {
-        return ArbitraryBranchSubstitutionParameterModel.class;
+        return ArbitrarySubstitutionParameterBranchModel.class;
     }
 
     @Override
     public String getParserName() {
-        return ARBITRARY_BRANCH_SUBSTITUTION_PARAMETER_MODEL;
+        return ARBITRARY_SUBSTITUTION_PARAMETER_BRANCH_MODEL;
     }
 }

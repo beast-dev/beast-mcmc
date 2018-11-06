@@ -39,7 +39,7 @@ import java.util.List;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel implements BranchModel {
+public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel implements BranchModel {
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
     private final CompoundParameter substitutionParameter;
@@ -48,7 +48,7 @@ public class ArbitraryBranchSubstitutionParameterModel extends AbstractModel imp
     private final TreeParameterModel parameterIndexHelper;
 
 
-    public ArbitraryBranchSubstitutionParameterModel(String name,
+    public ArbitrarySubstitutionParameterBranchModel(String name,
                                                      BranchSpecificSubstitutionModelProvider substitutionModelProvider,
                                                      CompoundParameter substitutionParameter,
                                                      Parameter rootParameter,

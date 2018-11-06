@@ -27,7 +27,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.*;
-import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameterModel;
+import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
@@ -55,7 +55,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
-    protected final ArbitraryBranchSubstitutionParameterModel branchModel;
+    protected final ArbitrarySubstitutionParameterBranchModel branchModel;
     protected final boolean useHessian;
 
     protected final Parameter branchSubstitutionParameter;
@@ -70,12 +70,12 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
                                                             TreeDataLikelihood treeDataLikelihood,
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                             Parameter branchSubstitutionParameter,
-                                                            ArbitraryBranchSubstitutionParameterModel substitutionParameterModel,
+                                                            ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
                                                             boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchSubstitutionParameter = branchSubstitutionParameter;
-        this.branchModel = substitutionParameterModel;
+        this.branchModel = arbitrarySubstitutionParameterBranchModel;
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, branchSubstitutionParameter, false);
 

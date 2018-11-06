@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.branchmodel.ArbitraryBranchSubstitutionParameterModel;
+import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -57,7 +57,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        ArbitraryBranchSubstitutionParameterModel branchModel = (ArbitraryBranchSubstitutionParameterModel) xo.getChild(BranchModel.class);
+        ArbitrarySubstitutionParameterBranchModel branchModel = (ArbitrarySubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
         Parameter branchSubstitutionParameter = branchModel.getSubstitutionParameter();
@@ -74,7 +74,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(ArbitraryBranchSubstitutionParameterModel.class),
+            new ElementRule(ArbitrarySubstitutionParameterBranchModel.class),
     };
 
     @Override

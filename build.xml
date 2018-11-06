@@ -83,6 +83,7 @@
             <include name="dr/app/beagle/**"/>
             <include name="dr/app/seqgen/**"/>
             <include name="dr/app/plugin/**"/>
+            <include name="dr/app/realtime/**"/>
             <include name="dr/app/tools/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/app/treestat/**"/>
@@ -129,6 +130,7 @@
                 <include name="dr/app/gui/**/*.class"/>
                 <include name="dr/app/seqgen/**"/>
                 <include name="dr/app/plugin/**"/>
+                <include name="dr/app/realtime/**"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/app/tools/**/*.class"/>
                 <include name="dr/app/treestat/**/*.class"/>

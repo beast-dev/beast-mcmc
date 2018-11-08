@@ -52,7 +52,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private MultivariateDiffusionModel diffusionModel;
     private TreeDataLikelihood treeLikelihood;
     private Parameter samplingPrecision;
-    private Parameter diffusionPrecision;
     private double[] diffusionProportion;
     private boolean scaleByHeight;
     private TreeVarianceSums treeSums;
@@ -72,7 +71,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.treeLikelihood = treeLikelihood;
         this.diffusionModel = diffusionModel;
         this.samplingPrecision = dataModel.getSamplingPrecision();
-        this.diffusionPrecision = diffusionModel.getPrecisionParameter();
         this.scaleByHeight = scaleByHeight;
 
         this.observedCounts = getObservedCounts(dataModel);
@@ -84,9 +82,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.treeSums = new TreeVarianceSums(0, 0);
 
         tree.addModelListener(this);
-        samplingPrecision.addParameterListener(this);
-        diffusionPrecision.addParameterListener(this);
+        diffusionModel.addModelListener(this);
 
+        samplingPrecision.addParameterListener(this);
     }
 
     /**
@@ -120,7 +118,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      */
     private int[] getObservedCounts(RepeatedMeasuresTraitDataModel dataModel) {
 
-        List<Integer> missingInds = dataModel.getMissingIndices();
+        List<Integer> missingIndices = dataModel.getMissingIndices();
         int n = tree.getExternalNodeCount();
         int dim = dataModel.getTraitDimension();
         int[] observedCounts = new int[dim];
@@ -132,7 +130,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         int threshold = n;
         int currentDim = 0;
 
-        for (int index : missingInds) {
+        for (int index : missingIndices) {
 
             if (index >= threshold) {
                 threshold += n;
@@ -203,10 +201,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private void updateSamplingVariance() {
 
         int dim = samplingPrecision.getDimension();
-        double[] samplingPrecisionVals = samplingPrecision.getParameterValues();
-
+        
         for (int i = 0; i < dim; i++) {
-            samplingVariance[i] = 1 / samplingPrecisionVals[i];
+            samplingVariance[i] = 1.0 / samplingPrecision.getParameterValue(i);
         }
     }
 
@@ -224,6 +221,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         if (!treeKnown) {
 
             updateTreeSums();
+            updateDiffusionVariance();
             treeKnown = true;
             needToUpdate = true;
 
@@ -231,7 +229,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         if (!varianceKnown) {
 
-            updateDiffusionVariance();
             updateSamplingVariance();
             varianceKnown = true;
             needToUpdate = true;
@@ -249,12 +246,14 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        assert  (variable == samplingPrecision);
+
         varianceKnown = false;
     }
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        assert (model == tree);
+        assert (model == tree || model == diffusionModel);
 
         treeKnown = false;
     }

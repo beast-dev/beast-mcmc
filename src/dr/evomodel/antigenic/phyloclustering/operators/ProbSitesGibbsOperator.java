@@ -83,21 +83,6 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
      }
 
 
-
-     public String getPerformanceSuggestion() {
-         if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-             return "";
-         } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-             return "";
-         } else {
-             return "";
-         }
-     }
-
- 
-    
- 
-
      public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 

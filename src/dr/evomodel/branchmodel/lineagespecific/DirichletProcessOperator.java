@@ -311,9 +311,4 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		return DirichletProcessOperatorParser.DIRICHLET_PROCESS_OPERATOR;
 	}
 
-	@Override
-	public String getPerformanceSuggestion() {
-		return null;
-	}// END: getPerformanceSuggestion
-	
 }// END: class

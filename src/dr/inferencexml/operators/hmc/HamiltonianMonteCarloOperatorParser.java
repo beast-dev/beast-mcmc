@@ -27,8 +27,8 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
@@ -72,7 +72,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
         int runMode = parseRunMode(xo);
 
-        CoercionMode coercionMode = CoercionMode.parseMode(xo);
+        AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -89,10 +89,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
 
         if (runMode == 0) {
-            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative, parameter, transform,
+            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative, parameter, transform,
                     stepSize, nSteps, drawVariance);
         } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative, parameter,transform,
+            return new NoUTurnOperator(adaptationMode, weight, derivative, parameter,transform,
                     stepSize, nSteps, drawVariance);
         }
     }
@@ -107,7 +107,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(MODE, true),
             new ElementRule(Parameter.class),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),

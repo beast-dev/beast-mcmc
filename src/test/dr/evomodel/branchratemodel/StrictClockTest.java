@@ -101,7 +101,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
 
         Parameter allInternalHeights = treeModel.createNodeHeightsParameter(true, true, false);
         operator = new UpDownOperator(new Scalable[]{new Scalable.Default(rateParameter)},
-                new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, CoercionMode.COERCION_ON);
+                new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, AdaptationMode.ADAPTATION_ON);
         schedule.addOperator(operator);
 
         operator = new ScaleOperator(popSize, 0.75);
@@ -118,7 +118,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
         operator = new UniformOperator(internalHeights, 30.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 15.0, 1.0, true, false, false, false, CoercionMode.COERCION_ON);
+        operator = new SubtreeSlideOperator(treeModel, 15.0, 1.0, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);

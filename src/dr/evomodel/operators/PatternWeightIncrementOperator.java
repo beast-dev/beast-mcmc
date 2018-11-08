@@ -98,16 +98,6 @@ public class PatternWeightIncrementOperator extends SimpleMCMCOperator implement
         super.reject();
     }
     
-    public String getPerformanceSuggestion() {
-        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
-    }
-
     public String getOperatorName() {
         return PATTERN_WEIGHT_INCREMENT_OPERATOR;
     }

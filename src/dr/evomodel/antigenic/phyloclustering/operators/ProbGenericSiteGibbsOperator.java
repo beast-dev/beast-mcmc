@@ -92,20 +92,6 @@ public class ProbGenericSiteGibbsOperator  extends SimpleMCMCOperator implements
      public final String getOperatorName() {
          return CLASSNAME_OPERATOR;
      }
-
-
-
-     public String getPerformanceSuggestion() {
-         if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-             return "";
-         } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-             return "";
-         } else {
-             return "";
-         }
-     }
-
- 
     
  
 

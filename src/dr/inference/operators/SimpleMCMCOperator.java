@@ -29,30 +29,6 @@ import dr.inference.model.Likelihood;
 
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
-    public double getTargetAcceptanceProbability() {
-        return targetAcceptanceProb;
-    }
-
-    public void setTargetAcceptanceProbability(double tap) {
-        targetAcceptanceProb = tap;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.05;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.50;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.10;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.40;
-    }
-
     public abstract String getOperatorName();
 
     /**
@@ -225,7 +201,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private double lastDeviation = 0.0;
 
     private boolean operateAllowed = true;
-    private double targetAcceptanceProb = 0.234;
 
     private long sumEvaluationTime = 0;
 

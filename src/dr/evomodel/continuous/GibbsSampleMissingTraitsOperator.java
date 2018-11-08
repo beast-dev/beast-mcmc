@@ -98,11 +98,6 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return "";
-    }
-
-    @Override
     public String getOperatorName() {
         return OPERATOR_NAME + "(" + "TODO" + ")";
     }

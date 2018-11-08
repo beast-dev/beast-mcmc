@@ -38,9 +38,6 @@ public interface MCMCOperator extends Serializable {
 
     public static final String WEIGHT = "weight";
 
-// This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator
-//	public static final String ADAPT = "adapt";
-
     /**
      * operates on the model.
      *
@@ -106,36 +103,6 @@ public interface MCMCOperator extends Serializable {
     //double getSpan(boolean reset);
 
     void setSumDeviation(double sumDeviation);
-
-    /**
-     * @return the optimal acceptance probability
-     */
-    double getTargetAcceptanceProbability();
-
-    /**
-     * @return the minimum acceptable acceptance probability
-     */
-    double getMinimumAcceptanceLevel();
-
-    /**
-     * @return the maximum acceptable acceptance probability
-     */
-    double getMaximumAcceptanceLevel();
-
-    /**
-     * @return the minimum good acceptance probability
-     */
-    double getMinimumGoodAcceptanceLevel();
-
-    /**
-     * @return the maximum good acceptance probability
-     */
-    double getMaximumGoodAcceptanceLevel();
-
-    /**
-     * @return a short descriptive message of the performance of this operator.
-     */
-    String getPerformanceSuggestion();
 
     /**
      * @return the relative weight of this operator.

@@ -156,7 +156,7 @@ public class MPILikelihoodRunner implements Runnable, Identifiable {
 			java.util.logging.Logger.getLogger("dr.inference").info("Creating the parallelCalculator chain:");
 			/*+
 					"\n  chainLength=" + options.getChainLength() +
-					"\n  autoOptimize=" + options.useCoercion());*/
+					"\n  autoOptimize=" + options.useAdaptation());*/
 
 			runner.init();
 

@@ -29,14 +29,11 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.NewBouncyParticleOperator;
-import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inferencexml.model.MaskedParameterParser;
-import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -64,7 +61,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
 
-        CoercionMode coercionMode = CoercionMode.parseMode(xo);
+        AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -88,7 +85,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         }
 
 
-        return new NewBouncyParticleOperator(coercionMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
+        return new NewBouncyParticleOperator(adaptationMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
                     parameter, drawVariance);
 
     }
@@ -101,7 +98,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule(DRAW_VARIANCE),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(MODE, true),
             new ElementRule(Parameter.class),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),

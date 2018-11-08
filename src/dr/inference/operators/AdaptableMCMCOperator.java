@@ -1,5 +1,5 @@
 /*
- * CoercableMCMCOperator.java
+ * AdaptableMCMCOperator.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -30,28 +30,35 @@ package dr.inference.operators;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CoercableMCMCOperator.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
+ * @version $Id: AdaptableMCMCOperator.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
-public interface CoercableMCMCOperator extends MCMCOperator {
+public interface AdaptableMCMCOperator extends MCMCOperator {
 
+    public static final String ADAPTABLE = "adaptable";
     public static final String AUTO_OPTIMIZE = "autoOptimize";
 
+    public static final double DEFAULT_ADAPTATION_TARGET = 0.234;
+    public static final double MINIMUM_ACCEPTANCE_LEVEL = 0.1;
+    public static final double MAXIMUM_ACCEPTANCE_LEVEL = 0.4;
+    public static final double MINIMUM_GOOD_ACCEPTANCE_LEVEL = 0.2;
+    public static final double MAXIMUM_GOOD_ACCEPTANCE_LEVEL = 0.3;
+
     /**
-     * A coercable parameter must have a range from -infinity to +infinity with a preference for
+     * An adaptable parameter must have a range from -infinity to +infinity with a preference for
      * small numbers.
      * <p/>
      * If operator acceptance is too high, BEAST increases the parameter; if operator acceptance is
      * too low, BEAST decreases the parameter.
      * <p/>
-     * From MarkovChain.coerceAcceptanceProbability:
+     * From MarkovChain.adaptAcceptanceProbability:
      * <p/>
      * new parameter = old parameter + 1/(1+N) * (current-step acceptance probability - target probabilitity),
      * <p/>
      * where N is some function of the number of operator trials.
      *
-     * @return a "coercable" parameter
+     * @return an "adaptable" parameter
      */
-    double getCoercableParameter();
+    double getAdaptableParameter();
 
     /**
      * Sets the coercable parameter value. A coercable parameter must have a range from -infinity to +infinity with a preference for
@@ -59,16 +66,25 @@ public interface CoercableMCMCOperator extends MCMCOperator {
      *
      * @param value the value to set the coercible parameter to
      */
-    void setCoercableParameter(double value);
+    void setAdaptableParameter(double value);
 
     /**
      * @return the underlying tuning parameter value
      */
     double getRawParameter();
 
+    double getTargetAcceptanceProbability();
+
+    String getAdaptableParameterName();
+
+    /**
+     * @return a short descriptive message of the performance of this operator.
+     */
+    String getPerformanceSuggestion();
+
     /**
      * @return the mode of this operator.
      */
-    CoercionMode getMode();
+    AdaptationMode getMode();
 
 }

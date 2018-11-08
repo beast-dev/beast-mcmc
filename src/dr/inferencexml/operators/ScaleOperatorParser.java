@@ -27,8 +27,8 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.ScaleOperator;
 import dr.xml.*;
@@ -56,7 +56,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         final int degreesOfFreedom = xo.getAttribute(DEGREES_OF_FREEDOM, 0);
         final boolean ignoreBounds = xo.getAttribute(IGNORE_BOUNDS, false);
 
-        final CoercionMode mode = CoercionMode.parseMode(xo);
+        final AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -148,7 +148,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SCALE_ALL, true),
             AttributeRule.newBooleanRule(SCALE_ALL_IND, true),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(DEGREES_OF_FREEDOM, true),
             AttributeRule.newBooleanRule(IGNORE_BOUNDS, true),
 

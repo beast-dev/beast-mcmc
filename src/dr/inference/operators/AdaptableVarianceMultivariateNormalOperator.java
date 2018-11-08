@@ -50,7 +50,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Guy Baele
  * @author Marc A. Suchard
  */
-public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercableOperator {
+public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator {
 
     public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -88,7 +88,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor, double[][] inMatrix,
-                                                       double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
+                                                       double weight, double beta, int initial, int burnin, int every, AdaptationMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -141,7 +141,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     }
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor,
-                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
+                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, AdaptationMode mode, boolean isVariance, boolean skipRankCheck) {
         this(parameter, transformations, transformationSizes, transformationSums, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
     }
 
@@ -567,11 +567,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return output;
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         scaleFactor = Math.exp(value);
     }
 
@@ -583,38 +583,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -629,7 +599,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 System.err.println("\nParsing AdaptableVarianceMultivariateNormalOperator.");
             }
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double beta = xo.getDoubleAttribute(BETA);

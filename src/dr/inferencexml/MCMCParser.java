@@ -52,12 +52,23 @@ public class MCMCParser extends AbstractXMLObjectParser {
         MCMC mcmc = new MCMC(xo.getAttribute(NAME, "mcmc1"));
 
         long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
-        boolean useCoercion = xo.getAttribute(COERCION, true);
-        long coercionDelay = chainLength / 100;
-        if (xo.hasAttribute(PRE_BURNIN)) {
-            coercionDelay = xo.getIntegerAttribute(PRE_BURNIN);
+        boolean useAdaptation =
+                xo.getAttribute(ADAPTATION, true) ||
+                xo.getAttribute(AUTO_OPTIMIZE, true);
+        if (System.getProperty("mcmc.use_adaptation") != null) {
+            useAdaptation = Boolean.parseBoolean(System.getProperty("mcmc.use_adaptation"));
         }
-        coercionDelay = xo.getAttribute(COERCION_DELAY, coercionDelay);
+        long adaptationDelay = chainLength / 100;
+        if (xo.hasAttribute(PRE_BURNIN)) {
+            adaptationDelay = xo.getIntegerAttribute(PRE_BURNIN);
+        }
+        adaptationDelay = xo.getAttribute(AUTO_OPTIMIZE, xo.getAttribute(ADAPTATION_DELAY, adaptationDelay));
+
+        double adaptationTarget = 0.234;
+        if (System.getProperty("mcmc.adaptation_target") != null) {
+            adaptationTarget = Double.parseDouble(System.getProperty("mcmc.adaptation_target"));
+        }
+
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
 
         long fullEvaluationCount = 1000;
@@ -78,8 +89,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 fullEvaluationCount,
                 minOperatorCountForFullEvaluation,
                 evaluationTestThreshold,
-                useCoercion,
-                coercionDelay,
+                useAdaptation,
+                adaptationDelay,
+                adaptationTarget,
                 temperature);
 
         OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
@@ -131,8 +143,8 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the MCMC chain:" +
                 "\n  chainLength=" + options.getChainLength() +
-                "\n  autoOptimize=" + options.useCoercion() +
-                (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +
+                "\n  autoOptimize=" + options.useAdaptation() +
+                (options.useAdaptation() ? "\n  autoOptimize delayed for " + options.getAdaptationDelay() + " steps" : "") +
                 (options.getFullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
         );
 
@@ -176,8 +188,10 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newLongIntegerRule(CHAIN_LENGTH),
-            AttributeRule.newBooleanRule(COERCION, true),
-            AttributeRule.newIntegerRule(COERCION_DELAY, true),
+            AttributeRule.newBooleanRule(ADAPTATION, true),
+            AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+            AttributeRule.newIntegerRule(ADAPTATION_DELAY, true),
+            AttributeRule.newIntegerRule(AUTO_OPTIMIZE_DELAY, true),
             AttributeRule.newIntegerRule(PRE_BURNIN, true),
             AttributeRule.newDoubleRule(TEMPERATURE, true),
             AttributeRule.newIntegerRule(FULL_EVALUATION, true),
@@ -191,10 +205,12 @@ public class MCMCParser extends AbstractXMLObjectParser {
             new ElementRule(Logger.class, 1, Integer.MAX_VALUE),
     };
 
-    public static final String COERCION = "autoOptimize";
+    public static final String ADAPTATION = "adaptation";
+    public static final String AUTO_OPTIMIZE = "autoOptimize";
     public static final String NAME = "name";
     public static final String PRE_BURNIN = "preBurnin";
-    public static final String COERCION_DELAY = "autoOptimizeDelay";
+    public static final String ADAPTATION_DELAY = "adaptationDelay";
+    public static final String AUTO_OPTIMIZE_DELAY = "autoOptimizeDelay";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String FULL_EVALUATION = "fullEvaluation";

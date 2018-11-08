@@ -30,8 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 
@@ -45,14 +45,14 @@ import java.util.List;
  * @author Luiz Max Carvalho
  * @version $Id$
  */
-public class SubtreeJumpOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
+public class SubtreeJumpOperator extends AbstractTreeOperator {
 
     private double size = 1.0;
     private double accP = 0.234;
     private boolean uniform = false;
 
     private final TreeModel tree;
-    private final CoercionMode mode;
+    private final AdaptationMode mode;
 
 
     /**
@@ -62,7 +62,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
      * @param size: the variance of a half normal used to compute distance weights (as a rule, larger size, bolder moves)
      * @param mode
      */
-    public SubtreeJumpOperator(TreeModel tree, double weight, double size, double accP, boolean uniform, CoercionMode mode) {
+    public SubtreeJumpOperator(TreeModel tree, double weight, double size, double accP, boolean uniform, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
@@ -266,11 +266,11 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(getSize());
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         setSize(Math.exp(value));
     }
 
@@ -278,31 +278,9 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         return getSize();
     }
 
-    public CoercionMode getMode() {
+    public AdaptationMode getMode() {
         return mode;
     }
-
-    public double getTargetAcceptanceProbability() {
-        return accP;
-    }
-
-    public String getPerformanceSuggestion() {
-        double prob = Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        if (size <=0) {
-            return "";
-        }
-
-        double ws = OperatorUtils.optimizeWindowSize(size, Double.MAX_VALUE, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
-    }
-
 
     public String getOperatorName() {
         return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";

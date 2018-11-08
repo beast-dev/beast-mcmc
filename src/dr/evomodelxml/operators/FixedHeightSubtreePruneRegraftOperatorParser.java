@@ -27,8 +27,6 @@ package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 

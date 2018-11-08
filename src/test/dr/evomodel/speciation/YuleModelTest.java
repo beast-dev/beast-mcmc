@@ -18,10 +18,7 @@ import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.SimpleOperatorSchedule;
+import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -65,7 +62,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
         MCMCOperator operator =
-                new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
+                new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         yuleTester(treeModel, schedule);

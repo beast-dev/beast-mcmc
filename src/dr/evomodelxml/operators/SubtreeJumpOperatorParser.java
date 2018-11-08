@@ -28,8 +28,8 @@ package dr.evomodelxml.operators;
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeJumpOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -50,7 +50,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
@@ -66,7 +66,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
         if (Double.isInfinite(size)) {
             // uniform so no auto optimize
-            mode = CoercionMode.COERCION_OFF;
+            mode = AdaptationMode.ADAPTATION_OFF;
         }
 
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
@@ -74,7 +74,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         }
 
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, uniform, mode);
-        operator.setTargetAcceptanceProbability(targetAcceptance);
+//        operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;
     }
@@ -95,7 +95,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule(SIZE, true),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };
 

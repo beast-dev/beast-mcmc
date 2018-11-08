@@ -338,16 +338,6 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 		else return 0.01;
 	}
 
-	public String getPerformanceSuggestion() {
-		if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-			return "";
-		} else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-			return "";
-		} else {
-			return "";
-		}
-	}
-
 	public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
 		public String getParserName() {

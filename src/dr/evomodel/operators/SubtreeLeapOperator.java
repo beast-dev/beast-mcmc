@@ -51,13 +51,13 @@ import java.util.Map;
  * @author Luiz Max Carvalho
  * @version $Id$
  */
-public class SubtreeLeapOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
+public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
     private double size = 1.0;
-    private double accP = 0.234;
 
     private final TreeModel tree;
-    private final CoercionMode mode;
+    private final AdaptationMode mode;
+    private final double targetAcceptance;
 
     /**
      * Constructor
@@ -67,11 +67,11 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
-        this.accP = accP;
+        this.targetAcceptance = targetAcceptance;
         this.mode = mode;
     }
 
@@ -282,11 +282,11 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(getSize());
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         setSize(Math.exp(value));
     }
 
@@ -294,26 +294,37 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         return getSize();
     }
 
-    public CoercionMode getMode() {
+    public AdaptationMode getMode() {
         return mode;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return accP;
+    public double getMinimumAcceptanceLevel() {
+        return 0.1;
     }
 
+    public double getMaximumAcceptanceLevel() {
+        return 0.4;
+    }
 
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.20;
+    }
 
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.30;
+    }
 
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
+    public final String getPerformanceSuggestion() {
+        return null;
+    }
+
+    @Override
+    public double getTargetAcceptanceProbability() {
+        return targetAcceptance;
+    }
+
+    public String getAdaptableParameterName() {
+        return "size";
     }
 
     public String getOperatorName() {

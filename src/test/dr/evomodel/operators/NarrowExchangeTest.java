@@ -15,7 +15,7 @@ import dr.evomodel.operators.ExchangeOperator;
 //import dr.evomodel.operators.NNI;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
@@ -76,7 +76,7 @@ public class NarrowExchangeTest  extends OperatorAssert{
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
         ExchangeOperator operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);
-        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
         UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();

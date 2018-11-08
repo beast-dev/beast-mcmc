@@ -144,11 +144,6 @@ System.err.print("\n");
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public double doOperation() {
         double[] draws=null;
 

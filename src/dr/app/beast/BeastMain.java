@@ -339,6 +339,9 @@ public class BeastMain {
                         new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
+                        new Arguments.Option("adaptation_off", "Don't adapt operator sizes"),
+                        new Arguments.RealOption("adaptation_target", 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
+
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
@@ -362,16 +365,18 @@ public class BeastMain {
                         new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
+                        new Arguments.StringOption("smc", "FOLDER", "Specify a folder of particle start states"),
+
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
-                        new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
-                        new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
-                        new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
-                        new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
-                        new Arguments.Option("force_resume", "Force resuming from a dumped state"),
+                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a savesd state from"),
+                        new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
+                        new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
+                        new Arguments.StringOption("save_at", "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
@@ -442,65 +447,79 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
 
-        if (arguments.hasOption("tests")) {
-            long fullEvaluationCount = arguments.getLongOption("tests");
-            System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
-        }
-
-        if (arguments.hasOption("threshold")) {
-            double fullEvaluationThreshold = arguments.getRealOption("threshold");
-            System.setProperty("mcmc.evaluation.threshold", Double.toString(fullEvaluationThreshold));
-        }
-
         int threadCount = -1;
 
-        if (arguments.hasOption("java")) {
-            useJava = true;
-        }
+        boolean usingSMC = false;
 
-        if (arguments.hasOption("prefix")) {
-            fileNamePrefix = arguments.getStringOption("prefix");
-        }
-
-        // ============= MC^3 settings =============
-
-        int chainCount = 1;
-        if (arguments.hasOption("mc3_chains")) {
-            chainCount = arguments.getIntegerOption("mc3_chains");
-        } else if (arguments.hasOption("mc3_temperatures")) {
-            chainCount = 1 + arguments.getRealArrayOption("mc3_temperatures").length;
-        }
-
-        double delta = DEFAULT_DELTA;
-        if (arguments.hasOption("mc3_delta")) {
-            if (arguments.hasOption("mc3_temperatures")) {
-                System.err.println("Either the -mc3_delta or the -mc3_temperatures option should be used, not both");
-                System.err.println();
-                printUsage(arguments);
-                System.exit(1);
-            }
-            delta = arguments.getRealOption("mc3_delta");
-        }
-
-        double[] chainTemperatures = new double[chainCount];
-        chainTemperatures[0] = 1.0;
-        if (arguments.hasOption("mc3_temperatures")) {
-            double[] hotChainTemperatures = arguments.getRealArrayOption("mc3_temperatures");
-            assert hotChainTemperatures.length == chainCount - 1;
-
-            System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
-        } else {
-            for (int i = 1; i < chainCount; i++) {
-                chainTemperatures[i] = 1.0 / (1.0 + (delta * i));
-            }
-        }
-
+        boolean usingMC3 = false;
+        double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
-        if (arguments.hasOption("mc3_swap")) {
-            swapChainsEvery = arguments.getIntegerOption("mc3_swap");
+
+        if (arguments.hasOption("smc")) {
+            System.setProperty("smc_particle_folder", arguments.getStringOption("smc"));
+            usingSMC = true;
+
+            System.setProperty("mcmc.evaluation.count", Long.toString(0));
         }
 
-        boolean useMC3 = chainCount > 1;
+        if (!usingSMC) {
+            if (arguments.hasOption("tests")) {
+                long fullEvaluationCount = arguments.getLongOption("tests");
+                System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
+            }
+
+            if (arguments.hasOption("threshold")) {
+                double fullEvaluationThreshold = arguments.getRealOption("threshold");
+                System.setProperty("mcmc.evaluation.threshold", Double.toString(fullEvaluationThreshold));
+            }
+
+            if (arguments.hasOption("java")) {
+                useJava = true;
+            }
+
+            if (arguments.hasOption("prefix")) {
+                fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            // ============= MC^3 settings =============
+
+            int chainCount = 1;
+            if (arguments.hasOption("mc3_chains")) {
+                chainCount = arguments.getIntegerOption("mc3_chains");
+            } else if (arguments.hasOption("mc3_temperatures")) {
+                chainCount = 1 + arguments.getRealArrayOption("mc3_temperatures").length;
+            }
+
+            double delta = DEFAULT_DELTA;
+            if (arguments.hasOption("mc3_delta")) {
+                if (arguments.hasOption("mc3_temperatures")) {
+                    System.err.println("Either the -mc3_delta or the -mc3_temperatures option should be used, not both");
+                    System.err.println();
+                    printUsage(arguments);
+                    System.exit(1);
+                }
+                delta = arguments.getRealOption("mc3_delta");
+            }
+
+            chainTemperatures = new double[chainCount];
+            chainTemperatures[0] = 1.0;
+            if (arguments.hasOption("mc3_temperatures")) {
+                double[] hotChainTemperatures = arguments.getRealArrayOption("mc3_temperatures");
+                assert hotChainTemperatures.length == chainCount - 1;
+
+                System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
+            } else {
+                for (int i = 1; i < chainCount; i++) {
+                    chainTemperatures[i] = 1.0 / (1.0 + (delta * i));
+                }
+            }
+
+            if (arguments.hasOption("mc3_swap")) {
+                swapChainsEvery = arguments.getIntegerOption("mc3_swap");
+            }
+
+            usingMC3 = chainCount > 1;
+        }
 
         // ============= BEAGLE settings =============
         long beagleFlags = 0;
@@ -539,7 +558,7 @@ public class BeastMain {
             int beagleThreadCount = arguments.getIntegerOption("beagle_thread_count");
             if (beagleThreadCount == 1) {
                 beagleFlags &= ~BeagleFlag.THREADING_CPP.getMask();
-                beagleFlags |= BeagleFlag.THREADING_NONE.getMask();                
+                beagleFlags |= BeagleFlag.THREADING_NONE.getMask();
             }
             System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
         }
@@ -604,51 +623,63 @@ public class BeastMain {
             }
         }
 
-        if (arguments.hasOption("load_dump")) {
-            String debugStateFile = arguments.getStringOption("load_dump");
-            System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, debugStateFile);
+        if (arguments.hasOption("adaptation_off")) {
+            System.setProperty("mcmc.use_adaptation", Boolean.FALSE.toString());
+        }
+        if (arguments.hasOption("adaptation_target")) {
+            System.setProperty("adaptation_target",
+                    Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
         }
 
-        if (arguments.hasOption("dump_state")) {
-            long debugWriteState = arguments.getLongOption("dump_state");
-            System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(debugWriteState));
-        }
+        if (!usingSMC) {
+            // ignore these other options
 
-        if (arguments.hasOption("dump_every")) {
-            long debugWriteEvery = arguments.getLongOption("dump_every");
-            System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, Long.toString(debugWriteEvery));
-        }
-
-        if (arguments.hasOption("save_dump")) {
-            String debugStateFile = arguments.getStringOption("save_dump");
-            System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
-        }
-
-        if (arguments.hasOption("force_resume")) {
-            System.setProperty("force.resume", Boolean.TRUE.toString());
-        }
-
-        if (arguments.hasOption("citations_file")) {
-            String debugStateFile = arguments.getStringOption("citations_file");
-            System.setProperty("citations.filename", debugStateFile);
-        }
-
-        if (useMPI) {
-            String[] nullArgs = new String[0];
-            try {
-                BeastMPI.Init(nullArgs);
-            } catch (Exception e) {
-                throw new RuntimeException("Unable to access MPI.");
+            if (arguments.hasOption("load_state")) {
+                String stateFile = arguments.getStringOption("load_state");
+                System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, stateFile);
             }
-            int rank = BeastMPI.COMM_WORLD.Rank();
-            System.setProperty("mpi.rank.postfix", String.valueOf(rank));
 
-        }
+            if (arguments.hasOption("save_at")) {
+                long saveAt = arguments.getLongOption("save_at");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(saveAt));
+            }
 
-        String rankProp = System.getProperty("mpi.rank.postfix");
-        if (rankProp != null) {
-            int rank = Integer.valueOf(rankProp);
-            seed = updateSeedByRank(seed, rank);
+            if (arguments.hasOption("save_every")) {
+                long saveEvery = arguments.getLongOption("save_every");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, Long.toString(saveEvery));
+            }
+
+            if (arguments.hasOption("save_state")) {
+                String stateFile = arguments.getStringOption("save_state");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, stateFile);
+            }
+
+            if (arguments.hasOption("force_resume")) {
+                System.setProperty("force.resume", Boolean.TRUE.toString());
+            }
+
+            if (arguments.hasOption("citations_file")) {
+                String debugStateFile = arguments.getStringOption("citations_file");
+                System.setProperty("citations.filename", debugStateFile);
+            }
+
+            if (useMPI) {
+                String[] nullArgs = new String[0];
+                try {
+                    BeastMPI.Init(nullArgs);
+                } catch (Exception e) {
+                    throw new RuntimeException("Unable to access MPI.");
+                }
+                int rank = BeastMPI.COMM_WORLD.Rank();
+                System.setProperty("mpi.rank.postfix", String.valueOf(rank));
+
+            }
+
+            String rankProp = System.getProperty("mpi.rank.postfix");
+            if (rankProp != null) {
+                int rank = Integer.valueOf(rankProp);
+                seed = updateSeedByRank(seed, rank);
+            }
         }
 
         int maxErrorCount = 0;
@@ -837,7 +868,8 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers,
+                    usingMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             // The stack trace here is not useful
 //            rte.printStackTrace(System.err);

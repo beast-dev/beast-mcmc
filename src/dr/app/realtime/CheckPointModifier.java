@@ -33,7 +33,7 @@ import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 
@@ -204,11 +204,11 @@ public class CheckPointModifier extends BeastCheckpointer {
                 }
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));
-                if (operator instanceof CoercableMCMCOperator) {
+                if (operator instanceof AdaptableMCMCOperator) {
                     if (fields.length != 5) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
-                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
                 }
                 line = in.readLine();
                 fields = line.split("\t");

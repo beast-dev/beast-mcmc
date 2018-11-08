@@ -33,7 +33,7 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.state.Factory;
@@ -236,9 +236,9 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 out.print(operator.getAcceptCount());
                 out.print("\t");
                 out.print(operator.getRejectCount());
-                if (operator instanceof CoercableMCMCOperator) {
+                if (operator instanceof AdaptableMCMCOperator) {
                     out.print("\t");
-                    out.print(((CoercableMCMCOperator)operator).getCoercableParameter());
+                    out.print(((AdaptableMCMCOperator)operator).getAdaptableParameter());
                 }
                 out.println();
             }
@@ -439,11 +439,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 }
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));
-                if (operator instanceof CoercableMCMCOperator) {
+                if (operator instanceof AdaptableMCMCOperator) {
                     if (fields.length != 5) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
-                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
                 }
             }
 

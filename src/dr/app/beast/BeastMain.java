@@ -437,8 +437,6 @@ public class BeastMain {
         }
 
         final boolean strictXML = arguments.hasOption("strict");
-        final boolean window = arguments.hasOption("window");
-        final boolean options = arguments.hasOption("options") || (argumentCount == 0);
         final boolean working = arguments.hasOption("working");
         String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");
@@ -461,6 +459,10 @@ public class BeastMain {
 
             System.setProperty("mcmc.evaluation.count", Long.toString(0));
         }
+
+        // smc option is always run without GUI.
+        final boolean window = !usingSMC && arguments.hasOption("window");
+        final boolean options = !usingSMC && (arguments.hasOption("options") || (argumentCount == 0));
 
         if (!usingSMC) {
             if (arguments.hasOption("tests")) {

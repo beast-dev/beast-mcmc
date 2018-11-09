@@ -287,6 +287,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         CommonOps.transpose(varianceXY, varianceYX);
 
         blockUnwrap(varianceYY, varianceXX, varianceXY, varianceYX, variances, destinationOffset);
+        schurComplementInverse(varianceYY, varianceXX, varianceXY, varianceYX, precisions, destinationOffset);
     }
 
     private void computeIOUActualization(final int scaledOffset,
@@ -323,6 +324,41 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                 destination[offset + (i + dimProcess) * dimTrait + j] = XY.get(i, j);
             }
         }
+    }
+
+    private void schurComplementInverse(final DenseMatrix64F A, final DenseMatrix64F D,
+                                        final DenseMatrix64F C, final DenseMatrix64F B,
+                                        final double[] destination, final int offset) {
+        DenseMatrix64F invA = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.invert(A, invA);
+        DenseMatrix64F invMatD = getSchurInverseComplement(invA, D, C, B);
+
+        DenseMatrix64F invAB = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.mult(invA, B, invAB);
+        DenseMatrix64F invMatB = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.mult(-1.0, invAB, invMatD, invMatB);
+
+        DenseMatrix64F CinvA = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.mult(C, invA, CinvA);
+        DenseMatrix64F invMatC = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.mult(-1.0, invMatD, CinvA, invMatC);
+
+        DenseMatrix64F invMatA = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.mult(-1.0, invMatB, CinvA, invMatA);
+        CommonOps.addEquals(invMatA, invA);
+
+        blockUnwrap(invMatA, invMatD, invMatC, invMatB, destination, offset);
+    }
+
+    private DenseMatrix64F getSchurInverseComplement(final DenseMatrix64F invA, final DenseMatrix64F D,
+                                        final DenseMatrix64F C, final DenseMatrix64F B) {
+        DenseMatrix64F complement = new DenseMatrix64F(dimProcess, dimProcess);
+        DenseMatrix64F tmp = new DenseMatrix64F(dimProcess, dimProcess);
+        CommonOps.mult(invA, B, tmp);
+        CommonOps.mult(-1.0, C, tmp, complement);
+        CommonOps.addEquals(complement, D);
+        CommonOps.invert(complement);
+        return complement;
     }
 
     @Override
@@ -373,8 +409,6 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
             final double edgeLength = edgeLengths[up];
 
             computeIOUVarianceBranch(unscaledOffset, scaledOffset, edgeLength, inverseSelectionStrength);
-
-            invertVector(variances, precisions, scaledOffset, dimTrait);
         }
 
         if (TIMING) {

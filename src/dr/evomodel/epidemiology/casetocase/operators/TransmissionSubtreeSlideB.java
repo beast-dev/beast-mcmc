@@ -476,9 +476,25 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements A
         return "size";
     }
 
+    public double getMinimumAcceptanceLevel() {
+        return MINIMUM_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return MAXIMUM_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return MINIMUM_GOOD_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return MAXIMUM_GOOD_ACCEPTANCE_LEVEL;
+    }
+
     @Override
     public String getPerformanceSuggestion() {
-        return "not implemented";
+        return "";
     }
 
     public String getOperatorName() {

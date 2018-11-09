@@ -441,8 +441,24 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements A
         return mode;
     }
 
+    public double getMinimumAcceptanceLevel() {
+        return MINIMUM_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return MAXIMUM_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return MINIMUM_GOOD_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return MAXIMUM_GOOD_ACCEPTANCE_LEVEL;
+    }
+
     public String getPerformanceSuggestion() {
-        return "not implemented";
+        return "";
     }
 
     public String getOperatorName() {

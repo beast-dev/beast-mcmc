@@ -43,9 +43,26 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
         return targetAcceptanceProbability;
     }
 
-    public void setTargetAcceptanceProbability(double tap) {
-        targetAcceptanceProbability = tap;
+    public void setTargetAcceptanceProbability(double targetAcceptanceProbability) {
+        this.targetAcceptanceProbability = targetAcceptanceProbability;
     }
+
+    public double getMinimumAcceptanceLevel() {
+        return MINIMUM_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return MAXIMUM_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return MINIMUM_GOOD_ACCEPTANCE_LEVEL;
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return MAXIMUM_GOOD_ACCEPTANCE_LEVEL;
+    }
+
 
     public String getPerformanceSuggestion() {
         //double d = OperatorUtils.optimizeWindowSize(getRawParameter(), parameter.getParameterValue(0) * 2.0, prob, targetProb);

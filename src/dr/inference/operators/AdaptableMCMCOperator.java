@@ -34,14 +34,14 @@ package dr.inference.operators;
  */
 public interface AdaptableMCMCOperator extends MCMCOperator {
 
-    public static final String ADAPTABLE = "adaptable";
-    public static final String AUTO_OPTIMIZE = "autoOptimize";
+    String ADAPTABLE = "adaptable";
+    String AUTO_OPTIMIZE = "autoOptimize";
 
-    public static final double DEFAULT_ADAPTATION_TARGET = 0.234;
-    public static final double MINIMUM_ACCEPTANCE_LEVEL = 0.1;
-    public static final double MAXIMUM_ACCEPTANCE_LEVEL = 0.4;
-    public static final double MINIMUM_GOOD_ACCEPTANCE_LEVEL = 0.2;
-    public static final double MAXIMUM_GOOD_ACCEPTANCE_LEVEL = 0.3;
+    double DEFAULT_ADAPTATION_TARGET = 0.234;
+    double MINIMUM_ACCEPTANCE_LEVEL = 0.1;
+    double MAXIMUM_ACCEPTANCE_LEVEL = 0.4;
+    double MINIMUM_GOOD_ACCEPTANCE_LEVEL = 0.2;
+    double MAXIMUM_GOOD_ACCEPTANCE_LEVEL = 0.3;
 
     /**
      * An adaptable parameter must have a range from -infinity to +infinity with a preference for
@@ -73,9 +73,17 @@ public interface AdaptableMCMCOperator extends MCMCOperator {
      */
     double getRawParameter();
 
+    String getAdaptableParameterName();
+
     double getTargetAcceptanceProbability();
 
-    String getAdaptableParameterName();
+    double getMinimumAcceptanceLevel();
+
+    double getMaximumAcceptanceLevel();
+
+    double getMinimumGoodAcceptanceLevel();
+
+    double getMaximumGoodAcceptanceLevel();
 
     /**
      * @return a short descriptive message of the performance of this operator.

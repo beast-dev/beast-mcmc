@@ -795,8 +795,12 @@ public class BeastMain {
 
         if (BeagleInfo.getVersion().startsWith("1.")) {
             System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                    "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
+                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
+        } else if (BeagleInfo.getVersion().startsWith("2.")) {
+            System.err.println("WARNING: You are currenly using BEAGLE v2.x. For best performance and compatibility\n" +
+                    "with models in BEAST, please upgrade to BEAGLE v3.x at http://github.com/beagle-dev/beagle-lib/\n");
         }
+
 
         if (beagleShowInfo) {
             BeagleInfo.printResourceList();

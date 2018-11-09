@@ -57,7 +57,7 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         if (!(substitutionModel instanceof ParameterReplaceableSubstitutionModel)) {
             throw new RuntimeException("The substitution model is not parameter replaceable!");
         }
-        CompoundParameter branchParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+        Parameter branchParameter = (Parameter) xo.getChild(Parameter.class);
 
         XMLObject cxo = xo.getChild(BRANCH_SPECIFIC_PARAMETER);
         Parameter oldParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -75,6 +75,8 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
                 throw new RuntimeException("branchSubstitutionParameter miss-specified.");
             }
 
+            CompoundParameter branchSpecificParameter = (CompoundParameter) branchParameter;
+
             if (tree.getRoot().getNumber() != tree.getNodeCount() - 1) {
                     throw new RuntimeException("Root node number is not the maximum.");
             }
@@ -85,19 +87,19 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
 
                 substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                         oldParameter,
-                        branchParameter.getParameter(nodeNum)));
+                        branchSpecificParameter.getParameter(nodeNum)));
 
             }
 
             Parameter rootParameter = new Parameter.Default((String) null,
-                    branchParameter.getParameter(0).getParameterValue(0),
-                    branchParameter.getParameter(0).getBounds().getLowerLimit(0),
-                    branchParameter.getParameter(0).getBounds().getUpperLimit(0));
+                    branchSpecificParameter.getParameter(0).getParameterValue(0),
+                    branchSpecificParameter.getParameter(0).getBounds().getLowerLimit(0),
+                    branchSpecificParameter.getParameter(0).getBounds().getUpperLimit(0));
             substitutionModelList.add(((ParameterReplaceableSubstitutionModel) substitutionModel).replaceParameter(
                     oldParameter, rootParameter));
-            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(branchParameter, substitutionModelList, tree);
+            substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(branchSpecificParameter, substitutionModelList, tree);
             branchParameterModel = new ArbitrarySubstitutionParameterBranchModel(ARBITRARY_SUBSTITUTION_PARAMETER_BRANCH_MODEL,
-                    substitutionModelProvider, branchParameter, rootParameter, tree);
+                    substitutionModelProvider, branchSpecificParameter, rootParameter, tree);
         }
 
         return branchParameterModel;
@@ -108,7 +110,7 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         return new XMLSyntaxRule[]{
                 new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
                 new ElementRule(TreeModel.class, "The tree."),
-                new ElementRule(CompoundParameter.class, "Substitution Parameters."),
+                new ElementRule(Parameter.class, "Substitution Parameters."),
                 new ElementRule(BRANCH_SPECIFIC_PARAMETER, Parameter.class, "The branch-specific substitution parameter.")
         };
     }

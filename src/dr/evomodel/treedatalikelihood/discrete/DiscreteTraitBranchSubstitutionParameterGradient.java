@@ -37,6 +37,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -83,11 +84,15 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
+            if (!(branchSubstitutionParameter instanceof CompoundParameter)) {
+                throw new RuntimeException("Only support CompoundParameter for now.");
+            }
             ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchModel);
+                    branchModel,
+                    (CompoundParameter) branchSubstitutionParameter);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

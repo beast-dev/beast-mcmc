@@ -60,7 +60,8 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         ArbitrarySubstitutionParameterBranchModel branchModel = (ArbitrarySubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
-        Parameter branchSubstitutionParameter = branchModel.getSubstitutionParameter();
+//        Parameter branchSubstitutionParameter = branchModel.getSubstitutionParameter();
+        Parameter branchSubstitutionParameter = (Parameter) xo.getChild(Parameter.class);
 
         return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
                 branchSubstitutionParameter, branchModel, useHessian);
@@ -75,6 +76,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(ArbitrarySubstitutionParameterBranchModel.class),
+            new ElementRule(Parameter.class)
     };
 
     @Override

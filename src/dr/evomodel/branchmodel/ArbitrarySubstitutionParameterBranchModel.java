@@ -71,8 +71,8 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
         return substitutionParameter;
     }
 
-    public Parameter getSubstitutionParameterForBranch(NodeRef branch) {
-        return substitutionParameter.getParameter(parameterIndexHelper.getParameterIndexFromNodeNumber(branch.getNumber()));
+    public Parameter getSubstitutionParameterForBranch(NodeRef branch, CompoundParameter branchParameter) {
+        return branchParameter.getParameter(parameterIndexHelper.getParameterIndexFromNodeNumber(branch.getNumber()));
     }
 
     @Override

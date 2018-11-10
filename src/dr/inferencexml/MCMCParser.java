@@ -25,6 +25,7 @@
 
 package dr.inferencexml;
 
+import dr.app.checkpoint.BeastCheckpointer;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
@@ -34,9 +35,12 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.smc.SMC;
+import dr.inference.smc.SMCOptions;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MCMCParser extends AbstractXMLObjectParser {
 
@@ -48,13 +52,28 @@ public class MCMCParser extends AbstractXMLObjectParser {
      * @return an mcmc object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        String id = xo.getAttribute(NAME, "mcmc1");
 
-        MCMC mcmc = new MCMC(xo.getAttribute(NAME, "mcmc1"));
+        if (System.getProperty("smc_particle_folder") != null) {
+            return parseSMC(id, xo);
+        }
+
+        return parseMCMC(id, xo);
+    }
+
+    /**
+     * Parse the MCMC object.
+     * @param xo the XML object
+     * @return the MXMX object
+     * @throws XMLParseException an exception of there is an XML parse error
+     */
+    private MCMC parseMCMC(String id, XMLObject xo) throws XMLParseException {
+        MCMC mcmc = new MCMC(id);
 
         long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
         boolean useAdaptation =
                 xo.getAttribute(ADAPTATION, true) ||
-                xo.getAttribute(AUTO_OPTIMIZE, true);
+                        xo.getAttribute(AUTO_OPTIMIZE, true);
         if (System.getProperty("mcmc.use_adaptation") != null) {
             useAdaptation = Boolean.parseBoolean(System.getProperty("mcmc.use_adaptation"));
         }
@@ -170,6 +189,51 @@ public class MCMCParser extends AbstractXMLObjectParser {
         return mcmc;
     }
 
+    /**
+     * Parse the SMC variant of MCMC.
+     * @param xo the XML object
+     * @return the SMC object
+     * @throws XMLParseException an exception of there is an XML parse error
+     */
+    private SMC parseSMC(String id, XMLObject xo) throws XMLParseException {
+
+        List<BeastCheckpointer> particleStates = new ArrayList<BeastCheckpointer>();
+
+        String particleFolder = System.getProperty("smc_particle_folder");
+
+        // todo: parse through folder and create BeastCheckpointer files for each
+
+        SMC smc = new SMC(id, particleStates);
+
+        long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
+
+        SMCOptions options = new SMCOptions(chainLength);
+
+        OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
+        Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+
+        likelihood.setUsed();
+
+        ArrayList<Logger> loggers = new ArrayList<Logger>();
+
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            Object child = xo.getChild(i);
+            if (child instanceof Logger) {
+                loggers.add((Logger) child);
+            }
+        }
+
+        Logger[] loggerArray = new Logger[loggers.size()];
+        loggers.toArray(loggerArray);
+
+        java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the SMC chain set for particles:" +
+                "\n  chainLength=" + options.getChainLength()
+        );
+
+        smc.init(options, likelihood, opsched, loggerArray);
+
+        return smc;
+    }
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************

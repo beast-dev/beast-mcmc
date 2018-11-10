@@ -72,7 +72,7 @@ public class CheckPointModifier extends BeastCheckpointer {
         return readStateFromFile(new File(loadStateFileName), markovChain, savedLnL);
     }
 
-    private long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+    protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
 
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
         long state = -1;

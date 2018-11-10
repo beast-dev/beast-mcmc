@@ -36,10 +36,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.state.Factory;
-import dr.inference.state.StateLoader;
-import dr.inference.state.StateSaver;
-import dr.inference.state.StateSaverChainListener;
+import dr.inference.state.*;
 import dr.math.MathUtils;
 
 import java.io.*;
@@ -51,7 +48,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Guy Baele
  */
-public class BeastCheckpointer implements StateLoader, StateSaver {
+public class BeastCheckpointer implements StateLoaderSaver {
 
     private static final boolean DEBUG = false;
 
@@ -98,6 +95,27 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             @Override
             public MarkovChainListener[] getStateSaverChainListeners() {
                 return listeners.toArray(new MarkovChainListener[0]);
+            }
+
+            @Override
+            public StateLoaderSaver getStateLoaderSaver(final File loadFile, final File saveFile) {
+                return new StateLoaderSaver() {
+
+                    @Override
+                    public boolean saveState(MarkovChain markovChain, long state, double lnL) {
+                        return BeastCheckpointer.this.writeStateToFile(saveFile, state, lnL, markovChain);
+                    }
+
+                    @Override
+                    public long loadState(MarkovChain markovChain, double[] savedLnL) {
+                        return BeastCheckpointer.this.readStateFromFile(loadFile, markovChain, savedLnL);
+                    }
+
+                    @Override
+                    public void checkLoadState(double savedLnL, double lnL) {
+                        // do nothing.
+                    }
+                };
             }
         };
 
@@ -190,7 +208,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         }
     }
 
-    private boolean writeStateToFile(File file, long state, double lnL, MarkovChain markovChain) {
+    protected boolean writeStateToFile(File file, long state, double lnL, MarkovChain markovChain) {
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
 
         OutputStream fileOut = null;
@@ -332,7 +350,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         return true;
     }
 
-    private long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+    protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
 
         long state = -1;
@@ -556,10 +574,10 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                                 }
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
-                               // childOrder[i] = Integer.parseInt(fields[2]);
+                                // childOrder[i] = Integer.parseInt(fields[2]);
                                 childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                 //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
+                                    //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
                                     traitValues[j][Integer.parseInt(fields[0])] = Double.parseDouble(fields[3+j]);
                                 }
                             }

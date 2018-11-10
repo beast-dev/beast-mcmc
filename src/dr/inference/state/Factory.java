@@ -27,6 +27,8 @@ package dr.inference.state;
 
 import dr.inference.markovchain.MarkovChainListener;
 
+import java.io.File;
+
 public abstract class Factory {
 
     /**
@@ -42,6 +44,12 @@ public abstract class Factory {
      * @return the array
      */
     public abstract MarkovChainListener[] getStateSaverChainListeners();
+
+    /**
+     * Get an instance of StateLoader/Saver for use as a particle for SMC.
+     * @return the StateLoaderSaver
+     */
+    public abstract StateLoaderSaver getStateLoaderSaver(File loadFile, File saveFile);
 
     // Set this to a concrete instance to provide these classes to the MarkovChain
     public static Factory INSTANCE;

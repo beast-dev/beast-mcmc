@@ -25,7 +25,6 @@
 
 package dr.inferencexml;
 
-import dr.app.checkpoint.BeastCheckpointer;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
@@ -37,8 +36,11 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.smc.SMC;
 import dr.inference.smc.SMCOptions;
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoaderSaver;
 import dr.xml.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -197,11 +199,34 @@ public class MCMCParser extends AbstractXMLObjectParser {
      */
     private SMC parseSMC(String id, XMLObject xo) throws XMLParseException {
 
-        List<BeastCheckpointer> particleStates = new ArrayList<BeastCheckpointer>();
+        List<StateLoaderSaver> particleStates = new ArrayList<StateLoaderSaver>();
 
-        String particleFolder = System.getProperty("smc_particle_folder");
+        String particleFolder = System.getProperty("smc.particle_folder");
+        File folder = new File(particleFolder);
+        if (!folder.isDirectory()) {
+            throw new XMLParseException("Specified particle folder is not a folder");
+        }
 
-        // todo: parse through folder and create BeastCheckpointer files for each
+        File[] particleFiles = folder.listFiles();
+        if (particleFiles == null || particleFiles.length == 0) {
+            throw new XMLParseException("Specified particle folder is empty");
+        }
+
+        for (final File particleFile : particleFiles) {
+            // The particles are setup with a fixed loading and saving file.
+
+            if (particleFile.isFile() && particleFile.getName().endsWith(".part")) {
+                final File saveFile = new File(particleFile.getAbsolutePath() + ".out");
+
+                particleStates.add(
+                        Factory.INSTANCE.getStateLoaderSaver(particleFile, saveFile)
+                );
+            }
+        }
+
+        if (particleStates.size() == 0) {
+            throw new XMLParseException("No particle files were found in the folder");
+        }
 
         SMC smc = new SMC(id, particleStates);
 
@@ -226,8 +251,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         Logger[] loggerArray = new Logger[loggers.size()];
         loggers.toArray(loggerArray);
 
-        java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the SMC chain set for particles:" +
-                "\n  chainLength=" + options.getChainLength()
+        java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the SMC chain set:" +
+                "\n  particles = " + particleStates.size() +
+                "\n  chain length = " + options.getChainLength()
         );
 
         smc.init(options, likelihood, opsched, loggerArray);

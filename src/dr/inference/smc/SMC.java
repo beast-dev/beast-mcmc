@@ -25,7 +25,6 @@
 
 package dr.inference.smc;
 
-import dr.app.checkpoint.BeastCheckpointer;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
@@ -38,6 +37,7 @@ import dr.inference.model.Model;
 import dr.inference.operators.*;
 import dr.inference.state.Factory;
 import dr.inference.state.StateLoader;
+import dr.inference.state.StateLoaderSaver;
 import dr.inference.state.StateSaver;
 import dr.util.Identifiable;
 import dr.util.NumberFormatter;
@@ -59,7 +59,7 @@ import java.util.List;
  */
 public class SMC implements Identifiable, Spawnable, Loggable {
 
-    public SMC(String id, List<BeastCheckpointer> particleStates) {
+    public SMC(String id, List<StateLoaderSaver> particleStates) {
         this.id = id;
         this.particleStates.addAll(particleStates);
     }
@@ -133,7 +133,7 @@ public class SMC implements Identifiable, Spawnable, Loggable {
 
         mc.addMarkovChainListener(chainListener);
 
-        for (BeastCheckpointer particleState : particleStates) {
+        for (StateLoaderSaver particleState : particleStates) {
             // Don't need the savedLnL - it won't be there
             particleState.loadState(mc, new double[1]);
 
@@ -287,7 +287,7 @@ public class SMC implements Identifiable, Spawnable, Loggable {
      */
     private SMCOptions options;
 
-    private final List<BeastCheckpointer> particleStates = new ArrayList<BeastCheckpointer>();
+    private final List<StateLoaderSaver> particleStates = new ArrayList<StateLoaderSaver>();
     private Logger[] loggers;
     private OperatorSchedule schedule;
 

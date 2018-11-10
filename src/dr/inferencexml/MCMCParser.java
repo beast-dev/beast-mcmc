@@ -81,7 +81,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         }
         long adaptationDelay = chainLength / 100;
         adaptationDelay =
-                xo.getAttribute(AUTO_OPTIMIZE,
+                xo.getAttribute(AUTO_OPTIMIZE_DELAY,
                 xo.getAttribute(ADAPTATION_DELAY,
                 xo.getAttribute(PRE_BURNIN, adaptationDelay)));
 

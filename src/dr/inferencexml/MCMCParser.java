@@ -80,10 +80,10 @@ public class MCMCParser extends AbstractXMLObjectParser {
             useAdaptation = Boolean.parseBoolean(System.getProperty("mcmc.use_adaptation"));
         }
         long adaptationDelay = chainLength / 100;
-        if (xo.hasAttribute(PRE_BURNIN)) {
-            adaptationDelay = xo.getIntegerAttribute(PRE_BURNIN);
-        }
-        adaptationDelay = xo.getAttribute(AUTO_OPTIMIZE, xo.getAttribute(ADAPTATION_DELAY, adaptationDelay));
+        adaptationDelay =
+                xo.getAttribute(AUTO_OPTIMIZE,
+                xo.getAttribute(ADAPTATION_DELAY,
+                xo.getAttribute(PRE_BURNIN, adaptationDelay)));
 
         double adaptationTarget = 0.234;
         if (System.getProperty("mcmc.adaptation_target") != null) {
@@ -93,16 +93,16 @@ public class MCMCParser extends AbstractXMLObjectParser {
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
 
         long fullEvaluationCount = 1000;
+        fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, fullEvaluationCount);
         if (System.getProperty("mcmc.evaluation.count") != null) {
             fullEvaluationCount = Long.parseLong(System.getProperty("mcmc.evaluation.count"));
         }
-        fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, fullEvaluationCount);
 
         double evaluationTestThreshold = MarkovChain.EVALUATION_TEST_THRESHOLD;
+        evaluationTestThreshold = xo.getAttribute(EVALUATION_THRESHOLD, evaluationTestThreshold);
         if (System.getProperty("mcmc.evaluation.threshold") != null) {
             evaluationTestThreshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
         }
-        evaluationTestThreshold = xo.getAttribute(EVALUATION_THRESHOLD, evaluationTestThreshold);
 
         int minOperatorCountForFullEvaluation = xo.getAttribute(MIN_OPS_EVALUATIONS, 1);
 

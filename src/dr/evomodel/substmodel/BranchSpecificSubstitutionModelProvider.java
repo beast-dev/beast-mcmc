@@ -29,10 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchModel.Mapping;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Parameter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,15 +84,15 @@ public interface BranchSpecificSubstitutionModelProvider {
 
     class Default extends Base implements BranchSpecificSubstitutionModelProvider {
 
-        private final CompoundParameter branchParameter;
+//        private final CompoundParameter branchParameter;
         private final TreeModel tree;
 
-        public Default(CompoundParameter branchParameter, List<SubstitutionModel> substitutionModelList,
+        public Default(List<SubstitutionModel> substitutionModelList,
                        TreeModel tree) {
-            this.branchParameter = branchParameter;
+//            this.branchParameter = branchParameter;
             this.substitutionModelList = substitutionModelList;
             this.tree = tree;
-            assert(branchParameter.getParameterCount() == tree.getNodeCount());
+            assert(substitutionModelList.size() == tree.getNodeCount());
         }
 
         private int getParameterIndexFromNode(NodeRef node) {

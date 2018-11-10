@@ -42,36 +42,54 @@ import java.util.List;
 public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel implements BranchModel {
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
-    private final CompoundParameter substitutionParameter;
-    private final Parameter rootParameter;
+//    private final CompoundParameter substitutionParameter;
+    protected final List<CompoundParameter> substitutionParameterList;
+    private int parameterDimension;
+//    private final Parameter rootParameter;  //TODO: make a list of rootParameter as well?
     private final TreeModel tree;
     private final TreeParameterModel parameterIndexHelper;
 
 
     public ArbitrarySubstitutionParameterBranchModel(String name,
                                                      BranchSpecificSubstitutionModelProvider substitutionModelProvider,
-                                                     CompoundParameter substitutionParameter,
-                                                     Parameter rootParameter,
+                                                     List<CompoundParameter> substitutionParameterList,
+//                                                     Parameter rootParameter,
                                                      TreeModel tree) {
         super(name);
         this.substitutionModelProvider = substitutionModelProvider;
-        this.substitutionParameter = substitutionParameter;
-        this.rootParameter = rootParameter;
+//        this.substitutionParameter = substitutionParameter;
+//        this.rootParameter = rootParameter;
         this.tree = tree;
-        this.parameterIndexHelper = new TreeParameterModel(tree, substitutionParameter, false);
+        this.parameterIndexHelper = new TreeParameterModel(tree, substitutionParameterList.get(0), false);
 
         for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {
             addModel(substitutionModel);
         }
 
+        this.substitutionParameterList = substitutionParameterList;
+        this.parameterDimension = substitutionParameterList.get(0).getDimension();
+        for (CompoundParameter substitutionParameter : substitutionParameterList) {
+            addVariable(substitutionParameter);
+            assert(substitutionParameter.getDimension() == parameterDimension);
+        }
+    }
+
+//    public Parameter getSubstitutionParameter() {
+//        return substitutionParameter;
+//    }
+
+    public void addSubstitutionParameter(CompoundParameter substitutionParameter) {
+        if (substitutionParameter.getDimension() != parameterDimension) {
+            throw new RuntimeException("Wrong dimension of the new BranchSpecificSubstitutionParameter.");
+        }
+        this.substitutionParameterList.add(substitutionParameter);
         addVariable(substitutionParameter);
     }
 
-    public Parameter getSubstitutionParameter() {
-        return substitutionParameter;
-    }
-
     public Parameter getSubstitutionParameterForBranch(NodeRef branch, CompoundParameter branchParameter) {
+        if (!substitutionParameterList.contains(branchParameter)) {
+            throw new RuntimeException("The branch parameter is not in the substitution parameter list.");
+        }
         return branchParameter.getParameter(parameterIndexHelper.getParameterIndexFromNodeNumber(branch.getNumber()));
     }
 

@@ -365,7 +365,7 @@ public class BeastMain {
                         new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
-                        new Arguments.StringOption("smc", "FOLDER", "Specify a folder of particle start states"),
+                        new Arguments.StringOption("particles", "FOLDER", "Specify a folder of particle start states"),
 
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
@@ -453,8 +453,8 @@ public class BeastMain {
         double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
 
-        if (arguments.hasOption("smc")) {
-            System.setProperty("smc_particle_folder", arguments.getStringOption("smc"));
+        if (arguments.hasOption("particles")) {
+            System.setProperty("smc.particle_folder", arguments.getStringOption("particles"));
             usingSMC = true;
 
             System.setProperty("mcmc.evaluation.count", Long.toString(0));

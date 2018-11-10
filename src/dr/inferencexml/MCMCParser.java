@@ -54,7 +54,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String id = xo.getAttribute(NAME, "mcmc1");
 
-        if (System.getProperty("smc_particle_folder") != null) {
+        if (System.getProperty("smc.particle_folder") != null) {
             return parseSMC(id, xo);
         }
 

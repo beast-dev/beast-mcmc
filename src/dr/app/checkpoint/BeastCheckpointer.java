@@ -188,12 +188,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
                     }
                     if (Math.abs(lnL - savedLnL) > threshold) {
-                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                        throw new RuntimeException("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
                                 "\nYour XML may require the construction of a randomly generated starting tree. " +
                                 "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
                     } else {
-                        System.out.println("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                        System.out.println("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
                         ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
                         "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
                     }

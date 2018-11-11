@@ -178,7 +178,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             //this also potentially gets the new adapationDelay of a possibly increased chain length
             final long adapationDelay = getAdaptationDelay();
 
-            //assume that dumped state has passed the adapationDelay
+            //assume that saved state has passed the adapationDelay
             //TODO: discuss whether we want to save the adapationDelay or chainLength to file
             if (adapationDelay > loadedState) {
                 mc.runChain(adapationDelay - loadedState, true);

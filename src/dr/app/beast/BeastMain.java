@@ -372,10 +372,10 @@ public class BeastMain {
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
-                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a savesd state from"),
+                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
-                        new Arguments.StringOption("save_at", "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),

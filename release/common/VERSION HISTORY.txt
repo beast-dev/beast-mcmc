@@ -1,4 +1,4 @@
-                    BEAST v1.10.3 2002-2018
+                    BEAST v1.10.4 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,8 +17,22 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 28th October 2018
+Last updated: a.rambaut@ed.ac.uk - 11th November 2018
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
+
+================================================================================
+
+Version 1.10.4  released 11th November 2018
+
+    New command line options for BEAGLE v3.1:
+        -beagle_threading_off | Turn off CPU multithreading in BEAGLE.
+        -beagle_thread_count  | Limit how many CPU threads BEAGLE uses.
+        By default BEAGLE tries to occupy the entire CPU (i.e., all the
+        available cores). Use this option to share the CPU with other users
+        or processes.
+
+	Bug Fixes:
+		Issue 1038: logcombiner -burnin issue.
 
 ================================================================================
 

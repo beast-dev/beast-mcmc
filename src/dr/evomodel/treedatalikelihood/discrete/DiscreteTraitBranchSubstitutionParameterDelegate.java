@@ -44,6 +44,7 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
     private BranchRateModel branchRateModel;
     private ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
     private CompoundParameter branchParameter;
+    private String name;
     public static String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
     public static String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
@@ -54,6 +55,7 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
                                                             ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
                                                             CompoundParameter branchParameter) {
         super(name, tree, likelihoodDelegate);
+        this.name = name;
         this.branchRateModel = branchRateModel;
         this.arbitrarySubstitutionParameterBranchModel = arbitrarySubstitutionParameterBranchModel;
         this.branchParameter = branchParameter;
@@ -87,14 +89,14 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
     }
 
     protected String getGradientTraitName() {
-        return GRADIENT_TRAIT_NAME;
+        return GRADIENT_TRAIT_NAME + ":" + name;
     }
 
     protected String getHessianTraitName() {
-        return HESSIAN_TRAIT_NAME;
+        return HESSIAN_TRAIT_NAME + ":" + name;
     }
 
     public static String getName(String name) {
-        return GRADIENT_TRAIT_NAME;
+        return GRADIENT_TRAIT_NAME + ":" + name;
     }
 }

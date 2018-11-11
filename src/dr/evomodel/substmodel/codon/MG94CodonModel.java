@@ -25,11 +25,10 @@
 
 package dr.evomodel.substmodel.codon;
 
-import dr.evomodel.substmodel.DefaultEigenSystem;
-import dr.evomodel.substmodel.EigenSystem;
-import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.*;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -44,7 +43,7 @@ import java.util.List;
  * @author Guy Baele
  * @author Philippe lemey
  */
-public class MG94CodonModel extends AbstractCodonModel implements Citable {
+public class MG94CodonModel extends AbstractCodonModel implements Citable, ParameterReplaceableSubstitutionModel {
 
     protected Parameter alphaParameter;
     protected Parameter betaParameter;
@@ -172,4 +171,97 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable {
             "Mol Biol Evol",
             11, 715, 724
     );
+
+    @Override
+    public SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter) {
+        if (oldParameter == alphaParameter) {
+            return new MG94CodonModel(codonDataType, newParameter, betaParameter, freqModel);
+        } else if (oldParameter == betaParameter) {
+            return new MG94CodonModel(codonDataType, alphaParameter, newParameter, freqModel);
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+    }
+
+    @Override
+    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+        WrappedMatrix.ArrayOfArray infinitesimalDifferentialMatrix = getInfinitesimalDifferentialMatrix(parameter);
+        double[] result = DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, infinitesimalDifferentialMatrix, eigenDecomposition);
+        return result;
+    }
+
+    protected WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter) {
+        if (parameter == alphaParameter || parameter == betaParameter) {
+            final double alphaPlusBetaInverse = 1.0 / (getAlpha() + getBeta());
+            final double normalizingConstant = setupMatrix();
+            final double[] Q = new double[stateCount * stateCount];
+            getInfinitesimalMatrix(Q);
+            final double[] differentialRates = new double[rateCount];
+            setupDifferentialRates(parameter, differentialRates, normalizingConstant);
+
+
+            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
+            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix.getArrays());
+            makeValid(differentialMassMatrix.getArrays(), stateCount);
+            final double weightedNormalizationGradient
+                    = getNormalizationValue(differentialMassMatrix.getArrays(), freqModel.getFrequencies()) - alphaPlusBetaInverse;
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    final double result = differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient;
+                    differentialMassMatrix.set(i, j, result);
+                }
+            }
+
+            return differentialMassMatrix;
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
+    protected void setupDifferentialRates(Parameter parameter, double[] differentialRates, double normalizingConstant) {
+        if (parameter == alphaParameter) {
+            for (int i = 0; i < rateCount; i++) {
+                switch (rateMap[i]) {
+                    case 0:
+                        differentialRates[i] = 0.0;
+                        break;
+                    case 1:
+                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
+                        break;        // synonymous transition
+                    case 2:
+                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
+                        break;        // synonymous transversion
+                    case 3:
+                        differentialRates[i] = 0.0;
+                        break;
+                    case 4:
+                        differentialRates[i] = 0.0;
+                        break;
+                }
+            }
+        } else if (parameter == betaParameter) {
+            for (int i = 0; i < rateCount; i++) {
+                switch (rateMap[i]) {
+                    case 0:
+                        differentialRates[i] = 0.0;
+                        break;
+                    case 1:
+                        differentialRates[i] = 0.0;
+                        break;
+                    case 2:
+                        differentialRates[i] = 0.0;
+                        break;
+                    case 3:
+                        differentialRates[i] = 1.0/ normalizingConstant / numNonsynTransitions;
+                        break;         // non-synonymous transition
+                    case 4:
+                        differentialRates[i] = 1.0 / normalizingConstant / numNonsynTransitions;
+                        break;            // non-synonymous transversion
+                }
+            }
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+    }
 }

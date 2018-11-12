@@ -78,7 +78,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         this.branchSubstitutionParameter = branchSubstitutionParameter;
         this.branchModel = arbitrarySubstitutionParameterBranchModel;
         this.useHessian = useHessian;
-        this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, branchSubstitutionParameter, false);
+        this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
 
         String name = DiscreteTraitBranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);

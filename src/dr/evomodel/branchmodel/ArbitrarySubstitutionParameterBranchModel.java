@@ -60,7 +60,7 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
 //        this.substitutionParameter = substitutionParameter;
 //        this.rootParameter = rootParameter;
         this.tree = tree;
-        this.parameterIndexHelper = new TreeParameterModel(tree, substitutionParameterList.get(0), false);
+        this.parameterIndexHelper = new TreeParameterModel(tree,  substitutionParameterList.get(0), true);
 
         for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {
             addModel(substitutionModel);

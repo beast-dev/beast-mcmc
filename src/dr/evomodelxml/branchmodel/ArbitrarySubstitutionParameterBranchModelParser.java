@@ -65,7 +65,6 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
         ArbitrarySubstitutionParameterBranchModel branchParameterModel = null;
 
-        final int numBranch = tree.getNodeCount() - 1;
         assert (dxo.getChildCount() == cxo.getChildCount());
 
         List<CompoundParameter> parameterList = new ArrayList<CompoundParameter>();
@@ -77,7 +76,7 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
 
         ParameterReplaceableSubstitutionModel rootSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
-        for (int nodeNum = 0; nodeNum < tree.getNodeCount() - 1; ++nodeNum) {
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
 
             ParameterReplaceableSubstitutionModel branchSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
 
@@ -87,7 +86,7 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
                 Parameter branchParameter = (Parameter) cxo.getChild(i);
 
 
-                if (!(branchParameter.getDimension() == numBranch && branchParameter instanceof CompoundParameter)) {
+                if (!(branchParameter.getDimension() == tree.getNodeCount() && branchParameter instanceof CompoundParameter)) {
                     throw new RuntimeException("branchSubstitutionParameter miss-specified.");
                 }
 

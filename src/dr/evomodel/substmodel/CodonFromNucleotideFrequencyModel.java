@@ -26,7 +26,6 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Codons;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -41,8 +40,7 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
     private final FrequencyModel nucleotideFrequencyModel;
     private final Codons dataType;
 
-    public CodonFromNucleotideFrequencyModel(String name,
-                                             Codons dataType,
+    public CodonFromNucleotideFrequencyModel(Codons dataType,
                                              FrequencyModel nucleotideFrequencyModel,
                                              Parameter codonFrequencies) {
         super(dataType, codonFrequencies);

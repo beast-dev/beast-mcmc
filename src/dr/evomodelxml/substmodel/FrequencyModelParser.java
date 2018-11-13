@@ -162,7 +162,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
         if (dataType instanceof Codons && xo.getAttribute(CODON_FROM_NUCLEOTIDE, false)) {
             FrequencyModel nucleotideFrequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqsParam);
             Parameter codonFrequencies = new Parameter.Default(dataType.getStateCount(), 1.0 / dataType.getStateCount());
-            return new CodonFromNucleotideFrequencyModel(CODON_FROM_NUCLEOTIDE, (Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
+            return new CodonFromNucleotideFrequencyModel((Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
         } else {
             return new FrequencyModel(dataType, freqsParam);
         }

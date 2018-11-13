@@ -365,17 +365,18 @@ public class BeastMain {
                         new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
-                        new Arguments.StringOption("smc", "FOLDER", "Specify a folder of particle start states"),
+                        new Arguments.StringOption("particles", "FOLDER", "Specify a folder of particle start states"),
 
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
-                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a savesd state from"),
+                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
+                        new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
-                        new Arguments.StringOption("save_at", "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("force_resume", "Force resuming from a saved state"),
 
                         new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
@@ -453,8 +454,8 @@ public class BeastMain {
         double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
 
-        if (arguments.hasOption("smc")) {
-            System.setProperty("smc_particle_folder", arguments.getStringOption("smc"));
+        if (arguments.hasOption("particles")) {
+            System.setProperty("smc.particle_folder", arguments.getStringOption("particles"));
             usingSMC = true;
 
             System.setProperty("mcmc.evaluation.count", Long.toString(0));
@@ -654,6 +655,11 @@ public class BeastMain {
             if (arguments.hasOption("save_state")) {
                 String stateFile = arguments.getStringOption("save_state");
                 System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, stateFile);
+            }
+
+            if (arguments.hasOption("save_stem")) {
+                String stemName = arguments.getStringOption("save_stem");
+                System.setProperty(BeastCheckpointer.SAVE_STEM, stemName);
             }
 
             if (arguments.hasOption("force_resume")) {

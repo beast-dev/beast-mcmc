@@ -1,7 +1,7 @@
 /*
- * Checkpointer.java
+ * MCMCOptions.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,26 +23,30 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.state;
-
-import dr.inference.markovchain.MarkovChain;
+package dr.inference.smc;
 
 /**
- * Checkpointer
+ * Options for the SMC class.
  *
  * @author Andrew Rambaut
+ * @version $Id$
  */
-public interface StateLoader {
+public class SMCOptions {
+
+    private final long chainLength;
 
     /**
-     * Attempts to load the current state from a state file. This should be a state
-     * file created using the same XML file (some rudimentary checking of this is done).
-     * If it fails then it will throw a RuntimeException. If successful it will return the
-     * current state number.
-     * @param markovChain the MarkovChain object
-     * @return the state number
+     * constructor
+     * @param chainLength
      */
-    long loadState(MarkovChain markovChain, double savedLnL[]);
+    public SMCOptions(long chainLength) {
+        this.chainLength = chainLength;
+    }
 
-    void checkLoadState(double savedLnL, double lnL);
+    /**
+     * @return the chain length of the SMC analysis
+     */
+    public final long getChainLength() {
+        return chainLength;
+    }
 }

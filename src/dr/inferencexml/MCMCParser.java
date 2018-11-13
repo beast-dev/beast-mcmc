@@ -34,9 +34,15 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.smc.SMC;
+import dr.inference.smc.SMCOptions;
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoaderSaver;
 import dr.xml.*;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MCMCParser extends AbstractXMLObjectParser {
 
@@ -48,24 +54,36 @@ public class MCMCParser extends AbstractXMLObjectParser {
      * @return an mcmc object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        String id = xo.getAttribute(NAME, "mcmc1");
 
-        MCMC mcmc = new MCMC(xo.getAttribute(NAME, "mcmc1"));
+        if (System.getProperty("smc.particle_folder") != null) {
+            return parseSMC(id, xo);
+        }
+
+        return parseMCMC(id, xo);
+    }
+
+    /**
+     * Parse the MCMC object.
+     * @param xo the XML object
+     * @return the MXMX object
+     * @throws XMLParseException an exception of there is an XML parse error
+     */
+    private MCMC parseMCMC(String id, XMLObject xo) throws XMLParseException {
+        MCMC mcmc = new MCMC(id);
 
         long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
-
-        boolean useAdaptation = true;
-        useAdaptation = xo.getAttribute(AUTO_OPTIMIZE, true);
-        useAdaptation = xo.getAttribute(ADAPTATION, useAdaptation);
+        boolean useAdaptation =
+                xo.getAttribute(ADAPTATION, true) ||
+                        xo.getAttribute(AUTO_OPTIMIZE, true);
         if (System.getProperty("mcmc.use_adaptation") != null) {
             useAdaptation = Boolean.parseBoolean(System.getProperty("mcmc.use_adaptation"));
         }
-
         long adaptationDelay = chainLength / 100;
-        adaptationDelay = xo.getAttribute(PRE_BURNIN, adaptationDelay);
-        adaptationDelay = xo.getAttribute(ADAPTATION_DELAY, adaptationDelay);
-        if (System.getProperty("mcmc.adaptation_delay") != null) {
-            adaptationDelay = Long.parseLong(System.getProperty("mcmc.adaptation_delay"));
-        }
+        adaptationDelay =
+                xo.getAttribute(AUTO_OPTIMIZE_DELAY,
+                xo.getAttribute(ADAPTATION_DELAY,
+                xo.getAttribute(PRE_BURNIN, adaptationDelay)));
 
         double adaptationTarget = 0.234;
         if (System.getProperty("mcmc.adaptation_target") != null) {
@@ -143,7 +161,6 @@ public class MCMCParser extends AbstractXMLObjectParser {
         Logger[] loggerArray = new Logger[loggers.size()];
         loggers.toArray(loggerArray);
 
-
         java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the MCMC chain:" +
                 "\n  chainLength=" + options.getChainLength() +
                 "\n  autoOptimize=" + options.useAdaptation() +
@@ -173,6 +190,75 @@ public class MCMCParser extends AbstractXMLObjectParser {
         return mcmc;
     }
 
+    /**
+     * Parse the SMC variant of MCMC.
+     * @param xo the XML object
+     * @return the SMC object
+     * @throws XMLParseException an exception of there is an XML parse error
+     */
+    private SMC parseSMC(String id, XMLObject xo) throws XMLParseException {
+
+        List<StateLoaderSaver> particleStates = new ArrayList<StateLoaderSaver>();
+
+        String particleFolder = System.getProperty("smc.particle_folder");
+        File folder = new File(particleFolder);
+        if (!folder.isDirectory()) {
+            throw new XMLParseException("Specified particle folder is not a folder");
+        }
+
+        File[] particleFiles = folder.listFiles();
+        if (particleFiles == null || particleFiles.length == 0) {
+            throw new XMLParseException("Specified particle folder is empty");
+        }
+
+        for (final File particleFile : particleFiles) {
+            // The particles are setup with a fixed loading and saving file.
+
+            if (particleFile.isFile() && particleFile.getName().endsWith(".part")) {
+                final File saveFile = new File(particleFile.getAbsolutePath() + ".out");
+
+                particleStates.add(
+                        Factory.INSTANCE.getStateLoaderSaver(particleFile, saveFile)
+                );
+            }
+        }
+
+        if (particleStates.size() == 0) {
+            throw new XMLParseException("No particle files were found in the folder");
+        }
+
+        SMC smc = new SMC(id, particleStates);
+
+        long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
+
+        SMCOptions options = new SMCOptions(chainLength);
+
+        OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
+        Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+
+        likelihood.setUsed();
+
+        ArrayList<Logger> loggers = new ArrayList<Logger>();
+
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            Object child = xo.getChild(i);
+            if (child instanceof Logger) {
+                loggers.add((Logger) child);
+            }
+        }
+
+        Logger[] loggerArray = new Logger[loggers.size()];
+        loggers.toArray(loggerArray);
+
+        java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the SMC chain set:" +
+                "\n  particles = " + particleStates.size() +
+                "\n  chain length = " + options.getChainLength()
+        );
+
+        smc.init(options, likelihood, opsched, loggerArray);
+
+        return smc;
+    }
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************

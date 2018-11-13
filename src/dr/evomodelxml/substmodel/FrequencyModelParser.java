@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.substmodel;
 
+import dr.evomodel.substmodel.CodonFromNucleotideFrequencyModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.app.bss.Utils;
 import dr.evolution.alignment.PatternList;
@@ -54,6 +55,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 
 	public static final String COMPOSITION = "composition";
 	public static final String FREQ_3x4 = "3x4";
+	public static final String CODON_FROM_NUCLEOTIDE = "codonFromNucleotide";
 	public static final String[] COMPOSITION_TYPES = new String[] { FREQ_3x4 };
 
 	public String getParserName() {
@@ -157,7 +159,13 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 		sb.append("}");
 		Logger.getLogger("dr.evomodel").info(sb.toString());
 
-		return new FrequencyModel(dataType, freqsParam);
+        if (dataType instanceof Codons && xo.getAttribute(CODON_FROM_NUCLEOTIDE, false)) {
+            FrequencyModel nucleotideFrequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqsParam);
+            Parameter codonFrequencies = new Parameter.Default(dataType.getStateCount(), 1.0 / dataType.getStateCount());
+            return new CodonFromNucleotideFrequencyModel(CODON_FROM_NUCLEOTIDE, (Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
+        } else {
+            return new FrequencyModel(dataType, freqsParam);
+        }
 	}// END: parseXMLObject
 
 	private double[] getEmpirical3x4Freqs(PatternList patternList) {

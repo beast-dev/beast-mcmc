@@ -1,5 +1,5 @@
 /*
- * ProductChainFrequencyModel.java
+ * CodonFromNucleotideFrequencyModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,8 +26,10 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 
 /**
  * @author Marc A. Suchard
@@ -41,8 +43,9 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
 
     public CodonFromNucleotideFrequencyModel(String name,
                                              Codons dataType,
-                                             FrequencyModel nucleotideFrequencyModel) {
-        super(name);
+                                             FrequencyModel nucleotideFrequencyModel,
+                                             Parameter codonFrequencies) {
+        super(dataType, codonFrequencies);
 
         if (nucleotideFrequencyModel.getDataType() != Nucleotides.INSTANCE) {
             throw new IllegalArgumentException("Must provide a nucleotide frequency model");
@@ -50,6 +53,7 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
 
         this.dataType = dataType;
         this.nucleotideFrequencyModel = nucleotideFrequencyModel;
+        updateFrequencyParameter();
         addModel(nucleotideFrequencyModel);
     }
 
@@ -62,9 +66,9 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
         fireModelChanged(model);
     }
 
-    public void setFrequency(int i, double value) {
-        throw new RuntimeException("Should not directly set frequencies");
-    }
+//    public void setFrequency(int i, double value) {
+//        throw new RuntimeException("Should not directly set frequencies");
+//    }
 
     private void updateFrequencyParameter() {
 
@@ -82,10 +86,24 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
 
                     double freq3 = nucleotideFrequencyModel.getFrequency(nuc3);
 
-                    frequencyParameter.setParameterValue(dataType.getState(nuc1, nuc2, nuc3),
-                            freq1 * freq2 * freq3);
+                    final int state = dataType.getState(nuc1, nuc2, nuc3);
+
+                    if (!(dataType.isStopCodon(state))) {
+
+                        frequencyParameter.setParameterValue( state,
+                                freq1 * freq2 * freq3);
+
+                    }
                 }
             }
+        }
+
+        final double sum = getSumOfFrequencies(frequencyParameter);
+
+        for (int i = 0; i < frequencyParameter.getSize(); i++) {
+
+            frequencyParameter.setParameterValue(i, frequencyParameter.getParameterValue(i) / sum);
+
         }
     }
 }

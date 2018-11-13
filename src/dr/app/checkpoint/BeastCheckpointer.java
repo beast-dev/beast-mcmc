@@ -59,17 +59,22 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STATE_FILE = "save.state.file";
     public final static String SAVE_STATE_AT = "save.state.at";
     public final static String SAVE_STATE_EVERY = "save.state.every";
+    public final static String SAVE_STEM = "save.state.stem";
 
     public final static String FORCE_RESUME = "force.resume";
 
     private final String loadStateFileName;
     private final String saveStateFileName;
 
+    private final String stemFileName;
+
     private boolean forceResume = false;
 
     public BeastCheckpointer() {
         loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
         saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+
+        stemFileName = System.getProperty(SAVE_STEM, null);
 
         final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 
@@ -127,9 +132,13 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
     @Override
     public boolean saveState(MarkovChain markovChain, long state, double lnL) {
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
-        String fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
-
+        String fileName = "";
+        if (stemFileName != null) {
+            fileName = stemFileName + "_" + state;
+        } else {
+            String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+            fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
+        }
         return writeStateToFile(new File(fileName), state, lnL, markovChain);
     }
 

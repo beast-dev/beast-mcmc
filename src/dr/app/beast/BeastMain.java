@@ -373,6 +373,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
                         new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a saved state from"),
+                        new Arguments.StringOption("save_stem", "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", "Specify a state at which to save a state file"),
                         new Arguments.LongOption("save_every", "Specify a frequency to save the state file"),
                         new Arguments.StringOption("save_state", "FILENAME", "Specify a filename to save state to"),
@@ -654,6 +655,11 @@ public class BeastMain {
             if (arguments.hasOption("save_state")) {
                 String stateFile = arguments.getStringOption("save_state");
                 System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, stateFile);
+            }
+
+            if (arguments.hasOption("save_stem")) {
+                String stemName = arguments.getStringOption("save_stem");
+                System.setProperty(BeastCheckpointer.SAVE_STEM, stemName);
             }
 
             if (arguments.hasOption("force_resume")) {

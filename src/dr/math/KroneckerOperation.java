@@ -185,10 +185,21 @@ public class KroneckerOperation {
 
     public static void product(double[] A, int m, int n, double[] B, int p, int q, double[] out) {
 
+        if (out.length != m * p * n * q || A.length != m * n || B.length != p * q) {
+            throw new RuntimeException("Wrong dimensions in Kronecker product");
+        }
+
+        product(A, m, n, 0, B, p, q, 0, out, 0);
+    }
+
+    public static void product(double[] A, int m, int n, int offsetA,
+                               double[] B, int p, int q, int offsetB,
+                               double[] out, int offsetOut) {
+
         final int dimi = m * p;
         final int dimj = n * q;
 
-        if (out.length != dimi * dimj || A.length != m * n || B.length != p * q) {
+        if (out.length < dimi * dimj + offsetOut|| A.length < m * n + offsetA || B.length < p * q + offsetB) {
             throw new RuntimeException("Wrong dimensions in Kronecker product");
         }
 
@@ -200,11 +211,11 @@ public class KroneckerOperation {
 
                 final int jOffset = j * q;
 
-                final double aij = A[i * n + j];
+                final double aij = A[offsetA + i * n + j];
 
                 for (int k = 0; k < p; k++) { // 1,\ldots,p
                     for (int l = 0; l < q; l++) { // 1,\ldots,q
-                        out[(iOffset + k) * dimj + jOffset + l] = aij * B[k * q + l];
+                        out[offsetOut + (iOffset + k) * dimj + jOffset + l] = aij * B[offsetB + k * q + l];
                     }
                 }
             }

@@ -709,6 +709,57 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 format.format(dataLikelihoodDiagonal.getLogLikelihood()));
     }
 
+    public void testLikelihoodIBM() {
+        System.out.println("\nTest Likelihood using IBM:");
+
+        // Diffusion
+        List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{100.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{200.0})));
+        driftModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-200.0})));
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new IntegratedBMDiffusionModelDelegate(treeModel, diffusionModel,
+                driftModels);
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, true, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModelIntegrated, rootPriorIntegrated, rateTransformation, rateModel, false);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
+
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+
+        assertEquals("likelihoodIBM",
+                format.format(logDatumLikelihood),
+                format.format(dataLikelihood.getLogLikelihood()));
+
+        System.out.println("likelihoodIBM: " + format.format(logDatumLikelihood));
+
+        // Conditional moments (preorder)
+//        new TreeTipGradient("" +
+//                "trait", dataLikelihood, likelihoodDelegate, null);
+//        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+//                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+//                TreeTraitLogger.NodeRestriction.EXTERNAL);
+//
+//        String moments = treeTraitLogger.getReport();
+//        double[] partials = parseVector(moments, "\t");
+//        testCMeans(s, "cMean ", partials);
+//        testCVariances(s, "cVar ", partials);
+    }
+
     public void testLikelihoodFullIOU() {
         System.out.println("\nTest Likelihood using Full IOU:");
 
@@ -748,11 +799,11 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
         double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
 
-        assertEquals("likelihoodFullOURelaxed",
+        assertEquals("likelihoodIOU",
                 format.format(logDatumLikelihood),
                 format.format(dataLikelihood.getLogLikelihood()));
 
-        System.out.println("likelihoodFullOURelaxed: " + format.format(logDatumLikelihood));
+        System.out.println("likelihoodIOU: " + format.format(logDatumLikelihood));
 
         // Conditional moments (preorder)
 //        new TreeTipGradient("" +

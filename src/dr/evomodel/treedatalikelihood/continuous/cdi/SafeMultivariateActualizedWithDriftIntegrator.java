@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -371,7 +372,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                 diagonalStrengthOfSelectionMatrix, rotation, updateCount);
 
         if (DEBUG) {
-            System.err.println("Matrices (safe with actualized drift, integrated):");
+            System.err.println("Matrices (safe with actualized drift, integrated OU):");
         }
 
         int matrixTraitSize = dimTrait * dimTrait;
@@ -427,6 +428,60 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         if (TIMING) {
             endTime("actualization");
+        }
+
+    }
+
+    @Override
+    public void updateIntegratedBrownianMotionDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                                final double[] edgeLengths, final double[] driftRates,
+                                                                int updateCount) {
+
+        super.updateIntegratedBrownianMotionDiffusionMatrices(precisionIndex, probabilityIndices,
+                edgeLengths, driftRates, updateCount);
+
+        if (DEBUG) {
+            System.err.println("Matrices (safe with actualized drift, integrated BM):");
+        }
+
+        int matrixTraitSize = dimTrait * dimTrait;
+        int matrixProcessSize = dimProcess * dimProcess;
+        final int unscaledOffset = matrixProcessSize * precisionIndex;
+
+        int offset = 0;
+        for (int up = 0; up < updateCount; ++up) {
+
+            final int pio = dimTrait * probabilityIndices[up];
+            final int scaledOffset = matrixTraitSize * probabilityIndices[up];
+            final double edgeLength = edgeLengths[up];
+            final double edgeLengthSquare = edgeLength * edgeLength / 2;
+            final double edgeLengthCube = edgeLength * edgeLength * edgeLength / 3;
+
+            // Drift
+            KroneckerOperation.product(
+                    new double[]{edgeLength, edgeLengthSquare}, 2, 1, 0,
+                    driftRates, dimProcess, 1, offset,
+                    displacements, pio);
+
+            // Actualization
+            KroneckerOperation.product(
+                    new double[]{1, 0, edgeLength, 1}, 2, 2, 0,
+                    KroneckerOperation.makeIdentityMatrix(dimProcess), dimProcess, dimProcess, 0,
+                    actualizations, scaledOffset);
+
+            // Variance
+            KroneckerOperation.product(
+                    new double[]{edgeLength, edgeLengthSquare, edgeLengthSquare, edgeLengthCube}, 2, 2, 0,
+                    inverseDiffusions, dimProcess, dimProcess, unscaledOffset,
+                    variances, scaledOffset);
+
+            // Precision
+            KroneckerOperation.product(
+                    new double[]{4 / edgeLength, - 3 / edgeLengthSquare, - 3 / edgeLengthSquare, 4 / edgeLengthCube}, 2, 2, 0,
+                    diffusions, dimProcess, dimProcess, unscaledOffset,
+                    precisions, scaledOffset);
+
+            offset += dimProcess;
         }
 
     }

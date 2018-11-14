@@ -186,7 +186,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                             dimTrait / 2,
                             partialBufferCount,
                             matrixBufferCount,
-                            ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                            false
                     );
                 } else {
                     if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
@@ -221,24 +221,36 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                                     matrixBufferCount
                             );
                         } else {
-                            if (allowSingular) {
-                                base = new SafeMultivariateIntegrator(
+                            if (diffusionProcessDelegate instanceof IntegratedBMDiffusionModelDelegate) {
+                                base = new SafeMultivariateActualizedWithDriftIntegrator(
                                         precisionType,
                                         numTraits,
                                         dimTrait,
-                                        dimTrait,
+                                        dimTrait / 2,
                                         partialBufferCount,
-                                        matrixBufferCount
+                                        matrixBufferCount,
+                                        false
                                 );
                             } else {
-                                base = new MultivariateIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
+                                if (allowSingular) {
+                                    base = new SafeMultivariateIntegrator(
+                                            precisionType,
+                                            numTraits,
+                                            dimTrait,
+                                            dimTrait,
+                                            partialBufferCount,
+                                            matrixBufferCount
+                                    );
+                                } else {
+                                    base = new MultivariateIntegrator(
+                                            precisionType,
+                                            numTraits,
+                                            dimTrait,
+                                            dimTrait,
+                                            partialBufferCount,
+                                            matrixBufferCount
+                                    );
+                                }
                             }
                         }
                     }

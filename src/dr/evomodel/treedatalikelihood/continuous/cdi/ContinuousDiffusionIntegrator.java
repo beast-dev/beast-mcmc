@@ -101,6 +101,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                                             final double[] rotation,
                                                             int updateCount);
 
+    public void updateIntegratedBrownianMotionDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                                final double[] edgeLengths, final double[] driftRates,
+                                                                int updateCount);
+
 //    void updateOrnsteinUhlenbeckMatrices(int precisionIndex, final int[] probabilityIndices,
 //                                         final double[] edgeLengths,
 //                                         int updateCount);
@@ -576,6 +580,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                                              final double[] strengthOfSelectionMatrix,
                                                              final double[] rotation,
                                                              int updateCount){
+            updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
+        }
+
+        public void updateIntegratedBrownianMotionDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                                    final double[] edgeLengths, final double[] driftRates,
+                                                                    int updateCount) {
             updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
         }
 

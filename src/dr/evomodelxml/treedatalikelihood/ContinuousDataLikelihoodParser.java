@@ -192,10 +192,14 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
             }
         } else {
-            if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
-                diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+            if (!integratedProcess) {
+                if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
+                    diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+                } else {
+                    diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
+                }
             } else {
-                diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
+                diffusionProcessDelegate = new IntegratedBMDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
             }
         }
         ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,

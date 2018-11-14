@@ -81,9 +81,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         }
         long adaptationDelay = chainLength / 100;
         adaptationDelay =
-                xo.getAttribute(AUTO_OPTIMIZE_DELAY,
                 xo.getAttribute(ADAPTATION_DELAY,
-                xo.getAttribute(PRE_BURNIN, adaptationDelay)));
+                        xo.getAttribute(AUTO_OPTIMIZE_DELAY,
+                                xo.getAttribute(PRE_BURNIN, adaptationDelay)));
 
         double adaptationTarget = 0.234;
         if (System.getProperty("mcmc.adaptation_target") != null) {
@@ -162,9 +162,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         loggers.toArray(loggerArray);
 
         java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the MCMC chain:" +
-                "\n  chainLength=" + options.getChainLength() +
-                "\n  autoOptimize=" + options.useAdaptation() +
-                (options.useAdaptation() ? "\n  autoOptimize delayed for " + options.getAdaptationDelay() + " steps" : "") +
+                "\n  chain length = " + options.getChainLength() +
+                "\n  operator adaption = " + options.useAdaptation() +
+                (options.useAdaptation() ? "\n  adaptation delayed for " + options.getAdaptationDelay() + " steps" : "") +
                 (options.getFullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
         );
 

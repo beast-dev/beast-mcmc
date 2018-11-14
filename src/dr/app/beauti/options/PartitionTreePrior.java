@@ -106,7 +106,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterOneOverXPrior("logistic.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0);
         createParameterLaplacePrior("logistic.growthRate", "coalescent logistic growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 1.0);
+                PriorScaleType.GROWTH_RATE_SCALE, 0.1, 0.0, 1.0);
         createParameterGammaPrior("logistic.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, true);
         createParameterGammaPrior("logistic.t50", "logistic shape parameter",

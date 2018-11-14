@@ -48,18 +48,18 @@
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-		<!-- <optimalTraits> -->
-		<!-- 	<strictClockBranchRates> -->
-		<!-- 		<rate> -->
-		<!-- 			<parameter id="rate.1" value="-1.4"/> -->
-		<!-- 		</rate> -->
-		<!-- 	</strictClockBranchRates> -->
-		<!-- 	<strictClockBranchRates> -->
-		<!-- 		<rate> -->
-		<!-- 			<parameter id="rate.2" value="1.0"/> -->
-		<!-- 		</rate> -->
-		<!-- 	</strictClockBranchRates> -->
-		<!-- </optimalTraits> -->
+		<driftModels>
+			<strictClockBranchRates>
+				<rate>
+					<parameter id="rate.1" value="-1.4"/>
+				</rate>
+			</strictClockBranchRates>
+			<strictClockBranchRates>
+				<rate>
+					<parameter id="rate.2" value="1.0"/>
+				</rate>
+			</strictClockBranchRates>
+		</driftModels>
      	<conjugateRootPrior>
             <meanParameter>
                 <parameter id="meanRoot"  value="-0.5 1.0 1.0 -2.0"/>
@@ -95,8 +95,8 @@
 			<!-- 	<traitDataLikelihood idref="ibmLikelihood"/> -->
 			<!-- 	<treeModel idref="treeModel"/> -->
 			<!-- </traitLogger> -->
-			<!-- <parameter idref="rate.1"/> -->
-			<!-- <parameter idref="rate.2"/> -->
+			<parameter idref="rate.1"/>
+			<parameter idref="rate.2"/>
 			<traitDataLikelihood idref="ibmLikelihood"/>
             <matrixParameter idref="precisionMatrix"/>
 			<parameter idref="meanRoot"/>

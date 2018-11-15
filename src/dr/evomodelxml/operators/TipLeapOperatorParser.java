@@ -1,12 +1,17 @@
 package dr.evomodelxml.operators;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxa;
-import dr.evomodel.operators.TipLeapOperator;
+import dr.evolution.util.Taxon;
+import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  */
@@ -31,6 +36,24 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
 
         Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
+        List<NodeRef> tips = new ArrayList<NodeRef>();
+
+        for (Taxon taxon : taxa) {
+            boolean found = false;
+            for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+                NodeRef tip = treeModel.getExternalNode(i);
+                if (treeModel.getNodeTaxon(tip).equals(taxon)) {
+                    tips.add(tip);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throw new XMLParseException("Error constructing " + TIP_LEAP +": " + taxon.getId() + ", not found in tree with id " + treeModel.getId());
+            }
+        }
+
         // size attribute is mandatory
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
@@ -42,9 +65,8 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
-        TipLeapOperator operator = new TipLeapOperator(treeModel, taxa, weight, size, targetAcceptance, mode);
 
-        return operator;
+        return new SubtreeLeapOperator(treeModel, taxa, weight, size, targetAcceptance, mode);
     }
 
     public String getParserDescription() {
@@ -52,7 +74,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return TipLeapOperator.class;
+        return SubtreeLeapOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

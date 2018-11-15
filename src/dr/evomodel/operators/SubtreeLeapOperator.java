@@ -32,10 +32,7 @@ import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implements the Subtree Leap move.
@@ -186,7 +183,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
 
-        final Map<NodeRef, Double> destinations = new HashMap<NodeRef, Double>();
+        final Map<NodeRef, Double> destinations = new LinkedHashMap<NodeRef, Double>();
 
         // get the parent's height
         final double height = tree.getNodeHeight(parent);

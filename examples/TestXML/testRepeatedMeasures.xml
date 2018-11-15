@@ -52,8 +52,14 @@
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
+		<!--<samplingPrecision>-->
+			<!--<parameter id="gamma" value="2 3"/>-->
+		<!--</samplingPrecision>-->
 		<samplingPrecision>
-			<parameter id="gamma" value="2 3"/>
+			<matrixParameter id="samplingPrecision">
+				<parameter value="1 0"/>
+				<parameter value="0 1"/>
+			</matrixParameter>
 		</samplingPrecision>
 		<multivariateDiffusionModel idref="diffusionModel"/>
 	</repeatedMeasuresModel>
@@ -102,24 +108,42 @@
 		</data>
 	</multivariateWishartPrior>
 
-	<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">
-		<parameter idref="gamma"/>
-	</gammaPrior>
+	<!--<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">-->
+		<!--<parameter idref="gamma"/>-->
+	<!--</gammaPrior>-->
+
+	<multivariateWishartPrior id="samplingPrior" df="3">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1 0"/>
+				<parameter value="0 1"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<matrixParameter idref="samplingPrecision"/>
+		</data>
+	</multivariateWishartPrior>
 
 	<operators id="operators" optimizationSchedule="log">
 		<!--<scaleOperator scaleFactor="0.75" weight="1.0" autoOptmizie="true">-->
 			<!--<parameter idref="gamma"/>-->
 		<!--</scaleOperator>-->
 
-		<normalGammaPrecisionGibbsOperator weight="1.0">
-			<repeatedMeasures>
-				<repeatedMeasuresModel idref="repeatedMeasures"/>
-				<treeDataLikelihood idref="traitLikelihood"/>
-			</repeatedMeasures>
-			<prior>
-				<gammaPrior idref="gammaPrior"/>
-			</prior>
-		</normalGammaPrecisionGibbsOperator>
+		<!--<normalGammaPrecisionGibbsOperator weight="1.0">-->
+			<!--<repeatedMeasures>-->
+				<!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
+				<!--<treeDataLikelihood idref="traitLikelihood"/>-->
+			<!--</repeatedMeasures>-->
+			<!--<prior>-->
+				<!--<gammaPrior idref="gammaPrior"/>-->
+			<!--</prior>-->
+		<!--</normalGammaPrecisionGibbsOperator>-->
+
+		<repeatedMeasuresPrecisionGibbsOperator weight="1">
+			<repeatedMeasuresModel idref="repeatedMeasures"/>
+			<multivariateWishartPrior idref="samplingPrior"/>
+			<treeDataLikelihood idref="traitLikelihood"/>
+		</repeatedMeasuresPrecisionGibbsOperator>
 
 		<precisionGibbsOperator weight="1">
 			<wishartStatistics  traitName="X">
@@ -137,8 +161,8 @@
 	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
-				<gammaPrior idref="gammaPrior"/>
-				<!--<multivariateWishartPrior idref="precisionPrior"/>-->
+				<gammaPrior idref="samplingPrior"/>
+				<multivariateWishartPrior idref="precisionPrior"/>
 			</prior>
 			<likelihood>
 				<traitDataLikelihood idref="traitLikelihood"/>
@@ -150,7 +174,7 @@
 				<posterior idref="posterior"/>
 			</column>
 			<column label="Sampling Precision" dp="4" width="12">
-				<parameter idref="gamma"/>
+				<matrixParameter idref="samplingPrecision"/>
 			</column>
 			<column label="Trait Precision" dp="4" width="12">
 				<matrixParameter idref="precisionMatrix"/>
@@ -160,7 +184,7 @@
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="traitLikelihood"/>
-			<parameter idref="gamma"/>
+			<matrixParameter idref="samplingPrecision"/>
 			<matrixParameter idref="precisionMatrix"/>
 			<traitLogger idref="traitLog"/>
 			<variancePorportionStatistic idref="varianceLog"/>

@@ -12,6 +12,7 @@ import dr.math.distributions.WishartDistribution;
 import dr.math.distributions.WishartStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.xml.*;
+import dr.math.matrixAlgebra.Matrix;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
@@ -52,6 +53,8 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
     public double doOperation() {
         int dim = dataModel.dimTrait;
         double df = priorDistribution.getDF() + dataLikelihood.getTree().getExternalNodeCount();
+        int x = dataLikelihood.getTree().getExternalNodeCount();
+        double y = priorDistribution.getDF();
         double[][] scaleMatrix = getPosteriorScaleMatrix();
 
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
@@ -69,7 +72,7 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
     private double[][] getPosteriorScaleMatrix() {
         int dimTrait = dataModel.dimTrait;
         int N = dataLikelihood.getTree().getExternalNodeCount();
-        double[][] scaleMatrix = priorDistribution.getScaleMatrix();
+        double[][] scaleMatrix = new Matrix(priorDistribution.getScaleMatrix()).inverse().toComponents();
         CompoundParameter traitParameter = dataModel.getParameter();
         TreeTrait tipTrait = dataLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + dataModel.getTraitName());
         double[] tipTraits = (double[]) tipTrait.getTrait(dataLikelihood.getTree(), null);
@@ -77,15 +80,28 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
             for (int j = 0; j < dimTrait; j++) {
                 double value = 0;
                 for (int k = 0; k < N; k++) {
-                    double test = traitParameter.getParameter(1).getParameterValue(0);
 
-                    value = value + (traitParameter.getParameter(k).getParameterValue(i) - tipTraits[k * dimTrait + i]) *
+                    value = value +
+                            (traitParameter.getParameter(k).getParameterValue(i) - tipTraits[k * dimTrait + i]) *
                             (traitParameter.getParameter(k).getParameterValue(j) - tipTraits[k * dimTrait + j]);
                 }
 
                 scaleMatrix[i][j] += value;
             }
         }
+
+//        double[][] scaleMatrix2 = priorDistribution.getScaleMatrix();
+//        for (int taxon = 0; taxon < N; taxon ++){
+//            for (int i = 0; i < dimTrait; i++){
+//                for (int j = 0; j < dimTrait; j++){
+//                    scaleMatrix2[i][j] = scaleMatrix2[i][j] +
+//                            (traitParameter.getParameter(taxon).getParameterValue(i) - tipTraits[taxon * dimTrait + i]) *
+//                            (traitParameter.getParameter(taxon).getParameterValue(j) - tipTraits[taxon * dimTrait + j]);
+//                }
+//            }
+//        }
+
+        scaleMatrix = new Matrix(scaleMatrix).inverse().toComponents();
 
         return scaleMatrix;
     }

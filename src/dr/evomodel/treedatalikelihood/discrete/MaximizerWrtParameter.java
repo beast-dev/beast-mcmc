@@ -137,6 +137,10 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Not yet executed.");
         } else {
 
+            if (transform != null) {
+                sb.append("Gradient is taken with respect to the transformed paramter values.\n");
+                sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
+            }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
             sb.append("Gradient type: ").append(gradientType).append("\n");

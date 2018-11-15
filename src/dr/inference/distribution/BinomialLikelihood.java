@@ -149,7 +149,7 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
      *         when the log of the probability is logP.
      */
     private double binomialLogLikelihood(int trials, int count, double logP, double log1MinusP) {
-        return Math.log(Binomial.choose(trials, count)) + (logP * count) + (log1MinusP * (trials - count));
+        return Binomial.logChoose(trials, count) + (logP * count) + (log1MinusP * (trials - count));
     }
 
     // **************************************************************

@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 
 /**
@@ -50,6 +51,16 @@ public class PrecisionGradient extends AbstractPrecisionGradient {
         double[] gradientDiagonal = getGradientDiagonal(gradient);
 
         return mergeGradients(gradientDiagonal, gradientCorrelation);
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix;
+    }
+
+    @Override
+    public int getDimension() {
+        return getParameter().getDimension();
     }
 
     private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {

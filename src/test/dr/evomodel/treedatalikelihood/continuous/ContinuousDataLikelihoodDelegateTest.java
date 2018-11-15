@@ -160,7 +160,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 traitParameter,
                 missingIndices,
                 loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0);
+                factorPrecisionParameters, 0.0, null);
 
         //// Integrated Process //// ***********************************************************************************
         // Data Model
@@ -236,7 +236,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -298,7 +298,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -364,7 +364,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -430,7 +430,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -502,7 +502,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -556,7 +556,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL,
+                false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -626,7 +627,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -701,7 +702,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -871,7 +872,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");
@@ -934,7 +935,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 "trait", dataLikelihood, likelihoodDelegate, null);
         TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
                 new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL);
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
         String moments = treeTraitLogger.getReport();
         double[] partials = parseVector(moments, "\t");

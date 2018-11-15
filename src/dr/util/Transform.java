@@ -587,17 +587,17 @@ public interface Transform {
             double[] startValues = {1.5, 0.6, 0.9};
             System.err.print("Starting values: ");
             double startSum = 0.0;
-            for (int i = 0; i < startValues.length; i++) {
-                System.err.print(startValues[i] + " ");
-                startSum += startValues[i];
+            for (double startValue : startValues) {
+                System.err.print(startValue + " ");
+                startSum += startValue;
             }
             System.err.println("\nSum = " + startSum);
 
             //perform transformation
             double[] transformedValues = LOG_CONSTRAINED_SUM.transform(startValues, 0, startValues.length-1);
             System.err.print("Transformed values: ");
-            for (int i = 0; i < transformedValues.length; i++) {
-                System.err.print(transformedValues[i] + " ");
+            for (double transformedValue : transformedValues) {
+                System.err.print(transformedValue + " ");
             }
             System.err.println();
 
@@ -610,9 +610,9 @@ public interface Transform {
             transformedValues = LOG_CONSTRAINED_SUM.inverse(transformedValues, 0, transformedValues.length-1);
             System.err.print("New values: ");
             double endSum = 0.0;
-            for (int i = 0; i < transformedValues.length; i++) {
-                System.err.print(transformedValues[i] + " ");
-                endSum += transformedValues[i];
+            for (double transformedValue : transformedValues) {
+                System.err.print(transformedValue + " ");
+                endSum += transformedValue;
             }
             System.err.println("\nSum = " + endSum);
 
@@ -695,11 +695,11 @@ public interface Transform {
         public double updateGradientLogDensity(double gradient, double value) {
             // 1 - value^2 : gradient of inverse (value is untransformed)
             // - 2*value : gradient of log jacobian of inverse
-            return (1.0 - value * value) * gradient - 2 * value;
+            return (1.0 - value * value) * gradient  - 2 * value;
         }
 
         protected double getGradientLogJacobianInverse(double value) {
-            // -1 - 2*value : gradient of log jacobian of inverse (value is transformed)
+            // - 2*value : gradient of log jacobian of inverse (value is transformed)
             return - 2 * inverse(value);
         }
 
@@ -1200,6 +1200,20 @@ public interface Transform {
         }
 
         @Override
+        public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("not implemented yet.");
+        }
+
+        @Override
+        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("not implemented yet");
+        }
+
+        @Override
+        public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("not implemented yet");
+        }
+
         public double[] inverse(double[] values, int from, int to, double sum) {
             throw new RuntimeException("Not relevant.");
         }
@@ -1265,20 +1279,6 @@ public interface Transform {
                 gradient[i] = - gradient[i];
             }
             return gradient;
-        }
-
-        public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("not implemented yet");
-        }
-
-        @Override
-        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("not implemented yet");
-        }
-
-        @Override
-        public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("not implemented yet");
         }
 
         private final MultivariateTransform inner;

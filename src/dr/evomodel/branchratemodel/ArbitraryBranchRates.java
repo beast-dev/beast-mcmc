@@ -94,7 +94,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
         double raw = rates.getNodeValue(tree, node);
-        return transform.differential(raw);
+        return transform.differential(raw, tree, node);
     }
 
     public BranchRateTransform getTransform() {
@@ -168,14 +168,14 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
         double raw = rates.getNodeValue(tree, node);
-        return transform.secondDifferential(raw);
+        return transform.secondDifferential(raw, tree, node);
     }
 
     public interface BranchRateTransform {
 
-        double differential(double raw);
+        double differential(double raw, Tree tree, NodeRef node);
 
-        double secondDifferential(double raw);
+        double secondDifferential(double raw, Tree tree, NodeRef node);
 
         double transform(double raw, Tree tree, NodeRef node);  // TODO tree and node are probably unnecessary if done differently
 
@@ -205,12 +205,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class None extends Base {
 
             @Override
-            public double differential(double raw) {
+            public double differential(double raw, Tree tree, NodeRef node) {
                 return 1.0;
             }
 
             @Override
-            public double secondDifferential(double raw) {
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
                 return 0.0;
             }
 
@@ -223,12 +223,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class Reciprocal extends Base {
 
             @Override
-            public double differential(double raw) {
+            public double differential(double raw, Tree tree, NodeRef node) {
                 return -1.0 / (raw * raw);
             }
 
             @Override
-            public double secondDifferential(double raw) {
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
                 return 2.0 / (raw * raw * raw);
             }
 
@@ -241,12 +241,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         class Exponentiate implements BranchRateTransform {
 
             @Override
-            public double differential(double raw) {
+            public double differential(double raw, Tree tree, NodeRef node) {
                 return transform(raw, null, null);
             }
 
             @Override
-            public double secondDifferential(double raw) {
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
                 return transform(raw, null, null);
             }
 
@@ -377,17 +377,17 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
 
             @Override
-            public double differential(double raw) {
+            public double differential(double raw, Tree tree, NodeRef node) {
 
-                double rate = transform(raw);
+                double rate = transform(raw, tree, node);
 
                 return raw > 0.0 ? (rate * transformSigma) / (raw * baseMeasureSigma) : Double.POSITIVE_INFINITY;
             }
 
             @Override
-            public double secondDifferential(double raw) {
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
 
-                double rate = transform(raw);
+                double rate = transform(raw, tree, node);
 
                 if (raw > 0.0) {
                     return (rate * transformSigma) / (raw * raw * baseMeasureSigma)
@@ -403,9 +403,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 }
             }
 
-            public double transform(double raw) {
-                return transform(raw, null, null);
-            }
+//            public double transform(double raw) {
+//                return transform(raw, null, null);
+//            }
 
             @Override
             public double transform(double raw, Tree tree, NodeRef node) {

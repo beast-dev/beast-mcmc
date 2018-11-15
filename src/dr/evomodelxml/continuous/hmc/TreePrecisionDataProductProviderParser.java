@@ -87,7 +87,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
         int eigenvalueReplicates = xo.getAttribute(EIGENVALUE_REPLICATES, 1);
 
         String mode = xo.getAttribute(MODE, "linear");
-        int threadCount = xo.getAttribute(THREAD_COUNT, 0);
+        int threadCount = xo.getAttribute(THREAD_COUNT, 1);
 
         if (mode.toLowerCase().compareTo("cubic") == 0) {
             return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);

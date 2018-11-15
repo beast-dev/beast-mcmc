@@ -140,4 +140,3 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
 }
-

@@ -230,8 +230,8 @@ public class TreeAnnotatorDialog {
 		return optionPane.getValue().equals("Run");
 	}
 
-    public int getBurninStates() {
-        return burninStatesText.getValue();
+    public long getBurninStates() {
+        return burninStatesText.getLongValue();
     }
 
     public int getBurninTrees() {

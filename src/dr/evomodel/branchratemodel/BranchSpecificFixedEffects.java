@@ -30,7 +30,7 @@ public interface BranchSpecificFixedEffects {
     abstract class Base extends AbstractModel implements BranchSpecificFixedEffects {
 
         public Base(String name) {
-            super("Base");
+            super(name);
         }
 
         public double[] getDifferential(double rate, final Tree tree, final NodeRef node) {

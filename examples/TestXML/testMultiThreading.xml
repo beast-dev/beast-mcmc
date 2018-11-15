@@ -155,7 +155,7 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="years">
 		<populationSize>
-			<parameter id="constant.popSize" value="380.0" lower="0.0" upper="380000.0"/>
+			<parameter id="constant.popSize" value="380.0" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 
@@ -190,7 +190,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="2.3E-5" lower="0.0" upper="100.0"/>
+			<parameter id="clock.rate" value="2.3E-5" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 
@@ -205,7 +205,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="hky1.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="hky1.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</hkyModel>
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
@@ -219,7 +219,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="hky2.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="hky2.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</hkyModel>
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
@@ -233,7 +233,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="hky3.kappa" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="hky3.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</hkyModel>
 
@@ -243,10 +243,10 @@
 			<hkyModel idref="hky1"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="siteModel1.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="siteModel1.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 		<gammaShape gammaCategories="4">
-			<parameter id="siteModel1.alpha" value="0.5" lower="0.0" upper="Infinity"/>
+			<parameter id="siteModel1.alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 	<!-- site model                                                              -->
@@ -255,10 +255,10 @@
 			<hkyModel idref="hky2"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="siteModel2.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="siteModel2.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 		<gammaShape gammaCategories="4">
-			<parameter id="siteModel2.alpha" value="0.5" lower="0.0" upper="Infinity"/>
+			<parameter id="siteModel2.alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 	<!-- site model                                                              -->
@@ -267,10 +267,10 @@
 			<hkyModel idref="hky3"/>
 		</substitutionModel>
 		<relativeRate>
-			<parameter id="siteModel3.mu" value="1.0" lower="0.0" upper="Infinity"/>
+			<parameter id="siteModel3.mu" value="1.0" lower="0.0"/>
 		</relativeRate>
 		<gammaShape gammaCategories="4">
-			<parameter id="siteModel3.alpha" value="0.5" lower="0.0" upper="Infinity"/>
+			<parameter id="siteModel3.alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 
@@ -361,6 +361,36 @@
 	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
+					<parameter idref="hky1.kappa"/>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
+					<parameter idref="hky2.kappa"/>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
+					<parameter idref="hky3.kappa"/>
+				</logNormalPrior>
+				<exponentialPrior mean="0.5" offset="0.0">
+					<parameter idref="siteModel1.alpha"/>
+				</exponentialPrior>
+				<exponentialPrior mean="0.5" offset="0.0">
+					<parameter idref="siteModel2.alpha"/>
+				</exponentialPrior>
+				<exponentialPrior mean="0.5" offset="0.0">
+					<parameter idref="siteModel3.alpha"/>
+				</exponentialPrior>
+				<dirichletPrior alpha="1.0" sumsTo="3.0">
+					<parameter idref="allMus"/>
+				</dirichletPrior>
+				<ctmcScalePrior>
+					<ctmcScale>
+						<parameter idref="clock.rate"/>
+					</ctmcScale>
+					<treeModel idref="treeModel"/>
+				</ctmcScalePrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
+					<parameter idref="constant.popSize"/>
+				</logNormalPrior>
 				<coalescentLikelihood idref="coalescent"/>
 			</prior>
 			<likelihood id="likelihood" threads="3">
@@ -370,6 +400,7 @@
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
+
 		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
@@ -387,6 +418,7 @@
 				<parameter idref="clock.rate"/>
 			</column>
 		</log>
+
 		<log id="fileLog" logEvery="10000" fileName="testMultiThreading.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
@@ -408,6 +440,7 @@
 			<treeLikelihood idref="treeLikelihood3"/>
 			<coalescentLikelihood idref="coalescent"/>
 		</log>
+
 		<logTree id="treeFileLog" logEvery="10000" nexusFormat="true" fileName="testMultiThreading.trees">
 			<treeModel idref="treeModel"/>
 			<posterior idref="posterior"/>

@@ -277,7 +277,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         updateMatrix = false;
     }
 
-    private double setupMatrix() {
+    protected double setupMatrix() {
         setupRelativeRates(relativeRates);
         double[] pi = freqModel.getFrequencies();
         setupQMatrix(relativeRates, pi, q);
@@ -336,7 +336,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     }
 
     // Make it a valid rate matrix (make sum of rows = 0)
-    private void makeValid(double[][] matrix, int dimension) {
+    protected void makeValid(double[][] matrix, int dimension) {
         for (int i = 0; i < dimension; i++) {
             double sum = 0.0;
             for (int j = 0; j < dimension; j++) {

@@ -46,7 +46,6 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
         super(gradientWrtPrecisionProvider, likelihood, parameter);
     }
 
-
     @Override
     public int getDimension() {
         return getDimensionCorrelation();

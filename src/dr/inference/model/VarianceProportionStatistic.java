@@ -50,6 +50,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     private TreeModel tree;
     private MultivariateDiffusionModel diffusionModel;
+    private RepeatedMeasuresTraitDataModel dataModel;
     private TreeDataLikelihood treeLikelihood;
     private Parameter samplingPrecision;
     private double[] diffusionProportion;
@@ -70,12 +71,14 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.tree = tree;
         this.treeLikelihood = treeLikelihood;
         this.diffusionModel = diffusionModel;
+        this.dataModel = dataModel;
         this.samplingPrecision = dataModel.getSamplingPrecision();
         this.scaleByHeight = scaleByHeight;
 
         this.observedCounts = getObservedCounts(dataModel);
 
-        int dim = samplingPrecision.getDimension();
+//        int dim = samplingPrecision.getDimension();
+        int dim = dataModel.getTraitDimension();
         this.diffusionVariance = new double[dim];
         this.samplingVariance = new double[dim];
         this.diffusionProportion = new double[dim];
@@ -148,7 +151,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      * recalculates the diffusionProportion statistic based on current parameters
      */
     private void updateDiffusionProportion() {
-        int dim = samplingPrecision.getDimension();
+        int dim = dataModel.getTraitDimension();
 
         for (int i = 0; i < dim; i++) {
 
@@ -195,15 +198,17 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         }
     }
 
+
     /**
      * recalculates the sampling variance for each trait based on the current sampling precision
      */
     private void updateSamplingVariance() {
 
-        int dim = samplingPrecision.getDimension();
+        int dim = dataModel.getTraitDimension();
+        Matrix samplingMatrix = new Matrix(dataModel.getPrecisionMatrix().getParameterAsMatrix()).inverse();
         
         for (int i = 0; i < dim; i++) {
-            samplingVariance[i] = 1.0 / samplingPrecision.getParameterValue(i);
+            samplingVariance[i] = samplingMatrix.component(i, i);
         }
     }
 

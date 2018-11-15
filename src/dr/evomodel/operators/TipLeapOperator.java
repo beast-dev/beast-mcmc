@@ -1,81 +1,67 @@
-/*
- * SubtreeLeapOperator.java
- *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.evomodel.operators;
+
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
+import dr.evomodelxml.operators.TipLeapOperatorParser;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Implements the Subtree Leap move.
+ * Implements the Tip Leap move.
  *
- * This move picks a node at random (except for the root) and then moves the parent to any location
+ * This move picks a taxon at random from a list of taxa, find the corresponding node, and then moves the parent to any location
  * that is a certain patristic distance from its starting point (the distance is drawn from a Gaussian).
  *
  * It is always possible for the node to move up (potentially becoming the root) but the destination can't
  * be younger than the original node. All possible destinations are collected and then picked amongst
  * uniformly.
  *
- * @author Andrew Rambaut
- * @author Luiz Max Carvalho
+ * This operator is adapted from SubtreeLeapMove
+ *
+ * @author Mathieu Fourment
  * @version $Id$
  */
-public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
-    private double size = 1.0;
+public class TipLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
+    private double size;
 
     private final TreeModel tree;
     private final AdaptationMode mode;
     private final double targetAcceptance;
 
+    private Taxa taxa;
+
     /**
      * Constructor
      *
      * @param tree   the tree
+     * @param taxa   some taxa
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, AdaptationMode mode) {
+    public TipLeapOperator(TreeModel tree, Taxa taxa, double weight, double size, double targetAcceptance, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.targetAcceptance = targetAcceptance;
         this.mode = mode;
+        this.taxa = taxa;
     }
 
 
 
     /**
-     * Do a subtree leap move.
+     * Do a tip leap move.
      *
      * @return the log-transformed hastings ratio
      */
@@ -84,15 +70,20 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
 
         final double delta = getDelta();
 
-        final NodeRef root = tree.getRoot();
-
-        NodeRef node;
-
-        do {
-            // choose a random node avoiding root
-            node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-
-        } while (node == root);
+        // Pick a taxon from taxa
+        Taxon taxon = taxa.getTaxon(MathUtils.nextInt(taxa.getTaxonCount()));
+        NodeRef node = null;
+        int external = tree.getExternalNodeCount();
+        for (int i = 0; i < external; i++) {
+            if (tree.getNodeTaxon(tree.getExternalNode(i)).getId().equals(taxon.getId())) {
+                node = tree.getExternalNode(i);
+                break;
+            }
+        }
+        if (node == null) {
+            System.err.println("Taxon not found in tree: " + taxon.getId());
+            System.exit(1);
+        }
 
         // get its parent - this is the node we will prune/graft
         final NodeRef parent = tree.getParent(node);
@@ -183,7 +174,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
 
-        final Map<NodeRef, Double> destinations = new LinkedHashMap<NodeRef, Double>();
+        final Map<NodeRef, Double> destinations = new HashMap<NodeRef, Double>();
 
         // get the parent's height
         final double height = tree.getNodeHeight(parent);
@@ -325,7 +316,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     }
 
     public String getOperatorName() {
-        return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
+        return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";
     }
 
 

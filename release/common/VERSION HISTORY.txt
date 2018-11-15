@@ -32,7 +32,7 @@ Version 1.10.4  released 11th November 2018
         or processes.
 
 	Bug Fixes:
-		Issue 1038: logcombiner -burnin issue.
+		Issue 1038: Issue specifying burnin in the command-line LogCombiner.
 
 ================================================================================
 

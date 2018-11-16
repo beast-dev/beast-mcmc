@@ -26,6 +26,9 @@
 package dr.evomodel.branchmodel;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -39,13 +42,14 @@ import java.util.List;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel implements BranchModel {
+public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel implements BranchModel, TreeTraitProvider{
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
     protected final List<CompoundParameter> substitutionParameterList;
     private int parameterDimension;
     private final TreeModel tree;
     private final TreeParameterModel parameterIndexHelper;
+    private final Helper traitProvider = new Helper();
 
 
     public ArbitrarySubstitutionParameterBranchModel(String name,
@@ -65,6 +69,7 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
         this.parameterDimension = substitutionParameterList.get(0).getDimension();
         for (CompoundParameter substitutionParameter : substitutionParameterList) {
             addVariable(substitutionParameter);
+            traitProvider.addTrait(new SubstitutionParameterTrait(substitutionParameter.getId(), substitutionParameter, parameterIndexHelper));
             assert(substitutionParameter.getDimension() == parameterDimension);
         }
     }
@@ -132,5 +137,60 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
+    }
+
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return traitProvider.getTreeTraits();
+    }
+
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        return traitProvider.getTreeTrait(key);
+    }
+
+    private class SubstitutionParameterTrait implements TreeTrait<Double> {
+
+        private CompoundParameter substitutionParameter;
+        private String traitName;
+        private TreeParameterModel parameterIndexHelper;
+
+        private SubstitutionParameterTrait(String name,
+                                           CompoundParameter substitutionParameter,
+                                           TreeParameterModel parameterIndexHelper) {
+            this.substitutionParameter = substitutionParameter;
+            this.traitName = name;
+            this.parameterIndexHelper = parameterIndexHelper;
+        }
+
+        @Override
+        public String getTraitName() {
+            return traitName;
+        }
+
+        @Override
+        public Intent getIntent() {
+            return Intent.BRANCH;
+        }
+
+        @Override
+        public Class getTraitClass() {
+            return CompoundParameter.class;
+        }
+
+        @Override
+        public Double getTrait(Tree tree, NodeRef node) {
+            return substitutionParameter.getParameterValue(0, parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber()));
+        }
+
+        @Override
+        public String getTraitString(Tree tree, NodeRef node) {
+            return getTrait(tree, node).toString();
+        }
+
+        @Override
+        public boolean getLoggable() {
+            return true;
+        }
     }
 }

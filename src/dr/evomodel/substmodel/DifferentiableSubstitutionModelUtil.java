@@ -35,13 +35,13 @@ import dr.math.matrixAlgebra.WrappedMatrix;
 public class DifferentiableSubstitutionModelUtil {
 
     public static double[] getDifferentialMassMatrix(double time,
-                                              int stateCount,
-                                              WrappedMatrix.ArrayOfArray differentialMassMatrix,
-                                              EigenDecomposition eigenDecomposition) {
+                                                     int stateCount,
+                                                     WrappedMatrix differentialMassMatrix,
+                                                     EigenDecomposition eigenDecomposition) {
+
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
         WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
-
 
         getTripleMatrixMultiplication(stateCount, inverseEigenVectors, differentialMassMatrix, eigenVectors);
 
@@ -58,15 +58,17 @@ public class DifferentiableSubstitutionModelUtil {
         getTripleMatrixMultiplication(stateCount, eigenVectors, differentialMassMatrix, inverseEigenVectors);
 
         double[] outputArray = new double[stateCount * stateCount];
-        for (int i = 0; i < stateCount; i++) {
-            System.arraycopy(differentialMassMatrix.getArrays()[i], 0, outputArray, i * stateCount, stateCount);
+
+        for (int i = 0, length = stateCount * stateCount; i < length; ++i) {
+            outputArray[i] = differentialMassMatrix.get(i);
         }
 
         return outputArray;
 
     }
 
-    public static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+    private static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
+                                                      WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
 
         double[][] tmpMatrix = new double[stateCount][stateCount];
 

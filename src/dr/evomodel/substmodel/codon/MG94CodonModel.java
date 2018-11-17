@@ -49,8 +49,8 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
     protected Parameter alphaParameter;
     protected Parameter betaParameter;
 
-    protected final int numSynTransitions;
-    protected final int numNonsynTransitions;
+    final int numSynTransitions;
+    final int numNonsynTransitions;
 
     public MG94CodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter,
                           FrequencyModel freqModel) {
@@ -58,7 +58,7 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
                 new DefaultEigenSystem(codonDataType.getStateCount()));
     }
 
-    public MG94CodonModel(Codons codonDataType,
+    MG94CodonModel(Codons codonDataType,
                           Parameter alphaParameter,
                           Parameter betaParameter,
                           FrequencyModel freqModel, EigenSystem eigenSystem) {
@@ -89,11 +89,11 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
         return count;
     }
 
-    protected int getNumSynTransitions() {
+    private int getNumSynTransitions() {
         return 2 * countRates(1, 2);
     }
 
-    protected int getNumNonsynTransitions() {
+    private int getNumNonsynTransitions() {
         return 2 * countRates(3, 4);
     }
 
@@ -167,9 +167,9 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
                     new Author("SV", "Muse"),
                     new Author("BS", "Gaut")
             },
-            "A likelihood approach for comparing synonymous and nonsynonymous nucleotide substitution rates, with application to the chloroplast genome",
+            "A likelihood approach for comparing synonymous and non-synonymous nucleotide substitution rates, with application to the chloroplast genome",
             1994,
-            "Mol Biol Evol",
+            "Molecular Biology and Evolution",
             11, 715, 724
     );
 
@@ -186,12 +186,13 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
 
     @Override
     public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-        WrappedMatrix.ArrayOfArray infinitesimalDifferentialMatrix = getInfinitesimalDifferentialMatrix(parameter);
-        double[] result = DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, infinitesimalDifferentialMatrix, eigenDecomposition);
-        return result;
+        WrappedMatrix infinitesimalDifferentialMatrix = getInfinitesimalDifferentialMatrix(parameter);
+
+        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount,
+                infinitesimalDifferentialMatrix, eigenDecomposition);
     }
 
-    protected WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter) {
+    private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
         if (parameter == alphaParameter || parameter == betaParameter) {
             final double alphaPlusBetaInverse = 1.0 / (getAlpha() + getBeta());
             final double normalizingConstant = setupMatrix();

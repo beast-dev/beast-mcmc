@@ -29,7 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
@@ -45,10 +45,10 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
     private ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
     private CompoundParameter branchParameter;
     private String name;
-    public static String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
-    public static String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
+    private static String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
+    private static String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
-    public DiscreteTraitBranchSubstitutionParameterDelegate(String name,
+    DiscreteTraitBranchSubstitutionParameterDelegate(String name,
                                                             Tree tree,
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                             BranchRateModel branchRateModel,
@@ -67,10 +67,12 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModelForBranch(i);
-                assert(substitutionModel instanceof ParameterReplaceableSubstitutionModel);
-                ParameterReplaceableSubstitutionModel parameterReplaceableSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
 
-                double[] differentialMassMatrix = parameterReplaceableSubstitutionModel.getDifferentialMassMatrix(
+                assert(substitutionModel instanceof DifferentialMassProvider);
+
+                DifferentialMassProvider massProvider = (DifferentialMassProvider) substitutionModel;
+
+                double[] differentialMassMatrix = massProvider.getDifferentialMassMatrix(
                         tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node),
                         arbitrarySubstitutionParameterBranchModel.getSubstitutionParameterForBranch(node, branchParameter));
                 evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);

@@ -25,11 +25,7 @@
 
 package dr.evomodel.substmodel.nucleotide;
 
-import dr.evomodel.substmodel.BaseSubstitutionModel;
-import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
-import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
+import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
@@ -51,7 +47,8 @@ import java.util.Arrays;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class HKY extends BaseSubstitutionModel implements Citable, ParameterReplaceableSubstitutionModel {
+public class HKY extends BaseSubstitutionModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentialMassProvider {
 
     private Parameter kappaParameter = null;
 

@@ -46,7 +46,8 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
-public class GY94CodonModel extends AbstractCodonModel implements Citable, ParameterReplaceableSubstitutionModel {
+public class GY94CodonModel extends AbstractCodonModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentialMassProvider {
     /**
      * kappa
      */
@@ -242,7 +243,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable, Param
     );
 
     @Override
-    public SubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
+    public ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
         if (oldParameter == omegaParameter) {
             return new GY94CodonModel(codonDataType, newParameter, kappaParameter, freqModel);
         } else {

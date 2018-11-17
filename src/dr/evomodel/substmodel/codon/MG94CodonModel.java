@@ -43,7 +43,8 @@ import java.util.List;
  * @author Guy Baele
  * @author Philippe lemey
  */
-public class MG94CodonModel extends AbstractCodonModel implements Citable, ParameterReplaceableSubstitutionModel {
+public class MG94CodonModel extends AbstractCodonModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentialMassProvider {
 
     protected Parameter alphaParameter;
     protected Parameter betaParameter;
@@ -173,7 +174,7 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable, Param
     );
 
     @Override
-    public SubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
+    public ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
         if (oldParameter == alphaParameter) {
             return new MG94CodonModel(codonDataType, newParameter, betaParameter, freqModel);
         } else if (oldParameter == betaParameter) {

@@ -1,5 +1,5 @@
 /*
- * ParameterReplaceableSubstitutionModel.java
+ * DifferentialMassProvider.java
  *
  * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -31,8 +31,8 @@ import dr.inference.model.Parameter;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public interface ParameterReplaceableSubstitutionModel extends SubstitutionModel {
+public interface DifferentialMassProvider {
 
-    ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter);
-    
+    double[] getDifferentialMassMatrix(double time, Parameter parameter); // TODO Improve API.  Is parameter necessary?
+
 }

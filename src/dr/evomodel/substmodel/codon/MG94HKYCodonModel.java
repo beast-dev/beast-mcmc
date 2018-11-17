@@ -104,7 +104,7 @@ public class MG94HKYCodonModel extends MG94CodonModel {
     }
 
     @Override
-    public SubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
+    public ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
         if (oldParameter == alphaParameter) {
             return new MG94HKYCodonModel(codonDataType, newParameter, betaParameter, kappaParameter, freqModel);
         } else if (oldParameter == betaParameter) {

@@ -183,8 +183,8 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
             throw new RuntimeException("Not yet implemented!");
         }
     }
-
-    @Override
+    
+    @Deprecated
     public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
         WrappedMatrix infinitesimalDifferentialMatrix = getInfinitesimalDifferentialMatrix(parameter);
 
@@ -192,6 +192,41 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
                 infinitesimalDifferentialMatrix, eigenDecomposition);
     }
 
+    private WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+
+            final double alphaPlusBetaInverse = 1.0 / (getAlpha() + getBeta());
+            final double normalizingConstant = setupMatrix();
+
+            final double[] Q = new double[stateCount * stateCount];
+            getInfinitesimalMatrix(Q);
+
+            final double[] differentialRates = new double[rateCount];
+            setupDifferentialRates(wrt, differentialRates, normalizingConstant);
+
+            double[][] differentialMassMatrix = new double[stateCount][stateCount];
+            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
+            makeValid(differentialMassMatrix, stateCount);
+
+            final double weightedNormalizationGradient
+                    = getNormalizationValue(differentialMassMatrix, freqModel.getFrequencies()) - alphaPlusBetaInverse;
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) { // TODO: Check that I did not break this
+                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
+                }
+            }
+
+            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+    }
+
+    private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        for (int i = 0; i < rateCount; ++i) {
+            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
+                    numSynTransitions, numNonsynTransitions);
+        }
+    }
+
+    @Deprecated
     private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
         if (parameter == alphaParameter || parameter == betaParameter) {
 
@@ -224,49 +259,84 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
         }
     }
 
+    @Deprecated
     protected void setupDifferentialRates(Parameter parameter, double[] differentialRates, double normalizingConstant) {
+
+        // TODO Improve API so parameter is not passed
+        // TODO The caller passes directly to a DifferentialMassProvider wrapper that already knows the WrtParameter (at construction)
+        // TODO Try constructing and using DifferentialWrapper in caller
+
+        WrtParameter wrt;
         if (parameter == alphaParameter) {
-            for (int i = 0; i < rateCount; i++) {
-                switch (rateMap[i]) {
-                    case 0:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 1:
-                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
-                        break;        // synonymous transition
-                    case 2:
-                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
-                        break;        // synonymous transversion
-                    case 3:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 4:
-                        differentialRates[i] = 0.0;
-                        break;
-                }
-            }
+            wrt = WrtParameter.ALPHA;
         } else if (parameter == betaParameter) {
-            for (int i = 0; i < rateCount; i++) {
-                switch (rateMap[i]) {
-                    case 0:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 1:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 2:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 3:
-                        differentialRates[i] = 1.0/ normalizingConstant / numNonsynTransitions;
-                        break;         // non-synonymous transition
-                    case 4:
-                        differentialRates[i] = 1.0 / normalizingConstant / numNonsynTransitions;
-                        break;            // non-synonymous transversion
-                }
-            }
+            wrt = WrtParameter.BETA;
         } else {
             throw new RuntimeException("Not yet implemented!");
         }
+
+        for (int i = 0; i < rateCount; ++i) {
+            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
+                    numSynTransitions, numNonsynTransitions);
+        }
+    }
+
+    public class DifferentialWrapper implements DifferentialMassProvider {
+
+        private final MG94CodonModel baseModel;
+        private final WrtParameter wrt;
+
+        // TODO Construct in caller to `getDifferentialMassMatrix` with either ALPHA or BETA as needed
+
+        DifferentialWrapper(MG94CodonModel baseModel,   // TODO Will need to generalize this for other SubstitutionModels
+                            WrtParameter wrt) {
+            this.baseModel = baseModel;
+            this.wrt = wrt;
+        }
+
+        @Override
+        public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+
+            // Note: no longer uses `parameter`
+
+            WrappedMatrix infinitesimalDifferentialMatrix = baseModel.getInfinitesimalDifferentialMatrix(wrt);
+
+            return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount,
+                    infinitesimalDifferentialMatrix, eigenDecomposition);
+        }
+    }
+
+    enum WrtParameter {
+        ALPHA {
+            @Override
+            double getRate(int switchCase, double normalizingConstant,
+                           int numSynTransitions, int numNonsynTransitions) {
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transition
+                    case 2: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transversion
+                    case 3: return 0.0;
+                    case 4: return 0.0;
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        },
+        BETA {
+            @Override
+            double getRate(int switchCase, double normalizingConstant, int numSynTransitions, int numNonsynTransitions) {
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 0.0;
+                    case 2: return 0.0;
+                    case 3: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                    case 4: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        };
+
+        abstract double getRate(int switchCase, double normalizingConstant,
+                                int numSynTransitions, int numNonsynTransitions);
+
     }
 }

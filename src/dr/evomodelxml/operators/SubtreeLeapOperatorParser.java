@@ -40,6 +40,7 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SIZE = "size";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+    public static final String DISTANCE_KERNEL = "distanceKernel";
 
     public String getParserName() {
         return SUBTREE_LEAP;
@@ -55,6 +56,7 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         // size attribute is mandatory
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+        final String distanceKernel = xo.getAttribute(DISTANCE_KERNEL, "gaussian");
 
         if (size <= 0.0) {
             throw new XMLParseException("The SubTreeLeap size attribute must be positive and non-zero.");
@@ -63,7 +65,8 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
-        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, targetAcceptance, mode);
+
+		SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, targetAcceptance, distanceKernel, mode);
 
         return operator;
     }

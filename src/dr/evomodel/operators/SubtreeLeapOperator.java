@@ -25,19 +25,19 @@
 
 package dr.evomodel.operators;
 
-import dr.app.treestat.TreeStatData;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
-import dr.evomodelxml.operators.TipLeapOperatorParser;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
+import dr.math.distributions.Distribution;
+import dr.inference.distribution.CauchyDistribution;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implements the Subtree Leap move.
@@ -51,18 +51,16 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Luiz Max Carvalho
- * @author Mathieu Fourment
  * @version $Id$
  */
 public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
-    private double size;
+    private double size = 1.0;
 
     private final TreeModel tree;
     private final AdaptationMode mode;
     private final double targetAcceptance;
-
-    private final List<NodeRef> tips;
+	private String distanceKernel;
 
     /**
      * Constructor
@@ -70,49 +68,17 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param tree   the tree
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param targetAcceptance target acceptance rate
+     * @param distanceKernel the distribution from which the patristic distance will be drawn
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, String distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.targetAcceptance = targetAcceptance;
+        this.setDistanceKernel(distanceKernel);
         this.mode = mode;
-        this.tips = null;
-    }
-
-    /**
-     * Constructor that takes a taxon set to pick from for the move.
-     *
-     * @param tree   the tree
-     * @param taxa   some taxa
-     * @param weight the weight
-     * @param size   scaling on a unit Gaussian to draw the patristic distance from
-     * @param mode   coercion mode
-     */
-    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, AdaptationMode mode) {
-        this.tree = tree;
-        setWeight(weight);
-        this.size = size;
-        this.targetAcceptance = targetAcceptance;
-        this.mode = mode;
-        this.tips = new ArrayList<NodeRef>();
-
-        for (Taxon taxon : taxa) {
-            boolean found = false;
-            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-                NodeRef tip = tree.getExternalNode(i);
-                if (tree.getNodeTaxon(tip).equals(taxon)) {
-                    tips.add(tip);
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                throw new IllegalArgumentException("Taxon, " + taxon.getId() + ", not found in tree with id " + tree.getId());
-            }
-        }
     }
 
 
@@ -124,24 +90,18 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     public double doOperation() {
         double logq;
 
-        final double delta = getDelta();
-
+        final double delta = getDelta(distanceKernel);
+        System.err.println("delta "+ delta + "\n");
 
         final NodeRef root = tree.getRoot();
 
         NodeRef node;
 
-        if (tips == null) {
-            // Pick a node (but not the root)
-            do {
-                // choose a random node avoiding root
-                node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+        do {
+            // choose a random node avoiding root
+            node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
 
-            } while (node == root);
-        } else {
-            // Pick a tip from the specified set of tips.
-            node = tips.get(MathUtils.nextInt(tips.size()));
-        }
+        } while (node == root);
 
         // get its parent - this is the node we will prune/graft
         final NodeRef parent = tree.getParent(node);
@@ -232,7 +192,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
 
-        final Map<NodeRef, Double> destinations = new LinkedHashMap<NodeRef, Double>();
+        final Map<NodeRef, Double> destinations = new HashMap<NodeRef, Double>();
 
         // get the parent's height
         final double height = tree.getNodeHeight(parent);
@@ -298,11 +258,19 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         return destinations;
     }
 
-    private double getDelta() {
-        return Math.abs(MathUtils.nextGaussian() * size);
+    private double getDelta(String distanceKernel) {
+    	   switch(distanceKernel) {
+           case "gaussian": return Math.abs(MathUtils.nextGaussian() * size);
+           case "cauchy":{
+        	   double u = MathUtils.nextDouble();
+        	   Distribution distK = new CauchyDistribution(0, size);
+        	   return Math.abs(distK.quantile(u));  
+           } 
+           default: throw new UnsupportedOperationException("Unknown enum value");
+       }
     }
 
-    private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
+	private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 
         final NodeRef parent = tree.getParent(node);
 
@@ -374,12 +342,16 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     }
 
     public String getOperatorName() {
-        if (tips == null) {
-            return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
-        } else {
-            return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";
-        }
+        return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
     }
+
+	public String getDistanceKernel() {
+		return distanceKernel;
+	}
+
+	public void setDistanceKernel(String distanceKernel) {
+		this.distanceKernel = distanceKernel;
+	}
 
 
 }

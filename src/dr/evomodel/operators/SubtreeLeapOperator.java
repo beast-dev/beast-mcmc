@@ -25,10 +25,8 @@
 
 package dr.evomodel.operators;
 
-import dr.app.treestat.TreeStatData;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
@@ -309,10 +307,10 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
  	   switch(distanceKernel) {
         case "gaussian": return Math.abs(MathUtils.nextGaussian() * size);
         case "cauchy":{
-     	   double u = MathUtils.nextDouble();
      	   Distribution distK = new CauchyDistribution(0, size);
+     	   double u = MathUtils.nextDouble();
      	   return Math.abs(distK.quantile(u));  
-        } 
+        }
         default: throw new UnsupportedOperationException("Unknown enum value");
     }
  }

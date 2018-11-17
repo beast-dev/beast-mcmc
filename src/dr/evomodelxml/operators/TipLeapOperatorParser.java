@@ -21,6 +21,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SIZE = "size";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+    public static final String DISTANCE_KERNEL = "distanceKernel";
     public static final String TAXA = "taxa";
 
     public String getParserName() {
@@ -57,6 +58,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
         // size attribute is mandatory
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+        final String distanceKernel = xo.getAttribute(DISTANCE_KERNEL, "gaussian");
 
         if (size <= 0.0) {
             throw new XMLParseException("The TipLeap size attribute must be positive and non-zero.");
@@ -66,7 +68,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
 
-        return new SubtreeLeapOperator(treeModel, taxa, weight, size, targetAcceptance, mode);
+        return new SubtreeLeapOperator(treeModel, taxa, weight, size, targetAcceptance, distanceKernel, mode);
     }
 
     public String getParserDescription() {

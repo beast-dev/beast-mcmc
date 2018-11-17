@@ -96,8 +96,23 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
                 kappaParameter.getDimension()));
 
         // Assuming it's always the same dim
-        
-        
+
+
+        Statistic synonymousRateStatistic = new Statistic.Abstract() {
+
+            public String getStatisticName() {
+                return "synonymousRate";
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public double getStatisticValue(int dim) {
+                return getSynonymousRate();
+            }
+
+        };
         addStatistic(synonymousRateStatistic);
     }
 
@@ -135,15 +150,15 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
         return omegaParameter.getParameterValue(0);
     }
 
-    public double getSynonymousRate() {
+    private double getSynonymousRate() {
         double k = getKappa();
         double o = getOmega();
         return ((31.0 * k) + 36.0) / ((31.0 * k) + 36.0 + (138.0 * o) + (58.0 * o * k));
     }
 
-    public double getNonSynonymousRate() {
-        return 0;
-    }
+//    public double getNonSynonymousRate() {
+//        return 0;
+//    }
 
     protected void setupRelativeRates(double[] rates) {
 
@@ -168,6 +183,8 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
                     break;        // non-synonymous transversion
             }
         }
+
+        // TODO Remove code duplication with YangCodonModel
     }
 
     // **************************************************************
@@ -175,31 +192,12 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     // **************************************************************
 
     public String toXHTML() {
-        StringBuffer buffer = new StringBuffer();
 
-        buffer.append("<em>Goldman Yang 94 Codon Model</em> kappa = ");
-        buffer.append(getKappa());
-        buffer.append(", omega = ");
-        buffer.append(getOmega());
-
-        return buffer.toString();
+        return "<em>Goldman Yang 94 Codon Model</em> kappa = " +
+                getKappa() +
+                ", omega = " +
+                getOmega();
     }
-
-    public Statistic synonymousRateStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "synonymousRate";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int dim) {
-            return getSynonymousRate();
-        }
-
-    };
 
     /* private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
 
@@ -251,7 +249,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
         }
     }
 
-    protected WrappedMatrix.ArrayOfArray getInfinitesimalDifferentialMatrix(Parameter parameter) {
+    private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
         if (parameter == omegaParameter) {
             final double kappa = getKappa();
             final double normalizingConstant = setupMatrix();
@@ -269,17 +267,22 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
                 }
             }
 
-            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
-            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix.getArrays());
-            makeValid(differentialMassMatrix.getArrays(), stateCount);
-            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix.getArrays(), freqModel.getFrequencies());
+            // TODO Why does below look like code duplication with MG94CodonModel?
+
+            double[][] differentialMassMatrix = new double[stateCount][stateCount];
+            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
+            makeValid(differentialMassMatrix, stateCount);
+
+            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix,
+                    freqModel.getFrequencies());
 
             for (int i = 0; i < stateCount; i++) {
                 for (int j = 0; j < stateCount; j++) {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient);
+                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
                 }
             }
-            return differentialMassMatrix;
+            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+
         } else {
             throw new RuntimeException("Not yet implemented");
         }

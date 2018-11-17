@@ -194,28 +194,31 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
 
     private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
         if (parameter == alphaParameter || parameter == betaParameter) {
+
             final double alphaPlusBetaInverse = 1.0 / (getAlpha() + getBeta());
             final double normalizingConstant = setupMatrix();
+
             final double[] Q = new double[stateCount * stateCount];
             getInfinitesimalMatrix(Q);
+
             final double[] differentialRates = new double[rateCount];
             setupDifferentialRates(parameter, differentialRates, normalizingConstant);
 
+            double[][] differentialMassMatrix = new double[stateCount][stateCount];
+            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
+            makeValid(differentialMassMatrix, stateCount);
 
-            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
-            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix.getArrays());
-            makeValid(differentialMassMatrix.getArrays(), stateCount);
             final double weightedNormalizationGradient
-                    = getNormalizationValue(differentialMassMatrix.getArrays(), freqModel.getFrequencies()) - alphaPlusBetaInverse;
+                    = getNormalizationValue(differentialMassMatrix, freqModel.getFrequencies()) - alphaPlusBetaInverse;
 
             for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    final double result = differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * weightedNormalizationGradient;
-                    differentialMassMatrix.set(i, j, result);
+                for (int j = 0; j < stateCount; j++) { // TODO: Check that I did not break this
+                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
                 }
             }
 
-            return differentialMassMatrix;
+            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+
         } else {
             throw new RuntimeException("Not yet implemented");
         }

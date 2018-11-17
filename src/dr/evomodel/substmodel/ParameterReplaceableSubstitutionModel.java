@@ -33,7 +33,7 @@ import dr.inference.model.Parameter;
  */
 public interface ParameterReplaceableSubstitutionModel extends SubstitutionModel {
 
-    SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter);
+    ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter);
 
     double[] getDifferentialMassMatrix(double time, Parameter parameter);
 }

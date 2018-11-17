@@ -173,7 +173,7 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable, Param
     );
 
     @Override
-    public SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter) {
+    public SubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
         if (oldParameter == alphaParameter) {
             return new MG94CodonModel(codonDataType, newParameter, betaParameter, freqModel);
         } else if (oldParameter == betaParameter) {

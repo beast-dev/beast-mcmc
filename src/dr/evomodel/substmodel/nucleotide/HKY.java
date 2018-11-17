@@ -306,7 +306,7 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
      * @param newParameter
      */
     @Override
-    public HKY replaceParameter(Parameter oldParameter, Parameter newParameter) {
+    public HKY factory(Parameter oldParameter, Parameter newParameter) {
         if (oldParameter == kappaParameter) {
             return new HKY(newParameter, freqModel);
         } else if (oldParameter == freqModel.getFrequencyParameter()) {

@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXMLObjectParser {
 
-    public static final String ARBITRARY_SUBSTITUTION_PARAMETER_BRANCH_MODEL ="arbitrarySubstitutionParameterBranchModel";
+    private static final String ARBITRARY_SUBSTITUTION_PARAMETER_BRANCH_MODEL ="arbitrarySubstitutionParameterBranchModel";
     private static final String SINGLE_RATE="replacedParameter";
     private static final String BRANCH_SPECIFIC_PARAMETER = "branchSpecificParameter";
 
@@ -62,8 +62,8 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         XMLObject dxo = xo.getChild(SINGLE_RATE);
 
 
-        BranchSpecificSubstitutionModelProvider substitutionModelProvider = null;
-        ArbitrarySubstitutionParameterBranchModel branchParameterModel = null;
+        BranchSpecificSubstitutionModelProvider substitutionModelProvider;
+        ArbitrarySubstitutionParameterBranchModel branchParameterModel;
 
         assert (dxo.getChildCount() == cxo.getChildCount());
 
@@ -96,7 +96,7 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
                     throw new RuntimeException("Root node number is not the maximum.");
                 }
 
-                branchSubstitutionModel = (ParameterReplaceableSubstitutionModel) branchSubstitutionModel.replaceParameter(
+                branchSubstitutionModel = branchSubstitutionModel.factory(
                         oldParameter,
                         branchSpecificParameter.getParameter(nodeNum));
 
@@ -107,11 +107,11 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         for (int i = 0; i < dxo.getChildCount(); i++) {
             Parameter oldParameter = (Parameter) dxo.getChild(i);
             CompoundParameter branchSpecificParameter = (CompoundParameter) cxo.getChild(i);
-            Parameter rootParameter = new Parameter.Default((String) null,
+            Parameter rootParameter = new Parameter.Default( "root.parameter",
                     branchSpecificParameter.getParameter(0).getParameterValue(0),
                     branchSpecificParameter.getParameter(0).getBounds().getLowerLimit(0),
                     branchSpecificParameter.getParameter(0).getBounds().getUpperLimit(0));
-            rootSubstitutionModel = (ParameterReplaceableSubstitutionModel) rootSubstitutionModel.replaceParameter(oldParameter, rootParameter);
+            rootSubstitutionModel = rootSubstitutionModel.factory(oldParameter, rootParameter);
         }
         substitutionModelList.add(rootSubstitutionModel);
 

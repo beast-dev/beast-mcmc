@@ -41,12 +41,13 @@ import dr.inference.model.CompoundParameter;
  */
 public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
 
-    private BranchRateModel branchRateModel;
-    private ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
-    private CompoundParameter branchParameter;
-    private String name;
-    private static String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
-    private static String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
+    private final BranchRateModel branchRateModel;
+    private final ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
+    private final CompoundParameter branchParameter;
+    private final String name;
+
+    private static final String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
+    private static final String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
     DiscreteTraitBranchSubstitutionParameterDelegate(String name,
                                                             Tree tree,

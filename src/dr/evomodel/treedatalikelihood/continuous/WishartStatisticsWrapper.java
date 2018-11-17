@@ -108,7 +108,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         return wishartStatistics;
     }
 
-    private void simulateMissingTraits() {
+    public void simulateMissingTraits() {
 
         likelihoodDelegate.fireModelChanged(); // Force new sample!
 

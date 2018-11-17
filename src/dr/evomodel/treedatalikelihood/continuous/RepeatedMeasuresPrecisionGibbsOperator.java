@@ -15,6 +15,8 @@ import dr.xml.*;
 import dr.math.matrixAlgebra.Matrix;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
+import static java.lang.Double.NaN;
+import static java.lang.Double.isNaN;
 
 public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
@@ -23,17 +25,22 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
     private static WishartStatistics priorDistribution;
     private RepeatedMeasuresTraitDataModel dataModel;
     private TreeDataLikelihood dataLikelihood;
+    private static RepeatedMeasuresTraitSimulator dataSimulator;
+    private static WishartStatisticsWrapper wishartWrapper;
 
 
     public RepeatedMeasuresPrecisionGibbsOperator(
             RepeatedMeasuresTraitDataModel dataModel,
             TreeDataLikelihood dataLikelihood,
             WishartStatistics priorDistribution,
+            WishartStatisticsWrapper wishartWrapper,
             double weight) {
 
         this.priorDistribution = priorDistribution;
         this.dataModel = dataModel;
         this.dataLikelihood = dataLikelihood;
+        this.dataSimulator = new RepeatedMeasuresTraitSimulator(dataModel, dataLikelihood);
+        this.wishartWrapper = wishartWrapper;
 
 
     }
@@ -52,9 +59,14 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
     @Override
     public double doOperation() {
         int dim = dataModel.dimTrait;
+//        ContinuousDataLikelihoodDelegate delegate = (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
+//        delegate.fireModelChanged();
+        wishartWrapper.simulateMissingTraits();
+        TreeTrait tipTrait = dataLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + dataModel.getTraitName());
+        double[] tipTraits = (double[]) tipTrait.getTrait(dataLikelihood.getTree(), null);
+        dataSimulator.simulateMissingData(tipTraits);
         double df = priorDistribution.getDF() + dataLikelihood.getTree().getExternalNodeCount();
-        //TODO: Draw missing data values
-        double[][] scaleMatrix = getPosteriorScaleMatrix();
+        double[][] scaleMatrix = getPosteriorScaleMatrix(tipTraits);
 
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
 
@@ -67,21 +79,24 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
                 column.setParameterValueQuietly(j, draw[j][i]);
         }
 
+
         dataModel.getPrecisionMatrix().fireParameterChangedEvent();
 
         return 0;
     }
 
-    private double[][] getPosteriorScaleMatrix() {
+    private double[][] getPosteriorScaleMatrix(double[] tipTraits) {
 
         int dimTrait = dataModel.dimTrait;
         int N = dataLikelihood.getTree().getExternalNodeCount();
         double[][] scaleMatrix = new Matrix(priorDistribution.getScaleMatrix()).inverse().toComponents();
 
+
         CompoundParameter traitParameter = dataModel.getParameter();
 
-        TreeTrait tipTrait = dataLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + dataModel.getTraitName());
-        double[] tipTraits = (double[]) tipTrait.getTrait(dataLikelihood.getTree(), null);
+
+//        System.err.println(java.util.Arrays.toString(scaleMatrix[0]));
+//        System.err.println(java.util.Arrays.toString(scaleMatrix[1]));
 
         for (int i = 0; i < dimTrait; i++) {
             for (int j = 0; j < dimTrait; j++) {
@@ -94,11 +109,17 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
 
                     value = value + (taxonParameter.getParameterValue(i) - tipTraits[k * dimTrait + i]) *
                             (taxonParameter.getParameterValue(j) - tipTraits[k * dimTrait + j]);
+
+
                 }
 
                 scaleMatrix[i][j] += value;
             }
         }
+
+//        System.err.println(java.util.Arrays.toString(scaleMatrix[0]));
+//        System.err.println(java.util.Arrays.toString(scaleMatrix[1]));
+
 
         scaleMatrix = new Matrix(scaleMatrix).inverse().toComponents();
 
@@ -115,12 +136,13 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
             TreeDataLikelihood dataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 //            ConjugateWishartStatisticsProvider ws = (ConjugateWishartStatisticsProvider) xo.getChild(ConjugateWishartStatisticsProvider.class);
             MultivariateDistributionLikelihood prior = (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+            WishartStatisticsWrapper wishartWrapper = (WishartStatisticsWrapper) xo.getChild((WishartStatisticsWrapper.class));
             assert (prior.getDistribution() instanceof WishartDistribution);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
 
-            return new RepeatedMeasuresPrecisionGibbsOperator(dataModel, dataLikelihood, (WishartStatistics) prior.getDistribution(),
+            return new RepeatedMeasuresPrecisionGibbsOperator(dataModel, dataLikelihood, (WishartStatistics) prior.getDistribution(), wishartWrapper,
                     weight);
         }
 
@@ -133,7 +155,8 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(MultivariateDistributionLikelihood.class),
                 new ElementRule(RepeatedMeasuresTraitDataModel.class),
-                new ElementRule(TreeDataLikelihood.class)
+                new ElementRule(TreeDataLikelihood.class),
+                new ElementRule(WishartStatisticsWrapper.class)
         };
 
         @Override

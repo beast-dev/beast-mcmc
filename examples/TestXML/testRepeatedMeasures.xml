@@ -2,19 +2,19 @@
 <beast>
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">0.9 -1.0</attr>
+			<attr name="X">NA NA 1</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">0 -0.1</attr>
+			<attr name="X">NA -0.1 2</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">-0.7 0</attr>
+			<attr name="X">-0.7 0 NA</attr>
 		</taxon>
 		<taxon id="D">
-			<attr name="X">0.4 0</attr>
+			<attr name="X">0.4 NA 4</attr>
 		</taxon>
 		<taxon id="E">
-			<attr name="X">-0.9 0</attr>
+			<attr name="X">NA 0 NA</attr>
 		</taxon>
 	</taxa>
 
@@ -33,7 +33,7 @@
 		<nodeHeights internalNodes="true" rootNode="true">
 			<parameter id="treeModel.allInternalNodeHeights"/>
 		</nodeHeights>
-		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3">
 			<parameter id="leafTraits"/>
 		</nodeTraits>
 	</treeModel>
@@ -41,8 +41,9 @@
 	<multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
 			<matrixParameter id="precisionMatrix">
-				<parameter id="prec.col1" value="1.0 0.1"/>
-				<parameter id="prec.col2" value="0.1 2.0"/>
+				<parameter id="prec.col1" value="1.0 0.1 0"/>
+				<parameter id="prec.col2" value="0.1 2.0 0"/>
+				<parameter id="prec.col3" value="0 0 1"/>
 			</matrixParameter>
 		</precisionMatrix>
 	</multivariateDiffusionModel>
@@ -57,8 +58,9 @@
 		<!--</samplingPrecision>-->
 		<samplingPrecision>
 			<matrixParameter id="samplingPrecision">
-				<parameter value="1 0"/>
-				<parameter value="0 1"/>
+				<parameter value="1 0.3 -0.2"/>
+				<parameter value="0.3 1 0.2"/>
+				<parameter value="-0.2 0.2 1"/>
 			</matrixParameter>
 		</samplingPrecision>
 		<multivariateDiffusionModel idref="diffusionModel"/>
@@ -70,7 +72,7 @@
 		<repeatedMeasuresModel idref="repeatedMeasures"/>
 		<conjugateRootPrior>
 			<meanParameter>
-				<parameter id="mean" value="0.0 0.0"/>
+				<parameter id="mean" value="0.0 0.0 0"/>
 			</meanParameter>
 			<priorSampleSize>
 				<parameter value="0.001"/>
@@ -96,11 +98,12 @@
 	</varianceProportionStatistic>
 
 
-	<multivariateWishartPrior id="precisionPrior" df="2">
+	<multivariateWishartPrior id="precisionPrior" df="3">
 		<scaleMatrix>
 			<matrixParameter>
-				<parameter value="1 0"/>
-				<parameter value="0 1"/>
+				<parameter value="1 0 0"/>
+				<parameter value="0 1 0"/>
+				<parameter value="0 0 1"/>
 			</matrixParameter>
 		</scaleMatrix>
 		<data>
@@ -112,11 +115,12 @@
 		<!--<parameter idref="gamma"/>-->
 	<!--</gammaPrior>-->
 
-	<multivariateWishartPrior id="samplingPrior" df="2">
+	<multivariateWishartPrior id="samplingPrior" df="3">
 		<scaleMatrix>
 			<matrixParameter>
-				<parameter value="1 0"/>
-				<parameter value="0 1"/>
+				<parameter value="2 0 0"/>
+				<parameter value="0 2 0"/>
+				<parameter value="0 0 2"/>
 			</matrixParameter>
 		</scaleMatrix>
 		<data>
@@ -143,14 +147,17 @@
 			<repeatedMeasuresModel idref="repeatedMeasures"/>
 			<multivariateWishartPrior idref="samplingPrior"/>
 			<treeDataLikelihood idref="traitLikelihood"/>
-		</repeatedMeasuresPrecisionGibbsOperator>
-
-		<precisionGibbsOperator weight="1">
 			<wishartStatistics  traitName="X">
 				<traitDataLikelihood idref="traitLikelihood"/>
 			</wishartStatistics>
-			<multivariateWishartPrior idref="precisionPrior"/>
-		</precisionGibbsOperator>
+		</repeatedMeasuresPrecisionGibbsOperator>
+
+		<!--<precisionGibbsOperator weight="1">-->
+			<!--<wishartStatistics  traitName="X">-->
+				<!--<traitDataLikelihood idref="traitLikelihood"/>-->
+			<!--</wishartStatistics>-->
+			<!--<multivariateWishartPrior idref="precisionPrior"/>-->
+		<!--</precisionGibbsOperator>-->
 	</operators>
 
 	<report>

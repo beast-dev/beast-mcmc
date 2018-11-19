@@ -170,6 +170,13 @@ public interface Parameter extends Statistic, Variable<Double> {
 
     boolean isUsed();
 
+    /**
+     * For Check-pointing: getting and setting untransformed parameter values when relevant
+     */
+    double getParameterUntransformedValue(int dim);
+
+    void setParameterUntransformedValue(int dim, double a);
+
     Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
     Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
 
@@ -329,6 +336,14 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public boolean check() {
             return true;
+        }
+
+        public void setParameterUntransformedValue(int dim, double a) {
+            setParameterValue(dim, a);
+        }
+
+        public double getParameterUntransformedValue(int dim) {
+            return getParameterValue(dim);
         }
 
         // --------------------------------------------------------------------

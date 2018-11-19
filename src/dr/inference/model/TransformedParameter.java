@@ -105,6 +105,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         return parameter.getParameterValues();
     }
 
+    public void setParameterUntransformedValue(int dim, double a) {
+        parameter.setParameterValue(dim, a);
+    }
+
     public Parameter getUntransformedParameter() {
         return parameter;
     }

@@ -56,12 +56,28 @@ import java.util.*;
  */
 public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
+    public enum DistanceKernelType {
+        NORMAL("normal"),
+        CAUCHY("Cauchy");
+
+        DistanceKernelType(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        String name;
+    };
+
     private double size;
 
     private final TreeModel tree;
     private final AdaptationMode mode;
     private final double targetAcceptance;
-    private final String distanceKernel;
+    private final DistanceKernelType distanceKernel;
 
     private final List<NodeRef> tips;
 
@@ -75,7 +91,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param distanceKernel the distribution from which to draw the patristic distance 
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, String distanceKernel, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
@@ -94,7 +110,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, String distanceKernel, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
@@ -303,17 +319,17 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         return destinations;
     }
 
-   private double getDelta(String distanceKernel) {
- 	   switch(distanceKernel) {
-        case "gaussian": return Math.abs(MathUtils.nextGaussian() * size);
-        case "cauchy":{
-     	   Distribution distK = new CauchyDistribution(0, size);
-     	   double u = MathUtils.nextDouble();
-     	   return Math.abs(distK.quantile(u));  
+    private double getDelta(DistanceKernelType distanceKernel) {
+        switch(distanceKernel) {
+            case NORMAL: return Math.abs(MathUtils.nextGaussian() * size);
+            case CAUCHY:{
+                Distribution distK = new CauchyDistribution(0, size);
+                double u = MathUtils.nextDouble();
+                return Math.abs(distK.quantile(u));
+            }
+            default: throw new UnsupportedOperationException("Unknown enum value");
         }
-        default: throw new UnsupportedOperationException("Unknown enum value");
     }
- }
 
     private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 

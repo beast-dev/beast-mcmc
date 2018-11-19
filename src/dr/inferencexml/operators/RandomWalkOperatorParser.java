@@ -27,17 +27,10 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-<<<<<<< HEAD
 import dr.inference.model.TransformedMultivariateParameter;
 import dr.inference.model.TransformedParameter;
 import dr.inference.operators.*;
 import dr.util.Transform;
-=======
-import dr.inference.operators.AdaptableMCMCOperator;
-import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.RandomWalkOperator;
->>>>>>> master
 import dr.xml.*;
 
 import static dr.util.Transform.Util.parseTransform;

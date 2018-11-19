@@ -29,9 +29,8 @@ import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-<<<<<<< HEAD
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.GeneralOperator;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -39,11 +38,6 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.inference.operators.PathDependent;
 import dr.math.MathUtils;
-=======
-import dr.inference.operators.AbstractAdaptableOperator;
-import dr.inference.operators.AdaptationMode;
-import dr.math.distributions.NormalDistribution;
->>>>>>> master
 import dr.util.Transform;
 
 /**
@@ -51,12 +45,8 @@ import dr.util.Transform;
  * @author Marc A. Suchard
  */
 
-<<<<<<< HEAD
-public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
+public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         implements GeneralOperator, PathDependent {
-=======
-public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
->>>>>>> master
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -67,7 +57,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
     protected final double[] mask;
     protected final Transform transform;
 
-    HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+    HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                   Parameter parameter, Transform transform, Parameter mask,
                                   double stepSize, int nSteps,
                                   double randomStepCountFraction,
@@ -81,18 +71,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
         );
     }
 
-    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight,
+    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
 
-<<<<<<< HEAD
-=======
-    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                         Parameter parameter, Transform transform,
-                                         double stepSize, int nSteps, double drawVariance) {
->>>>>>> master
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -173,7 +157,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
     }
 
     private boolean shouldCheckStepSize() {
-        return getCount() < 1 && getMode() == CoercionMode.COERCION_ON;
+        return getCount() < 1 && getMode() == AdaptationMode.ADAPTATION_ON;
     }
 
     private void checkStepSize() {
@@ -410,14 +394,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-<<<<<<< HEAD
-    public void setCoercableParameter(double value) {
-=======
     public void setAdaptableParameter(double value) {
         if (DEBUG) {
             System.err.println("Setting coercable paramter: " + getAdaptableParameter() + " -> " + value);
         }
->>>>>>> master
         stepSize = Math.exp(value);
     }
 
@@ -426,7 +406,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
         return stepSize;
     }
 
-<<<<<<< HEAD
     enum InstabilityHandler {
 
         REJECT {
@@ -472,11 +451,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
         } else {
             return InstabilityHandler.REJECT;
         }
-=======
+    }
+
     @Override
     public String getAdaptableParameterName() {
         return "stepSize";
->>>>>>> master
     }
 
     interface LeapFrogEngine {

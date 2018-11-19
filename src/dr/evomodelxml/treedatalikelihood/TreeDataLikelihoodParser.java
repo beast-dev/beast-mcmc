@@ -97,30 +97,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
         }
 
-<<<<<<< HEAD
-//        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-//                treeModel,
-//                patternLists.get(0),
-//                branchModel,
-//                siteRateModel,
-//                useAmbiguities,
-//                scalingScheme,
-//                delayRescalingUntilUnderflow);
-
-        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
-        boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
-
-//        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {///XJ: need to change this back
-        if (false) {
-            DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                    treeModel,
-                    patternLists,
-                    branchModels,
-                    siteRateModels,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayRescalingUntilUnderflow);
-=======
         boolean useBeagle3MultiPartition = false;
 
         if (patternLists.size() > 1) {
@@ -130,7 +106,6 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
                 useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));
             }
->>>>>>> master
 
             if (System.getProperty("beagle.multipartition.extensions") != null &&
                     !System.getProperty("beagle.multipartition.extensions").equals("auto")) {
@@ -149,8 +124,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         siteRateModels,
                         useAmbiguities,
                         scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        usePreOrder);
+                        delayRescalingUntilUnderflow
+                        );
 
                 return new TreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -174,7 +149,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     siteRateModels.get(i),
                     useAmbiguities,
                     scalingScheme,
-                    delayRescalingUntilUnderflow);
+                    delayRescalingUntilUnderflow,
+                    usePreOrder);
 
             treeDataLikelihoods.add(
                     new TreeDataLikelihood(

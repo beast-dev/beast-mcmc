@@ -31,14 +31,8 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
-<<<<<<< HEAD
 import dr.inference.operators.hmc.AbstractParticleOperator;
 import dr.inference.operators.hmc.BouncyParticleOperator;
-=======
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
-import dr.inference.operators.hmc.NewBouncyParticleOperator;
-import dr.util.Transform;
->>>>>>> master
 import dr.xml.*;
 
 /**
@@ -63,11 +57,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-<<<<<<< HEAD
-        @SuppressWarnings("unused") CoercionMode coercionMode = CoercionMode.parseMode(xo);
-=======
         AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
->>>>>>> master
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -93,13 +83,8 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
     static AbstractParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
 
-<<<<<<< HEAD
         double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
         int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
-=======
-        return new NewBouncyParticleOperator(adaptationMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
-                    parameter, drawVariance);
->>>>>>> master
 
         return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency);
     }
@@ -111,17 +96,9 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
     final static XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-<<<<<<< HEAD
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(RANDOM_TIME_WIDTH, true),
             AttributeRule.newIntegerRule(UPDATE_FREQUENCY, true),
-=======
-            AttributeRule.newDoubleRule(DRAW_VARIANCE),
-            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
-            AttributeRule.newStringRule(MODE, true),
-            new ElementRule(Parameter.class),
-            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
->>>>>>> master
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(PrecisionMatrixVectorProductProvider.class),
             new ElementRule(MASKING, new XMLSyntaxRule[] {

@@ -100,10 +100,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return hastingsRatio;
     }
 
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
+//    @Override
+//    public String getPerformanceSuggestion() {
+//        return null;
+//    }
 
     abstract double integrateTrajectory(WrappedVector position);
 

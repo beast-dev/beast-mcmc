@@ -252,7 +252,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
                 double var = stationaryVariances[offsetStationaryVariances + i * dim + j];
-                if (Double.isInfinite(var)) {
+                if (Double.isInfinite(var) || (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]) == 0.0) {
                     destination[destinationOffset + i * dim + j] = edgeLength * variance[varianceOffset + i * dim + j];
                 } else {
                     destination[destinationOffset + i * dim + j] = var * (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]);

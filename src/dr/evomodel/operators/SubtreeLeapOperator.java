@@ -25,17 +25,17 @@
 
 package dr.evomodel.operators;
 
-import dr.app.treestat.TreeStatData;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.evomodelxml.operators.TipLeapOperatorParser;
+import dr.inference.distribution.CauchyDistribution;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
+import dr.math.distributions.Distribution;
 
 import java.util.*;
 
@@ -61,6 +61,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     private final TreeModel tree;
     private final AdaptationMode mode;
     private final double targetAcceptance;
+    private final String distanceKernel;
 
     private final List<NodeRef> tips;
 
@@ -70,13 +71,16 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param tree   the tree
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param targetAcceptance the desired acceptance probability
+     * @param distanceKernel the distribution from which to draw the patristic distance 
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, String distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.targetAcceptance = targetAcceptance;
+        this.distanceKernel = distanceKernel;
         this.mode = mode;
         this.tips = null;
     }
@@ -90,11 +94,12 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, String distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.targetAcceptance = targetAcceptance;
+        this.distanceKernel = distanceKernel;
         this.mode = mode;
         this.tips = new ArrayList<NodeRef>();
 
@@ -124,7 +129,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     public double doOperation() {
         double logq;
 
-        final double delta = getDelta();
+        final double delta = getDelta(distanceKernel);
 
 
         final NodeRef root = tree.getRoot();
@@ -298,9 +303,17 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         return destinations;
     }
 
-    private double getDelta() {
-        return Math.abs(MathUtils.nextGaussian() * size);
+   private double getDelta(String distanceKernel) {
+ 	   switch(distanceKernel) {
+        case "gaussian": return Math.abs(MathUtils.nextGaussian() * size);
+        case "cauchy":{
+     	   Distribution distK = new CauchyDistribution(0, size);
+     	   double u = MathUtils.nextDouble();
+     	   return Math.abs(distK.quantile(u));  
+        }
+        default: throw new UnsupportedOperationException("Unknown enum value");
     }
+ }
 
     private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 

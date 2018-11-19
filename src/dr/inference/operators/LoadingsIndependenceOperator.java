@@ -46,7 +46,7 @@ import java.util.ListIterator;
  * Time: 2:23 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LoadingsIndependenceOperator extends AbstractCoercableOperator {
+public class LoadingsIndependenceOperator extends AbstractAdaptableOperator {
     NormalDistribution prior;
     LatentFactorModel LFM;
     ArrayList<double[][]> precisionArray;
@@ -59,7 +59,7 @@ public class LoadingsIndependenceOperator extends AbstractCoercableOperator {
     double priorPrecision;
     double priorMeanPrecision;
 
-    public LoadingsIndependenceOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan, double scaleFactor, CoercionMode mode) {
+    public LoadingsIndependenceOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan, double scaleFactor, AdaptationMode mode) {
         super(mode);
         setWeight(weight);
 
@@ -270,11 +270,6 @@ public class LoadingsIndependenceOperator extends AbstractCoercableOperator {
 //    }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public String getOperatorName() {
         return "loadingsGibbsOperator";  //To change body of implemented methods use File | Settings | File Templates.
     }
@@ -311,17 +306,21 @@ public class LoadingsIndependenceOperator extends AbstractCoercableOperator {
         return 0;
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(scaleFactor);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         scaleFactor = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
         return scaleFactor;
+    }
+
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 }

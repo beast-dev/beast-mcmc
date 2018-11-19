@@ -65,7 +65,7 @@ public class TestCalibratedYuleModel {
         Parameter brParameter = new Parameter.Default("birthRate", 2.0, 0.0, 100.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
-        MCMCOperator operator = new SubtreeSlideOperator(treeModel, 10, 1, true, false, false, false, CoercionMode.COERCION_ON);
+        MCMCOperator operator = new SubtreeSlideOperator(treeModel, 10, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ScaleOperator(brParameter, 0.5);

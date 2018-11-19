@@ -29,6 +29,7 @@ import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+<<<<<<< HEAD
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GeneralOperator;
@@ -38,6 +39,11 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.inference.operators.PathDependent;
 import dr.math.MathUtils;
+=======
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
+import dr.math.distributions.NormalDistribution;
+>>>>>>> master
 import dr.util.Transform;
 
 /**
@@ -45,8 +51,12 @@ import dr.util.Transform;
  * @author Marc A. Suchard
  */
 
+<<<<<<< HEAD
 public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         implements GeneralOperator, PathDependent {
+=======
+public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
+>>>>>>> master
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -77,6 +87,12 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
 
+<<<<<<< HEAD
+=======
+    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                                         Parameter parameter, Transform transform,
+                                         double stepSize, int nSteps, double drawVariance) {
+>>>>>>> master
         super(mode);
         setWeight(weight);
         setTargetAcceptanceProbability(0.8); // Stan default
@@ -94,11 +110,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
                         getDefaultInstabilityHandler(), preconditioning, mask) :
                 new LeapFrogEngine.Default(parameter,
                         getDefaultInstabilityHandler(), preconditioning, mask));
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override
@@ -394,12 +405,19 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
     }
 
     @Override
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(stepSize);
     }
 
     @Override
+<<<<<<< HEAD
     public void setCoercableParameter(double value) {
+=======
+    public void setAdaptableParameter(double value) {
+        if (DEBUG) {
+            System.err.println("Setting coercable paramter: " + getAdaptableParameter() + " -> " + value);
+        }
+>>>>>>> master
         stepSize = Math.exp(value);
     }
 
@@ -408,6 +426,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         return stepSize;
     }
 
+<<<<<<< HEAD
     enum InstabilityHandler {
 
         REJECT {
@@ -453,6 +472,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
         } else {
             return InstabilityHandler.REJECT;
         }
+=======
+    @Override
+    public String getAdaptableParameterName() {
+        return "stepSize";
+>>>>>>> master
     }
 
     interface LeapFrogEngine {

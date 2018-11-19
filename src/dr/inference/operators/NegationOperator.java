@@ -17,11 +17,6 @@ public class NegationOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
-
-    @Override
     public String getOperatorName() {
         return "NegationOperator";
     }

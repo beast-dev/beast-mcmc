@@ -25,16 +25,16 @@
 
 package dr.inference.operators.hmc.deprecated;
 
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.NormalDistribution;
 
 /**
  * Created by max on 12/3/15.
  */
 @Deprecated
-public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOperator {
-    public AbstractHamiltonianMCOperator(CoercionMode mode, double momentumSd) {
+public abstract class AbstractHamiltonianMCOperator extends AbstractAdaptableOperator {
+    public AbstractHamiltonianMCOperator(AdaptationMode mode, double momentumSd) {
         super(mode);
         this.momentumSd=momentumSd;
     }
@@ -48,6 +48,11 @@ public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOpe
 
     private double momentumSd;
     protected double[] momentum;
+
+    @Override
+    public String getAdaptableParameterName() {
+        return "";
+    }
 
     protected void drawMomentum(int size){
         momentum=new double[size];

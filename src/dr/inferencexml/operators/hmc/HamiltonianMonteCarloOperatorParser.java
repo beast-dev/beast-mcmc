@@ -27,8 +27,8 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
@@ -87,6 +87,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         int runMode = parseRunMode(xo);
 
+<<<<<<< HEAD
         MassPreconditioner.Type preconditioningType = parsePreconditioning(xo);
 
         double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
@@ -99,6 +100,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 
         CoercionMode coercionMode = CoercionMode.parseMode(xo);
+=======
+        AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
+>>>>>>> master
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -135,6 +139,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         );
 
         if (runMode == 0) {
+<<<<<<< HEAD
             return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative,
                     parameter, transform, mask,
                     runtimeOptions, preconditioningType);
@@ -142,6 +147,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             return new NoUTurnOperator(coercionMode, weight, derivative,
                     parameter,transform, mask,
                     stepSize, nSteps);
+=======
+            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative, parameter, transform,
+                    stepSize, nSteps, drawVariance);
+        } else {
+            return new NoUTurnOperator(adaptationMode, weight, derivative, parameter,transform,
+                    stepSize, nSteps, drawVariance);
+>>>>>>> master
         }
     }
 
@@ -154,8 +166,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
+<<<<<<< HEAD
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
+=======
+            AttributeRule.newDoubleRule(DRAW_VARIANCE),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
+>>>>>>> master
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             new ElementRule(Parameter.class),

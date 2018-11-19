@@ -37,7 +37,7 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalOperator extends AbstractCoercableOperator {
+public class MultivariateNormalOperator extends AbstractAdaptableOperator {
 
     public static final String MVN_OPERATOR = "mvnOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -51,7 +51,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
     private double[][] cholesky;
 
     public MultivariateNormalOperator(Parameter parameter, double scaleFactor, double[][] inMatrix, double weight,
-                                      CoercionMode mode, boolean isVarianceMatrix) {
+                                      AdaptationMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -79,7 +79,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
     }
 
     public MultivariateNormalOperator(Parameter parameter, double scaleFactor,
-                                      MatrixParameter varMatrix, double weight, CoercionMode mode, boolean isVariance) {
+                                      MatrixParameter varMatrix, double weight, AdaptationMode mode, boolean isVariance) {
         this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, mode, isVariance);
     }
 
@@ -136,11 +136,11 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         scaleFactor = Math.exp(value);
     }
 
@@ -152,37 +152,8 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -193,7 +164,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);

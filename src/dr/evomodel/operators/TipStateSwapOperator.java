@@ -81,16 +81,6 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
         swap(index1, index2);
     }
 
-    public String getPerformanceSuggestion() {
-        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
-    }
-
     public String getOperatorName() {
         return TIP_STATE_OPERATOR;
     }

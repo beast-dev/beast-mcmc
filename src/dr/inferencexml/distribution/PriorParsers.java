@@ -31,6 +31,7 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
+import dr.util.Attribute;
 import dr.xml.*;
 import org.apache.commons.math.distribution.CauchyDistributionImpl;
 
@@ -42,7 +43,7 @@ import java.util.List;
 public class PriorParsers {
     public final static boolean DEBUG = false;
 
-    public static final String TRUNCATED = "trancated";
+    public static final String TRUNCATED = "truncated";
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
@@ -83,10 +84,17 @@ public class PriorParsers {
      */
     public static XMLObjectParser TRUNCATED_PARSER = new AbstractXMLObjectParser() {
 
+        @Override
         public String getParserName() {
             return TRUNCATED;
         }
 
+        @Override
+        public String[] getParserNames() {
+            return new String[] { getParserName(), "trancated" }; // was misspelled, keep compatibility.
+        }
+
+        @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double lower = xo.getAttribute(LOWER, Double.NEGATIVE_INFINITY);
@@ -94,9 +102,15 @@ public class PriorParsers {
 
             DistributionLikelihood dl = (DistributionLikelihood)xo.getChild(DistributionLikelihood.class);
 
-            return new DistributionLikelihood(new TruncatedDistribution(dl.getDistribution(), lower, upper));
+            DistributionLikelihood likelihood = new DistributionLikelihood(new TruncatedDistribution(dl.getDistribution(), lower, upper));
+            for (Attribute<double[]> data : dl.getDataList()) {
+                likelihood.addData(data);
+            }
+
+            return likelihood;
         }
 
+        @Override
         public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
@@ -107,10 +121,12 @@ public class PriorParsers {
                 new ElementRule(DistributionLikelihood.class)
         };
 
+        @Override
         public String getParserDescription() {
             return "Truncates the enclosed distribution to the given bounds.";
         }
 
+        @Override
         public Class getReturnType() {
             return Likelihood.class;
         }

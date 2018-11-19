@@ -12,12 +12,6 @@ public class LoadingsSparsityOperator extends SimpleMCMCOperator{
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-
-        return null;
-    }
-
-    @Override
     public String getOperatorName() {
         return "LoadingsSparsityOperator";
     }

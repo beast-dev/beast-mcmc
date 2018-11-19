@@ -28,7 +28,7 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.GeneralOperator;
 import dr.inference.operators.GibbsOperator;
 import dr.math.MathUtils;
@@ -55,11 +55,17 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     // TODO Magic numbers; pass as options
     private final Options options = new Options();
 
+<<<<<<< HEAD
     public NoUTurnOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, Transform transform, Parameter mask,
                            double stepSize, int nSteps) {
         super(mode, weight, gradientProvider, parameter, transform, mask,
                 stepSize, nSteps, 0.0,1E-3);
+=======
+    public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                           Parameter parameter, Transform transform, double stepSize, int nSteps, double drawVariance) {
+        super(mode, weight, gradientProvider, parameter, transform, stepSize, nSteps, drawVariance);
+>>>>>>> master
     }
 
     @Override

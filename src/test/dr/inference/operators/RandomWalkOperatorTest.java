@@ -25,15 +25,8 @@
 
 package test.dr.inference.operators;
 
-import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
-import dr.evomodel.speciation.*;
-import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.RandomWalkOperator;
 import junit.framework.*;
 
@@ -56,7 +49,7 @@ public class RandomWalkOperatorTest extends TestCase {
 
     public void testRandomWalkOperator() {
         Parameter parameter = new Parameter.Default("test", 0.5, 0.0, 1.0);
-        RandomWalkOperator rwo = new RandomWalkOperator(parameter, 1.0, RandomWalkOperator.BoundaryCondition.reflecting, 1.0, CoercionMode.COERCION_OFF);
+        RandomWalkOperator rwo = new RandomWalkOperator(parameter, 1.0, RandomWalkOperator.BoundaryCondition.reflecting, 1.0, AdaptationMode.ADAPTATION_OFF);
         
         double test1 = rwo.reflectValue(8.7654321, 3.14159265, Double.POSITIVE_INFINITY);
         double test2 = rwo.reflectValue(8.7654321, Double.NEGATIVE_INFINITY, 3.14159265);

@@ -27,10 +27,17 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+<<<<<<< HEAD
 import dr.inference.model.TransformedMultivariateParameter;
 import dr.inference.model.TransformedParameter;
 import dr.inference.operators.*;
 import dr.util.Transform;
+=======
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.RandomWalkOperator;
+>>>>>>> master
 import dr.xml.*;
 
 import static dr.util.Transform.Util.parseTransform;
@@ -55,7 +62,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
@@ -146,7 +153,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
                 new ElementRule(UPDATE_INDEX,
                         new XMLSyntaxRule[] {
                                 new ElementRule(Parameter.class),

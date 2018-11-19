@@ -27,7 +27,7 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.FactorIndependenceOperator;
 import dr.xml.*;
 
@@ -43,7 +43,7 @@ public class FactorIndependenceOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
         String scaleFactorTemp = (String) xo.getAttribute(SCALE_FACTOR);
         double scaleFactor = Double.parseDouble(scaleFactorTemp);
         String weightTemp = (String) xo.getAttribute(WEIGHT);

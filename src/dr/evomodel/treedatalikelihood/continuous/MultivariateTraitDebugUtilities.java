@@ -34,6 +34,7 @@ import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -246,20 +247,28 @@ public class MultivariateTraitDebugUtilities {
             }
         }
 
+
         private BranchCumulant postOrderAccumulation(Tree tree,
                                                      NodeRef node,
-                                                     BranchRates branchRates) {
+                                                     BranchRates branchRates,
+                                                     ArrayList<Integer> missingNodes) {
             if (tree.isExternal(node)) {
 
-                return new BranchCumulant(1, 0);
+                if (missingNodes.contains(node.getNumber())){
+
+                    return new BranchCumulant(0, 0);
+
+                } else
+
+                    return new BranchCumulant(1, 0);
 
             } else {
 
                 NodeRef child0 = tree.getChild(node, 0);
                 NodeRef child1 = tree.getChild(node, 1);
 
-                BranchCumulant cumulant0 = postOrderAccumulation(tree, child0, branchRates);
-                BranchCumulant cumulant1 = postOrderAccumulation(tree, child1, branchRates);
+                BranchCumulant cumulant0 = postOrderAccumulation(tree, child0, branchRates, missingNodes);
+                BranchCumulant cumulant1 = postOrderAccumulation(tree, child1, branchRates, missingNodes);
 
                 double length0 = tree.getBranchLength(child0);
                 double length1 = tree.getBranchLength(child1);
@@ -279,19 +288,21 @@ public class MultivariateTraitDebugUtilities {
 
     public static double getVarianceOffDiagonalSum(Tree tree,
                                                    BranchRates branchRates,
-                                                   double normalization) {
+                                                   double normalization,
+                                                   ArrayList<Integer> missingNodes) {
 
         Accumulator.BranchCumulant cumulant = Accumulator.OFF_DIAGONAL.postOrderAccumulation(
-                tree, tree.getRoot(), branchRates);
+                tree, tree.getRoot(), branchRates, missingNodes);
         return cumulant.sharedLength * normalization;
     }
 
     public static double getVarianceDiagonalSum(Tree tree,
                                                 BranchRates branchRates,
-                                                double normalization) {
+                                                double normalization,
+                                                ArrayList<Integer> missingNodes) {
 
         Accumulator.BranchCumulant cumulant = Accumulator.DIAGONAL.postOrderAccumulation(
-                tree, tree.getRoot(), branchRates);
+                tree, tree.getRoot(), branchRates, missingNodes);
         return cumulant.sharedLength * normalization;
     }
 }

@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,10 +56,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private Parameter samplingPrecision;
     private double[] diffusionProportion;
     private boolean scaleByHeight;
-    private TreeVarianceSums treeSums;
+    private TreeVarianceSums[] treeSums;
     private double[] diffusionVariance;
     private double[] samplingVariance;
     private int[] observedCounts;
+    private ArrayList<Integer>[] perTraitMissingIndices;
 
     private boolean treeKnown = false;
     private boolean varianceKnown = false;
@@ -75,18 +77,24 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.samplingPrecision = dataModel.getSamplingPrecision();
         this.scaleByHeight = scaleByHeight;
 
-        this.observedCounts = getObservedCounts(dataModel);
 
 //        int dim = samplingPrecision.getDimension();
         int dim = dataModel.getTraitDimension();
         this.diffusionVariance = new double[dim];
         this.samplingVariance = new double[dim];
         this.diffusionProportion = new double[dim];
-        this.treeSums = new TreeVarianceSums(0, 0);
+        this.perTraitMissingIndices = getPerTraitMissingIndices();
+        this.observedCounts = getObservedCounts();
+        this.treeSums = new TreeVarianceSums[dim];
+        for (int i = 0; i < dim; i++){
+            treeSums[i] = new TreeVarianceSums(0, 0);
+        }
+
 
         tree.addModelListener(this);
-        diffusionModel.addModelListener(this);
+//        diffusionModel.addModelListener(this);
 
+        diffusionModel.getPrecisionParameter().addParameterListener(this);
         samplingPrecision.addParameterListener(this);
     }
 
@@ -119,33 +127,51 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     /**
      * @return an array with the number of taxa with observed data for each trait
      */
-    private int[] getObservedCounts(RepeatedMeasuresTraitDataModel dataModel) {
+    private ArrayList<Integer>[] getPerTraitMissingIndices() {
 
         List<Integer> missingIndices = dataModel.getMissingIndices();
         int n = tree.getExternalNodeCount();
         int dim = dataModel.getTraitDimension();
-        int[] observedCounts = new int[dim];
 
-        for (int i = 0; i < dim; i++) {
-            observedCounts[i] = n;
+        ArrayList<Integer>[] missingArrays = (ArrayList<Integer>[]) new ArrayList[dim];
+
+        for(int i = 0; i < dim; i++){
+            missingArrays[i] = new ArrayList<Integer>();
         }
+
 
         int threshold = n;
         int currentDim = 0;
+        int currentTaxon = 0;
 
         for (int index : missingIndices) {
 
-            if (index >= threshold) {
-                threshold += n;
-                currentDim += 1;
-            }
+            currentTaxon = index / dim;
+            currentDim = index - currentTaxon * dim;
 
-            observedCounts[currentDim] -= 1;
+
+            missingArrays[currentDim].add(currentTaxon);
         }
 
-        return observedCounts;
+        return missingArrays;
 
     }
+
+    private int[] getObservedCounts(){
+        int dim = dataModel.getTraitDimension();
+        int n = tree.getExternalNodeCount();
+        int[] counts = new int[dim];
+
+        for(int i = 0; i < dim; i++){
+
+            counts[i] = n - perTraitMissingIndices[i].size();
+
+        }
+
+        return counts;
+
+    }
+
 
     /**
      * recalculates the diffusionProportion statistic based on current parameters
@@ -155,8 +181,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         for (int i = 0; i < dim; i++) {
 
-            double diffusionComponent = diffusionVariance[i] * (treeSums.getDiagonalSum() / observedCounts[i]
-                    - treeSums.getTotalSum() / (observedCounts[i] * observedCounts[i]));
+            double diffusionComponent = diffusionVariance[i] * (treeSums[i].getDiagonalSum() / observedCounts[i]
+                    - treeSums[i].getTotalSum() / (observedCounts[i] * observedCounts[i]));
 
             double samplingComponent = samplingVariance[i] * (observedCounts[i] - 1) / observedCounts[i];
             diffusionProportion[i] = diffusionComponent / (diffusionComponent + samplingComponent);
@@ -169,19 +195,25 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      */
     private void updateTreeSums() {
 
+        int dim = treeSums.length;
+
         double normalization = 1.0;
         if (scaleByHeight) {
             normalization = 1 / tree.getNodeHeight(tree.getRoot());
         }
 
-        double diagonalSum = MultivariateTraitDebugUtilities.getVarianceDiagonalSum(tree,
-                treeLikelihood.getBranchRateModel(), normalization);
+        for (int i = 0; i < dim; i ++){
+            double diagonalSum = MultivariateTraitDebugUtilities.getVarianceDiagonalSum(tree,
+                    treeLikelihood.getBranchRateModel(), normalization, perTraitMissingIndices[i]);
 
-        double offDiagonalSum = MultivariateTraitDebugUtilities.getVarianceOffDiagonalSum(tree,
-                treeLikelihood.getBranchRateModel(), normalization);
+            double offDiagonalSum = MultivariateTraitDebugUtilities.getVarianceOffDiagonalSum(tree,
+                    treeLikelihood.getBranchRateModel(), normalization, perTraitMissingIndices[i]);
 
-        treeSums.diagonalSum = diagonalSum;
-        treeSums.totalSum = diagonalSum + offDiagonalSum;
+            treeSums[i].diagonalSum = diagonalSum;
+            treeSums[i].totalSum = diagonalSum + offDiagonalSum;
+        }
+
+
     }
 
     /**
@@ -226,7 +258,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         if (!treeKnown) {
 
             updateTreeSums();
-            updateDiffusionVariance();
             treeKnown = true;
             needToUpdate = true;
 
@@ -235,6 +266,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         if (!varianceKnown) {
 
             updateSamplingVariance();
+            updateDiffusionVariance();
             varianceKnown = true;
             needToUpdate = true;
 
@@ -251,14 +283,14 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        assert  (variable == samplingPrecision);
+        assert  (variable == samplingPrecision || variable == diffusionModel.getPrecisionParameter());
 
         varianceKnown = false;
     }
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        assert (model == tree || model == diffusionModel);
+        assert (model == tree);
 
         treeKnown = false;
     }

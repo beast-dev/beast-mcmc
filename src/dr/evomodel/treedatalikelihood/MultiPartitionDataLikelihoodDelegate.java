@@ -72,6 +72,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
     }
 
+    public static boolean IS_ODD_STATE_SSE_FIXED() {
+        // SSE for odd state counts fixed in BEAGLE 3.1.2
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 2;
+    }
+
     public static boolean IS_MULTI_PARTITION_RECOMMENDED() {
         if (!IS_MULTI_PARTITION_COMPATIBLE()) {
             return false;
@@ -364,6 +370,20 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 threadCount = Integer.parseInt(tc);
                 if (threadCount < 2) {
                     threadCount = 1;
+                }
+            }
+
+
+            if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
+                    && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
+            ) {
+                // @todo SSE doesn't seem to work for larger state spaces so for now we override the
+                // SSE option.
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags |= BeagleFlag.VECTOR_NONE.getMask();
+
+                if (stateCount > 4 && this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                    this.rescalingScheme = PartialsRescalingScheme.DELAYED;
                 }
             }
 

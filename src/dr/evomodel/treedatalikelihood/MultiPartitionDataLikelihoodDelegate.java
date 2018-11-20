@@ -367,20 +367,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 }
             }
 
-
-            if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-                    && !forceVectorization
-            ) {
-                // @todo SSE doesn't seem to work for larger state spaces so for now we override the
-                // SSE option.
-                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-                preferenceFlags |= BeagleFlag.VECTOR_NONE.getMask();
-
-                if (stateCount > 4 && this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                    this.rescalingScheme = PartialsRescalingScheme.DELAYED;
-                }
-            }
-
             if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
                 // if single precision not explicitly set then prefer double
                 preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();

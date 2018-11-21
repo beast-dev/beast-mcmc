@@ -75,7 +75,7 @@ public class RepeatedMeasuresTraitSimulator {
             simulateMissingTaxonData(tipTraits, i);
         }
 
-        samplingPrecision.fireParameterChangedEvent();
+        dataParameter.fireParameterChangedEvent();
 
     }
 
@@ -140,20 +140,28 @@ public class RepeatedMeasuresTraitSimulator {
 
         Matrix missingVarianceBlock = missingPrecisionBlock.inverse();
 
-        Matrix missingObservedPrecisionBlock = new Matrix(nMissing, dimTrait - nMissing);
+        double[] draw = null;
 
-        for (int i = 0; i < nMissing; i++) {
-            for (int j = nMissing; j < dimTrait; j++) {
-                missingObservedPrecisionBlock.set(i, j - nMissing, samplingPrecision.getParameterValue(i, j));
+        if (nMissing == dimTrait){
+            draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(tipTrait,
+                    missingVarianceBlock.toComponents());
+        } else {
+
+            Matrix missingObservedPrecisionBlock = new Matrix(nMissing, dimTrait - nMissing);
+
+            for (int i = 0; i < nMissing; i++) {
+                for (int j = nMissing; j < dimTrait; j++) {
+                    missingObservedPrecisionBlock.set(i, j - nMissing, samplingPrecision.getParameterValue(i, j));
+                }
+
             }
 
+            double[] adjustedMean = computeAdjustedMean(missingVarianceBlock, missingObservedPrecisionBlock, observedData, observedTip, missingTip);
+
+
+            draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(adjustedMean,
+                    missingVarianceBlock.toComponents());
         }
-
-        double[] adjustedMean = computeAdjustedMean(missingVarianceBlock, missingObservedPrecisionBlock, observedData, observedTip, missingTip);
-
-
-        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(adjustedMean,
-                missingVarianceBlock.toComponents());
 
 
         for (int i = 0; i < nMissing; i++) {

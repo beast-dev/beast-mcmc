@@ -39,7 +39,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
     }
 
     WishartSufficientStatistics getRepeatedMeasuresStatistics() {
-        // TODO -- probably does not need to involve data augmentation, as I see in RepeatedMeasuresTraitSimulator
+        // TODO -- data augmentation (?), then compute outer products
         
         return null;
     }

@@ -27,8 +27,6 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
@@ -36,9 +34,6 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.distributions.MultivariateNormalDistribution;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import static java.lang.Double.isNaN;
 
 /**
  * @author Gabriel Hassler
@@ -47,13 +42,13 @@ import static java.lang.Double.isNaN;
 
 public class RepeatedMeasuresTraitSimulator {
 
-    private static RepeatedMeasuresTraitDataModel dataModel;
-    private static TreeDataLikelihood dataLikelihood;
-    private static Tree tree;
-    private static int dimTrait;
-    private static int nTaxa;
-    private Parameter dataParameter;
-    private MatrixParameterInterface samplingPrecision;
+    private final RepeatedMeasuresTraitDataModel dataModel;
+    private final TreeDataLikelihood dataLikelihood;
+    private final Tree tree;
+    private final int dimTrait;
+    private final int nTaxa;
+    private final Parameter dataParameter;
+    private final MatrixParameterInterface samplingPrecision;
 
     RepeatedMeasuresTraitSimulator(RepeatedMeasuresTraitDataModel dataModel, TreeDataLikelihood dataLikelihood) {
 

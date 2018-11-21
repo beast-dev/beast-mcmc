@@ -368,11 +368,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             String tc = System.getProperty(THREAD_COUNT);
             if (tc != null) {
                 threadCount = Integer.parseInt(tc);
-                if (threadCount < 2) {
-                    threadCount = 1;
-                }
             }
 
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
 
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
                     && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
@@ -1379,7 +1383,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     private int rescalingFrequency = RESCALE_FREQUENCY;
     private boolean delayRescalingUntilUnderflow = true;
 
-    private int threadCount = 1;
+    private int threadCount = -1;
 
     //allow per partition rescaling
     private boolean[] useScaleFactors;

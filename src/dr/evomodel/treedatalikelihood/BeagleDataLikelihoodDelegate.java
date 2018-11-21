@@ -276,9 +276,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             String tc = System.getProperty(THREAD_COUNT);
             if (tc != null) {
                 threadCount = Integer.parseInt(tc);
-                if (threadCount < 2) {
-                    threadCount = 1;
-                }
+            }
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
             }
 
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
@@ -1036,7 +1041,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
 
-    private int threadCount = 1;
+    private int threadCount = -1;
     private long instanceFlags;
 
     private boolean firstRescaleAttempt = false;

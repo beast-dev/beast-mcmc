@@ -304,9 +304,14 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             String tc = System.getProperty(THREAD_COUNT);
             if (tc != null) {
                 threadCount = Integer.parseInt(tc);
-                if (threadCount < 2) {
-                    threadCount = 1;
-                }
+            }
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
             }
 
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
@@ -1368,7 +1373,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     private int rescalingMessageCount = 0;
 
-    private int threadCount = 1;
+    private int threadCount = -1;
 
     /**
      * the branch-site model for these sites

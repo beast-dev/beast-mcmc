@@ -25,14 +25,22 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
@@ -63,8 +71,28 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 //        Parameter branchSubstitutionParameter = branchModel.getSubstitutionParameter();
         Parameter branchSubstitutionParameter = (Parameter) xo.getChild(Parameter.class);
 
+        Tree tree = treeDataLikelihood.getTree();
+        List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
+
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+
+            if (!tree.isRoot(node)) {
+
+                DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) branchModel.getSubstitutionModelForBranch(node);
+
+                Parameter parameter = branchModel.getSubstitutionParameterForBranch(node, (CompoundParameter) branchSubstitutionParameter);
+
+                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
+
+                differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
+
+            }
+        }
+
+
         return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                branchSubstitutionParameter, branchModel, useHessian);
+                branchSubstitutionParameter, branchModel, differentialMassProviderList, useHessian);
     }
 
     @Override

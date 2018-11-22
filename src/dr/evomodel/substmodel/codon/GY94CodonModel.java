@@ -26,6 +26,7 @@
 package dr.evomodel.substmodel.codon;
 
 import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
@@ -47,7 +48,7 @@ import java.util.List;
  * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
 public class GY94CodonModel extends AbstractCodonModel implements Citable,
-        ParameterReplaceableSubstitutionModel, DifferentialMassProvider {
+        ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
     /**
      * kappa
      */
@@ -249,47 +250,111 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
         }
     }
 
-    private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
-        if (parameter == omegaParameter) {
-            final double kappa = getKappa();
-            final double normalizingConstant = setupMatrix();
-            final double[] Q = new double[stateCount * stateCount];
-            getInfinitesimalMatrix(Q);
-            final double[] differentialRates = new double[rateCount];
-            for (int i = 0; i < rateCount; i++) {
-                switch (rateMap[i]) {
-                    case 3:
-                        differentialRates[i] = kappa / normalizingConstant;
-                        break;// non-synonymous transition
-                    case 4:
-                        differentialRates[i] = 1.0 / normalizingConstant;
-                        break;        // non-synonymous transversion
-                }
-            }
+//    private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
+//        if (parameter == omegaParameter) {
+//            final double kappa = getKappa();
+//            final double normalizingConstant = setupMatrix();
+//            final double[] Q = new double[stateCount * stateCount];
+//            getInfinitesimalMatrix(Q);
+//            final double[] differentialRates = new double[rateCount];
+//            for (int i = 0; i < rateCount; i++) {
+//                switch (rateMap[i]) {
+//                    case 3:
+//                        differentialRates[i] = kappa / normalizingConstant;
+//                        break;// non-synonymous transition
+//                    case 4:
+//                        differentialRates[i] = 1.0 / normalizingConstant;
+//                        break;        // non-synonymous transversion
+//                }
+//            }
+//
+//            // TODO Why does below look like code duplication with MG94CodonModel?  XJ: Because it was copy-pasted...
+//
+//            double[][] differentialMassMatrix = new double[stateCount][stateCount];
+//            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
+//            makeValid(differentialMassMatrix, stateCount);
+//
+//            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix,
+//                    freqModel.getFrequencies());
+//
+//            for (int i = 0; i < stateCount; i++) {
+//                for (int j = 0; j < stateCount; j++) {
+//                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
+//                }
+//            }
+//            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+//
+//        } else {
+//            throw new RuntimeException("Not yet implemented");
+//        }
+//    }
 
-            // TODO Why does below look like code duplication with MG94CodonModel?
+//    @Override
+//    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
+//        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
+//    }
 
-            double[][] differentialMassMatrix = new double[stateCount][stateCount];
-            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
-            makeValid(differentialMassMatrix, stateCount);
+    private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
-            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix,
-                    freqModel.getFrequencies());
-
-            for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
-                }
-            }
-            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
-
-        } else {
-            throw new RuntimeException("Not yet implemented");
+        for (int i = 0; i < rateCount; ++i) {
+            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
+                    this);
         }
     }
 
     @Override
-    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        final double normalizingConstant = setupMatrix();
+
+        final double[] Q = new double[stateCount * stateCount];
+        getInfinitesimalMatrix(Q);
+
+        final double[] differentialRates = new double[rateCount];
+        setupDifferentialRates(wrt, differentialRates, normalizingConstant);
+
+        double[][] differentialMassMatrix = new double[stateCount][stateCount];
+        setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
+        makeValid(differentialMassMatrix, stateCount);
+
+        final double weightedNormalizationGradient
+                = getNormalizationValue(differentialMassMatrix, freqModel.getFrequencies());
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) { // TODO: Check that I did not break this
+                differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
+            }
+        }
+
+        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter) {
+        WrtGY94ModelParameter wrt;
+        if (parameter == omegaParameter) {
+            wrt = WrtGY94ModelParameter.OMEGA;
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+        return wrt;
+    }
+
+    enum WrtGY94ModelParameter implements WrtParameter {
+        OMEGA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant,
+                                  DifferentiableSubstitutionModel substitutionModel) {
+                GY94CodonModel thisSubstitutionModel = (GY94CodonModel) substitutionModel;
+                final double kappa = thisSubstitutionModel.getKappa();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 0.0;
+                    case 2: return 0.0;
+                    case 3: return kappa / normalizingConstant;
+                    case 4: return 1.0 / normalizingConstant;
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        }
     }
 }

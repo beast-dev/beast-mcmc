@@ -27,13 +27,13 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.DifferentialMassProvider;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
-import dr.inference.model.CompoundParameter;
+
+import java.util.List;
 
 /**
  * @author Xiang Ji
@@ -42,24 +42,27 @@ import dr.inference.model.CompoundParameter;
 public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
 
     private final BranchRateModel branchRateModel;
-    private final ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
-    private final CompoundParameter branchParameter;
+//    private final ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
+//    private final CompoundParameter branchParameter;
+    private final BranchDifferentialMassProvider branchDifferentialMassProvider;
     private final String name;
 
     private static final String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
     private static final String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
     DiscreteTraitBranchSubstitutionParameterDelegate(String name,
-                                                            Tree tree,
-                                                            BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                            BranchRateModel branchRateModel,
-                                                            ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
-                                                            CompoundParameter branchParameter) {
+                                                     Tree tree,
+                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                     BranchRateModel branchRateModel,
+//                                                     ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
+//                                                     CompoundParameter branchParameter,
+                                                     BranchDifferentialMassProvider branchDifferentialMassProvider) {
         super(name, tree, likelihoodDelegate);
         this.name = name;
         this.branchRateModel = branchRateModel;
-        this.arbitrarySubstitutionParameterBranchModel = arbitrarySubstitutionParameterBranchModel;
-        this.branchParameter = branchParameter;
+//        this.arbitrarySubstitutionParameterBranchModel = arbitrarySubstitutionParameterBranchModel;
+//        this.branchParameter = branchParameter;
+        this.branchDifferentialMassProvider = branchDifferentialMassProvider;
     }
 
     @Override
@@ -67,17 +70,23 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModelForBranch(i);
+//                SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModelForBranch(i);
+//
+//                assert(substitutionModel instanceof DifferentialMassProvider);
 
-                assert(substitutionModel instanceof DifferentialMassProvider);
+//                DifferentialMassProvider massProvider = (DifferentialMassProvider) substitutionModel;
 
-                DifferentialMassProvider massProvider = (DifferentialMassProvider) substitutionModel;
+//                double[] differentialMassMatrix = massProvider.getDifferentialMassMatrix(
+//                        tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node),
+//                        arbitrarySubstitutionParameterBranchModel.getSubstitutionParameterForBranch(node, branchParameter));
 
-                double[] differentialMassMatrix = massProvider.getDifferentialMassMatrix(
-                        tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node),
-                        arbitrarySubstitutionParameterBranchModel.getSubstitutionParameterForBranch(node, branchParameter));
+                final double time = tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node);
+                double[] differentialMassMatrix = branchDifferentialMassProvider.getDifferentialMassMatrixForBranch(node, time);
                 evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);
             }
+        }
+        if (cacheSquaredMatrix) {
+            throw new RuntimeException("Not yet implemented!");
         }
     }
 
@@ -101,5 +110,23 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
 
     public static String getName(String name) {
         return GRADIENT_TRAIT_NAME + ":" + name;
+    }
+
+    public static class BranchDifferentialMassProvider {
+
+        private TreeParameterModel indexHelper;
+        private List<DifferentialMassProvider> differentialMassProviderList;
+
+        BranchDifferentialMassProvider(TreeParameterModel indexHelper,
+                                       List<DifferentialMassProvider> differentialMassProviderList) {
+
+            this.indexHelper = indexHelper;
+            this.differentialMassProviderList = differentialMassProviderList;
+
+        }
+
+        double[] getDifferentialMassMatrixForBranch(NodeRef node, double time) {
+            return differentialMassProviderList.get(indexHelper.getParameterIndexFromNodeNumber(node.getNumber())).getDifferentialMassMatrix(time);
+        }
     }
 }

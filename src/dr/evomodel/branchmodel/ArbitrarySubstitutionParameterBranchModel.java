@@ -104,6 +104,10 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
         return substitutionModelProvider.getRootSubstitutionModel();
     }
 
+    public SubstitutionModel getSubstitutionModelForBranch(NodeRef branch) {
+        return substitutionModelProvider.getSubstitutionModel(tree, branch);
+    }
+
     @Override
     public FrequencyModel getRootFrequencyModel() {
         return getRootSubstitutionModel().getFrequencyModel();

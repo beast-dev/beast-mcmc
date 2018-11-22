@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 
 /**
  * @author Marc A. Suchard
@@ -33,6 +33,39 @@ import dr.inference.model.Parameter;
  */
 public interface DifferentialMassProvider {
 
-    double[] getDifferentialMassMatrix(double time, Parameter parameter); // TODO Improve API.  Is parameter necessary?
+    double[] getDifferentialMassMatrix(double time); // TODO Improve API.  Is parameter necessary?
+
+    class DifferentialWrapper implements DifferentialMassProvider {
+
+
+        private final DifferentiableSubstitutionModel baseModel;
+        private final WrtParameter wrt;
+
+        // TODO Construct in caller to `getDifferentialMassMatrix` with either ALPHA or BETA as needed
+
+        public DifferentialWrapper(DifferentiableSubstitutionModel baseModel,   // TODO Will need to generalize this for other SubstitutionModels
+                                   WrtParameter wrt) {
+            this.baseModel = baseModel;
+            this.wrt = wrt;
+        }
+
+        @Override
+        public double[] getDifferentialMassMatrix(double time) {
+
+            // Note: no longer uses `parameter`
+
+            WrappedMatrix infinitesimalDifferentialMatrix = baseModel.getInfinitesimalDifferentialMatrix(wrt);
+
+            return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, baseModel.getDataType().getStateCount(),
+                    infinitesimalDifferentialMatrix, baseModel.getEigenDecomposition());
+        }
+
+        public interface WrtParameter {
+
+            double getRate(int switchCase, double normalizingConstant,
+                           DifferentiableSubstitutionModel substitutionModel);
+
+        }
+    }
 
 }

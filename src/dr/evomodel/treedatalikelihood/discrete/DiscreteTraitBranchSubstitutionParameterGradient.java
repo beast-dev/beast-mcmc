@@ -28,6 +28,8 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
+import dr.evomodel.substmodel.DifferentialMassProvider;
+import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterDelegate.BranchDifferentialMassProvider;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
@@ -43,6 +45,8 @@ import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
+
+import java.util.List;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
 
@@ -72,6 +76,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                             Parameter branchSubstitutionParameter,
                                                             ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
+                                                            List<DifferentialMassProvider> differentialMassProviderList,
                                                             boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
@@ -87,12 +92,16 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
             if (!(branchSubstitutionParameter instanceof CompoundParameter)) {
                 throw new RuntimeException("Only support CompoundParameter for now.");
             }
+
+            BranchDifferentialMassProvider branchDifferentialMassProvider =
+                    new BranchDifferentialMassProvider(parameterIndexHelper, differentialMassProviderList);
             ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-                    branchModel,
-                    (CompoundParameter) branchSubstitutionParameter);
+//                    branchModel,
+//                    (CompoundParameter) branchSubstitutionParameter,
+                    branchDifferentialMassProvider);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
         }

@@ -26,6 +26,7 @@
 package dr.evomodel.substmodel.codon;
 
 import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 
@@ -104,51 +105,100 @@ public class MG94HKYCodonModel extends MG94CodonModel {
         }
     }
 
-    protected void setupDifferentialRates(Parameter parameter, double[] differentialRates, double normalizingConstant) {
+//    protected void setupDifferentialRates(Parameter parameter, double[] differentialRates, double normalizingConstant) {
+//        if (parameter == alphaParameter) {
+//            final double kappa = getKappa();
+//            for (int i = 0; i < rateCount; i++) {
+//                switch (rateMap[i]) {
+//                    case 0:
+//                        differentialRates[i] = 0.0;
+//                        break;
+//                    case 1:
+//                        differentialRates[i] = kappa / normalizingConstant / numSynTransitions;
+//                        break;        // synonymous transition
+//                    case 2:
+//                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
+//                        break;        // synonymous transversion
+//                    case 3:
+//                        differentialRates[i] = 0.0;
+//                        break;
+//                    case 4:
+//                        differentialRates[i] = 0.0;
+//                        break;
+//                }
+//            }
+//        } else if (parameter == betaParameter) {
+//            final double kappa = getKappa();
+//            for (int i = 0; i < rateCount; i++) {
+//                switch (rateMap[i]) {
+//                    case 0:
+//                        differentialRates[i] = 0.0;
+//                        break;
+//                    case 1:
+//                        differentialRates[i] = 0.0;
+//                        break;
+//                    case 2:
+//                        differentialRates[i] = 0.0;
+//                        break;
+//                    case 3:
+//                        differentialRates[i] = kappa / normalizingConstant / numNonsynTransitions;
+//                        break;         // non-synonymous transition
+//                    case 4:
+//                        differentialRates[i] = 1.0 / normalizingConstant / numNonsynTransitions;
+//                        break;            // non-synonymous transversion
+//                }
+//            }
+//        } else {
+//            throw new RuntimeException("Not yet implemented!");
+//        }
+//    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter) { //TODO: figure out how to avoid override this function
+        WrtMG94HKYModelParameter wrt;
         if (parameter == alphaParameter) {
-            final double kappa = getKappa();
-            for (int i = 0; i < rateCount; i++) {
-                switch (rateMap[i]) {
-                    case 0:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 1:
-                        differentialRates[i] = kappa / normalizingConstant / numSynTransitions;
-                        break;        // synonymous transition
-                    case 2:
-                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
-                        break;        // synonymous transversion
-                    case 3:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 4:
-                        differentialRates[i] = 0.0;
-                        break;
-                }
-            }
+            wrt = WrtMG94HKYModelParameter.ALPHA;
         } else if (parameter == betaParameter) {
-            final double kappa = getKappa();
-            for (int i = 0; i < rateCount; i++) {
-                switch (rateMap[i]) {
-                    case 0:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 1:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 2:
-                        differentialRates[i] = 0.0;
-                        break;
-                    case 3:
-                        differentialRates[i] = kappa / normalizingConstant / numNonsynTransitions;
-                        break;         // non-synonymous transition
-                    case 4:
-                        differentialRates[i] = 1.0 / normalizingConstant / numNonsynTransitions;
-                        break;            // non-synonymous transversion
-                }
-            }
+            wrt = WrtMG94HKYModelParameter.BETA;
         } else {
             throw new RuntimeException("Not yet implemented!");
+        }
+        return wrt;
+    }
+
+    enum WrtMG94HKYModelParameter implements WrtParameter {
+        ALPHA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant,
+                                  DifferentiableSubstitutionModel substitutionModel) {
+                MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
+                final double numSynTransitions = thisSubstitutionModel.getNumSynTransitions();
+                final double kappa = thisSubstitutionModel.getKappa();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return kappa / normalizingConstant / numSynTransitions; // synonymous transition
+                    case 2: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transversion
+                    case 3: return 0.0;
+                    case 4: return 0.0;
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        },
+        BETA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant, DifferentiableSubstitutionModel substitutionModel) {
+                MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
+                final double numNonsynTransitions = thisSubstitutionModel.getNumNonsynTransitions();
+                final double kappa = thisSubstitutionModel.getKappa();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 0.0;
+                    case 2: return 0.0;
+                    case 3: return kappa / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                    case 4: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
         }
     }
 }

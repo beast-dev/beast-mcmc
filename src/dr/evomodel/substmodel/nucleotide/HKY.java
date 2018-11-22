@@ -311,46 +311,6 @@ public class HKY extends BaseSubstitutionModel implements Citable,
         }
     }
 
-//    @Override
-//    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-//        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
-//    }
-//
-//    private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
-//
-//        if (parameter == kappaParameter) {
-//            double[] pi = freqModel.getFrequencies();
-//
-//            final double normalization = setupMatrix();
-//            final double[] Q = new double[stateCount * stateCount];
-//            getInfinitesimalMatrix(Q);
-////            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
-////            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
-////            final double tmpMultiplier = normalizationGradient / normalization;
-//
-//            final double[] rates = new double[6];
-//            Arrays.fill(rates, 0.0);
-//            rates[1] = rates[4] = 1.0 / normalization;
-//
-//            // TODO Remove code duplication below with codon models
-//
-//            double[][] differentialMassMatrix = new double[stateCount][stateCount];
-//            setupQMatrix(rates, pi, differentialMassMatrix);
-//            makeValid(differentialMassMatrix, stateCount);
-//
-//            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix, pi);
-//
-//            for (int i = 0; i < stateCount; i++) {
-//                for (int j = 0; j < stateCount; j++) {
-//                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
-//                }
-//            }
-//
-//            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
-//        } else {
-//            throw new RuntimeException("Not yet implemented");
-//        }
-//    }
 
     private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
@@ -372,13 +332,8 @@ public class HKY extends BaseSubstitutionModel implements Citable,
         final double normalizingConstant = setupMatrix();
         final double[] Q = new double[stateCount * stateCount];
         getInfinitesimalMatrix(Q);
-//            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
-//            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
-//            final double tmpMultiplier = normalizationGradient / normalization;
 
         final double[] differentialRates = new double[6];
-//        Arrays.fill(differentialRates, 0.0);
-//        differentialRates[1] = differentialRates[4] = 1.0 / normalizingConstant;
         setupDifferentialRates(wrt, differentialRates, normalizingConstant);
 
         // TODO Remove code duplication below with codon models
@@ -415,7 +370,6 @@ public class HKY extends BaseSubstitutionModel implements Citable,
             @Override
             public double getRate(int switchCase, double normalizingConstant,
                                   DifferentiableSubstitutionModel substitutionModel) {
-                HKY thisSubstitutionModel = (HKY) substitutionModel;
                 switch (switchCase) {
                     case 0: return 0.0;
                     case 1: return 1.0 / normalizingConstant; // synonymous transition

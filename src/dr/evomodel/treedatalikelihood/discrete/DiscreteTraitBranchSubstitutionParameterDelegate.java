@@ -42,8 +42,6 @@ import java.util.List;
 public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
 
     private final BranchRateModel branchRateModel;
-//    private final ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel;
-//    private final CompoundParameter branchParameter;
     private final BranchDifferentialMassProvider branchDifferentialMassProvider;
     private final String name;
 
@@ -54,14 +52,10 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
                                                      Tree tree,
                                                      BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                      BranchRateModel branchRateModel,
-//                                                     ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
-//                                                     CompoundParameter branchParameter,
                                                      BranchDifferentialMassProvider branchDifferentialMassProvider) {
         super(name, tree, likelihoodDelegate);
         this.name = name;
         this.branchRateModel = branchRateModel;
-//        this.arbitrarySubstitutionParameterBranchModel = arbitrarySubstitutionParameterBranchModel;
-//        this.branchParameter = branchParameter;
         this.branchDifferentialMassProvider = branchDifferentialMassProvider;
     }
 
@@ -70,15 +64,6 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-//                SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModelForBranch(i);
-//
-//                assert(substitutionModel instanceof DifferentialMassProvider);
-
-//                DifferentialMassProvider massProvider = (DifferentialMassProvider) substitutionModel;
-
-//                double[] differentialMassMatrix = massProvider.getDifferentialMassMatrix(
-//                        tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node),
-//                        arbitrarySubstitutionParameterBranchModel.getSubstitutionParameterForBranch(node, branchParameter));
 
                 final double time = tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node);
                 double[] differentialMassMatrix = branchDifferentialMassProvider.getDifferentialMassMatrixForBranch(node, time);

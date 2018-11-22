@@ -105,54 +105,6 @@ public class MG94HKYCodonModel extends MG94CodonModel {
         }
     }
 
-//    protected void setupDifferentialRates(Parameter parameter, double[] differentialRates, double normalizingConstant) {
-//        if (parameter == alphaParameter) {
-//            final double kappa = getKappa();
-//            for (int i = 0; i < rateCount; i++) {
-//                switch (rateMap[i]) {
-//                    case 0:
-//                        differentialRates[i] = 0.0;
-//                        break;
-//                    case 1:
-//                        differentialRates[i] = kappa / normalizingConstant / numSynTransitions;
-//                        break;        // synonymous transition
-//                    case 2:
-//                        differentialRates[i] = 1.0 / normalizingConstant / numSynTransitions;
-//                        break;        // synonymous transversion
-//                    case 3:
-//                        differentialRates[i] = 0.0;
-//                        break;
-//                    case 4:
-//                        differentialRates[i] = 0.0;
-//                        break;
-//                }
-//            }
-//        } else if (parameter == betaParameter) {
-//            final double kappa = getKappa();
-//            for (int i = 0; i < rateCount; i++) {
-//                switch (rateMap[i]) {
-//                    case 0:
-//                        differentialRates[i] = 0.0;
-//                        break;
-//                    case 1:
-//                        differentialRates[i] = 0.0;
-//                        break;
-//                    case 2:
-//                        differentialRates[i] = 0.0;
-//                        break;
-//                    case 3:
-//                        differentialRates[i] = kappa / normalizingConstant / numNonsynTransitions;
-//                        break;         // non-synonymous transition
-//                    case 4:
-//                        differentialRates[i] = 1.0 / normalizingConstant / numNonsynTransitions;
-//                        break;            // non-synonymous transversion
-//                }
-//            }
-//        } else {
-//            throw new RuntimeException("Not yet implemented!");
-//        }
-//    }
-
     @Override
     public WrtParameter factory(Parameter parameter) { //TODO: figure out how to avoid override this function
         WrtMG94HKYModelParameter wrt;

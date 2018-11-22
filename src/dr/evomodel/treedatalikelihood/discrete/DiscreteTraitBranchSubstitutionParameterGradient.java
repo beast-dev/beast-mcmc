@@ -99,8 +99,6 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),
-//                    branchModel,
-//                    (CompoundParameter) branchSubstitutionParameter,
                     branchDifferentialMassProvider);
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());

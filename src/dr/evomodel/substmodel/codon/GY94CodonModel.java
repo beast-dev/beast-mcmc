@@ -250,49 +250,6 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
         }
     }
 
-//    private WrappedMatrix getInfinitesimalDifferentialMatrix(Parameter parameter) {
-//        if (parameter == omegaParameter) {
-//            final double kappa = getKappa();
-//            final double normalizingConstant = setupMatrix();
-//            final double[] Q = new double[stateCount * stateCount];
-//            getInfinitesimalMatrix(Q);
-//            final double[] differentialRates = new double[rateCount];
-//            for (int i = 0; i < rateCount; i++) {
-//                switch (rateMap[i]) {
-//                    case 3:
-//                        differentialRates[i] = kappa / normalizingConstant;
-//                        break;// non-synonymous transition
-//                    case 4:
-//                        differentialRates[i] = 1.0 / normalizingConstant;
-//                        break;        // non-synonymous transversion
-//                }
-//            }
-//
-//            // TODO Why does below look like code duplication with MG94CodonModel?  XJ: Because it was copy-pasted...
-//
-//            double[][] differentialMassMatrix = new double[stateCount][stateCount];
-//            setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
-//            makeValid(differentialMassMatrix, stateCount);
-//
-//            final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix,
-//                    freqModel.getFrequencies());
-//
-//            for (int i = 0; i < stateCount; i++) {
-//                for (int j = 0; j < stateCount; j++) {
-//                    differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
-//                }
-//            }
-//            return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
-//
-//        } else {
-//            throw new RuntimeException("Not yet implemented");
-//        }
-//    }
-
-//    @Override
-//    public double[] getDifferentialMassMatrix(double time, Parameter parameter) {
-//        return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, stateCount, getInfinitesimalDifferentialMatrix(parameter), eigenDecomposition);
-//    }
 
     private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 

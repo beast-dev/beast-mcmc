@@ -68,7 +68,6 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         ArbitrarySubstitutionParameterBranchModel branchModel = (ArbitrarySubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
-//        Parameter branchSubstitutionParameter = branchModel.getSubstitutionParameter();
         Parameter branchSubstitutionParameter = (Parameter) xo.getChild(Parameter.class);
 
         Tree tree = treeDataLikelihood.getTree();

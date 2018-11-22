@@ -40,13 +40,14 @@ import java.util.List;
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 public class RepeatedMeasuresTraitDataModel extends
         ContinuousTraitDataModel implements ContinuousTraitPartialsProvider {
 
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
-    private boolean diagonalOnly;
+    private boolean diagonalOnly = false;
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
@@ -63,13 +64,6 @@ public class RepeatedMeasuresTraitDataModel extends
         samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 samplingPrecision.getDimension()));
 
-//        this.diagonalOnly = false;
-//        if (samplingPrecision.getDimension() == dimTrait){
-//            this.diagonalOnly = true;
-//        }
-//        if (samplingPrecision.getDimension() != dimTrait) {
-//            throw new RuntimeException("Currently only implemented for diagonal deflation");
-//        }
     }
 
     @Override
@@ -78,13 +72,9 @@ public class RepeatedMeasuresTraitDataModel extends
         assert (numTraits == 1);
         assert (samplingPrecision.getRowDimension() == dimTrait && samplingPrecision.getColumnDimension() == dimTrait);
 
-//        if (fullyObserved) {
-//            throw new IllegalArgumentException("Wishart statistics are not implemented for the repeated measures model");
-//        }
-        if (fullyObserved == true) {
+        if (fullyObserved){
             return new double[dimTrait + 1];
         }
-
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
         DenseMatrix64F V = MissingOps.wrap(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);

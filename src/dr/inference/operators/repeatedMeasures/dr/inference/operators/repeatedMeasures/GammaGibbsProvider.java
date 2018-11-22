@@ -1,7 +1,6 @@
 package dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.distribution.DistributionLikelihood;

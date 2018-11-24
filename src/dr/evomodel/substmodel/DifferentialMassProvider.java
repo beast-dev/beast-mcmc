@@ -50,12 +50,11 @@ public interface DifferentialMassProvider {
         @Override
         public double[] getDifferentialMassMatrix(double time) {
 
-            // Note: no longer uses `parameter`
-
             WrappedMatrix infinitesimalDifferentialMatrix = baseModel.getInfinitesimalDifferentialMatrix(wrt);
 
             return DifferentiableSubstitutionModelUtil.getDifferentialMassMatrix(time, baseModel.getDataType().getStateCount(),
                     infinitesimalDifferentialMatrix, baseModel.getEigenDecomposition());
+
         }
 
         public interface WrtParameter {

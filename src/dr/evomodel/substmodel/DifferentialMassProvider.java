@@ -33,7 +33,7 @@ import dr.math.matrixAlgebra.WrappedMatrix;
  */
 public interface DifferentialMassProvider {
 
-    double[] getDifferentialMassMatrix(double time); // TODO Improve API.  Is parameter necessary?
+    double[] getDifferentialMassMatrix(double time);
 
     class DifferentialWrapper implements DifferentialMassProvider {
 
@@ -41,9 +41,7 @@ public interface DifferentialMassProvider {
         private final DifferentiableSubstitutionModel baseModel;
         private final WrtParameter wrt;
 
-        // TODO Construct in caller to `getDifferentialMassMatrix` with either ALPHA or BETA as needed
-
-        public DifferentialWrapper(DifferentiableSubstitutionModel baseModel,   // TODO Will need to generalize this for other SubstitutionModels
+        public DifferentialWrapper(DifferentiableSubstitutionModel baseModel,
                                    WrtParameter wrt) {
             this.baseModel = baseModel;
             this.wrt = wrt;

@@ -277,7 +277,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
                 = getNormalizationValue(differentialMassMatrix, freqModel.getFrequencies());
 
         for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) { // TODO: Check that I did not break this
+            for (int j = 0; j < stateCount; j++) {
                 differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
             }
         }

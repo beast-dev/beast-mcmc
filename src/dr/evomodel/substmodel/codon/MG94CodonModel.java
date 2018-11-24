@@ -187,10 +187,6 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
 
     private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
-        // TODO Improve API so parameter is not passed
-        // TODO The caller passes directly to a DifferentialMassProvider wrapper that already knows the WrtMG94ModelParameter (at construction)
-        // TODO Try constructing and using DifferentialWrapper in caller
-
         for (int i = 0; i < rateCount; ++i) {
             differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
                     this);
@@ -216,7 +212,7 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
                 = getNormalizationValue(differentialMassMatrix, freqModel.getFrequencies()) - alphaPlusBetaInverse;
 
         for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) { // TODO: Check that I did not break this
+            for (int j = 0; j < stateCount; j++) {
                 differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
             }
         }

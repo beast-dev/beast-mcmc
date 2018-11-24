@@ -106,7 +106,7 @@ public class MG94HKYCodonModel extends MG94CodonModel {
     }
 
     @Override
-    public WrtParameter factory(Parameter parameter) { //TODO: figure out how to avoid override this function
+    public WrtParameter factory(Parameter parameter) {
         WrtMG94HKYModelParameter wrt;
         if (parameter == alphaParameter) {
             wrt = WrtMG94HKYModelParameter.ALPHA;

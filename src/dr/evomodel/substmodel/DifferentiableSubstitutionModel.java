@@ -1,5 +1,5 @@
 /*
- * ParameterReplaceableSubstitutionModel.java
+ * DifferentiableSubstitutionModel.java
  *
  * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -39,5 +39,9 @@ public interface DifferentiableSubstitutionModel extends SubstitutionModel {
     WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt);
 
     WrtParameter factory(Parameter parameter);
+
+    void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant);
+
+    double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies);
 
 }

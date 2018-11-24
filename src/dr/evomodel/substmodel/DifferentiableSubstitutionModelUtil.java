@@ -27,6 +27,7 @@ package dr.evomodel.substmodel;
 
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 
 /**
  * @author Marc A. Suchard
@@ -89,6 +90,38 @@ public class DifferentiableSubstitutionModelUtil {
                 middleMatrix.set(i, j, sumProduct);
             }
         }
+    }
+
+    public static WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt,
+                                                                   BaseSubstitutionModel substitutionModel) {
+        if (!(substitutionModel instanceof DifferentiableSubstitutionModel)) {
+            throw new RuntimeException("Not supported!");
+        }
+        final double normalizingConstant = substitutionModel.setupMatrix();
+
+        final int stateCount = substitutionModel.getDataType().getStateCount();
+        final int rateCount = substitutionModel.getRateCount(stateCount);
+
+        final double[] Q = new double[stateCount * stateCount];
+        substitutionModel.getInfinitesimalMatrix(Q);
+
+        final double[] differentialRates = new double[rateCount];
+        ((DifferentiableSubstitutionModel) substitutionModel).setupDifferentialRates(wrt, differentialRates, normalizingConstant);
+
+        double[][] differentialMassMatrix = new double[stateCount][stateCount];
+        substitutionModel.setupQMatrix(differentialRates, substitutionModel.getFrequencyModel().getFrequencies(), differentialMassMatrix);
+        substitutionModel.makeValid(differentialMassMatrix, stateCount);
+
+        final double weightedNormalizationGradient
+                = ((DifferentiableSubstitutionModel) substitutionModel).getWeightedNormalizationGradient(differentialMassMatrix, substitutionModel.getFrequencyModel().getFrequencies());
+
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
+            }
+        }
+
+        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
     }
 
 }

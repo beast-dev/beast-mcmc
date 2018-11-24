@@ -33,6 +33,7 @@ import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -185,7 +186,7 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
         }
     }
 
-    private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
         for (int i = 0; i < rateCount; ++i) {
             differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
@@ -194,30 +195,14 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
     }
 
     @Override
-    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+    public double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies) {
         final double alphaPlusBetaInverse = 1.0 / (getAlpha() + getBeta());
-        final double normalizingConstant = setupMatrix();
+        return getNormalizationValue(differentialMassMatrix, frequencies) - alphaPlusBetaInverse;
+    }
 
-        final double[] Q = new double[stateCount * stateCount];
-        getInfinitesimalMatrix(Q);
-
-        final double[] differentialRates = new double[rateCount];
-        setupDifferentialRates(wrt, differentialRates, normalizingConstant);
-
-        double[][] differentialMassMatrix = new double[stateCount][stateCount];
-        setupQMatrix(differentialRates, freqModel.getFrequencies(), differentialMassMatrix);
-        makeValid(differentialMassMatrix, stateCount);
-
-        final double weightedNormalizationGradient
-                = getNormalizationValue(differentialMassMatrix, freqModel.getFrequencies()) - alphaPlusBetaInverse;
-
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
-            }
-        }
-
-        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
     }
 
     @Override

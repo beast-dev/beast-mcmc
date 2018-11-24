@@ -312,7 +312,7 @@ public class HKY extends BaseSubstitutionModel implements Citable,
     }
 
 
-    private void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
         byte[] rateMap = new byte[rateCount];
         Arrays.fill(rateMap, (byte) 0);
@@ -325,33 +325,13 @@ public class HKY extends BaseSubstitutionModel implements Citable,
     }
 
     @Override
+    public double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies) {
+        return getNormalizationValue(differentialMassMatrix, frequencies);
+    }
+
+    @Override
     public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
-        //TODO: remove code duplication
-        double[] pi = freqModel.getFrequencies();
-
-        final double normalizingConstant = setupMatrix();
-        final double[] Q = new double[stateCount * stateCount];
-        getInfinitesimalMatrix(Q);
-
-        final double[] differentialRates = new double[6];
-        setupDifferentialRates(wrt, differentialRates, normalizingConstant);
-
-        // TODO Remove code duplication below with codon models
-
-        double[][] differentialMassMatrix = new double[stateCount][stateCount];
-        setupQMatrix(differentialRates, pi, differentialMassMatrix);
-        makeValid(differentialMassMatrix, stateCount);
-
-        final double weightedNormalizationGradient = super.getNormalizationValue(differentialMassMatrix, pi);
-
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                differentialMassMatrix[i][j] -= Q[i * stateCount + j] * weightedNormalizationGradient;
-            }
-        }
-
-        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
-
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
     }
 
     @Override

@@ -34,7 +34,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.HyperParameterBranchRateGradient;
-import dr.evomodel.treedatalikelihood.discrete.NewLocationGradient;
+import dr.evomodel.treedatalikelihood.discrete.LocationGradient;
 import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
@@ -86,7 +86,7 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("Poorly formed");
                     }
 
-                    return new NewLocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
+                    return new LocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
 
                 } else if (xo.hasChildNamed(SCALE)) {
 

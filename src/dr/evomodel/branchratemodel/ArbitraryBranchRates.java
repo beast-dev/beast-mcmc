@@ -142,8 +142,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
     }
 
     public static BranchRateTransform make(boolean reciprocal, boolean exp,
-                                    BranchSpecificFixedEffects location,
-                                    Parameter scale) {
+                                           BranchSpecificFixedEffects location,
+                                           Parameter scale) {
         final BranchRateTransform transform;
 
         if ((reciprocal || exp) && (location != null || scale != null)) {
@@ -271,7 +271,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
         }
         
-        class LocationScaleLogNormal extends AbstractModel implements BranchRateTransform  {
+        class LocationScaleLogNormal extends AbstractModel implements BranchRateTransform {
 
             private final BranchSpecificFixedEffects location;
             private final Parameter scale;
@@ -320,40 +320,40 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 //                }
 //            }
 
-            @Deprecated
-            public double expLocationDifferential(double rate, Tree tree, NodeRef node) {
-                if (!transformKnown) {
-                    setupTransform();
-                    transformKnown = true;
-                }
+//            @Deprecated
+//            public double expLocationDifferential(double rate, Tree tree, NodeRef node) {
+//                if (!transformKnown) {
+//                    setupTransform();
+//                    transformKnown = true;
+//                }
+//
+//                double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
+//
+//                return rate / multiplier;
+//            }
 
-                double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
+//            @Deprecated
+//            public double expLocationDifferential(double rate) {
+//                return expLocationDifferential(rate, null, null);
+//                // TODO Does not depend on this class; move back into calling function
+//            }
 
-                return rate / multiplier;
-            }
-
-            @Deprecated
-            public double expLocationDifferential(double rate) {
-                return expLocationDifferential(rate, null, null);
-                // TODO Does not depend on this class; move back into calling function
-            }
-
-            @Deprecated
-            public double expScaleDifferential(double rate, Tree tree, NodeRef node) {
-
-                if (!transformKnown) {
-                    setupTransform();
-                    transformKnown = true;
-                }
-
-                // TODO Can out out of this class (I think), if we provide both transform() and inverse() here.
-
-                double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
-                double tmp = (Math.log(rate / multiplier) - transformMu)/(transformSigma * transformSigma) - 1.0;
-
-                return tmp * rate * scale.getParameterValue(0) / (1.0 + scale.getParameterValue(0) * scale.getParameterValue(0));
-
-            }
+//            @Deprecated
+//            public double expScaleDifferential(double rate, Tree tree, NodeRef node) {
+//
+//                if (!transformKnown) {
+//                    setupTransform();
+//                    transformKnown = true;
+//                }
+//
+//                // TODO Can out out of this class (I think), if we provide both transform() and inverse() here.
+//
+//                double multiplier = (location != null) ? location.getEffect(tree, node) : 1.0;
+//                double tmp = (Math.log(rate / multiplier) - transformMu)/(transformSigma * transformSigma) - 1.0;
+//
+//                return tmp * rate * scale.getParameterValue(0) / (1.0 + scale.getParameterValue(0) * scale.getParameterValue(0));
+//
+//            }
 
             public double getTransformMu() {
                 return transformMu;
@@ -371,10 +371,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 return scale.getParameterValue(0);
             }
 
-            @Deprecated
-            public double expScaleDifferential(double rate) {
-                return expScaleDifferential(rate, null, null);
-            }
+//            @Deprecated
+//            public double expScaleDifferential(double rate) {
+//                return expScaleDifferential(rate, null, null);
+//            }
 
             @Override
             public double differential(double raw, Tree tree, NodeRef node) {

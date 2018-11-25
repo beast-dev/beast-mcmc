@@ -60,8 +60,38 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         Parameter rateCategoryParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
         boolean centerAtOne = xo.getAttribute(CENTER_AT_ONE, true);
+
+
+        final int numBranches = tree.getNodeCount() - 1;
+        if (rateCategoryParameter.getDimension() != numBranches) {
+            rateCategoryParameter.setDimension(numBranches);
+        }
+
+        Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
+        Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
+        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
+
+
+        ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
+
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
+    }
+
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
+
+    public String getParserDescription() {
+        return "This element returns an arbitrary rate model." +
+                "The branch rates are drawn from an arbitrary distribution determine by the prior.";
+    }
+
+    public static ArbitraryBranchRates.BranchRateTransform parseTransform (XMLObject xo) throws XMLParseException {
+
+        boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
+        Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
+
         boolean exp = xo.getAttribute(EXP, false);
 
         BranchSpecificFixedEffects locationParameter = null;
@@ -79,28 +109,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             scaleParameter = (Parameter) xo.getElementFirstChild(SCALE);
         }
 
-        final int numBranches = tree.getNodeCount() - 1;
-        if (rateCategoryParameter.getDimension() != numBranches) {
-            rateCategoryParameter.setDimension(numBranches);
-        }
-
-        Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
-        Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
-        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
-        Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
-
-        ArbitraryBranchRates.BranchRateTransform transform = make(reciprocal, exp, locationParameter, scaleParameter);
-
-        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
-    }
-
-    //************************************************************************
-    // AbstractXMLObjectParser implementation
-    //************************************************************************
-
-    public String getParserDescription() {
-        return "This element returns an arbitrary rate model." +
-                "The branch rates are drawn from an arbitrary distribution determine by the prior.";
+        return make(reciprocal, exp, locationParameter, scaleParameter);
     }
 
     public Class getReturnType() {

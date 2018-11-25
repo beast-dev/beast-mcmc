@@ -25,7 +25,10 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -46,11 +49,21 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         final int numNodes = treeModel.getNodeCount();
         for (int i = 0; i < numNodes; i++) {
-            Parameter branchParameter = new Parameter.Default((String) parameter.getId() + String.valueOf(i + 1), parameter.getParameterValue(0),
+            Parameter branchInnerParameter = new Parameter.Default((String) parameter.getId() + String.valueOf(i + 1), parameter.getParameterValue(0),
                     parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0));
-            compoundParameter.addParameter(branchParameter);
+            compoundParameter.addParameter(branchInnerParameter);
         }
-        return compoundParameter;
+        BranchParameter branchParameter = new BranchParameter(compoundParameter,
+                treeModel,
+                ArbitraryBranchRatesParser.parseTransform(xo),
+                new TreeParameterModel(treeModel, compoundParameter, true, TreeTrait.Intent.BRANCH));
+
+        CompoundParameter resultCompoundParameter = new CompoundParameter(null);
+        for (int i = 0; i < numNodes; i++) {
+            BranchParameter.IndividualBranchParameter individualBranchParameter = new BranchParameter.IndividualBranchParameter(branchParameter, i, compoundParameter.getParameter(i));
+            resultCompoundParameter.addParameter(individualBranchParameter);
+        }
+        return resultCompoundParameter;
     }
 
     @Override

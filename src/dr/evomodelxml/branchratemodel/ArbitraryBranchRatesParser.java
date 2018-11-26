@@ -45,8 +45,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String EXP = "exp";
     private static final String CENTER_AT_ONE = "centerAtOne";
 
-    private static final String LOCATION = "location";
-    private static final String SCALE = "scale";
+    public static final String LOCATION = "location";
+    public static final String SCALE = "scale";
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;

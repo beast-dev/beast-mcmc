@@ -25,9 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -53,10 +51,10 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
                     parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0));
             compoundParameter.addParameter(branchInnerParameter);
         }
+
         BranchParameter branchParameter = new BranchParameter(compoundParameter,
                 treeModel,
-                ArbitraryBranchRatesParser.parseTransform(xo),
-                new TreeParameterModel(treeModel, compoundParameter, true, TreeTrait.Intent.BRANCH));
+                ArbitraryBranchRatesParser.parseTransform(xo));
 
         CompoundParameter resultCompoundParameter = new CompoundParameter(null);
         for (int i = 0; i < numNodes; i++) {
@@ -70,7 +68,9 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class),
-                new ElementRule(TreeModel.class)
+                new ElementRule(TreeModel.class),
+                new ElementRule(ArbitraryBranchRatesParser.SCALE, Parameter.class, "optional scale parameter", true),
+                new ElementRule(ArbitraryBranchRatesParser.LOCATION, Parameter.class, "optional location parameter", true),
         };
     }
 

@@ -25,32 +25,45 @@
 
 package dr.inference.model;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates.BranchRateTransform;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 
-
+/**
+ * @author Marc Suchard
+ * @author Xiang Ji
+ */
 public class BranchParameter extends Parameter.Abstract implements VariableListener {
 
-    final CompoundParameter parameter;
-    final BranchRateTransform transform;
-    final Tree tree;
-    final TreeParameterModel indexHelper;
+    final private CompoundParameter parameter;
+    final private BranchRateTransform transform;
+    final private TreeModel tree;
+    final private TreeParameterModel indexHelper;
 
-    public BranchParameter(CompoundParameter parameter, Tree tree, BranchRateTransform transform, TreeParameterModel indexHelper) {
+    public BranchParameter(CompoundParameter parameter, TreeModel tree, BranchRateTransform transform) {
 
         this.parameter = parameter;
         this.transform = transform;
         this.tree = tree;
-        this.indexHelper = indexHelper;
+        this.indexHelper = new TreeParameterModel(tree, new Parameter.Default(tree.getNodeCount() - 1), false, TreeTrait.Intent.BRANCH);
         this.parameter.addVariableListener(this);
 
     }
 
     @Override
-    public double getParameterValue(int dim) {
-        return transform.transform(parameter.getParameterValue(dim), tree,
-                tree.getNode(indexHelper.getNodeNumberFromParameterIndex(dim)));
+    public double getParameterValue(int nodeNum) {
+
+        NodeRef node = tree.getNode(nodeNum);
+
+        if (tree.isRoot(node)) {
+            return parameter.getParameterValue(nodeNum);
+        } else {
+            return transform.transform(parameter.getParameterValue(nodeNum), tree, node);
+        }
+
     }
 
     @Override
@@ -122,15 +135,32 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         fireParameterChangedEvent(index, type);
     }
 
+    public int getDimension() {
+        return parameter.getDimension();
+    }
+
+    public double[] getBranchParameterValues() {
+        double[] copyOfValues = new double[tree.getNodeCount() - 1];
+        for (int i = 0; i < copyOfValues.length; i++) {
+            copyOfValues[i] = getParameterValue(indexHelper.getNodeNumberFromParameterIndex(i));
+        }
+        return copyOfValues;
+    }
+
+    public double getChainGradient(Tree tree, NodeRef node) {
+        final double raw = parameter.getParameterValue(node.getNumber());
+        return transform.differential(raw, tree, node);
+    }
+
     public static class IndividualBranchParameter extends Parameter.Abstract implements VariableListener {
 
         final private Parameter parameter;
         final private BranchParameter branchParameter;
-        final private int parameterIndex;
+        final private int nodeNum;
 
-        public IndividualBranchParameter(BranchParameter branchParameter, int parameterIndex, Parameter parameter) {
+        public IndividualBranchParameter(BranchParameter branchParameter, int nodeNum, Parameter parameter) {
             this.branchParameter = branchParameter;
-            this.parameterIndex = parameterIndex;
+            this.nodeNum = nodeNum;
             this.parameter = parameter;
             if (!(parameter.getDimension() == 1)) {
                 throw new RuntimeException("Individual parameter can only be one dimensional.");
@@ -138,32 +168,36 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
             this.parameter.addVariableListener(this);
         }
 
+        public BranchParameter getBranchParameter() {
+            return branchParameter;
+        }
+
         @Override
         public double getParameterValue(int dim) {
             if (dim > 0) {
                 throw new RuntimeException("Should be one dimensional!");
             }
-            return branchParameter.getParameterValue(parameterIndex);
+            return branchParameter.getParameterValue(nodeNum);
         }
 
         @Override
         public void setParameterValue(int dim, double value) {
-            branchParameter.setParameterValue(parameterIndex, value);
+            branchParameter.setParameterValue(nodeNum, value);
         }
 
         @Override
         public void setParameterValueQuietly(int dim, double value) {
-            branchParameter.setParameterValueQuietly(parameterIndex, value);
+            branchParameter.setParameterValueQuietly(nodeNum, value);
         }
 
         @Override
         public void setParameterValueNotifyChangedAll(int dim, double value) {
-            branchParameter.setParameterValueNotifyChangedAll(parameterIndex, value);
+            branchParameter.setParameterValueNotifyChangedAll(nodeNum, value);
         }
 
         @Override
         public String getParameterName() {
-            return branchParameter.getParameterName() + "." + parameterIndex;
+            return branchParameter.getParameterName() + "." + nodeNum;
         }
 
         @Override

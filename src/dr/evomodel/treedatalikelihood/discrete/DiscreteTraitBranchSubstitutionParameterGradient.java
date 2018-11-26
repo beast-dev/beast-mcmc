@@ -39,6 +39,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -64,6 +65,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected final boolean useHessian;
 
     protected final Parameter branchSubstitutionParameter;
+    protected final BranchParameter branchParameter;
     private final TreeParameterModel parameterIndexHelper;
 
     private static final boolean DEBUG = true;
@@ -75,12 +77,14 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
                                                             TreeDataLikelihood treeDataLikelihood,
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                             Parameter branchSubstitutionParameter,
+                                                            BranchParameter branchParameter,
                                                             ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
                                                             List<DifferentialMassProvider> differentialMassProviderList,
                                                             boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchSubstitutionParameter = branchSubstitutionParameter;
+        this.branchParameter = branchParameter;
         this.branchModel = arbitrarySubstitutionParameterBranchModel;
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
@@ -167,7 +171,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        return 1.0;
+        return branchParameter.getChainGradient(tree, node);
     }
 
     @Override
@@ -189,7 +193,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         public double evaluate(double[] argument) {
 
             for (int i = 0; i < argument.length; ++i) {
-                branchSubstitutionParameter.setParameterValue(i, argument[i]);
+                branchParameter.setParameterValue(parameterIndexHelper.getNodeNumberFromParameterIndex(i), argument[i]);
             }
 
 //            treeDataLikelihood.makeDirty();
@@ -198,7 +202,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
         @Override
         public int getNumArguments() {
-            return branchSubstitutionParameter.getDimension();
+            return tree.getNodeCount() - 1;
         }
 
         @Override
@@ -224,23 +228,23 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
     @Override
     public String getReport() {
-        double[] savedValues = branchSubstitutionParameter.getParameterValues();
+        double[] savedValues = branchParameter.getBranchParameterValues();
         double[] testGradient = null;
         double[] testHessian = null;
 
-        boolean largeEnoughValues = valuesAreSufficientlyLarge(branchSubstitutionParameter.getParameterValues());
+        boolean largeEnoughValues = valuesAreSufficientlyLarge(branchParameter.getBranchParameterValues());
 
         if (DEBUG && largeEnoughValues) {
-            testGradient = NumericalDerivative.gradient(numeric1, branchSubstitutionParameter.getParameterValues());
+            testGradient = NumericalDerivative.gradient(numeric1, branchParameter.getBranchParameterValues());
         }
 
         if (DEBUG && useHessian && largeEnoughValues) {
-            testHessian = NumericalDerivative.diagonalHessian(numeric1, branchSubstitutionParameter.getParameterValues());
+            testHessian = NumericalDerivative.diagonalHessian(numeric1, branchParameter.getBranchParameterValues());
         }
 
 
         for (int i = 0; i < savedValues.length; ++i) {
-            branchSubstitutionParameter.setParameterValue(i, savedValues[i]);
+            branchParameter.setParameterValue(i, savedValues[i]);
         }
 
         StringBuilder sb = new StringBuilder();

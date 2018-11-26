@@ -35,6 +35,7 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -89,9 +90,12 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             }
         }
 
+        //TODO: fix multiple casts
+        BranchParameter branchParameter = ((BranchParameter.IndividualBranchParameter) ((CompoundParameter) branchSubstitutionParameter).getParameter(0)).getBranchParameter();
+
 
         return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                branchSubstitutionParameter, branchModel, differentialMassProviderList, useHessian);
+                branchSubstitutionParameter, branchParameter, branchModel, differentialMassProviderList, useHessian);
     }
 
     @Override

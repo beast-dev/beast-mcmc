@@ -38,14 +38,14 @@ import dr.evomodel.tree.TreeParameterModel;
  */
 public class BranchParameter extends Parameter.Abstract implements VariableListener {
 
-    final private CompoundParameter parameter;
+    final private Parameter parameter;
     final private BranchRateTransform transform;
     final private TreeModel tree;
     final private TreeParameterModel indexHelper;
 
-    public BranchParameter(CompoundParameter parameter, TreeModel tree, BranchRateTransform transform) {
+    public BranchParameter(Parameter parameter, TreeModel tree, BranchRateTransform transform) {
 
-        this.parameter = parameter;
+        this.parameter =  parameter;
         this.transform = transform;
         this.tree = tree;
         this.indexHelper = new TreeParameterModel(tree, new Parameter.Default(tree.getNodeCount() - 1), false, TreeTrait.Intent.BRANCH);

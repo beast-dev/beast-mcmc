@@ -53,6 +53,10 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
 
     }
 
+    public BranchRateTransform getTransform() {
+        return transform;
+    }
+
     @Override
     public double getParameterValue(int nodeNum) {
 
@@ -136,7 +140,7 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     }
 
     public int getDimension() {
-        return parameter.getDimension();
+        return tree.getNodeCount() - 1;
     }
 
     public double[] getBranchParameterValues() {

@@ -28,7 +28,10 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.evomodel.substmodel.DifferentialMassProvider;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterDelegate.BranchDifferentialMassProvider;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -47,6 +50,7 @@ import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
@@ -61,12 +65,11 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
-    protected final ArbitrarySubstitutionParameterBranchModel branchModel;
     protected final boolean useHessian;
 
     protected final Parameter branchSubstitutionParameter;
     protected final BranchParameter branchParameter;
-    private final TreeParameterModel parameterIndexHelper;
+    protected final TreeParameterModel parameterIndexHelper;
 
     private static final boolean DEBUG = true;
 
@@ -78,14 +81,11 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                             Parameter branchSubstitutionParameter,
                                                             BranchParameter branchParameter,
-                                                            ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
-                                                            List<DifferentialMassProvider> differentialMassProviderList,
                                                             boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchSubstitutionParameter = branchSubstitutionParameter;
         this.branchParameter = branchParameter;
-        this.branchModel = arbitrarySubstitutionParameterBranchModel;
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
 
@@ -97,8 +97,26 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
                 throw new RuntimeException("Only support CompoundParameter for now.");
             }
 
+            BranchModel branchModel = likelihoodDelegate.getBranchModel();
+
+            List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
+
+            for (int i = 0; i < parameterIndexHelper.getParameterSize(); i++) {
+
+                NodeRef branch = tree.getNode(parameterIndexHelper.getNodeNumberFromParameterIndex(i));
+
+                DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) getSubstitutionModel(branchModel, branch);
+
+                Parameter parameter = getParameterForBranch(branchSubstitutionParameter, branchModel, branch);
+
+                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
+
+                differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
+            }
+
             BranchDifferentialMassProvider branchDifferentialMassProvider =
                     new BranchDifferentialMassProvider(parameterIndexHelper, differentialMassProviderList);
+
             ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
@@ -114,6 +132,22 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         int nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
+        }
+    }
+
+    private SubstitutionModel getSubstitutionModel(BranchModel branchModel, NodeRef branch) { //TODO: get rid of instanceof
+        if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel) {
+            return ((ArbitrarySubstitutionParameterBranchModel) branchModel).getSubstitutionModelForBranch(branch);
+        } else {
+            return branchModel.getRootSubstitutionModel();
+        }
+    }
+
+    private Parameter getParameterForBranch(Parameter parameter, BranchModel branchModel, NodeRef branch) { //TODO: get rid of instanceof
+        if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel) {
+            return ((ArbitrarySubstitutionParameterBranchModel) branchModel).getSubstitutionParameterForBranch(branch, (CompoundParameter) parameter);
+        } else {
+            return parameter;
         }
     }
 

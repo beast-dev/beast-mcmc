@@ -72,30 +72,13 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         Parameter branchSubstitutionParameter = (Parameter) xo.getChild(Parameter.class);
 
         Tree tree = treeDataLikelihood.getTree();
-        List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
-
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-
-            if (!tree.isRoot(node)) {
-
-                DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) branchModel.getSubstitutionModelForBranch(node);
-
-                Parameter parameter = branchModel.getSubstitutionParameterForBranch(node, (CompoundParameter) branchSubstitutionParameter);
-
-                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
-
-                differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
-
-            }
-        }
 
         //TODO: fix multiple casts
         BranchParameter branchParameter = ((BranchParameter.IndividualBranchParameter) ((CompoundParameter) branchSubstitutionParameter).getParameter(0)).getBranchParameter();
 
 
         return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                branchSubstitutionParameter, branchParameter, branchModel, differentialMassProviderList, useHessian);
+                branchSubstitutionParameter, branchParameter, useHessian);
     }
 
     @Override

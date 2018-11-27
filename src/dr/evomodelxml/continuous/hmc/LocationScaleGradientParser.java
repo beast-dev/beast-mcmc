@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
@@ -62,21 +63,18 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 //        final Parameter locationScaleParameter = (Parameter) xo.getChild(Parameter.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
-        if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
+        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
-            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (delegate instanceof  ContinuousDataLikelihoodDelegate) {
+            throw new XMLParseException("Not yet implemented! ");
+        } else if (delegate instanceof  BeagleDataLikelihoodDelegate) {
+            BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
 
-            if (delegate instanceof ContinuousDataLikelihoodDelegate) {
 
-                throw new XMLParseException("Not yet implemented! ");
-
-            } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
-
-                BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-
+            if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
                 if (xo.hasChildNamed(LOCATION)) {
                     Object locationObject = xo.getElementFirstChild(LOCATION);
-                    BranchSpecificFixedEffects location = null;
+                    BranchSpecificFixedEffects location;
 
                     if (locationObject instanceof Parameter) {
                         location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
@@ -97,11 +95,10 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                     throw new XMLParseException("Poorly formed");
                 }
             } else {
-                throw new XMLParseException("Unknown likelihood delegate type");
+                throw new XMLParseException("Only implemented for an arbitrary rates model");
             }
-
         } else {
-            throw new XMLParseException("Only implemented for an arbitrary rates model");
+            throw new XMLParseException("Unknown likelihood delegate type");
         }
     }
 

@@ -222,7 +222,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         return columns;
     }
 
-    private MultivariateFunction numericWrap(Parameter parameter) {
+    private MultivariateFunction numericWrap(final Parameter parameter) {
         return new MultivariateFunction() {
             @Override
             public double evaluate(double[] argument) {
@@ -264,7 +264,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         return true;
     }
 
-    protected String getReport(Parameter parameter) {
+    protected String getReport(final Parameter parameter) {
         double[] savedValues = parameter.getParameterValues();
         double[] testGradient = null;
         double[] testHessian = null;

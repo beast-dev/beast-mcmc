@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -34,10 +35,13 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterLocationGradient;
 import dr.evomodel.treedatalikelihood.discrete.HyperParameterBranchRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.LocationGradient;
 import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.BranchParameter;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -70,19 +74,12 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
         } else if (delegate instanceof  BeagleDataLikelihoodDelegate) {
             BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
 
+            BranchModel branchModel = beagleData.getBranchModel();
 
             if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
                 if (xo.hasChildNamed(LOCATION)) {
-                    Object locationObject = xo.getElementFirstChild(LOCATION);
-                    BranchSpecificFixedEffects location;
 
-                    if (locationObject instanceof Parameter) {
-                        location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
-                    } else if (locationObject instanceof BranchSpecificFixedEffects) {
-                        location = (BranchSpecificFixedEffects) locationObject;
-                    } else {
-                        throw new XMLParseException("Poorly formed");
-                    }
+                    BranchSpecificFixedEffects location = parseLocation(xo);
 
                     return new LocationGradient(traitName, treeDataLikelihood, beagleData, location, useHessian);
 
@@ -94,12 +91,43 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                 } else {
                     throw new XMLParseException("Poorly formed");
                 }
+            } else if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel){
+
+                CompoundParameter substitutionParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+
+                BranchParameter branchParameter = ((BranchParameter.IndividualBranchParameter) substitutionParameter.getParameter(0)).getBranchParameter();
+
+                if (xo.hasChildNamed(LOCATION)) {
+
+                    BranchSpecificFixedEffects location = parseLocation(xo);
+
+                    return new BranchSubstitutionParameterLocationGradient(traitName, treeDataLikelihood, beagleData, substitutionParameter, branchParameter,
+                            useHessian, location);
+
+                } else {
+                    throw new XMLParseException("Not yet implemented.");
+                }
+
             } else {
                 throw new XMLParseException("Only implemented for an arbitrary rates model");
             }
         } else {
             throw new XMLParseException("Unknown likelihood delegate type");
         }
+    }
+
+    private BranchSpecificFixedEffects parseLocation(XMLObject xo) throws XMLParseException {
+        Object locationObject = xo.getElementFirstChild(LOCATION);
+        BranchSpecificFixedEffects location;
+
+        if (locationObject instanceof Parameter) {
+            location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
+        } else if (locationObject instanceof BranchSpecificFixedEffects) {
+            location = (BranchSpecificFixedEffects) locationObject;
+        } else {
+            throw new XMLParseException("Poorly formed");
+        }
+        return location;
     }
 
     @Override
@@ -123,6 +151,8 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                         new ElementRule(Parameter.class),
                 })
             ),
+
+            new ElementRule(CompoundParameter.class, true)
     };
 
     @Override

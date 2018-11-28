@@ -36,7 +36,7 @@ import dr.evomodel.tree.TreeParameterModel;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class BranchParameter extends Parameter.Abstract implements VariableListener {
+public class BranchParameter extends Parameter.Abstract implements VariableListener, ModelListener {
 
     final private Parameter parameter;
     final private BranchRateTransform transform;
@@ -50,11 +50,18 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         this.tree = tree;
         this.indexHelper = new TreeParameterModel(tree, new Parameter.Default(tree.getNodeCount() - 1), false, TreeTrait.Intent.BRANCH);
         this.parameter.addVariableListener(this);
+        if (transform instanceof AbstractModel) {
+            ((AbstractModel) transform).addModelListener(this);
+        }
 
     }
 
     public BranchRateTransform getTransform() {
         return transform;
+    }
+
+    public double[] getParameterValues() {
+        return getBranchParameterValues();
     }
 
     @Override
@@ -156,7 +163,17 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         return transform.differential(raw, tree, node);
     }
 
-    public static class IndividualBranchParameter extends Parameter.Abstract implements VariableListener {
+    @Override
+    public void modelChangedEvent(Model model, Object object, int index) {
+        fireParameterChangedEvent();
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+
+    }
+
+    public static class IndividualBranchParameter extends Parameter.Abstract implements VariableListener, ModelListener {
 
         final private Parameter parameter;
         final private BranchParameter branchParameter;
@@ -170,6 +187,10 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
                 throw new RuntimeException("Individual parameter can only be one dimensional.");
             }
             this.parameter.addVariableListener(this);
+
+            if (branchParameter.getTransform() instanceof AbstractModel) {
+                ((AbstractModel) branchParameter.getTransform()).addModelListener(this);
+            }
         }
 
         public BranchParameter getBranchParameter() {
@@ -247,6 +268,16 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         @Override
         public void variableChangedEvent(Variable variable, int index, ChangeType type) {
             fireParameterChangedEvent(index, type);
+        }
+
+        @Override
+        public void modelChangedEvent(Model model, Object object, int index) {
+            fireParameterChangedEvent();
+        }
+
+        @Override
+        public void modelRestored(Model model) {
+
         }
     }
 }

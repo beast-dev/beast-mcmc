@@ -60,6 +60,10 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         return transform;
     }
 
+    public Parameter getParameter() {
+        return parameter;
+    }
+
     public double[] getParameterValues() {
         return getBranchParameterValues();
     }

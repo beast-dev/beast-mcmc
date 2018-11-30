@@ -301,6 +301,6 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
     @Override
     public String getReport() {
-        return getReport(branchParameter);
+        return getReport(branchParameter.getParameter());
     }
 }

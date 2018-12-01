@@ -30,6 +30,8 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 
+import java.util.List;
+
 /**
  * Muse-Gaut model of codon evolution
  *
@@ -93,16 +95,31 @@ public class MG94HKYCodonModel extends MG94CodonModel {
     }
 
     @Override
-    public ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
-        if (oldParameter == alphaParameter) {
-            return new MG94HKYCodonModel(codonDataType, newParameter, betaParameter, kappaParameter, freqModel);
-        } else if (oldParameter == betaParameter) {
-            return new MG94HKYCodonModel(codonDataType, alphaParameter, newParameter, kappaParameter, freqModel);
-        } else if (oldParameter == kappaParameter) {
-            return new MG94HKYCodonModel(codonDataType, alphaParameter, betaParameter, newParameter, freqModel);
-        } else {
-            throw new RuntimeException("Not yet implemented!");
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+
+        Parameter alpha = alphaParameter;
+        Parameter beta = betaParameter;
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencyModel = freqModel;
+
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++) {
+
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+
+            if (oldParameter == alphaParameter) {
+                alpha = newParameter;
+            } else if (oldParameter == betaParameter) {
+                beta = newParameter;
+            } else if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            } else {
+                throw new RuntimeException("Not yet implemented!");
+            }
         }
+        return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencyModel);
     }
 
     @Override

@@ -176,14 +176,27 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable,
     );
 
     @Override
-    public ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
-        if (oldParameter == alphaParameter) {
-            return new MG94CodonModel(codonDataType, newParameter, betaParameter, freqModel);
-        } else if (oldParameter == betaParameter) {
-            return new MG94CodonModel(codonDataType, alphaParameter, newParameter, freqModel);
-        } else {
-            throw new RuntimeException("Not yet implemented!");
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter alpha = alphaParameter;
+        Parameter beta = betaParameter;
+        FrequencyModel frequencyModel = freqModel;
+
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++) {
+
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+
+            if (oldParameter == alphaParameter) {
+                alpha = newParameter;
+            } else if (oldParameters == betaParameter) {
+                beta = newParameter;
+            } else {
+                throw new RuntimeException("Not yet implemented!");
+            }
         }
+        return new MG94CodonModel(codonDataType, alpha, beta, frequencyModel);
     }
 
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {

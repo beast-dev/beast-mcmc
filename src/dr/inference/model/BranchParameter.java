@@ -32,6 +32,9 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates.BranchRateTransform;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc Suchard
  * @author Xiang Ji
@@ -42,8 +45,12 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     final private BranchRateTransform transform;
     final private TreeModel tree;
     final private TreeParameterModel indexHelper;
+    private Boolean addedTransformedParameter;
+    private List<IndividualBranchParameter> transformedParameter = new ArrayList<IndividualBranchParameter>();
 
-    public BranchParameter(Parameter parameter, TreeModel tree, BranchRateTransform transform) {
+    public BranchParameter(String name, Parameter parameter, TreeModel tree, BranchRateTransform transform) {
+
+        super(name);
 
         this.parameter =  parameter;
         this.transform = transform;
@@ -54,6 +61,23 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
             ((AbstractModel) transform).addModelListener(this);
         }
 
+        this.addedTransformedParameter = false;
+    }
+
+    public void addTransformedParameterList(List<IndividualBranchParameter> transformedParameter) {
+        if (addedTransformedParameter) {
+            throw new RuntimeException("Should be called only once.");
+        } else {
+            if (transformedParameter.size() != tree.getNodeCount()) {
+                throw new RuntimeException("Size mismatch!");
+            }
+            this.transformedParameter = transformedParameter;
+            addedTransformedParameter = true;
+        }
+    }
+
+    public IndividualBranchParameter getParameter(int nodeNum) {
+        return transformedParameter.get(nodeNum);
     }
 
     public BranchRateTransform getTransform() {
@@ -191,10 +215,8 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
                 throw new RuntimeException("Individual parameter can only be one dimensional.");
             }
             this.parameter.addVariableListener(this);
+            this.branchParameter.addParameterListener(this);
 
-            if (branchParameter.getTransform() instanceof AbstractModel) {
-                ((AbstractModel) branchParameter.getTransform()).addModelListener(this);
-            }
         }
 
         public BranchParameter getBranchParameter() {

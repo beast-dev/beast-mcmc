@@ -45,7 +45,7 @@ import java.util.List;
 public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel implements BranchModel, TreeTraitProvider{
 
     private final BranchSpecificSubstitutionModelProvider substitutionModelProvider;
-    protected final List<CompoundParameter> substitutionParameterList;
+    protected final List<BranchParameter> substitutionParameterList;
     private int parameterDimension;
     private final TreeModel tree;
     private final TreeParameterModel parameterIndexHelper;
@@ -54,12 +54,12 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
 
     public ArbitrarySubstitutionParameterBranchModel(String name,
                                                      BranchSpecificSubstitutionModelProvider substitutionModelProvider,
-                                                     List<CompoundParameter> substitutionParameterList,
+                                                     List<BranchParameter> substitutionParameterList,
                                                      TreeModel tree) {
         super(name);
         this.substitutionModelProvider = substitutionModelProvider;
         this.tree = tree;
-        this.parameterIndexHelper = new TreeParameterModel(tree,  substitutionParameterList.get(0), true);
+        this.parameterIndexHelper = new TreeParameterModel(tree, new Parameter.Default(substitutionParameterList.get(0).getDimension()), true);
 
         for (SubstitutionModel substitutionModel : substitutionModelProvider.getSubstitutionModelList()) {
             addModel(substitutionModel);
@@ -67,14 +67,14 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
 
         this.substitutionParameterList = substitutionParameterList;
         this.parameterDimension = substitutionParameterList.get(0).getDimension();
-        for (CompoundParameter substitutionParameter : substitutionParameterList) {
+        for (BranchParameter substitutionParameter : substitutionParameterList) {
             addVariable(substitutionParameter);
             traitProvider.addTrait(new SubstitutionParameterTrait(substitutionParameter.getId(), substitutionParameter, parameterIndexHelper));
             assert(substitutionParameter.getDimension() == parameterDimension);
         }
     }
 
-    public void addSubstitutionParameter(CompoundParameter substitutionParameter) {
+    public void addSubstitutionParameter(BranchParameter substitutionParameter) {
         if (substitutionParameter.getDimension() != parameterDimension) {
             throw new RuntimeException("Wrong dimension of the new BranchSpecificSubstitutionParameter.");
         }
@@ -82,7 +82,7 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
         addVariable(substitutionParameter);
     }
 
-    public Parameter getSubstitutionParameterForBranch(NodeRef branch, CompoundParameter branchParameter) {
+    public Parameter getSubstitutionParameterForBranch(NodeRef branch, BranchParameter branchParameter) {
         if (!substitutionParameterList.contains(branchParameter)) {
             throw new RuntimeException("The branch parameter is not in the substitution parameter list.");
         }
@@ -155,12 +155,12 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
 
     private class SubstitutionParameterTrait implements TreeTrait<Double> {
 
-        private CompoundParameter substitutionParameter;
+        private Parameter substitutionParameter;
         private String traitName;
         private TreeParameterModel parameterIndexHelper;
 
         private SubstitutionParameterTrait(String name,
-                                           CompoundParameter substitutionParameter,
+                                           Parameter substitutionParameter,
                                            TreeParameterModel parameterIndexHelper) {
             this.substitutionParameter = substitutionParameter;
             this.traitName = name;
@@ -184,7 +184,7 @@ public class ArbitrarySubstitutionParameterBranchModel extends AbstractModel imp
 
         @Override
         public Double getTrait(Tree tree, NodeRef node) {
-            return substitutionParameter.getParameterValue(0, parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber()));
+            return substitutionParameter.getParameterValue(parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber()));
         }
 
         @Override

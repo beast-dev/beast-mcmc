@@ -1,5 +1,5 @@
 /*
- * TreeSpecificCompoundParameterParser.java
+ * BranchSpecificCompoundParameterParser.java
  *
  * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,11 +25,14 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc Suchard
@@ -37,40 +40,46 @@ import dr.xml.*;
  */
 public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectParser {
     public static final String BRANCH_SPECIFIC_COMPOUND_PARAMETER = "branchSpecificCompoundParameter";
+    public static final String BRANCH_RATE_TRANFORM="branchRateTransform";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CompoundParameter compoundParameter = new CompoundParameter((String) null);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+        CompoundParameter compoundParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
         final int numNodes = treeModel.getNodeCount();
-        for (int i = 0; i < numNodes; i++) {
-            Parameter branchInnerParameter = new Parameter.Default((String) parameter.getId() + String.valueOf(i + 1), parameter.getParameterValue(0),
-                    parameter.getBounds().getLowerLimit(0), parameter.getBounds().getUpperLimit(0));
-            compoundParameter.addParameter(branchInnerParameter);
+        if (compoundParameter.getDimension() != numNodes) {
+            throw new RuntimeException("Dimension mismatch!");
         }
 
-        BranchParameter branchParameter = new BranchParameter(compoundParameter,
+        ArbitraryBranchRates.BranchRateTransform transform = (ArbitraryBranchRates.BranchRateTransform) xo.getChild(ArbitraryBranchRates.BranchRateTransform.class);
+        if (transform == null) {
+            transform = new ArbitraryBranchRates.BranchRateTransform.None();
+        }
+
+        BranchParameter branchParameter = new BranchParameter(
+                xo.getName(),
+                compoundParameter,
                 treeModel,
-                ArbitraryBranchRatesParser.parseTransform(xo));
+                transform);
 
-        CompoundParameter resultCompoundParameter = new CompoundParameter(null);
+        List<BranchParameter.IndividualBranchParameter> individualBranchParameterList = new ArrayList<BranchParameter.IndividualBranchParameter>();
         for (int i = 0; i < numNodes; i++) {
-            BranchParameter.IndividualBranchParameter individualBranchParameter = new BranchParameter.IndividualBranchParameter(branchParameter, i, compoundParameter.getParameter(i));
-            resultCompoundParameter.addParameter(individualBranchParameter);
+            BranchParameter.IndividualBranchParameter individualBranchParameter =
+                    new BranchParameter.IndividualBranchParameter(branchParameter, i, compoundParameter.getParameter(i));
+            individualBranchParameterList.add(individualBranchParameter);
         }
-        return resultCompoundParameter;
+        branchParameter.addTransformedParameterList(individualBranchParameterList);
+        return branchParameter;
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(Parameter.class),
+                new ElementRule(CompoundParameter.class),
                 new ElementRule(TreeModel.class),
-                new ElementRule(ArbitraryBranchRatesParser.SCALE, Parameter.class, "optional scale parameter", true),
-                new ElementRule(ArbitraryBranchRatesParser.LOCATION, Parameter.class, "optional location parameter", true),
+                new ElementRule(ArbitraryBranchRates.BranchRateTransform.class, true),
         };
     }
 
@@ -81,7 +90,7 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
 
     @Override
     public Class getReturnType() {
-        return CompoundParameter.class;
+        return BranchParameter.class;
     }
 
     @Override

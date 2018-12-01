@@ -310,6 +310,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 this.transformKnown = false;
             }
 
+            public BranchSpecificFixedEffects getLocationObject() {
+                return location;
+            }
+
             public double getTransformMu() {
                 return transformMu;
             }

@@ -67,7 +67,6 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected final Tree tree;
     protected final boolean useHessian;
 
-    protected final Parameter branchSubstitutionParameter;
     protected final BranchParameter branchParameter;
     protected final TreeParameterModel parameterIndexHelper;
 
@@ -79,12 +78,10 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     public DiscreteTraitBranchSubstitutionParameterGradient(String traitName,
                                                             TreeDataLikelihood treeDataLikelihood,
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                            Parameter branchSubstitutionParameter,
                                                             BranchParameter branchParameter,
                                                             boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
-        this.branchSubstitutionParameter = branchSubstitutionParameter;
         this.branchParameter = branchParameter;
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
@@ -93,9 +90,6 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
-            if (!(branchSubstitutionParameter instanceof CompoundParameter)) {
-                throw new RuntimeException("Only support CompoundParameter for now.");
-            }
 
             BranchModel branchModel = likelihoodDelegate.getBranchModel();
 
@@ -107,7 +101,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
                 DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) getSubstitutionModel(branchModel, branch);
 
-                Parameter parameter = getParameterForBranch(branchSubstitutionParameter, branchModel, branch);
+                Parameter parameter = getParameterForBranch(branchParameter, branchModel, branch);
 
                 DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
 
@@ -143,9 +137,9 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         }
     }
 
-    private Parameter getParameterForBranch(Parameter parameter, BranchModel branchModel, NodeRef branch) { //TODO: get rid of instanceof
+    private Parameter getParameterForBranch(BranchParameter parameter, BranchModel branchModel, NodeRef branch) { //TODO: get rid of instanceof
         if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel) {
-            return ((ArbitrarySubstitutionParameterBranchModel) branchModel).getSubstitutionParameterForBranch(branch, (CompoundParameter) parameter);
+            return ((ArbitrarySubstitutionParameterBranchModel) branchModel).getSubstitutionParameterForBranch(branch, parameter);
         } else {
             return parameter;
         }
@@ -168,33 +162,28 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
     @Override
     public Parameter getParameter() {
-        return branchSubstitutionParameter;
+        return branchParameter;
     }
 
     @Override
     public int getDimension() {
-        return branchSubstitutionParameter.getDimension();
+        return branchParameter.getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
         double[] result = new double[tree.getNodeCount() - 1];
 
-        //Do single call to traitProvider with node == null (get full tree)
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
-        int v = 0;
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            final NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                final int destinationIndex = parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber());
-                final double nodeResult = gradient[v] * getChainGradient(tree, node);
+        for (int i = 0; i < result.length; ++i) {
+            final NodeRef node = tree.getNode(parameterIndexHelper.getNodeNumberFromParameterIndex(i));
+            final int destinationIndex = parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber());
+            final double nodeResult = gradient[i] * getChainGradient(tree, node);
 //                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
 //                    System.err.println("Check Gradient calculation please.");
 //                }
-                result[destinationIndex] = nodeResult;
-                v++;
-            }
+            result[destinationIndex] = nodeResult;
         }
 
         if (COUNT_TOTAL_OPERATIONS) {

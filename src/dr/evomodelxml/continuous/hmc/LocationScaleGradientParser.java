@@ -35,13 +35,9 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterLocationGradient;
-import dr.evomodel.treedatalikelihood.discrete.HyperParameterBranchRateGradient;
-import dr.evomodel.treedatalikelihood.discrete.LocationGradient;
-import dr.evomodel.treedatalikelihood.discrete.ScaleGradient;
+import dr.evomodel.treedatalikelihood.discrete.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.BranchParameter;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -64,7 +60,7 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
 
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-//        final Parameter locationScaleParameter = (Parameter) xo.getChild(Parameter.class);
+
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
@@ -93,16 +89,19 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                 }
             } else if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel){
 
-                CompoundParameter substitutionParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
-
-                BranchParameter branchParameter = ((BranchParameter.IndividualBranchParameter) substitutionParameter.getParameter(0)).getBranchParameter();
+                BranchParameter branchParameter = (BranchParameter) xo.getChild(BranchParameter.class);
 
                 if (xo.hasChildNamed(LOCATION)) {
 
                     BranchSpecificFixedEffects location = parseLocation(xo);
 
-                    return new BranchSubstitutionParameterLocationGradient(traitName, treeDataLikelihood, beagleData, substitutionParameter, branchParameter,
+                    return new BranchSubstitutionParameterLocationGradient(traitName, treeDataLikelihood, beagleData, branchParameter,
                             useHessian, location);
+
+                } else if (xo.hasChildNamed(SCALE)) {
+
+                    Parameter scale = (Parameter) xo.getElementFirstChild(SCALE);
+                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, useHessian);
 
                 } else {
                     throw new XMLParseException("Not yet implemented.");
@@ -124,6 +123,8 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
             location = new BranchSpecificFixedEffects.None((Parameter) xo.getElementFirstChild(LOCATION));
         } else if (locationObject instanceof BranchSpecificFixedEffects) {
             location = (BranchSpecificFixedEffects) locationObject;
+        } else if (locationObject instanceof ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal) {
+            location = ((ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal) locationObject).getLocationObject();
         } else {
             throw new XMLParseException("Poorly formed");
         }
@@ -143,8 +144,10 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
             new XORRule(
                 new ElementRule(LOCATION, new XMLSyntaxRule[]{
                         new XORRule(
-                                new ElementRule(BranchSpecificFixedEffects.class),
-                                new ElementRule(Parameter.class)
+                                new XMLSyntaxRule[]{
+                                        new ElementRule(BranchSpecificFixedEffects.class),
+                                        new ElementRule(Parameter.class),
+                                        new ElementRule(ArbitraryBranchRates.BranchRateTransform.class)}
                         )
                 }),
                 new ElementRule(SCALE, new XMLSyntaxRule[]{
@@ -152,7 +155,7 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
                 })
             ),
 
-            new ElementRule(CompoundParameter.class, true)
+            new ElementRule(Parameter.class, true)
     };
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * BranchSubstitutionParameterLocationGradient.java
+ * BranchSubstitutionParameterScaleGradient.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,47 +23,48 @@
  * Boston, MA  02110-1301  USA
  */
 
+
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.BranchParameter;
-
+import dr.inference.model.Parameter;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class BranchSubstitutionParameterLocationGradient extends HyperParameterBranchSubstitutionParameterGradient {
+public class BranchSubstitutionParameterScaleGradient extends HyperParameterBranchSubstitutionParameterGradient {
 
-    private final BranchSpecificFixedEffects fixedEffects;
+    private final ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal locationScaleTransform;
 
-    public BranchSubstitutionParameterLocationGradient(String traitName,
-                                                       TreeDataLikelihood treeDataLikelihood,
-                                                       BeagleDataLikelihoodDelegate likelihoodDelegate,
-//                                                       Parameter branchSubstitutionParameter,
-                                                       BranchParameter branchParameter,
-                                                       boolean useHessian,
-                                                       BranchSpecificFixedEffects fixedEffects) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter,
-                fixedEffects.getFixedEffectsParameter(), useHessian);
+    public BranchSubstitutionParameterScaleGradient(String traitName,
+                                                    TreeDataLikelihood treeDataLikelihood,
+                                                    BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                    BranchParameter branchParameter,
+                                                    Parameter hyperParameter,
+                                                    boolean useHessian) {
 
-        this.fixedEffects = fixedEffects;
+        super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter, hyperParameter, useHessian);
+        this.locationScaleTransform = (ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal) branchParameter.getTransform();
     }
 
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
         double rate = branchParameter.getParameterValue(node.getNumber());
-        double[] results = fixedEffects.getDifferential(rate, tree, node);
+        double tmp = (Math.log(rate / locationScaleTransform.getLocation(tree, node)) - locationScaleTransform.getTransformMu())
+                /(locationScaleTransform.getTransformSigma() * locationScaleTransform.getTransformSigma()) - 1.0;
 
-        return results;
+        return new double[] {tmp * rate * locationScaleTransform.getScale(tree, node) / (1.0 + locationScaleTransform.getScale(tree, node) * locationScaleTransform.getScale(tree, node))};
     }
 
     @Override
     public String getReport() {
         return getReport(hyperParameter);
     }
+
 }

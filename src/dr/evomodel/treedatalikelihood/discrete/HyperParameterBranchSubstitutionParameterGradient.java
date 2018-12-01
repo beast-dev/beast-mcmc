@@ -54,12 +54,11 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
     public HyperParameterBranchSubstitutionParameterGradient(String traitName,
                                                              TreeDataLikelihood treeDataLikelihood,
                                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                             Parameter branchSubstitutionParameter,
                                                              BranchParameter branchParameter,
                                                              Parameter hyperParameter,
                                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate, branchSubstitutionParameter, branchParameter, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate,  branchParameter, useHessian);
 
         locationScaleTransform = branchParameter.getTransform();
 
@@ -67,16 +66,32 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
     }
 
     @Override
-    public double[] getGradientLogDensity() {
+    public double[] getGradientLogDensity() { //TODO：fix commented code chunk
+//        double[] result = new double[hyperParameter.getDimension()];
+//        double[] nodeGradients = super.getGradientLogDensity();
+//
+//        for (int i = 0; i < result.length; ++i) {
+//            final int nodeNum = parameterIndexHelper.getNodeNumberFromParameterIndex(i);
+//            final NodeRef node = tree.getNode(nodeNum);
+//            double[] hyperChainGradient = getDifferential(tree, node);
+//            for (int j = 0; j < result.length; j++) {
+//                result[j] += nodeGradients[i] * hyperChainGradient[j];
+//            }
+//        }
+//        return result;
+
         double[] result = new double[hyperParameter.getDimension()];
         double[] nodeGradients = super.getGradientLogDensity();
 
-        for (int i = 0; i < result.length; ++i) {
-            final int nodeNum = parameterIndexHelper.getNodeNumberFromParameterIndex(i);
-            final NodeRef node = tree.getNode(nodeNum);
-            double[] hyperChainGradient = getDifferential(tree, node);
-            for (int j = 0; j < result.length; j++) {
-                result[j] += nodeGradients[i] * hyperChainGradient[j];
+        int v = 0;
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            final NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                double[] hyperChainGradient = getDifferential(tree, node);
+                for (int j = 0; j < result.length; j++) {
+                    result[j] += nodeGradients[v] * hyperChainGradient[j];
+                }
+                v++;
             }
         }
         return result;
@@ -87,6 +102,10 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
         // cannot avoid calculating full hessian in this case, use numerical method for now
         // TODO: maybe add Hessian into BEAGLE ?
         return NumericalDerivative.diagonalHessian(numeric, branchParameter.getParameterValues());
+    }
+
+    protected double getChainGradient(Tree tree, NodeRef node) {
+        return 1.0;
     }
 
 

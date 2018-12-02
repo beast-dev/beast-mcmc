@@ -250,7 +250,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
             Parameter oldParameter = oldParameters.get(i);
             Parameter newParameter = newParameters.get(i);
             if (oldParameter == omegaParameter) {
-                kappa = newParameter;
+                omega = newParameter;
             } else {
                 throw new RuntimeException("Parameter not found in GY94Codon SubstitutionModel.");
             }

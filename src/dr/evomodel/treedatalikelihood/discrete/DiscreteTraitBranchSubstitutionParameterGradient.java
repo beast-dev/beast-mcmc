@@ -43,7 +43,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.BranchParameter;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -162,7 +161,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
     @Override
     public Parameter getParameter() {
-        return branchParameter;
+        return branchParameter.getParameter();
     }
 
     @Override

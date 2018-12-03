@@ -25,10 +25,12 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -39,18 +41,24 @@ import java.util.List;
  * @author Xiang Ji
  */
 public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectParser {
+
     public static final String BRANCH_SPECIFIC_COMPOUND_PARAMETER = "branchSpecificCompoundParameter";
-    public static final String BRANCH_RATE_TRANFORM="branchRateTransform";
+    public static final String BRANCH_PARAMETER = "branchParameter";
+    public static final String ROOT_PARAMETER = "rootParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-        CompoundParameter compoundParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+        CompoundParameter compoundParameter = (CompoundParameter) xo.getChild(BRANCH_PARAMETER).getChild(CompoundParameter.class);
+        Parameter rootParameter = (Parameter) xo.getChild(ROOT_PARAMETER).getChild(Parameter.class);
         final int numNodes = treeModel.getNodeCount();
-        if (compoundParameter.getDimension() != numNodes) {
+        if (compoundParameter.getDimension() != numNodes - 1) {
             throw new RuntimeException("Dimension mismatch!");
+        }
+        if (rootParameter.getDimension() != 1) {
+            throw new RuntimeException("Root parameter dimension should be one.");
         }
 
         ArbitraryBranchRates.BranchRateTransform transform = (ArbitraryBranchRates.BranchRateTransform) xo.getChild(ArbitraryBranchRates.BranchRateTransform.class);
@@ -61,15 +69,28 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
         BranchParameter branchParameter = new BranchParameter(
                 xo.getName(),
                 compoundParameter,
+                rootParameter,
                 treeModel,
                 transform);
 
         List<BranchParameter.IndividualBranchParameter> individualBranchParameterList = new ArrayList<BranchParameter.IndividualBranchParameter>();
+        BranchParameter.IndividualBranchParameter rootBranchParameter = null;
+        int v = 0;
         for (int i = 0; i < numNodes; i++) {
-            BranchParameter.IndividualBranchParameter individualBranchParameter =
-                    new BranchParameter.IndividualBranchParameter(branchParameter, i, compoundParameter.getParameter(i));
-            individualBranchParameterList.add(individualBranchParameter);
+            NodeRef node = treeModel.getNode(i);
+            BranchParameter.IndividualBranchParameter individualBranchParameter;
+            if (treeModel.isRoot(node)) {
+                rootBranchParameter =
+                        new BranchParameter.IndividualBranchParameter(branchParameter, numNodes - 1, rootParameter);
+            } else {
+                individualBranchParameter =
+                        new BranchParameter.IndividualBranchParameter(branchParameter, v, compoundParameter.getParameter(v));
+                v++;
+                individualBranchParameterList.add(individualBranchParameter);
+            }
         }
+        assert(rootBranchParameter != null);
+        individualBranchParameterList.add(rootBranchParameter);
         branchParameter.addTransformedParameterList(individualBranchParameterList);
         return branchParameter;
     }
@@ -77,8 +98,15 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(CompoundParameter.class),
+                new ElementRule(BRANCH_PARAMETER,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(CompoundParameter.class, "The branch-specific substitution parameter.", 1, Integer.MAX_VALUE),
+                        }),
                 new ElementRule(TreeModel.class),
+                new ElementRule(ROOT_PARAMETER,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class, "The root substitution parameter.", 1, 1),
+                        }),
                 new ElementRule(ArbitraryBranchRates.BranchRateTransform.class, true),
         };
     }

@@ -41,24 +41,31 @@ import java.util.List;
  */
 public class BranchParameter extends Parameter.Abstract implements VariableListener, ModelListener {
 
-    final private Parameter parameter;
+    final private CompoundParameter parameter;
+    final private Parameter rootParameter;
     final private BranchRateTransform transform;
     final private TreeModel tree;
     final private TreeParameterModel indexHelper;
     private Boolean addedTransformedParameter;
     private List<IndividualBranchParameter> transformedParameter = new ArrayList<IndividualBranchParameter>();
 
-    public BranchParameter(String name, Parameter parameter, TreeModel tree, BranchRateTransform transform) {
+    public BranchParameter(String name,
+                           CompoundParameter parameter,
+                           Parameter rootParameter,
+                           TreeModel tree,
+                           BranchRateTransform transform) {
 
         super(name);
 
         this.parameter =  parameter;
+        this.rootParameter = rootParameter;
         this.transform = transform;
         this.tree = tree;
-        this.indexHelper = new TreeParameterModel(tree, new Parameter.Default(tree.getNodeCount() - 1), false, TreeTrait.Intent.BRANCH);
+        this.indexHelper = new TreeParameterModel(tree, parameter, false, TreeTrait.Intent.BRANCH);
         this.parameter.addVariableListener(this);
-        if (transform instanceof AbstractModel) {
-            ((AbstractModel) transform).addModelListener(this);
+        this.rootParameter.addVariableListener(this);
+        if (transform instanceof Model) {
+            ((Model) transform).addModelListener(this);
         }
 
         this.addedTransformedParameter = false;
@@ -76,8 +83,8 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         }
     }
 
-    public IndividualBranchParameter getParameter(int nodeNum) {
-        return transformedParameter.get(nodeNum);
+    public IndividualBranchParameter getParameter(int dim) {
+        return transformedParameter.get(dim);
     }
 
     public BranchRateTransform getTransform() {
@@ -93,14 +100,12 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     }
 
     @Override
-    public double getParameterValue(int nodeNum) {
+    public double getParameterValue(int dim) {
 
-        NodeRef node = tree.getNode(nodeNum);
-
-        if (tree.isRoot(node)) {
-            return parameter.getParameterValue(nodeNum);
+        if (dim == tree.getNodeCount() - 1) {
+            return rootParameter.getParameterValue(0);
         } else {
-            return transform.transform(parameter.getParameterValue(nodeNum), tree, node);
+            return transform.transform(parameter.getParameterValue(dim), tree, tree.getNode(indexHelper.getNodeNumberFromParameterIndex(dim)));
         }
 
     }

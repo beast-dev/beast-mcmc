@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.branchmodel;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
@@ -80,15 +81,26 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         List<Parameter> branchParameters = parseParameters(cxo);
 
         final int parameterCount = oldParameters.size();
+        int v = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
+
+            NodeRef node = tree.getNode(nodeNum);
 
             ParameterReplaceableSubstitutionModel branchSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
 
             List<Parameter> newParameters = new ArrayList<Parameter>();
 
-            for (int i = 0; i < parameterCount; i++) {
-                BranchParameter branchParameter = (BranchParameter) branchParameters.get(i);
-                newParameters.add(branchParameter.getParameter(nodeNum));
+            if (tree.isRoot(node)) {
+                for (int i = 0; i < parameterCount; i++) {
+                    BranchParameter branchParameter = (BranchParameter) branchParameters.get(i);
+                    newParameters.add(branchParameter.getParameter(tree.getNodeCount() - 1));
+                }
+            } else {
+                for (int i = 0; i < parameterCount; i++) {
+                    BranchParameter branchParameter = (BranchParameter) branchParameters.get(i);
+                    newParameters.add(branchParameter.getParameter(v));
+                }
+                v++;
             }
 
             branchSubstitutionModel = branchSubstitutionModel.factory(

@@ -96,7 +96,7 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     }
 
     public double[] getParameterValues() {
-        return getBranchParameterValues();
+        return parameter.getParameterValues();
     }
 
     @Override
@@ -183,16 +183,8 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         return tree.getNodeCount() - 1;
     }
 
-    public double[] getBranchParameterValues() {
-        double[] copyOfValues = new double[tree.getNodeCount() - 1];
-        for (int i = 0; i < copyOfValues.length; i++) {
-            copyOfValues[i] = getParameterValue(indexHelper.getNodeNumberFromParameterIndex(i));
-        }
-        return copyOfValues;
-    }
-
     public double getChainGradient(Tree tree, NodeRef node) {
-        final double raw = parameter.getParameterValue(node.getNumber());
+        final double raw = parameter.getParameterValue(indexHelper.getParameterIndexFromNodeNumber(node.getNumber()));
         return transform.differential(raw, tree, node);
     }
 

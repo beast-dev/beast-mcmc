@@ -62,9 +62,4 @@ public class BranchSubstitutionParameterScaleGradient extends HyperParameterBran
         return new double[] {tmp * rate * locationScaleTransform.getScale(tree, node) / (1.0 + locationScaleTransform.getScale(tree, node) * locationScaleTransform.getScale(tree, node))};
     }
 
-    @Override
-    public String getReport() {
-        return getReport(hyperParameter);
-    }
-
 }

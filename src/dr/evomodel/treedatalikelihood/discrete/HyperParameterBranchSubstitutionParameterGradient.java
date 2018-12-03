@@ -111,4 +111,16 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
 
     abstract double[] getDifferential(Tree tree, NodeRef node);
 
+    public int getDimension() {
+        return hyperParameter.getDimension();
+    }
+
+    @Override
+    public String getReport() {
+        return getReport(hyperParameter);
+    }
+
+    public Parameter getParameter() {
+        return hyperParameter;
+    }
 }

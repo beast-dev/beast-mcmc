@@ -61,9 +61,4 @@ public class BranchSubstitutionParameterLocationGradient extends HyperParameterB
 
         return results;
     }
-
-    @Override
-    public String getReport() {
-        return getReport(hyperParameter);
-    }
 }

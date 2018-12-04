@@ -177,7 +177,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
             computeOUVarianceBranch(unscaledOffset, scaledOffset, scaledOffsetDiagonal, edgeLength);
 
-            invertVector(variances, precisions, scaledOffset, dimProcess);
+            invertVectorSymmPosDef(variances, precisions, scaledOffset, dimProcess);
         }
 
         if (TIMING) {
@@ -261,14 +261,15 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         }
     }
 
-    static void invertVector(final double[] source,
-                             final double[] destination,
-                             final int offset,
-                             final int dim) {
+    private static void invertVectorSymmPosDef(final double[] source,
+                                               final double[] destination,
+                                               final int offset,
+                                               final int dim) {
         DenseMatrix64F sourceMatrix = wrap(source, offset, dim, dim);
         DenseMatrix64F destinationMatrix = new DenseMatrix64F(dim, dim);
 
-        CommonOps.invert(sourceMatrix, destinationMatrix);
+//        CommonOps.invert(sourceMatrix, destinationMatrix);
+        symmPosDefInvert(sourceMatrix, destinationMatrix);
 
         unwrap(destinationMatrix, destination, offset);
     }

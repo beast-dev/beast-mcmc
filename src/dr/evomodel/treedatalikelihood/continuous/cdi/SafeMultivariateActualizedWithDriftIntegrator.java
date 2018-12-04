@@ -491,6 +491,8 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         CommonOps.add(QdiPipQdi, QdjPjpQdj, Pk);
 
+//        forceSymmetric(Pk);
+
         if (DEBUG) {
             System.err.println("Qdi: " + Qdi);
             System.err.println("\tQdiPip: " + QdiPip);
@@ -504,7 +506,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     private void scalePrecision(DenseMatrix64F Q, DenseMatrix64F P,
                                 DenseMatrix64F QtP, DenseMatrix64F QtPQ) {
         CommonOps.multTransA(Q, P, QtP);
+//        symmetricMult(Q, P, QtPQ);
         CommonOps.mult(QtP, Q, QtPQ);
+        forceSymmetric(QtPQ);
     }
 
     private void scaleVariance(DenseMatrix64F Q, DenseMatrix64F P,

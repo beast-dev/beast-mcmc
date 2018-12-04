@@ -474,6 +474,44 @@ public class MissingOps {
         return result;
     }
 
+    public static void safeSolveSymmPosDef(DenseMatrix64F A,
+                                           WrappedVector b,
+                                           WrappedVector x) {
+        final int dim = b.getDim();
+
+        assert (A.getNumRows() == dim && A.getNumCols() == dim);
+
+        final DenseMatrix64F B = wrap(b.getBuffer(), b.getOffset(), dim, 1);
+        final DenseMatrix64F X = new DenseMatrix64F(dim, 1);
+
+        safeSolveSymmPosDef(A, B, X);
+
+
+        for (int row = 0; row < dim; ++row) {
+            x.set(row, X.unsafe_get(row, 0));
+        }
+    }
+
+    public static void safeSolveSymmPosDef(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X) {
+
+        final int finiteCount = countFiniteNonZeroDiagonals(A);
+
+        InversionResult result;
+        if (finiteCount == 0) {
+            Arrays.fill(X.getData(), 0);
+        } else {
+            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(A.getNumCols());
+            DenseMatrix64F Abis = new DenseMatrix64F(A);
+            if(solver.setA(Abis)) {
+                solver.solve(B, X);
+            } else {
+                LinearSolver<DenseMatrix64F> solverSVD = LinearSolverFactory.pseudoInverse(true);
+                solverSVD.setA(A);
+                solverSVD.solve(B, X);
+            }
+        }
+    }
+
     public static InversionResult safeInvert(ReadableMatrix source, WritableMatrix destination, boolean getDeterminant) {
 
         final int dim = source.getMajorDim();
@@ -487,7 +525,8 @@ public class MissingOps {
             if (getDeterminant) {
                 logDet = invertAndGetDeterminant(copyOfSource, result, true);
             } else {
-                CommonOps.invert(copyOfSource, result);
+//                CommonOps.invert(copyOfSource, result);
+                symmPosDefInvert(copyOfSource, result);
             }
 
             copy(result, destination);
@@ -508,7 +547,8 @@ public class MissingOps {
             if (getDeterminant) {
                 logDet = invertAndGetDeterminant(source, destination, true);
             } else {
-                CommonOps.invert(source, destination);
+//                CommonOps.invert(source, destination);
+                symmPosDefInvert(source, destination);
             }
             return new InversionResult(FULLY_OBSERVED, dim, logDet, true);
         } else {
@@ -526,7 +566,8 @@ public class MissingOps {
                 if (getDeterminant) {
                     logDet = invertAndGetDeterminant(subSource, inverseSubSource, true);
                 } else {
-                    CommonOps.invert(subSource, inverseSubSource);
+//                    CommonOps.invert(subSource, inverseSubSource);
+                    symmPosDefInvert(subSource, inverseSubSource);
                 }
 
                 scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
@@ -534,6 +575,13 @@ public class MissingOps {
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, logDet, true);
             }
         }
+    }
+
+    public static void symmPosDefInvert(DenseMatrix64F P, DenseMatrix64F P_inv) {
+        LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(P.getNumCols());
+        DenseMatrix64F Pbis = new DenseMatrix64F(P);
+        if( !solver.setA(Pbis) ) throw new RuntimeException("Invert failed");
+        solver.invert(P_inv);
     }
 
     public static void matrixVectorMultiple(final DenseMatrix64F A,
@@ -815,6 +863,30 @@ public class MissingOps {
 
         for (int i = 0; i < dim; ++i) {
             p12.set(i, p1.get(i) + p2.get(i));
+        }
+    }
+
+    public static void forceSymmetric(DenseMatrix64F P) {
+        DenseMatrix64F Ptrans = new DenseMatrix64F(P);
+        CommonOps.transpose(P, Ptrans);
+        CommonOps.addEquals(P, Ptrans);
+        CommonOps.scale(0.5, P);
+    }
+
+    public static void symmetricMult(DenseMatrix64F Q, DenseMatrix64F P, DenseMatrix64F QtPQ) {
+        int dimTrait = Q.getNumCols();
+        assert dimTrait == Q.getNumRows() && dimTrait == P.getNumCols() && dimTrait == P.getNumRows();
+        for (int i = 0; i < dimTrait; i++) {
+            for (int j = i; j < dimTrait; j++) {
+                double val = 0;
+                for (int k = 0; k < dimTrait; k++) {
+                    for (int r = 0; r < dimTrait; r++) {
+                        val += P.unsafe_get(k, r) * Q.unsafe_get(k, i) * Q.unsafe_get(r, j);
+                    }
+                }
+                QtPQ.unsafe_set(i, j, val);
+                QtPQ.unsafe_set(j, i, val);
+            }
         }
     }
 }

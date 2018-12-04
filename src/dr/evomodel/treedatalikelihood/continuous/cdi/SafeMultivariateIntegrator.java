@@ -691,8 +691,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("PRoot: " + wrap(partials, rootOffset + dimTrait, dimTrait, dimTrait));
                 System.err.println("PPrior: " + PPrior);
                 System.err.println("PTotal: " + PTotal);
-                System.err.println("\t" + logLike + " " + (logLike + remainder));
-                System.err.println("\t" + remainder);
+                System.err.println("\n SS:" + SS);
+                System.err.println("det:" + dettot);
+                System.err.println("remainder:" + remainder);
+                System.err.println("likelihood" + (logLike + remainder));
 
 //                if (incrementOuterProducts) {
 //                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));

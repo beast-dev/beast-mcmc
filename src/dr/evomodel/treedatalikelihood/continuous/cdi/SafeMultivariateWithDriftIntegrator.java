@@ -156,7 +156,7 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
         final WrappedVector kPartials = new WrappedVector.Raw(partials, kbo, dimTrait);
         final WrappedVector wrapTmp = new WrappedVector.Raw(tmp, 0, dimTrait);
 
-        safeSolve(matrixPk, wrapTmp, kPartials, false);
+        safeSolveSymmPosDef(matrixPk, wrapTmp, kPartials);
 
         if (TIMING) {
             endTime("peel4");

@@ -176,18 +176,6 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
         return branchRates.getNodeValue(tree, node) / multiplier;
     }
 
-//    private double getSubTreeGradient(Tree tree, NodeRef node, final double multiplier) {
-//        if (tree.isExternal(node)) {
-//            return branchRates.getNodeValue(tree, node) / multiplier;
-//        } else {
-//            double sum = branchRates.getNodeValue(tree, node) / multiplier;
-//            for (int i = 0; i < tree.getChildCount(node); i++) {
-//                sum += getSubTreeGradient(tree, tree.getChild(node, i), multiplier);
-//            }
-//            return sum;
-//        }
-//    }
-
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented.");
     }

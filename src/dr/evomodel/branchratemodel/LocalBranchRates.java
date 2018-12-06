@@ -78,6 +78,10 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
         if (transform instanceof Model) {
             addModel((Model) transform);
         }
+
+        if (!(transform instanceof BranchRateTransform.None)) {
+            throw new RuntimeException("Only tested without transformation.");
+        }
     }
 
     private void simulateTraits(final NodeRef targetNode) {
@@ -140,5 +144,23 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
         sb.append("Local branch rates:\n").append(new dr.math.matrixAlgebra.Vector(branchRateParameter.getParameterValues()));
         sb.append("\n");
         return sb.toString();
+    }
+
+    @Override
+    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+        final double multiplier = ratesMultiplier.getNodeValue(tree, node);
+        return getChainGradient(tree, node, multiplier);
+    }
+
+    private double getChainGradient(Tree tree, NodeRef node, final double multiplier) {
+        if (tree.isExternal(node)) {
+            return branchRates.getNodeValue(tree, node) / multiplier;
+        } else {
+            double sum = branchRates.getNodeValue(tree, node) / multiplier;
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                sum += getChainGradient(tree, tree.getChild(node, i), multiplier);
+            }
+            return sum;
+        }
     }
 }

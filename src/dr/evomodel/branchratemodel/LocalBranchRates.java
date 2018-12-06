@@ -26,6 +26,7 @@
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.SimulationTreeTraversal;
@@ -33,18 +34,20 @@ import dr.evomodel.treedatalikelihood.preorder.LocalBranchRateDelegate;
 import dr.evomodelxml.branchratemodel.LocalBranchRatesParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class LocalBranchRates extends ArbitraryBranchRates {
+public class LocalBranchRates extends ArbitraryBranchRates implements Reportable {
 
     private TreeModel tree;
     private TreeParameterModel ratesMultiplier;
     private Parameter multiplierParameter;
 
     private TreeParameterModel branchRates;
+    private Parameter branchRateParameter;
     private double normalizingConstant;
     private LocalBranchRateDelegate branchRateDelegate;
 
@@ -61,7 +64,8 @@ public class LocalBranchRates extends ArbitraryBranchRates {
         this.tree = tree;
         this.multiplierParameter = multiplierParameter;
         this.ratesMultiplier = new TreeParameterModel(tree, this.multiplierParameter, false, Intent.BRANCH);
-        this.branchRates = new TreeParameterModel(tree, new Parameter.Default(tree.getNodeCount()), true, Intent.NODE);
+        this.branchRateParameter = new Parameter.Default(tree.getNodeCount());
+        this.branchRates = new TreeParameterModel(tree, branchRateParameter, true, Intent.NODE);
         this.branchRateDelegate = new LocalBranchRateDelegate(LocalBranchRatesParser.SHRINKAGE_BRANCH_RATES,
                 ratesMultiplier, branchRates);
         this.transform = transform;
@@ -103,6 +107,10 @@ public class LocalBranchRates extends ArbitraryBranchRates {
             }
         }
         normalizingConstant = totalBranchLength / totalRateBranchLengthProduct;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final double normalizedRate = branchRateParameter.getParameterValue(i) * normalizingConstant;
+            branchRateParameter.setParameterValue(i, normalizedRate);
+        }
     }
 
     private void updateBranchRates() {
@@ -114,5 +122,23 @@ public class LocalBranchRates extends ArbitraryBranchRates {
         if (model == ratesMultiplier) {
             fireModelChanged(object, index);
         }
+    }
+
+    @Override
+    public double getBranchRate(final Tree tree, final NodeRef node) {
+        return transform.transform(branchRates.getNodeValue(tree, node), tree, node);
+    }
+
+    @Override
+    public void setBranchRate(Tree tree, NodeRef node, double value) {
+        throw new RuntimeException("This function should not be called.");
+    }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Local branch rates:\n").append(new dr.math.matrixAlgebra.Vector(branchRateParameter.getParameterValues()));
+        sb.append("\n");
+        return sb.toString();
     }
 }

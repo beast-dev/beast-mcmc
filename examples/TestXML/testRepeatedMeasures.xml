@@ -2,16 +2,16 @@
 <beast>
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">NA NA 1</attr>
+			<attr name="X">1 NA 1</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">NA -0.1 2</attr>
+			<attr name="X">2 -0.1 2</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">-0.7 0 NA</attr>
+			<attr name="X">NA 0 -0.3</attr>
 		</taxon>
 		<taxon id="D">
-			<attr name="X">0.4 NA 4</attr>
+			<attr name="X">0.4 3 4</attr>
 		</taxon>
 		<taxon id="E">
 			<attr name="X">NA 0 NA</attr>
@@ -90,7 +90,7 @@
 		<matrixParameter idref="precisionMatrix"/>
 	</matrixInverse>
 
-	<varianceProportionStatistic id="varianceLog" scaleByTreeHeight="true">
+	<varianceProportionStatistic id="varianceLog" normalization="treeHeight" computeOffDiagonal="true">
 		<traitDataLikelihood idref="traitLikelihood"/>
 		<treeModel idref = "treeModel"/>
 		<repeatedMeasuresModel idref = "repeatedMeasures"/>

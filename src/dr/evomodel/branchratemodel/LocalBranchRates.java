@@ -131,7 +131,8 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == ratesMultiplier) {
-            fireModelChanged(object, index);
+            fireModelChanged();
+            updateBranchRates();
         }
     }
 
@@ -169,5 +170,9 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
             }
             return sum;
         }
+    }
+
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented.");
     }
 }

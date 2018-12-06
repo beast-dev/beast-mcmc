@@ -59,8 +59,15 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
     public LocalBranchRates(TreeModel tree,
                             Parameter multiplierParameter,
                             BranchRateTransform transform) {
+        this(LocalBranchRatesParser.SHRINKAGE_BRANCH_RATES, tree, multiplierParameter, transform);
+    }
 
-        super(tree, multiplierParameter, new BranchRateTransform.None(), false);
+    public LocalBranchRates(String name,
+                            TreeModel tree,
+                            Parameter multiplierParameter,
+                            BranchRateTransform transform) {
+
+        super(name, tree, multiplierParameter, new BranchRateTransform.None(), false);
         this.tree = tree;
         this.multiplierParameter = multiplierParameter;
         this.ratesMultiplier = new TreeParameterModel(tree, this.multiplierParameter, false, Intent.BRANCH);

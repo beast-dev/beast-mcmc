@@ -108,20 +108,36 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
     }
 
     private void updateNormalizingConstant() {
+        double totalBranchLength = getTotalBranchLength();
+        double totalRateBranchLengthProduct = getTotalRateBranchLengthProduct();
+
+        normalizingConstant = totalBranchLength / totalRateBranchLengthProduct;
+//        for (int i = 0; i < tree.getNodeCount(); i++) {
+//            final double normalizedRate = branchRateParameter.getParameterValue(i) * normalizingConstant;
+//            branchRateParameter.setParameterValue(i, normalizedRate);
+//        }
+    }
+
+    private double getTotalBranchLength() {
         double totalBranchLength = 0.0;
-        double totalRateBranchLengthProduct = 0.0;
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
                 totalBranchLength += tree.getBranchLength(node);
+            }
+        }
+        return totalBranchLength;
+    }
+
+    private double getTotalRateBranchLengthProduct() {
+        double totalRateBranchLengthProduct = 0.0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
                 totalRateBranchLengthProduct += tree.getBranchLength(node) * ratesMultiplier.getNodeValue(tree, node);
             }
         }
-        normalizingConstant = totalBranchLength / totalRateBranchLengthProduct;
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            final double normalizedRate = branchRateParameter.getParameterValue(i) * normalizingConstant;
-            branchRateParameter.setParameterValue(i, normalizedRate);
-        }
+        return totalRateBranchLengthProduct;
     }
 
     private void updateBranchRates() {
@@ -157,20 +173,20 @@ public class LocalBranchRates extends ArbitraryBranchRates implements Reportable
     @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
         final double multiplier = ratesMultiplier.getNodeValue(tree, node);
-        return getChainGradient(tree, node, multiplier);
+        return branchRates.getNodeValue(tree, node) / multiplier;
     }
 
-    private double getChainGradient(Tree tree, NodeRef node, final double multiplier) {
-        if (tree.isExternal(node)) {
-            return branchRates.getNodeValue(tree, node) / multiplier;
-        } else {
-            double sum = branchRates.getNodeValue(tree, node) / multiplier;
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                sum += getChainGradient(tree, tree.getChild(node, i), multiplier);
-            }
-            return sum;
-        }
-    }
+//    private double getSubTreeGradient(Tree tree, NodeRef node, final double multiplier) {
+//        if (tree.isExternal(node)) {
+//            return branchRates.getNodeValue(tree, node) / multiplier;
+//        } else {
+//            double sum = branchRates.getNodeValue(tree, node) / multiplier;
+//            for (int i = 0; i < tree.getChildCount(node); i++) {
+//                sum += getSubTreeGradient(tree, tree.getChild(node, i), multiplier);
+//            }
+//            return sum;
+//        }
+//    }
 
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
         throw new RuntimeException("Not yet implemented.");

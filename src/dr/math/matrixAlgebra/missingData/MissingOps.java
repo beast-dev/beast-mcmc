@@ -4,6 +4,7 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
+import org.ejml.alg.dense.linsol.svd.SolvePseudoInverseSvd;
 import org.ejml.alg.dense.misc.UnrolledDeterminantFromMinor;
 import org.ejml.alg.dense.misc.UnrolledInverseFromMinor;
 import org.ejml.data.DenseMatrix64F;
@@ -440,6 +441,7 @@ public class MissingOps {
         } else {
 
             LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
+            ((SolvePseudoInverseSvd) solver).setThreshold(1e-8);
             solver.setA(A);
             solver.solve(B, X);
 
@@ -474,43 +476,43 @@ public class MissingOps {
         return result;
     }
 
-    public static void safeSolveSymmPosDef(DenseMatrix64F A,
-                                           WrappedVector b,
-                                           WrappedVector x) {
-        final int dim = b.getDim();
-
-        assert (A.getNumRows() == dim && A.getNumCols() == dim);
-
-        final DenseMatrix64F B = wrap(b.getBuffer(), b.getOffset(), dim, 1);
-        final DenseMatrix64F X = new DenseMatrix64F(dim, 1);
-
-        safeSolveSymmPosDef(A, B, X);
-
-
-        for (int row = 0; row < dim; ++row) {
-            x.set(row, X.unsafe_get(row, 0));
-        }
-    }
-
-    public static void safeSolveSymmPosDef(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X) {
-
-        final int finiteCount = countFiniteNonZeroDiagonals(A);
-
-        InversionResult result;
-        if (finiteCount == 0) {
-            Arrays.fill(X.getData(), 0);
-        } else {
-            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(A.getNumCols());
-            DenseMatrix64F Abis = new DenseMatrix64F(A);
-            if(solver.setA(Abis)) {
-                solver.solve(B, X);
-            } else {
-                LinearSolver<DenseMatrix64F> solverSVD = LinearSolverFactory.pseudoInverse(true);
-                solverSVD.setA(A);
-                solverSVD.solve(B, X);
-            }
-        }
-    }
+//    public static void safeSolveSymmPosDef(DenseMatrix64F A,
+//                                           WrappedVector b,
+//                                           WrappedVector x) {
+//        final int dim = b.getDim();
+//
+//        assert (A.getNumRows() == dim && A.getNumCols() == dim);
+//
+//        final DenseMatrix64F B = wrap(b.getBuffer(), b.getOffset(), dim, 1);
+//        final DenseMatrix64F X = new DenseMatrix64F(dim, 1);
+//
+//        safeSolveSymmPosDef(A, B, X);
+//
+//
+//        for (int row = 0; row < dim; ++row) {
+//            x.set(row, X.unsafe_get(row, 0));
+//        }
+//    }
+//
+//    public static void safeSolveSymmPosDef(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X) {
+//
+//        final int finiteCount = countFiniteNonZeroDiagonals(A);
+//
+//        InversionResult result;
+//        if (finiteCount == 0) {
+//            Arrays.fill(X.getData(), 0);
+//        } else {
+//            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(A.getNumCols());
+//            DenseMatrix64F Abis = new DenseMatrix64F(A);
+//            if(solver.setA(Abis)) {
+//                solver.solve(B, X);
+//            } else {
+//                LinearSolver<DenseMatrix64F> solverSVD = LinearSolverFactory.pseudoInverse(true);
+//                solverSVD.setA(A);
+//                solverSVD.solve(B, X);
+//            }
+//        }
+//    }
 
     public static InversionResult safeInvert(ReadableMatrix source, WritableMatrix destination, boolean getDeterminant) {
 
@@ -846,6 +848,42 @@ public class MissingOps {
                 SSj += jg * Pjp.unsafe_get(g, h) * jh;
                 SSk += kg * Pk .unsafe_get(g, h) * kh;
             }
+        }
+
+        return SSi + SSj - SSk;
+    }
+
+    public static double weightedThreeInnerProductNormalized(final double[] ipartials,
+                                                             final int ibo,
+                                                             final DenseMatrix64F Pip,
+                                                             final double[] jpartials,
+                                                             final int jbo,
+                                                             final DenseMatrix64F Pjp,
+                                                             final double[] kpartials,
+                                                             final int kbo,
+                                                             final double[] kpartialsBis,
+                                                             final int kboBis,
+                                                             final int dimTrait) {
+
+        double SSi = 0;
+        double SSj = 0;
+        double SSk = 0;
+
+        // vector-matrix-vector TODO in parallel
+        for (int g = 0; g < dimTrait; ++g) {
+            final double ig = ipartials[ibo + g];
+            final double jg = jpartials[jbo + g];
+            final double kg = kpartials[kbo + g];
+            final double kgBis = kpartialsBis[kboBis + g];
+
+            for (int h = 0; h < dimTrait; ++h) {
+                final double ih = ipartials[ibo + h];
+                final double jh = jpartials[jbo + h];
+
+                SSi += ig * Pip.unsafe_get(g, h) * ih;
+                SSj += jg * Pjp.unsafe_get(g, h) * jh;
+            }
+            SSk += kg * kgBis;
         }
 
         return SSi + SSj - SSk;

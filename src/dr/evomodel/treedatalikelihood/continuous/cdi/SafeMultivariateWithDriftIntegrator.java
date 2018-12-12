@@ -149,14 +149,14 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
             displacementj[g] = partials[jbo + g] - displacements[jdo + g];
         }
 
-        final double[] tmp = vector0;
+        final double[] tmp = vectorPMk;
 
         computeWeightedSum(displacementi, displacementj, dimTrait, tmp);
 
         final WrappedVector kPartials = new WrappedVector.Raw(partials, kbo, dimTrait);
         final WrappedVector wrapTmp = new WrappedVector.Raw(tmp, 0, dimTrait);
 
-        safeSolveSymmPosDef(matrixPk, wrapTmp, kPartials);
+        safeSolve(matrixPk, wrapTmp, kPartials, false);
 
         if (TIMING) {
             endTime("peel4");
@@ -184,9 +184,10 @@ public class SafeMultivariateWithDriftIntegrator extends SafeMultivariateIntegra
                      final int kbo,
                      final DenseMatrix64F Pk,
                      final int dimTrait) {
-        return weightedThreeInnerProduct(vectorDispi, 0, Pip,
+        return weightedThreeInnerProductNormalized(vectorDispi, 0, Pip,
                 vectorDispj, 0, Pjp,
-                partials, kbo, Pk,
+                partials, kbo,
+                vectorPMk, 0,
                 dimTrait);
     }
 

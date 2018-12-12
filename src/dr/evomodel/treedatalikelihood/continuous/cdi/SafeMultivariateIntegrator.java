@@ -31,7 +31,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         variances = new double[dimTrait * dimTrait * bufferCount];
 
         vectorDelta = new double[dimTrait];
-
+        vectorPMk = new double[dimTrait];
         matrixQjPjp = new DenseMatrix64F(dimTrait, dimTrait);
 
         partialsDimData = new int[bufferCount];
@@ -533,7 +533,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             startTime("peel4");
         }
 
-        final double[] tmp = vector0;
+        final double[] tmp = vectorPMk;
         weightedSum(partials, ibo, matrixPip, partials, jbo, matrixPjp, dimTrait, tmp);
 
 
@@ -749,13 +749,15 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                      final int kbo,
                      final DenseMatrix64F Pk,
                      final int dimTrait) {
-        return weightedThreeInnerProduct(partials, ibo, Pip,
+        return weightedThreeInnerProductNormalized(partials, ibo, Pip,
                 partials, jbo, Pjp,
-                partials, kbo, Pk,
+                partials, kbo,
+                vectorPMk, 0,
                 dimTrait);
     }
 
     private DenseMatrix64F matrixQjPjp;
     private double[] vectorDelta;
+    double[] vectorPMk;
     private int[] partialsDimData;
 }

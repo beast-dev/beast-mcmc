@@ -25,19 +25,23 @@
 
 package dr.evomodel.operators;
 
-import dr.app.treestat.TreeStatData;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.evomodelxml.operators.TipLeapOperatorParser;
-import dr.inference.operators.*;
+import dr.inference.distribution.CauchyDistribution;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
+import dr.math.distributions.Distribution;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implements the Subtree Leap move.
@@ -56,11 +60,42 @@ import java.util.*;
  */
 public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
+    public enum DistanceKernelType {
+        NORMAL("normal") {
+            @Override
+            double getDelta(double size) {
+                return Math.abs(MathUtils.nextGaussian() * size);
+            }
+        },
+        CAUCHY("Cauchy") {
+            @Override
+            double getDelta(double size) {
+                Distribution distK = new CauchyDistribution(0, size);
+                double u = MathUtils.nextDouble();
+                return Math.abs(distK.quantile(u));
+            }
+        };
+
+        DistanceKernelType(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        String name;
+
+        abstract double getDelta(double size);
+    }
+
     private double size;
 
     private final TreeModel tree;
     private final AdaptationMode mode;
     private final double targetAcceptance;
+    private final DistanceKernelType distanceKernel;
 
     private final List<NodeRef> tips;
 
@@ -70,13 +105,16 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param tree   the tree
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param targetAcceptance the desired acceptance probability
+     * @param distanceKernel the distribution from which to draw the patristic distance 
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.targetAcceptance = targetAcceptance;
+        this.distanceKernel = distanceKernel;
         this.mode = mode;
         this.tips = null;
     }
@@ -90,11 +128,12 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.targetAcceptance = targetAcceptance;
+        this.distanceKernel = distanceKernel;
         this.mode = mode;
         this.tips = new ArrayList<NodeRef>();
 
@@ -124,8 +163,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     public double doOperation() {
         double logq;
 
-        final double delta = getDelta();
-
+        final double delta = distanceKernel.getDelta(size);
 
         final NodeRef root = tree.getRoot();
 
@@ -298,10 +336,6 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         return destinations;
     }
 
-    private double getDelta() {
-        return Math.abs(MathUtils.nextGaussian() * size);
-    }
-
     private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 
         final NodeRef parent = tree.getParent(node);
@@ -380,6 +414,4 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
             return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";
         }
     }
-
-
 }

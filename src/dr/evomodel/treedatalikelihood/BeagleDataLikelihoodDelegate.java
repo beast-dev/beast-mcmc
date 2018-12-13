@@ -66,6 +66,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
     }
 
+    public static boolean IS_ODD_STATE_SSE_FIXED() {
+        // SSE for odd state counts fixed in BEAGLE 3.1.2
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 2;
+    }
+
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
@@ -270,13 +276,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             String tc = System.getProperty(THREAD_COUNT);
             if (tc != null) {
                 threadCount = Integer.parseInt(tc);
-                if (threadCount < 2) {
-                    threadCount = 1;
-                }
+            }
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
             }
 
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-                    && !forceVectorization
+                    && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
                     ) {
                 // @todo SSE doesn't seem to work for larger state spaces so for now we override the
                 // SSE option.
@@ -1030,7 +1041,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
 
-    private int threadCount = 1;
+    private int threadCount = -1;
     private long instanceFlags;
 
     private boolean firstRescaleAttempt = false;

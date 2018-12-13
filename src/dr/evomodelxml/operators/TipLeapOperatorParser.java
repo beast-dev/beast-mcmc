@@ -21,6 +21,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SIZE = "size";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+    public static final String DISTANCE_KERNEL = "distanceKernel";
     public static final String TAXA = "taxa";
 
     public String getParserName() {
@@ -58,6 +59,15 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
+        final SubtreeLeapOperator.DistanceKernelType distanceKernel = SubtreeLeapOperator.DistanceKernelType.NORMAL;
+        if (xo.hasAttribute(DISTANCE_KERNEL)) {
+            try {
+                SubtreeLeapOperator.DistanceKernelType.valueOf(xo.getStringAttribute(DISTANCE_KERNEL).trim().toUpperCase());
+            } catch (IllegalArgumentException iae) {
+                throw new XMLParseException("Unrecognised distanceKernel attribute: " + xo.getStringAttribute(DISTANCE_KERNEL));
+            }
+        }
+
         if (size <= 0.0) {
             throw new XMLParseException("The TipLeap size attribute must be positive and non-zero.");
         }
@@ -66,7 +76,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
 
-        return new SubtreeLeapOperator(treeModel, taxa, weight, size, targetAcceptance, mode);
+        return new SubtreeLeapOperator(treeModel, taxa, weight, size, targetAcceptance, distanceKernel, mode);
     }
 
     public String getParserDescription() {
@@ -85,6 +95,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule(SIZE, false),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
+            AttributeRule.newStringRule(DISTANCE_KERNEL, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class),
             new ElementRule(Taxa.class)

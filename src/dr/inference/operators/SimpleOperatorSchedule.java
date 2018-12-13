@@ -160,6 +160,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
             case LOG:  return Math.log(d);
             case SQRT: return Math.sqrt(d);
 			case LINEAR: return d;
+			case POWER: return Math.pow(d, 0.55); // c = 5/9
 
 			default: throw new UnsupportedOperationException("Unknown enum value");
         }

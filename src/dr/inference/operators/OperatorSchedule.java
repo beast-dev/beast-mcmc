@@ -75,7 +75,8 @@ public interface OperatorSchedule extends Serializable {
         DEFAULT("default"),
         LOG("log"),
         SQRT("sqrt"),
-        LINEAR("linear");
+        LINEAR("linear"),
+        POWER("power");
 
         OptimizationTransform(String name) {
             this.name = name;

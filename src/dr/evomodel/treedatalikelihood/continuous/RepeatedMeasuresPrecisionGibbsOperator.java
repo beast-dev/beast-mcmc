@@ -4,29 +4,25 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.WishartDistribution;
 import dr.math.distributions.WishartStatistics;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.xml.*;
 import dr.math.matrixAlgebra.Matrix;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-import static java.lang.Double.NaN;
-import static java.lang.Double.isNaN;
 
 public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     public static final String OPERATOR_NAME = "repeatedMeasuresPrecisionGibbsOperator";
 
-    private static WishartStatistics priorDistribution;
-    private RepeatedMeasuresTraitDataModel dataModel;
-    private TreeDataLikelihood dataLikelihood;
-    private static RepeatedMeasuresTraitSimulator dataSimulator;
-    private static WishartStatisticsWrapper wishartWrapper;
+    private final WishartStatistics priorDistribution;
+    private final RepeatedMeasuresTraitDataModel dataModel;
+    private final TreeDataLikelihood dataLikelihood;
+    private final RepeatedMeasuresTraitSimulator dataSimulator;
+    private final WishartStatisticsWrapper wishartWrapper;
 
 
     public RepeatedMeasuresPrecisionGibbsOperator(
@@ -36,13 +32,14 @@ public class RepeatedMeasuresPrecisionGibbsOperator extends SimpleMCMCOperator i
             WishartStatisticsWrapper wishartWrapper,
             double weight) {
 
+
         this.priorDistribution = priorDistribution;
         this.dataModel = dataModel;
         this.dataLikelihood = dataLikelihood;
         this.dataSimulator = new RepeatedMeasuresTraitSimulator(dataModel, dataLikelihood);
         this.wishartWrapper = wishartWrapper;
 
-
+        setWeight(weight);
     }
 
 

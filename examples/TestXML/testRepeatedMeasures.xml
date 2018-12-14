@@ -2,19 +2,19 @@
 <beast>
 	<taxa id="taxa">
 		<taxon id="A">
-			<attr name="X">1 NA 1</attr>
+			<attr name="X">100 NA 1</attr>
 		</taxon>
 		<taxon id="B">
-			<attr name="X">2 -0.1 2</attr>
+			<attr name="X">100 -0.1 2</attr>
 		</taxon>
 		<taxon id="C">
-			<attr name="X">NA 0 -0.3</attr>
+			<attr name="X">100 0 -0.3</attr>
 		</taxon>
 		<taxon id="D">
-			<attr name="X">0.4 3 4</attr>
+			<attr name="X">100 3 4</attr>
 		</taxon>
 		<taxon id="E">
-			<attr name="X">NA 0 NA</attr>
+			<attr name="X">100 0 NA</attr>
 		</taxon>
 	</taxa>
 
@@ -143,21 +143,32 @@
 			<!--</prior>-->
 		<!--</normalGammaPrecisionGibbsOperator>-->
 
-		<repeatedMeasuresPrecisionGibbsOperator weight="1">
-			<repeatedMeasuresModel idref="repeatedMeasures"/>
-			<multivariateWishartPrior idref="samplingPrior"/>
-			<treeDataLikelihood idref="traitLikelihood"/>
-			<wishartStatistics  traitName="X">
-				<traitDataLikelihood idref="traitLikelihood"/>
-			</wishartStatistics>
-		</repeatedMeasuresPrecisionGibbsOperator>
-
-		<!--<precisionGibbsOperator weight="1">-->
+		<!--<repeatedMeasuresPrecisionGibbsOperator weight="1">-->
+			<!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
+			<!--<multivariateWishartPrior idref="samplingPrior"/>-->
+			<!--<treeDataLikelihood idref="traitLikelihood"/>-->
 			<!--<wishartStatistics  traitName="X">-->
 				<!--<traitDataLikelihood idref="traitLikelihood"/>-->
 			<!--</wishartStatistics>-->
-			<!--<multivariateWishartPrior idref="precisionPrior"/>-->
-		<!--</precisionGibbsOperator>-->
+		<!--</repeatedMeasuresPrecisionGibbsOperator>-->
+
+
+
+		<precisionGibbsOperator weight="1">
+			<wishartStatistics id="treeWishartStatistics" traitName="X">
+				<traitDataLikelihood idref="traitLikelihood"/>
+			</wishartStatistics>
+			<multivariateWishartPrior idref="precisionPrior"/>
+		</precisionGibbsOperator>
+
+		<precisionGibbsOperator weight="1">
+			<repeatedMeasuresWishartStatistics>
+				<repeatedMeasuresModel idref="repeatedMeasures"/>
+				<traitDataLikelihood idref="traitLikelihood"/>
+				<wishartStatistics idref="treeWishartStatistics"/>
+			</repeatedMeasuresWishartStatistics>
+			<multivariateWishartPrior idref="samplingPrior"/>
+		</precisionGibbsOperator>
 	</operators>
 
 	<report>

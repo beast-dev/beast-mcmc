@@ -54,23 +54,17 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
 
     public static final String PARSER_NAME = "varianceProportionStatistic";
-    private static final String SCALE_BY_HEIGHT = "scaleByTreeHeight";
     private static final String OFF_DIAGONAL = "computeOffDiagonal";
     private static final String REMOVE_MISSING = "removeMissingBranches";
-    private static final String NORMALIZATION = "normalization";
-    private static final String TREE_HEIGHT = "treeHeight";
-    private static final String AVG_TIP_DISTANCE = "averageHeight";
-    private static final String NO_NORMALIZATION = "none";
-    private String normalizationStrategy;
 
     private final TreeModel tree;
     private final MultivariateDiffusionModel diffusionModel;
     private final RepeatedMeasuresTraitDataModel dataModel;
     private final TreeDataLikelihood treeLikelihood;
     private final Parameter samplingPrecision;
-    private boolean scaleByHeight;
     private final boolean offDiagonal;
     private final boolean removeMissing;
+    private final RateRescalingScheme rescalingScheme;
     private Matrix diffusionProportion;
     private TreeVarianceSums[][] treeSums;
     private Matrix diffusionVariance;
@@ -88,7 +82,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
                                        MultivariateDiffusionModel diffusionModel,
-                                       String normalizationStrategy,
                                        boolean removeMissing,
                                        boolean offDiagonal) {
         this.tree = tree;
@@ -96,13 +89,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionModel = diffusionModel;
         this.dataModel = dataModel;
         this.samplingPrecision = dataModel.getSamplingPrecision();
-//        this.scaleByHeight = scaleByHeight;
-        this.normalizationStrategy = normalizationStrategy;
+        this.rescalingScheme = treeLikelihood.getDataLikelihoodDelegate().getRateRescalingScheme();
         this.offDiagonal = offDiagonal;
         this.removeMissing = removeMissing;
 
 
-//        int dim = samplingPrecision.getDimension();
         int dim = dataModel.getTraitDimension();
         this.diffusionVariance = new Matrix(dim, dim);
         this.samplingVariance = new Matrix(dim, dim);
@@ -307,7 +298,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
 
-
     /**
      * recalculates the the sum of the diagonal elements and sum of all the elements of the tree variance
      * matrix statistic based on current parameters
@@ -315,7 +305,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private void updateTreeSums() {
 
         int dim = treeSums.length;
-
 
 
         for (int i = 0; i < dim; i++) {
@@ -339,10 +328,15 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                 treeLikelihood.getBranchRateModel(), 1.0, perTraitMissingIndices[i][j]);
 
         double normalization = 1.0;
-        if (normalizationStrategy.equals(TREE_HEIGHT)) {
+        if (rescalingScheme == RateRescalingScheme.TREE_HEIGHT) {
             normalization = tree.getNodeHeight(tree.getRoot());
-        } else if (normalizationStrategy.equals(AVG_TIP_DISTANCE)) {
-            normalization = diagonalSum / observedCounts[i][j];
+        } else if (rescalingScheme == RateRescalingScheme.TREE_LENGTH) {
+            //TODO: find function that returns tree length
+            System.err.println("VarianceProportionStatistic not yet implemented for " +
+                    "traitDataLikelihood argument useTreeLength='true'.");
+        } else if (rescalingScheme != RateRescalingScheme.NONE) {
+            System.err.println("VarianceProportionStatistic not yet implemented for RateRescalingShceme" +
+                    rescalingScheme.getText() + ".");
         }
 
         treeSums[i][j].diagonalSum = diagonalSum / normalization;
@@ -478,20 +472,15 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                     xo.getChild(MultivariateDiffusionModel.class);
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-            String normalizationStrategy = xo.getAttribute(NORMALIZATION, NO_NORMALIZATION);
-            //TODO: change assertion to error
-            assert (normalizationStrategy.equals(TREE_HEIGHT) || normalizationStrategy.equals(AVG_TIP_DISTANCE) ||
-                    normalizationStrategy.equals(NO_NORMALIZATION));
 
             boolean offDiagonal = xo.getAttribute(OFF_DIAGONAL, false);
             boolean removeMissing = xo.getAttribute(REMOVE_MISSING, false);
 
             return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
-                    normalizationStrategy, removeMissing, offDiagonal);
+                    removeMissing, offDiagonal);
         }
 
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(NORMALIZATION, true),
                 AttributeRule.newStringRule(OFF_DIAGONAL, true),
                 AttributeRule.newStringRule(REMOVE_MISSING, true),
                 new ElementRule(TreeModel.class),

@@ -66,7 +66,7 @@
 		<multivariateDiffusionModel idref="diffusionModel"/>
 	</repeatedMeasuresModel>
 
-	<traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true">
+	<traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
 		<repeatedMeasuresModel idref="repeatedMeasures"/>
@@ -91,7 +91,6 @@
 	</matrixInverse>
 
 	<varianceProportionStatistic id="varianceLog"
-								 normalization="treeHeight"
 								 computeOffDiagonal="true"
 								 removeMissingBranches="true">
 		<traitDataLikelihood idref="traitLikelihood"/>

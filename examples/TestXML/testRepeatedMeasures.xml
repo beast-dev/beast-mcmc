@@ -90,7 +90,10 @@
 		<matrixParameter idref="precisionMatrix"/>
 	</matrixInverse>
 
-	<varianceProportionStatistic id="varianceLog" normalization="treeHeight" computeOffDiagonal="true">
+	<varianceProportionStatistic id="varianceLog"
+								 normalization="treeHeight"
+								 computeOffDiagonal="true"
+								 removeMissingBranches="true">
 		<traitDataLikelihood idref="traitLikelihood"/>
 		<treeModel idref = "treeModel"/>
 		<repeatedMeasuresModel idref = "repeatedMeasures"/>

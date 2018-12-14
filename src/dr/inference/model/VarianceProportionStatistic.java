@@ -30,9 +30,11 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitSimulator;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -54,19 +56,21 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     public static final String PARSER_NAME = "varianceProportionStatistic";
     private static final String SCALE_BY_HEIGHT = "scaleByTreeHeight";
     private static final String OFF_DIAGONAL = "computeOffDiagonal";
+    private static final String REMOVE_MISSING = "removeMissingBranches";
     private static final String NORMALIZATION = "normalization";
     private static final String TREE_HEIGHT = "treeHeight";
     private static final String AVG_TIP_DISTANCE = "averageHeight";
     private static final String NO_NORMALIZATION = "none";
     private String normalizationStrategy;
 
-    private TreeModel tree;
-    private MultivariateDiffusionModel diffusionModel;
-    private RepeatedMeasuresTraitDataModel dataModel;
-    private TreeDataLikelihood treeLikelihood;
-    private Parameter samplingPrecision;
+    private final TreeModel tree;
+    private final MultivariateDiffusionModel diffusionModel;
+    private final RepeatedMeasuresTraitDataModel dataModel;
+    private final TreeDataLikelihood treeLikelihood;
+    private final Parameter samplingPrecision;
     private boolean scaleByHeight;
-    private boolean offDiagonal;
+    private final boolean offDiagonal;
+    private final boolean removeMissing;
     private Matrix diffusionProportion;
     private TreeVarianceSums[][] treeSums;
     private Matrix diffusionVariance;
@@ -85,6 +89,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                                        RepeatedMeasuresTraitDataModel dataModel,
                                        MultivariateDiffusionModel diffusionModel,
                                        String normalizationStrategy,
+                                       boolean removeMissing,
                                        boolean offDiagonal) {
         this.tree = tree;
         this.treeLikelihood = treeLikelihood;
@@ -94,6 +99,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 //        this.scaleByHeight = scaleByHeight;
         this.normalizationStrategy = normalizationStrategy;
         this.offDiagonal = offDiagonal;
+        this.removeMissing = removeMissing;
 
 
 //        int dim = samplingPrecision.getDimension();
@@ -103,6 +109,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionProportion = new Matrix(dim, dim);
         this.diffusionComponent = new Matrix(dim, dim);
         this.samplingComponent = new Matrix(dim, dim);
+
+
         this.perTraitMissingIndices = getPerTraitMissingIndices();
         this.observedCounts = getObservedCounts();
         this.treeSums = new TreeVarianceSums[dim][dim];
@@ -118,7 +126,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
 
         tree.addModelListener(this);
-//        diffusionModel.addModelListener(this);
 
         diffusionModel.getPrecisionParameter().addParameterListener(this);
         samplingPrecision.addParameterListener(this);
@@ -155,8 +162,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
      */
     private ArrayList<Integer>[][] getPerTraitMissingIndices() {
 
-//        List<Integer> missingIndices = dataModel.getMissingIndices();
-        boolean[] missingVector = dataModel.getMissingVector();
         int n = tree.getExternalNodeCount();
         int dim = dataModel.getTraitDimension();
 
@@ -173,49 +178,29 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             }
         }
 
+        if (removeMissing) {
 
-//        int threshold = n;
-//        int currentDim = 0;
-//        int currentTaxon = 0;
+            boolean[] missingVector = dataModel.getMissingVector();
 
-//        for (int index : missingIndices) {
-//
-//            currentTaxon = index / dim;
-//            currentDim = index - currentTaxon * dim;
-//
-//
-//            missingArrays[currentDim].add(currentTaxon);
-//        }
-        for (int taxon = 0; taxon < n; taxon++) {
-            ArrayList<Integer> added = new ArrayList<Integer>();
+            for (int taxon = 0; taxon < n; taxon++) {
+                ArrayList<Integer> added = new ArrayList<Integer>();
 
-            for (int trait = 0; trait < dim; trait++) {
-                if (missingVector[taxon * dim + trait]) {
-                    missingArrays[trait][trait].add(taxon);
-                    added.add(trait);
+                for (int trait = 0; trait < dim; trait++) {
+                    if (missingVector[taxon * dim + trait]) {
+                        missingArrays[trait][trait].add(taxon);
+                        added.add(trait);
 
-
-//                    for (int i = 0; i < dim; i++) {
-//
-//                        if (i != trait) {
-//                            int lastDim = missingArrays[trait][i].size() - 1;
-//
-//                            if (missingArrays[trait][i].get(lastDim) != taxon && i != trait) {
-//                                missingArrays[trait][i].add(taxon);
-//                                missingArrays[i][trait].add(taxon);
-//                            }
-//                        }
-//                    }
+                    }
                 }
-            }
 
-            for (int i : added) {
-                for (int j = 0; j < dim; j++) {
-                    if (i != j) {
-                        int lastDim = missingArrays[i][j].size() - 1;
-                        if (lastDim == -1 || missingArrays[i][j].get(lastDim) != taxon) {
-                            missingArrays[i][j].add(taxon);
-                            missingArrays[j][i].add(taxon);
+                for (int i : added) {
+                    for (int j = 0; j < dim; j++) {
+                        if (i != j) {
+                            int lastDim = missingArrays[i][j].size() - 1;
+                            if (lastDim == -1 || missingArrays[i][j].get(lastDim) != taxon) {
+                                missingArrays[i][j].add(taxon);
+                                missingArrays[j][i].add(taxon);
+                            }
                         }
                     }
                 }
@@ -250,23 +235,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     }
 
-//    private int getPairwiseObservedCount(int trait1, int trait2){
-//
-//        int k = 0;
-//        int n = tree.getExternalNodeCount();
-//
-//        for (int i = 0; l < perTraitMissingIndices[trait1].size(); i ++){
-//
-//            if (perTraitMissingIndices[trait2].contains(perTraitMissingIndices[trait1].get(i))){
-//
-//                k += 1;
-//            }
-//        }
-//
-//
-//        return k;
-//    }
-
 
     /**
      * recalculates the diffusionProportion statistic based on current parameters
@@ -292,28 +260,26 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         Matrix sqrt = getMatrixSqrt(totalPrecision);
 
 
-
-
         diffusionProportion = sqrt.product(diffusionComponent.product(sqrt));
     }
 
-    private Matrix getMatrixSqrt(Matrix M){
+    private Matrix getMatrixSqrt(Matrix M) {
         DoubleMatrix2D S = new DenseDoubleMatrix2D(M.toComponents());
         RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(S, 100);
         DoubleMatrix1D eigenValues = eigenDecomp.getRealEigenvalues();
         int dim = eigenValues.size();
-        for (int i = 0; i < dim; i++){
+        for (int i = 0; i < dim; i++) {
             eigenValues.set(i, Math.sqrt(eigenValues.get(i)));
         }
 
         DoubleMatrix2D eigenVectors = eigenDecomp.getV();
-        for (int i = 0; i < dim; i++){
-            for (int j = 0; j < dim; j++){
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
                 eigenVectors.set(i, j, eigenVectors.get(i, j) * eigenValues.get(j));
 
             }
         }
-        DoubleMatrix2D storageMatrix = new DenseDoubleMatrix2D(dim , dim);
+        DoubleMatrix2D storageMatrix = new DenseDoubleMatrix2D(dim, dim);
         eigenVectors.zMult(eigenDecomp.getV(), storageMatrix, 1, 0, false, true);
 
 
@@ -340,13 +306,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     }
 
-//    private double getDiffusionProportion(int i, int j) {
-//
-//        double diffusionComponent = getDiffusionComponent(i, j);
-//        double samplingComponent = getSamplingComponent(i, j);
-//
-//        return diffusionComponent / (diffusionComponent + samplingComponent);
-//    }
+
 
     /**
      * recalculates the the sum of the diagonal elements and sum of all the elements of the tree variance
@@ -356,10 +316,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         int dim = treeSums.length;
 
-//        double normalization = 1.0;
-//        if (scaleByHeight) {
-//            normalization = 1 / tree.getNodeHeight(tree.getRoot());
-//        }
+
 
         for (int i = 0; i < dim; i++) {
             updateTreeSum(i, i);
@@ -382,9 +339,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                 treeLikelihood.getBranchRateModel(), 1.0, perTraitMissingIndices[i][j]);
 
         double normalization = 1.0;
-        if (normalizationStrategy.equals(TREE_HEIGHT)){
+        if (normalizationStrategy.equals(TREE_HEIGHT)) {
             normalization = tree.getNodeHeight(tree.getRoot());
-        } else if (normalizationStrategy.equals(AVG_TIP_DISTANCE)){
+        } else if (normalizationStrategy.equals(AVG_TIP_DISTANCE)) {
             normalization = diagonalSum / observedCounts[i][j];
         }
 
@@ -522,18 +479,21 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
             TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             String normalizationStrategy = xo.getAttribute(NORMALIZATION, NO_NORMALIZATION);
-            assert(normalizationStrategy.equals(TREE_HEIGHT) || normalizationStrategy.equals(AVG_TIP_DISTANCE) ||
+            //TODO: change assertion to error
+            assert (normalizationStrategy.equals(TREE_HEIGHT) || normalizationStrategy.equals(AVG_TIP_DISTANCE) ||
                     normalizationStrategy.equals(NO_NORMALIZATION));
 
             boolean offDiagonal = xo.getAttribute(OFF_DIAGONAL, false);
+            boolean removeMissing = xo.getAttribute(REMOVE_MISSING, false);
 
             return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
-                    normalizationStrategy, offDiagonal);
+                    normalizationStrategy, removeMissing, offDiagonal);
         }
 
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(NORMALIZATION, true),
                 AttributeRule.newStringRule(OFF_DIAGONAL, true),
+                AttributeRule.newStringRule(REMOVE_MISSING, true),
                 new ElementRule(TreeModel.class),
                 new ElementRule(TreeDataLikelihood.class),
                 new ElementRule(RepeatedMeasuresTraitDataModel.class),

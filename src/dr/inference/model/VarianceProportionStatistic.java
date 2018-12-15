@@ -34,7 +34,6 @@ import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitSimulator;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -254,6 +253,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         diffusionProportion = sqrt.product(diffusionComponent.product(sqrt));
     }
 
+    //TODO: Move method below to a different class
     private Matrix getMatrixSqrt(Matrix M) {
         DoubleMatrix2D S = new DenseDoubleMatrix2D(M.toComponents());
         RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(S, 100);

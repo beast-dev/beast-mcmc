@@ -32,6 +32,9 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.missingData.MissingOps;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.data.*;
 
 import java.util.ArrayList;
 
@@ -39,7 +42,8 @@ import java.util.ArrayList;
  * @author Gabriel Hassler
  */
 
-
+//TODO::TRIPLE CHECK THAT THE CONDITIONAL MEAN AND VARIANCE ARE BEING CALCULATED CORRECTLY
+//TODO: Add comments
 public class RepeatedMeasuresTraitSimulator {
 
     private final RepeatedMeasuresTraitDataModel dataModel;
@@ -65,7 +69,7 @@ public class RepeatedMeasuresTraitSimulator {
 
     public void simulateMissingData(double[] tipTraits) {
 
-        //TODO: simulate diffusion on tree
+
         for (int i = 0; i < nTaxa; i++) {
             simulateMissingTaxonData(tipTraits, i);
         }
@@ -107,19 +111,20 @@ public class RepeatedMeasuresTraitSimulator {
             return;
         }
 
-        double[] observedData = new double[dimTrait - nMissing];
-        double[] observedTip = new double[dimTrait - nMissing];
-        double[] missingTip = new double[nMissing];
+
+        DenseMatrix64F observedData = new DenseMatrix64F(dimTrait - nMissing, 1);
+        DenseMatrix64F observedTip = new DenseMatrix64F(dimTrait - nMissing, 1);
+        DenseMatrix64F missingTip = new DenseMatrix64F(nMissing, 1);
 
 
         for (int i = 0; i < dimTrait - nMissing; i++) {
-            observedData[i] = wholeData[observedArray.get(i)];
-            observedTip[i] = tipTrait[observedArray.get(i)];
+            observedData.set(i, 0, wholeData[observedArray.get(i)]);
+            observedTip.set(i, 0, tipTrait[observedArray.get(i)]);
 
         }
 
         for (int i = 0; i < nMissing; i++) {
-            missingTip[i] = tipTrait[missingArray.get(i)];
+            missingTip.set(i, 0, tipTrait[missingArray.get(i)]);
 
         }
 
@@ -128,35 +133,39 @@ public class RepeatedMeasuresTraitSimulator {
 
         for (int i = 0; i < nMissing; i++) {
             for (int j = 0; j < nMissing; j++) {
-                missingPrecisionBlock.set(i, j, samplingPrecision.getParameterValue(i, j));
+                int mi = missingArray.get(i);
+                int mj = missingArray.get(j);
+                missingPrecisionBlock.set(i, j, samplingPrecision.getParameterValue(mi, mj));
             }
 
         }
 
         Matrix missingVarianceBlock = missingPrecisionBlock.inverse();
+        DenseMatrix64F missingVarianceBlockMat = MissingOps.wrap(missingVarianceBlock.toArrayComponents(),
+                0, nMissing, nMissing);
 
-        double[] draw = null;
+        double[] adjustedMean = missingTip.getData();
+        if (nMissing != dimTrait) {
 
-        if (nMissing == dimTrait){
-            draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(tipTrait,
-                    missingVarianceBlock.toComponents());
-        } else {
-
-            Matrix missingObservedPrecisionBlock = new Matrix(nMissing, dimTrait - nMissing);
+            DenseMatrix64F missingObservedPrecisionBlock = new DenseMatrix64F(nMissing, dimTrait - nMissing);
 
             for (int i = 0; i < nMissing; i++) {
-                for (int j = nMissing; j < dimTrait; j++) {
-                    missingObservedPrecisionBlock.set(i, j - nMissing, samplingPrecision.getParameterValue(i, j));
+                for (int j = 0; j < dimTrait - nMissing; j++) {
+                    int mi = missingArray.get(i);
+                    int oj = observedArray.get(j);
+                    missingObservedPrecisionBlock.set(i, j, samplingPrecision.getParameterValue(mi, oj));
                 }
 
             }
 
-            double[] adjustedMean = computeAdjustedMean(missingVarianceBlock, missingObservedPrecisionBlock, observedData, observedTip, missingTip);
+            adjustedMean = computeAdjustedMean(missingVarianceBlockMat, missingObservedPrecisionBlock,
+                    observedData, observedTip, missingTip);
 
 
-            draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(adjustedMean,
-                    missingVarianceBlock.toComponents());
         }
+
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalVariance(adjustedMean,
+                missingVarianceBlock.toComponents());
 
 
         for (int i = 0; i < nMissing; i++) {
@@ -168,31 +177,16 @@ public class RepeatedMeasuresTraitSimulator {
 
     }
 
-    private double[] computeAdjustedMean(Matrix missingVarianceBlock, Matrix missingObservedPrecisionBlock,
-                                         double[] observedData, double[] observedTip, double[] missingTip) {
 
-        int nMissing = missingVarianceBlock.rows();
-        double[] adjustedMean = new double[nMissing];
-        double[] storageMis = new double[nMissing];
+    private double[] computeAdjustedMean(DenseMatrix64F missingVarianceBlock,
+                                         DenseMatrix64F missingObservedPrecisionBlock, DenseMatrix64F observedData,
+                                         DenseMatrix64F observedTip, DenseMatrix64F missingTip) {
 
-        for (int i = 0; i < nMissing; i++) {
-            for (int j = 0; j < dimTrait - nMissing; j++) {
-                storageMis[i] += missingObservedPrecisionBlock.component(i, j) * (observedData[j] - observedTip[j]);
-            }
-        }
+        DenseMatrix64F storage = new DenseMatrix64F(missingTip.numRows, 1);
+        org.ejml.ops.CommonOps.addEquals(observedData, -1, observedTip);
+        org.ejml.ops.CommonOps.mult(missingObservedPrecisionBlock, observedData, storage);
+        org.ejml.ops.CommonOps.multAdd(missingVarianceBlock, storage, missingTip);
 
-        for (int i = 0; i < nMissing; i++) {
-
-            for (int j = 0; j < nMissing; j++) {
-                adjustedMean[i] += storageMis[j] * missingVarianceBlock.component(i, j);
-            }
-
-            adjustedMean[i] = missingTip[i] - adjustedMean[i];
-
-        }
-
-
-        return adjustedMean;
-
+        return (double[]) missingTip.data;
     }
 }

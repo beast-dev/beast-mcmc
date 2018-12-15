@@ -150,7 +150,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     }
 
     private void calculateUnscaledBranchRates(TreeModel tree) {
-        cubr(tree, tree.getRoot(), 1.0);
+        recursivelyCompute(tree, tree.getRoot(), 1.0);
     }
 
     /**
@@ -162,7 +162,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
      * @param node the node
      * @param rate the rate of the parent node
      */
-    private void cubr(TreeModel tree, NodeRef node, double rate) {
+    private void recursivelyCompute(TreeModel tree, NodeRef node, double rate) {
 
         int nodeNumber = node.getNumber();
 
@@ -179,7 +179,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
 
         int childCount = tree.getChildCount(node);
         for (int i = 0; i < childCount; i++) {
-            cubr(tree, tree.getChild(node, i), rate);
+            recursivelyCompute(tree, tree.getChild(node, i), rate);
         }
     }
 
@@ -236,7 +236,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
 
     // true if the rate variables are treated as relative
     // to the parent rate rather than absolute rates
-    private boolean ratesAreMultipliers = false;
+    private boolean ratesAreMultipliers;
 
     // the unscaled rates of each branch, taking into account the indicators
     private double[] unscaledBranchRates;
@@ -247,7 +247,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     private TreeParameterModel indicators;
     private TreeParameterModel rates;
 
-    boolean recalculationNeeded = true;
+    private boolean recalculationNeeded = true;
 
     private final double threshold;
 

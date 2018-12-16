@@ -83,7 +83,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        int nSteps = xo.getIntegerAttribute(N_STEPS);
+        int nSteps = xo.getAttribute(N_STEPS, 10);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         int runMode = parseRunMode(xo);
 
@@ -152,7 +152,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newIntegerRule(N_STEPS),
+            AttributeRule.newIntegerRule(N_STEPS, true),
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),

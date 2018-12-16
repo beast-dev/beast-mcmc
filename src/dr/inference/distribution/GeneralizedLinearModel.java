@@ -151,6 +151,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         int rank = svd.rank();
         boolean isFullRank = (totalColDim == rank);
         Logger.getLogger("dr.inference").info("\tTotal # of predictors = " + totalColDim + " and rank = " + rank);
+        if (!isFullRank) {
+            Logger.getLogger("dr.inference").info("\tProvided matrix of independent variables is not identifiable.");
+        }
         return isFullRank;
     }
 

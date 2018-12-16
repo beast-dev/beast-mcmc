@@ -32,6 +32,7 @@ import org.ejml.data.DenseMatrix64F;
 import java.util.Arrays;
 
 import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author Marc A. Suchard
@@ -73,7 +74,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
             return buffer;
         }
 
-        final public int getOffset() { return offset; }
+        final public int getOffset() {
+            return offset;
+        }
 
         final public int getMajorDim() {
             return dimMajor;
@@ -83,10 +86,12 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
             return dimMinor;
         }
 
-        public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() {
+            return getMajorDim() * getMinorDim();
+        }
     }
 
-    final class WrappedDenseMatrix extends Base  {
+    final class WrappedDenseMatrix extends Base {
 
         private final DenseMatrix64F matrix;
 
@@ -183,7 +188,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        public int getDim() { return getMajorDim() * getMinorDim(); }
+        public int getDim() {
+            return getMajorDim() * getMinorDim();
+        }
 
         @Override
         public double[] getBuffer() {
@@ -326,7 +333,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
             for (int i = 0; i < rowLength; ++i) {
                 final int rowIndex = rowIndices[i];
                 for (int j = 0; j < colLength; ++j) {
-                    destination.set(i, j, source.get(rowIndex, colIndices[j]) );
+                    destination.set(i, j, source.get(rowIndex, colIndices[j]));
                 }
             }
         }
@@ -424,8 +431,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     W.set(i, j, temp);
                     sum += temp * temp;
                 }
-                if (sum > 1) {
-                    throw new RuntimeException("In Cholesky parametrization: the row squared sum of the off-diagonal coefficients cannot be greater than 1.O");
+                if (sum > 1.0) {
+                    assertEquals(sum, 1.0, 1E-6);
+                    sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));
             }

@@ -1,4 +1,4 @@
-            	BEAST v1.10 VEME2017 2002-2018
+                    BEAST v1.10.1 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 10 June 2018
+Last updated: a.rambaut@ed.ac.uk - 8th August 2018
 
 Contents:
 1) INTRODUCTION
@@ -133,6 +133,7 @@ BEAST arguments:
      -beagle         "Use BEAGLE library if available (default on)"
      -beagle_off     "Don't use BEAGLE library"
      -beagle_info          "BEAGLE: show information on available resources"
+     -beagle_auto          "BEAGLE: automatically select fastest resource for analysis"
      -beagle_order         "BEAGLE: set order of resource use"
      -beagle_instances     "BEAGLE: divide site patterns amongst instances"
      -beagle_CPU           "BEAGLE: use CPU instance"

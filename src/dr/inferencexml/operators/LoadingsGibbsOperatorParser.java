@@ -25,73 +25,94 @@
 
 package dr.inferencexml.operators;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.IndependentNormalDistributionModel;
-import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.operators.LoadingsGibbsOperator;
 import dr.inference.operators.LoadingsGibbsTruncatedOperator;
+import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
+import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
 import dr.xml.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: max
- * Date: 5/23/14
- * Time: 1:49 PM
- * To change this template use File | Settings | File Templates.
+ * @author Max R. Tolkoff
+ * @author Marc A. Suchard
  */
 public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
-    public static final String LOADINGS_GIBBS_OPERATOR = "loadingsGibbsOperator";
-    public static final String WEIGHT = "weight";
-    private final String RANDOM_SCAN = "randomScan";
-    private final String WORKING_PRIOR = "workingPrior";
-    private final String CUTOFF_PRIOR = "cutoffPrior";
-    private final String MULTI_THREADED = "multiThreaded";
-    private final String NUM_THREADS = "numThreads";
-    private final String PATH_PARAMETER = "pathParameter";
-    private final String UPPER_TRIANGLE = "upperTriangle";
 
+    private final static String LOADINGS_GIBBS_OPERATOR = "loadingsGibbsOperator";
+    private final static String WEIGHT = "weight";
+    private final static String RANDOM_SCAN = "randomScan";
+    private final static String WORKING_PRIOR = "workingPrior";
+    private final static String CUTOFF_PRIOR = "cutoffPrior";
+    private final static String MULTI_THREADED = "multiThreaded";
+    private final static String NUM_THREADS = "numThreads";
+    private final static String MODE = "newMode";
+    private final static String CONSTRAINT = "constraint";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        String weightTemp = (String) xo.getAttribute(WEIGHT);
-        double weight = Double.parseDouble(weightTemp);
-        LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
-        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
-        MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
-        IndependentNormalDistributionModel prior3 = (IndependentNormalDistributionModel) xo.getChild(IndependentNormalDistributionModel.class);
-        DistributionLikelihood cutoffPrior = null;
-        if(xo.hasChildNamed(CUTOFF_PRIOR)){
-            cutoffPrior = (DistributionLikelihood) xo.getChild(CUTOFF_PRIOR).getChild(DistributionLikelihood.class);
-        }
+
+        // Get XML attributes
+        double weight = xo.getDoubleAttribute(WEIGHT);
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
         int numThreads = xo.getAttribute(NUM_THREADS, 4);
-        MatrixParameterInterface loadings=null;
-        if(xo.getChild(MatrixParameterInterface.class)!=null){
-            loadings=(MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+        boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);
+        boolean useNewMode = xo.getAttribute(MODE, false);
+
+        // Get main objects
+        LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
+
+        // TODO The next 3 lines are not necessary, nor in XML rules
+        MatrixParameterInterface loadings = null;
+        if (xo.getChild(MatrixParameterInterface.class) != null) {
+            loadings = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         }
+
+        // Get priors
+        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
+
+        DistributionLikelihood cutoffPrior = null;
+        if (xo.hasChildNamed(CUTOFF_PRIOR)) {
+            cutoffPrior = (DistributionLikelihood) xo.getChild(CUTOFF_PRIOR).getChild(DistributionLikelihood.class);
+        }
+
         DistributionLikelihood WorkingPrior = null;
-        if(xo.getChild(WORKING_PRIOR) != null){
+        if (xo.getChild(WORKING_PRIOR) != null) {
             WorkingPrior = (DistributionLikelihood) xo.getChild(WORKING_PRIOR).getChild(DistributionLikelihood.class);
         }
-        boolean multiThreaded = xo.getAttribute(MULTI_THREADED, false);
-        boolean upperTriangle = xo.getAttribute(UPPER_TRIANGLE, true);
 
+        // Dispatch
+        if (prior != null) {
+            if (useNewMode) {
 
-        if(prior !=null || prior3 != null){
-            LoadingsGibbsOperator lfmOp = new LoadingsGibbsOperator(LFM, prior, prior3, loadings, weight, randomScan,
-                    WorkingPrior, multiThreaded, numThreads, upperTriangle);
-            if(xo.hasAttribute(PATH_PARAMETER)){
-                System.out.println("WARNING: Setting Path Parameter is intended for debugging purposes only!");
-                lfmOp.setPathParameter(xo.getDoubleAttribute(PATH_PARAMETER));
+                final FactorAnalysisOperatorAdaptor adaptor;
+                if (LFM != null) {
+                    adaptor = new FactorAnalysisOperatorAdaptor.SampledFactors(LFM);
+                } else {
+                    IntegratedFactorAnalysisLikelihood integratedLikelihood = (IntegratedFactorAnalysisLikelihood)
+                            xo.getChild(IntegratedFactorAnalysisLikelihood.class);
+                    TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+                    adaptor = new FactorAnalysisOperatorAdaptor.IntegratedFactors(integratedLikelihood, treeLikelihood);
+                }
+
+                NewLoadingsGibbsOperator.ConstrainedSampler sampler = NewLoadingsGibbsOperator.ConstrainedSampler.parse(
+                        xo.getAttribute(CONSTRAINT, NewLoadingsGibbsOperator.ConstrainedSampler.NONE.getName())
+                );
+
+                return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
+                        multiThreaded, numThreads, sampler);
+            } else {
+//                return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
+                return null;
             }
-        return lfmOp;
-    }
-        else
+        } else {
             return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings, cutoffPrior);
+        }
     }
 
     @Override
@@ -100,40 +121,43 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(LatentFactorModelInterface.class),
-
             new XORRule(
-                    new XORRule(
-                            new ElementRule(IndependentNormalDistributionModel.class),
-        new ElementRule(DistributionLikelihood.class)),
+                    new ElementRule(LatentFactorModel.class),
                     new AndRule(
-            new ElementRule(MomentDistributionModel.class),
-
-                    new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{new ElementRule(DistributionLikelihood.class)}))
+                            new ElementRule(IntegratedFactorAnalysisLikelihood.class),
+                            new ElementRule(TreeDataLikelihood.class)
+                    )
             ),
-//            new ElementRule(CompoundParameter.class),
+            new XORRule(
+                    new ElementRule(DistributionLikelihood.class),
+                    new AndRule(
+                            new ElementRule(MomentDistributionModel.class),
+                            new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[] {
+                                    new ElementRule(DistributionLikelihood.class)
+                            }))
+            ),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newBooleanRule(MULTI_THREADED, true),
             AttributeRule.newIntegerRule(NUM_THREADS, true),
+            AttributeRule.newBooleanRule(MODE, true),
+            AttributeRule.newStringRule(CONSTRAINT, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),
-            AttributeRule.newDoubleRule(PATH_PARAMETER, true),
-            AttributeRule.newBooleanRule(UPPER_TRIANGLE, true)
     };
 
     @Override
     public String getParserDescription() {
-        return "Gibbs sampler for the loadings matrix of a latent factor model";  //To change body of implemented methods use File | Settings | File Templates.
+        return "Gibbs sampler for the loadings matrix of a latent factor model";
     }
 
     @Override
     public Class getReturnType() {
-        return LoadingsGibbsOperator.class;  //To change body of implemented methods use File | Settings | File Templates.
+        return LoadingsGibbsOperator.class;
     }
 
     @Override
     public String getParserName() {
-        return LOADINGS_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
+        return LOADINGS_GIBBS_OPERATOR;
     }
 }

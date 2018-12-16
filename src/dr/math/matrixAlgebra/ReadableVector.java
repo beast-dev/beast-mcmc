@@ -120,6 +120,13 @@ public interface ReadableVector {
 
     class Utils {
 
+        public static void setParameter(double[] value, Parameter parameter) {
+            for (int j = 0, dim = value.length; j < dim; ++j) {
+                parameter.setParameterValueQuietly(j, value[j]);
+            }
+            parameter.fireParameterChangedEvent();
+        }
+
         public static void setParameter(ReadableVector position, Parameter parameter) {
             for (int j = 0, dim = position.getDim(); j < dim; ++j) {
                 parameter.setParameterValueQuietly(j, position.get(j));

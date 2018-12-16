@@ -84,7 +84,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 }
 
                 for (Predictor predictor : model.getTraitData().getIncludedPredictors()) {
-                    if (predictor.isLogged() && predictor.hasZeroValues()) {
+                    if (predictor.isLogged() && predictor.hasZeroValues(true)) {
                         throw new GeneratorException("The GLM predictor, " + predictor.getName() + ", for trait, " + model.getTraitData().getName() + ", has zero values and therefore should not be logged.");
                     }
                     if (predictor.isStandardized() && predictor.isBinary()) {

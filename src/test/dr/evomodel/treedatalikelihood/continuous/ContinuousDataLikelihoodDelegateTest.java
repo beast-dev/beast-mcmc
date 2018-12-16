@@ -126,7 +126,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 traitParameter,
                 missingIndices,
                 loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0);
+                factorPrecisionParameters, 0.0, null);
     }
 
     public void testLikelihoodBM() {

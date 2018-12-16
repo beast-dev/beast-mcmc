@@ -388,7 +388,7 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             if (modelInLogSpace) {
                 effect += coefficient * getMidpointHeight(tree, node, true);
             } else {
-                effect *= Math.pow(coefficient,getMidpointHeight(tree, node, false));
+                effect *= Math.pow(getMidpointHeight(tree, node, false),coefficient);
             }
         }
 

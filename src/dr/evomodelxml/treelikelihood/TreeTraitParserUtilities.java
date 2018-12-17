@@ -402,15 +402,6 @@ public class TreeTraitParserUtilities {
                 }
             }
 
-            // Standardize
-            if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
-
-                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter);
-                String message = st.doStandardization(false);
-
-                Logger.getLogger("dr.evomodel.continous").info(message);
-            }
-
             // Find missing values
             double[] allValues = traitParameter.getParameterValues();
             missingIndices = new ArrayList<Integer>();
@@ -419,6 +410,15 @@ public class TreeTraitParserUtilities {
                     traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
                     missingIndices.add(i);
                 }
+            }
+
+            // Standardize
+            if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
+
+                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter, missingIndices);
+                String message = st.doStandardization(false);
+
+                Logger.getLogger("dr.evomodel.continous").info(message);
             }
 
             if (xo.hasChildNamed(MISSING)) {

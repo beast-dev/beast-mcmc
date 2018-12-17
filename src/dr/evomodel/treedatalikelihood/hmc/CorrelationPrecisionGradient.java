@@ -48,8 +48,10 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
 
     @Override
     public Parameter getParameter() {
-        return compoundSymmetricMatrix.getOffDiagonalParameter();
+        return compoundSymmetricMatrix.getUntransformedOffDiagonalParameter();
     }
+
+
 
 
     @Override

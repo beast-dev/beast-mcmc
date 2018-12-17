@@ -297,18 +297,27 @@ public class HKY extends BaseSubstitutionModel implements Citable,
 
     /**
      * Generate a replicate of itself with new kappaParamter.
-     * @param oldParameter
-     * @param newParameter
+     * @param oldParameters
+     * @param newParameters
      */
     @Override
-    public HKY factory(Parameter oldParameter, Parameter newParameter) {
-        if (oldParameter == kappaParameter) {
-            return new HKY(newParameter, freqModel);
-        } else if (oldParameter == freqModel.getFrequencyParameter()) {
-            return new HKY(kappaParameter, new FrequencyModel(freqModel.getDataType(), newParameter));
-        } else {
-            throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+    public HKY factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencies = freqModel;
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++){
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+            if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            } else if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
+            } else {
+                throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+            }
         }
+        return new HKY(kappa, frequencies);
     }
 
 

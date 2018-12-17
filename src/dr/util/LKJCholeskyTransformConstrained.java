@@ -47,7 +47,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     public double[] inverse(double[] values, int from, int to) {
         assert from == 0 && to == values.length : "The transform function can only be applied to the whole array of values.";
         assert dim * (dim - 1) / 2 == values.length : "The transform function can only be applied to the whole array of values.";
-        for (int k = 0; k < dim; k++) {
+        for (int k = 0; k < values.length; k++) {
             assert values[k] <= 1.0 && values[k] >= -1.0 : "CPCs must be between -1.0 and 1.0";
         }
 

@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.hmc.TaxonTaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
@@ -59,7 +60,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                                               List<Integer> missingIndices,
                                               MatrixParameterInterface loadings,
                                               Parameter traitPrecision,
-                                              double nuggetPrecision) {
+                                              double nuggetPrecision,
+                                              TaxonTaskPool taxonTaskPool) {
         super(name);
 
         this.traitParameter = traitParameter;
@@ -88,6 +90,15 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
 
         this.nuggetPrecision = nuggetPrecision;
+        this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool : new TaxonTaskPool(numTaxa, 1);
+
+        if (USE_CACHE && taxonTaskPool.getNumThreads() > 1) {
+            throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
+        }
+
+        if (this.taxonTaskPool.getNumTaxon() != numTaxa) {
+            throw new IllegalArgumentException("Incorrectly specified TaxonTaskPool");
+        }
     }
 
     @Override
@@ -250,6 +261,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private final double nuggetPrecision;
+    private final TaxonTaskPool taxonTaskPool;
 
     private class HashedMissingArray {
 
@@ -429,10 +441,90 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     }
 
+    private void computePartialAndRemainderForOneTaxon(int taxon,
+                                                       DenseMatrix64F precision,
+                                                       DenseMatrix64F variance) {
+
+        final int partialsOffset = dimPartial * taxon;
+        // Work with mean in-place
+        final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
+
+        computePrecisionForTaxon(precision, taxon, numFactors);
+        InversionResult ci = fillInMeanForTaxon(mean, precision, taxon);
+
+        if (DEBUG) {
+            System.err.println("taxon " + taxon);
+            System.err.println("\tprecision: " + precision);
+        }
+
+        double constant;
+        double nuggetDensity = 0;
+
+        if (observedDimensions[taxon] == 0) {
+
+            makeCompletedUnobserved(precision, 0);
+            makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
+            constant = 0.0;
+
+        } else {
+
+
+            if (DEBUG) {
+                System.err.println("\tmean: " + mean);
+                //System.err.println("\n");
+            }
+
+            final double factorLogDeterminant = Math.log(ci.getDeterminant());
+            double traitLogDeterminant = getTraitLogDeterminant(taxon);
+
+//                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
+            final double logDetChange = traitLogDeterminant - factorLogDeterminant;
+
+            final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
+            final double traitInnerProduct = computeTraitInnerProduct(taxon);
+            final double innerProductChange = traitInnerProduct - factorInnerProduct;
+
+            int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension();
+
+            if (DEBUG) {
+                System.err.println("fIP: " + factorInnerProduct);
+                System.err.println("tIP: " + traitInnerProduct);
+                System.err.println("fDet: " + factorLogDeterminant);
+                System.err.println("tDet: " + traitLogDeterminant);
+                System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
+                        "\n\n");
+
+//                    if (Double.isInfinite(getTraitDeterminant(taxon))) {
+//                        System.err.println("\tOffending parameter: " +
+//                                new dr.math.matrixAlgebra.Vector(traitPrecision.getParameterValues()));
+//                    }
+            }
+
+            constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
+                    nuggetDensity;
+
+        }
+
+        // store in precision, variance and normalization constant
+        unwrap(precision, partials, partialsOffset + numFactors);
+
+        if (STORE_VARIANCE) {
+            safeInvert(precision, variance, true);
+            unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
+        }
+
+        normalizationConstants[taxon] = constant;
+    }
+
     private void computePartialsAndRemainders() {
 
-        final DenseMatrix64F precision = new DenseMatrix64F(numFactors, numFactors);
-        final DenseMatrix64F variance = new DenseMatrix64F(numFactors, numFactors);
+        final DenseMatrix64F[] precisions = new DenseMatrix64F[taxonTaskPool.getNumThreads()];
+        final DenseMatrix64F[] variances = new DenseMatrix64F[taxonTaskPool.getNumThreads()];
+
+        for (int i = 0; i < taxonTaskPool.getNumThreads(); ++i) {
+            precisions[i] = new DenseMatrix64F(numFactors, numFactors);
+            variances[i] = new DenseMatrix64F(numFactors, numFactors);
+        }
 
         if (USE_CACHE) {
             precisionMatrixMap.clear();
@@ -441,80 +533,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
         }
 
-        int partialsOffset = 0;
-        for (int taxon = 0; taxon < numTaxa; ++taxon) {
 
-            // Work with mean in-place
-            final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
-
-            computePrecisionForTaxon(precision, taxon, numFactors);
-            InversionResult ci = fillInMeanForTaxon(mean, precision, taxon);
-
-            if (DEBUG) {
-                System.err.println("taxon " + taxon);
-                System.err.println("\tprecision: " + precision);
+        taxonTaskPool.fork(new TaxonTaskPool.TaxonCallable() {
+            @Override
+            public void execute(int taxon, int thread) {
+                computePartialAndRemainderForOneTaxon(taxon, precisions[thread], variances[thread]);
             }
-
-            double constant;
-            double nuggetDensity = 0;
-
-            if (observedDimensions[taxon] == 0) {
-
-                makeCompletedUnobserved(precision, 0);
-                makeCompletedUnobserved(variance, Double.POSITIVE_INFINITY);
-                constant = 0.0;
-
-            } else {
-
-
-                if (DEBUG) {
-                    System.err.println("\tmean: " + mean);
-                    //System.err.println("\n");
-                }
-
-                final double factorLogDeterminant = Math.log(ci.getDeterminant());
-                double traitLogDeterminant = getTraitLogDeterminant(taxon);
-
-//                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
-                final double logDetChange = traitLogDeterminant - factorLogDeterminant;
-
-                final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
-                final double traitInnerProduct = computeTraitInnerProduct(taxon);
-                final double innerProductChange = traitInnerProduct - factorInnerProduct;
-
-                int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension();
-
-                if (DEBUG) {
-                    System.err.println("fIP: " + factorInnerProduct);
-                    System.err.println("tIP: " + traitInnerProduct);
-                    System.err.println("fDet: " + factorLogDeterminant);
-                    System.err.println("tDet: " + traitLogDeterminant);
-                    System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
-                            "\n\n");
-
-//                    if (Double.isInfinite(getTraitDeterminant(taxon))) {
-//                        System.err.println("\tOffending parameter: " +
-//                                new dr.math.matrixAlgebra.Vector(traitPrecision.getParameterValues()));
-//                    }
-                }
-
-                constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
-                        nuggetDensity;
-
-            }
-
-            // store in precision, variance and normalization constant
-            unwrap(precision, partials, partialsOffset + numFactors);
-
-            if (STORE_VARIANCE) {
-                safeInvert(precision, variance, true);
-                unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
-            }
-
-            normalizationConstants[taxon] = constant;
-
-            partialsOffset += dimPartial;
-        }
+        });
     }
 
     private static final boolean STORE_VARIANCE = true;
@@ -607,8 +632,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             double nugget = xo.getAttribute(NUGGET, 0.0);
 
+            TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
+
             return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
-                    loadings, traitPrecision, nugget);
+                    loadings, traitPrecision, nugget, taxonTaskPool);
         }
 
         @Override
@@ -654,6 +681,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     new ElementRule(Parameter.class)
             }, true),
             AttributeRule.newDoubleRule(NUGGET, true),
+            new ElementRule(TaxonTaskPool.class, true),
 
     };
 

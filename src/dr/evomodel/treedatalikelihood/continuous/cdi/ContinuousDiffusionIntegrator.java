@@ -652,9 +652,12 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //                    }
 //                    prePartials[ibo + g] = sum; // Write node
 //                }
+                final double pTmp = Double.isInfinite(pk) ? 1.0 : 1.0 + pjp / pk;
+                final double pWeight = Double.isInfinite(pTmp) ? 0.0 : 1.0 / pTmp;
 
                 for (int g = 0; g < dimTrait; ++g) {
-                    double mean = (pk * preOrderPartials[kbo + g] + pjp * partials[jbo + g]) / pip;
+//                    double mean = (pk * preOrderPartials[kbo + g] + pjp * partials[jbo + g]) / pip;
+                    double mean = pWeight * preOrderPartials[kbo + g] + (1.0 - pWeight) * partials[jbo + g];
                     preOrderPartials[ibo + g] = mean;
 //                    preBranchPartials[ibo + g] = mean; // TODO Only when necessary
                 }
@@ -673,7 +676,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //
 //                // X. Store precision results for node
 
-                preOrderPartials[ibo + dimTrait] = pi;
+//                preOrderPartials[ibo + dimTrait] = pi;
+                preOrderPartials[ibo + dimTrait] = Double.isInfinite(pi) ? Double.POSITIVE_INFINITY : pi;
+
 //                preBranchPartials[ibo + dimTrait] = pip; // TODO Ony when necessary
 
 //                unwrap(Pi, prePartials, ibo + dimTrait);
@@ -750,13 +755,16 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 // Compute partial mean and precision at node k
 
                 // A. Partial precision scalar
-                final double pk = pip + pjp;
+                final double pk = Double.isInfinite(pip + pjp) ? Double.POSITIVE_INFINITY : pip + pjp;
+                final double pTmp = Double.isInfinite(pip) ? 1.0 : 1.0 + pjp / pip;
+                final double pWeight = Double.isInfinite(pTmp) ? 0.0 : 1.0 / pTmp;
 
                 // B. Partial mean
                 if (INLINE) {
                     // For each dimension // TODO in parallel
                     for (int g = 0; g < dimTrait; ++g) {
-                        partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
+//                        partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
+                        partials[kbo + g] = pWeight * partials[ibo + g] + (1.0 - pWeight) * partials[jbo + g];
                     }
                 } else {
                     updateMean(partials, kbo, ibo, jbo, pip, pjp, pk, dimTrait);
@@ -894,8 +902,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                        final double pjp,
                                        final double pk,
                                        final int dimTrait) {
+            final double pTmp = Double.isInfinite(pip) ? 1.0 : 1.0 + pjp / pip;
+            final double pWeight = Double.isInfinite(pTmp) ? 0.0 : 1.0 / pTmp;
             for (int g = 0; g < dimTrait; ++g) {
-                partials[kob + g] = (pip * partials[iob + g] + pjp * partials[job + g]) / pk;
+//                partials[kob + g] = (pip * partials[iob + g] + pjp * partials[job + g]) / pk;
+                partials[kob + g] = pWeight * partials[iob + g] + (1.0 - pWeight) * partials[job + g];
             }
         }
 

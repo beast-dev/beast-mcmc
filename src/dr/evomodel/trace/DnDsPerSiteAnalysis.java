@@ -1,5 +1,5 @@
 /*
- * CnCsToDnDsPerSiteAnalysis.java
+ * DnDsPerSiteAnalysis.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,9 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.trace;
+package dr.evomodel.trace;
 
-import dr.math.EmpiricalBayesPoissonSmoother;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceException;
+import dr.inference.trace.TraceList;
 import dr.stats.DiscreteStatistics;
 import dr.util.*;
 import dr.xml.*;
@@ -38,9 +41,8 @@ import java.util.*;
  * @author Philippe Lemey
  * @author Marc A. Suchard
  */
-public class CnCsToDnDsPerSiteAnalysis implements Citable {
-
-    public static final String CNCS_TO_DNDS_PER_SITE_ANALYSIS = "cNcSTodNdSPerSiteAnalysis";
+public class DnDsPerSiteAnalysis implements Citable {
+    public static final String DNDS_PER_SITE_ANALYSIS = "dNdSPerSiteAnalysis";
     public static final String BURN_IN = "burnin";
     public static final String CUTOFF = "cutoff";
     public static final String PROPORTION = "proportion";
@@ -51,79 +53,14 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     public static final String SEPARATOR_STRING = "separator";
     public static final String INCLUDE_SIMULATION_OUTCOME = "simulationOutcome";
     public static final String INCLUDE_HPD = "includeHPD";
+    public static final String INCLUDE_CPD = "includeCPD";
     public static final String SITE_SIMULATION = "siteSimulation";
-    public static final String CN = "CN";
-    public static final String CS = "CS";
-    public static final String USE_SAMPLE = "sample";
 
-    public CnCsToDnDsPerSiteAnalysis(TraceList traceListN, TraceList traceListS) {
-        this.traceListN = traceListN;
-        this.traceListS = traceListS;
-        this.numSites = (traceListN.getTraceCount()) / 2;
+    public DnDsPerSiteAnalysis(TraceList traceList) {
+        this.traceList = traceList;
+        this.numSites = traceList.getTraceCount();
         this.format = new OutputFormat();
 
-
-        setUseSample(false);
-
-
-        double[][] allCn = new double[numSites][this.traceListN.getStateCount()];
-        double[][] allUn = new double[numSites][this.traceListN.getStateCount()];
-        double[][] allCs = new double[numSites][this.traceListS.getStateCount()];
-        double[][] allUs = new double[numSites][this.traceListS.getStateCount()];
-
-        for (int o = 0; o < numSites; o++) {
-            allCn[o] = listToDoubleArray(traceListN.getValues(o));
-            allUn[o] = listToDoubleArray(traceListN.getValues(numSites + o));
-            allCs[o] = listToDoubleArray(traceListS.getValues(o));
-            allUs[o] = listToDoubleArray(traceListS.getValues(numSites + o));
-        }
-
-        allCn = transpose(allCn);
-        allUn = transpose(allUn);
-        allCs = transpose(allCs);
-        allUs = transpose(allUs);
-
-        double[][] tempAllSmoothedCn = new double[this.traceListN.getStateCount()][numSites];
-        double[][] tempAllSmoothedUn = new double[this.traceListN.getStateCount()][numSites];
-        double[][] tempAllSmoothedCs = new double[this.traceListS.getStateCount()][numSites];
-        double[][] tempAllSmoothedUs = new double[this.traceListS.getStateCount()][numSites];
-
-        boolean first = true;
-
-        for (int p = 0; p < this.traceListN.getStateCount(); p++) {
-
-            // Testing code:
-
-//            if (first) {
-//                tempAllSmoothedCn[p] = EmpiricalBayesPoissonSmoother.smooth(allCn[p]);
-//                System.err.println("Smooth values: " + new Vector(tempAllSmoothedCn[p]));
-//
-//                tempAllSmoothedCn[p] = EmpiricalBayesPoissonSmoother.smoothWithSample(allCn[p]);
-//                System.err.println("Sample values: " + new Vector(tempAllSmoothedCn[p]));
-//                first = false;
-//            }
-
-//            System.exit(-1);
-
-
-            if (format.useSample) {
-                tempAllSmoothedCn[p] = EmpiricalBayesPoissonSmoother.smoothWithSample(allCn[p]);
-                tempAllSmoothedUn[p] = EmpiricalBayesPoissonSmoother.smoothWithSample(allUn[p]);
-                tempAllSmoothedCs[p] = EmpiricalBayesPoissonSmoother.smoothWithSample(allCs[p]);
-                tempAllSmoothedUs[p] = EmpiricalBayesPoissonSmoother.smoothWithSample(allUs[p]);
-            } else {
-                tempAllSmoothedCn[p] = EmpiricalBayesPoissonSmoother.smooth(allCn[p]);
-                tempAllSmoothedUn[p] = EmpiricalBayesPoissonSmoother.smooth(allUn[p]);
-                tempAllSmoothedCs[p] = EmpiricalBayesPoissonSmoother.smooth(allCs[p]);
-                tempAllSmoothedUs[p] = EmpiricalBayesPoissonSmoother.smooth(allUs[p]);
-            }
-
-        }
-
-        allSmoothedCn = transpose(tempAllSmoothedCn);
-        allSmoothedUn = transpose(tempAllSmoothedUn);
-        allSmoothedCs = transpose(tempAllSmoothedCs);
-        allSmoothedUs = transpose(tempAllSmoothedUs);
 
         fieldWidth = 14;
         firstField = 10;
@@ -140,6 +77,10 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         format.includeHPD = b;
     }
 
+    public void setIncludeCPD(boolean b) {
+        format.includeCPD = b;
+    }
+
     public void setIncludeSignificanceLevel(boolean b) {
         format.includeSignificanceLevel = b;
     }
@@ -153,7 +94,7 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     }
 
     public boolean getIncludeSimulationOutcome() {
-        return (format.includeSimulationOutcome);
+        return(format.includeSimulationOutcome);
     }
 
     public void setProportion(double d) {
@@ -180,38 +121,36 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         format.test = t;
     }
 
-    public void setUseSample(boolean u) {
-        format.useSample = u;
-    }
-
     private String toStringSite(int index, OutputFormat format) {
-
-        double[] dN = getRatioArray(allSmoothedCn[index], allSmoothedUn[index]);
-        double[] dS = getRatioArray(allSmoothedCs[index], allSmoothedUs[index]);
-
-        double[] omegas = getRatioArray(dN, dS);
-//        for (int x = 0; x < dN.length; x ++){
-//            System.out.println(index+"\t"+allSmoothedCn[index][x]+"\t"+allSmoothedUn[index][x]+"\t"+dN[x]+"\t"+allSmoothedCs[index][x]+"\t"+allSmoothedUs[index][x]+"\t"+dS[x]+"\t"+omegas[x]);
-//        }
-
         StringBuilder sb = new StringBuilder();
+        traceList.analyseTrace(index);
+        TraceDistribution distribution = traceList.getDistributionStatistics(index);
         sb.append(numberFormatter.formatToFieldWidth(Integer.toString(index + 1), firstField));
 
         double[] hpd = new double[2];
-        double[] minMax = getMinMax(omegas);
-        // this is weird, yes. But we used these 'HPD's to obtain the ROC curves for different cut-offs
-        if (format.proportion >= 1.0) {
-            hpd[0] = minMax[0] - (minMax[0] * (format.proportion - 1.0));
-            hpd[1] = minMax[1] + (minMax[1] * (format.proportion - 1.0));
-            System.out.println("hpd = " + hpd[0] + " - " + hpd[1]);
+        double[] cpd = new double[2];
+
+        if (format.proportion == 0.95){
+            hpd[0] = distribution.getLowerHPD();
+            hpd[1] = distribution.getUpperHPD();
+            cpd[0] = distribution.getLowerCPD();
+            cpd[1] = distribution.getUpperCPD();
+            // this is weird, yes. But we used these 'HPD's/CPDs to obtain the ROC curves for different cut-offs
+        }  else if (format.proportion >= 1.0) {
+            hpd[0] = cpd[0] = distribution.getMinimum() - (distribution.getMinimum()*(format.proportion - 1.0));
+            hpd[1] = cpd[1] = distribution.getMaximum() + (distribution.getMaximum()*(format.proportion - 1.0));
         } else {
-            hpd = getHPDInterval(format.proportion, omegas);
+//                distribution does not allow to specify proportion
+            hpd = getCustomHPDInterval(format.proportion,traceList.getValues(index));
+            double[] proportions = new double[]{((1.0-format.proportion)/2.0),(format.proportion+((1.0-format.proportion)/2.0))};
+            cpd = getCustomCPDInterval(proportions,traceList.getValues(index));
+
+//                    System.out.println("HPD proportion is "+format.proportion);
         }
 
         if (format.includeMean) {
             sb.append(format.separator);
-//            sb.append(numberFormatter.format(DiscreteStatistics.mean(omegas)));
-            sb.append(numberFormatter.format(DiscreteStatistics.median(omegas)));
+            sb.append(numberFormatter.format(distribution.getMean()));
         }
         if (format.includeHPD) {
             sb.append(format.separator);
@@ -219,35 +158,55 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
             sb.append(format.separator);
             sb.append(numberFormatter.format(hpd[1]));
         }
+        if (format.includeCPD) {
+            sb.append(format.separator);
+            sb.append(numberFormatter.format(cpd[0]));
+            sb.append(format.separator);
+            sb.append(numberFormatter.format(cpd[1]));
+        }
         if (format.includeSignificanceLevel || format.includeSignificantSymbol || format.includeSiteClassification || format.includeSimulationOutcome) {
             boolean isSignificant = false;
             String classification = "0";
             String level;
-            if (format.test == SignificanceTest.NOT_EQUAL) {
+            if (format.test == SignificanceTest.NOT_EQUAL_HPD) {
                 if (hpd[0] < format.cutoff && hpd[1] < format.cutoff) {
-                    level = numberFormatter.formatToFieldWidth(">" + format.proportion, fieldWidth);
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
                     isSignificant = true;
                     classification = "-";
                 } else if (hpd[0] > format.cutoff && hpd[1] > format.cutoff) {
-                    level = numberFormatter.formatToFieldWidth(">" + format.proportion, fieldWidth);
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
                     isSignificant = true;
                     classification = "+";
                 } else {
-                    level = numberFormatter.formatToFieldWidth("<=" + format.proportion, fieldWidth);
+                    level = numberFormatter.formatToFieldWidth("<="+format.proportion, fieldWidth);
+                }
+            } else if(format.test == SignificanceTest.NOT_EQUAL_CPD) {
+                if (cpd[0] < format.cutoff && cpd[1] < format.cutoff) {
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
+                    isSignificant = true;
+                    classification = "-";
+                } else if (cpd[0] > format.cutoff && cpd[1] > format.cutoff) {
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
+                    isSignificant = true;
+                    classification = "+";
+                } else {
+                    level = numberFormatter.formatToFieldWidth("<="+format.proportion, fieldWidth);
                 }
             } else {
+                List values = traceList.getValues(index);
                 double levelPosValue = 0.0;
                 double levelNegValue = 0.0;
                 int total = 0;
-                for (double w : omegas) {
+                for (Object obj : values) {
+                    double d = ((Number) obj).doubleValue();
 //                    if ((format.test == SignificanceTest.LESS_THAN && d < format.cutoff) ||
 //                            (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff)) {
-                    if (w < format.cutoff) {
-                        if (format.test == SignificanceTest.LESS_THAN || format.test == SignificanceTest.LESS_OR_GREATER_THAN) {
+                    if (d < format.cutoff) {
+                        if(format.test == SignificanceTest.LESS_THAN || format.test == SignificanceTest.LESS_OR_GREATER_THAN) {
                             levelNegValue++;
                         }
-                    } else if (w > format.cutoff) {
-                        if (format.test == SignificanceTest.GREATER_THAN || format.test == SignificanceTest.LESS_OR_GREATER_THAN) {
+                    } else if (d > format.cutoff){
+                        if (format.test == SignificanceTest.GREATER_THAN || format.test == SignificanceTest.LESS_OR_GREATER_THAN){
                             levelPosValue++;
                         }
                     }
@@ -264,9 +223,9 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
                 }
                 if (levelPosValue > levelNegValue) {
                     level = numberFormatter.format(levelPosValue);
-                } else {
+                                    } else {
                     level = numberFormatter.format(levelNegValue);
-                }
+                                    }
             }
 
             if (format.includeSignificanceLevel) {
@@ -294,13 +253,13 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
                 sb.append(format.siteSimulation[index]);
                 sb.append(format.separator);
                 if (format.siteSimulation[index].equals("+") || format.siteSimulation[index].equals("-")) {
-                    if (classification.equals(format.siteSimulation[index])) {
+                    if (classification.equals(format.siteSimulation[index])){
                         sb.append("TP");   // True Positive
                     } else {
                         sb.append("FN");   // True Negative
                     }
-                } else {
-                    if (classification.equals(format.siteSimulation[index])) {
+                }  else {
+                    if (classification.equals(format.siteSimulation[index])){
                         sb.append("TN");   // True Negative
                     } else {
                         sb.append("FP");   // False Positive
@@ -315,7 +274,7 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     public String header(OutputFormat format) {
         StringBuilder sb = new StringBuilder();
         sb.append("# Some information here\n");
-        sb.append("# Please cite: " + Utils.getCitationString(this));
+        sb.append("# Please cite: " + Citable.Utils.getCitationString(this));
 
 
         sb.append(numberFormatter.formatToFieldWidth("Site", firstField));
@@ -327,9 +286,16 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
 
         if (format.includeHPD) {
             sb.append(format.separator);
-            sb.append(numberFormatter.formatToFieldWidth("Lower", fieldWidth));
+            sb.append(numberFormatter.formatToFieldWidth("HPD Low", fieldWidth));
             sb.append(format.separator);
-            sb.append(numberFormatter.formatToFieldWidth("Upper", fieldWidth));
+            sb.append(numberFormatter.formatToFieldWidth("HPD Up", fieldWidth));
+        }
+
+        if (format.includeCPD) {
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("CPD Low", fieldWidth));
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("CPD Up", fieldWidth));
         }
 
         if (format.includeSignificanceLevel) {
@@ -364,8 +330,6 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
             sb.append(toStringSite(i, format));
         }
 
-        sb.append(toStringSite(0, format));
-
         return sb.toString();
     }
 
@@ -385,9 +349,9 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     }
 
     private class OutputFormat {
-        boolean useSample;
         boolean includeMean;
         boolean includeHPD;
+        boolean includeCPD;
         boolean includeSignificanceLevel;
         boolean includeSignificantSymbol;
         boolean includeSiteClassification;
@@ -399,12 +363,12 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         String separator;
 
         OutputFormat() {
-            this(false, true, true, true, true, true, false, null, 1.0, 0.95, SignificanceTest.NOT_EQUAL, "\t");
+            this(true, false, true, true, true, true, false, null, 1.0, 0.95, SignificanceTest.NOT_EQUAL_CPD, "\t");
         }
 
-        OutputFormat(boolean useSample,
-                     boolean includeMean,
+        OutputFormat(boolean includeMean,
                      boolean includeHPD,
+                     boolean includeCPD,
                      boolean includeSignificanceLevel,
                      boolean includeSignificantSymbol,
                      boolean includeSiteClassification,
@@ -414,9 +378,9 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
                      double proportion,
                      SignificanceTest test,
                      String separator) {
-            this.useSample = useSample;
             this.includeMean = includeMean;
             this.includeHPD = includeHPD;
+            this.includeCPD = includeCPD;
             this.includeSignificanceLevel = includeSignificanceLevel;
             this.includeSignificantSymbol = includeSignificantSymbol;
             this.includeSiteClassification = includeSiteClassification;
@@ -432,7 +396,8 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     public enum SignificanceTest {
         GREATER_THAN("gt"),    //>
         LESS_THAN("lt"),       //<
-        NOT_EQUAL("ne"),       //!=
+        NOT_EQUAL_HPD("ne_HPD"),       //!=
+        NOT_EQUAL_CPD("ne_CPD"),       //!=
         LESS_OR_GREATER_THAN("logt"); //<>
 
         private SignificanceTest(String text) {
@@ -454,99 +419,51 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         private final String text;
     }
 
-    private static double[] listToDoubleArray(List list) {
-        Double[] resultObjArray = (Double[]) list.toArray(new Double[0]);
-        double[] result = toPrimitiveDoubleArray(resultObjArray);
-        return result;
-    }
+    private static double[] getCustomHPDInterval(double proportion, List list) {
 
-    private double[][] transpose(double[][] in) {
-        double[][] out = new double[in[0].length][in.length];
-        for (int r = 0; r < in.length; r++) {
-            for (int c = 0; c < in[0].length; c++) {
-                out[c][r] = in[r][c];
-            }
-        }
-        return out;
-    }
-
-    private static double[] getFirstHalfArray(double[] condAndUncond) {
-        int count = (condAndUncond.length) / 2;
-        double[] returnArray = new double[count];
-        for (int a = 0; a < count; a++) {
-            returnArray[a] = condAndUncond[a];
-        }
-        return returnArray;
-    }
-
-    private static double[] getSecondHalfArray(double[] condAndUncond) {
-        int count = (condAndUncond.length) / 2;
-        double[] returnArray = new double[count];
-        for (int a = 0; a < count; a++) {
-            returnArray[a] = condAndUncond[count + a];
-        }
-        return returnArray;
-    }
-
-    private static double[] getRatioArray(double[] enumArray, double[] denomArray) {
-        double[] returnArray = new double[enumArray.length];
-        for (int x = 0; x < enumArray.length; x++) {
-            returnArray[x] = enumArray[x] / denomArray[x];
-        }
-        return returnArray;
-    }
-
-    private static double[] getMinMax(double[] values) {
-        double[] returnArray = new double[2];
-
-        double min = Double.MAX_VALUE;
-        double max = 0;
-
-        for (int x = 0; x < values.length; x++) {
-            if (values[x] > max) {
-                max = values[x];
-            }
-            if (values[x] < min) {
-                min = values[x];
-            }
-        }
-
-        returnArray[0] = min;
-        returnArray[1] = max;
-
-        return returnArray;
-
-    }
-
-    private static double[] getHPDInterval(double proportion, double[] values) {
-
-        double[] returnArray = new double[2];
-
-        int length = values.length;
+        double returnArray[] = new double[2];
+        int length = list.size();
         int[] indices = new int[length];
-        HeapSort.sort(values, indices);
+        Double[] resultObjArray = (Double[]) list.toArray( new Double[0] );
+        double[] result = toPrimitiveDoubleArray(resultObjArray);
+        HeapSort.sort(result, indices);
         double minRange = Double.MAX_VALUE;
         int hpdIndex = 0;
 
-        int diff = (int) Math.round(proportion * (double) length);
+        int diff = (int)Math.round(proportion * (double)length);
 
         for (int i = 0; i <= (length - diff); i++) {
-            double minValue = values[indices[i]];
-            double maxValue = values[indices[i + diff - 1]];
+            double minValue = result[indices[i]];
+            double maxValue = result[indices[i+diff-1]];
             double range = Math.abs(maxValue - minValue);
             if (range < minRange) {
                 minRange = range;
                 hpdIndex = i;
             }
         }
-        returnArray[0] = values[indices[hpdIndex]];
-        returnArray[1] = values[indices[hpdIndex + diff - 1]];
+        returnArray[0] = result[indices[hpdIndex]];
+        returnArray[1] = result[indices[hpdIndex+diff-1]];
         return returnArray;
     }
 
-    private static double[] toPrimitiveDoubleArray(Double[] array) {
+    private static double[] getCustomCPDInterval(double[] proportions, List list) {
+
+        double returnArray[] = new double[2];
+        int length = list.size();
+        int[] indices = new int[length];
+        Double[] resultObjArray = (Double[]) list.toArray( new Double[0] );
+        double[] result = toPrimitiveDoubleArray(resultObjArray);
+        HeapSort.sort(result, indices);
+
+        returnArray[0] = DiscreteStatistics.quantile(proportions[0], result, indices);
+        returnArray[1] = DiscreteStatistics.quantile(proportions[1], result, indices);
+
+        return returnArray;
+    }
+
+   private static double[] toPrimitiveDoubleArray(Double[] array){
         double[] returnArray = new double[array.length];
-        for (int i = 0; i < array.length; i++) {
+        for(int i = 0; i < array.length; i++ ){
             returnArray[i] = array[i].doubleValue();
         }
         return returnArray;
@@ -571,75 +488,62 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return CNCS_TO_DNDS_PER_SITE_ANALYSIS;
+            return DNDS_PER_SITE_ANALYSIS;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String fileNameCN = xo.getStringAttribute(FileHelpers.FILE_NAME + CN);
-            String fileNameCS = xo.getStringAttribute(FileHelpers.FILE_NAME + CS);
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
             try {
 
-                File fileCN = new File(fileNameCN);
-                File fileCS = new File(fileNameCS);
-                String nameCN = fileCN.getName();
-                String nameCS = fileCS.getName();
-                String parentCN = fileCN.getParent();
-                String parentCS = fileCS.getParent();
+                File file = new File(fileName);
+                String name = file.getName();
+                String parent = file.getParent();
 
-                if (!fileCN.isAbsolute()) {
-                    parentCN = System.getProperty("user.dir");
-                }
-                if (!fileCS.isAbsolute()) {
-                    parentCS = System.getProperty("user.dir");
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
                 }
 
-                fileCN = new File(parentCN, nameCN);
-                fileCS = new File(parentCS, nameCS);
+                file = new File(parent, name);
 
-                fileNameCN = fileCN.getAbsolutePath();
-                fileNameCS = fileCS.getAbsolutePath();
+                fileName = file.getAbsolutePath();
 
-                LogFileTraces tracesCN = new LogFileTraces(fileNameCN, fileCN);
-                LogFileTraces tracesCS = new LogFileTraces(fileNameCS, fileCS);
-                tracesCN.loadTraces();
-                tracesCS.loadTraces();
-
-                long maxStateCN = tracesCN.getMaxState();
-                long maxStateCS = tracesCS.getMaxState();
-
-                if (maxStateCN != maxStateCS) {
-                    System.err.println("max states in" + fileNameCN + " and " + fileNameCS + " are not equal");
-                }
+                LogFileTraces traces = new LogFileTraces(fileName, file);
+                traces.loadTraces();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                long burnin = xo.getAttribute(BURN_IN, maxStateCN / 10);
+                long burnin = xo.getAttribute(BURN_IN, maxState / 10);
                 //TODO: implement custom burn-in
 
-                if (burnin < 0 || burnin >= maxStateCN) {
-                    burnin = maxStateCN / 5;
+                if (burnin < 0 || burnin >= maxState) {
+                    burnin = maxState / 5;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 20%");
                 }
 
-                tracesCN.setBurnIn(burnin);
-                tracesCS.setBurnIn(burnin);
+                traces.setBurnIn(burnin);
 
                 // TODO: Filter traces to include only dNdS columns
 
-                CnCsToDnDsPerSiteAnalysis analysis = new CnCsToDnDsPerSiteAnalysis(tracesCN, tracesCS);
+                DnDsPerSiteAnalysis analysis = new DnDsPerSiteAnalysis(traces);
 
+                analysis.setSignificanceTest(
+                        SignificanceTest.parseFromString(
+                                xo.getAttribute(SIGNIFICANCE_TEST, SignificanceTest.NOT_EQUAL_CPD.getText())
+                        )
+                );
                 analysis.setCutoff(xo.getAttribute(CUTOFF, 1.0));
                 analysis.setProportion(xo.getAttribute(PROPORTION, 0.95));
                 analysis.setSeparator(xo.getAttribute(SEPARATOR_STRING, "\t"));
-                analysis.setUseSample(xo.getAttribute(USE_SAMPLE, false));
-                analysis.setIncludeHPD(xo.getAttribute(INCLUDE_HPD, true));
+                analysis.setIncludeHPD(xo.getAttribute(INCLUDE_HPD, false));
+                analysis.setIncludeCPD(xo.getAttribute(INCLUDE_HPD, true));
                 analysis.setIncludeSignificanceLevel(xo.getAttribute(INCLUDE_SIGNIFICANCE_LEVEL, false));
                 analysis.setIncludeSignificantSymbol(xo.getAttribute(INCLUDE_SIGNIFICANT_SYMBOL, true));
                 analysis.setIncludeSiteClassification(xo.getAttribute(INCLUDE_SITE_CLASSIFICATION, true));
                 analysis.setIncludeSimulationOutcome(xo.getAttribute(INCLUDE_SIMULATION_OUTCOME, false));
-                if (analysis.getIncludeSimulationOutcome()) {
-                    String sites = (String) xo.getAttribute(SITE_SIMULATION, "empty");
-                    if (sites.equals("empty")) {
+                if (analysis.getIncludeSimulationOutcome()){
+                    String sites = (String)xo.getAttribute(SITE_SIMULATION, "empty");
+                    if (sites.equals("empty")){
                         System.err.println("you want simulation evaluation but do not provide a site simulation string??");
                     } else {
                         String[] siteSimulation = parseVariableLengthStringArray(sites);
@@ -647,10 +551,11 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
                     }
                 }
 
+
                 return analysis;
 
             } catch (FileNotFoundException fnfe) {
-                throw new XMLParseException("File '" + fileNameCN + "  and " + fileNameCS + "' can not be opened for " + getParserName() + " element.");
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
             } catch (TraceException e) {
@@ -663,11 +568,11 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         //************************************************************************
 
         public String getParserDescription() {
-            return "Performs a trace analysis of N and S counts.";
+            return "Performs a trace dN/dS analysis.";
         }
 
         public Class getReturnType() {
-            return CnCsPerSiteAnalysis.class;
+            return DnDsPerSiteAnalysis.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -675,13 +580,11 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newStringRule(FileHelpers.FILE_NAME + CN, true),
-                AttributeRule.newStringRule(FileHelpers.FILE_NAME + CS, true),
                 AttributeRule.newDoubleRule(CUTOFF, true),
                 AttributeRule.newDoubleRule(PROPORTION, true),
-                AttributeRule.newIntegerRule(BURN_IN, true),
-                AttributeRule.newBooleanRule(USE_SAMPLE, true),
+                AttributeRule.newIntegerRule(BURN_IN,true),
                 AttributeRule.newBooleanRule(INCLUDE_HPD, true),
+                AttributeRule.newBooleanRule(INCLUDE_CPD, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANT_SYMBOL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANCE_LEVEL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SITE_CLASSIFICATION, true),
@@ -689,8 +592,8 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
                 AttributeRule.newStringRule(SITE_SIMULATION, true),
                 AttributeRule.newStringRule(SIGNIFICANCE_TEST, true),
                 AttributeRule.newStringRule(SEPARATOR_STRING, true),
-//                new StringAttributeRule(FileHelpers.FILE_NAME,
-//                        "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
+                new StringAttributeRule(FileHelpers.FILE_NAME,
+                        "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
 //                new ElementRule(UNCONDITIONAL_S_COLUMN, new XMLSyntaxRule[]{
 //                       new StringAttributeRule(Attribute.NAME, "The column name")}),
 //                new ElementRule(UNCONDITIONAL_N_COLUMN, new XMLSyntaxRule[]{
@@ -698,13 +601,8 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         };
     };
 
-    final private TraceList traceListN;
-    final private TraceList traceListS;
+    final private TraceList traceList;
     final private int numSites;
-    final private double[][] allSmoothedCn;
-    final private double[][] allSmoothedUn;
-    final private double[][] allSmoothedCs;
-    final private double[][] allSmoothedUs;
     private OutputFormat format;
 
 
@@ -712,5 +610,25 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
     private int firstField;
     private NumberFormatter numberFormatter;
 
+
+//    private String separator = "\t";
+//    final private int numSamples;
+
+//    private double[][][] allSamples;
+//    final private static int NUM_VARIABLES = 4;
+//    final private static int COND_S = 0;
+//    final private static int UNCOND_S = 1;
+//    final private static int COND_N = 2;
+//    final private static int UNCOND_N = 3;
+//    final private static String[] names = {COND_SPERSITE_COLUMNS, UNCOND_SPERSITE_COLUMNS, COND_NPERSITE_COLUMNS, UNCOND_NPERSITE_COLUMNS};
+//    private double[][][] smoothSamples;
+//    private double[][][] smoothDnDsSamples;
+
+    private static final boolean DEBUG = true;
+
+//    private double[][] rawMeanStats;
+//    private double[][] smoothMeanStats;
+//    private double[][] smoothMeanDnDsStats;
+//    private double[][][] smoothHPDDnDsStats;
 
 }

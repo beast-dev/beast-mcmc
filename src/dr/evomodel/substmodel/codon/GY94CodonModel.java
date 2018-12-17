@@ -242,12 +242,20 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     );
 
     @Override
-    public ParameterReplaceableSubstitutionModel factory(Parameter oldParameter, Parameter newParameter) {
-        if (oldParameter == omegaParameter) {
-            return new GY94CodonModel(codonDataType, newParameter, kappaParameter, freqModel);
-        } else {
-            throw new RuntimeException("Parameter not found in GY94Codon SubstitutionModel.");
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter omega = omegaParameter;
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencyModel = freqModel;
+        for (int i = 0; i < oldParameters.size(); i++) {
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+            if (oldParameter == omegaParameter) {
+                omega = newParameter;
+            } else {
+                throw new RuntimeException("Parameter not found in GY94Codon SubstitutionModel.");
+            }
         }
+        return new GY94CodonModel(codonDataType, omega, kappa, frequencyModel);
     }
 
 

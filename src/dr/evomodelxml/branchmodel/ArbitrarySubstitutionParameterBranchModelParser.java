@@ -25,11 +25,13 @@
 
 package dr.evomodelxml.branchmodel;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -67,53 +69,46 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
 
         assert (dxo.getChildCount() == cxo.getChildCount());
 
-        List<CompoundParameter> parameterList = new ArrayList<CompoundParameter>();
+        List<BranchParameter> parameterList = new ArrayList<BranchParameter>();
         for (int i = 0; i < cxo.getChildCount(); i++) {
-            parameterList.add((CompoundParameter) cxo.getChild(i));
+            parameterList.add((BranchParameter) cxo.getChild(i));
         }
 
-        //TODO: more generic SubstitutionModel construction
         List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
 
         ParameterReplaceableSubstitutionModel rootSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
+        List<Parameter> oldParameters = parseParameters(dxo);
+        List<Parameter> branchParameters = parseParameters(cxo);
+
+        final int parameterCount = oldParameters.size();
+        int v = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
+
+            NodeRef node = tree.getNode(nodeNum);
 
             ParameterReplaceableSubstitutionModel branchSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
 
+            List<Parameter> newParameters = new ArrayList<Parameter>();
 
-            for (int i = 0; i < dxo.getChildCount(); i++) {
-                Parameter oldParameter = (Parameter) dxo.getChild(i);
-                Parameter branchParameter = (Parameter) cxo.getChild(i);
-
-
-                if (!(branchParameter.getDimension() == tree.getNodeCount() && branchParameter instanceof CompoundParameter)) {
-                    throw new RuntimeException("branchSubstitutionParameter miss-specified.");
+            if (tree.isRoot(node)) {
+                for (int i = 0; i < parameterCount; i++) {
+                    BranchParameter branchParameter = (BranchParameter) branchParameters.get(i);
+                    newParameters.add(branchParameter.getParameter(tree.getNodeCount() - 1));
                 }
-
-                CompoundParameter branchSpecificParameter = (CompoundParameter) branchParameter;
-
-                if (tree.getRoot().getNumber() != tree.getNodeCount() - 1) {
-                    throw new RuntimeException("Root node number is not the maximum.");
+            } else {
+                for (int i = 0; i < parameterCount; i++) {
+                    BranchParameter branchParameter = (BranchParameter) branchParameters.get(i);
+                    newParameters.add(branchParameter.getParameter(v));
                 }
-
-                branchSubstitutionModel = branchSubstitutionModel.factory(
-                        oldParameter,
-                        branchSpecificParameter.getParameter(nodeNum));
-
-
+                v++;
             }
+
+            branchSubstitutionModel = branchSubstitutionModel.factory(
+                    oldParameters,
+                    newParameters);
+
             substitutionModelList.add(branchSubstitutionModel);
         }
-        for (int i = 0; i < dxo.getChildCount(); i++) {
-            Parameter oldParameter = (Parameter) dxo.getChild(i);
-            CompoundParameter branchSpecificParameter = (CompoundParameter) cxo.getChild(i);
-            Parameter rootParameter = new Parameter.Default( "root.parameter",
-                    branchSpecificParameter.getParameter(0).getParameterValue(0),
-                    branchSpecificParameter.getParameter(0).getBounds().getLowerLimit(0),
-                    branchSpecificParameter.getParameter(0).getBounds().getUpperLimit(0));
-            rootSubstitutionModel = rootSubstitutionModel.factory(oldParameter, rootParameter);
-        }
-        substitutionModelList.add(rootSubstitutionModel);
 
         substitutionModelProvider = new BranchSpecificSubstitutionModelProvider.Default(substitutionModelList, tree);
 
@@ -121,6 +116,16 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
                 substitutionModelProvider, parameterList, tree);
 
         return branchParameterModel;
+    }
+
+    private List<Parameter> parseParameters(XMLObject cxo) {
+        List<Parameter> parameters = new ArrayList<Parameter>();
+
+        for (int i = 0; i < cxo.getChildCount(); i++) {
+            parameters.add((Parameter) cxo.getChild(i));
+        }
+
+        return parameters;
     }
 
     @Override

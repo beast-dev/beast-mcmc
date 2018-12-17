@@ -83,6 +83,20 @@ public class TreeUtils {
         return 0;
     }
 
+    /**
+     * Get the length of the path between node1 and node2.
+     * @param tree
+     * @param node1
+     * @param node2
+     * @return
+     */
+    public static double getPathLength(Tree tree, NodeRef node1, NodeRef node2) {
+
+        NodeRef mrca = getCommonAncestorNode(tree, node1, node2);
+
+        return (2 * tree.getNodeHeight(mrca)) - tree.getNodeHeight(node1) - tree.getNodeHeight(node2);
+    }
+
     public static double getMinNodeHeight(Tree tree, NodeRef node) {
 
         int childCount = tree.getChildCount(node);
@@ -241,6 +255,41 @@ public class TreeUtils {
             }
         }
     }
+
+    /**
+     * Gets the most recent common ancestor (MRCA) node for a pair of nodes. One
+     * node could be the ancestor of the other.
+     *
+     * @param tree    the Tree
+     * @param node1   a node
+     * @param node2   a second node
+     * @return        the NodeRef of the MRCA
+     */
+    public static NodeRef getCommonAncestorNode(Tree tree, NodeRef node1, NodeRef node2) {
+
+        // get set of ancestors going back to the root for node1
+        Set<NodeRef> ancestors = new HashSet<NodeRef>();
+        NodeRef node = node1;
+        while (node != null) {
+            ancestors.add(node);
+            node = tree.getParent(node);
+        }
+
+        node = node2;
+        NodeRef mrca = null;
+
+        // walk back from node2 looking form mrca with node1
+        while (node != null && mrca == null) {
+            if (ancestors.contains(node)) {
+                mrca = node;
+            }
+
+            node = tree.getParent(node);
+        }
+
+        return mrca;
+    }
+
 
     /**
      * Gets the most recent common ancestor (MRCA) node of a set of leaf nodes.
@@ -714,7 +763,7 @@ public class TreeUtils {
             idx += 1;
             postOrderList[idx] = child.getNumber();
             if( ! tree.isExternal(child) ) {
-              idx = preOrderTraversalList(tree, idx, postOrderList);
+                idx = preOrderTraversalList(tree, idx, postOrderList);
             }
         }
         return idx;

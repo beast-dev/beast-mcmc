@@ -23,11 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.trace;
+package dr.evomodel.trace;
 
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceException;
+import dr.inference.trace.TraceList;
 import dr.util.*;
 import dr.xml.*;
-import mpi.Comm;
 
 import java.io.File;
 import java.io.FileNotFoundException;

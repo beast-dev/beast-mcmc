@@ -28,7 +28,10 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.evomodel.substmodel.DifferentialMassProvider;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterDelegate.BranchDifferentialMassProvider;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -39,13 +42,14 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.CompoundParameter;
+import dr.inference.model.BranchParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
@@ -60,11 +64,10 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
-    protected final ArbitrarySubstitutionParameterBranchModel branchModel;
     protected final boolean useHessian;
 
-    protected final Parameter branchSubstitutionParameter;
-    private final TreeParameterModel parameterIndexHelper;
+    protected final BranchParameter branchParameter;
+    protected final TreeParameterModel parameterIndexHelper;
 
     private static final boolean DEBUG = true;
 
@@ -74,14 +77,11 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     public DiscreteTraitBranchSubstitutionParameterGradient(String traitName,
                                                             TreeDataLikelihood treeDataLikelihood,
                                                             BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                            Parameter branchSubstitutionParameter,
-                                                            ArbitrarySubstitutionParameterBranchModel arbitrarySubstitutionParameterBranchModel,
-                                                            List<DifferentialMassProvider> differentialMassProviderList,
+                                                            BranchParameter branchParameter,
                                                             boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
-        this.branchSubstitutionParameter = branchSubstitutionParameter;
-        this.branchModel = arbitrarySubstitutionParameterBranchModel;
+        this.branchParameter = branchParameter;
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
 
@@ -89,12 +89,27 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
-            if (!(branchSubstitutionParameter instanceof CompoundParameter)) {
-                throw new RuntimeException("Only support CompoundParameter for now.");
+
+            BranchModel branchModel = likelihoodDelegate.getBranchModel();
+
+            List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
+
+            for (int i = 0; i < parameterIndexHelper.getParameterSize(); i++) {
+
+                NodeRef branch = tree.getNode(parameterIndexHelper.getNodeNumberFromParameterIndex(i));
+
+                DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) getSubstitutionModel(branchModel, branch);
+
+                Parameter parameter = getParameterForBranch(branchParameter, branchModel, branch);
+
+                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
+
+                differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
             }
 
             BranchDifferentialMassProvider branchDifferentialMassProvider =
                     new BranchDifferentialMassProvider(parameterIndexHelper, differentialMassProviderList);
+
             ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
@@ -110,6 +125,22 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         int nTraits = treeDataLikelihood.getDataLikelihoodDelegate().getTraitCount();
         if (nTraits != 1) {
             throw new RuntimeException("Not yet implemented for >1 traits");
+        }
+    }
+
+    private SubstitutionModel getSubstitutionModel(BranchModel branchModel, NodeRef branch) { //TODO: get rid of instanceof
+        if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel) {
+            return ((ArbitrarySubstitutionParameterBranchModel) branchModel).getSubstitutionModelForBranch(branch);
+        } else {
+            return branchModel.getRootSubstitutionModel();
+        }
+    }
+
+    private Parameter getParameterForBranch(BranchParameter parameter, BranchModel branchModel, NodeRef branch) { //TODO: get rid of instanceof
+        if (branchModel instanceof ArbitrarySubstitutionParameterBranchModel) {
+            return ((ArbitrarySubstitutionParameterBranchModel) branchModel).getSubstitutionParameterForBranch(branch, parameter);
+        } else {
+            return parameter;
         }
     }
 
@@ -130,33 +161,28 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
 
     @Override
     public Parameter getParameter() {
-        return branchSubstitutionParameter;
+        return branchParameter.getParameter();
     }
 
     @Override
     public int getDimension() {
-        return branchSubstitutionParameter.getDimension();
+        return branchParameter.getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
         double[] result = new double[tree.getNodeCount() - 1];
 
-        //Do single call to traitProvider with node == null (get full tree)
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
-        int v = 0;
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            final NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                final int destinationIndex = parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber());
-                final double nodeResult = gradient[v] * getChainGradient(tree, node);
+        for (int i = 0; i < result.length; ++i) {
+            final NodeRef node = tree.getNode(parameterIndexHelper.getNodeNumberFromParameterIndex(i));
+            final int destinationIndex = parameterIndexHelper.getParameterIndexFromNodeNumber(node.getNumber());
+            final double nodeResult = gradient[i] * getChainGradient(tree, node);
 //                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
 //                    System.err.println("Check Gradient calculation please.");
 //                }
-                result[destinationIndex] = nodeResult;
-                v++;
-            }
+            result[destinationIndex] = nodeResult;
         }
 
         if (COUNT_TOTAL_OPERATIONS) {
@@ -167,7 +193,7 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        return 1.0;
+        return branchParameter.getChainGradient(tree, node);
     }
 
     @Override
@@ -184,33 +210,37 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         return columns;
     }
 
-    protected MultivariateFunction numeric1 = new MultivariateFunction() {
-        @Override
-        public double evaluate(double[] argument) {
+    private MultivariateFunction numericWrap(final Parameter parameter) {
+        return new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
 
-            for (int i = 0; i < argument.length; ++i) {
-                branchSubstitutionParameter.setParameterValue(i, argument[i]);
-            }
+                for (int i = 0; i < argument.length; ++i) {
+                    parameter.setParameterValue(i, argument[i]);
+                }
 
 //            treeDataLikelihood.makeDirty();
-            return treeDataLikelihood.getLogLikelihood();
-        }
+                return treeDataLikelihood.getLogLikelihood();
+            }
 
-        @Override
-        public int getNumArguments() {
-            return branchSubstitutionParameter.getDimension();
-        }
+            @Override
+            public int getNumArguments() {
+                return parameter.getDimension();
+            }
 
-        @Override
-        public double getLowerBound(int n) {
-            return 0;
-        }
+            @Override
+            public double getLowerBound(int n) {
+                return 0;
+            }
 
-        @Override
-        public double getUpperBound(int n) {
-            return Double.POSITIVE_INFINITY;
-        }
-    };
+            @Override
+            public double getUpperBound(int n) {
+                return Double.POSITIVE_INFINITY;
+            }
+        };
+    }
+
+    protected MultivariateFunction numeric;
 
     protected boolean valuesAreSufficientlyLarge(double[] vector) {
         for (double x : vector) {
@@ -222,25 +252,25 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         return true;
     }
 
-    @Override
-    public String getReport() {
-        double[] savedValues = branchSubstitutionParameter.getParameterValues();
+    protected String getReport(final Parameter parameter) {
+        double[] savedValues = parameter.getParameterValues();
         double[] testGradient = null;
         double[] testHessian = null;
 
-        boolean largeEnoughValues = valuesAreSufficientlyLarge(branchSubstitutionParameter.getParameterValues());
+        boolean largeEnoughValues = valuesAreSufficientlyLarge(parameter.getParameterValues());
+        numeric = numericWrap(parameter);
 
         if (DEBUG && largeEnoughValues) {
-            testGradient = NumericalDerivative.gradient(numeric1, branchSubstitutionParameter.getParameterValues());
+            testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
         }
 
         if (DEBUG && useHessian && largeEnoughValues) {
-            testHessian = NumericalDerivative.diagonalHessian(numeric1, branchSubstitutionParameter.getParameterValues());
+            testHessian = NumericalDerivative.diagonalHessian(numeric, parameter.getParameterValues());
         }
 
 
         for (int i = 0; i < savedValues.length; ++i) {
-            branchSubstitutionParameter.setParameterValue(i, savedValues[i]);
+            parameter.setParameterValue(i, savedValues[i]);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -255,5 +285,10 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
         sb.append("\n");
 
         return sb.toString();
+    }
+
+    @Override
+    public String getReport() {
+        return getReport(branchParameter.getParameter());
     }
 }

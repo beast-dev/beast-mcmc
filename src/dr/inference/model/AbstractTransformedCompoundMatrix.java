@@ -45,7 +45,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         dim = diagonalParameter.getDimension();
         offDiagonalParameter = offDiagonal;
         addParameter(diagonalParameter);
-        addParameter(offDiagonal);
+        addParameter(offDiagonalParameter);
     }
 
     AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal, Transform.MultivariableTransform transform, Boolean inverse) {
@@ -54,7 +54,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         dim = diagonalParameter.getDimension();
         offDiagonalParameter = new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
-        addParameter(offDiagonal);
+        addParameter(offDiagonalParameter);
     }
 
     @Override
@@ -100,6 +100,13 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return offDiagonalParameter;
     }
 
+    public Parameter getUntransformedOffDiagonalParameter() {
+        if (offDiagonalParameter instanceof TransformedMultivariateParameter) {
+            return ((TransformedMultivariateParameter) offDiagonalParameter).getUntransformedParameter();
+        }
+        return offDiagonalParameter;
+    }
+
     abstract double[] updateGradientDiagonal(double[] gradient);
 
     abstract double[] updateGradientOffDiagonal(double[] gradient);
@@ -131,4 +138,3 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
     }
 }
-

@@ -35,6 +35,7 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -68,30 +69,11 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         ArbitrarySubstitutionParameterBranchModel branchModel = (ArbitrarySubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
-        Parameter branchSubstitutionParameter = (Parameter) xo.getChild(Parameter.class);
 
-        Tree tree = treeDataLikelihood.getTree();
-        List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
-
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-
-            if (!tree.isRoot(node)) {
-
-                DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) branchModel.getSubstitutionModelForBranch(node);
-
-                Parameter parameter = branchModel.getSubstitutionParameterForBranch(node, (CompoundParameter) branchSubstitutionParameter);
-
-                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
-
-                differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
-
-            }
-        }
-
+        BranchParameter branchParameter = (BranchParameter) xo.getChild(Parameter.class);
 
         return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                branchSubstitutionParameter, branchModel, differentialMassProviderList, useHessian);
+                branchParameter, useHessian);
     }
 
     @Override

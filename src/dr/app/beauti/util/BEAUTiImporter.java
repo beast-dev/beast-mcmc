@@ -178,7 +178,9 @@ public class BEAUTiImporter {
                 options.taxonSetsMono.put(taxonSet, false);
                 options.taxonSetsIncludeStem.put(taxonSet, false);
                 options.taxonSetsTreeModel.put(taxonSet, options.getPartitionTreeModels().get(0));
+                options.updateTMRCAStatistic(taxonSet); // force the creation of a tmrca statistic
             }
+            Collections.sort(options.taxonSets);
 
             reader.close();
         } catch (JDOMException e) {

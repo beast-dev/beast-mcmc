@@ -46,7 +46,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
     private final static String N_STEPS = "nSteps";
     private final static String STEP_SIZE = "stepSize";
-    private final static String DRAW_VARIANCE = "drawVariance";
     private final static String MODE = "mode";
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
@@ -54,6 +53,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+    private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
+    private final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
+    private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
+    private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String MASK = "mask";
 
     @Override
@@ -120,8 +123,15 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             }
         }
 
+        int gradientCheckCount = xo.getAttribute(GRADIENT_CHECK_COUNT, 0);
+        double gradientCheckTolerance = xo.getAttribute(GRADIENT_CHECK_TOLERANCE, 1E-3);
+        int maxIterations = xo.getAttribute(MAX_ITERATIONS, 10);
+        double reductionFactor = xo.getAttribute(REDUCTION_FACTOR, 0.1);
+
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
-                stepSize, nSteps, randomStepFraction, preconditioningUpdateFrequency, preconditioningDelay
+                stepSize, nSteps, randomStepFraction,
+                preconditioningUpdateFrequency, preconditioningDelay, gradientCheckCount, gradientCheckTolerance,
+                maxIterations, reductionFactor
         );
 
         if (runMode == 0) {
@@ -144,7 +154,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newIntegerRule(N_STEPS),
             AttributeRule.newDoubleRule(STEP_SIZE),
-            AttributeRule.newDoubleRule(DRAW_VARIANCE, true), // TODO Deprecate
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),

@@ -31,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Timer;
 import dr.util.Transform;
 import dr.xml.Reportable;
 import com.github.lbfgs4j.liblbfgs.Lbfgs;
@@ -55,7 +56,7 @@ public class MaximizerWrtParameter implements Reportable {
     private final Function function;
     private final Settings settings;
 
-    private long time = 0;
+    private double time = 0.0;
     private long count = 0;
     private double minimumValue = Double.NaN;
     private double[] minimumPoint = null;
@@ -116,13 +117,14 @@ public class MaximizerWrtParameter implements Reportable {
 //            }
         }
 
-        long startTime = System.currentTimeMillis();
+        Timer timer = new Timer();
+        timer.start();
 
         minimumPoint = minimizer.minimize(function, x0);
 
-        long endTime = System.currentTimeMillis();
+        timer.stop();
 
-        time += endTime - startTime;
+        time += timer.toSeconds();
         minimumValue = function.valueAt(minimumPoint);
 
         if (transform != null) {
@@ -149,7 +151,7 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
             sb.append("Gradient type: ").append(gradientType).append("\n");
             sb.append("Fx: ").append(minimumValue).append("\n");
-            sb.append("Time: ").append(time).append("\n");
+            sb.append("Time: ").append(time).append("s\n");
             sb.append("Count: ").append(count).append("\n");
 
         }

@@ -183,8 +183,8 @@ public class RepeatedMeasuresTraitSimulator {
                                          DenseMatrix64F observedTip, DenseMatrix64F missingTip) {
 
         DenseMatrix64F storage = new DenseMatrix64F(missingTip.numRows, 1);
-        org.ejml.ops.CommonOps.addEquals(observedData, -1, observedTip);
-        org.ejml.ops.CommonOps.mult(missingObservedPrecisionBlock, observedData, storage);
+        org.ejml.ops.CommonOps.addEquals(observedTip, -1, observedData);
+        org.ejml.ops.CommonOps.mult(missingObservedPrecisionBlock, observedTip, storage);
         org.ejml.ops.CommonOps.multAdd(missingVarianceBlock, storage, missingTip);
 
         return (double[]) missingTip.data;

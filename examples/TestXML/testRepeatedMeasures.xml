@@ -173,6 +173,11 @@
 		</precisionGibbsOperator>
 	</operators>
 
+	<repeatedMeasuresTraitLogger id="rmLogger">
+		<repeatedMeasuresModel idref="repeatedMeasures"/>
+		<traitDataLikelihood idref="traitLikelihood"/>
+	</repeatedMeasuresTraitLogger>
+
 	<report>
 		With likelihood =
 		<traitDataLikelihood idref="traitLikelihood"/>
@@ -209,6 +214,7 @@
 			<traitLogger idref="traitLog"/>
 			<variancePorportionStatistic idref="varianceLog"/>
 			<matrixInverse idref="diffVariance"/>
+			<repeatedMeasuresTraitLogger idref="rmLogger"/>
 		</log>
 	</mcmc>
 

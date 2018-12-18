@@ -54,7 +54,7 @@ public class RepeatedMeasuresTraitSimulator {
     private final Parameter dataParameter;
     private final MatrixParameterInterface samplingPrecision;
 
-    RepeatedMeasuresTraitSimulator(RepeatedMeasuresTraitDataModel dataModel, TreeDataLikelihood dataLikelihood) {
+    public RepeatedMeasuresTraitSimulator(RepeatedMeasuresTraitDataModel dataModel, TreeDataLikelihood dataLikelihood) {
 
         this.dataModel = dataModel;
         this.dataLikelihood = dataLikelihood;
@@ -187,6 +187,6 @@ public class RepeatedMeasuresTraitSimulator {
         org.ejml.ops.CommonOps.mult(missingObservedPrecisionBlock, observedTip, storage);
         org.ejml.ops.CommonOps.multAdd(missingVarianceBlock, storage, missingTip);
 
-        return (double[]) missingTip.data;
+        return missingTip.data;
     }
 }

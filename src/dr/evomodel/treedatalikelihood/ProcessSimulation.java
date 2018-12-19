@@ -117,6 +117,6 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
     @Override
     public void modelRestored(Model model) {
-        // Do nothing
+        validSimulation = false;
     }
 }

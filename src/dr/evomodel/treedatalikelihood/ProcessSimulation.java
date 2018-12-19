@@ -62,6 +62,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
                 simulationDelegate.getOptimalTraversalType());
 
         treeDataLikelihood.addModelListener(this);
+        treeDataLikelihood.addModelRestoreListener(this);
 
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);

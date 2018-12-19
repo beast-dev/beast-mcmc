@@ -188,7 +188,7 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator
             }
 
             if (!acceptableSize) {
-                stepSize *= runtimeOptions.checkStepSizeMaxIterations;
+                stepSize *= runtimeOptions.checkStepSizeReductionFactor;
             }
 
             ReadableVector.Utils.setParameter(initialPosition, parameter);  // Restore initial position

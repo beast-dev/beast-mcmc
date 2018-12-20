@@ -35,9 +35,9 @@ import dr.inference.mcmc.MCMCCriterion;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorAnalysisPrinter;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 import dr.util.NumberFormatter;
@@ -106,7 +106,7 @@ public class MCMCMC implements Runnable {
         timer.start();
 
 //        if (isPreBurninNeeded()) {
-//            long preBurnin = mcmcOptions.getCoercionDelay();
+//            long preBurnin = mcmcOptions.getAdaptationDelay();
 //            if (preBurnin > 0) {
 //                MarkovChainListener burninListener = new BurninListener(preBurnin);
 //
@@ -287,10 +287,10 @@ public class MCMCMC implements Runnable {
                 operator1.setSumDeviation(operator2.getSumDeviation());
                 operator2.setSumDeviation(tmp2);
 
-                if (operator1 instanceof CoercableMCMCOperator) {
-                    tmp2 = ((CoercableMCMCOperator) operator1).getCoercableParameter();
-                    ((CoercableMCMCOperator) operator1).setCoercableParameter(((CoercableMCMCOperator) operator2).getCoercableParameter());
-                    ((CoercableMCMCOperator) operator2).setCoercableParameter(tmp2);
+                if (operator1 instanceof AdaptableMCMCOperator) {
+                    tmp2 = ((AdaptableMCMCOperator) operator1).getAdaptableParameter();
+                    ((AdaptableMCMCOperator) operator1).setAdaptableParameter(((AdaptableMCMCOperator) operator2).getAdaptableParameter());
+                    ((AdaptableMCMCOperator) operator2).setAdaptableParameter(tmp2);
                 }
             }
 
@@ -335,42 +335,8 @@ public class MCMCMC implements Runnable {
                             formatter.formatToFieldWidth("", 8) +
                             formatter.formatToFieldWidth("Pr(accept)", 11) +
                             " Performance suggestion");
-            for (int i = 0; i < schedules[coldChain].getOperatorCount(); i++) {
 
-                MCMCOperator op = schedules[coldChain].getOperator(i);
-                double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
-                String message = "good";
-                if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
-                    if (acceptanceProb < (op.getMinimumAcceptanceLevel() / 10.0)) {
-                        message = "very low";
-                    } else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
-                        message = "low";
-                    } else message = "slightly low";
-
-                } else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
-                    double reallyHigh = 1.0 - ((1.0 - op.getMaximumAcceptanceLevel()) / 10.0);
-                    if (acceptanceProb > reallyHigh) {
-                        message = "very high";
-                    } else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
-                        message = "high";
-                    } else message = "slightly high";
-                }
-
-                String suggestion = op.getPerformanceSuggestion();
-
-                String pString = "        ";
-                if (op instanceof CoercableMCMCOperator) {
-                    pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator) op).getRawParameter(), 3), 8);
-                }
-
-                System.out.println(
-                        formatter.formatToFieldWidth(op.getOperatorName(), 30) +
-
-                                pString +
-
-                                formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) +
-                                " " + message + "\t" + suggestion);
-            }
+            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedules[coldChain], mcmcOptions.useAdaptation());
             System.out.println();
         }
     }

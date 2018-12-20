@@ -342,7 +342,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
             final String name = xo.hasId() ? xo.getId() : null;
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
-            final boolean signalComponents = xo.getAttribute(SIGNAL_COMPONENTS, true);
+            final boolean signalComponents = xo.getAttribute(SIGNAL_COMPONENTS, false);
 
             List<Parameter> columns = new ArrayList<Parameter>();
             for (int i = 0; i < xo.getChildCount(); ++i) {

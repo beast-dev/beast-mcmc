@@ -42,15 +42,15 @@ import java.util.List;
  * Time: 8:01:56 PM
  * To change this template use File | Settings | File Templates.
  */
-public class SlidingPatternsOperator extends AbstractCoercableOperator {
+public class SlidingPatternsOperator extends AbstractAdaptableOperator {
 //
-//		SimpleMCMCOperator implements CoercableMCMCOperator {
+//		SimpleMCMCOperator implements AdaptableMCMCOperator {
 
     public static final String WINDOW_SIZE = "windowSize";
     public static final String OPERATOR_NAME = "slidingPatternsOperator";
     public static final String BREAK_POINTS = "breakPoints";
 
-    public SlidingPatternsOperator(List<SitePatterns> list, Parameter breakPoints, int windowSize, int weight, CoercionMode mode) {
+    public SlidingPatternsOperator(List<SitePatterns> list, Parameter breakPoints, int windowSize, int weight, AdaptationMode mode) {
         super(mode);
         this.partitions = list;
         this.windowSize = windowSize;
@@ -111,16 +111,20 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
         return 0;
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         windowSize = (int) Math.exp(value);
     }
 
     public double getRawParameter() {
         return windowSize;
+    }
+
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
 //	public int getMode() {
@@ -150,49 +154,6 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
         return true;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-//	public int getWeight() {
-//		return weight;
-//	}
-
-//	public void setWeight(int w) {
-//		weight = w;
-//	}
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, totalAlignmentLength, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
-    }
-
-
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -201,16 +162,16 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//			int mode = CoercableMCMCOperator.DEFAULT;
+//			int mode = AdaptableMCMCOperator.DEFAULT;
 //			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 //				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-//					mode = CoercableMCMCOperator.COERCION_ON;
+//					mode = AdaptableMCMCOperator.ADAPTATION_ON;
 //				} else {
-//					mode = CoercableMCMCOperator.COERCION_OFF;
+//					mode = AdaptableMCMCOperator.ADAPTATION_OFF;
 //				}
 //			}
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             int weight = xo.getIntegerAttribute(WEIGHT);
             int windowSize = xo.getIntegerAttribute(WINDOW_SIZE);
@@ -275,7 +236,7 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
     private int totalAlignmentLength;
     private final List<SitePatterns> partitions;
     private int windowSize = 10;
-    //	private int mode = CoercableMCMCOperator.DEFAULT;
+    //	private int mode = AdaptableMCMCOperator.DEFAULT;
     //	private int weight = 1;
     private final Parameter breakPoints;
 }

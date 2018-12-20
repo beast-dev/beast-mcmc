@@ -26,7 +26,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.model.TransformedParameter;
-import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RandomWalkOperator;
 import dr.inference.operators.TransformedParameterRandomWalkOperator;
@@ -70,7 +70,7 @@ public class TransformedParameterRandomWalkOperatorParser extends RandomWalkOper
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(WINDOW_SIZE),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(UPDATE_INDEX,
                     new XMLSyntaxRule[]{
                             new ElementRule(TransformedParameter.class),

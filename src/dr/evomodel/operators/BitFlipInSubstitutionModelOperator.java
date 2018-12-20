@@ -37,12 +37,12 @@ import dr.xml.*;
  * @author Marc Suchard
  * @version $Id$
  */
-public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperator {
+public class BitFlipInSubstitutionModelOperator extends AbstractAdaptableOperator {
 
     public static final String BIT_FLIP_OPERATOR = "bitFlipInSubstitutionModelOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
 
-    public BitFlipInSubstitutionModelOperator(BayesianStochasticSearchVariableSelection subModel, Parameter rateParameter, double weight, double scaleFactor, CoercionMode mode) {
+    public BitFlipInSubstitutionModelOperator(BayesianStochasticSearchVariableSelection subModel, Parameter rateParameter, double weight, double scaleFactor, AdaptationMode mode) {
         super(mode);
         this.model = subModel;
         this.indicatorParameter = subModel.getIndicators();
@@ -124,12 +124,12 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
         return "bitflip(" + indicatorParameter.getParameterName() + ")";
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
 //	     return Math.log(1.0 / scaleFactor - 1.0);
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
 //	     scaleFactor = 1.0 / (Math.exp(value) + 1.0);
         scaleFactor = Math.exp(value);
     }
@@ -142,37 +142,8 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
 
@@ -190,7 +161,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractCoercableOperato
 
             double weight = xo.getDoubleAttribute(WEIGHT);
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             if (scaleFactor <= 0.0 || scaleFactor >= 1.0) {

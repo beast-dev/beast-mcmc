@@ -32,7 +32,6 @@ import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 /**
@@ -138,7 +137,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 		for (int i : availableOperators) {
 			MCMCOperator op = operators.get(i);
-			if (!(op instanceof CoercableMCMCOperator) && op.getCount() > operatorUseThreshold) {
+			if (!(op instanceof AdaptableMCMCOperator) && op.getCount() > operatorUseThreshold) {
 				double acceptanceRate = ((double)op.getAcceptCount()) / op.getCount();
 				if (acceptanceRate < operatorAcceptanceThreshold) {
 					toRemove.add(i);
@@ -192,8 +191,8 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		for (int i = 0; i < getOperatorCount(); i++) {
 			MCMCOperator op = getOperator(i);
 			columnList.add(new OperatorAcceptanceColumn(op.getOperatorName(), op));
-			if (op instanceof CoercableMCMCOperator) {
-				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (CoercableMCMCOperator)op));
+			if (op instanceof AdaptableMCMCOperator) {
+				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (AdaptableMCMCOperator)op));
 			}
 		}
 		LogColumn[] columns = columnList.toArray(new LogColumn[columnList.size()]);
@@ -214,9 +213,9 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	}
 
 	private class OperatorSizeColumn extends NumberColumn {
-		private final CoercableMCMCOperator op;
+		private final AdaptableMCMCOperator op;
 
-		public OperatorSizeColumn(String label, CoercableMCMCOperator op) {
+		public OperatorSizeColumn(String label, AdaptableMCMCOperator op) {
 			super(label);
 			this.op = op;
 		}

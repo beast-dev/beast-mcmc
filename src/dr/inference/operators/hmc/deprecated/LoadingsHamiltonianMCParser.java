@@ -25,11 +25,10 @@
 
 package dr.inference.operators.hmc.deprecated;
 
-import dr.inference.operators.hmc.deprecated.LoadingsHamiltonianMC;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
-import dr.inference.operators.CoercionMode;
 import dr.xml.*;
 
 /**
@@ -49,7 +48,7 @@ public class LoadingsHamiltonianMCParser extends AbstractXMLObjectParser {
         LatentFactorModel lfm=(LatentFactorModel) xo.getChild(LatentFactorModel.class);
         MomentDistributionModel prior=(MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
         double weight=xo.getDoubleAttribute(WEIGHT);
-        CoercionMode mode=CoercionMode.parseMode(xo);
+        AdaptationMode mode= AdaptationMode.parseMode(xo);
         int nSteps=xo.getIntegerAttribute(N_STEPS);
         double stepSize=xo.getDoubleAttribute(STEP_SIZE);
         double momentumSd= xo.getDoubleAttribute(MOMENTUM_SD);

@@ -1,5 +1,5 @@
 /*
- * CoercionMode.java
+ * AdaptationMode.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -31,16 +31,16 @@ import dr.xml.XMLParseException;
 /**
  * @author Alexei Drummond
  */
-public enum CoercionMode {
-    DEFAULT, COERCION_ON, COERCION_OFF;
+public enum AdaptationMode {
+    DEFAULT, ADAPTATION_ON, ADAPTATION_OFF;
 
-    public static CoercionMode parseMode(XMLObject xo) throws XMLParseException {
-        CoercionMode mode = CoercionMode.DEFAULT;
-        if (xo.hasAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-            if (xo.getBooleanAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
-                mode = CoercionMode.COERCION_ON;
+    public static AdaptationMode parseMode(XMLObject xo) throws XMLParseException {
+        AdaptationMode mode = AdaptationMode.DEFAULT;
+        if (xo.hasAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+            if (xo.getBooleanAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+                mode = AdaptationMode.ADAPTATION_ON;
             } else {
-                mode = CoercionMode.COERCION_OFF;
+                mode = AdaptationMode.ADAPTATION_OFF;
             }
         }
         return mode;

@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.StandardizeTraits;
 import dr.evomodel.continuous.hmc.TaxonTaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -663,6 +664,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final String LOADINGS = "loadings";
     private static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
+    private static final String STANDARDIZE = "standardize";
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(LOADINGS, new XMLSyntaxRule[] {
@@ -681,6 +683,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     new ElementRule(Parameter.class)
             }, true),
             AttributeRule.newDoubleRule(NUGGET, true),
+            AttributeRule.newBooleanRule(STANDARDIZE, true),
             new ElementRule(TaxonTaskPool.class, true),
 
     };

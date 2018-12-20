@@ -681,12 +681,12 @@ public class LogCombiner {
 
             burnin = -1;
             if (arguments.hasOption("burnin")) {
-                burnin = arguments.getIntegerOption("burnin");
+                burnin = arguments.getLongOption("burnin");
             }
 
             resample = -1;
             if (arguments.hasOption("resample")) {
-                resample = arguments.getIntegerOption("resample");
+                resample = arguments.getLongOption("resample");
             }
 
             scale = 1.0;

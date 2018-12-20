@@ -27,8 +27,7 @@ package dr.inference.operators.hmc.deprecated;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.*;
-import dr.inference.operators.hmc.deprecated.AbstractHamiltonianMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 
 /**
@@ -50,7 +49,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private Parameter missingIndicator;
 
 
-    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
+    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, AdaptationMode mode, double stepSize, int nSteps, double momentumSd){
         super(mode, momentumSd);
         setWeight(weight);
         this.lfm = lfm;
@@ -69,23 +68,18 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
     @Override
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         stepSize = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
         return stepSize;
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override

@@ -30,10 +30,12 @@ import dr.evolution.util.Taxon;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.Polynomial;
 import dr.xml.*;
+import org.omg.PortableInterceptor.INACTIVE;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 /**
  * Created by msuchard on 2/3/17.
@@ -44,11 +46,24 @@ public class StandardizeTraits {
     public static final String TRAIT_NAME = dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
     private final MatrixParameterInterface matrix;
+    private final boolean[] missing;
 
     public StandardizeTraits(MatrixParameterInterface matrix) {
+        this(matrix, null);
+    }
+
+    public StandardizeTraits(MatrixParameterInterface matrix, List<Integer> missingIndices) {
         this.matrix = matrix;
 //        System.err.println("rows: " + matrix.getRowDimension());
 //        System.err.println("cols: " + matrix.getColumnDimension());
+
+        missing = new boolean[matrix.getDimension()];
+
+        if (missingIndices != null) {
+            for (int m : missingIndices) {
+                missing[m] = true;
+            }
+        }
     }
 
 //    private final Taxa taxa;
@@ -175,16 +190,19 @@ public class StandardizeTraits {
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
         final double sd = Math.sqrt(mv.variance);
 
+        int offset = dim * major;
         for (int index = 0; index < dim; ++index) {
 
             final int row = byColumn ? index : major;
             final int col = byColumn ? major : index;
 
             double x = matrix.getParameterValue(row, col);
-            if (!Double.isNaN(x)) {
+            if (!Double.isNaN(x) && !missing[offset]) {
                 x = (x - mv.mean) / sd;
                 matrix.setParameterValueQuietly(row, col, x);
             }
+
+            ++offset;
         }
 
         matrix.fireParameterChangedEvent();
@@ -220,13 +238,16 @@ public class StandardizeTraits {
         int c = 0;
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
+
+        int offset = dim * major;
         for (int index = 0; index < dim; ++index) {
             double x = byColumn ? matrix.getParameterValue(index, major) : matrix.getParameterValue(major, index);
-            if (!Double.isNaN(x)) {
+            if (!Double.isNaN(x) && !missing[offset]) {
                 s += x;
                 ss += x * x;
                 ++c;
             }
+            ++offset;
         }
 
         MeanVariance mv = new MeanVariance();
@@ -254,8 +275,9 @@ public class StandardizeTraits {
 
             StandardizeTraits st = new StandardizeTraits(matrix);
 
-            st.doStandardization(false);
+            String report = st.doStandardization(false);
 
+            Logger.getLogger("dr.evomodel.continuous").info(report);
 //            try {
 //                st.doStandardization();
 //            } catch (Exception e) {

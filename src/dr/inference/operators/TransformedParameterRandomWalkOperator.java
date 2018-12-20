@@ -36,7 +36,8 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
 
     private static boolean DEBUG = false;
 
-    public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
+    public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize,
+                                                  BoundaryCondition bc, double weight, AdaptationMode mode) {
         super(parameter, windowSize, bc, weight, mode);
     }
 

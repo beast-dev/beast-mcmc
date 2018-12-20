@@ -41,7 +41,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id: RandomWalkOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
-public class RandomWalkOperator extends AbstractCoercableOperator {
+public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     public enum BoundaryCondition {
         rejecting,
@@ -51,12 +51,12 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         logit
     }
 
-    public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
+    public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, AdaptationMode mode) {
         this(parameter, null, windowSize, bc, weight, mode);
     }
 
     public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition boundaryCondition,
-                              double weight, CoercionMode mode) {
+                              double weight, AdaptationMode mode) {
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
@@ -222,11 +222,11 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         windowSize = Math.exp(value);
     }
 
@@ -234,38 +234,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         return windowSize;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
     public String toString() {

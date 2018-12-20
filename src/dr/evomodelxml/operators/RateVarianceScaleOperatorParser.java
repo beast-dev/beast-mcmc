@@ -28,8 +28,8 @@ package dr.evomodelxml.operators;
 import dr.evomodel.operators.RateVarianceScaleOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -46,7 +46,7 @@ public class RateVarianceScaleOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -86,7 +86,7 @@ public class RateVarianceScaleOperatorParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(SCALE_FACTOR),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class),
             new ElementRule(Parameter.class),
     };

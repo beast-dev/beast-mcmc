@@ -30,8 +30,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.RateVarianceScaleOperatorParser;
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 
@@ -44,12 +44,12 @@ import java.util.List;
  *
  * @author Michael Defoin Platel
  */
-public class RateVarianceScaleOperator extends AbstractCoercableOperator {
+public class RateVarianceScaleOperator extends AbstractAdaptableOperator {
 
     private TreeModel tree;
     private Parameter variance;
 
-    public RateVarianceScaleOperator(TreeModel tree, Parameter variance, double scale, CoercionMode mode) {
+    public RateVarianceScaleOperator(TreeModel tree, Parameter variance, double scale, AdaptationMode mode) {
         super(mode);
 
         this.scaleFactor = scale;
@@ -124,11 +124,11 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
         return "rateVarianceScale";
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -140,37 +140,8 @@ public class RateVarianceScaleOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public String toString() {

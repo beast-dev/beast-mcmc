@@ -35,8 +35,8 @@ import dr.inference.markovchain.MarkovChain;
 public interface StateLoader {
 
     /**
-     * Attempts to load the current state from a state dump. This should be a state
-     * dump created using the same XML file (some rudimentary checking of this is done).
+     * Attempts to load the current state from a state file. This should be a state
+     * file created using the same XML file (some rudimentary checking of this is done).
      * If it fails then it will throw a RuntimeException. If successful it will return the
      * current state number.
      * @param markovChain the MarkovChain object

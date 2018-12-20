@@ -45,7 +45,7 @@ import dr.inference.model.Parameter;
  * Time: 11:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
+public class CRPClusterRandomWalkOperator extends AbstractAdaptableOperator {
 
 
 
@@ -61,7 +61,7 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
     private double windowSize;
 
     public CRPClusterRandomWalkOperator( Parameter assignments, MatrixParameter virusLocations,double windowSize,   double weight){
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 
         this.virusLocations=virusLocations;
         this.windowSize = windowSize;
@@ -181,9 +181,10 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
 
 
 
-    public String getPerformanceSuggestion() {
-        return null;
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
+
 
 
 
@@ -193,22 +194,17 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
 
 
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         windowSize = Math.exp(value);
     }
 
     public double getRawParameter() {
         return windowSize;
     }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
 
 
 

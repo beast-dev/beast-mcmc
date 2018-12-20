@@ -1,0 +1,18 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <icon>../common/icons/beauti.ico</icon>
+  <jar>./lib/beauti.jar</jar>
+  <dontWrapJar>true</dontWrapJar>
+  <jre>
+    <minVersion>1.6.0</minVersion>
+    <initialHeapSize>256</initialHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
+  </jre>    
+  <versionInfo>
+    <fileDescription>BEAUti</fileDescription>
+        <copyright>2002-2018</copyright>
+    <productName>BEAUti</productName>
+    <internalName>BEAUti</internalName>
+    <originalFilename>BEAUti.exe</originalFilename>    
+  </versionInfo>
+</launch4jConfig>

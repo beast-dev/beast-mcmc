@@ -37,7 +37,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  * Time: 12:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FactorOperator extends AbstractCoercableOperator {
+public class FactorOperator extends AbstractAdaptableOperator {
     private static final String FACTOR_OPERATOR = "factorOperator";
     private LatentFactorModel LFM;
     private MatrixParameter diffusionPrecision;
@@ -48,7 +48,7 @@ public class FactorOperator extends AbstractCoercableOperator {
     private boolean randomScan;
     private double scaleFactor;
 
-    public FactorOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, CoercionMode mode) {
+    public FactorOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, AdaptationMode mode) {
         super(mode);
         this.scaleFactor = scaleFactor;
         this.LFM = LFM;
@@ -128,10 +128,10 @@ public class FactorOperator extends AbstractCoercableOperator {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
+
 
     @Override
     public String getOperatorName() {
@@ -167,12 +167,12 @@ public class FactorOperator extends AbstractCoercableOperator {
 
 
     @Override
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(scaleFactor);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         scaleFactor = Math.exp(value);
     }
 

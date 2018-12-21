@@ -28,7 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
-import dr.evomodel.continuous.StandardizeTraits;
+
 import dr.evomodel.continuous.hmc.TaxonTaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -45,6 +45,8 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.*;
 
+import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
+import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
 import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
@@ -664,7 +666,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final String LOADINGS = "loadings";
     private static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
-    private static final String STANDARDIZE = "standardize";
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(LOADINGS, new XMLSyntaxRule[] {
@@ -685,6 +686,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             AttributeRule.newDoubleRule(NUGGET, true),
             AttributeRule.newBooleanRule(STANDARDIZE, true),
             new ElementRule(TaxonTaskPool.class, true),
+            AttributeRule.newDoubleRule(TARGET_SD, true),
 
     };
 

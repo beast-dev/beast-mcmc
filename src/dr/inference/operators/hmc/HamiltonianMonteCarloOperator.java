@@ -396,7 +396,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     @Override
     public void setAdaptableParameter(double value) {
         if (DEBUG) {
-            System.err.println("Setting coercable paramter: " + getAdaptableParameter() + " -> " + value);
+            System.err.println("Setting adaptable parameter: " + getAdaptableParameter() + " -> " + value);
         }
         stepSize = Math.exp(value);
     }

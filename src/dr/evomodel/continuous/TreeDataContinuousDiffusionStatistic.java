@@ -74,19 +74,19 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
     @Override
     public double getStatisticValue(int dim) {
 
-        Statistic total = weightedScheme.factory(0.0, 0.0);
+        Statistic total = new Statistic();
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (node != tree.getRoot()) {
-                total.add(computeBranchStatistic(node));
+                addBranchStatistic(total, node);
             }
         }
 
-        return total.transform();
+        return total.numerator / total.denominator;
     }
 
-    private Statistic computeBranchStatistic(NodeRef child) {
+    private void addBranchStatistic(Statistic lhs, NodeRef child) {
 
         NodeRef parent = tree.getParent(child);
 
@@ -96,7 +96,7 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         double displacement = distance(parentTrait, childTrait);
         double time = tree.getNodeHeight(parent) - tree.getNodeHeight(child);
 
-        return weightedScheme.factory(displacement, time);
+        weightedScheme.add(lhs, displacement, time);
     }
 
     private static double distance(double[] x, double[] y) {
@@ -117,73 +117,33 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
     private enum WeightingScheme {
         WEIGHTED {
             @Override
-            Statistic factory(double displacement, double time) {
-                return new Statistic.Weighted(displacement, time);
+            void add(Statistic lhs, double displacement, double time) {
+                 lhs.numerator += displacement;
+                 lhs.denominator += time;
             }
         },
         UNWEIGHTED {
             @Override
-            Statistic factory(double displacement, double time) {
-                return new Statistic.Unweighted(displacement, time);
+            void add(Statistic lhs, double displacement, double time) {
+                lhs.numerator += displacement / time;
+                lhs.denominator += 1;
             }
         };
 
-        abstract Statistic factory(double displacement, double time);
+        abstract void add(Statistic lhs, double displacement, double time);
     }
 
-    private interface Statistic {
+    private class Statistic {
 
-        void add(Statistic rhs);
-        double transform();
+        double numerator;
+        double denominator;
 
-        class Weighted implements Statistic {
-
-            double displacement;
-            double time;
-
-            Weighted(double displacement, double time) {
-                this.displacement = displacement;
-                this.time = time;
-            }
-
-            @Override
-            public void add(Statistic rhs) {
-
-                assert (rhs instanceof Weighted);
-
-                displacement += ((Weighted) rhs).displacement;
-                time += ((Weighted) rhs).time;
-            }
-
-            @Override
-            public double transform() {
-                return displacement / time;
-            }
-        }
-
-        class Unweighted implements Statistic {
-
-            double total;
-
-            Unweighted(double displacement, double time) {
-                total = displacement / time;
-            }
-
-            @Override
-            public void add(Statistic rhs) {
-
-                assert (rhs instanceof Unweighted);
-
-                total += ((Unweighted) rhs).total;
-            }
-
-            @Override
-            public double transform() {
-                return total;
-            }
+        Statistic() {
+            this.numerator = 0.0;
+            this.denominator = 0.0;
         }
     }
-
+    
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         @Override

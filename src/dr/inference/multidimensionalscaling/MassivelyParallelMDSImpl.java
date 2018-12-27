@@ -29,6 +29,7 @@ import dr.math.matrixAlgebra.Vector;
 
 import static dr.inference.multidimensionalscaling.NativeMDSSingleton.DEFAULT_DEVICE;
 import static dr.inference.multidimensionalscaling.NativeMDSSingleton.MDS_RESOURCE;
+import static dr.inference.multidimensionalscaling.NativeMDSSingleton.THREADS;
 
 /**
  * MassivelyParallelMDSImpl
@@ -49,6 +50,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private int instance = -1; // Get instance # via initialization
 
     private int deviceNumber = DEFAULT_DEVICE;
+    private int threads;
 
     MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
@@ -64,11 +66,16 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
                 throw new RuntimeException("Unable to parse '" + MDS_RESOURCE + "' environmental property");
             }
         }
+
+        String r = System.getProperty(THREADS);
+        if (r != null) {
+            threads = Integer.parseInt(r.trim());
+        }
     }
 
     @Override
     public void initialize(int embeddingDimension, int locationCount, long flags) {
-        instance = singleton.initialize(embeddingDimension, locationCount, flags, deviceNumber);
+        instance = singleton.initialize(embeddingDimension, locationCount, flags, deviceNumber, threads);
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
     }
 

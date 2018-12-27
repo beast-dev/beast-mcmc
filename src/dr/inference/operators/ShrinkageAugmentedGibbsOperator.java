@@ -51,11 +51,6 @@ public class ShrinkageAugmentedGibbsOperator extends SimpleMCMCOperator implemen
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
-
-    @Override
     public String getOperatorName() {
         return "ShrinkageAugmentedGibbsOperator";
     }

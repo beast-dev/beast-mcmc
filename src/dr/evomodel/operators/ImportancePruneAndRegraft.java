@@ -96,7 +96,7 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
         ExchangeOperator wideExchange = new ExchangeOperator(
                 ExchangeOperator.WIDE, treeModel, 3);
         SubtreeSlideOperator subtreeSlide = new SubtreeSlideOperator(treeModel,
-                10.0, 1.0, true, false, false, false, CoercionMode.COERCION_ON);
+                10.0, 1.0, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         NNI nni = new NNI(treeModel, 10.0);
         WilsonBalding wilsonBalding = new WilsonBalding(treeModel, 3.0);
         FNPR fnpr = new FNPR(treeModel, 5.0);

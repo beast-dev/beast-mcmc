@@ -1,8 +1,6 @@
 package dr.inferencexml.hmc;
 
-import dr.inference.hmc.MaskedGradient;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.TransposedMatrixParameter;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -12,6 +10,7 @@ import java.util.List;
 public class LoadingsTransformParser extends AbstractXMLObjectParser {
 
     public final static String NAME = "loadingsTransform";
+    private final static String INDICES = "indices";
 
     @Override
     public String getParserName() {
@@ -27,10 +26,20 @@ public class LoadingsTransformParser extends AbstractXMLObjectParser {
         int nCols = matrix.getColumnDimension();
 
         List<Transform> transforms = new ArrayList<Transform>();
+        List<Integer> indices = null;
+
+        if (xo.hasAttribute(INDICES)) {
+            int[] tmp = xo.getIntegerArrayAttribute(INDICES);
+            indices = new ArrayList<Integer>();
+            for (int i : tmp) {
+                indices.add(i - 1);
+
+            }
+        }
 
         for (int col = 0; col < nCols; ++col) {
             for (int row = 0; row < nRows; ++row) {
-                if (row != col) {
+                if (noTransform(row, col, indices, nRows)) {
                     transforms.add(Transform.NONE);
                 } else {
                     transforms.add(Transform.LOG);
@@ -41,6 +50,15 @@ public class LoadingsTransformParser extends AbstractXMLObjectParser {
         return new Transform.Array(transforms, matrix);
     }
 
+    private boolean noTransform(int row, int col, List<Integer> indices, int nRows) {
+        if (indices == null) {
+            return row != col;
+        } else {
+            boolean transform = indices.contains(col * nRows + row);
+            return !transform;
+        }
+    }
+
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
@@ -48,6 +66,7 @@ public class LoadingsTransformParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(MatrixParameterInterface.class),
+            AttributeRule.newIntegerArrayRule(INDICES, true),
     };
 
     @Override

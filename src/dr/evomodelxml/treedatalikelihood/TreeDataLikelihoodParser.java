@@ -97,63 +97,75 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
         }
 
-//        DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-//                treeModel,
-//                patternLists.get(0),
-//                branchModel,
-//                siteRateModel,
-//                useAmbiguities,
-//                scalingScheme,
-//                delayRescalingUntilUnderflow);
+        boolean useBeagle3MultiPartition = false;
 
-        boolean useBeagle3 = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3", "true"));
+        if (patternLists.size() > 1) {
+            // will currently recommend true if using GPU, CUDA or OpenCL.
+            useBeagle3MultiPartition = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
+    
+            if (System.getProperty("USE_BEAGLE3_EXTENSIONS") != null) {
+                useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("USE_BEAGLE3_EXTENSIONS"));
+            }
+
+            if (System.getProperty("beagle.multipartition.extensions") != null &&
+                    !System.getProperty("beagle.multipartition.extensions").equals("auto")) {
+                useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("beagle.multipartition.extensions"));
+            }
+        }
+
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
 
-//        if ( useBeagle3 && MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_COMPATIBLE() && !useJava) {///XJ: need to change this back
-        if (false) {
-            DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                    treeModel,
-                    patternLists,
-                    branchModels,
-                    siteRateModels,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayRescalingUntilUnderflow);
-
-            return new TreeDataLikelihood(
-                    dataLikelihoodDelegate,
-                    treeModel,
-                    branchRateModel);
-        } else {
-            // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
-            List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
-
-            for (int i = 0; i < patternLists.size(); i++) {
-
-                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+        if ( useBeagle3MultiPartition && !useJava) {
+            try {
+                DataLikelihoodDelegate dataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
                         treeModel,
-                        patternLists.get(i),
-                        branchModels.get(i),
-                        siteRateModels.get(i),
+                        patternLists,
+                        branchModels,
+                        siteRateModels,
                         useAmbiguities,
                         scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        usePreOrder);
+                        delayRescalingUntilUnderflow
+                        );
 
-                treeDataLikelihoods.add(
-                        new TreeDataLikelihood(
-                                dataLikelihoodDelegate,
-                                treeModel,
-                                branchRateModel));
-
+                return new TreeDataLikelihood(
+                        dataLikelihoodDelegate,
+                        treeModel,
+                        branchRateModel);
+            } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+                useBeagle3MultiPartition = false;
             }
 
-            if (treeDataLikelihoods.size() == 1) {
-                return treeDataLikelihoods.get(0);
-            }
+        } 
 
-            return new CompoundLikelihood(treeDataLikelihoods);
+        // The multipartition data likelihood isn't available so make a set of single partition data likelihoods
+        List<Likelihood> treeDataLikelihoods = new ArrayList<Likelihood>();
+
+        for (int i = 0; i < patternLists.size(); i++) {
+
+            DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists.get(i),
+                    branchModels.get(i),
+                    siteRateModels.get(i),
+                    useAmbiguities,
+                    scalingScheme,
+                    delayRescalingUntilUnderflow,
+                    usePreOrder);
+
+            treeDataLikelihoods.add(
+                    new TreeDataLikelihood(
+                            dataLikelihoodDelegate,
+                            treeModel,
+                            branchRateModel));
+
         }
+
+        if (treeDataLikelihoods.size() == 1) {
+            return treeDataLikelihoods.get(0);
+        }
+
+        return new CompoundLikelihood(treeDataLikelihoods);
+    
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -307,11 +319,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(BranchModel.class, true)})
                     ,
                     new ElementRule(PARTITION, new XMLSyntaxRule[] {
-                    new ElementRule(PatternList.class),
-                    new ElementRule(SiteRateModel.class),
-                    new ElementRule(FrequencyModel.class, true),
-                    new ElementRule(BranchModel.class, true)
-            }, 1, Integer.MAX_VALUE)),
+                            new ElementRule(PatternList.class),
+                            new ElementRule(SiteRateModel.class),
+                            new ElementRule(FrequencyModel.class, true),
+                            new ElementRule(BranchModel.class, true)
+                    }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TreeModel.class),

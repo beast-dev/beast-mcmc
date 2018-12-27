@@ -26,9 +26,8 @@
 package dr.inference.operators.hmc.deprecated;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
-import dr.inference.operators.hmc.deprecated.LatentFactorHamiltonianMC;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.CoercionMode;
 import dr.xml.*;
 
 /**
@@ -46,7 +45,7 @@ public class LatentFactorHamiltonianMCParser extends AbstractXMLObjectParser {
         LatentFactorModel lfm=(LatentFactorModel) xo.getChild(LatentFactorModel.class);
         FullyConjugateMultivariateTraitLikelihood tree=(FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
         double weight=xo.getDoubleAttribute(WEIGHT);
-        CoercionMode mode=CoercionMode.parseMode(xo);
+        AdaptationMode mode= AdaptationMode.parseMode(xo);
         int nSteps=xo.getIntegerAttribute(N_STEPS);
         double stepSize=xo.getDoubleAttribute(STEP_SIZE);
         double momentumSd= xo.getDoubleAttribute(MOMENTUM_SD);

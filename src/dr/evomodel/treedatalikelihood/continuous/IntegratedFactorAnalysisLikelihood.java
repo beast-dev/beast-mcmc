@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
+
 import dr.evomodel.continuous.hmc.TaxonTaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -44,6 +45,8 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.*;
 
+import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
+import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
 import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
@@ -681,7 +684,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     new ElementRule(Parameter.class)
             }, true),
             AttributeRule.newDoubleRule(NUGGET, true),
+            AttributeRule.newBooleanRule(STANDARDIZE, true),
             new ElementRule(TaxonTaskPool.class, true),
+            AttributeRule.newDoubleRule(TARGET_SD, true),
 
     };
 

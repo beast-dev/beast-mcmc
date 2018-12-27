@@ -35,11 +35,6 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements PathD
     }
     
     @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
-
-    @Override
     public String getOperatorName() {
         return "Factor Tree Gibbs Operator";
     }

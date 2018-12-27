@@ -126,11 +126,6 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public String getOperatorName() {
         return FACTOR_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
     }

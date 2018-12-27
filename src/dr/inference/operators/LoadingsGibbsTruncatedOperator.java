@@ -312,11 +312,6 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public String getOperatorName() {
         return "loadingsGibbsTruncatedOperator";  //To change body of implemented methods use File | Settings | File Templates.
     }

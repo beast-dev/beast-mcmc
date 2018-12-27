@@ -78,8 +78,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     protected List<Parameter> missingCov;
     protected List<MatrixParameter> covariates;
     protected List<Parameter> beta;
-    protected List<Parameter> covPrecParameters;
-    protected List<SymmTridiagMatrix> weightMatricesForMissingCov;
+    protected List<Parameter> covPrecParametersRecent;
+    protected List<Parameter> covPrecParametersDistant;
+    protected List<SymmTridiagMatrix> weightMatricesForMissingCovRecent;
+    protected List<SymmTridiagMatrix> weightMatricesForMissingCovDistant;
+    protected int[] firstObservedIndex;
     protected int[] lastObservedIndex;
 
     private double[] coalescentEventStatisticValues;
@@ -203,8 +206,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            Parameter specGridPoints,
                                            List<MatrixParameter> covariates,
                                            Parameter ploidyFactorsParameter,
+                                           List<Parameter> firstObservedIndexParameter,
                                            List<Parameter> lastObservedIndexParameter,
-                                           List<Parameter> covPrecParameters,
+                                           List<Parameter> covPrecParametersRecent,
+                                           List<Parameter> covPrecParametersDistant,
                                            List<Parameter> betaList) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
@@ -219,6 +224,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         this.gridPoints = specGridPoints.getParameterValues();
         this.numGridPoints = gridPoints.length;
         this.cutOff = gridPoints[numGridPoints - 1];
+
+        if (firstObservedIndexParameter != null) {
+            firstObservedIndex = new int[firstObservedIndexParameter.size()];
+            for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
+                this.firstObservedIndex[i] = (int) firstObservedIndexParameter.get(i).getParameterValue(0);
+            }
+        }
 
         if (lastObservedIndexParameter != null) {
             lastObservedIndex = new int[lastObservedIndexParameter.size()];
@@ -255,10 +267,16 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 addVariable(cov);
             }
         }
-        this.covPrecParameters = covPrecParameters;
-        if (covPrecParameters != null) {
-            for (Parameter covPrec : covPrecParameters) {
-                addVariable(covPrec);
+        this.covPrecParametersRecent = covPrecParametersRecent;
+        if (covPrecParametersRecent != null) {
+            for (Parameter covPrecRecent : covPrecParametersRecent) {
+                addVariable(covPrecRecent);
+            }
+        }
+        this.covPrecParametersDistant = covPrecParametersDistant;
+        if (covPrecParametersDistant != null){
+            for(Parameter covPrecDistant : covPrecParametersDistant){
+                addVariable(covPrecDistant);
             }
         }
 
@@ -296,7 +314,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                     addVariable(betaParam);
                 }
             }
-            if (lastObservedIndexParameter != null) {
+            if (lastObservedIndexParameter != null || firstObservedIndexParameter != null) {
                 setupGMRFWeightsForMissingCov();
                 skygridHelper = new SkygridMissingCovariateHelper();
             } else {
@@ -721,37 +739,69 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
 
     protected void setupGMRFWeightsForMissingCov() {
-        //System.err.println("fieldLength: " + fieldLength);
-        // System.err.println("lastObservedIndex: " + lastObservedIndex);
-        //Set up the weight Matrix
-        weightMatricesForMissingCov = new ArrayList<SymmTridiagMatrix>();
 
-        for (int i = 0; i < covPrecParameters.size(); i++) {
-            double[] offdiag = new double[fieldLength - lastObservedIndex[i] - 1];
-            double[] diag = new double[fieldLength - lastObservedIndex[i]];
+        if(firstObservedIndex != null){
+            weightMatricesForMissingCovRecent = new ArrayList<SymmTridiagMatrix>();
 
-            //First set up the offdiagonal entries;
+            for (int i = 0; i < covPrecParametersRecent.size(); i++) {
+                double[] offdiagRec = new double[firstObservedIndex[i] - 2];
+                double[] diagRec = new double[firstObservedIndex[i] - 1];
 
-            for (int k = 0; k < fieldLength - lastObservedIndex[i] - 1; k++) {
-                offdiag[k] = -1;
+                for (int k = 0; k < firstObservedIndex[i] - 2; k++) {
+                    offdiagRec[k] = -1;
+                }
+
+                for (int k = 1; k < firstObservedIndex[i] - 1; k++) {
+                    diagRec[k] = 2.0;
+                }
+                diagRec[0] = 1.0;
+
+                weightMatricesForMissingCovRecent.add(i, new SymmTridiagMatrix(diagRec, offdiagRec));
             }
 
-            //Then set up the diagonal entries;
-            for (int k = 0; k < fieldLength - lastObservedIndex[i] - 1; k++) {
-                //	diag[i] = -(offdiag[i] + offdiag[i - 1]);
-                diag[k] = 2.0;
-            }
-            //Take care of the endpoint
-            diag[fieldLength - lastObservedIndex[i] - 1] = 1.0;
+        }
 
-            weightMatricesForMissingCov.add(i, new SymmTridiagMatrix(diag, offdiag));
+        if(lastObservedIndex != null) {
+            weightMatricesForMissingCovDistant = new ArrayList<SymmTridiagMatrix>();
+
+            for (int i = 0; i < covPrecParametersDistant.size(); i++) {
+                double[] offdiag = new double[fieldLength - lastObservedIndex[i] - 1];
+                double[] diag = new double[fieldLength - lastObservedIndex[i]];
+
+                //First set up the offdiagonal entries;
+
+                for (int k = 0; k < fieldLength - lastObservedIndex[i] - 1; k++) {
+                    offdiag[k] = -1;
+                }
+
+                //Then set up the diagonal entries;
+                for (int k = 0; k < fieldLength - lastObservedIndex[i] - 1; k++) {
+                    //	diag[i] = -(offdiag[i] + offdiag[i - 1]);
+                    diag[k] = 2.0;
+                }
+                //Take care of the endpoint
+                diag[fieldLength - lastObservedIndex[i] - 1] = 1.0;
+
+                weightMatricesForMissingCovDistant.add(i, new SymmTridiagMatrix(diag, offdiag));
+            }
         }
 
     }
 
 
-    public SymmTridiagMatrix getScaledWeightMatrixForMissingCov(double precision, int covIndex, int lastObs) {
-        SymmTridiagMatrix a = weightMatricesForMissingCov.get(covIndex).copy();
+    public SymmTridiagMatrix getScaledWeightMatrixForMissingCovRecent(double precision, int covIndex, int firstObs) {
+        SymmTridiagMatrix a = weightMatricesForMissingCovRecent.get(covIndex).copy();
+        for (int i = 0; i < a.numRows() - 1; i++) {
+            a.set(i, i, a.get(i, i) * precision);
+            a.set(i + 1, i, a.get(i + 1, i) * precision);
+        }
+        a.set(firstObs - 2, firstObs - 2,
+                a.get(firstObs - 2, firstObs - 2) * precision);
+        return a;
+    }
+
+    public SymmTridiagMatrix getScaledWeightMatrixForMissingCovDistant(double precision, int covIndex, int lastObs) {
+        SymmTridiagMatrix a = weightMatricesForMissingCovDistant.get(covIndex).copy();
         for (int i = 0; i < a.numRows() - 1; i++) {
             a.set(i, i, a.get(i, i) * precision);
             a.set(i + 1, i, a.get(i + 1, i) * precision);
@@ -971,31 +1021,51 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             DenseVector tempVectMissingCov;
             SymmTridiagMatrix missingCovQ;
             DenseVector tempVectMissingCov2;
+            int numMissingRecent;
 
             double currentLike = 0.0;
 
-            for (int i = 0; i < covPrecParameters.size(); i++) {
+            if(lastObservedIndex != null) {
+                for (int i = 0; i < covPrecParametersDistant.size(); i++) {
 
-                numMissing = fieldLength - lastObservedIndex[i];
-                tempVectMissingCov = new DenseVector(numMissing);
-                tempVectMissingCov2 = new DenseVector(numMissing);
+                    numMissing = fieldLength - lastObservedIndex[i];
+                    tempVectMissingCov = new DenseVector(numMissing);
+                    tempVectMissingCov2 = new DenseVector(numMissing);
 
-                missingCovQ = getScaledWeightMatrixForMissingCov(covPrecParameters.get(i).getParameterValue(0), i,
-                        lastObservedIndex[i]);
+                    missingCovQ = getScaledWeightMatrixForMissingCovDistant(covPrecParametersDistant.get(i).getParameterValue(0), i,
+                            lastObservedIndex[i]);
 
-                for (int j = 0; j < numMissing; j++) {
-                    // System.err.println("covariate.get(i).getSize(): " + covariates.get(i).getSize());
-                    // System.err.println("lastObservedIndex: " + lastObservedIndex);
-                    // System.err.println("j: " + j);
-                    // System.err.println("getParameterValue(0, lastObservedIndex-1): " + covariates.get(i).getParameterValue(0,lastObservedIndex-1));
-                    tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, lastObservedIndex[i] + j) -
-                            covariates.get(i).getParameterValue(0, lastObservedIndex[i] - 1));
+                    for (int j = 0; j < numMissing; j++) {
+                        tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, lastObservedIndex[i] + j) -
+                                covariates.get(i).getParameterValue(0, lastObservedIndex[i] - 1));
+                    }
+
+                    missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);
+                    currentLike += 0.5 * (numMissing) * Math.log(covPrecParametersDistant.get(i).getParameterValue(0))
+                            - 0.5 * tempVectMissingCov.dot(tempVectMissingCov2);
                 }
+            }
 
-                missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);
-                // System.err.println("missingCovQ: " + missingCovQ.get(0,0));
-                currentLike += 0.5 * (numMissing) * Math.log(covPrecParameters.get(i).getParameterValue(0))
-                        - 0.5 * tempVectMissingCov.dot(tempVectMissingCov2);
+            if(firstObservedIndex != null){
+
+                for (int i = 0; i < covPrecParametersRecent.size(); i++) {
+
+                    numMissingRecent = firstObservedIndex[i]-1;
+                    tempVectMissingCov = new DenseVector(numMissingRecent);
+                    tempVectMissingCov2 = new DenseVector(numMissingRecent);
+
+                    missingCovQ = getScaledWeightMatrixForMissingCovRecent(covPrecParametersRecent.get(i).getParameterValue(0), i,
+                            firstObservedIndex[i]);
+
+                    for (int j = 0; j < numMissingRecent; j++) {
+                        tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, j) -
+                                covariates.get(i).getParameterValue(0, firstObservedIndex[i]-1));
+                    }
+
+                    missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);
+                    currentLike += 0.5 * (numMissingRecent) * Math.log(covPrecParametersRecent.get(i).getParameterValue(0))
+                            - 0.5 * tempVectMissingCov.dot(tempVectMissingCov2);
+                }
             }
             return currentLike;
         }

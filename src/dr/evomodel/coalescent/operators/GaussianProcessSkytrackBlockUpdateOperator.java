@@ -49,7 +49,7 @@ import java.io.FileWriter;
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 
-//public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercableOperator{
+//public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractAdaptableOperator{
 
 public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperator implements GibbsOperator {
     private double scaleFactor;
@@ -90,7 +90,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 //    private double[] zeros;
 
     public GaussianProcessSkytrackBlockUpdateOperator(GaussianProcessSkytrackLikelihood GPLikelihood,
-                                                      double weight, CoercionMode mode, double scaleFactor,
+                                                      double weight, AdaptationMode mode, double scaleFactor,
                                                       int maxIterations, double stopValue) {
 //        super(mode);
         GPvalue = GPLikelihood;     //before gmrfField
@@ -1520,19 +1520,20 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         return 0.0;
     }
 
-
+    /* This is not a coercable operator so shouldn't have these
     public double getCoercableParameter() {
 //        return Math.log(scaleFactor);
         return Math.sqrt(scaleFactor - 1);
     }
 
-    public int getStepCount() {
-        return 1;
-    }
-
     public void setCoercableParameter(double value) {
 //        scaleFactor = Math.exp(value);
         scaleFactor = 1 + value * value;
+    }
+    */
+
+    public int getStepCount() {
+        return 1;
     }
 
     public double getRawParameter() {

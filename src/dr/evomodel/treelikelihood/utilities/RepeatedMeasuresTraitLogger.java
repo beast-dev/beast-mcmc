@@ -51,8 +51,8 @@ public class RepeatedMeasuresTraitLogger implements Loggable, Reportable {
 
             int index = traitModel.getMissingIndices().get(i);
 
-            int taxon = index / dim;
-            int trait = index - taxon * dim;
+            final int taxon = index / dim;
+            final int trait = index - taxon * dim;
 
             columns[i] = new LogColumn.Abstract(traitParameter.getParameterName() + "." +
                     traitParameter.getParameter(taxon).getParameterName() + "." +

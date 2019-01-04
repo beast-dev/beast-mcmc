@@ -117,11 +117,11 @@ public class AlternatingOperatorSchedule implements OperatorSchedule {
         }
     }
 
-    public double getOptimizationTransform(double d) {
+    public OptimizationTransform getOptimizationTransform() {
         if (operatorSchedules.size() > 0)
-            return operatorSchedules.get(0).getOptimizationTransform(d);
+            return operatorSchedules.get(0).getOptimizationTransform();
         else
-            return 0;
+            return null;
     }
 
     public long getMinimumAcceptAndRejectCount() {

@@ -47,7 +47,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	private double totalWeight = 0;
 	private int current = 0;
 	private boolean sequential = false;
-	private OptimizationTransform optimizationSchedule = OptimizationTransform.DEFAULT;
+	private OptimizationTransform optimizationTransform = OptimizationTransform.DEFAULT;
 
 	int operatorUseThreshold = Integer.MAX_VALUE; // operator use threshold over which an operator may get turned off if ...
 	double operatorAcceptanceThreshold = 0.0; // acceptance rate threshold under which an operator gets turned off
@@ -154,19 +154,12 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 	}
 
-	public double getOptimizationTransform(double d) {
-        switch( optimizationSchedule ) {
-			case DEFAULT:
-            case LOG:  return Math.log(d);
-            case SQRT: return Math.sqrt(d);
-			case LINEAR: return d;
-
-			default: throw new UnsupportedOperationException("Unknown enum value");
-        }
+	public OptimizationTransform getOptimizationTransform() {
+       return optimizationTransform;
 	}
 
-	public void setOptimizationSchedule(OptimizationTransform optimizationSchedule) {
-		this.optimizationSchedule = optimizationSchedule;
+	public void setOptimizationTransform(OptimizationTransform optimizationTransform) {
+		this.optimizationTransform = optimizationTransform;
 	}
 
     public long getMinimumAcceptAndRejectCount() {

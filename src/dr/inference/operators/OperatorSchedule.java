@@ -64,22 +64,32 @@ public interface OperatorSchedule extends Serializable {
     /**
      * @return the optimization schedule
      */
-    double getOptimizationTransform(double d);
+    OptimizationTransform getOptimizationTransform();
 
     /**
      * @return the minimum number of times an operator has been called
      */
     long getMinimumAcceptAndRejectCount();
 
-    public enum OptimizationTransform {
-        DEFAULT("default"),
-        LOG("log"),
-        SQRT("sqrt"),
-        LINEAR("linear");
+    enum OptimizationTransform {
+        DEFAULT("default") {
+            @Override public double transform(double d) { return LINEAR.transform(d); }
+        },
+        LOG("log") {
+            @Override public double transform(double d) { return Math.log(d); }
+        },
+        SQRT("sqrt") {
+            @Override public double transform(double d) { return Math.sqrt(d); }
+        },
+        LINEAR("linear") {
+            @Override public double transform(double d) { return d; }
+        };
 
         OptimizationTransform(String name) {
             this.name = name;
         }
+
+        public abstract double transform(double d);
 
         @Override
         public String toString() {

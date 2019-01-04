@@ -102,7 +102,7 @@ public class OperatorsGenerator extends Generator {
                 new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE,
                         (shouldLogCool ?
                                 OperatorSchedule.OptimizationTransform.LOG.toString() :
-                                OperatorSchedule.OptimizationTransform.DEFAULT.toString()))
+                                OperatorSchedule.DEFAULT_TRANSFORM.toString()))
         };
 
         writer.writeComment("Define operators");

@@ -47,7 +47,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	private double totalWeight = 0;
 	private int current = 0;
 	private boolean sequential = false;
-	private OptimizationTransform optimizationTransform = OptimizationTransform.DEFAULT;
+	private OptimizationTransform optimizationTransform = DEFAULT_TRANSFORM;
 
 	int operatorUseThreshold = Integer.MAX_VALUE; // operator use threshold over which an operator may get turned off if ...
 	double operatorAcceptanceThreshold = 0.0; // acceptance rate threshold under which an operator gets turned off

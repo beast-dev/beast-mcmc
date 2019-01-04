@@ -73,7 +73,7 @@ public interface OperatorSchedule extends Serializable {
 
     enum OptimizationTransform {
         DEFAULT("default") {
-            @Override public double transform(double d) { return LINEAR.transform(d); }
+            @Override public double transform(double d) { return LOG.transform(d); }
         },
         LOG("log") {
             @Override public double transform(double d) { return Math.log(d); }
@@ -83,8 +83,10 @@ public interface OperatorSchedule extends Serializable {
         },
         LINEAR("linear") {
             @Override public double transform(double d) { return d; }
-        };
-
+        },
+        POWER("power") {
+            @Override public double transform(double d) { return Math.pow(d/1E6, .55); }
+        };	
         OptimizationTransform(String name) {
             this.name = name;
         }

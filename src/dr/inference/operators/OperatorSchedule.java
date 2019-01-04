@@ -83,6 +83,11 @@ public interface OperatorSchedule extends Serializable {
         },
         LINEAR("linear") {
             @Override public double transform(double d) { return d; }
+        },
+        POWER("power") {
+            @Override public double transform(double d) {
+                return Math.pow(d / 1.0E6, 0.55); // c = 5/9, B = 1e6
+            }
         };
 
         OptimizationTransform(String name) {

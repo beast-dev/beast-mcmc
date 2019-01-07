@@ -131,7 +131,7 @@ public class BeautiOptions extends ModelOptions {
         units = Units.Type.SUBSTITUTIONS;
 
         // Operator schedule options
-        optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
+        optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
         // MCMC options
         chainLength = 10000000;
@@ -1306,7 +1306,7 @@ public class BeautiOptions extends ModelOptions {
     public Units.Type units = Units.Type.YEARS;
 
     // Operator schedule options
-    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
+    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
     // MCMC options
     public int chainLength = 10000000;

@@ -33,11 +33,15 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.evomodelxml.operators.TipLeapOperatorParser;
 import dr.inference.distribution.CauchyDistribution;
-import dr.inference.operators.*;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implements the Subtree Leap move.
@@ -57,8 +61,20 @@ import java.util.*;
 public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
     public enum DistanceKernelType {
-        NORMAL("normal"),
-        CAUCHY("Cauchy");
+        NORMAL("normal") {
+            @Override
+            double getDelta(double size) {
+                return Math.abs(MathUtils.nextGaussian() * size);
+            }
+        },
+        CAUCHY("Cauchy") {
+            @Override
+            double getDelta(double size) {
+                Distribution distK = new CauchyDistribution(0, size);
+                double u = MathUtils.nextDouble();
+                return Math.abs(distK.quantile(u));
+            }
+        };
 
         DistanceKernelType(String name) {
             this.name = name;
@@ -70,7 +86,9 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         }
 
         String name;
-    };
+
+        abstract double getDelta(double size);
+    }
 
     private double size;
 
@@ -145,8 +163,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     public double doOperation() {
         double logq;
 
-        final double delta = getDelta(distanceKernel);
-
+        final double delta = distanceKernel.getDelta(size);
 
         final NodeRef root = tree.getRoot();
 
@@ -319,18 +336,6 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         return destinations;
     }
 
-    private double getDelta(DistanceKernelType distanceKernel) {
-        switch(distanceKernel) {
-            case NORMAL: return Math.abs(MathUtils.nextGaussian() * size);
-            case CAUCHY:{
-                Distribution distK = new CauchyDistribution(0, size);
-                double u = MathUtils.nextDouble();
-                return Math.abs(distK.quantile(u));
-            }
-            default: throw new UnsupportedOperationException("Unknown enum value");
-        }
-    }
-
     private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 
         final NodeRef parent = tree.getParent(node);
@@ -409,6 +414,4 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
             return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";
         }
     }
-
-
 }

@@ -76,7 +76,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                 XMLObject xoc = (XMLObject) xo.getChild(i);
 
                 Parameter rateParameter = null;
-                BranchRateModel branchRates = (BranchRateModel) xo.getChild(BranchRateModel.class);
+                BranchRateModel branchRates = (BranchRateModel) xoc.getChild(BranchRateModel.class);
                 if (branchRates == null) {
                     rateParameter = (Parameter) xoc.getChild(Parameter.class);
                 }

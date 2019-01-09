@@ -114,7 +114,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             popSizeParameter.setDimension(events);
 
             // adding a non-infinite bound on this parameter precludes the use of the scale operator (and is unnecessary).
-            // popSizeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, popSizeParameter.getDimension()));
+            popSizeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, popSizeParameter.getDimension()));
         }
 
         if (nIndicators != events - 1) {

@@ -33,6 +33,7 @@ import java.util.List;
 public class SumParameter extends Parameter.Abstract implements VariableListener {
 
     public SumParameter(List<Parameter> parameterList) {
+        this.isImmutable = true;
         this.parameterList = parameterList;
         dimension = parameterList.size() == 1 ? 1 : parameterList.get(0).getDimension();;
         for (Parameter p : parameterList) {

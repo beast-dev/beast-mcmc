@@ -175,7 +175,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
-            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            if (branchModel.getSubstitutionModels().size() == 1) {
+                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            } else {
+                // use a more general delegate that allows different substitution models on different branches and
+                // can do matrix convolution.
+
+                // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
+                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel);
+            }
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {

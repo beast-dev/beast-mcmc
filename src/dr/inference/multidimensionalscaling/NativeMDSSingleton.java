@@ -48,8 +48,6 @@ public class NativeMDSSingleton {
 
     static final String THREADS = "mds.threads";
     static final String MDS_RESOURCE = "mds.resource";
-    static final int DEFAULT_DEVICE = -1;
-
 
 //    private int getThreads() {
 //        String r = System.getProperty(THREADS);
@@ -117,11 +115,12 @@ public class NativeMDSSingleton {
 
     private static NativeMDSSingleton INSTANCE = null;
 
-    public int initialize(int dimensionCount, int locationCount, long flags, int threads) {
-        return initialize(dimensionCount, locationCount, flags, DEFAULT_DEVICE, threads);
+    public int initialize(int dimensionCount, int locationCount, MultiDimensionalScalingCore.CoreInformation information) {
+        return initialize(dimensionCount, locationCount,
+                information.flags, information.deviceNumber, information.numThreads);
     }
 
-    public native int initialize(int dimensionCount, int locationCount, long flags, int deviceNumber, int threads);
+    private native int initialize(int dimensionCount, int locationCount, long flags, int deviceNumber, int threads);
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 

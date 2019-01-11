@@ -31,6 +31,9 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This class maintains a parameter of length equal to the number of nodes in the tree.
  * It can optionally include the root node. If the root node is not included then this
@@ -46,6 +49,9 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     // The tree parameter;
     private final Parameter parameter;
+
+    private final int[] nodeNumberToParameterIndex;
+    private final int[] parameterIndexToNodeNumber;
 
     // the index of the root node.
     private final Parameter rootNodeNumber;
@@ -88,13 +94,29 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         int dim = parameter.getDimension();
         int treeSize = getParameterSize();
         if (dim != treeSize) {
-//            System.err.println("WARNING: setting dimension of parameter to match tree branch count ("
-//                    + dim + " != " + treeSize + ")"); // http://code.google.com/p/beast-mcmc/issues/detail?id=385
-            parameter.setDimension(treeSize);
+            if (dim < 2) {
+                // if the parameter is of size 1 or hasn't had its dimension set then expand to fit
+                parameter.setDimension(treeSize);
+            } else {
+                throw new IllegalArgumentException("dimension of parameter does not match tree branch count");
+            }
         }
 
         addModel(tree);
         addVariable(parameter);
+
+        nodeNumberToParameterIndex = new int[treeSize];
+        parameterIndexToNodeNumber = new int[dim];
+
+        int k = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (includeRoot || !tree.isRoot(node)) {
+                nodeNumberToParameterIndex[node.getNumber()] = k;
+                parameterIndexToNodeNumber[k] = node.getNumber();
+                k++;
+            }
+        }
 
         rootNodeNumber = new Parameter.Default(parameter.getId() + ".rootNodeNumber");
         rootNodeNumber.setParameterValue(0, tree.getRoot().getNumber());
@@ -102,12 +124,8 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     }
 
     public int getParameterSize() {
-        int treeSize = tree.getNodeCount();
-        if (!includeRoot) {
-            treeSize -= 1;
-        }
-        return treeSize;
-    }
+        return tree.getNodeCount() - (includeRoot ? 0 : 1);
+\    }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
@@ -142,34 +160,22 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         assert (!tree.isRoot(node) || includeRoot) : "root node doesn't have a parameter value!";
 
-        assert !includeRoot || tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
-                "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
-
-        int nodeNumber = node.getNumber();
-        int index = getParameterIndexFromNodeNumber(nodeNumber);
-        return parameter.getParameterValue(index);
+        return parameter.getParameterValue(parameterIndexToNodeNumber[node.getNumber()]);
     }
 
     public void setNodeValue(Tree tree, NodeRef node, double value) {
 
         assert (!tree.isRoot(node) && !includeRoot) : "root node doesn't have a parameter value!";
 
-        assert tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
-                "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
-
-        int nodeNumber = node.getNumber();
-        int index = getParameterIndexFromNodeNumber(nodeNumber);
-        parameter.setParameterValue(index, value);
+        parameter.setParameterValue(parameterIndexToNodeNumber[node.getNumber()], value);
     }
 
     public int getNodeNumberFromParameterIndex(int parameterIndex) {
-        if (!includeRoot && parameterIndex >= tree.getRoot().getNumber()) return parameterIndex + 1;
-        return parameterIndex;
+        return parameterIndexToNodeNumber[parameterIndex];
     }
 
     public int getParameterIndexFromNodeNumber(int nodeNumber) {
-        if (!includeRoot && nodeNumber > tree.getRoot().getNumber()) return nodeNumber - 1;
-        return nodeNumber;
+        return nodeNumberToParameterIndex[nodeNumber];
     }
 
     private void handleRootMove() {
@@ -180,13 +186,14 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
             final int newRootNodeNumber = tree.getRoot().getNumber();
 
             if (oldRootNodeNumber != newRootNodeNumber) {
-                if (oldRootNodeNumber > newRootNodeNumber) {
+                int oldRootParameterIndex = nodeNumberToParameterIndex[oldRootNodeNumber];
 
-                    final double oldValue = parameter.getParameterValue(newRootNodeNumber);
+                if (oldRootNodeNumber > newRootNodeNumber) {
 
                     final int end = Math.min(parameter.getDimension() - 1, oldRootNodeNumber);
                     for (int i = newRootNodeNumber; i < end; i++) {
-                        parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
+                        parameterIndexToNodeNumber[
+                                parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
                     }
 
                     parameter.setParameterValue(end, oldValue);

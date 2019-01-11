@@ -33,6 +33,7 @@ import java.util.List;
 public class ProductParameter extends Parameter.Abstract implements VariableListener {
 
     public ProductParameter(List<Parameter> parameter) {
+        this.isImmutable = true;
         this.paramList = parameter;
         for (Parameter p : paramList) {
             p.addVariableListener(this);

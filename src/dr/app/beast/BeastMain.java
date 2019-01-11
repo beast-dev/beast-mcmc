@@ -552,18 +552,11 @@ public class BeastMain {
         } else {
             beagleFlags |= BeagleFlag.VECTOR_NONE.getMask();
         }
-        if (arguments.hasOption("beagle_threading_off")) {
-            beagleFlags |= BeagleFlag.THREADING_NONE.getMask();
-        } else {
-            beagleFlags |= BeagleFlag.THREADING_CPP.getMask();
-        }
         if (arguments.hasOption("beagle_thread_count")) {
-            int beagleThreadCount = arguments.getIntegerOption("beagle_thread_count");
-            if (beagleThreadCount == 1) {
-                beagleFlags &= ~BeagleFlag.THREADING_CPP.getMask();
-                beagleFlags |= BeagleFlag.THREADING_NONE.getMask();
-            }
             System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
+        }
+        if (arguments.hasOption("beagle_threading_off")) {
+            System.setProperty("beagle.thread.count", Integer.toString(1));
         }
 //        if (arguments.hasOption("beagle_double")) {
 //            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();

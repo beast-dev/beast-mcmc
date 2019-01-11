@@ -165,6 +165,8 @@ public interface Parameter extends Statistic, Variable<Double> {
 
     boolean isUsed();
 
+    boolean isImmutable();
+
     Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
     Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
 
@@ -395,6 +397,10 @@ public interface Parameter extends Statistic, Variable<Double> {
             acceptParameterValues();
         }
 
+        public boolean isImmutable() {
+            return this.isImmutable;
+        }
+
         public boolean isUsed() {
             return listeners != null && listeners.size() > 0;
         }
@@ -473,6 +479,9 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         private boolean isValid = true;
+
+        //determines whether a parameter's value can be set, true by default
+        protected boolean isImmutable = false;
 
         private ArrayList<VariableListener> listeners;
 

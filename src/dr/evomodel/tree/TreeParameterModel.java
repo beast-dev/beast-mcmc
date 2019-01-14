@@ -134,7 +134,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     public int getParameterSize() {
         return tree.getNodeCount() - (includeRoot ? 0 : 1);
-\    }
+    }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
@@ -143,11 +143,17 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        int nodeNumber = getNodeNumberFromParameterIndex(index);
+        if (variable == parameterIndexToNodeNumber) {
+            int nodeNumber = getNodeNumberFromParameterIndex(index);
 
-        assert (tree.getNode(nodeNumber).getNumber() == nodeNumber);
+            assert (tree.getNode(nodeNumber).getNumber() == nodeNumber);
 
-        fireModelChanged(variable, nodeNumber);
+            fireModelChanged(variable, nodeNumber);
+        } else if (variable == nodeNumberToParameterIndex) {
+            assert (tree.getNode(index).getNumber() == index);
+
+            fireModelChanged(variable, index);
+        }
     }
 
     protected void storeState() {
@@ -198,6 +204,9 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
                 parameterIndexToNodeNumber.setParameterValue(getParameterIndexFromNodeNumber(newRootNodeNumber), oldRootNodeNumber);
 
                 double oldRootParameterIndex = nodeNumberToParameterIndex.getParameterValue(oldRootNodeNumber);
+
+                assert(oldRootParameterIndex < 0); // should be -1
+
                 nodeNumberToParameterIndex.setParameterValue(oldRootNodeNumber, nodeNumberToParameterIndex.getParameterValue(newRootNodeNumber));
                 nodeNumberToParameterIndex.setParameterValue(newRootNodeNumber, oldRootParameterIndex);
                 

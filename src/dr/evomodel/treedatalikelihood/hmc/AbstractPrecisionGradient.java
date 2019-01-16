@@ -254,7 +254,9 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
                 for (int i = 0; i < dim * dim; ++i) {
 
-                    if (vecV[i] == 0) throw new RuntimeException("starting with zero variance is not allowed.");
+                    if (vecV[i] == 0 || Double.isNaN(vecV[i])) {
+                        throw new RuntimeException("0 or NaN value in variance. check start value or use smaller step size for hmc");
+                    }
                     gradient[i] = -lhs[i] * vecP[i] / vecV[i];
                 }
 

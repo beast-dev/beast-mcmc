@@ -134,7 +134,7 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         operator = new UniformOperator(internalHeights, 30.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 15.0, 0.0077, true, false, false, false, CoercionMode.COERCION_ON);
+        operator = new SubtreeSlideOperator(treeModel, 15.0, 0.0077, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);

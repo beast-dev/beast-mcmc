@@ -28,8 +28,8 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -42,14 +42,14 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
-public class DiscretizedLocationOperator extends AbstractCoercableOperator {
+public class DiscretizedLocationOperator extends AbstractAdaptableOperator {
 
     public static final String GIBBS_OPERATOR = "discretizedLocationOperator";
     public static final String INTERNAL_ONLY = "onlyInternalNodes";
     public static final String DISK = "neighborhoodSize";
     public static final String RANDOMIZE = "randomize";
 
-    public DiscretizedLocationOperator(AbstractMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, CoercionMode mode) {
+    public DiscretizedLocationOperator(AbstractMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, AdaptationMode mode) {
         super(mode);
         this.treeModel = traitModel.getTreeModel();
         this.traitName = traitModel.getTraitName();
@@ -208,16 +208,21 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
         return Math.log(value - 1);
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return autoOptimize;
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         autoOptimize = value;
     }
 
     public double getRawParameter() {
         return convertFromAutoOptimizeValue(autoOptimize);
+    }
+
+    @Override
+    public String getAdaptableParameterName() {
+        return null;
     }
 
 //    public double getScaleFactor() {
@@ -255,7 +260,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             boolean onlyInternalNodes = xo.getAttribute(INTERNAL_ONLY, true);

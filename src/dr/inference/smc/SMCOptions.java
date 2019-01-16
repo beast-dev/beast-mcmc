@@ -1,5 +1,5 @@
 /*
- * AbstractCoercableOperator.java
+ * MCMCOptions.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,20 +23,30 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.inference.smc;
 
 /**
- * @author Alexei Drummond
+ * Options for the SMC class.
+ *
+ * @author Andrew Rambaut
+ * @version $Id$
  */
-public abstract class AbstractCoercableOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class SMCOptions {
 
-    public CoercionMode mode = CoercionMode.DEFAULT;
+    private final long chainLength;
 
-    public AbstractCoercableOperator(CoercionMode mode) {
-        this.mode = mode;
+    /**
+     * constructor
+     * @param chainLength
+     */
+    public SMCOptions(long chainLength) {
+        this.chainLength = chainLength;
     }
 
-    public final CoercionMode getMode() {
-        return mode;
+    /**
+     * @return the chain length of the SMC analysis
+     */
+    public final long getChainLength() {
+        return chainLength;
     }
 }

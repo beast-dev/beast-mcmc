@@ -132,16 +132,6 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
     }
 
 
-    public String getPerformanceSuggestion() {
-        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
-    }
-
     public String getOperatorName() {
         return RateExchangeOperatorParser.RATE_EXCHANGE;
     }

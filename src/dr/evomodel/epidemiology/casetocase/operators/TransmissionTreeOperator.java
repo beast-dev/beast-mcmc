@@ -34,9 +34,9 @@ import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -49,14 +49,14 @@ import java.util.ArrayList;
  * @author Matthew Hall
  */
 
-public class TransmissionTreeOperator extends AbstractCoercableOperator {
+public class TransmissionTreeOperator extends AbstractAdaptableOperator {
 
     private final CaseToCaseTreeLikelihood c2cLikelihood;
     private final AbstractTreeOperator innerOperator;
     public static final String TRANSMISSION_TREE_OPERATOR = "transmissionTreeOperator";
 
     public TransmissionTreeOperator(CaseToCaseTreeLikelihood c2cLikelihood, AbstractTreeOperator operator,
-                                    CoercionMode mode) {
+                                    AdaptationMode mode) {
         super(mode);
         this.c2cLikelihood = c2cLikelihood;
         this.innerOperator = operator;
@@ -68,7 +68,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
     }
 
     public TransmissionTreeOperator(CaseToCaseTreeLikelihood c2cLikelihood, AbstractTreeOperator operator) {
-        this(c2cLikelihood,operator,CoercionMode.COERCION_OFF);
+        this(c2cLikelihood,operator, AdaptationMode.ADAPTATION_OFF);
     }
 
     public double doOperation() {
@@ -200,30 +200,33 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         return out;
     }
 
-    public double getCoercableParameter() {
-        if(innerOperator instanceof CoercableMCMCOperator){
-            return ((CoercableMCMCOperator) innerOperator).getCoercableParameter();
+    public double getAdaptableParameter() {
+        if(innerOperator instanceof AdaptableMCMCOperator){
+            return ((AdaptableMCMCOperator) innerOperator).getAdaptableParameter();
         }
         throw new IllegalArgumentException();
     }
 
-    public void setCoercableParameter(double value) {
-        if(innerOperator instanceof CoercableMCMCOperator){
-            ((CoercableMCMCOperator) innerOperator).setCoercableParameter(value);
+    public void setAdaptableParameter(double value) {
+        if(innerOperator instanceof AdaptableMCMCOperator){
+            ((AdaptableMCMCOperator) innerOperator).setAdaptableParameter(value);
             return;
         }
         throw new IllegalArgumentException();
     }
 
     public double getRawParameter() {
-        if(innerOperator instanceof CoercableMCMCOperator){
-            return ((CoercableMCMCOperator) innerOperator).getRawParameter();
+        if(innerOperator instanceof AdaptableMCMCOperator){
+            return ((AdaptableMCMCOperator) innerOperator).getRawParameter();
         }
         throw new IllegalArgumentException();
     }
 
-    public String getPerformanceSuggestion() {
-        return "Not implemented";
+    public String getAdaptableParameterName() {
+        if(innerOperator instanceof AdaptableMCMCOperator) {
+            return ((AdaptableMCMCOperator) innerOperator).getAdaptableParameterName();
+        }
+        return "";
     }
 
     public String getOperatorName() {
@@ -238,10 +241,10 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                     = (CaseToCaseTreeLikelihood)xo.getChild(CaseToCaseTreeLikelihood.class);
             AbstractTreeOperator treeOp = (AbstractTreeOperator)xo.getChild(AbstractTreeOperator.class);
 
-            CoercionMode mode = CoercionMode.COERCION_OFF;
+            AdaptationMode mode = AdaptationMode.ADAPTATION_OFF;
 
-            if(treeOp instanceof CoercableMCMCOperator){
-                mode = ((CoercableMCMCOperator) treeOp).getMode();
+            if(treeOp instanceof AdaptableMCMCOperator){
+                mode = ((AdaptableMCMCOperator) treeOp).getMode();
             }
 
             return new TransmissionTreeOperator(c2cL,treeOp,mode);

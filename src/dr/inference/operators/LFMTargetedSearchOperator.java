@@ -29,12 +29,6 @@ public class LFMTargetedSearchOperator extends SimpleMCMCOperator {
         this.cutoffs = cutoffs;
     }
 
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
-
     @Override
     public String getOperatorName() {
         return "Latent Factor Model Targeted Search Operator";

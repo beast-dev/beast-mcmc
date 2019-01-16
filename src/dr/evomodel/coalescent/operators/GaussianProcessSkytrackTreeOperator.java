@@ -31,8 +31,8 @@ import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackTreeOperatorParser;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 import dr.util.ComparableDouble;
@@ -48,7 +48,7 @@ import java.util.ArrayList;
  * @author Julia Palacios
  * @version $Id:  $
  */
-public class GaussianProcessSkytrackTreeOperator extends AbstractCoercableOperator {
+public class GaussianProcessSkytrackTreeOperator extends AbstractAdaptableOperator {
 
 	private TreeModel tree = null;
 	private double scaleFactor;
@@ -72,8 +72,8 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractCoercableOperat
 
 	private double[] zeros;
 
-	public GaussianProcessSkytrackTreeOperator(TreeModel treeModel,GaussianProcessSkytrackLikelihood gpLikelihood,
-											   double weight, double scaleFactor,CoercionMode mode) {
+	public GaussianProcessSkytrackTreeOperator(TreeModel treeModel, GaussianProcessSkytrackLikelihood gpLikelihood,
+                                               double weight, double scaleFactor, AdaptationMode mode) {
 		super(mode);
 		GPOperator=new GaussianProcessSkytrackBlockUpdateOperator();
 		this.tree=treeModel;
@@ -670,12 +670,12 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractCoercableOperat
 		return GaussianProcessSkytrackTreeOperatorParser.BLOCK_UPDATE_OPERATOR;
 	}
 
-	public double getCoercableParameter() {
+	public double getAdaptableParameter() {
 //        return Math.log(scaleFactor);
 		return Math.sqrt(scaleFactor - 1);
 	}
 
-	public void setCoercableParameter(double value) {
+	public void setAdaptableParameter(double value) {
 //        scaleFactor = Math.exp(value);
 		scaleFactor = 1 + value * value;
 	}
@@ -688,41 +688,9 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractCoercableOperat
 		return scaleFactor;
 	}
 
-	public double getTargetAcceptanceProbability() {
-		return 0.234;
-	}
-
-	public double getMinimumAcceptanceLevel() {
-		return 0.1;
-	}
-
-	public double getMaximumAcceptanceLevel() {
-		return 0.4;
-	}
-
-	public double getMinimumGoodAcceptanceLevel() {
-		return 0.20;
-	}
-
-	public double getMaximumGoodAcceptanceLevel() {
-		return 0.30;
-	}
-
-	public final String getPerformanceSuggestion() {
-
-		double prob = Utils.getAcceptanceProbability(this);
-		double targetProb = getTargetAcceptanceProbability();
-		dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-
-		double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-
-		if (prob < getMinimumGoodAcceptanceLevel()) {
-			return "Try setting scaleFactor to about " + formatter.format(sf);
-		} else if (prob > getMaximumGoodAcceptanceLevel()) {
-			return "Try setting scaleFactor to about " + formatter.format(sf);
-		} else return "";
-	}
-
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
+    }
 
 //  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
 //  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);

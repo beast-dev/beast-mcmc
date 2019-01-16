@@ -59,6 +59,18 @@ import java.util.logging.Logger;
  */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+
+    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
+    }
+
+    public static boolean IS_ODD_STATE_SSE_FIXED() {
+        // SSE for odd state counts fixed in BEAGLE 3.1.2
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 2;
+    }
+
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
@@ -71,6 +83,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
+    private static final String THREAD_COUNT = "beagle.thread.count";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -167,6 +180,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         isRestored = false;
 
+        this.settings = settings;
+
         try {
 
             int compactPartialsCount = tipCount;
@@ -184,14 +199,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             if (settings.branchInfinitesimalDerivative) {
                 evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
             } else {
-                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel, 0, settings);
+
+                if (branchModel.getSubstitutionModels().size() == 1) {
+                    evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+                } else {
+                    // use a more general delegate that allows different substitution models on different branches and
+                    // can do matrix convolution.
+
+                    // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
+                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
+                }
             }
-//            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel, 0, settings);
 
             int numPartials = partialBufferHelper.getBufferCount();
             int numScaleBuffers = scaleBufferHelper.getBufferCount();
             int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
-            this.settings = settings;
 
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
             if (settings.usePreOrder){
@@ -296,8 +318,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 forceVectorization = true;
             }
 
+            String tc = System.getProperty(THREAD_COUNT);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
+
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-                    && !forceVectorization
+                    && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
                     ) {
                 // @todo SSE doesn't seem to work for larger state spaces so for now we override the
                 // SSE option.
@@ -327,6 +362,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 // non-CPU implementations don't have SSE so remove default preference for SSE
                 // when using non-CPU preferences or prioritising non-CPU resource
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
             }
 
             // start auto resource selection
@@ -412,6 +448,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
+            instanceFlags = instanceDetails.getFlags();
+
+            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
+                beagle.setCPUThreadCount(threadCount);
+            }
+
             if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
             }
@@ -485,7 +527,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
-        return TreeTraversal.TraversalType.POST_ORDER;
+        if ((instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+            return TreeTraversal.TraversalType.POST_ORDER;
+        } else {
+            return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
+        }
     }
 
     @Override
@@ -1080,6 +1126,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
 
+    private int threadCount = -1;
+    private long instanceFlags;
+
     private boolean firstRescaleAttempt = false;
     private int rescalingMessageCount = 0;
 
@@ -1175,5 +1224,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * PreOrder related settings
      */
     private PreOrderSettings settings;
+
 
 }

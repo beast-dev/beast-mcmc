@@ -27,8 +27,8 @@ package dr.inference.multidimensionalscaling;
 
 import dr.math.matrixAlgebra.Vector;
 
-import static dr.inference.multidimensionalscaling.NativeMDSSingleton.DEFAULT_DEVICE;
 import static dr.inference.multidimensionalscaling.NativeMDSSingleton.MDS_RESOURCE;
+import static dr.inference.multidimensionalscaling.NativeMDSSingleton.THREADS;
 
 /**
  * MassivelyParallelMDSImpl
@@ -48,27 +48,39 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private NativeMDSSingleton singleton;
     private int instance = -1; // Get instance # via initialization
 
-    private int deviceNumber = DEFAULT_DEVICE;
+    private final CoreInformation information;
 
     MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
+
+        information = new CoreInformation();
 
         String resource = System.getProperty(MDS_RESOURCE);
         if (resource != null) {
             try {
                 int number = Integer.parseInt(resource);
                 if (number > 0) {
-                    deviceNumber = number - 1;
+                    information.deviceNumber = number - 1;
                 }
             } catch (NumberFormatException exception) {
                 throw new RuntimeException("Unable to parse '" + MDS_RESOURCE + "' environmental property");
+            }
+        }
+
+        String r = System.getProperty(THREADS);
+        if (r != null) {
+            try {
+                information.numThreads = Integer.parseInt(r.trim());
+            } catch (NumberFormatException exception) {
+                throw new RuntimeException("Unable to parse '" + THREADS + "' environmental property");
             }
         }
     }
 
     @Override
     public void initialize(int embeddingDimension, int locationCount, long flags) {
-        instance = singleton.initialize(embeddingDimension, locationCount, flags, deviceNumber);
+        information.flags = flags;
+        instance = singleton.initialize(embeddingDimension, locationCount, information);
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
     }
 

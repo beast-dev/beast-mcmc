@@ -181,7 +181,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 //
 //        Parameter allInternalHeights = treeModel.createNodeHeightsParameter(true, true, false);
 //        operator = new UpDownOperator(new Scalable[]{new Scalable.Default(meanParam)},
-//                new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, CoercionMode.COERCION_ON);
+//                new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, AdaptationMode.ADAPTATION_ON);
 //        schedule.addOperator(operator);
 //
 //        operator = new SwapOperator(rateCategoryParameter, 10);
@@ -209,7 +209,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 //        operator = new UniformOperator(internalHeights, 30.0);
 //        schedule.addOperator(operator);
 //
-//        operator = new SubtreeSlideOperator(treeModel, 15.0, 38.0, true, false, false, false, CoercionMode.COERCION_ON);
+//        operator = new SubtreeSlideOperator(treeModel, 15.0, 38.0, true, false, false, false, AdaptationMode.ADAPTATION_ON);
 //        schedule.addOperator(operator);
 //
 //        operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);

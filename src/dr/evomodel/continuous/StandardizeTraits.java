@@ -1,5 +1,5 @@
 /*
- * StandarizeTraits.java
+ * StandardizeTraits.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,40 +25,41 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 import dr.inference.model.MatrixParameterInterface;
-import dr.math.Polynomial;
 import dr.xml.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 /**
- * Created by msuchard on 2/3/17.
+ * Created by Marc A. Suchard on 2/3/17.
  */
 public class StandardizeTraits {
 
-    public static final String STANDARDIZE_TRAITS = "standardizeTraits";
-    public static final String TRAIT_NAME = dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String STANDARDIZE_TRAITS = "standardizeTraits";
 
     private final MatrixParameterInterface matrix;
+    private final boolean[] missing;
+
+    private final double targetSd;
 
     public StandardizeTraits(MatrixParameterInterface matrix) {
-        this.matrix = matrix;
-//        System.err.println("rows: " + matrix.getRowDimension());
-//        System.err.println("cols: " + matrix.getColumnDimension());
+        this(matrix, null, 1.0);
     }
 
-//    private final Taxa taxa;
-//    private final String traitName;
-//
-//    public StandardizeTraits(Taxa taxa, String traitName) {
-//        this.taxa = taxa;
-//        this.traitName = traitName;
-//    }
-//
+    public StandardizeTraits(MatrixParameterInterface matrix, List<Integer> missingIndices, double targetSd) {
+
+        this.matrix = matrix;
+        this.missing = new boolean[matrix.getDimension()];
+
+        if (missingIndices != null) {
+            for (int m : missingIndices) {
+                missing[m] = true;
+            }
+        }
+
+        this.targetSd = targetSd;
+    }
 
     public String doStandardization(boolean byColumn) {
 
@@ -71,19 +72,19 @@ public class StandardizeTraits {
             MeanVariance mv = getStatistics(matrix, index, byColumn);
 
             sb.append("\tBEFORE\n");
-            sb.append("\tindex: " + (index + 1) + "\n");
-            sb.append("\tmean : " + mv.mean + "\n");
-            sb.append("\tvar  : " + mv.variance + "\n");
-            sb.append("\tcnt  : " + mv.count + "\n");
+            sb.append("\tindex: ").append(index + 1).append("\n");
+            sb.append("\tmean : ").append(mv.mean).append("\n");
+            sb.append("\tvar  : ").append(mv.variance).append("\n");
+            sb.append("\tcnt  : ").append(mv.count).append("\n");
 
             updateValues(matrix, mv, index, byColumn);
 
             mv = getStatistics(matrix, index, byColumn);
             sb.append("\tAFTER\n");
-            sb.append("\tindex: " + (index + 1) + "\n");
-            sb.append("\tmean : " + mv.mean + "\n");
-            sb.append("\tvar  : " + mv.variance + "\n");
-            sb.append("\tcnt  : " + mv.count + "\n\n");
+            sb.append("\tindex: ").append(index + 1).append("\n");
+            sb.append("\tmean : ").append(mv.mean).append("\n");
+            sb.append("\tvar  : ").append(mv.variance).append("\n");
+            sb.append("\tcnt  : ").append(mv.count).append("\n\n");
 
         }
 
@@ -173,6 +174,8 @@ public class StandardizeTraits {
     private void updateValues(MatrixParameterInterface matrix, final MeanVariance mv, int major, boolean byColumn) {
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
+        final int minorDim = (byColumn ? matrix.getColumnDimension() : matrix.getRowDimension());
+
         final double sd = Math.sqrt(mv.variance);
 
         for (int index = 0; index < dim; ++index) {
@@ -181,8 +184,8 @@ public class StandardizeTraits {
             final int col = byColumn ? major : index;
 
             double x = matrix.getParameterValue(row, col);
-            if (!Double.isNaN(x)) {
-                x = (x - mv.mean) / sd;
+            if (!Double.isNaN(x) && !missing[col * minorDim + row]) {
+                x = (x - mv.mean) / sd * targetSd;
                 matrix.setParameterValueQuietly(row, col, x);
             }
         }
@@ -220,9 +223,15 @@ public class StandardizeTraits {
         int c = 0;
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
+        final int minorDim = (byColumn ? matrix.getColumnDimension() : matrix.getRowDimension());
+
         for (int index = 0; index < dim; ++index) {
-            double x = byColumn ? matrix.getParameterValue(index, major) : matrix.getParameterValue(major, index);
-            if (!Double.isNaN(x)) {
+
+            final int row = byColumn ? index : major;
+            final int col = byColumn ? major : index;
+
+            double x = matrix.getParameterValue(row, col);
+            if (!Double.isNaN(x) && !missing[col * minorDim + row]) {
                 s += x;
                 ss += x * x;
                 ++c;
@@ -246,23 +255,15 @@ public class StandardizeTraits {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-//            Taxa taxa = (Taxa) xo.getChild(Taxa.class);
-//            String traitName = (String) xo.getAttribute(TRAIT_NAME);
+        public Object parseXMLObject(XMLObject xo) {
 
             MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
             StandardizeTraits st = new StandardizeTraits(matrix);
 
-            st.doStandardization(false);
+            String report = st.doStandardization(false);
 
-//            try {
-//                st.doStandardization();
-//            } catch (Exception e) {
-//                throw new XMLParseException(e.getMessage());
-//            }
-
-//            System.exit(-1);
+            Logger.getLogger("dr.evomodel.continuous").info(report);
 
             return st;
         }

@@ -25,8 +25,6 @@
 
 package dr.evomodel.branchmodel.lineagespecific;
 
-import java.util.List;
-
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -40,6 +38,8 @@ public class RatioParameter extends Parameter.Abstract implements
 	private Bounds bounds = null;
 
 	public RatioParameter(Parameter parameter1, Parameter parameter2) {
+
+		this.isImmutable = true;
 
 		this.parameter1 = parameter1;
 		this.parameter2 = parameter2;

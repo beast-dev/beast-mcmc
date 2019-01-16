@@ -256,16 +256,6 @@ public class IstvanOperator extends SimpleMCMCOperator {
         return 0.4;
     }
 
-    public String getPerformanceSuggestion() {
-        if (MCMCOperator.Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (MCMCOperator.Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
-    }
-
     public Element createOperatorElement(Document doc) {
         throw new RuntimeException();
     }

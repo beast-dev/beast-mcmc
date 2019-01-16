@@ -27,6 +27,9 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
@@ -35,10 +38,11 @@ import dr.inference.model.Parameter;
  * @author Xiang Ji
  */
 
-public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
+public class CodonFromNucleotideFrequencyModel extends FrequencyModel implements Loggable {
 
     private final FrequencyModel nucleotideFrequencyModel;
     private final Codons dataType;
+    private final Parameter codonFrequencies;
 
     public CodonFromNucleotideFrequencyModel(Codons dataType,
                                              FrequencyModel nucleotideFrequencyModel,
@@ -49,6 +53,7 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
             throw new IllegalArgumentException("Must provide a nucleotide frequency model");
         }
 
+        this.codonFrequencies = codonFrequencies;
         this.dataType = dataType;
         this.nucleotideFrequencyModel = nucleotideFrequencyModel;
         updateFrequencyParameter();
@@ -102,6 +107,34 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel {
 
             frequencyParameter.setParameterValue(i, frequencyParameter.getParameterValue(i) / sum);
 
+        }
+    }
+
+    private String getDimensionName(int dim) {
+        return codonFrequencies.getParameterName() + "." + dataType.getCode(dim);
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        final int dim = codonFrequencies.getDimension();
+        LogColumn[] columns = new LogColumn[dim];
+        for (int i = 0; i < dim; i++) {
+            columns[i] = new CodonFrequencyColumn(getDimensionName(i), i);
+        }
+        return columns;
+    }
+
+    private class CodonFrequencyColumn extends NumberColumn {
+        
+        private final int dim;
+
+        CodonFrequencyColumn(String label, int dim) {
+            super(label);
+            this.dim = dim;
+        }
+
+        public double getDoubleValue() {
+            return codonFrequencies.getParameterValue(dim);
         }
     }
 }

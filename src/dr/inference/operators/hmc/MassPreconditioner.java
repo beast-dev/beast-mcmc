@@ -7,9 +7,7 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
-import dr.math.AdaptableCovariance;
-import dr.math.AdaptableVector;
-import dr.math.MathUtils;
+import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
@@ -58,8 +56,8 @@ public interface MassPreconditioner {
         ADAPTIVE("adaptive") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
-                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
-//                AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
+//                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
+                AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
                 return new AdaptivePreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension());
             }
         };
@@ -461,6 +459,8 @@ public interface MassPreconditioner {
 
             WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
+            double[][] numericHessian = NumericalDerivative.getNumericalHessian(numeric1, gradientProvider.getParameter().getParameterValues());
+
             return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.Negate);
 
         }
@@ -470,5 +470,34 @@ public interface MassPreconditioner {
 //            adaptableCovariance.update(gradient);
             adaptableCovariance.update(position);
         }
+
+        protected MultivariateFunction numeric1 = new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
+
+                for (int i = 0; i < argument.length; ++i) {
+                    gradientProvider.getParameter().setParameterValue(i, argument[i]);
+                }
+
+//            treeDataLikelihood.makeDirty();
+                return gradientProvider.getLikelihood().getLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() {
+                return gradientProvider.getParameter().getDimension();
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return 0;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return Double.POSITIVE_INFINITY;
+            }
+        };
+
     }
 }

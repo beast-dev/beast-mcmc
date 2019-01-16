@@ -89,14 +89,12 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel implements
 
                     double freq3 = nucleotideFrequencyModel.getFrequency(nuc3);
 
-                    final int state = dataType.getState(nuc1, nuc2, nuc3);
+                    int state = dataType.getState(nuc1, nuc2, nuc3);
+                    double value = dataType.isStopCodon(state) ?
+                            0.0 :
+                            freq1 * freq2 * freq3;
 
-                    if (!(dataType.isStopCodon(state))) {
-
-                        frequencyParameter.setParameterValue( state,
-                                freq1 * freq2 * freq3);
-
-                    }
+                    frequencyParameter.setParameterValue(state, value);
                 }
             }
         }

@@ -1,9 +1,12 @@
 package dr.evomodel.treelikelihood.utilities;
 
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitSimulator;
+import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
@@ -34,12 +37,6 @@ public class RepeatedMeasuresTraitLogger implements Loggable, Reportable {
     @Override
     public LogColumn[] getColumns() {
 
-        //TODO: Make sure getTrait() involves data augementation on the tree
-
-        double[] tips = (double[]) tipTrait.getTrait(traitLikelihood.getTree(), null);
-
-
-        traitSimulator.simulateMissingData(tips);
 
         int m = traitModel.getMissingIndices().size();
         int n = traitParameter.getParameterCount();
@@ -53,18 +50,37 @@ public class RepeatedMeasuresTraitLogger implements Loggable, Reportable {
 
             final int taxon = index / dim;
             final int trait = index - taxon * dim;
+            final int currentInd = i;
 
             columns[i] = new LogColumn.Abstract(traitParameter.getParameterName() + "." +
                     traitParameter.getParameter(taxon).getParameterName() + "." +
                     Integer.toString(trait)) {
                 @Override
                 protected String getFormattedValue() {
+
+                    if (currentInd == 0) {
+                        resample();
+                    }
+
                     return Double.toString(traitParameter.getParameterValue(trait, taxon));
+
                 }
             };
         }
 
         return columns;
+    }
+
+    private void resample() {
+
+        ContinuousDataLikelihoodDelegate delegate = (ContinuousDataLikelihoodDelegate)
+                traitLikelihood.getDataLikelihoodDelegate();
+
+        delegate.fireModelChanged(); //Force new sample
+
+        double[] tips = (double[]) tipTrait.getTrait(traitLikelihood.getTree(), null);
+
+        traitSimulator.simulateMissingData(tips);
     }
 
     @Override

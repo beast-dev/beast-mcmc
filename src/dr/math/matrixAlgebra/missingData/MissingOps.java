@@ -582,8 +582,11 @@ public class MissingOps {
     public static void symmPosDefInvert(DenseMatrix64F P, DenseMatrix64F P_inv) {
         LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(P.getNumCols());
         DenseMatrix64F Pbis = new DenseMatrix64F(P);
-        if( !solver.setA(Pbis) ) throw new RuntimeException("Invert failed");
-        solver.invert(P_inv);
+        if (!solver.setA(Pbis)) {
+            CommonOps.invert(P, P_inv);
+        } else {
+            solver.invert(P_inv);
+        }
     }
 
     public static void matrixVectorMultiple(final DenseMatrix64F A,

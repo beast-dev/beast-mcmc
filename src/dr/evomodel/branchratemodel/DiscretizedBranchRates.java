@@ -112,7 +112,6 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
 
         this.cacheRates = cacheRates;
 
-        this.rateCategories = new TreeParameterModel(tree, rateCategoryParameter, false);
 
         categoryCount = (tree.getNodeCount() - 1) * overSampling;
         step = 1.0 / (double) categoryCount;
@@ -146,6 +145,8 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
                 rateCategoryParameter.setParameterValue(i, index);
             }
         }
+
+        this.rateCategories = new TreeParameterModel(tree, rateCategoryParameter, false);
 
         addModel(model);
         addModel(rateCategories);

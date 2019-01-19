@@ -117,7 +117,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
             NodeRef node = tree.getNode(i);
             if (includeRoot || !tree.isRoot(node)) {
                 nodeNumberToParameterIndex.setParameterValue(i, k);
-                nodeNumberToParameterIndex.setParameterValue(k, node.getNumber());
+                parameterIndexToNodeNumber.setParameterValue(k, node.getNumber());
                 k++;
             } else {
                 nodeNumberToParameterIndex.setParameterValue(i, -1); // set the root index to an illegal value
@@ -143,25 +143,22 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == parameterIndexToNodeNumber) {
+        if (variable == parameter) {
+            // the underlying parameter has changed - fire an event for the associated node...
             int nodeNumber = getNodeNumberFromParameterIndex(index);
 
             assert (tree.getNode(nodeNumber).getNumber() == nodeNumber);
 
             fireModelChanged(variable, nodeNumber);
-        } else if (variable == nodeNumberToParameterIndex) {
-            assert (tree.getNode(index).getNumber() == index);
-
-            fireModelChanged(variable, index);
         }
     }
 
     protected void storeState() {
-        //rootNodeNumber.storeParameterValues();
+        // parameters store themselves
     }
 
     protected void restoreState() {
-        //rootNodeNumber.restoreParameterValues();
+        // parameters restore themselves
     }
 
     protected void acceptState() {

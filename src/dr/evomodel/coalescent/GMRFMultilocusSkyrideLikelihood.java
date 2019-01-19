@@ -84,6 +84,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     protected List<SymmTridiagMatrix> weightMatricesForMissingCovDistant;
     protected int[] firstObservedIndex;
     protected int[] lastObservedIndex;
+    protected int[] recIndices;
+    protected int[] distIndices;
 
     private double[] coalescentEventStatisticValues;
 
@@ -210,6 +212,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            List<Parameter> lastObservedIndexParameter,
                                            List<Parameter> covPrecParametersRecent,
                                            List<Parameter> covPrecParametersDistant,
+                                           Parameter recentIndices,
+                                           Parameter distantIndices,
                                            List<Parameter> betaList) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
@@ -226,17 +230,47 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         this.cutOff = gridPoints[numGridPoints - 1];
 
         if (firstObservedIndexParameter != null) {
-            firstObservedIndex = new int[firstObservedIndexParameter.size()];
+            this.firstObservedIndex = new int[firstObservedIndexParameter.size()];
             for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
                 this.firstObservedIndex[i] = (int) firstObservedIndexParameter.get(i).getParameterValue(0);
             }
+
+            if(recentIndices != null){
+                // indices specify which covariates require default unobserved covariate data prior
+                this.recIndices = new int [firstObservedIndexParameter.size()];
+                for (int i = 0; i < firstObservedIndexParameter.size(); i++){
+                    this.recIndices[i] = (int) recentIndices.getParameterValue(i);
+                }
+            }else{
+                // If specific covariates not specified by indices, need default unobserved covariate data prior for all covariates
+                this.recIndices = new int [firstObservedIndexParameter.size()];
+                for (int i = 0; i < firstObservedIndexParameter.size(); i++){
+                    this.recIndices[i] = i+1;
+                }
+            }
+
         }
 
         if (lastObservedIndexParameter != null) {
-            lastObservedIndex = new int[lastObservedIndexParameter.size()];
+            this.lastObservedIndex = new int[lastObservedIndexParameter.size()];
             for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
                 this.lastObservedIndex[i] = (int) lastObservedIndexParameter.get(i).getParameterValue(0);
             }
+
+            if(distantIndices != null){
+                // indices specify which covariates require default unobserved covariate data prior
+                this.distIndices = new int [lastObservedIndexParameter.size()];
+                for (int i = 0; i < lastObservedIndexParameter.size(); i++){
+                    this.distIndices[i] = (int) distantIndices.getParameterValue(i);
+                }
+            }else{
+                // If specific covariates not specified by indices, need default unobserved covariate data prior for all covariates
+                this.distIndices = new int [lastObservedIndexParameter.size()];
+                for (int i = 0; i < lastObservedIndexParameter.size(); i++){
+                    this.distIndices[i] = i+1;
+                }
+            }
+
         }
 
         /*else{
@@ -1036,8 +1070,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                             lastObservedIndex[i]);
 
                     for (int j = 0; j < numMissing; j++) {
-                        tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, lastObservedIndex[i] + j) -
-                                covariates.get(i).getParameterValue(0, lastObservedIndex[i] - 1));
+                        tempVectMissingCov.set(j, covariates.get(distIndices[i] - 1).getParameterValue(0, lastObservedIndex[i] + j) -
+                                covariates.get(distIndices[i] - 1).getParameterValue(0, lastObservedIndex[i] - 1));
                     }
 
                     missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);
@@ -1058,8 +1092,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                             firstObservedIndex[i]);
 
                     for (int j = 0; j < numMissingRecent; j++) {
-                        tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, j) -
-                                covariates.get(i).getParameterValue(0, firstObservedIndex[i]-1));
+                        tempVectMissingCov.set(j, covariates.get(recIndices[i] - 1).getParameterValue(0, j) -
+                                covariates.get(recIndices[i] - 1).getParameterValue(0, firstObservedIndex[i]-1));
                     }
 
                     missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);

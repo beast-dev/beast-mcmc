@@ -109,7 +109,7 @@ public class CodonFromNucleotideFrequencyModel extends FrequencyModel implements
     }
 
     private String getDimensionName(int dim) {
-        return codonFrequencies.getParameterName() + "." + dataType.getCode(dim); // TODO maybe getTriple(dim)?
+        return codonFrequencies.getParameterName() + "." + dataType.getTriplet(dim);
     }
 
     @Override

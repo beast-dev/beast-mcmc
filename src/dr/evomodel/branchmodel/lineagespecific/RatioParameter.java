@@ -39,8 +39,6 @@ public class RatioParameter extends Parameter.Abstract implements
 
 	public RatioParameter(Parameter parameter1, Parameter parameter2) {
 
-		this.isImmutable = true;
-
 		this.parameter1 = parameter1;
 		this.parameter2 = parameter2;
 
@@ -57,6 +55,11 @@ public class RatioParameter extends Parameter.Abstract implements
 
 		return value;
 	}// END: getParameterValue
+
+	@Override
+	public boolean isImmutable() {
+		return true;
+	}
 
 	@Override
 	public void setParameterValue(int dim, double value) {

@@ -33,7 +33,6 @@ import java.util.List;
 public class ProductParameter extends Parameter.Abstract implements VariableListener {
 
     public ProductParameter(List<Parameter> parameter) {
-        this.isImmutable = true;
         this.paramList = parameter;
         for (Parameter p : paramList) {
             p.addVariableListener(this);
@@ -42,6 +41,11 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
 
     public int getDimension() {
         return paramList.get(0).getDimension();
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return false;
     }
 
     protected void storeValues() {

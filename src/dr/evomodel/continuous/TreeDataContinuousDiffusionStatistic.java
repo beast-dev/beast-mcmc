@@ -95,10 +95,20 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         double[] parentTrait = trait.getTrait(tree, parent);
         double[] childTrait = trait.getTrait(tree, child);
 
-        double displacement = displacementScheme.distance(parentTrait, childTrait);
+        double displacement = displacementScheme.displace(parentTrait, childTrait);
         double time = tree.getNodeHeight(parent) - tree.getNodeHeight(child);
 
         weightingScheme.add(lhs, displacement, time);
+    }
+
+    private static double distance(double[] x, double[] y){
+        assert (x.length == y.length);
+
+        double total = 0.0;
+        for (int i = 0; i < x.length; ++i) {
+            total += (x[i] - y[i]) * (x[i] - y[i]);
+        }
+        return total;
     }
 
     private final TreeTrait.DA trait;
@@ -112,35 +122,25 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
     private enum DisplacementScheme {
         LINEAR {
             @Override
-            double distance(double[] x, double[] y) {
-                assert (x.length == y.length);
-
-                double total = 0.0;
-                for (int i = 0; i < x.length; ++i) {
-                    total += (x[i] - y[i]) * (x[i] - y[i]);
-                }
-
-                return Math.sqrt(total);
+            double displace(double[] x, double[] y){
+                return Math.sqrt(distance(x, y));
             }
+
             @Override
             String getName() { return "linear"; }
         },
         QUADRATIC {
             @Override
-            double distance(double[] x, double[] y) {
-                assert (x.length == y.length);
-
-                double total = 0.0;
-                for (int i = 0; i < x.length; ++i) {
-                    total += (x[i] - y[i]) * (x[i] - y[i]);
-                }
-                return total;
+            double displace(double[] x, double[] y){
+                return distance(x, y);
             }
+
             @Override
             String getName() { return "quadratic"; }
         };
-        abstract double distance(double[] x, double[] y);
+
         abstract String getName();
+        abstract double displace(double[] x, double[] y);
     }
 
     private enum WeightingScheme {

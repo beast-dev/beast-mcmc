@@ -148,7 +148,14 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 //        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
 
         // Error model
-        Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5});
+        Parameter[] factorPrecision = new Parameter[3];
+        factorPrecision[0] = new Parameter.Default(new double[]{1.0, 0.5, 0.2});
+        factorPrecision[1] = new Parameter.Default(new double[]{0.5, 5.0, 0.0});
+        factorPrecision[2] = new Parameter.Default(new double[]{0.2, 0.0, 0.5});
+        MatrixParameterInterface factorPrecisionParameters
+                = new MatrixParameter("factorPrecision", factorPrecision);
+
+//        MatrixParameterInterface factorPrecisionParameters = new DiagonalMatrix(new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5}));
 
         // Loadings
         Parameter[] loadingsParameters = new Parameter[2];
@@ -1007,11 +1014,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{0.6002879987080073,1.3630884580519484,0.5250449300511655,1.4853676908300644,0.6673202215955497,1.399820047380221,1.0853554355129353,1.6054879123935393,0.4495494080256063,1.4427296475118248,0.8750789069500045,1.8099596179292183};
+        double[] expectedTraits = new double[]{0.5465660348743779,1.4630588821162218,0.5269128635581201,1.5893136820798857,0.6710852429187679,1.5029828619880496,1.086143018033472,1.7199651678375532,0.8259954834667216,1.6198597117499574,0.8943759297423082,1.883525907495704};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }    }
+        }
+    }
 
     public void testLikelihoodDriftFactor() {
         System.out.println("\nTest Likelihood using drifted BM and factor:");
@@ -1063,11 +1071,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{1.5058510863259034,-2.344107747791032,1.415239714927795,-2.225937980916329,1.5639840062954773,-2.3082612693286513,1.9875205911751028,-2.1049011248405525,1.3355460225282372,-2.2848471441564056,1.742347318026791,-1.940903337116235};
+        double[] expectedTraits = new double[]{1.4253173030875967,-2.303529760054276,1.3911367775584844,-2.1804943569626927,1.5416862752420926,-2.2643516055441855,1.9616668293129644,-2.049007739844355,1.6865650403835397,-2.1618813046449183,1.7376526612221093,-1.9154773481169824};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }    }
+        }
+    }
 
     public void testLikelihoodDriftRelaxedFactor() {
         System.out.println("\nTest Likelihood using drifted Relaxed BM and factor:");
@@ -1122,7 +1131,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{0.21992781609528125,1.271388273711557,0.40761548539751596,1.3682648770877144,0.6599021787120436,1.2830636141108613,1.1488658943588324,1.472103688153391,0.8971632986744889,1.20748933414854,1.603739823726808,1.4761482401796842};
+        double[] expectedTraits = new double[]{0.18706585597925554,1.3789549552109548,0.4154391209373806,1.4804852322163773,0.6694121384379099,1.3944259204124303,1.1456184528469746,1.5952491597077192,1.2346606015535597,1.3984078447275292,1.556929180473793,1.5691060274867998};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
@@ -1183,11 +1192,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{1.3270345780274333,-1.5589839744569975,1.241407854756886,-1.4525648723106128,1.388017192005544,-1.533399261149814,1.8040948421311085,-1.4189758121385794,1.1408165195832969,-1.4607180451268982,1.6048925583434688,-1.4333922414628846};
+        double[] expectedTraits = new double[]{1.2661812048403958,-1.5601987678298495,1.237446720479603,-1.4524772824103267,1.38571414295445,-1.534159429561456,1.7996426251091364,-1.4170923915969982,1.5205462963225242,-1.4540114665751946,1.6138006594873264,-1.4347696894136706};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }    }
+        }
+    }
 
     public void testLikelihoodDiagonalOURelaxedFactor() {
         System.out.println("\nTest Likelihood using diagonal Relaxed OU and factor:");
@@ -1245,11 +1255,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{1.2546097113922914,-1.1761389606670978,1.305611773283861,-1.0644815941127401,1.4571577864569687,-1.1477885449972944,1.749551506462585,-0.9890375857170963,1.0763987351136657,-1.0671848958534547,1.5276137550128892,-0.9822950795368887};
+        double[] expectedTraits = new double[]{1.195190236152443,-1.1789243642241476,1.299455400150337,-1.0647393453748792,1.4512482170336167,-1.1491156455961575,1.7445630013416964,-0.9846801795321203,1.4453824289220822,-1.0472280568477315,1.5386906072447606,-0.9850032177835296};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }    }
+        }
+    }
 
     public void testLikelihoodFullOUFactor() {
         System.out.println("\nTest Likelihood using full OU and factor:");
@@ -1309,11 +1320,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{0.4889263054598222,1.866143125522109,0.41845209107775877,1.978457443711536,0.5589398189015322,1.8942177991552116,0.9699471556784252,2.0423474270630155,0.3288819110219145,1.9759942582707206,0.8081782260054755,2.038299849681893};
+        double[] expectedTraits = new double[]{0.4653207352928792,1.8651780543656606,0.4504975010414803,1.9791256873553373,0.5928597377048458,1.8943915189612304,1.0019098658641454,2.0470937144421897,0.7411887507380247,1.9911336598314213,0.849042656244048,2.0371227193171015};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }    }
+        }
+    }
 
     public void testLikelihoodFullOURelaxedFactor() {
         System.out.println("\nTest Likelihood using full Relaxed OU and factor:");
@@ -1376,11 +1388,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 
-        double[] expectedTraits = new double[]{0.6074917696668031,1.4240248941610945,0.5818653246406664,1.545237778993696,0.7248840308905077,1.4623057820376757,1.0961030597302799,1.603694717986661,0.44280937767720896,1.5374906898020686,0.920698984735896,1.6011019734876784};
+        double[] expectedTraits = new double[]{0.5771219814883327,1.4228543643506777,0.6061440030287131,1.54565271965551,0.7505232714938799,1.4621507423823044,1.1211158357858184,1.6081573398162914,0.849513804864352,1.5512812784344256,0.956280303218616,1.5995936766474121};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }    }
+        }
+    }
 
     public void testLikelihoodFullDiagonalOUFactor() {
         System.out.println("\nTest Likelihood comparing full and diagonal OU and factor:");

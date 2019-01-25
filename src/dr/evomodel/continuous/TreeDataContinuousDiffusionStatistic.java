@@ -48,12 +48,14 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
 
     private TreeDataContinuousDiffusionStatistic(String statisticName,
                                                  TreeTrait.DA trait,
-                                                 TreeDataLikelihood likelihood) {
+                                                 TreeDataLikelihood likelihood,
+                                                 WeightingScheme weightingScheme,
+                                                 DisplacementScheme displacementScheme) {
         super(statisticName);
         this.trait = trait;
         this.tree = likelihood.getTree();
-
-        this.weightedScheme = WeightingScheme.WEIGHTED;
+        this.weightingScheme = weightingScheme;
+        this.displacementScheme = displacementScheme;
     }
 
     @Override
@@ -93,26 +95,53 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
         double[] parentTrait = trait.getTrait(tree, parent);
         double[] childTrait = trait.getTrait(tree, child);
 
-        double displacement = distance(parentTrait, childTrait);
+        double displacement = displacementScheme.displace(parentTrait, childTrait);
         double time = tree.getNodeHeight(parent) - tree.getNodeHeight(child);
 
-        weightedScheme.add(lhs, displacement, time);
+        weightingScheme.add(lhs, displacement, time);
     }
 
-    private static double distance(double[] x, double[] y) {
+    private static double distance(double[] x, double[] y){
         assert (x.length == y.length);
 
         double total = 0.0;
         for (int i = 0; i < x.length; ++i) {
             total += (x[i] - y[i]) * (x[i] - y[i]);
         }
-
-        return Math.sqrt(total);
+        return total;
     }
 
     private final TreeTrait.DA trait;
     private final Tree tree;
-    private final WeightingScheme weightedScheme;
+    private final WeightingScheme weightingScheme;
+    private final DisplacementScheme displacementScheme;
+
+    private static final String WEIGHTING_SCHEME = "weightingScheme";
+    private static final String DISPLACEMENT_SCHEME = "displacementScheme";
+
+    private enum DisplacementScheme {
+        LINEAR {
+            @Override
+            double displace(double[] x, double[] y){
+                return Math.sqrt(distance(x, y));
+            }
+
+            @Override
+            String getName() { return "linear"; }
+        },
+        QUADRATIC {
+            @Override
+            double displace(double[] x, double[] y){
+                return distance(x, y);
+            }
+
+            @Override
+            String getName() { return "quadratic"; }
+        };
+
+        abstract String getName();
+        abstract double displace(double[] x, double[] y);
+    }
 
     private enum WeightingScheme {
         WEIGHTED {
@@ -121,6 +150,9 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                  lhs.numerator += displacement;
                  lhs.denominator += time;
             }
+
+            @Override
+            String getName() { return "weighted"; }
         },
         UNWEIGHTED {
             @Override
@@ -128,9 +160,14 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                 lhs.numerator += displacement / time;
                 lhs.denominator += 1;
             }
+
+            @Override
+            String getName() { return "unweighted"; }
         };
 
         abstract void add(Statistic lhs, double displacement, double time);
+
+        abstract String getName();
     }
 
     private class Statistic {
@@ -168,10 +205,15 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                 throw new XMLParseException("Not trait `" + trait + "' in likelihood `" + likelihood.getId() + "`");
             }
 
+            WeightingScheme weightingScheme = parseWeightingScheme(xo);
+            DisplacementScheme displacementScheme = parseDisplacementScheme(xo);
+
             return new TreeDataContinuousDiffusionStatistic(
                     name,
                     trait,
-                    likelihood);
+                    likelihood,
+                    weightingScheme,
+                    displacementScheme);
         }
 
         //************************************************************************
@@ -194,7 +236,35 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
                 AttributeRule.newStringRule(NAME, true),
                 AttributeRule.newStringRule(TRAIT_NAME),
                 new ElementRule(TreeDataLikelihood.class),
+                AttributeRule.newStringRule(WEIGHTING_SCHEME, true),
+                AttributeRule.newStringRule(DISPLACEMENT_SCHEME, true),
         };
+
+        WeightingScheme parseWeightingScheme(XMLObject xo) throws XMLParseException {
+
+            String name = xo.getAttribute(WEIGHTING_SCHEME, WeightingScheme.WEIGHTED.getName());
+
+            for (WeightingScheme scheme : WeightingScheme.values()) {
+                if (name.compareToIgnoreCase(scheme.getName()) == 0) {
+                    return scheme;
+                }
+            }
+
+            throw new XMLParseException("Unknown weighting scheme '" + name + "'");
+        }
+
+        DisplacementScheme parseDisplacementScheme(XMLObject xo) throws XMLParseException {
+
+            String name = xo.getAttribute(DISPLACEMENT_SCHEME, DisplacementScheme.QUADRATIC.getName());
+
+            for (DisplacementScheme scheme : DisplacementScheme.values()) {
+                if (name.compareToIgnoreCase(scheme.getName()) == 0) {
+                    return scheme;
+                }
+            }
+            throw new XMLParseException("Unknown displacement scheme '" + name + "'");
+        }
+
     };
 }
 

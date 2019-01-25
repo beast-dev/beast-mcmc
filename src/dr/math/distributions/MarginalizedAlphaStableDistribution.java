@@ -52,7 +52,7 @@ public class MarginalizedAlphaStableDistribution implements Distribution {
     }
 
     public static double logPdf(double x, double scale, double alpha) {
-        return -Math.log(scale) - alpha * Math.abs(x) / scale;
+        return -Math.log(scale) - Math.pow(Math.abs(x) / scale, alpha);
     }
 
     public static double gradLogPdf(double x, double scale, double alpha) {

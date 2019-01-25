@@ -91,6 +91,8 @@ public class StandardizeTraits {
             sb.append("\tvar  : " + mv.variance + "\n");
             sb.append("\tcnt  : " + mv.count + "\n");
 
+            //TODO: don't divide by variance when there is only one measurement (or at least give a warning)
+
             updateValues(matrix, mv, index, byColumn);
 
             mv = getStatistics(matrix, index, byColumn);
@@ -188,9 +190,11 @@ public class StandardizeTraits {
     private void updateValues(MatrixParameterInterface matrix, final MeanVariance mv, int major, boolean byColumn) {
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
+        final int rowDim = matrix.getRowDimension();
         final double sd = Math.sqrt(mv.variance);
 
-        int offset = dim * major;
+        int offset = byColumn ? dim * major : major;
+
         for (int index = 0; index < dim; ++index) {
 
             final int row = byColumn ? index : major;
@@ -202,7 +206,8 @@ public class StandardizeTraits {
                 matrix.setParameterValueQuietly(row, col, x);
             }
 
-            ++offset;
+            offset += byColumn ? 1 : rowDim;
+
         }
 
         matrix.fireParameterChangedEvent();
@@ -238,8 +243,9 @@ public class StandardizeTraits {
         int c = 0;
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
+        final int rowDim = matrix.getRowDimension();
 
-        int offset = dim * major;
+        int offset = byColumn ? dim * major : major;
         for (int index = 0; index < dim; ++index) {
             double x = byColumn ? matrix.getParameterValue(index, major) : matrix.getParameterValue(major, index);
             if (!Double.isNaN(x) && !missing[offset]) {
@@ -247,12 +253,13 @@ public class StandardizeTraits {
                 ss += x * x;
                 ++c;
             }
-            ++offset;
+
+            offset += byColumn ? 1 : rowDim;
         }
 
         MeanVariance mv = new MeanVariance();
         mv.mean = s / c;
-        mv.variance =  ss / c - mv.mean * mv.mean;
+        mv.variance = ss / c - mv.mean * mv.mean;
         mv.count = c;
 
         return mv;
@@ -316,7 +323,7 @@ public class StandardizeTraits {
             return STANDARDIZE_TRAITS;
         }
 
-        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 //                AttributeRule.newStringRule(TRAIT_NAME),
 //                new ElementRule(Taxa.class),
                 new ElementRule(MatrixParameterInterface.class),

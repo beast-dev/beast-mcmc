@@ -27,20 +27,15 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.operators.*;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.SpeciesTreeModelParser;
-import dr.evomodelxml.speciation.YuleModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.inference.operators.OperatorSchedule;
@@ -195,8 +190,8 @@ public class OperatorsGenerator extends Generator {
             case SUBTREE_LEAP:
                 writeSubtreeLeapOperator(operator, prefix, writer);
                 break;
-            case SUBTREE_JUMP:
-                writeSubtreeJumpOperator(operator, prefix, writer);
+            case FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT:
+                writeFHSPROperator(operator, prefix, writer);
                 break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, prefix, writer);
@@ -541,11 +536,21 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
+    private void writeFHSPROperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModelPrefix + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT);
+    }
+
+    // tuneable version of FHSPR but not currently being used
     private void writeSubtreeJumpOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
         writer.writeOpenTag(SubtreeJumpOperatorParser.SUBTREE_JUMP,
                 new Attribute[]{
-                // not tuneable at the moment.
-//                        new Attribute.Default<Double>("size", operator.getTuning()),
+                        new Attribute.Default<Double>("size", operator.getTuning()),
                         getWeightAttribute(operator.getWeight())
                 }
         );

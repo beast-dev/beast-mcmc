@@ -34,6 +34,7 @@ import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
 /**
+ * This is an adaptable version of the FixedHeightSubtreePruneRegraft move by Sebastian Hoehna.
  */
 public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 

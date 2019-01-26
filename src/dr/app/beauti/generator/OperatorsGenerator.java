@@ -597,8 +597,92 @@ public class OperatorsGenerator extends Generator {
                 //determine how many parameters will be part of the AVMVN transition kernel
                 int parameterCount = 0;
                 for (Parameter parameter : options.selectParameters()) {
+                    if (!parameter.isFixed() && parameter.isAdaptiveMultivariateCompatible) {
+                        parameterCount++;
+                    }
+                }
+
+                if (parameterCount > 0) {
+                    //options set according to recommendations in AVMVN paper
+                    int initial = 200 * parameterCount;
+                    int burnin = initial / 2;
+
+                    writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
+                            new Attribute[]{
+                                    getWeightAttribute(operator.getWeight()),
+                                    new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
+                                    new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
+                                    new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
+                                    new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
+                                    new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
+                                    new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
+                                    new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
+                            });
+
+                    ArrayList<Parameter> logList = new ArrayList<Parameter>();
+                    ArrayList<Parameter> noList = new ArrayList<Parameter>();
+                    ArrayList<Parameter> constrainedList = new ArrayList<Parameter>();
+
+                    for (Parameter parameter : options.selectParameters()) {
+                        if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
+                            //System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
+                            if (parameter.isNonNegative && !parameter.isMaintainedSum) {
+                                logList.add(parameter);
+                            } else if (parameter.isInRealSpace()) {
+                                noList.add(parameter);
+                            } else if (parameter.isMaintainedSum) {
+                                constrainedList.add(parameter);
+                            } else {
+                                System.out.println("Parameter " + parameter + " should likely be equipped with a Dirichlet prior.");
+                                System.out.println("Use of a Dirichlet prior for frequencies is set to: " + options.useNewFrequenciesPrior());
+                                throw new UnsupportedOperationException("Parameter " + parameter.getName() + " with unidentified transformation.");
+                            }
+                        }
+                    }
+
+                    if (logList.size() > 0) {
+                        writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName())});
+                        for (Parameter parameter : logList) {
+                            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                        }
+                        writer.writeCloseTag(TransformParsers.TRANSFORM);
+                    }
+
+                    if (noList.size() > 0) {
+                        writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName())});
+                        for (Parameter parameter : noList) {
+                            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                        }
+                        writer.writeCloseTag(TransformParsers.TRANSFORM);
+                    }
+
+                    for (Parameter parameter : constrainedList) {
+                        writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
+                                new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                        writer.writeCloseTag(TransformParsers.TRANSFORM);
+                    }
+
+                    writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
+
+                }
+
+            } catch (UnsupportedOperationException unSup) {
+                System.out.println(unSup);
+            }
+
+        } else {
+
+            //determine how many parameters will be part of the AVMVN transition kernel
+            int parameterCount = 0;
+            for (Parameter parameter : options.selectParameters()) {
+                if (!parameter.isFixed() && parameter.isAdaptiveMultivariateCompatible) {
                     parameterCount++;
                 }
+            }
+
+            if (parameterCount > 0) {
+
                 //options set according to recommendations in AVMVN paper
                 int initial = 200 * parameterCount;
                 int burnin = initial / 2;
@@ -615,112 +699,41 @@ public class OperatorsGenerator extends Generator {
                                 new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
                         });
 
-                ArrayList<Parameter> logList = new ArrayList<Parameter>();
-                ArrayList<Parameter> noList = new ArrayList<Parameter>();
-                ArrayList<Parameter> constrainedList = new ArrayList<Parameter>();
+                // @todo Need to collate only the parameters being controlled by this here.
 
                 for (Parameter parameter : options.selectParameters()) {
-                    if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
-                        //System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
-                        if (parameter.isNonNegative && !parameter.isMaintainedSum) {
-                            logList.add(parameter);
-                        } else if (parameter.isInRealSpace()) {
-                            noList.add(parameter);
-                        } else if (parameter.isMaintainedSum) {
-                            constrainedList.add(parameter);
-                        } else {
-                            System.out.println("Parameter " + parameter + " should likely be equipped with a Dirichlet prior.");
-                            System.out.println("Use of a Dirichlet prior for frequencies is set to: " + options.useNewFrequenciesPrior());
-                            throw new UnsupportedOperationException("Parameter " + parameter.getName() + " with unidentified transformation.");
+                    if (parameter.isAdaptiveMultivariateCompatible) {
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    }
+                }
+
+                //set appropriate transformations for all parameters
+                //TODO: we should aggregate as best as possible the different transformation so as to have fewer attributes
+                int startTransform = 0;
+                for (Parameter parameter : options.selectParameters()) {
+                    if (parameter.isAdaptiveMultivariateCompatible) {
+                        if (parameter.isNonNegative) {
+                            writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName()),
+                                    new Attribute.Default<Integer>(TransformParsers.START, startTransform),
+                                    new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
+                            }, true);
+                            startTransform += parameter.getDimensionWeight();
+                            System.out.println(parameter + ": " + parameter.getDimensionWeight());
+
+                        } else { // -Inf to Inf
+                            writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName()),
+                                    new Attribute.Default<Integer>(TransformParsers.START, startTransform),
+                                    new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
+                            }, true);
+                            startTransform += parameter.getDimensionWeight();
+                            System.out.println(parameter + ": " + parameter.getDimensionWeight());
                         }
                     }
                 }
 
-                if (logList.size() > 0) {
-                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName())});
-                    for (Parameter parameter : logList) {
-                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                    }
-                    writer.writeCloseTag(TransformParsers.TRANSFORM);
-                }
-
-                if (noList.size() > 0) {
-                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName())});
-                    for (Parameter parameter : noList) {
-                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                    }
-                    writer.writeCloseTag(TransformParsers.TRANSFORM);
-                }
-
-                for (Parameter parameter : constrainedList) {
-                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
-                            new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
-                    writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                    writer.writeCloseTag(TransformParsers.TRANSFORM);
-                }
-
                 writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
 
-            } catch (UnsupportedOperationException unSup) {
-                System.out.println(unSup);
             }
-
-        } else {
-
-            //determine how many parameters will be part of the AVMVN transition kernel
-            int parameterCount = 0;
-            for (Parameter parameter : options.selectParameters()) {
-                parameterCount++;
-            }
-            //options set according to recommendations in AVMVN paper
-            int initial = 200 * parameterCount;
-            int burnin = initial / 2;
-
-            writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
-                    new Attribute[]{
-                            getWeightAttribute(operator.getWeight()),
-                            new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
-                            new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
-                            new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
-                            new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
-                            new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
-                            new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
-                            new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
-                    });
-
-            // @todo Need to collate only the parameters being controlled by this here.
-
-            for (Parameter parameter : options.selectParameters()) {
-                if (parameter.isAdaptiveMultivariateCompatible) {
-                    writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                }
-            }
-
-            //set appropriate transformations for all parameters
-            //TODO: we should aggregate as best as possible the different transformation so as to have fewer attributes
-            int startTransform = 0;
-            for (Parameter parameter : options.selectParameters()) {
-                if (parameter.isAdaptiveMultivariateCompatible) {
-                    if (parameter.isNonNegative) {
-                        writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName()),
-                                new Attribute.Default<Integer>(TransformParsers.START, startTransform),
-                                new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
-                        }, true);
-                        startTransform += parameter.getDimensionWeight();
-                        System.out.println(parameter + ": " + parameter.getDimensionWeight());
-
-                    } else { // -Inf to Inf
-                        writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName()),
-                                new Attribute.Default<Integer>(TransformParsers.START, startTransform),
-                                new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
-                        }, true);
-                        startTransform += parameter.getDimensionWeight();
-                        System.out.println(parameter + ": " + parameter.getDimensionWeight());
-                    }
-                }
-            }
-
-            writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
 
         }
     }

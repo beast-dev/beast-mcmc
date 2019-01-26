@@ -592,7 +592,9 @@ public class OperatorsGenerator extends Generator {
                 //determine how many parameters will be part of the AVMVN transition kernel
                 int parameterCount = 0;
                 for (Parameter parameter : options.selectParameters()) {
-                    parameterCount++;
+                    if (!parameter.isFixed() && parameter.isAdaptiveMultivariateCompatible) {
+                        parameterCount++;
+                    }
                 }
 
                 if (parameterCount > 0) {
@@ -669,7 +671,9 @@ public class OperatorsGenerator extends Generator {
             //determine how many parameters will be part of the AVMVN transition kernel
             int parameterCount = 0;
             for (Parameter parameter : options.selectParameters()) {
-                parameterCount++;
+                if (!parameter.isFixed() && parameter.isAdaptiveMultivariateCompatible) {
+                    parameterCount++;
+                }
             }
 
             if (parameterCount > 0) {

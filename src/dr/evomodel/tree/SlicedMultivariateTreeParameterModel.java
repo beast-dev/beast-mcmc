@@ -33,6 +33,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // no apparent use of this
 public class SlicedMultivariateTreeParameterModel extends MultivariateTreeParameterModel implements TreeDoubleTraitProvider {
 
     /**

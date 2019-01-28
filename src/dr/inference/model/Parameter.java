@@ -398,7 +398,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         public boolean isImmutable() {
-            return this.isImmutable;
+            return false;
         }
 
         public boolean isUsed() {
@@ -479,9 +479,6 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         private boolean isValid = true;
-
-        //determines whether a parameter's value can be set, true by default
-        protected boolean isImmutable = false;
 
         private ArrayList<VariableListener> listeners;
 

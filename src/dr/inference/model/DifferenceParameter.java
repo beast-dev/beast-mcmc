@@ -33,11 +33,15 @@ import java.util.List;
 public class DifferenceParameter extends Parameter.Abstract implements VariableListener {
 
     public DifferenceParameter(List<Parameter> parameter) {
-        this.isImmutable = true;
         this.paramList = parameter;
         for (Parameter p : paramList) {
             p.addVariableListener(this);
         }
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return true;
     }
 
     public int getDimension() {

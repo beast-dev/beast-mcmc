@@ -31,10 +31,13 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.util.*;
 
 import java.util.*;
@@ -49,26 +52,36 @@ import java.util.*;
  */
 public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final boolean ASSOC_MULTIPLICATION = true;
 
-    public StructuredCoalescentLikelihood(Tree tree, Parameter popSizes, PatternList patternList,
+    public StructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
                                           GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
                                           TaxonList includeSubtree, List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
         super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, tree, includeSubtree, excludeSubtrees);
 
-        this.patternList = patternList;
-        this.popSizes = popSizes;
         this.treeModel = (TreeModel)tree;
+        this.patternList = patternList;
+
+        this.popSizes = popSizes;
+        addVariable(this.popSizes);
+
+        if (branchRateModel != null) {
+            this.branchRateModel = branchRateModel;
+        } else {
+            this.branchRateModel = new DefaultBranchRateModel();
+        }
+        addModel(this.branchRateModel);
+
         this.generalSubstitutionModel = generalSubstitutionModel;
+        addModel(this.generalSubstitutionModel);
+
         this.demes = generalSubstitutionModel.getDataType().getStateCount();
         this.startExpected = new double[this.demes];
         this.endExpected = new double[this.demes];
         this.subIntervals = subIntervals;
-
-        System.out.println("Coalescent Intervals list of length: " + (tree.getNodeCount()-1));
 
         this.nodeProbDist = new HashMap<NodeRef,ProbDist>();
         this.activeLineageList = new ArrayList<ProbDist>();
@@ -86,15 +99,19 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
      */
     public double calculateLogLikelihood() {
 
-        System.out.println("\nStructuredCoalescentLikelihood.calculateLogLikelihood():");
-        System.out.println("Tree: " + treeModel.getNewick() + "\n");
+        if (DEBUG) {
+            System.out.println("\nStructuredCoalescentLikelihood.calculateLogLikelihood():");
+            System.out.println("Coalescent Intervals list of length: " + (this.treeModel.getNodeCount() - 1));
+            System.out.println("Tree: " + treeModel.getNewick() + "\n");
 
-        System.out.println("Pattern information: " + patternList.getPatternCount() + " pattern(s) of type: " + patternList.getDataType());
-        for (int i = 0; i < patternList.getTaxonCount(); i++) {
-            System.out.println("  Taxon " + patternList.getTaxon(i) + ": " + patternList.getPattern(0)[i]);
+            System.out.println("Pattern information: " + patternList.getPatternCount() + " pattern(s) of type: " + patternList.getDataType());
+            for (int i = 0; i < patternList.getTaxonCount(); i++) {
+                System.out.println("  Taxon " + patternList.getTaxon(i) + ": " + patternList.getPattern(0)[i]);
+            }
+            System.out.println();
         }
-        System.out.println();
 
+        //TODO Need to pass on pattern list all the time? How is this done in ancestralTreeLikelihood?
         return traverseTree(treeModel, treeModel.getRoot(), patternList);
     }
 
@@ -117,8 +134,7 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
 
         int i = 0;
         int j = 0;
-        System.out.println("** (j=" + j + ") \n");
-        //int intervalCount = 0;
+        //System.out.println("** (j=" + j + ") \n");
         while (i < times.size()) {
 
             int lineagesRemoved = 0;
@@ -128,7 +144,9 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             //int j = i;
             double next = finish;
 
-            System.out.println("start = " + start + " ; finish = " + finish);
+            if (DEBUG) {
+                System.out.println("start = " + start + " ; finish = " + finish);
+            }
 
             double intervalLength = finish - start;
 
@@ -146,17 +164,23 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             }
 
             if (lineagesAdded > 0) {
-                System.out.println("lineagesAdded = " + lineagesAdded);
+                if (DEBUG){
+                    System.out.println("lineagesAdded = " + lineagesAdded);
+                }
                 if ((intervalLength) > MULTIFURCATION_LIMIT) {
                     incrementActiveLineages(finish-start);
-                    System.out.println("start = " + start + " ; finish = " + finish + " ; intervalCount > 0");
+                    if (DEBUG) {
+                        System.out.println("start = " + start + " ; finish = " + finish + " ; intervalCount > 0");
+                    }
                     while (Math.abs(treeModel.getNodeHeight(nodes.get(indices[j])) - finish) < MULTIFURCATION_LIMIT) {
                         if (treeModel.isExternal(nodes.get(indices[j]))) {
                             ProbDist newProbDist = new ProbDist(demes, 0.0, nodes.get(indices[j]));
                             newProbDist.setIntervalType(IntervalType.SAMPLE);
                             newProbDist.setStartLineageProb(patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(newProbDist.node).getId())], 1.0);
                             newProbDist.computeEndLineageDensities(0.0);
-                            System.out.println(newProbDist);
+                            if (DEBUG) {
+                                System.out.println(newProbDist);
+                            }
                             tempLineageList.add(newProbDist);
                             //activeLineageList.add(newProbDist);
                             //System.out.println("currently active lineages: " + activeLineageList.size());
@@ -178,9 +202,9 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                             //add to HashMap
                             //nodeProbDist.put(nodes.get(indices[j]), newProbDist);
                         }
-                        System.out.println("** (j=" + j + ") " + treeModel.getNodeHeight(nodes.get(indices[j])));
+                        //System.out.println("** (j=" + j + ") " + treeModel.getNodeHeight(nodes.get(indices[j])));
                         j++;
-                        System.out.println("** (j=" + j + ") ");
+                        //System.out.println("** (j=" + j + ") ");
                         if (j >= indices.length) {
                             j = 0;
                             break;
@@ -188,14 +212,18 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                     }
                 } else {
                     //very first sampling event
-                    System.out.println("first sampling event");
+                    if (DEBUG) {
+                        System.out.println("first sampling event");
+                    }
                     while (Math.abs(treeModel.getNodeHeight(nodes.get(indices[j])) - start) < MULTIFURCATION_LIMIT) {
                         if (treeModel.isExternal(nodes.get(indices[j]))) {
                             ProbDist newProbDist = new ProbDist(demes, 0.0, nodes.get(indices[j]));
                             newProbDist.setIntervalType(IntervalType.SAMPLE);
                             newProbDist.setStartLineageProb(patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(newProbDist.node).getId())], 1.0);
                             newProbDist.computeEndLineageDensities(0.0);
-                            System.out.println(newProbDist);
+                            if (DEBUG) {
+                                System.out.println(newProbDist);
+                            }
                             tempLineageList.add(newProbDist);
                             //activeLineageList.add(newProbDist);
                             //System.out.println("currently active lineages: " + activeLineageList.size());
@@ -214,9 +242,9 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                             //add to HashMap
                             //nodeProbDist.put(nodes.get(indices[j]), newProbDist);
                         }
-                        System.out.println("** (j=" + j + ") " + treeModel.getNodeHeight(nodes.get(indices[j])));
+                        //System.out.println("** (j=" + j + ") " + treeModel.getNodeHeight(nodes.get(indices[j])));
                         j++;
-                        System.out.println("** (j=" + j + ") ");
+                        //System.out.println("** (j=" + j + ") ");
                         if (j >= indices.length) {
                             j = 0;
                             break;
@@ -227,8 +255,10 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             }
 
             if (lineagesRemoved > 0) {
-                System.out.println("lineagesRemoved = " + lineagesRemoved);
-                System.out.println("start = " + start + " ; finish = " + finish);
+                if (DEBUG) {
+                    System.out.println("lineagesRemoved = " + lineagesRemoved);
+                    System.out.println("start = " + start + " ; finish = " + finish);
+                }
                 incrementActiveLineages(finish-start);
                 while (Math.abs(treeModel.getNodeHeight(nodes.get(indices[j])) - finish) < MULTIFURCATION_LIMIT) {
                     if (treeModel.isExternal(nodes.get(indices[j]))) {
@@ -252,7 +282,9 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                         ProbDist rightProbDist = nodeProbDist.get(rightChild);
                         tempLineageList.remove(leftProbDist);
                         tempLineageList.remove(rightProbDist);
-                        System.out.println("currently active lineages: " + activeLineageList.size());
+                        if (DEBUG) {
+                            System.out.println("currently active lineages: " + activeLineageList.size());
+                        }
                         ProbDist newProbDist = new ProbDist(demes, intervalLength, nodes.get(indices[j]), leftChild, rightChild);
                         newProbDist.setIntervalType(IntervalType.COALESCENT);
                         lnL += newProbDist.computeCoalescedLineage(leftProbDist, rightProbDist);
@@ -264,12 +296,14 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                             //add to HashMap
                             nodeProbDist.put(nodes.get(indices[j]), newProbDist);
                         } else {
-                            System.out.println("ROOT");
+                            if (DEBUG) {
+                                System.out.println("ROOT");
+                            }
                         }
                     }
-                    System.out.println("** (j=" + j + ") " + treeModel.getNodeHeight(nodes.get(indices[j])));
+                    //System.out.println("** (j=" + j + ") " + treeModel.getNodeHeight(nodes.get(indices[j])));
                     j++;
-                    System.out.println("** (j=" + j + ") ");
+                    //System.out.println("** (j=" + j + ") ");
                     if (j >= indices.length) {
                         break;
                     }
@@ -279,14 +313,18 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
 
             //compute expected lineage counts here
             if (!(finish == 0.0)) {
-                System.out.println("Computing expected lineage counts");
+                if (DEBUG) {
+                    System.out.println("Computing expected lineage counts");
+                }
                 computeExpectedLineageCounts();
             }
 
             //and then compute the log likelihood
             if (!(finish == 0.0)) {
                 lnL += computeLogLikelihood(intervalLength);
-                System.out.println("Computing (log) likelihood contribution; logP = " + lnL);
+                if (DEBUG) {
+                    System.out.println("Computing (log) likelihood contribution; logP = " + lnL);
+                }
             }
 
             //update the list of active lineages for next iteration
@@ -295,11 +333,15 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                 activeLineageList.add(pd);
             }
             //tempLineageList.clear();
-            System.out.println("currently active lineages: " + activeLineageList.size() + "\n");
+            if (DEBUG) {
+                System.out.println("currently active lineages: " + activeLineageList.size() + "\n");
+            }
 
         }
 
-        System.out.println("Structured coalescent lnL = " + lnL);
+        if (DEBUG) {
+            System.out.println("Structured coalescent lnL = " + lnL);
+        }
 
         return lnL;
     }
@@ -314,8 +356,10 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         double intervalOne = 0.0;
         double intervalTwo = 0.0;
 
-        System.out.println("interval length = " + intervalLength);
-        System.out.println("active lineage list length = " + activeLineageList.size());
+        if (DEBUG) {
+            System.out.println("interval length = " + intervalLength);
+            System.out.println("active lineage list length = " + activeLineageList.size());
+        }
 
         for (int i = 0; i < demes; i++) {
             double startProbs = 0.0;
@@ -324,15 +368,19 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                 startProbs += pd.getStartLineageProb(i)*pd.getStartLineageProb(i);
                 endProbs += pd.getEndLineageProb(i)*pd.getEndLineageProb(i);
             }
-            System.out.println("  startProbs = " + startProbs + " ; endProbs = " + endProbs);
+            if (DEBUG) {
+                System.out.println("  startProbs = " + startProbs + " ; endProbs = " + endProbs);
+            }
             intervalOne += (1.0/popSizes.getParameterValue(i)) * (startExpected[i]*startExpected[i] - startProbs);
             intervalTwo += (1.0/popSizes.getParameterValue(i)) * (endExpected[i]*endExpected[i] - endProbs);
         }
         intervalOne *= -intervalLength/4.0;
         intervalTwo *= -intervalLength/4.0;
-        System.out.println("interval 1 (log) likelihood = " + intervalOne);
-        System.out.println("interval 2 (log) likelihood = " + intervalTwo);
-        System.out.println("total (log) likelihood = " + (intervalOne + intervalTwo));
+        if (DEBUG) {
+            System.out.println("interval 1 (log) likelihood = " + intervalOne);
+            System.out.println("interval 2 (log) likelihood = " + intervalTwo);
+            System.out.println("total (log) likelihood = " + (intervalOne + intervalTwo));
+        }
 
         return intervalOne + intervalTwo;
     }
@@ -349,15 +397,17 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                 this.endExpected[i] += pd.getEndLineageProb(i);
             }
         }
-        System.out.print("  E_start(");
-        for (int i = 0; i < this.demes; i++) {
-            System.out.print(this.startExpected[i] + " ");
+        if (DEBUG) {
+            System.out.print("  E_start(");
+            for (int i = 0; i < this.demes; i++) {
+                System.out.print(this.startExpected[i] + " ");
+            }
+            System.out.print(")\n  E_end(");
+            for (int i = 0; i < this.demes; i++) {
+                System.out.print(this.endExpected[i] + " ");
+            }
+            System.out.println(")");
         }
-        System.out.print(")\n  E_end(");
-        for (int i = 0; i < this.demes; i++) {
-            System.out.print(this.endExpected[i] + " ");
-        }
-        System.out.println(")");
     }
 
     /**
@@ -367,10 +417,14 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
      * @param increment
      */
     private void incrementActiveLineages(double increment) {
-        System.out.println("Incrementing active lineages by " + increment);
+        if (DEBUG) {
+            System.out.println("Incrementing active lineages by " + increment);
+        }
         for (ProbDist pd : activeLineageList) {
             pd.incrementIntervalLength(increment);
-            System.out.println("  " + pd);
+            if (DEBUG) {
+                System.out.println("  " + pd);
+            }
         }
     }
 
@@ -395,6 +449,10 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             NodeRef child = tree.getChild(top, i);
             collectAllTimes(tree, child, nodes, times, children);
         }
+    }
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        likelihoodKnown = false;
     }
 
     /**
@@ -448,13 +506,19 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                 sum += sumComponents[i];
             }
 
-            System.out.println("coalescent end lineage prob 0 = " + leftProbDist.getEndLineageProb(0));
-            System.out.println("coalescent end lineage prob 1 = " + leftProbDist.getEndLineageProb(1));
+            if (DEBUG) {
+                System.out.println("coalescent end lineage prob 0 = " + leftProbDist.getEndLineageProb(0));
+                System.out.println("coalescent end lineage prob 1 = " + leftProbDist.getEndLineageProb(1));
+            }
             for (int i = 0; i < demes; i++) {
                 this.setStartLineageProb(i, sumComponents[i]/sum);
-                System.out.println("coalescent start lineage prob " + i + " = " + (sumComponents[i]/sum));
+                if (DEBUG) {
+                    System.out.println("coalescent start lineage prob " + i + " = " + (sumComponents[i]/sum));
+                }
             }
-            System.out.println("E_i = " + Math.log(sum));
+            if (DEBUG) {
+                System.out.println("E_i = " + Math.log(sum));
+            }
             //new interval (and new node) so set its length to zero
             this.intervalLength = 0.0;
             return Math.log(sum);
@@ -469,26 +533,29 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                     this.setEndLineageProb(k, this.getStartLineageProb(k));
                 }
             } else {
+                //TODO this should be possible in parallel for each lineage within the same coalescent interval
                 generalSubstitutionModel.getTransitionProbabilities(lineageLength, migrationMatrix);
                 //start extra test
-                double[] infinitesimal = new double[demes*demes];
+                /*double[] infinitesimal = new double[demes*demes];
                 generalSubstitutionModel.getInfinitesimalMatrix(infinitesimal);
                 for (int i = 0; i < demes * demes; i++) {
                     System.out.print(infinitesimal[i] + " ");
                     if ((i + 1) % demes == 0) {
                         System.out.println();
                     }
-                }
+                }*/
                 //end extra test
-                System.out.println("-----------");
-                System.out.println("Matrix exponentiation (t=" + lineageLength + ") is: ");
-                for (int i = 0; i < demes * demes; i++) {
-                    System.out.print(migrationMatrix[i] + " ");
-                    if ((i + 1) % demes == 0) {
-                        System.out.println();
+                if (DEBUG) {
+                    System.out.println("-----------");
+                    System.out.println("Matrix exponentiation (t=" + lineageLength + ") is: ");
+                    for (int i = 0; i < demes * demes; i++) {
+                        System.out.print(migrationMatrix[i] + " ");
+                        if ((i + 1) % demes == 0) {
+                            System.out.println();
+                        }
                     }
+                    System.out.println("-----------");
                 }
-                System.out.println("-----------");
 
                 for (int k = 0; k < demes; k++) {
                     double value = 0.0;
@@ -625,6 +692,9 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
 
     //the tree model
     private TreeModel treeModel;
+
+    //the branch rate model
+    private BranchRateModel branchRateModel;
 
     //the population sizes
     private Parameter popSizes;

@@ -35,6 +35,8 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.*;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -193,10 +195,12 @@ public class BASTADensityTester {
 
         int subIntervals = 2;
 
+        BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
         StructuredCoalescentLikelihood structured = null;
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
@@ -230,7 +234,7 @@ public class BASTADensityTester {
         patterns.addPattern(pattern);
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
@@ -300,7 +304,7 @@ public class BASTADensityTester {
         migrationModel = new SVSComplexSubstitutionModel("migrationModel", dataType, freqModel, ratesParameter, null);
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }

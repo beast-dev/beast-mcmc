@@ -177,7 +177,7 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                             ProbDist newProbDist = new ProbDist(demes, 0.0, nodes.get(indices[j]));
                             newProbDist.setIntervalType(IntervalType.SAMPLE);
                             newProbDist.setStartLineageProb(patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(newProbDist.node).getId())], 1.0);
-                            newProbDist.computeEndLineageDensities(0.0);
+                            newProbDist.computeEndLineageDensities(0.0, null);
                             if (DEBUG) {
                                 System.out.println(newProbDist);
                             }
@@ -220,7 +220,7 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                             ProbDist newProbDist = new ProbDist(demes, 0.0, nodes.get(indices[j]));
                             newProbDist.setIntervalType(IntervalType.SAMPLE);
                             newProbDist.setStartLineageProb(patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(newProbDist.node).getId())], 1.0);
-                            newProbDist.computeEndLineageDensities(0.0);
+                            newProbDist.computeEndLineageDensities(0.0, null);
                             if (DEBUG) {
                                 System.out.println(newProbDist);
                             }
@@ -265,7 +265,9 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                         ProbDist newProbDist = new ProbDist(demes, intervalLength, nodes.get(indices[j]));
                         newProbDist.setIntervalType(IntervalType.SAMPLE);
                         newProbDist.setStartLineageProb(patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(newProbDist.node).getId())], 1.0);
-                        newProbDist.computeEndLineageDensities(0.0);
+                        //TODO set (or compute) these end lineage whenever setStartLineageProb is called?
+                        //TODO and then stop calling this method with a null parameter!
+                        newProbDist.computeEndLineageDensities(0.0, null);
                         tempLineageList.add(newProbDist);
                         //activeLineageList.add(newProbDist);
                         //System.out.println("currently active lineages: " + activeLineageList.size());
@@ -420,8 +422,28 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         if (DEBUG) {
             System.out.println("Incrementing active lineages by " + increment);
         }
+
+        final double branchRate;
+        synchronized (branchRateModel) {
+            branchRate = branchRateModel.getBranchRate(treeModel, treeModel.getRoot());
+        }
+        double[] migrationMatrix = new double[demes*demes];
+        generalSubstitutionModel.getTransitionProbabilities(branchRate*increment, migrationMatrix);
+
+        if (DEBUG) {
+            System.out.println("-----------");
+            System.out.println("Matrix exponentiation (t=" + increment + ") is: ");
+            for (int i = 0; i < demes * demes; i++) {
+                System.out.print(migrationMatrix[i] + " ");
+                if ((i + 1) % demes == 0) {
+                    System.out.println();
+                }
+            }
+            System.out.println("-----------");
+        }
+
         for (ProbDist pd : activeLineageList) {
-            pd.incrementIntervalLength(increment);
+            pd.incrementIntervalLength(increment, migrationMatrix);
             if (DEBUG) {
                 System.out.println("  " + pd);
             }
@@ -524,17 +546,13 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             return Math.log(sum);
         }
 
-        //TODO cache/avoid matrix exponentiation for efficiency
         //compute the end probability densities and expected numbers of lineages
-        public void computeEndLineageDensities(double lineageLength) {
-            double[] migrationMatrix = new double[demes*demes];
+        public void computeEndLineageDensities(double lineageLength, double[] migrationMatrix) {
             if (lineageLength == 0.0) {
                 for (int k = 0; k < demes; k++) {
                     this.setEndLineageProb(k, this.getStartLineageProb(k));
                 }
             } else {
-                //TODO this should be possible in parallel for each lineage within the same coalescent interval
-                generalSubstitutionModel.getTransitionProbabilities(lineageLength, migrationMatrix);
                 //start extra test
                 /*double[] infinitesimal = new double[demes*demes];
                 generalSubstitutionModel.getInfinitesimalMatrix(infinitesimal);
@@ -545,18 +563,8 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                     }
                 }*/
                 //end extra test
-                if (DEBUG) {
-                    System.out.println("-----------");
-                    System.out.println("Matrix exponentiation (t=" + lineageLength + ") is: ");
-                    for (int i = 0; i < demes * demes; i++) {
-                        System.out.print(migrationMatrix[i] + " ");
-                        if ((i + 1) % demes == 0) {
-                            System.out.println();
-                        }
-                    }
-                    System.out.println("-----------");
-                }
 
+                //TODO this should be possible in parallel for each lineage within the same coalescent interval
                 for (int k = 0; k < demes; k++) {
                     double value = 0.0;
                     for (int l = 0; l < demes; l++) {
@@ -568,19 +576,19 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
 
         }
 
-        public void incrementIntervalLength(double increment) {
+        public void incrementIntervalLength(double increment, double[] migrationMatrix) {
             this.intervalLength = this.intervalLength + increment;
             if (incremented) {
                 if (ASSOC_MULTIPLICATION) {
                 for (int i = 0; i < demes; i++) {
                     startLineageProbs[i] = endLineageProbs[i];
                 }
-                computeEndLineageDensities(increment);
+                computeEndLineageDensities(increment, migrationMatrix);
                 } else {
-                    computeEndLineageDensities(this.intervalLength);
+                    throw new RuntimeException("Only incremental matrix exponentiation allowed for performance reasons.");
                 }
             } else {
-                computeEndLineageDensities(this.intervalLength);
+                computeEndLineageDensities(this.intervalLength, migrationMatrix);
             }
             this.incremented = true;
         }
@@ -724,7 +732,6 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
     private int demes;
 
     //number of subintervals across each branch of the tree
-    //TODO: determine if we want to provide this as an option; default value = 2
     private int subIntervals;
 
 }

@@ -37,8 +37,10 @@ public class EigenVectorsMatrix extends MatrixParameter {
     }
 
     @Override
-    public boolean check(){
+    public boolean check() {
         DenseMatrix64F M = wrapSpherical(getParameterValues(), 0, getColumnDimension());
-        return NormOps.conditionP2(M) < 1.0E8;
+        boolean res = NormOps.conditionP2(M) < 1.0E8;
+        if (!res) System.err.println("An ill conditioned matrix proposal was rejected.");
+        return res;
     }
 }

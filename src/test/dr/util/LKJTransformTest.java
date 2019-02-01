@@ -28,10 +28,7 @@ package test.dr.util;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
-import dr.util.CorrelationToCholesky;
-import dr.util.LKJCholeskyTransformConstrained;
-import dr.util.LKJTransformConstrained;
-import dr.util.Transform;
+import dr.util.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -359,6 +356,26 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                     format.format(corrValuesTer[k]));
         }
 
+        double jacobianDet2ToInf = 0.0;
+        for (int k = 1; k < dim; k++) {
+            double[] tempCPC = new double[k];
+            double[] tempChol = new double[k];
+            int l = k - 1;
+            for (int i = 0; i < k; i++) {
+                tempCPC[i] = CPCs[l];
+                tempChol[i] = cholValues[l];
+                l += dim - i - 2;
+            }
+            EuclideanToInfiniteNormUnitBallTransform transform2ToInf = new EuclideanToInfiniteNormUnitBallTransform(k);
+            double[] cholValuesBis = transform2ToInf.inverse(tempCPC, 0, tempCPC.length);
+            jacobianDet2ToInf += transform2ToInf.getLogJacobian(tempChol, 0, tempChol.length);
+            for (int i = 0; i < k; i++) {
+                assertEquals("spherical=" + k + i,
+                        format.format(tempChol[i]),
+                        format.format(cholValuesBis[i]));
+            }
+        }
+
         // Determinant
         double jacobianDetCholToCPC = transformChol.getLogJacobian(cholValues, 0, CPCs.length);
         double jacobianDetCorrToChol = transformCorrToChol.getLogJacobian(corrValues, 0, CPCs.length);
@@ -377,6 +394,10 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         assertEquals("jacobian log det",
                 format.format(jacobianDetCorrToCPC),
                 format.format(jacobianDetCorrToCPCComp));
+
+        assertEquals("jacobian log det",
+                format.format(jacobianDetCholToCPC),
+                format.format(jacobianDet2ToInf));
 
         // Matrices
         DenseMatrix64F jacobianMatCholToCPC = new DenseMatrix64F(transformChol.computeJacobianMatrixInverse(CPCs));

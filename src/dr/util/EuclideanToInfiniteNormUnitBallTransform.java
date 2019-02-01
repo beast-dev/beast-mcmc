@@ -110,7 +110,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     }
 
     public static double projection(final double[] x, final int offset, final int length) {
-        return Math.sqrt(1 - squaredNorm(x, offset, length));
+        return Math.sqrt(1.0 - squaredNorm(x, offset, length));
     }
 
     @Override
@@ -146,9 +146,8 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     @Override
     protected double[] getGradientLogJacobianInverse(double[] values) {
         double[] gradientLogJacobian = new double[values.length];
-        int k = 0;
-        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
-            gradientLogJacobian[k] = -(dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
+        for (int i = 0; i < dim - 1; i++) { // Sizes of conditioning sets
+            gradientLogJacobian[i] = -(dim - i - 1) * values[i] / (1.0 - Math.pow(values[i], 2));
         }
         return gradientLogJacobian;
     }
@@ -226,7 +225,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
         //************************************************************************
 
         public String getParserDescription() {
-            return "A compound matrix parametrized by its eigen values and vectors.";
+            return "A spherical transform using Fisher Z and LKJ.";
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

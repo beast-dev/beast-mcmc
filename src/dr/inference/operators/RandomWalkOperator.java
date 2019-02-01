@@ -153,7 +153,6 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
             if (parameter.check()) {
                 return 0.0;
             } else {
-                System.err.println("An ill conditioned matrix proposal was rejected.");
                 return Double.NEGATIVE_INFINITY;
             }
 

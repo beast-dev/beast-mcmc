@@ -48,6 +48,7 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
+import dr.util.Attribute;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     private static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
     private static final String MAX_ATTEMPTS = "numAttempts";
+    private static final String MISSING_BY_COLUMN = "missingByColumn";
 
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
@@ -68,7 +70,9 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private final int dim;
 
     private Parameter mask;
-    private MaskIndices maskIndices;
+//    private MaskIndices maskIndices;
+    private final MaskIndicesDelegate maskDelegate;
+    private final Boolean missingByColumn;
 
     private double[] fcdMean;
     private double[][] fcdPrecision;
@@ -80,7 +84,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     public NewLatentLiabilityGibbs(
             TreeDataLikelihood treeDataLikelihood,
             LatentTruncation LatentLiability, CompoundParameter tipTraitParameter, Parameter mask,
-            double weight, String traitName, int maxAttempts) {
+            double weight, String traitName, int maxAttempts, boolean missingByColumn) {
         super();
 
         this.latentLiability = LatentLiability;
@@ -94,8 +98,12 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             likelihoodDelegate.addWrappedFullConditionalDensityTrait(traitName);
         }
         this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
+
+        this.missingByColumn = missingByColumn;
         this.mask = mask;
-        setupmask();
+        this.maskDelegate = new MaskIndicesDelegate();
+//        setupMaskDelegate();
+//        setupmask();
         this.fcdMean = new double[dim];
         this.fcdVaraince = new double[dim][dim];
         this.fcdPrecision = new double[dim][dim];
@@ -130,13 +138,13 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private void setNodeTrait(NodeRef node, double[] traitValue) {
 
         int index = node.getNumber();
-        if (maskIndices == null) {
+        if (mask == null) {
             for (int i = 0; i < dim; i++) {
                 tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[i]);
             }
         } else {
             int j = 0;
-            for (int i : maskIndices.discreteIndices) {
+            for (int i : maskDelegate.getLatentIndices(node)) {
                 tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[j]);
                 j++;
             }
@@ -146,6 +154,12 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private double sampleNode(NodeRef node, WrappedNormalSufficientStatistics statistics) {
 
         final int thisNumber = node.getNumber();
+
+        final int obsDim = maskDelegate.getObservedIndices(thisNumber).length;
+
+        if (obsDim == dim){
+            return 0;
+        }
 
         ReadableVector mean = statistics.getMean();
         ReadableMatrix thisP = statistics.getPrecision();
@@ -160,10 +174,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-        MultivariateNormalDistribution fullDistribution = new MultivariateNormalDistribution(fcdMean, fcdPrecision);
+        MultivariateNormalDistribution fullDistribution = new MultivariateNormalDistribution(fcdMean, fcdPrecision); //TODO: should this not be declared until 'else' statement?
         MultivariateNormalDistribution drawDistribution;
 
-        if (maskIndices != null && maskIndices.continuousIndex.length > 0) {
+        if (mask != null && obsDim > 0) {
             addMaskOnContiuousTraitsPrecisionSpace(thisNumber);
             drawDistribution = new MultivariateNormalDistribution(maskedMean, maskedPrecision);
         } else {
@@ -217,8 +231,9 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             currentValues[i] = tipTraitParameter.getParameterValues()[nodeNumber * dim + i];
         }
 
+
         ConditionalPrecisionAndTransform cVarianceJoint = new ConditionalPrecisionAndTransform(
-                new Matrix(fcdPrecision), maskIndices.discreteIndices, maskIndices.continuousIndex);
+                new Matrix(fcdPrecision), maskDelegate.getLatentIndices(nodeNumber), maskDelegate.getObservedIndices(nodeNumber));
 
         maskedPrecision = cVarianceJoint.getConditionalPrecision().toComponents();
         maskedMean = cVarianceJoint.getConditionalMean(currentValues, 0, fcdMean, 0);
@@ -233,28 +248,28 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         return result;
     }
 
-    private void setupmask() {
-
-        if (mask != null) {
-
-            List<Integer> missingIndex = new ArrayList<Integer>();
-            List<Integer> notmissingIndex = new ArrayList<Integer>();
-
-            for (int i = 0; i < dim; ++i) {
-
-                if (mask.getParameterValue(i) == 1.0) {
-                    missingIndex.add(i);
-                } else {
-                    notmissingIndex.add(i);
-                }
-            }
-
-            int[] cMissingJoint = convertListToArray(missingIndex);
-            int[] cNotMissingJoint = convertListToArray(notmissingIndex);
-
-            maskIndices = new MaskIndices(cMissingJoint, cNotMissingJoint);
-        }
-    }
+//    private void setupmask() {
+//
+//        if (mask != null) {
+//
+//            List<Integer> missingIndex = new ArrayList<Integer>();
+//            List<Integer> notmissingIndex = new ArrayList<Integer>();
+//
+//            for (int i = 0; i < dim; ++i) {
+//
+//                if (mask.getParameterValue(i) == 1.0) {
+//                    missingIndex.add(i);
+//                } else {
+//                    notmissingIndex.add(i);
+//                }
+//            }
+//
+//            int[] cMissingJoint = convertListToArray(missingIndex);
+//            int[] cNotMissingJoint = convertListToArray(notmissingIndex);
+//
+//            maskIndices = new MaskIndices(cMissingJoint, cNotMissingJoint);
+//        }
+//    }
 
     protected class MaskIndices {
 
@@ -265,6 +280,91 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             this.discreteIndices = latentindex;
             this.continuousIndex = contindex;
         }
+    }
+
+    private void setupMaskDelegate() {
+        if (mask != null) {
+            if (missingByColumn) {
+
+            }
+        }
+    }
+
+    private class MaskIndicesDelegate {
+
+        int[] latentColumns = null;
+        int[] observedColumns = null;
+
+        private MaskIndicesDelegate() {
+            if (mask != null) {
+                if (missingByColumn) {
+
+                    List<Integer> missingIndex = new ArrayList<Integer>();
+                    List<Integer> notmissingIndex = new ArrayList<Integer>();
+
+                    for (int i = 0; i < dim; ++i) {
+
+                        if (mask.getParameterValue(i) == 1.0) {
+                            missingIndex.add(i);
+                        } else {
+                            notmissingIndex.add(i);
+                        }
+                    }
+
+                    this.latentColumns = convertListToArray(missingIndex);
+                    this.observedColumns = convertListToArray(notmissingIndex);
+                }
+            }
+
+
+        }
+
+        private int[] getLatentIndices(NodeRef nodeRef) {
+            return getLatentIndices(nodeRef.getNumber());
+        }
+
+        private int[] getLatentIndices(int nodeNumber){
+            if (missingByColumn) {
+                return this.latentColumns;
+            } else {
+
+                int offset = dim * nodeNumber;
+                List<Integer> latentArray = new ArrayList<Integer>();
+
+                for (int i = offset; i < offset + dim; i++){
+                    if (mask.getParameterValue(i) == 1.0){
+                        latentArray.add(i - offset);
+                    }
+                }
+
+                return convertListToArray(latentArray);
+
+            }
+        }
+
+        private int[] getObservedIndices(int nodeNumber){
+            if (missingByColumn) {
+                return this.observedColumns;
+            } else{
+
+                int offset = dim * nodeNumber;
+                List<Integer> obsArray = new ArrayList<Integer>();
+
+                for (int i = offset; i < offset + dim; i++){
+                    if (mask.getParameterValue(i) == 0.0){
+                        obsArray.add(i - offset);
+                    }
+                }
+
+                return convertListToArray(obsArray);
+            }
+        }
+
+        private int[] getObservedIndices(NodeRef nodeRef){
+            return getObservedIndices(nodeRef.getNumber());
+        }
+
+
     }
 
     @SuppressWarnings("unchecked")
@@ -315,9 +415,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             if (xo.hasChildNamed(MASK)) {
                 mask = (Parameter) xo.getElementFirstChild(MASK);
             }
+            boolean missingByColumn = xo.getAttribute(MISSING_BY_COLUMN, true);
 
             return new NewLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight, "latent",
-                    numAttempts);
+                    numAttempts, missingByColumn);
         }
 
         public String getParserDescription() {
@@ -334,6 +435,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newBooleanRule(MISSING_BY_COLUMN, true),
                 new ElementRule(TreeDataLikelihood.class, "The model for the latent random variables"),
                 new ElementRule(LatentTruncation.class, "The model that links latent and observed variables"),
                 new ElementRule(MASK, dr.inference.model.Parameter.class, "Mask: 1 for latent variables that should " +

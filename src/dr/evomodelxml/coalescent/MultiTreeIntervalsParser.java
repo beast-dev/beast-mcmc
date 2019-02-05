@@ -1,7 +1,7 @@
 /*
- * MultiTreeIntervalsParser.java
+ * CoalescentLikelihoodParser.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -54,20 +54,14 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        double cutoff = xo.getDoubleAttribute(CUTOFF);
-
         XMLObject cxo = xo.getChild(TREES);
 
-        List<Tree> trees = new ArrayList<Tree>();
-
-        for (int i = 0; i < cxo.getChildCount(); i++) {
-            Tree tree = (Tree)cxo.getChild(Tree.class);
-            trees.add(tree);
-        }
-
+        List<Tree> trees = new ArrayList<Tree>(cxo.getAllChildren(Tree.class));
         Taxa singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
 
-        return new MultiTreeIntervals(trees, singletonTaxa, cutoff);
+        double cutoffTime = xo.getDoubleAttribute(CUTOFF);
+
+        return new MultiTreeIntervals(trees, singletonTaxa, cutoffTime);
     }
 
     //************************************************************************
@@ -75,11 +69,11 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element stores the coalescent intervals across a set of trees.";
+        return "This element stores a set of coalescent intervals over multiple trees.";
     }
 
     public Class getReturnType() {
-        return CoalescentLikelihood.class;
+        return MultiTreeIntervals.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

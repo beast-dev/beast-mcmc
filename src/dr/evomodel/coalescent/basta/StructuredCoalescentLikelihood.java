@@ -35,7 +35,9 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.*;
@@ -53,7 +55,9 @@ import java.util.*;
 public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
     private static final boolean DEBUG = false;
+    private static final boolean MATRIX_DEBUG = false;
 
+    //private static final boolean USE_BEAGLE = false;
     private static final boolean ASSOC_MULTIPLICATION = true;
 
     public StructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
@@ -87,6 +91,12 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         this.activeLineageList = new ArrayList<ProbDist>();
         this.tempLineageList = new ArrayList<ProbDist>();
 
+        this.maxCoalescentIntervals = treeModel.getTaxonCount() * 2 - 2;
+        //System.out.println("maxCoalescentIntervals = " + maxCoalescentIntervals);
+        this.currentCoalescentInterval = 0;
+        this.migrationMatrices = new double[maxCoalescentIntervals][this.demes*this.demes];
+        this.storedMigrationMatrices = new double[maxCoalescentIntervals][this.demes*this.demes];
+
     }
 
     // **************************************************************
@@ -111,8 +121,16 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             System.out.println();
         }
 
-        //TODO Need to pass on pattern list all the time? How is this done in ancestralTreeLikelihood?
-        return traverseTree(treeModel, treeModel.getRoot(), patternList);
+        logLikelihood = traverseTree(treeModel, treeModel.getRoot(), patternList);
+        return logLikelihood;
+    }
+
+    public double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
     }
 
     //based on the traverseTree method in OldAbstractCoalescentLikelihood
@@ -265,8 +283,6 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                         ProbDist newProbDist = new ProbDist(demes, intervalLength, nodes.get(indices[j]));
                         newProbDist.setIntervalType(IntervalType.SAMPLE);
                         newProbDist.setStartLineageProb(patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(newProbDist.node).getId())], 1.0);
-                        //TODO set (or compute) these end lineage whenever setStartLineageProb is called?
-                        //TODO and then stop calling this method with a null parameter!
                         newProbDist.computeEndLineageDensities(0.0, null);
                         tempLineageList.add(newProbDist);
                         //activeLineageList.add(newProbDist);
@@ -344,6 +360,11 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         if (DEBUG) {
             System.out.println("Structured coalescent lnL = " + lnL);
         }
+
+        this.finalCoalescentInterval = this.currentCoalescentInterval;
+        //System.out.println("finalCoalescentInterval = " + finalCoalescentInterval);
+        this.currentCoalescentInterval = 0;
+        this.matricesKnown = true;
 
         return lnL;
     }
@@ -427,27 +448,29 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         synchronized (branchRateModel) {
             branchRate = branchRateModel.getBranchRate(treeModel, treeModel.getRoot());
         }
-        double[] migrationMatrix = new double[demes*demes];
-        generalSubstitutionModel.getTransitionProbabilities(branchRate*increment, migrationMatrix);
+        if (!matricesKnown) {
+            generalSubstitutionModel.getTransitionProbabilities(branchRate * increment, migrationMatrices[this.currentCoalescentInterval]);
 
-        if (DEBUG) {
-            System.out.println("-----------");
-            System.out.println("Matrix exponentiation (t=" + increment + ") is: ");
-            for (int i = 0; i < demes * demes; i++) {
-                System.out.print(migrationMatrix[i] + " ");
-                if ((i + 1) % demes == 0) {
-                    System.out.println();
+            if (MATRIX_DEBUG) {
+                System.out.println("-----------");
+                System.out.println("Matrix exponentiation (t=" + increment + ") is: ");
+                for (int i = 0; i < demes * demes; i++) {
+                    System.out.print(migrationMatrices[this.currentCoalescentInterval][i] + " ");
+                    if ((i + 1) % demes == 0) {
+                        System.out.println();
+                    }
                 }
+                System.out.println("-----------");
             }
-            System.out.println("-----------");
         }
 
         for (ProbDist pd : activeLineageList) {
-            pd.incrementIntervalLength(increment, migrationMatrix);
+            pd.incrementIntervalLength(increment, migrationMatrices[this.currentCoalescentInterval]);
             if (DEBUG) {
                 System.out.println("  " + pd);
             }
         }
+        this.currentCoalescentInterval++;
     }
 
     /**
@@ -473,8 +496,85 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         }
     }
 
+    // **************************************************************
+    // ModelListener IMPLEMENTATION
+    // **************************************************************
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (DEBUG) {
+            System.out.println("handleModelChangedEvent: " + model.getModelName() + ", " + object + ", " + index);
+        }
+        if (model == treeModel) {
+            //for all the nodes that are older than the event, set updateProbDist (still to implement) to true
+            //then trigger a recalculation that makes use of an adjusted traverseTree method (that checks whether
+            //or not the ProbDist needs to be updated
+            likelihoodKnown = false;
+            matricesKnown = false;
+        } else if (model == branchRateModel) {
+            likelihoodKnown = false;
+            matricesKnown = false;
+        } else if (model == generalSubstitutionModel) {
+            likelihoodKnown = false;
+            matricesKnown = false;
+        } else {
+            throw new RuntimeException("Unknown handleModelChangedEvent source, exiting.");
+        }
+    }
+
+    // **************************************************************
+    // VariableListener IMPLEMENTATION
+    // **************************************************************
+
+
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (DEBUG) {
+            System.out.println("handleVariableChangedEvent: " + variable.getVariableName());
+        }
+        //if even one of the popSizes has changed, the whole density needs to be recomputed
+        //hence we should use the adaptive multivariate transition kernel on all popSizes
         likelihoodKnown = false;
+        //a change in one of the popSizes does not affect matrix exponentiation
+        matricesKnown = true;
+    }
+
+    protected void storeState() {
+        //System.out.println("STORESTATE, matricesKnown=" + this.matricesKnown);
+        //super.storeState();
+        for (int i = 0; i < this.finalCoalescentInterval; i++) {
+            System.arraycopy(this.migrationMatrices[i],0, this.storedMigrationMatrices[i], 0, demes*demes);
+        }
+        /*double[] tmp;
+        for (int i = 0; i < this.finalCoalescentInterval; i++) {
+            tmp = this.storedMigrationMatrices[i];
+            this.storedMigrationMatrices[i] = this.migrationMatrices[i];
+            this.migrationMatrices[i] = tmp;
+        }*/
+        /*if (DEBUG) {
+            System.out.println("STORESTATE, matricesKnown=" + this.matricesKnown);
+        }*/
+        storedLikelihoodKnown = likelihoodKnown;
+        storedLogLikelihood = logLikelihood;
+    }
+
+    protected void restoreState() {
+        //System.out.println("RESTORESTATE, matricesKnown=" + this.matricesKnown);
+        //super.restoreState();
+        double[] tmp;
+        for (int i = 0; i < this.finalCoalescentInterval; i++) {
+            tmp = this.migrationMatrices[i];
+            this.migrationMatrices[i] = this.storedMigrationMatrices[i];
+            this.storedMigrationMatrices[i] = tmp;
+        }
+        /*if (DEBUG) {
+            System.out.println("RESTORESTATE, matricesKnown=" + this.matricesKnown);
+        }*/
+        likelihoodKnown = storedLikelihoodKnown;
+        logLikelihood = storedLogLikelihood;
+    }
+
+    public void makeDirty() {
+        likelihoodKnown = false;
+        matricesKnown = false;
     }
 
     /**
@@ -553,17 +653,6 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                     this.setEndLineageProb(k, this.getStartLineageProb(k));
                 }
             } else {
-                //start extra test
-                /*double[] infinitesimal = new double[demes*demes];
-                generalSubstitutionModel.getInfinitesimalMatrix(infinitesimal);
-                for (int i = 0; i < demes * demes; i++) {
-                    System.out.print(infinitesimal[i] + " ");
-                    if ((i + 1) % demes == 0) {
-                        System.out.println();
-                    }
-                }*/
-                //end extra test
-
                 //TODO this should be possible in parallel for each lineage within the same coalescent interval
                 for (int k = 0; k < demes; k++) {
                     double value = 0.0;
@@ -646,16 +735,14 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
     // **************************************************************
 
     /**
-     * Sets the units these coalescent intervals are
-     * measured in.
+     * Sets the units these coalescent intervals are measured in.
      */
     public final void setUnits(Type u) {
         treeModel.setUnits(u);
     }
 
     /**
-     * Returns the units these coalescent intervals are
-     * measured in.
+     * Returns the units these coalescent intervals are measured in.
      */
     public final Type getUnits() {
         return treeModel.getUnits();
@@ -733,5 +820,14 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
 
     //number of subintervals across each branch of the tree
     private int subIntervals;
+
+    //variables that allow to use storeState and restoreState
+    private int maxCoalescentIntervals;
+    private int currentCoalescentInterval;
+    private double[][] migrationMatrices;
+    private int finalCoalescentInterval;
+    private double[][] storedMigrationMatrices;
+
+    private boolean matricesKnown;
 
 }

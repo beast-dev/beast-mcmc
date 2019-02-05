@@ -311,6 +311,41 @@ public class BASTADensityTester {
 
         System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
 
+
+
+
+
+        System.out.println("EXAMPLE 4: 6 taxa (2 identical sampling dates) with 3 demes and simple branch lengths");
+
+        try {
+            treeModel = createSpecifiedTree("(((AB192965Japan2004:4.5,((AF189018Indonesia2005:1.5,AJ842306France2004:0.5):0.25,FM212660Cameroon2007:3.75):3.75):5.0,AF071228Spain1997:2.5):1.0,AF105975Portugal1995:1.5)");
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to parse Newick tree");
+        }
+
+        try {
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+        } catch (TreeUtils.MissingTaxonException missing) {
+            System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
+        }
+
+        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
+
+
+        try {
+            treeModel = createSpecifiedTree("(((((AF189018Indonesia2005:1.5,AJ842306France2004:0.5):0.75,AB192965Japan2004:1.25):3.25,FM212660Cameroon2007:7.5):5.0,AF071228Spain1997:2.5):1.0,AF105975Portugal1995:1.5)");
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to parse Newick tree");
+        }
+
+        try {
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+        } catch (TreeUtils.MissingTaxonException missing) {
+            System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
+        }
+
+        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
+
     }
 
 }

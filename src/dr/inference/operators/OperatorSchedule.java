@@ -86,7 +86,7 @@ public interface OperatorSchedule extends Serializable {
         },
         POWER("power") {
             @Override public double transform(double d) {
-                return Math.pow(d / 1.0E6, 0.55); // c = 5/9, B = 1e6
+                return Math.pow(d, 0.55); // c = 5/9
             }
         };
 

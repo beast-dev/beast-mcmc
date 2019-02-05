@@ -72,7 +72,7 @@ public class OperatorAnalysisPrinter {
                                     + formattedTimeString(op)
                                     + formattedTimePerOpString(op)
                                     + formattedProbString(jointOp)
-                                    + (useAdaptation ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
+                                    + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                     );
                 }
             } else {
@@ -82,7 +82,7 @@ public class OperatorAnalysisPrinter {
                                 + formattedTimeString(op)
                                 + formattedTimePerOpString(op)
                                 + formattedProbString(op)
-                                + (useAdaptation ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
+                                + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
                 );
             }
 
@@ -118,7 +118,7 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedProbString(MCMCOperator op) {
-        final double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+        final double acceptanceProb = op.getAcceptanceProbability();
         return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
     }
 

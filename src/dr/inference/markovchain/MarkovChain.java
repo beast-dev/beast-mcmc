@@ -542,14 +542,17 @@ public final class MarkovChain implements Serializable {
 //            final double n = op.getAdaptationCount();
 //            System.err.println("i = " + i + " n = " + n + "\n");
 
+            // final double acceptance = Math.exp(logr);
+            final double acceptance = op.getSmoothedAcceptanceProbability();
+
             final double target = op.getTargetAcceptanceProbability();
 
-            final double newp = p + ((1.0 / i) * (Math.exp(logr) - target));
+            final double newp = p + ((1.0 / i) * (acceptance - target));
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
                 op.setAdaptableParameter(newp);
                 if (DEBUG) {
-                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " current: " + acceptance);
                 }
             }
         }

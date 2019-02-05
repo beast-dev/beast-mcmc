@@ -25,6 +25,9 @@
 
 package dr.inference.operators;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -52,7 +55,7 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
         }
     }
 
-
+    @Override
     public final double getTargetAcceptanceProbability() {
         return targetAcceptanceProbability;
     }
@@ -108,7 +111,8 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
     public String getPerformanceSuggestion() {
         //double d = OperatorUtils.optimizeWindowSize(getRawParameter(), parameter.getParameterValue(0) * 2.0, prob, targetProb);
 
-        return getPerformanceSuggestion(MCMCOperator.Utils.getAcceptanceProbability(this),
+        return getPerformanceSuggestion(
+                getAcceptanceProbability(),
                 getTargetAcceptanceProbability(),
                 getRawParameter(),
                 getAdaptableParameterName());

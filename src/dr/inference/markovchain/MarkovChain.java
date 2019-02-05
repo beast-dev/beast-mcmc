@@ -538,7 +538,9 @@ public final class MarkovChain implements Serializable {
         if (isAdaptable(op)) {
             final double p = op.getAdaptableParameter();
 
-            final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 1);
+            final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
+//            final double n = op.getAdaptationCount();
+//            System.err.println("i = " + i + " n = " + n + "\n");
 
             final double target = op.getTargetAcceptanceProbability();
 

@@ -107,11 +107,12 @@ public class DeltaMixOperator extends AbstractAdaptableOperator {
         return parameter.getParameterName();
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(delta)-Math.log(1-delta);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         delta = 1/(1+Math.exp(-value));
     }
 

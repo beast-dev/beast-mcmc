@@ -26,26 +26,67 @@
 package dr.inference.operators;
 
 /**
+ * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator implements AdaptableMCMCOperator {
-    public AdaptationMode mode = AdaptationMode.DEFAULT;
+
+    public final AdaptationMode mode;
+    private final double targetAcceptanceProbability;
+    private long adaptationCount = 0;
+
+    public AbstractAdaptableOperator() {
+        this(AdaptationMode.DEFAULT, DEFAULT_ADAPTATION_TARGET);
+    }
 
     public AbstractAdaptableOperator(AdaptationMode mode) {
+        this(mode, DEFAULT_ADAPTATION_TARGET);
+    }
+
+    public AbstractAdaptableOperator(AdaptationMode mode, double targetAcceptanceProbability) {
         this.mode = mode;
         if (System.getProperty("mcmc.adaptation_target") != null) {
             this.targetAcceptanceProbability = Double.parseDouble(System.getProperty("mcmc.adaptation_target"));
+        } else {
+            this.targetAcceptanceProbability = targetAcceptanceProbability;
         }
-
     }
 
-    public double getTargetAcceptanceProbability() {
+
+    public final double getTargetAcceptanceProbability() {
         return targetAcceptanceProbability;
     }
 
-    public void setTargetAcceptanceProbability(double targetAcceptanceProbability) {
-        this.targetAcceptanceProbability = targetAcceptanceProbability;
+    @Override
+    public final long getAdaptationCount() {
+        return adaptationCount;
     }
+
+    @Override
+    public final void setAdaptableParameter(double value) {
+        setAdaptableParameterValue(value);
+        adaptationCount ++;
+    }
+
+    @Override
+    public final double getAdaptableParameter() {
+        return getAdaptableParameterValue();
+    }
+
+    /**
+     * Sets the adaptable parameter value.
+     *
+     * @param value the value to set the adaptable parameter to
+     */
+    protected abstract void setAdaptableParameterValue(double value);
+
+    /**
+     * Gets the adaptable parameter value.
+     *
+     * @returns the value
+     */
+    protected abstract double getAdaptableParameterValue();
+
 
     public double getMinimumAcceptanceLevel() {
         return MINIMUM_ACCEPTANCE_LEVEL;
@@ -73,7 +114,7 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
                 getAdaptableParameterName());
     }
 
-    public final AdaptationMode getMode() {
+    public AdaptationMode getMode() {
         return mode;
     }
 
@@ -97,5 +138,4 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
     }
 
 
-    private double targetAcceptanceProbability = DEFAULT_ADAPTATION_TARGET;
 }

@@ -73,7 +73,7 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
-        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, targetAcceptance, distanceKernel, mode);
+        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, distanceKernel, mode, targetAcceptance);
 
         return operator;
     }

@@ -161,12 +161,12 @@ public class FactorIndependenceOperator extends AbstractAdaptableOperator {
 
 
     @Override
-    public double getAdaptableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
     @Override
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 

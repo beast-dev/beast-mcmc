@@ -38,31 +38,45 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalPrecisionAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
+import dr.evomodel.treelikelihood.utilities.RepeatedMeasuresTraitLogger;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.util.Attribute;
 import dr.xml.*;
+import org.ejml.data.D1Matrix64F;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.data.RowD1Matrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.ejml.alg.dense.mult.MatrixVectorMult.mult;
+import static org.ejml.alg.dense.mult.MatrixVectorMult.multAdd;
 
 public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     private static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
     private static final String MAX_ATTEMPTS = "numAttempts";
     private static final String MISSING_BY_COLUMN = "missingByColumn";
+    private static final String FORCE_ALL_MISSING = "forceAllMissing";
 
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
+    private final RepeatedMeasuresTraitDataModel repeatedMeasuresModel;
 
     private int maxAttempts;
 
@@ -70,7 +84,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private final int dim;
 
     private Parameter mask;
-//    private MaskIndices maskIndices;
+    //    private MaskIndices maskIndices;
     private final MaskIndicesDelegate maskDelegate;
     private final Boolean missingByColumn;
 
@@ -83,13 +97,15 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public NewLatentLiabilityGibbs(
             TreeDataLikelihood treeDataLikelihood,
-            LatentTruncation LatentLiability, CompoundParameter tipTraitParameter, Parameter mask,
+            LatentTruncation LatentLiability, CompoundParameter tipTraitParameter,
+            RepeatedMeasuresTraitDataModel repeatedMeasuresModel, Parameter mask,
             double weight, String traitName, int maxAttempts, boolean missingByColumn) {
         super();
 
         this.latentLiability = LatentLiability;
         this.tipTraitParameter = tipTraitParameter;
         this.treeModel = treeDataLikelihood.getTree();
+        this.repeatedMeasuresModel = repeatedMeasuresModel;
         ContinuousDataLikelihoodDelegate likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood
                 .getDataLikelihoodDelegate();
         this.dim = likelihoodDelegate.getTraitDim();
@@ -154,10 +170,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private double sampleNode(NodeRef node, WrappedNormalSufficientStatistics statistics) {
 
         final int thisNumber = node.getNumber();
+        final int[] obsInds = maskDelegate.getObservedIndices(node);
+        final int obsDim = obsInds.length;
 
-        final int obsDim = maskDelegate.getObservedIndices(thisNumber).length;
-
-        if (obsDim == dim){
+        if (obsDim == dim) {
             return 0;
         }
 
@@ -171,6 +187,42 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         for (int i = 0; i < mean.getDim(); ++i) {
             for (int j = 0; j < mean.getDim(); ++j) {
                 fcdPrecision[i][j] = thisP.get(i, j) * precisionScalar;
+            }
+        }
+
+        if (repeatedMeasuresModel != null) {
+            //TODO: preallocate memory for all these matrices/vectors
+            DenseMatrix64F Q = new DenseMatrix64F(fcdPrecision); //storing original fcd precision
+            double[] tipPartial = repeatedMeasuresModel.getTipPartial(thisNumber, false);
+            int offset = dim;
+            DenseMatrix64F P = MissingOps.wrap(tipPartial, offset, dim, dim);
+
+            DenseMatrix64F preOrderMean = new DenseMatrix64F(dim, 1);
+            for (int i = 0; i < dim; i++) {
+                preOrderMean.set(i, 0, fcdMean[i]);
+            }
+            DenseMatrix64F dataMean = new DenseMatrix64F(dim, 1);
+            for (int i = 0; i < dim; i++) {
+                dataMean.set(i, 0, tipPartial[i]);
+            }
+
+            D1Matrix64F bufferMean = new DenseMatrix64F(dim, 1);
+
+            mult(Q, preOrderMean, bufferMean); //bufferMean = Q * preOrderMean
+            multAdd(P, dataMean, bufferMean); //bufferMean = Q * preOderMean + P * dataMean
+
+
+            CommonOps.addEquals(P, Q); //P = P + Q
+            DenseMatrix64F V = new DenseMatrix64F(dim, dim);
+            CommonOps.invert(P, V); //V = inv(P + Q)
+            mult(V, bufferMean, dataMean); // dataMean = inv(P + Q) * (Q * preOderMean + P * dataMean)
+
+            for (int i = 0; i < dim; i++) {
+                fcdMean[i] = dataMean.get(i);
+                for (int j = 0; j < dim; j++) {
+                    fcdPrecision[i][j] = P.get(i, j);
+                }
+
             }
         }
 
@@ -282,13 +334,6 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
     }
 
-    private void setupMaskDelegate() {
-        if (mask != null) {
-            if (missingByColumn) {
-
-            }
-        }
-    }
 
     private class MaskIndicesDelegate {
 
@@ -323,7 +368,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             return getLatentIndices(nodeRef.getNumber());
         }
 
-        private int[] getLatentIndices(int nodeNumber){
+        private int[] getLatentIndices(int nodeNumber) {
             if (missingByColumn) {
                 return this.latentColumns;
             } else {
@@ -331,8 +376,8 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
                 int offset = dim * nodeNumber;
                 List<Integer> latentArray = new ArrayList<Integer>();
 
-                for (int i = offset; i < offset + dim; i++){
-                    if (mask.getParameterValue(i) == 1.0){
+                for (int i = offset; i < offset + dim; i++) {
+                    if (mask.getParameterValue(i) == 1.0) {
                         latentArray.add(i - offset);
                     }
                 }
@@ -342,16 +387,16 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-        private int[] getObservedIndices(int nodeNumber){
+        private int[] getObservedIndices(int nodeNumber) {
             if (missingByColumn) {
                 return this.observedColumns;
-            } else{
+            } else {
 
                 int offset = dim * nodeNumber;
                 List<Integer> obsArray = new ArrayList<Integer>();
 
-                for (int i = offset; i < offset + dim; i++){
-                    if (mask.getParameterValue(i) == 0.0){
+                for (int i = offset; i < offset + dim; i++) {
+                    if (mask.getParameterValue(i) == 0.0) {
                         obsArray.add(i - offset);
                     }
                 }
@@ -360,7 +405,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-        private int[] getObservedIndices(NodeRef nodeRef){
+        private int[] getObservedIndices(NodeRef nodeRef) {
             return getObservedIndices(nodeRef.getNumber());
         }
 
@@ -385,6 +430,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
         private final static String MASK = "mask";
+        private final static String PARTIALS_PROVIDER = "partialsProvider";
 
 
         public String getParserName() {
@@ -410,14 +456,31 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
             int numAttempts = xo.getAttribute(MAX_ATTEMPTS, 100000);
 
+            boolean missingByColumn = xo.getAttribute(MISSING_BY_COLUMN, true);
+
+
             Parameter mask = null;
 
             if (xo.hasChildNamed(MASK)) {
                 mask = (Parameter) xo.getElementFirstChild(MASK);
             }
-            boolean missingByColumn = xo.getAttribute(MISSING_BY_COLUMN, true);
 
-            return new NewLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, mask, weight, "latent",
+            RepeatedMeasuresTraitDataModel repeatedMeasuresModel = null;
+            if (xo.hasChildNamed(PARTIALS_PROVIDER)) {
+                repeatedMeasuresModel = (RepeatedMeasuresTraitDataModel) xo.getElementFirstChild(PARTIALS_PROVIDER);
+            }
+
+            if (xo.getAttribute(FORCE_ALL_MISSING, false)) {
+                int dim = traitModel.getDataLikelihoodDelegate().getTraitDim();
+                mask = new Parameter.Default(dim);
+                for (int i = 0; i < dim; i++) {
+                    mask.setParameterValue(i, 1.0);
+                }
+                missingByColumn = true;
+
+            }
+
+            return new NewLatentLiabilityGibbs(traitModel, LLModel, tipTraitParameter, repeatedMeasuresModel, mask, weight, "latent",
                     numAttempts, missingByColumn);
         }
 
@@ -436,11 +499,14 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(MISSING_BY_COLUMN, true),
+//                AttributeRule.newBooleanRule(FORCE_ALL_MISSING, false),
                 new ElementRule(TreeDataLikelihood.class, "The model for the latent random variables"),
                 new ElementRule(LatentTruncation.class, "The model that links latent and observed variables"),
                 new ElementRule(MASK, dr.inference.model.Parameter.class, "Mask: 1 for latent variables that should " +
                         "be sampled", true),
-                new ElementRule(CompoundParameter.class, "The parameter of tip locations from the tree")
+                new ElementRule(CompoundParameter.class, "The parameter of tip locations from the tree"),
+                new ElementRule(PARTIALS_PROVIDER, RepeatedMeasuresTraitDataModel.class,
+                        "Provides information about model extensions", true)
 
         };
     };

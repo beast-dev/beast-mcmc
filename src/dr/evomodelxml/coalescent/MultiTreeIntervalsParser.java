@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * MultiTreeIntervalsParser
+ *
  * @author Andrew Rambaut
  */
 public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {

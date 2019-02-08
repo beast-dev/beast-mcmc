@@ -26,11 +26,14 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.Reportable;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -38,15 +41,12 @@ import dr.xml.Reportable;
  */
 public class NodeHeightTransform extends Transform.MultivariateTransform implements Reportable {
 
-    private Parameter ratios;
-    private Parameter nodeHeights;
-    private Tree tree;
+    private NodeHeightTransformDelegate nodeHeightTransformDelegate;
+    private TreeModel tree;
 
-    public NodeHeightTransform(Parameter nodeHeights, Tree tree) {
-        this.nodeHeights = nodeHeights;
+    public NodeHeightTransform(Parameter nodeHeights, TreeModel tree) {
         this.tree = tree;
-        this.ratios = new Parameter.Default(nodeHeights.getDimension(), 0.5);
-        updateRatios(nodeHeights.getParameterValues());
+        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate(tree, nodeHeights);
     }
 
     @Override
@@ -56,15 +56,8 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public double[] transform(double[] values, int from, int to) {
-        if (values.length != ratios.getDimension()) {
-            throw new RuntimeException("NodeHeightTransform dimension mismatch!");
-        }
-        updateRatios(values);
-        return ratios.getParameterValues();
-    }
-
-    private void updateRatios(double[] nodeHeights) {
-        // TODO: update ratios here.
+        nodeHeightTransformDelegate.updateRatios(values);
+        return nodeHeightTransformDelegate.getRatios();
     }
 
     @Override
@@ -74,11 +67,8 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public double[] inverse(double[] values, int from, int to) {
-        if (values.length != ratios.getDimension()) {
-            throw new RuntimeException("NodeHeightTransform dimension mismatch!");
-        }
-        updateNodeHeights(values);
-        return nodeHeights.getParameterValues();
+        nodeHeightTransformDelegate.updateNodeHeights(values);
+        return nodeHeightTransformDelegate.getNodeHeights();
     }
 
     @Override
@@ -106,10 +96,6 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
         throw new RuntimeException("Not yet implemented!");
     }
 
-    private void updateNodeHeights(double[] ratios) {
-        // TODO: update NodeHeights here.
-    }
-
 
     @Override
     public String getReport() {
@@ -124,5 +110,25 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     @Override
     public double[][] computeJacobianMatrixInverse(double[] values) {
         throw new RuntimeException("Not yet implemented!");
+    }
+
+    private class Epoch implements Comparable {
+        private final NodeRef anchorTipNode;
+        private List<NodeRef> internalNodes;
+        private Epoch connectingEpoch;
+        private NodeRef connectingNode;
+
+        private Epoch(NodeRef anchorTipNode) {
+            this.anchorTipNode = anchorTipNode;
+        }
+
+        public double getAnchorTipHeight() {
+            return tree.getNodeHeight(anchorTipNode);
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            return Double.compare(getAnchorTipHeight(), ((Epoch) o).getAnchorTipHeight());
+        }
     }
 }

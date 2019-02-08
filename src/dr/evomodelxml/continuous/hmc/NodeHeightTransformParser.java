@@ -38,7 +38,7 @@ import dr.xml.*;
 
 public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "nodeHeightTransform";
+    public static final String NAME = "nodeHeightTransform";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

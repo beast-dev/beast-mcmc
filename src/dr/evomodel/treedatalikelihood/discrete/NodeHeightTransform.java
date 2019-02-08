@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 
 import dr.evolution.tree.Tree;
+import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -35,7 +36,7 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class NodeHeightTransform implements Transform, Reportable {
+public class NodeHeightTransform extends Transform.MultivariateTransform implements Reportable {
 
     private Parameter ratios;
     private Parameter nodeHeights;
@@ -45,6 +46,7 @@ public class NodeHeightTransform implements Transform, Reportable {
         this.nodeHeights = nodeHeights;
         this.tree = tree;
         this.ratios = new Parameter.Default(nodeHeights.getDimension(), 0.5);
+        updateRatios(nodeHeights.getParameterValues());
     }
 
     @Override
@@ -79,77 +81,13 @@ public class NodeHeightTransform implements Transform, Reportable {
         return nodeHeights.getParameterValues();
     }
 
-    private void updateNodeHeights(double[] ratios) {
-        // TODO: update NodeHeights here.
-    }
-
     @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
         throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
-    public double updateGradientLogDensity(double gradient, double value) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double updateGradientInverseUnWeightedLogDensity(double gradient, double value) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double updateGradientUnWeightedLogDensity(double gradient, double value) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double gradient(double value) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
     public double[] gradient(double[] values, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double gradientInverse(double value) {
         throw new RuntimeException("Not yet implemented!");
     }
 
@@ -160,12 +98,7 @@ public class NodeHeightTransform implements Transform, Reportable {
 
     @Override
     public String getTransformName() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public double getLogJacobian(double value) {
-        throw new RuntimeException("Not yet implemented!");
+        return NodeHeightTransformParser.NAME;
     }
 
     @Override
@@ -173,13 +106,23 @@ public class NodeHeightTransform implements Transform, Reportable {
         throw new RuntimeException("Not yet implemented!");
     }
 
-    @Override
-    public boolean isMultivariate() {
-        return true;
+    private void updateNodeHeights(double[] ratios) {
+        // TODO: update NodeHeights here.
     }
+
 
     @Override
     public String getReport() {
         return "Report ratios here.";
+    }
+
+    @Override
+    protected double[] getGradientLogJacobianInverse(double[] values) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double[][] computeJacobianMatrixInverse(double[] values) {
+        throw new RuntimeException("Not yet implemented!");
     }
 }

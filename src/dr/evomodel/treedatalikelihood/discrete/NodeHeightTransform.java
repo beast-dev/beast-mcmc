@@ -25,15 +25,12 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-
-import dr.evolution.tree.NodeRef;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.Reportable;
-
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -44,9 +41,11 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     private NodeHeightTransformDelegate nodeHeightTransformDelegate;
     private TreeModel tree;
 
-    public NodeHeightTransform(Parameter nodeHeights, TreeModel tree) {
+    public NodeHeightTransform(Parameter nodeHeights,
+                               TreeModel tree,
+                               BranchRateModel branchrateModel) {
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate(tree, nodeHeights);
+        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate(tree, nodeHeights, branchrateModel);
     }
 
     @Override
@@ -110,25 +109,5 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     @Override
     public double[][] computeJacobianMatrixInverse(double[] values) {
         throw new RuntimeException("Not yet implemented!");
-    }
-
-    private class Epoch implements Comparable {
-        private final NodeRef anchorTipNode;
-        private List<NodeRef> internalNodes;
-        private Epoch connectingEpoch;
-        private NodeRef connectingNode;
-
-        private Epoch(NodeRef anchorTipNode) {
-            this.anchorTipNode = anchorTipNode;
-        }
-
-        public double getAnchorTipHeight() {
-            return tree.getNodeHeight(anchorTipNode);
-        }
-
-        @Override
-        public int compareTo(Object o) {
-            return Double.compare(getAnchorTipHeight(), ((Epoch) o).getAnchorTipHeight());
-        }
     }
 }

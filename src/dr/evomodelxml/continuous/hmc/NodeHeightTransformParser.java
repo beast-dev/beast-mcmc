@@ -26,6 +26,7 @@
 package dr.evomodelxml.continuous.hmc;
 
 
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
@@ -44,14 +45,16 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter nodeHeightParameter = (Parameter) xo.getChild(Parameter.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        return new NodeHeightTransform(nodeHeightParameter, tree);
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        return new NodeHeightTransform(nodeHeightParameter, tree, branchRateModel);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class),
-                new ElementRule(TreeModel.class)
+                new ElementRule(TreeModel.class),
+                new ElementRule(BranchRateModel.class)
         };
     }
 

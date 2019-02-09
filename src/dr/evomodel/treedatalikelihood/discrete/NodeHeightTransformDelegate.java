@@ -53,7 +53,7 @@ public class NodeHeightTransformDelegate extends AbstractModel {
     private Parameter nodeHeights;
     private final LikelihoodTreeTraversal treeTraversalDelegate;
     private Map<NodeRef, Epoch> nodeEpochMap = new HashMap<NodeRef, Epoch>();
-    private List<Epoch> epochs = new ArrayList<>();
+    private List<Epoch> epochs = new ArrayList<Epoch>();
 
     public NodeHeightTransformDelegate(TreeModel treeModel,
                                        Parameter nodeHeights,

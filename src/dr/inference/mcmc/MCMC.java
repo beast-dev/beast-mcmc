@@ -183,19 +183,11 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             if (adapationDelay > loadedState) {
                 mc.runChain(adapationDelay - loadedState, true);
                 chainLength -= adapationDelay;
-            }
 
-            //if (adapationDelay > 0) {
-            // Run the chain for adapationDelay steps with coercion disabled
-            //mc.runChain(adapationDelay, true);
-            //chainLength -= adapationDelay;
-
-            // reset operator acceptance levels
-            //GB: we are now restoring these; commenting out for now
-                /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
+                for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
-                }*/
-            //}
+                }
+            }
 
             mc.runChain(chainLength, false);
 

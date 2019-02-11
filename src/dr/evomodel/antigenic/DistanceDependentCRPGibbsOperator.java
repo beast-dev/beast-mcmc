@@ -758,9 +758,9 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	    }
 
 	    public String getPerformanceSuggestion() {
-	        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
+	        if (getAcceptanceProbability() < getMinimumAcceptanceLevel()) {
 	            return "";
-	        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
+	        } else if (getAcceptanceProbability() > getMaximumAcceptanceLevel()) {
 	            return "";
 	        } else {
 	            return "";

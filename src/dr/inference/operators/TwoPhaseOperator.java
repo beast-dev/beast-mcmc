@@ -245,18 +245,22 @@ public class TwoPhaseOperator extends AbstractAdaptableOperator {
         currentOperators.get(currentOperatorIndex).reset();
     }*/
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return currentOperators.get(currentOperatorIndex).getAdaptableParameter();
     }
 
-    public void setAdaptableParameter(double value) {
-        currentOperators.get(currentOperatorIndex).setAdaptableParameter(value);
+    @Override
+    public void setAdaptableParameterValue(double value) {
+        currentOperators.get(currentOperatorIndex).setAdaptableParameterValue(value);
     }
 
+    @Override
     public double getRawParameter() {
         return currentOperators.get(currentOperatorIndex).getRawParameter();
     }
 
+    @Override
     public String getAdaptableParameterName() {
         return "windowSize";
     }

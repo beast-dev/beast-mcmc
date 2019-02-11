@@ -64,6 +64,7 @@ public final class MarkovChain implements Serializable {
     private long currentLength;
 
     private boolean useAdaptation = true;
+    private final boolean useSmoothedAcceptanceProbability;
 
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
@@ -74,13 +75,14 @@ public final class MarkovChain implements Serializable {
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
-                       boolean useAdaptation) {
+                       boolean useAdaptation, boolean useSmoothedAcceptanceProbability) {
 
         currentLength = 0;
         this.likelihood = likelihood;
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useAdaptation = useAdaptation;
+        this.useSmoothedAcceptanceProbability = useSmoothedAcceptanceProbability;
 
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
@@ -538,16 +540,25 @@ public final class MarkovChain implements Serializable {
         if (isAdaptable(op)) {
             final double p = op.getAdaptableParameter();
 
-            final double i = schedule.getOptimizationTransform().transform(MCMCOperator.Utils.getOperationCount(op));
+            final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
+//            final double n = op.getAdaptationCount();
+//            System.err.println("i = " + i + " n = " + n + "\n");
+
+            double acceptance;
+            if (useSmoothedAcceptanceProbability) {
+                acceptance = op.getSmoothedAcceptanceProbability();
+            } else {
+                acceptance = Math.exp(logr);
+            }
 
             final double target = op.getTargetAcceptanceProbability();
 
-            final double newp = p + ((1.0 / (i + 1.0)) * (Math.exp(logr) - target));
+            final double newp = p + ((1.0 / i) * (acceptance - target));
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
                 op.setAdaptableParameter(newp);
                 if (DEBUG) {
-                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " current: " + acceptance);
                 }
             }
         }

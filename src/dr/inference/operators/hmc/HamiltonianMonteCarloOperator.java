@@ -48,9 +48,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
                                          double stepSize, int nSteps, double drawVariance) {
-        super(mode);
+        super(mode, 0.8); // setTargetAcceptanceProbability(0.8); // Stan default
         setWeight(weight);
-        setTargetAcceptanceProbability(0.8); // Stan default
 
         this.gradientProvider = gradientProvider;
         this.stepSize = stepSize;
@@ -139,12 +138,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-    public double getAdaptableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         if (DEBUG) {
             System.err.println("Setting coercable paramter: " + getAdaptableParameter() + " -> " + value);
         }

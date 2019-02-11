@@ -64,6 +64,7 @@ public final class MarkovChain implements Serializable {
     private long currentLength;
 
     private boolean useAdaptation = true;
+    private final boolean useSmoothedAcceptanceProbability;
 
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
@@ -74,13 +75,14 @@ public final class MarkovChain implements Serializable {
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
-                       boolean useAdaptation) {
+                       boolean useAdaptation, boolean useSmoothedAcceptanceProbability) {
 
         currentLength = 0;
         this.likelihood = likelihood;
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useAdaptation = useAdaptation;
+        this.useSmoothedAcceptanceProbability = useSmoothedAcceptanceProbability;
 
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
@@ -542,8 +544,12 @@ public final class MarkovChain implements Serializable {
 //            final double n = op.getAdaptationCount();
 //            System.err.println("i = " + i + " n = " + n + "\n");
 
-            // final double acceptance = Math.exp(logr);
-            final double acceptance = op.getSmoothedAcceptanceProbability();
+            double acceptance;
+            if (useSmoothedAcceptanceProbability) {
+                acceptance = op.getSmoothedAcceptanceProbability();
+            } else {
+                acceptance = Math.exp(logr);
+            }
 
             final double target = op.getTargetAcceptanceProbability();
 

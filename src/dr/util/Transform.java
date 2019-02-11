@@ -1037,7 +1037,12 @@ public interface Transform {
 
         @Override
         public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("not implemented yet");
+
+            return outer.updateDiagonalHessianLogDensity(
+                    inner.updateDiagonalHessianLogDensity(diagonalHessian, gradient, value,from, to),
+                    inner.updateGradientLogDensity(gradient, value, from, to),
+                    inner.transform(value, from, to),
+                    from, to);
         }
 
         @Override

@@ -28,10 +28,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.LikelihoodTreeTraversal;
-import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
-import dr.evomodel.treedatalikelihood.TreeTraversal;
+import dr.evomodel.treedatalikelihood.*;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -51,7 +48,8 @@ public class NodeHeightTransformDelegate extends AbstractModel {
     private TreeModel tree;
     private Parameter ratios;
     private Parameter nodeHeights;
-    private final LikelihoodTreeTraversal treeTraversalDelegate;
+    private final LikelihoodTreeTraversal epochConstructionTraversal;
+    private final SimulationTreeTraversal nodeHeightUpdateTraversal;
     private Map<NodeRef, Epoch> nodeEpochMap = new HashMap<NodeRef, Epoch>();
     private List<Epoch> epochs = new ArrayList<Epoch>();
 
@@ -63,20 +61,25 @@ public class NodeHeightTransformDelegate extends AbstractModel {
         this.tree = treeModel;
         this.nodeHeights = nodeHeights;
         this.ratios = new Parameter.Default(nodeHeights.getDimension(), 0.5);
-        treeTraversalDelegate = new LikelihoodTreeTraversal(
+        epochConstructionTraversal = new LikelihoodTreeTraversal(
                 tree,
                 branchRateModel,
                 TreeTraversal.TraversalType.POST_ORDER);
+
+        nodeHeightUpdateTraversal = new SimulationTreeTraversal(
+                tree,
+                branchRateModel,
+                TreeTraversal.TraversalType.PRE_ORDER);
 
         addModel(treeModel);
         constructEpochs();
     }
 
     private void constructEpochs() {
-        treeTraversalDelegate.updateAllNodes();
-        treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        epochConstructionTraversal.updateAllNodes();
+        epochConstructionTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
-        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = epochConstructionTraversal.getNodeOperations();
 
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
             final NodeRef node = tree.getNode(op.getNodeNumber());
@@ -151,8 +154,26 @@ public class NodeHeightTransformDelegate extends AbstractModel {
         }
     }
 
+    public void setRatios(double[] ratios) {
+        for (int i = 0; i < ratios.length; i++) {
+            this.ratios.setParameterValue(i, ratios[i]);
+        }
+    }
+
     public void updateNodeHeights() {
-        // TODO: update NodeHeights here.
+        nodeHeightUpdateTraversal.updateAllNodes();
+        nodeHeightUpdateTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = nodeHeightUpdateTraversal.getNodeOperations();
+        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
+            NodeRef node = tree.getNode(op.getLeftChild());
+            if (!tree.isRoot(node) && !tree.isExternal(node)) {
+                Epoch epoch = nodeEpochMap.get(node);
+                final NodeRef parentNode = tree.getParent(node);
+                final double ratio = ratios.getParameterValue(node.getNumber() - tree.getExternalNodeCount());
+                final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
+                tree.setNodeHeight(node, nodeHeight);
+            }
+        }
     }
 
     @Override
@@ -183,7 +204,7 @@ public class NodeHeightTransformDelegate extends AbstractModel {
     private class Epoch implements Comparable {
         private final NodeRef anchorTipNode;
         private List<NodeRef> internalNodes = new ArrayList<NodeRef>();
-        private Epoch connectingEpoch;
+        private Epoch lastEpoch;
         private NodeRef connectingNode;
 
         private Epoch(NodeRef anchorTipNode) {
@@ -195,8 +216,8 @@ public class NodeHeightTransformDelegate extends AbstractModel {
             return tree.getNodeHeight(anchorTipNode);
         }
 
-        public void endEpoch(NodeRef node, Epoch connectingEpoch) {
-            this.connectingEpoch = connectingEpoch;
+        public void endEpoch(NodeRef node, Epoch lastEpoch) {
+            this.lastEpoch = lastEpoch;
             this.connectingNode = node;
         }
 

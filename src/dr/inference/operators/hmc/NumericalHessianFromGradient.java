@@ -21,7 +21,7 @@ public class NumericalHessianFromGradient implements HessianWrtParameterProvider
     public double[] getDiagonalHessianLogDensity() {
 
         final int dim = gradientProvider.getDimension();
-        double[][] numericalHessian = getNumericalHessianCentral();
+        double[][] numericalHessian = getNumericalHessianCentral(); //todo: no need to get the full hessian if only need the diagonals
         double[] numericalHessianDiag = new double[dim];
 
         for (int i = 0; i < dim; i++) {

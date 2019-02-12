@@ -36,7 +36,7 @@ import java.util.List;
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule extends Serializable {
-    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.LOG;
+    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
 
     /**
      * @return Choose the next operator.

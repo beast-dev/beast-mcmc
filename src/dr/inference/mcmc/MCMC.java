@@ -77,7 +77,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         mc = new MarkovChain(likelihood, schedule, criterion,
                 options.getFullEvaluationCount(), options.minOperatorCountForFullEvaluation(),
                 options.getEvaluationTestThreshold(),
-                options.useAdaptation());
+                options.useAdaptation(), options.useSmoothedAcceptanceProbability());
 
         this.options = options;
         this.loggers = loggers;

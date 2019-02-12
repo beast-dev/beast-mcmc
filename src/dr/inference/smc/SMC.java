@@ -82,7 +82,7 @@ public class SMC implements Identifiable, Spawnable, Loggable {
 
         // full evaluation tests and operator adaptation are off as these are multiple short runs.
         // Operator tuning will have already been done.
-        mc = new MarkovChain(likelihood, schedule, criterion, 0, 0, 0, false);
+        mc = new MarkovChain(likelihood, schedule, criterion, 0, 0, 0, false, false);
 
         this.options = options;
         this.loggers = loggers;

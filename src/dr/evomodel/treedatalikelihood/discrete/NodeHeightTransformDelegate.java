@@ -132,11 +132,26 @@ public class NodeHeightTransformDelegate extends AbstractModel {
         return nodeHeights.getParameterValues();
     }
 
-    public void updateRatios(double[] nodeHeights) {
-        // TODO: update ratios here.
+    public void setNodeHeights(double[] nodeHeights) {
+        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
+            tree.setNodeHeight(tree.getNode(i), nodeHeights[i - tree.getExternalNodeCount()]);
+        }
     }
 
-    public void updateNodeHeights(double[] ratios) {
+    public void updateRatios() {
+        for (Epoch epoch : epochs) {
+            double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
+            final double anchorNodeHeight = epoch.getAnchorTipHeight();
+            for (NodeRef node : epoch.getInternalNodes()) {
+                final int ratioNum = node.getNumber() - tree.getExternalNodeCount();
+                final double currentNodeHeight = tree.getNodeHeight(node);
+                ratios.setParameterValue(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
+                previousNodeHeight = currentNodeHeight;
+            }
+        }
+    }
+
+    public void updateNodeHeights() {
         // TODO: update NodeHeights here.
     }
 
@@ -186,7 +201,15 @@ public class NodeHeightTransformDelegate extends AbstractModel {
         }
 
         public void addInternalNode(NodeRef node) {
-            internalNodes.add(node);
+            internalNodes.add(0, node);
+        }
+
+        public List<NodeRef> getInternalNodes() {
+            return internalNodes;
+        }
+
+        public NodeRef getConnectingNode() {
+            return connectingNode;
         }
 
         @Override

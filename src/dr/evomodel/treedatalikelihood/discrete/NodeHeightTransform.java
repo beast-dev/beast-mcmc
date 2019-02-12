@@ -55,7 +55,8 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public double[] transform(double[] values, int from, int to) {
-        nodeHeightTransformDelegate.updateRatios(values);
+        nodeHeightTransformDelegate.setNodeHeights(values);
+        nodeHeightTransformDelegate.updateRatios();
         return nodeHeightTransformDelegate.getRatios();
     }
 
@@ -66,7 +67,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public double[] inverse(double[] values, int from, int to) {
-        nodeHeightTransformDelegate.updateNodeHeights(values);
+        nodeHeightTransformDelegate.updateNodeHeights();
         return nodeHeightTransformDelegate.getNodeHeights();
     }
 
@@ -98,7 +99,12 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public String getReport() {
-        return "Report ratios here.";
+        nodeHeightTransformDelegate.updateRatios();
+        StringBuilder sb = new StringBuilder();
+        sb.append("NodeHeight ratios: ").append(new dr.math.matrixAlgebra.Vector(nodeHeightTransformDelegate.getRatios()));
+        sb.append("\n");
+
+        return sb.toString();
     }
 
     @Override

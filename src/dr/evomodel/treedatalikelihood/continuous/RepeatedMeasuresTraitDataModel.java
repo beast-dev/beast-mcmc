@@ -48,6 +48,7 @@ public class RepeatedMeasuresTraitDataModel extends
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
     private boolean diagonalOnly = false;
+    private final Matrix samplingVariance;
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
@@ -59,6 +60,7 @@ public class RepeatedMeasuresTraitDataModel extends
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.traitName = name;
         this.samplingPrecision = samplingPrecision;
+        this.samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
         addVariable(samplingPrecision);
 
         samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
@@ -72,13 +74,12 @@ public class RepeatedMeasuresTraitDataModel extends
         assert (numTraits == 1);
         assert (samplingPrecision.getRowDimension() == dimTrait && samplingPrecision.getColumnDimension() == dimTrait);
 
-        if (fullyObserved){
+        if (fullyObserved) {
             return new double[dimTrait + 1];
         }
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
         DenseMatrix64F V = MissingOps.wrap(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-        Matrix samplingV = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
 
         //TODO: remove diagonalOnly part
         if (diagonalOnly) {
@@ -88,7 +89,7 @@ public class RepeatedMeasuresTraitDataModel extends
         } else {
             for (int i = 0; i < dimTrait; i++) {
                 for (int j = 0; j < dimTrait; j++) {
-                    V.set(i, j, V.get(i, j) + samplingV.component(i, j));
+                    V.set(i, j, V.get(i, j) + samplingVariance.component(i, j));
                 }
             }
         }
@@ -121,6 +122,12 @@ public class RepeatedMeasuresTraitDataModel extends
         super.handleVariableChangedEvent(variable, index, type);
 
         if (variable == samplingPrecision) {
+            Matrix V = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+            for (int i = 0; i < dimTrait; i++) {
+                for (int j = 0; j < dimTrait; j++) {
+                    samplingVariance.set(i, j, V.component(i, j));
+                }
+            }
             fireModelChanged();
         }
     }

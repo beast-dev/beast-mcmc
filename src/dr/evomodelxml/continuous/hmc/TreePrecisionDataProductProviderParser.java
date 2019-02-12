@@ -79,11 +79,15 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     }
 
     private TreePrecisionTraitProductProvider parseComputeMode(XMLObject xo,
-                                                                TreeDataLikelihood treeDataLikelihood,
-                                                                ContinuousDataLikelihoodDelegate continuousData,
-                                                                String traitName) throws XMLParseException {
+                                                               TreeDataLikelihood treeDataLikelihood,
+                                                               ContinuousDataLikelihoodDelegate continuousData,
+                                                               String traitName) throws XMLParseException {
 
-        double roughTimeGuess = xo.getAttribute(TIME_GUESS, -1.0); // TODO This is bad; magic number, not checking
+        double roughTimeGuess = (double) xo.getAttribute(TIME_GUESS);
+        if (roughTimeGuess <= 0) {
+            throw new RuntimeException("must provide a positive travel time");
+        }
+
         int eigenvalueReplicates = xo.getAttribute(EIGENVALUE_REPLICATES, 1);
 
         String mode = xo.getAttribute(MODE, "linear");

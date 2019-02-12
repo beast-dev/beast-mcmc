@@ -541,8 +541,6 @@ public final class MarkovChain implements Serializable {
             final double p = op.getAdaptableParameter();
 
             final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
-//            final double n = op.getAdaptationCount();
-//            System.err.println("i = " + i + " n = " + n + "\n");
 
             double acceptance;
             if (useSmoothedAcceptanceProbability) {

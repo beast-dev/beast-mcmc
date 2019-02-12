@@ -86,10 +86,15 @@ public class NodeHeightTransformDelegate extends AbstractModel {
             final double leftAnchorHeight = getAnchorTipHeight(leftChild);
             final double rightAnchorHeight = getAnchorTipHeight(rightChild);
 
-            if (rightAnchorHeight > leftAnchorHeight) {
-                addToEpoch(node, rightChild, leftChild);
+            if (tree.isRoot(node)){
+                nodeEpochMap.get(leftChild).endEpoch(node, null);
+                nodeEpochMap.get(rightChild).endEpoch(node, null);
             } else {
-                addToEpoch(node, leftChild, rightChild);
+                if (rightAnchorHeight > leftAnchorHeight) {
+                    addToEpoch(node, rightChild, leftChild);
+                } else {
+                    addToEpoch(node, leftChild, rightChild);
+                }
             }
         }
     }

@@ -190,8 +190,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             }
 
             // C. Inflate variance along node branch
-            @SuppressWarnings("redundant")
-            final DenseMatrix64F Vi = Vip;
+            @SuppressWarnings("redundant") final DenseMatrix64F Vi = Vip;
             CommonOps.add(vi, Vd, Vip, Vi);
 
 //                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
@@ -232,6 +231,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final int jMatrix,
             final boolean incrementOuterProducts
     ) {
+        //TODO: MAKE SURE CHANGES DON'T BREAK OTHER THINGS!!!!
 
         if (incrementOuterProducts) {
             throw new RuntimeException("Outer-products are not supported.");
@@ -240,7 +240,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         if (TIMING) {
             startTime("total");
         }
-        //TODO: THIS IS WHERE I NEED TO FOCUS
+
         // Determine buffer offsets
         int kbo = dimPartial * kBuffer;
         int ibo = dimPartial * iBuffer;
@@ -293,11 +293,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             }
 
             // B. Integrate along branch using two matrix inversions
-            @SuppressWarnings("SpellCheckingInspection")
-            final double lpip = Double.isInfinite(lpi) ?
+            @SuppressWarnings("SpellCheckingInspection") final double lpip = Double.isInfinite(lpi) ?
                     1.0 / vi : lpi / (1.0 + lpi * vi);
-            @SuppressWarnings("SpellCheckingInspection")
-            final double lpjp = Double.isInfinite(lpj) ?
+            @SuppressWarnings("SpellCheckingInspection") final double lpjp = Double.isInfinite(lpj) ?
                     1.0 / vj : lpj / (1.0 + lpj * vj);
 
 //                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
@@ -637,10 +635,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         // TODO For each trait in parallel
         for (int trait = 0; trait < numTraits; ++trait) {
 
-            @SuppressWarnings("SpellCheckingInspection")
-            final DenseMatrix64F Proot = wrap(preOrderPartials, rootOffset + dimTrait, dimTrait, dimTrait);
-            @SuppressWarnings("SpellCheckingInspection")
-            final DenseMatrix64F Vroot = wrap(preOrderPartials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
+            @SuppressWarnings("SpellCheckingInspection") final DenseMatrix64F Proot = wrap(preOrderPartials, rootOffset + dimTrait, dimTrait, dimTrait);
+            @SuppressWarnings("SpellCheckingInspection") final DenseMatrix64F Vroot = wrap(preOrderPartials, rootOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
             // TODO Block below is for the conjugate prior ONLY
             {
@@ -659,7 +655,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
                                            boolean incrementOuterProducts) {
-        assert(logLikelihoods.length == numTraits);
+        assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
 

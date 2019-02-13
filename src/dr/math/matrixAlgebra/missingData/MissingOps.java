@@ -441,6 +441,8 @@ public class MissingOps {
         return null;
     }
 
+    //TODO: rewrite below to be more efficient (or remove it if it's unnecessary
+
     private static class MissingPartition {
         final int[] fInds;
         final int[] zInds;
@@ -519,6 +521,7 @@ public class MissingOps {
         }
     }
 
+    //TODO: Just have one safeInvert function after checking to make sure it doesn't break anything
     public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 
         final int dim = source.getNumCols();
@@ -555,12 +558,12 @@ public class MissingOps {
                 }
 
                 scatterRowsAndColumns(inverseSubSource, destination, mPart.fInds, mPart.fInds, true);
-                for (int i = 0; i < mPart.infInds.length; i++){
+                for (int i = 0; i < mPart.infInds.length; i++) {
                     int ind = mPart.infInds[i];
                     destination.set(ind, ind, 0);
                 }
 
-                for (int i = 0; i < mPart.zInds.length; i++){
+                for (int i = 0; i < mPart.zInds.length; i++) {
                     int ind = mPart.zInds[i];
                     destination.set(ind, ind, Double.POSITIVE_INFINITY);
                 }
@@ -755,9 +758,9 @@ public class MissingOps {
         for (int g = 0; g < dimTrait; ++g) {
             double sum = 0.0;
             for (int h = 0; h < dimTrait; ++h) {
-                if (!Double.isInfinite(Vk.unsafe_get(g, g)) && !Double.isInfinite(Vk.unsafe_get(h, h))){
+                if (!Double.isInfinite(Vk.unsafe_get(g, g)) && !Double.isInfinite(Vk.unsafe_get(h, h))) {
                     sum += Vk.unsafe_get(g, h) * tmp[h];
-                    if (Double.isNaN(sum)){
+                    if (Double.isNaN(sum)) {
                         int z = 0;
                     }
                 }
@@ -823,7 +826,7 @@ public class MissingOps {
         double SSj = 0;
         double SSk = 0;
 
-        if (kbo == 352){
+        if (kbo == 352) {
             int y = 0;
         }
 
@@ -839,12 +842,11 @@ public class MissingOps {
                 final double kh = kpartials[kbo + h];
 
 
-
                 SSi += ig * Pip.unsafe_get(g, h) * ih;
                 SSj += jg * Pjp.unsafe_get(g, h) * jh;
                 SSk += kg * Pk.unsafe_get(g, h) * kh;
 
-                if (Double.isNaN(SSi) || Double.isNaN(SSk) || Double.isNaN(SSk)){
+                if (Double.isNaN(SSi) || Double.isNaN(SSk) || Double.isNaN(SSk)) {
                     int x = 0;
                 }
             }

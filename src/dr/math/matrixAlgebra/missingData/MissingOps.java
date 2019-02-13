@@ -760,9 +760,6 @@ public class MissingOps {
             for (int h = 0; h < dimTrait; ++h) {
                 if (!Double.isInfinite(Vk.unsafe_get(g, g)) && !Double.isInfinite(Vk.unsafe_get(h, h))) {
                     sum += Vk.unsafe_get(g, h) * tmp[h];
-                    if (Double.isNaN(sum)) {
-                        int z = 0;
-                    }
                 }
 
             }
@@ -826,9 +823,6 @@ public class MissingOps {
         double SSj = 0;
         double SSk = 0;
 
-        if (kbo == 352) {
-            int y = 0;
-        }
 
         // vector-matrix-vector TODO in parallel
         for (int g = 0; g < dimTrait; ++g) {
@@ -846,9 +840,6 @@ public class MissingOps {
                 SSj += jg * Pjp.unsafe_get(g, h) * jh;
                 SSk += kg * Pk.unsafe_get(g, h) * kh;
 
-                if (Double.isNaN(SSi) || Double.isNaN(SSk) || Double.isNaN(SSk)) {
-                    int x = 0;
-                }
             }
         }
 

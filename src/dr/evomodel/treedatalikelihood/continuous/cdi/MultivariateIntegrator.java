@@ -240,7 +240,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         if (TIMING) {
             startTime("total");
         }
-
+        //TODO: THIS IS WHERE I NEED TO FOCUS
         // Determine buffer offsets
         int kbo = dimPartial * kBuffer;
         int ibo = dimPartial * iBuffer;
@@ -318,8 +318,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final DenseMatrix64F Pip = matrixPip;
             final DenseMatrix64F Pjp = matrixPjp;
 
-            InversionResult ci = safeInvert(Vip, Pip, true);
-            InversionResult cj = safeInvert(Vjp, Pjp, true);
+            InversionResult ci = safeInvert2(Vip, Pip, true);
+            InversionResult cj = safeInvert2(Vjp, Pjp, true);
 
             if (TIMING) {
                 endTime("peel2a");
@@ -338,7 +338,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vk = matrix5;
-            InversionResult ck = safeInvert(Pk, Vk, true);
+            //TODO: should saveInvert put an infinity on the diagonal of Vk?
+            InversionResult ck = safeInvert2(Pk, Vk, true);
 
             // B. Partial mean
 //                for (int g = 0; g < dimTrait; ++g) {

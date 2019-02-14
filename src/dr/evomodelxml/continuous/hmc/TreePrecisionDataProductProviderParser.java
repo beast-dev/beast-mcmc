@@ -83,7 +83,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
                                                                ContinuousDataLikelihoodDelegate continuousData,
                                                                String traitName) throws XMLParseException {
 
-        double roughTimeGuess = (double) xo.getAttribute(TIME_GUESS);
+        double roughTimeGuess = xo.getAttribute(TIME_GUESS, 1.0);
         if (roughTimeGuess <= 0) {
             throw new RuntimeException("must provide a positive travel time");
         }

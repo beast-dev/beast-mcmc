@@ -48,7 +48,8 @@ public class RepeatedMeasuresTraitDataModel extends
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
     private boolean diagonalOnly = false;
-    private final Matrix samplingVariance;
+    private Matrix samplingVariance;
+    private boolean varianceKnown = false;
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
@@ -60,8 +61,11 @@ public class RepeatedMeasuresTraitDataModel extends
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.traitName = name;
         this.samplingPrecision = samplingPrecision;
-        this.samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
         addVariable(samplingPrecision);
+
+//        this.samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+        this.samplingVariance = null;
+
 
         samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 samplingPrecision.getDimension()));
@@ -73,6 +77,11 @@ public class RepeatedMeasuresTraitDataModel extends
 
         assert (numTraits == 1);
         assert (samplingPrecision.getRowDimension() == dimTrait && samplingPrecision.getColumnDimension() == dimTrait);
+
+        if (!varianceKnown) {
+            samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+            varianceKnown = true;
+        }
 
         if (fullyObserved) {
             return new double[dimTrait + 1];
@@ -122,12 +131,8 @@ public class RepeatedMeasuresTraitDataModel extends
         super.handleVariableChangedEvent(variable, index, type);
 
         if (variable == samplingPrecision) {
-            Matrix V = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
-            for (int i = 0; i < dimTrait; i++) {
-                for (int j = 0; j < dimTrait; j++) {
-                    samplingVariance.set(i, j, V.component(i, j));
-                }
-            }
+
+            varianceKnown = false;
             fireModelChanged();
         }
     }

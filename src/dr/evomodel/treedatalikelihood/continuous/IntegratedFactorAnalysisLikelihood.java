@@ -424,29 +424,23 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 //        return det;
 //    }
 
-    private InversionResult getTraitLogDeterminant(final int taxon, DenseMatrix64F traitPrecisionTaxon) {
+    private InversionResult getTraitLogDeterminant(int taxon, DenseMatrix64F traitPrecisionTaxon) {
+        DenseMatrix64F traitVarianceTaxon = getTraitVariance(taxon);
+        return safeInvert(traitVarianceTaxon, traitPrecisionTaxon, true);
+    }
+
+    protected DenseMatrix64F getTraitVariance(final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
 
-        // Compute det( D_i \Gamma D_i^t)
-//        double logDet = 0.0;
-//        for (int k = 0; k < dimTrait; ++k) {
-//            if (observed[k] == 1.0) {
-//                logDet += Math.log(traitPrecision.getParameterValue(k));
-//            }
-//        }
-//        return logDet;
         DenseMatrix64F V = wrap(traitPrecision);
-//        DenseMatrix64F V = new DenseMatrix64F(P);
         CommonOps.invert(V);
         for (int k = 0; k < dimTrait; ++k) {
             if (observed[k] == 0) {
                 V.unsafe_set(k, k, Double.POSITIVE_INFINITY);
             }
         }
-        return safeInvert(V, traitPrecisionTaxon, true);
-//        InversionResult ci = safeDeterminant(V, false);
-//        return -ci.getLogDeterminant();
+        return V;
     }
 
     private void makeCompletedUnobserved(final DenseMatrix64F matrix, double diagonal) {
@@ -661,8 +655,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
 
-            return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
-                    loadings, traitPrecision, nugget, taxonTaskPool);
+            boolean asCorrelation = xo.getAttribute(TREE_SCALED, false);
+
+            return asCorrelation ?
+                    new TreeScaledIntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
+                            loadings, traitPrecision, nugget, taxonTaskPool) :
+                    new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
+                            loadings, traitPrecision, nugget, taxonTaskPool);
         }
 
         @Override
@@ -690,6 +689,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final String LOADINGS = "loadings";
     private static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
+    private static final String TREE_SCALED = "treeScaled";
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(LOADINGS, new XMLSyntaxRule[] {
@@ -709,6 +709,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }, true),
             AttributeRule.newDoubleRule(NUGGET, true),
             new ElementRule(TaxonTaskPool.class, true),
+            AttributeRule.newBooleanRule(TREE_SCALED, true),
 
     };
 
@@ -716,7 +717,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.delegate = delegate;
     }
 
-    private ContinuousDataLikelihoodDelegate delegate = null;
+    protected ContinuousDataLikelihoodDelegate delegate = null;
 
     private static Matrix buildDiagonalMatrix(double[] diagonals) {
         Matrix mat = new Matrix(diagonals.length, diagonals.length);
@@ -724,6 +725,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             mat.set(i, i, diagonals[i]);
         }
         return mat;
+    }
+
+    protected void fillTreeScales(double[] tmp, double[][] treeSharedLengths) {
+        Arrays.fill(tmp, 1.0);
     }
 
     @Override
@@ -795,7 +800,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             Matrix gammaVariance = gamma.inverse();
 
             double[] tmp = new double[tree.getExternalNodeCount()];
-            Arrays.fill(tmp, 1.0);
+            fillTreeScales(tmp, treeSharedLengths);
             Matrix identity = buildDiagonalMatrix(tmp);
             Matrix errorVariance = new Matrix(KroneckerOperation.product(identity.toComponents(), gammaVariance.toComponents()));
 

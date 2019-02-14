@@ -47,6 +47,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
     private MultivariateDiffusionModel diffusionModelFactor;
     private IntegratedFactorAnalysisLikelihood dataModelFactor;
+    private IntegratedFactorAnalysisLikelihood dataModelFactorTreeScaled;
+
     private ConjugateRootTraitPrior rootPriorFactor;
 
     private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
@@ -164,6 +166,12 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         MatrixParameterInterface loadingsMatrixParameters = new MatrixParameter("loadings", loadingsParameters);
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
+                traitParameter,
+                missingIndices,
+                loadingsMatrixParameters,
+                factorPrecisionParameters, 0.0, null);
+
+        dataModelFactorTreeScaled = new TreeScaledIntegratedFactorAnalysisLikelihood("dataModelFactorsTreeScaled",
                 traitParameter,
                 missingIndices,
                 loadingsMatrixParameters,
@@ -1457,6 +1465,56 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         assertEquals("likelihoodFullDiagonalOUFactor",
                 format.format(likelihoodFactorData + likelihoodFactorDiffusion),
                 format.format(likelihoodFactorDataDiagonal + likelihoodFactorDiffusionDiagonal));
+    }
+
+    public void testLikelihoodFullOUFactorTreeScaled() {
+        System.out.println("\nTest Likelihood using full OU and factor tree scaled:");
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{2.0})));
+
+        Parameter[] strengthOfSelectionParameters = new Parameter[2];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.05});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.05, 25.5});
+        MatrixParameter strengthOfSelectionMatrixParam
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
+
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+
+        // Rates
+        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
+                treeModel, false, false);
+        BranchRateModel rateModel = new DefaultBranchRateModel();
+
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegateFactors = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModelFactorTreeScaled, rootPriorFactor,
+                rateTransformation, rateModel, false);
+
+        dataModelFactorTreeScaled.setLikelihoodDelegate(likelihoodDelegateFactors);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihoodFactors
+                = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
+
+        String sf = dataModelFactorTreeScaled.getReport();
+        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
+        int indLikEndF = sf.indexOf("\n", indLikBegF);
+        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
+        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
+        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
+
+        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
+        double likelihoodFactorDiffusion = dataModelFactorTreeScaled.getLogLikelihood();
+
+
+        assertEquals("likelihoodFullOUFactor",
+                format.format(logDatumLikelihoodFactor),
+                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
     }
 
     private double[] parseVectorLine(String s, String sep) {

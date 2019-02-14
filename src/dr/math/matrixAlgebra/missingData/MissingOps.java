@@ -522,7 +522,10 @@ public class MissingOps {
     }
 
     //TODO: Just have one safeInvert function after checking to make sure it doesn't break anything
+    // TODO: change all inversion to return logDeterminant
     public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
+
+        Arrays.fill(destination.data, 0.0);
 
         final int dim = source.getNumCols();
         final MissingPartition mPart = new MissingPartition(source);
@@ -558,17 +561,16 @@ public class MissingOps {
                 }
 
                 scatterRowsAndColumns(inverseSubSource, destination, mPart.fInds, mPart.fInds, true);
-                for (int i = 0; i < mPart.infInds.length; i++) {
-                    int ind = mPart.infInds[i];
-                    destination.set(ind, ind, 0);
-                }
+//                for (int i = 0; i < mPart.infInds.length; i++) {
+//                    int ind = mPart.infInds[i];
+//                    destination.set(ind, ind, 0);
+//                }
 
                 for (int i = 0; i < mPart.zInds.length; i++) {
                     int ind = mPart.zInds[i];
                     destination.set(ind, ind, Double.POSITIVE_INFINITY);
                 }
-
-
+                
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
             }
         }
@@ -758,6 +760,7 @@ public class MissingOps {
         for (int g = 0; g < dimTrait; ++g) {
             double sum = 0.0;
             for (int h = 0; h < dimTrait; ++h) {
+                // TODO Fix conditions
                 if (!Double.isInfinite(Vk.unsafe_get(g, g)) && !Double.isInfinite(Vk.unsafe_get(h, h))) {
                     sum += Vk.unsafe_get(g, h) * tmp[h];
                 }

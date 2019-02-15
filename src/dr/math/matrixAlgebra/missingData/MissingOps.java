@@ -417,31 +417,32 @@ public class MissingOps {
         return result;
     }
 
-    public static InversionResult safeInvert(ReadableMatrix source, WritableMatrix destination, boolean getDeterminant) {
+//    public static InversionResult safeInvert(ReadableMatrix source, WritableMatrix destination, boolean getDeterminant) {
+//
+//        final int dim = source.getMajorDim();
+//        final int finiteCount = countFiniteNonZeroDiagonals(source);
+//        double det = 0;
+//
+//        if (finiteCount == dim) {
+//
+//            DenseMatrix64F result = new DenseMatrix64F(dim, dim);
+//            DenseMatrix64F copyOfSource = copy(source);
+//            if (getDeterminant) {
+//                det = invertAndGetDeterminant(copyOfSource, result);
+//            } else {
+//                CommonOps.invert(copyOfSource, result);
+//            }
+//
+//            copy(result, destination);
+//
+//            return new InversionResult(FULLY_OBSERVED, dim, det);
+//        }
+//
+//        return null;
+//    }
 
-        final int dim = source.getMajorDim();
-        final int finiteCount = countFiniteNonZeroDiagonals(source);
-        double det = 0;
 
-        if (finiteCount == dim) {
-
-            DenseMatrix64F result = new DenseMatrix64F(dim, dim);
-            DenseMatrix64F copyOfSource = copy(source);
-            if (getDeterminant) {
-                det = invertAndGetDeterminant(copyOfSource, result);
-            } else {
-                CommonOps.invert(copyOfSource, result);
-            }
-
-            copy(result, destination);
-
-            return new InversionResult(FULLY_OBSERVED, dim, det);
-        }
-
-        return null;
-    }
-
-    //TODO: rewrite below to be more efficient (or remove it if it's unnecessary
+//TODO: deprecate class in favor of lazy PermutationIndices
 
     private static class MissingPartition {
         final int[] fInds;
@@ -525,12 +526,10 @@ public class MissingOps {
     // TODO: change all inversion to return logDeterminant
     public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 
-        Arrays.fill(destination.data, 0.0);
-
         final int dim = source.getNumCols();
-        final MissingPartition mPart = new MissingPartition(source);
-//        final int finiteCount = countFiniteNonZeroDiagonals(source);
-        final int finiteCount = mPart.fInds.length;
+        final PermutationIndices permutationIndices = new PermutationIndices(source);
+        final int finiteCount = permutationIndices.getNumberOfNonZeroFiniteDiagonals();
+
         double det = 0;
 
         if (finiteCount == dim) {
@@ -545,13 +544,12 @@ public class MissingOps {
                 Arrays.fill(destination.getData(), 0);
                 return new InversionResult(NOT_OBSERVED, 0, 0);
             } else {
-//                final int[] finiteIndices = new int[finiteCount];
-//                getFiniteNonZeroDiagonalIndices(source, finiteIndices);
+
+                final int[] finiteIndices = permutationIndices.getNonZeroFiniteIndices();
+                final int[] zeroIndices = permutationIndices.getZeroIndices();
 
                 final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
-//                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
-                gatherRowsAndColumns(source, subSource, mPart.fInds, mPart.fInds);
-
+                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
 
                 final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
                 if (getDeterminant) {
@@ -560,15 +558,11 @@ public class MissingOps {
                     CommonOps.invert(subSource, inverseSubSource);
                 }
 
-                scatterRowsAndColumns(inverseSubSource, destination, mPart.fInds, mPart.fInds, true);
-//                for (int i = 0; i < mPart.infInds.length; i++) {
-//                    int ind = mPart.infInds[i];
-//                    destination.set(ind, ind, 0);
-//                }
+                scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
 
-                for (int i = 0; i < mPart.zInds.length; i++) {
-                    int ind = mPart.zInds[i];
-                    destination.set(ind, ind, Double.POSITIVE_INFINITY);
+                for (int i = 0; i < zeroIndices.length; i++) {
+                    int index = zeroIndices[i];
+                    destination.set(index, index, Double.POSITIVE_INFINITY);
                 }
                 
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);

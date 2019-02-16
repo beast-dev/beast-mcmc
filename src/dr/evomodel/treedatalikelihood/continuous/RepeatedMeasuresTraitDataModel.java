@@ -78,10 +78,7 @@ public class RepeatedMeasuresTraitDataModel extends
         assert (numTraits == 1);
         assert (samplingPrecision.getRowDimension() == dimTrait && samplingPrecision.getColumnDimension() == dimTrait);
 
-        if (!varianceKnown) {
-            samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
-            varianceKnown = true;
-        }
+        recomputeVariance();
 
         if (fullyObserved) {
             return new double[dimTrait + 1];
@@ -120,6 +117,18 @@ public class RepeatedMeasuresTraitDataModel extends
 
     public Parameter getSamplingPrecision() {
         return samplingPrecision;
+    }
+
+    private void recomputeVariance(){
+        if (!varianceKnown){
+            samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+            varianceKnown = true;
+        }
+    }
+
+    public Matrix getSamplingVariance() {
+        recomputeVariance();
+        return samplingVariance;
     }
 
     public String getTraitName() {

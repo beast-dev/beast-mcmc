@@ -42,10 +42,11 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     private TreeModel tree;
 
     public NodeHeightTransform(Parameter nodeHeights,
+                               Parameter ratios,
                                TreeModel tree,
                                BranchRateModel branchrateModel) {
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate(tree, nodeHeights, branchrateModel);
+        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
     }
 
     @Override

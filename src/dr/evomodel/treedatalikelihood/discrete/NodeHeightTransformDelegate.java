@@ -27,7 +27,9 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.AbstractModel;
@@ -50,17 +52,19 @@ public class NodeHeightTransformDelegate extends AbstractModel {
     private Parameter nodeHeights;
     private final LikelihoodTreeTraversal epochConstructionTraversal;
     private final SimulationTreeTraversal nodeHeightUpdateTraversal;
-    private Map<NodeRef, Epoch> nodeEpochMap = new HashMap<NodeRef, Epoch>();
+    private Map<Integer, Epoch> nodeEpochMap = new HashMap<Integer, Epoch>();
     private List<Epoch> epochs = new ArrayList<Epoch>();
+    private TreeParameterModel indexHelper;
 
     public NodeHeightTransformDelegate(TreeModel treeModel,
                                        Parameter nodeHeights,
+                                       Parameter ratios,
                                        BranchRateModel branchRateModel) {
         super(NodeHeightTransformParser.NAME);
 
         this.tree = treeModel;
         this.nodeHeights = nodeHeights;
-        this.ratios = new Parameter.Default(nodeHeights.getDimension(), 0.5);
+        this.ratios = ratios;
         epochConstructionTraversal = new LikelihoodTreeTraversal(
                 tree,
                 branchRateModel,
@@ -71,11 +75,18 @@ public class NodeHeightTransformDelegate extends AbstractModel {
                 branchRateModel,
                 TreeTraversal.TraversalType.PRE_ORDER);
 
+        indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
+
         addModel(treeModel);
+        addVariable(nodeHeights);
+        addVariable(ratios);
         constructEpochs();
     }
 
     private void constructEpochs() {
+        nodeEpochMap.clear();
+        epochs.clear();
+
         epochConstructionTraversal.updateAllNodes();
         epochConstructionTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
@@ -90,8 +101,8 @@ public class NodeHeightTransformDelegate extends AbstractModel {
             final double rightAnchorHeight = getAnchorTipHeight(rightChild);
 
             if (tree.isRoot(node)){
-                nodeEpochMap.get(leftChild).endEpoch(node, null);
-                nodeEpochMap.get(rightChild).endEpoch(node, null);
+                nodeEpochMap.get(leftChild.getNumber()).endEpoch(node, null);
+                nodeEpochMap.get(rightChild.getNumber()).endEpoch(node, null);
             } else {
                 if (rightAnchorHeight > leftAnchorHeight) {
                     addToEpoch(node, rightChild, leftChild);
@@ -103,7 +114,7 @@ public class NodeHeightTransformDelegate extends AbstractModel {
     }
 
     private void addToEpoch(NodeRef node, NodeRef anchorChild, NodeRef otherChild) {
-        Epoch epoch = nodeEpochMap.getOrDefault(anchorChild, null);
+        Epoch epoch = nodeEpochMap.get(anchorChild.getNumber());
         if (epoch == null) {
             if (!tree.isExternal(anchorChild)) {
                 throw new RuntimeException("Internal node should be assigned to an epoch already.");
@@ -111,9 +122,9 @@ public class NodeHeightTransformDelegate extends AbstractModel {
             epoch = new Epoch(anchorChild);
         }
         epoch.addInternalNode(node);
-        nodeEpochMap.put(node, epoch);
+        nodeEpochMap.put(node.getNumber(), epoch);
 
-        Epoch endingEpoch = nodeEpochMap.getOrDefault(otherChild, null);
+        Epoch endingEpoch = nodeEpochMap.getOrDefault(otherChild.getNumber(), null);
         if (endingEpoch != null) {
             endingEpoch.endEpoch(node, epoch);
         }
@@ -121,8 +132,8 @@ public class NodeHeightTransformDelegate extends AbstractModel {
 
     private double getAnchorTipHeight(NodeRef node) {
         double anchorTipHeight = tree.getNodeHeight(node);
-        if (nodeEpochMap.containsKey(node)) {
-            anchorTipHeight = nodeEpochMap.get(node).getAnchorTipHeight();
+        if (nodeEpochMap.containsKey(node.getNumber())) {
+            anchorTipHeight = nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
         }
         return anchorTipHeight;
     }
@@ -137,7 +148,7 @@ public class NodeHeightTransformDelegate extends AbstractModel {
 
     public void setNodeHeights(double[] nodeHeights) {
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
-            tree.setNodeHeight(tree.getNode(i), nodeHeights[i - tree.getExternalNodeCount()]);
+            tree.setNodeHeight(tree.getNode(indexHelper.getNodeNumberFromParameterIndex(i)), nodeHeights[i - tree.getExternalNodeCount()]);
         }
     }
 
@@ -146,9 +157,9 @@ public class NodeHeightTransformDelegate extends AbstractModel {
             double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
             final double anchorNodeHeight = epoch.getAnchorTipHeight();
             for (NodeRef node : epoch.getInternalNodes()) {
-                final int ratioNum = node.getNumber() - tree.getExternalNodeCount();
+                final int ratioNum = indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount();
                 final double currentNodeHeight = tree.getNodeHeight(node);
-                ratios.setParameterValue(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
+                ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
                 previousNodeHeight = currentNodeHeight;
             }
         }
@@ -156,7 +167,7 @@ public class NodeHeightTransformDelegate extends AbstractModel {
 
     public void setRatios(double[] ratios) {
         for (int i = 0; i < ratios.length; i++) {
-            this.ratios.setParameterValue(i, ratios[i]);
+            this.ratios.setParameterValueQuietly(i, ratios[i]);
         }
     }
 
@@ -167,18 +178,27 @@ public class NodeHeightTransformDelegate extends AbstractModel {
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
             NodeRef node = tree.getNode(op.getLeftChild());
             if (!tree.isRoot(node) && !tree.isExternal(node)) {
-                Epoch epoch = nodeEpochMap.get(node);
+                Epoch epoch = nodeEpochMap.get(node.getNumber());
                 final NodeRef parentNode = tree.getParent(node);
-                final double ratio = ratios.getParameterValue(node.getNumber() - tree.getExternalNodeCount());
+                final double ratio = ratios.getParameterValue( indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount());
                 final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
-                tree.setNodeHeight(node, nodeHeight);
+//                tree.setNodeHeight(node, nodeHeight);
+                nodeHeights.setParameterValueQuietly(indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount(), nodeHeight);
             }
         }
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        if (model == tree) {
+            if (object instanceof TreeChangedEvent) {
+                TreeModel.TreeChangedEvent changedEvent = (TreeModel.TreeChangedEvent) object;
+                if (changedEvent.isTreeChanged()) {
+                    constructEpochs();
+                    updateRatios();
+                }
+            }
+        }
     }
 
     @Override
@@ -198,7 +218,11 @@ public class NodeHeightTransformDelegate extends AbstractModel {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        if (variable == ratios) {
+            updateNodeHeights();
+        } else if (variable == nodeHeights) {
+            updateRatios();
+        }
     }
 
     private class Epoch implements Comparable {

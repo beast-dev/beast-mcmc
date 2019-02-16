@@ -40,19 +40,32 @@ import dr.xml.*;
 public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "nodeHeightTransform";
+    private static final String NODEHEIGHT = "nodeHeights";
+    private static final String RATIO = "ratios";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter nodeHeightParameter = (Parameter) xo.getChild(Parameter.class);
+        XMLObject cxo = xo.getChild(NODEHEIGHT);
+        Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
+
+        XMLObject dxo = xo.getChild(RATIO);
+        Parameter ratioParameter = (Parameter) dxo.getChild(Parameter.class);
+
+        if (ratioParameter.getDimension() == 1) {
+            ratioParameter.setDimension(nodeHeightParameter.getDimension());
+        }
+        ratioParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ratioParameter.getDimension()));
+
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        return new NodeHeightTransform(nodeHeightParameter, tree, branchRateModel);
+        return new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(Parameter.class),
+                new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
+                new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class)
         };

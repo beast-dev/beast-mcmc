@@ -31,6 +31,8 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -51,7 +53,7 @@ import java.util.List;
  */
 
 public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
-        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable {
+        implements GradientWrtParameterProvider, MultiLociTreeSet, CoalescentIntervalProvider, Citable {
 
     public static final boolean DEBUG = false;
 
@@ -905,6 +907,68 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         ploidySums = storedPloidySums;
         storedPloidySums = tmp2;
     }
+
+    // Implementation of GradientWrtParameterProvider
+    // Need to update to include beta and log-transformed precision parameter
+
+    public Parameter getParameter() {
+        return popSizeParameter;
+    }
+
+    public int getDimension() {
+        return popSizeParameter.getDimension();
+    }
+
+    public Likelihood getLikelihood() {
+        return this;
+    }
+
+    public double[] getGradientLogDensity() {
+        double [] gradLogDens = new double [popSizeParameter.getSize()];
+        double[] currentGamma = popSizeParameter.getParameterValues();
+        int popSizeDim = popSizeParameter.getSize();
+
+        // handle covariate case later
+        gradLogDens[0] = precisionParameter.getParameterValue(0)*(currentGamma[0]-currentGamma[1])
+                + numCoalEvents[0] - sufficientStatistics[0]*Math.exp(-currentGamma[0]);
+
+        gradLogDens[popSizeDim-1] = precisionParameter.getParameterValue(0)*(currentGamma[popSizeDim-1]-currentGamma[popSizeDim-2])
+                + numCoalEvents[popSizeDim-1] - sufficientStatistics[popSizeDim-1]*Math.exp(-currentGamma[popSizeDim-1]);
+
+        if(beta != null) {
+            for (int k = 0; k < beta.size(); k++) {
+
+                Parameter b = beta.get(k);
+                MatrixParameter covariate = covariates.get(k);
+
+                gradLogDens[0] = gradLogDens[0] - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 0) * b.getParameterValue(0)
+                        + precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
+
+                gradLogDens[popSizeDim - 1] = gradLogDens[popSizeDim - 1] - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, popSizeDim - 1) * b.getParameterValue(0)
+                        + precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, popSizeDim - 2) * b.getParameterValue(0);
+            }
+        }
+
+        for(int i = 1; i<(popSizeDim-1); i++){
+            gradLogDens[i] = precisionParameter.getParameterValue(0)*(-currentGamma[i-1] + 2*currentGamma[i] - currentGamma[i+1])
+                    + numCoalEvents[i] - sufficientStatistics[i]*Math.exp(-currentGamma[i]);
+
+            if(beta != null) {
+                for (int k = 0; k < beta.size(); k++) {
+
+                    Parameter bk = beta.get(k);
+                    MatrixParameter covk = covariates.get(k);
+
+                    gradLogDens[i] = gradLogDens[i] + precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i - 1) * bk.getParameterValue(0)
+                            - 2 * precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i) * bk.getParameterValue(0)
+                            + precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i + 1) * bk.getParameterValue(0);
+                }
+            }
+        }
+
+        return gradLogDens;
+    }
+
 
     /*public int getCoalescentIntervalLineageCount(int i) {
         return 0;

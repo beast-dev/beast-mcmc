@@ -34,9 +34,15 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.smc.SMC;
+import dr.inference.smc.SMCOptions;
+import dr.inference.state.Factory;
+import dr.inference.state.StateLoaderSaver;
 import dr.xml.*;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MCMCParser extends AbstractXMLObjectParser {
 
@@ -48,29 +54,57 @@ public class MCMCParser extends AbstractXMLObjectParser {
      * @return an mcmc object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        String id = xo.getAttribute(NAME, "mcmc1");
 
-        MCMC mcmc = new MCMC(xo.getAttribute(NAME, "mcmc1"));
+        if (System.getProperty("smc.particle_folder") != null) {
+            return parseSMC(id, xo);
+        }
+
+        return parseMCMC(id, xo);
+    }
+
+    /**
+     * Parse the MCMC object.
+     * @param xo the XML object
+     * @return the MXMX object
+     * @throws XMLParseException an exception of there is an XML parse error
+     */
+    private MCMC parseMCMC(String id, XMLObject xo) throws XMLParseException {
+        MCMC mcmc = new MCMC(id);
 
         long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
-        boolean useCoercion = xo.getAttribute(COERCION, true);
-        long coercionDelay = chainLength / 100;
-        if (xo.hasAttribute(PRE_BURNIN)) {
-            coercionDelay = xo.getIntegerAttribute(PRE_BURNIN);
+        boolean useAdaptation =
+                xo.getAttribute(ADAPTATION, true) ||
+                        xo.getAttribute(AUTO_OPTIMIZE, true);
+        if (System.getProperty("mcmc.use_adaptation") != null) {
+            useAdaptation = Boolean.parseBoolean(System.getProperty("mcmc.use_adaptation"));
         }
-        coercionDelay = xo.getAttribute(COERCION_DELAY, coercionDelay);
+        long adaptationDelay = chainLength / 100;
+        adaptationDelay =
+                xo.getAttribute(ADAPTATION_DELAY,
+                        xo.getAttribute(AUTO_OPTIMIZE_DELAY,
+                                xo.getAttribute(PRE_BURNIN, adaptationDelay)));
+
+        double adaptationTarget = 0.234;
+        if (System.getProperty("mcmc.adaptation_target") != null) {
+            adaptationTarget = Double.parseDouble(System.getProperty("mcmc.adaptation_target"));
+        }
+
+        boolean useSmoothAcceptanceRatio = xo.getAttribute(SMOOTHED_ACCEPTANCE_RATIO, false);
+
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
 
         long fullEvaluationCount = 1000;
+        fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, fullEvaluationCount);
         if (System.getProperty("mcmc.evaluation.count") != null) {
             fullEvaluationCount = Long.parseLong(System.getProperty("mcmc.evaluation.count"));
         }
-        fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, fullEvaluationCount);
 
         double evaluationTestThreshold = MarkovChain.EVALUATION_TEST_THRESHOLD;
+        evaluationTestThreshold = xo.getAttribute(EVALUATION_THRESHOLD, evaluationTestThreshold);
         if (System.getProperty("mcmc.evaluation.threshold") != null) {
             evaluationTestThreshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
         }
-        evaluationTestThreshold = xo.getAttribute(EVALUATION_THRESHOLD, evaluationTestThreshold);
 
         int minOperatorCountForFullEvaluation = xo.getAttribute(MIN_OPS_EVALUATIONS, 1);
 
@@ -78,8 +112,10 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 fullEvaluationCount,
                 minOperatorCountForFullEvaluation,
                 evaluationTestThreshold,
-                useCoercion,
-                coercionDelay,
+                useAdaptation,
+                adaptationDelay,
+                adaptationTarget,
+                useSmoothAcceptanceRatio,
                 temperature);
 
         OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
@@ -128,11 +164,10 @@ public class MCMCParser extends AbstractXMLObjectParser {
         Logger[] loggerArray = new Logger[loggers.size()];
         loggers.toArray(loggerArray);
 
-
         java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the MCMC chain:" +
-                "\n  chainLength=" + options.getChainLength() +
-                "\n  autoOptimize=" + options.useCoercion() +
-                (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +
+                "\n  chain length = " + options.getChainLength() +
+                "\n  operator adaption = " + options.useAdaptation() +
+                (options.useAdaptation() ? "\n  adaptation delayed for " + options.getAdaptationDelay() + " steps" : "") +
                 (options.getFullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
         );
 
@@ -158,6 +193,75 @@ public class MCMCParser extends AbstractXMLObjectParser {
         return mcmc;
     }
 
+    /**
+     * Parse the SMC variant of MCMC.
+     * @param xo the XML object
+     * @return the SMC object
+     * @throws XMLParseException an exception of there is an XML parse error
+     */
+    private SMC parseSMC(String id, XMLObject xo) throws XMLParseException {
+
+        List<StateLoaderSaver> particleStates = new ArrayList<StateLoaderSaver>();
+
+        String particleFolder = System.getProperty("smc.particle_folder");
+        File folder = new File(particleFolder);
+        if (!folder.isDirectory()) {
+            throw new XMLParseException("Specified particle folder is not a folder");
+        }
+
+        File[] particleFiles = folder.listFiles();
+        if (particleFiles == null || particleFiles.length == 0) {
+            throw new XMLParseException("Specified particle folder is empty");
+        }
+
+        for (final File particleFile : particleFiles) {
+            // The particles are setup with a fixed loading and saving file.
+
+            if (particleFile.isFile() && particleFile.getName().endsWith(".part")) {
+                final File saveFile = new File(particleFile.getAbsolutePath() + ".out");
+
+                particleStates.add(
+                        Factory.INSTANCE.getStateLoaderSaver(particleFile, saveFile)
+                );
+            }
+        }
+
+        if (particleStates.size() == 0) {
+            throw new XMLParseException("No particle files were found in the folder");
+        }
+
+        SMC smc = new SMC(id, particleStates);
+
+        long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
+
+        SMCOptions options = new SMCOptions(chainLength);
+
+        OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
+        Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+
+        likelihood.setUsed();
+
+        ArrayList<Logger> loggers = new ArrayList<Logger>();
+
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            Object child = xo.getChild(i);
+            if (child instanceof Logger) {
+                loggers.add((Logger) child);
+            }
+        }
+
+        Logger[] loggerArray = new Logger[loggers.size()];
+        loggers.toArray(loggerArray);
+
+        java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the SMC chain set:" +
+                "\n  particles = " + particleStates.size() +
+                "\n  chain length = " + options.getChainLength()
+        );
+
+        smc.init(options, likelihood, opsched, loggerArray);
+
+        return smc;
+    }
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
@@ -176,8 +280,11 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newLongIntegerRule(CHAIN_LENGTH),
-            AttributeRule.newBooleanRule(COERCION, true),
-            AttributeRule.newIntegerRule(COERCION_DELAY, true),
+            AttributeRule.newBooleanRule(ADAPTATION, true),
+            AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+            AttributeRule.newIntegerRule(ADAPTATION_DELAY, true),
+            AttributeRule.newIntegerRule(AUTO_OPTIMIZE_DELAY, true),
+            AttributeRule.newBooleanRule(SMOOTHED_ACCEPTANCE_RATIO, true),
             AttributeRule.newIntegerRule(PRE_BURNIN, true),
             AttributeRule.newDoubleRule(TEMPERATURE, true),
             AttributeRule.newIntegerRule(FULL_EVALUATION, true),
@@ -191,10 +298,13 @@ public class MCMCParser extends AbstractXMLObjectParser {
             new ElementRule(Logger.class, 1, Integer.MAX_VALUE),
     };
 
-    public static final String COERCION = "autoOptimize";
+    public static final String ADAPTATION = "adaptation";
+    public static final String AUTO_OPTIMIZE = "autoOptimize";
     public static final String NAME = "name";
     public static final String PRE_BURNIN = "preBurnin";
-    public static final String COERCION_DELAY = "autoOptimizeDelay";
+    public static final String ADAPTATION_DELAY = "adaptationDelay";
+    public static final String AUTO_OPTIMIZE_DELAY = "autoOptimizeDelay";
+    public static final String SMOOTHED_ACCEPTANCE_RATIO = "smoothAcceptanceRatio";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String FULL_EVALUATION = "fullEvaluation";

@@ -43,11 +43,11 @@ import dr.math.MathUtils;
 @Deprecated
 public class FunkyPriorMixerOperator extends
         SimpleMCMCOperator {
-//        AbstractCoercableOperator {
+//        AbstractAdaptableOperator {
 //        implements GibbsOperator {
 
     public FunkyPriorMixerOperator(TreeModel treeModel, Parameter parameter, double windowSize, RandomWalkOperator.BoundaryCondition bc,
-                                   double weight, CoercionMode mode) {
+                                   double weight, AdaptationMode mode) {
       
 //        super(mode);
         this.treeModel = treeModel;
@@ -203,6 +203,7 @@ public class FunkyPriorMixerOperator extends
         return FunkyPriorMixerOperatorParser.FUNKY_OPERATOR;
     }
 
+    /* This is not an adaptable operator so these will not be called
     public double getCoercableParameter() {
         return Math.log(windowSize);
     }
@@ -210,6 +211,7 @@ public class FunkyPriorMixerOperator extends
     public void setCoercableParameter(double value) {
         windowSize = Math.exp(value);
     }
+    */
 
     public double getRawParameter() {
         return windowSize;
@@ -237,7 +239,7 @@ public class FunkyPriorMixerOperator extends
 
     public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double prob = getAcceptanceProbability();
         double targetProb = getTargetAcceptanceProbability();
 
 //        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);

@@ -552,9 +552,9 @@ public class ClockModelGenerator extends Generator {
         if (options.useNuRelativeRates()) {
             Parameter allNus = model.getParameter("allNus");
             if (allNus.getSubParameters().size() > 1) {
-                // The mu's are the more relevent parameter and allow comparisons with the old parameterization
-                // It would be confusing to log the nus and mus.
-//                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
+                // The mu's are the more relevant parameter and allow comparisons with the old parameterization
+                // May be confusing to log the nus and mus, but necessary for use with generalized stepping-stone sampling
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, prefix + "allNus");
 
                 for (Parameter parameter : allNus.getSubParameters()) {
                     String name = parameter.getName();

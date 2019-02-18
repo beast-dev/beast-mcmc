@@ -27,9 +27,8 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
 
@@ -38,7 +37,7 @@ import dr.util.Transform;
  * @author Marc A. Suchard
  */
 
-public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
+public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -46,12 +45,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     final NormalDistribution drawDistribution;
     final LeapFrogEngine leapFrogEngine;
 
-    public HamiltonianMonteCarloOperator(CoercionMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform,
                                          double stepSize, int nSteps, double drawVariance) {
-        super(mode);
+        super(mode, 0.8); // setTargetAcceptanceProbability(0.8); // Stan default
         setWeight(weight);
-        setTargetAcceptanceProbability(0.8); // Stan default
 
         this.gradientProvider = gradientProvider;
         this.stepSize = stepSize;
@@ -61,11 +59,6 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
                 new LeapFrogEngine.WithTransform(parameter, transform) :
                 new LeapFrogEngine.Default(parameter));
 
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override
@@ -145,14 +138,14 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         if (DEBUG) {
-            System.err.println("Setting coercable paramter: " + getCoercableParameter() + " -> " + value);
+            System.err.println("Setting coercable paramter: " + getAdaptableParameter() + " -> " + value);
         }
         stepSize = Math.exp(value);
     }
@@ -160,6 +153,11 @@ public class HamiltonianMonteCarloOperator extends AbstractCoercableOperator {
     @Override
     public double getRawParameter() {
         return stepSize;
+    }
+
+    @Override
+    public String getAdaptableParameterName() {
+        return "stepSize";
     }
 
     interface LeapFrogEngine {

@@ -52,6 +52,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.tree.TreeUtils;
 import org.apache.commons.math.random.MersenneTwister;
 
@@ -1297,7 +1298,12 @@ public class Utils {
 				if (state == gapFlag) {
 					sSeq.append(dataType.getCode(dataType.getGapState()));
 				} else {
-					sSeq.append(dataType.getCode(seq[i]));
+					if(dataType instanceof HiddenDataType){
+						sSeq.append(dataType.getCode(seq[i] %
+								(dataType.getStateCount()/((HiddenDataType) dataType).getHiddenClassCount())));
+					}else{
+						sSeq.append(dataType.getCode(seq[i]));
+					}
 				}// END: gap check
 
 			}// END: replications loop

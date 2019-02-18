@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ -z "$TEMPEST" ]; then
+	## resolve links - $0 may be a link to application
+	PRG="$0"
+
+	# need this for relative symlinks
+	while [ -h "$PRG" ] ; do
+	    ls=`ls -ld "$PRG"`
+	    link=`expr "$ls" : '.*-> \(.*\)$'`
+	    if expr "$link" : '/.*' > /dev/null; then
+		PRG="$link"
+	    else
+		PRG="`dirname "$PRG"`/$link"
+	    fi
+	done
+
+	# make it fully qualified
+	saveddir=`pwd`
+	TEMPEST0=`dirname "$PRG"`/..
+	TEMPEST=`cd "$TEMPEST0" && pwd`
+	cd "$saveddir"
+fi
+
+TEMPEST_LIB=$TEMPEST/lib
+java -Xms64m -Xmx1024m -Djava.library.path="$TEMPEST_LIB:/usr/local/lib" -jar $TEMPEST_LIB/tempest.jar $*
+

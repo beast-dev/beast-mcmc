@@ -31,6 +31,7 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
+import dr.util.Attribute;
 import dr.xml.*;
 import org.apache.commons.math.distribution.CauchyDistributionImpl;
 
@@ -42,7 +43,7 @@ import java.util.List;
 public class PriorParsers {
     public final static boolean DEBUG = false;
 
-    public static final String TRUNCATED = "trancated";
+    public static final String TRUNCATED = "truncated";
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
@@ -57,6 +58,7 @@ public class PriorParsers {
     public static final String LAPLACE_PRIOR = "laplacePrior";
     public static final String BETA_PRIOR = "betaPrior";
     public static final String CAUCHY_PRIOR = "cauchyPrior";
+    public static final String GUMBEL_PRIOR = "gumbelPrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
@@ -77,16 +79,22 @@ public class PriorParsers {
     public static final String COUNTS = "counts";
     public static final String SUMS_TO = "sumsTo";
 
-
     /**
      * A special parser that reads a convenient short form of priors on parameters.
      */
     public static XMLObjectParser TRUNCATED_PARSER = new AbstractXMLObjectParser() {
 
+        @Override
         public String getParserName() {
             return TRUNCATED;
         }
 
+        @Override
+        public String[] getParserNames() {
+            return new String[] { getParserName(), "trancated" }; // was misspelled, keep compatibility.
+        }
+
+        @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double lower = xo.getAttribute(LOWER, Double.NEGATIVE_INFINITY);
@@ -94,9 +102,15 @@ public class PriorParsers {
 
             DistributionLikelihood dl = (DistributionLikelihood)xo.getChild(DistributionLikelihood.class);
 
-            return new DistributionLikelihood(new TruncatedDistribution(dl.getDistribution(), lower, upper));
+            DistributionLikelihood likelihood = new DistributionLikelihood(new TruncatedDistribution(dl.getDistribution(), lower, upper));
+            for (Attribute<double[]> data : dl.getDataList()) {
+                likelihood.addData(data);
+            }
+
+            return likelihood;
         }
 
+        @Override
         public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
@@ -107,10 +121,12 @@ public class PriorParsers {
                 new ElementRule(DistributionLikelihood.class)
         };
 
+        @Override
         public String getParserDescription() {
             return "Truncates the enclosed distribution to the given bounds.";
         }
 
+        @Override
         public Class getReturnType() {
             return Likelihood.class;
         }
@@ -945,6 +961,47 @@ public class PriorParsers {
         };
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a Cauchy distribution.";
+        }
+
+        public Class getReturnType() {
+            return DistributionLikelihood.class;
+        }
+    };
+    
+    public static XMLObjectParser GUMBEL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return GUMBEL_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final double shape = xo.getDoubleAttribute(SHAPE);
+            final double scale = xo.getDoubleAttribute(SCALE);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new Gumbel2Distribution(shape, scale));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(SHAPE),
+                AttributeRule.newDoubleRule(SCALE),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a Gumbel type II distribution.";
         }
 
         public Class getReturnType() {

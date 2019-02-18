@@ -27,13 +27,19 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
-import dr.inference.operators.*;
+import dr.evomodelxml.operators.TipLeapOperatorParser;
+import dr.inference.distribution.CauchyDistribution;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
+import dr.math.distributions.Distribution;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,15 +54,48 @@ import java.util.Map;
  * uniformly.
  *
  * @author Andrew Rambaut
+ * @author Luiz Max Carvalho
+ * @author Mathieu Fourment
  * @version $Id$
  */
-public class SubtreeLeapOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
+public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
-    private double size = 1.0;
-    private double accP = 0.234;
+    public enum DistanceKernelType {
+        NORMAL("normal") {
+            @Override
+            double getDelta(double size) {
+                return Math.abs(MathUtils.nextGaussian() * size);
+            }
+        },
+        CAUCHY("Cauchy") {
+            @Override
+            double getDelta(double size) {
+                Distribution distK = new CauchyDistribution(0, size);
+                double u = MathUtils.nextDouble();
+                return Math.abs(distK.quantile(u));
+            }
+        };
+
+        DistanceKernelType(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        String name;
+
+        abstract double getDelta(double size);
+    }
+
+    private double size;
 
     private final TreeModel tree;
-    private final CoercionMode mode;
+    private final DistanceKernelType distanceKernel;
+
+    private final List<NodeRef> tips;
 
     /**
      * Constructor
@@ -64,16 +103,54 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
      * @param tree   the tree
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param targetAcceptance the desired acceptance probability
+     * @param distanceKernel the distribution from which to draw the patristic distance 
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
         this.tree = tree;
         setWeight(weight);
         this.size = size;
-        this.accP = accP;
-        this.mode = mode;
+        this.distanceKernel = distanceKernel;
+        this.tips = null;
     }
 
+    /**
+     * Constructor that takes a taxon set to pick from for the move.
+     *
+     * @param tree   the tree
+     * @param taxa   some taxa
+     * @param weight the weight
+     * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param mode   coercion mode
+     */
+    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
+        this.tree = tree;
+        setWeight(weight);
+        this.size = size;
+        this.distanceKernel = distanceKernel;
+        this.tips = new ArrayList<NodeRef>();
+
+        for (Taxon taxon : taxa) {
+            boolean found = false;
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                NodeRef tip = tree.getExternalNode(i);
+                if (tree.getNodeTaxon(tip).equals(taxon)) {
+                    tips.add(tip);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throw new IllegalArgumentException("Taxon, " + taxon.getId() + ", not found in tree with id " + tree.getId());
+            }
+        }
+    }
 
 
     /**
@@ -84,17 +161,23 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
     public double doOperation() {
         double logq;
 
-        final double delta = getDelta();
+        final double delta = distanceKernel.getDelta(size);
 
         final NodeRef root = tree.getRoot();
 
         NodeRef node;
 
-        do {
-            // choose a random node avoiding root
-            node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+        if (tips == null) {
+            // Pick a node (but not the root)
+            do {
+                // choose a random node avoiding root
+                node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
 
-        } while (node == root);
+            } while (node == root);
+        } else {
+            // Pick a tip from the specified set of tips.
+            node = tips.get(MathUtils.nextInt(tips.size()));
+        }
 
         // get its parent - this is the node we will prune/graft
         final NodeRef parent = tree.getParent(node);
@@ -185,7 +268,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
 
     private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
 
-        final Map<NodeRef, Double> destinations = new HashMap<NodeRef, Double>();
+        final Map<NodeRef, Double> destinations = new LinkedHashMap<NodeRef, Double>();
 
         // get the parent's height
         final double height = tree.getNodeHeight(parent);
@@ -251,10 +334,6 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         return destinations;
     }
 
-    private double getDelta() {
-        return Math.abs(MathUtils.nextGaussian() * size);
-    }
-
     private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 
         final NodeRef parent = tree.getParent(node);
@@ -281,43 +360,30 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         this.size = size;
     }
 
-    public double getCoercableParameter() {
-        return Math.log(getSize());
-    }
-
-    public void setCoercableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
+    @Override
+    protected double getAdaptableParameterValue() {
+        return Math.log(getSize());
+    }
+
+    @Override
     public double getRawParameter() {
         return getSize();
     }
 
-    public CoercionMode getMode() {
-        return mode;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return accP;
-    }
-
-
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "size";
     }
 
     public String getOperatorName() {
-        return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
+        if (tips == null) {
+            return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
+        } else {
+            return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";
+        }
     }
-
-
 }

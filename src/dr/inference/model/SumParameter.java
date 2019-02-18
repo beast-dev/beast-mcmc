@@ -32,31 +32,37 @@ import java.util.List;
  */
 public class SumParameter extends Parameter.Abstract implements VariableListener {
 
-    public SumParameter(List<Parameter> parameter) {
-        this.paramList = parameter;
-        for (Parameter p : paramList) {
+    public SumParameter(List<Parameter> parameterList) {
+        this.parameterList = parameterList;
+        dimension = parameterList.size() == 1 ? 1 : parameterList.get(0).getDimension();;
+        for (Parameter p : parameterList) {
             p.addVariableListener(this);
         }
     }
 
     public int getDimension() {
-        return paramList.get(0).getDimension();
+        return dimension;
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return true;
     }
 
     protected void storeValues() {
-        for (Parameter p : paramList) {
+        for (Parameter p : parameterList) {
             p.storeParameterValues();
         }
     }
 
     protected void restoreValues() {
-        for (Parameter p : paramList) {
+        for (Parameter p : parameterList) {
             p.restoreParameterValues();
         }
     }
 
     protected void acceptValues() {
-        for (Parameter p : paramList) {
+        for (Parameter p : parameterList) {
             p.acceptParameterValues();
         }
     }
@@ -67,11 +73,15 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
 
     public double getParameterValue(int dim) {
         double value = 0;
-        for (int i = 0; i < paramList.size(); i++) {
-            if (i == 0){
-                value = paramList.get(i).getParameterValue(dim);
-            } else {
-                value += paramList.get(i).getParameterValue(dim);
+        if (dimension == 1) {
+            value = parameterList.get(0).getParameterValue(0);
+            for (int i = 1; i < parameterList.get(0).getDimension(); i++) {
+                value += parameterList.get(0).getParameterValue(i);
+            }
+        } else {
+            value = parameterList.get(0).getParameterValue(dim);
+            for (int i = 1; i < parameterList.size(); i++) {
+                value += parameterList.get(i).getParameterValue(dim);
             }
         }
         return value;
@@ -92,7 +102,7 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
     public String getParameterName() {
         if (getId() == null) {
             StringBuilder sb = new StringBuilder("sum");
-            for (Parameter p : paramList) {
+            for (Parameter p : parameterList) {
                 sb.append(".").append(p.getId());
             }
             setId(sb.toString());
@@ -106,7 +116,7 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
 
     public Bounds<Double> getBounds() {
         if (bounds == null) {
-            return paramList.get(0).getBounds(); // TODO
+            return parameterList.get(0).getBounds(); // TODO
         } else {
             return bounds;
         }
@@ -124,6 +134,7 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
         fireParameterChangedEvent(index,type);
     }
 
-    private final List<Parameter> paramList;
+    private final List<Parameter> parameterList;
+    private final int dimension;
     private Bounds bounds = null;
 }

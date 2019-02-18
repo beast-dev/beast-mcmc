@@ -4,8 +4,8 @@ import dr.evomodel.antigenic.phyloclustering.TreeClusteringSharedRoutines;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
@@ -17,7 +17,7 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-public class Mu2ScaleActiveScaledMu2IntactOperator extends AbstractCoercableOperator  {
+public class Mu2ScaleActiveScaledMu2IntactOperator extends AbstractAdaptableOperator {
 
 	
     private MatrixParameter mu = null;
@@ -35,7 +35,7 @@ public class Mu2ScaleActiveScaledMu2IntactOperator extends AbstractCoercableOper
 	
 	public Mu2ScaleActiveScaledMu2IntactOperator(double weight, MatrixParameter virusLocations, MatrixParameter mu, Parameter indicators, Parameter mu2Scale, TreeModel treeModel_in, double scale, MatrixParameter virusLocationsTreeNode_in){
    
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 
 		setWeight(weight);
         this.virusLocations = virusLocations;
@@ -95,12 +95,13 @@ public class Mu2ScaleActiveScaledMu2IntactOperator extends AbstractCoercableOper
 	
 	
 	//copied from the original ScaleOperator
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
 	//copied from the original ScaleOperator
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -109,68 +110,13 @@ public class Mu2ScaleActiveScaledMu2IntactOperator extends AbstractCoercableOper
         return scaleFactor;
     }
 
-	
-	
-	//copied from the original ScaleOperator
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-	//copied from the original ScaleOperator
-    public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-    }
-	
-	
-	/*
-    public String getPerformanceSuggestion() {
-        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
+
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
-    public final void optimize(double targetProb) {
 
-        throw new RuntimeException("This operator cannot be optimized!");
-    }
-
-    public boolean isOptimizing() {
-        return false;
-    }
-
-    public void setOptimizing(boolean opt) {
-        throw new RuntimeException("This operator cannot be optimized!");
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-*/
-    
     public final static String MU2SCALEACTIVEACTIVEMU2INTACTOPERATOR = "Mu2ScaleActiveScaledMu2IntactOperator";
 
     public final String getOperatorName() {

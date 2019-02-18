@@ -41,6 +41,7 @@ import java.io.IOException;
 /**
  * @author shhn001
  */
+@Deprecated
 public class ConvergenceListener implements MarkovChainListener {
 
     private MarkovChain chain;

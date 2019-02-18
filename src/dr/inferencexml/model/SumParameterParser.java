@@ -36,6 +36,7 @@ import java.util.List;
  */
 public class SumParameterParser extends AbstractXMLObjectParser {
 
+    public static final String SUM_ALL = "sumAll";
     public static final String SUM_PARAMETER = "sumParameter";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -52,6 +53,15 @@ public class SumParameterParser extends AbstractXMLObjectParser {
                 }
             }
             paramList.add(parameter);
+        }
+
+        boolean sumAll = xo.getBooleanAttribute(SUM_ALL);
+
+        if (sumAll && paramList.size() > 1) {
+            throw new XMLParseException("To sum all the elements, only one parameter should be given");
+        }
+        if (!sumAll && paramList.size() < 2) {
+            throw new XMLParseException("For an element-wise sum, more than one parameter should be given");
         }
 
         return new SumParameter(paramList);

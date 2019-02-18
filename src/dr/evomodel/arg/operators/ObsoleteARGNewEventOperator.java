@@ -54,8 +54,8 @@ import java.util.ArrayList;
  * @version $Id: ObsoleteARGAddRemoveEventOperator.java,v 1.18.2.4 2006/11/06 01:38:30 msuchard Exp $
  */
 
-public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
-//		SimpleMCMCOperator implements CoercableMCMCOperator {
+public class ObsoleteARGNewEventOperator extends AbstractAdaptableOperator {
+//		SimpleMCMCOperator implements AdaptableMCMCOperator {
 
     public static final String SUBTREE_SLIDE = "newARGEvent";
     public static final String SWAP_RATES = "swapRates";
@@ -75,14 +75,14 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
     private boolean isRecombination = false;
     //   private boolean swapRates;
     //   private boolean swapTraits;
-    //	private int mode = CoercableMCMCOperator.DEFAULT;
+    //	private int mode = AdaptableMCMCOperator.DEFAULT;
     private CompoundParameter internalNodeParameters;
     private CompoundParameter internalAndRootNodeParameters;
     private CompoundParameter nodeRates;
 //	private int maxTips = 1;
 
     public ObsoleteARGNewEventOperator(ARGModel arg, int weight, double size, boolean gaussian,
-                                       boolean swapRates, boolean swapTraits, CoercionMode mode,
+                                       boolean swapRates, boolean swapTraits, AdaptationMode mode,
                                        CompoundParameter param1,
                                        CompoundParameter param2,
                                        CompoundParameter param3,
@@ -625,11 +625,12 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(getSize());
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
@@ -641,22 +642,8 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
 //		return mode;
 //	}
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "size";
     }
 
     public String getOperatorName() {
@@ -677,14 +664,14 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
             double singlePartitionProbability = 0.0;
             boolean isRecombination = false;
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
-//			int mode = CoercableMCMCOperator.DEFAULT;
+//			int mode = AdaptableMCMCOperator.DEFAULT;
 //			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 //				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-//					mode = CoercableMCMCOperator.COERCION_ON;
+//					mode = AdaptableMCMCOperator.ADAPTATION_ON;
 //				} else {
-//					mode = CoercableMCMCOperator.COERCION_OFF;
+//					mode = AdaptableMCMCOperator.ADAPTATION_OFF;
 //				}
 //			}
 

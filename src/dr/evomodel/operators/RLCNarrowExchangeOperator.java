@@ -140,24 +140,6 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         tree.setNodeTrait(b, "trait", changedA);
     }
 
-    public double getMinimumAcceptanceLevel() {
-        return 0.05;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.05;
-    }
-
-    public String getPerformanceSuggestion() {
-        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
-            return "";
-        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
-            return "";
-        } else {
-            return "";
-        }
-    }
-
     public static XMLObjectParser NARROW_EXCHANGE_PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {

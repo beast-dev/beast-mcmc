@@ -61,7 +61,7 @@ public class BeautiOptions extends ModelOptions {
     private static final boolean NEW_GTR_PARAMETERIZATION = true;
 
     // Makes sets the initial state of PartitionClockModel.continuousQuantile
-    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = true;
+    public static final boolean DEFAULT_QUANTILE_RELAXED_CLOCK = false;
 
     // Uses a logit transformed random walk on pInv parameters
     private static final boolean LOGIT_PINV_KERNEL = true;
@@ -131,7 +131,7 @@ public class BeautiOptions extends ModelOptions {
         units = Units.Type.SUBSTITUTIONS;
 
         // Operator schedule options
-        optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
+        optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
         // MCMC options
         chainLength = 10000000;
@@ -177,29 +177,35 @@ public class BeautiOptions extends ModelOptions {
 
         if (taxonSets != null) {
             for (Taxa taxa : taxonSets) {
-                Parameter statistic = statistics.get(taxa);
-                PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
-                if (statistic == null) {
-                    // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
-                    statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set")
-                            .isStatistic(true).isNodeHeight(true)
-                            .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
-                    statistic.setPrefix(treeModel.getPrefix());
-
-                    statistics.put(taxa, statistic);
-
-                } else {
-                    statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
-                    statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
-                    PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
-                    statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
-                            && taxonSetsMono.get(taxa);
-                }
-                params.add(statistic);
+                params.add(updateTMRCAStatistic(taxa));
             }
         } else {
             System.err.println("TaxonSets are null");
         }
+    }
+
+    public Parameter updateTMRCAStatistic(Taxa taxa) {
+        Parameter statistic = statistics.get(taxa);
+        PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
+        if (statistic == null) {
+            // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
+            statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set")
+                    .isStatistic(true).isNodeHeight(true)
+                    .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
+            statistic.setPrefix(treeModel.getPrefix());
+            statistic.taxaId = taxa.getId();
+
+            statistics.put(taxa, statistic);
+
+        } else {
+            statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
+            statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
+            PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
+            statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
+                    && taxonSetsMono.get(taxa);
+            statistic.taxaId = taxa.getId();
+        }
+        return statistic;
     }
 
     public boolean renameTMRCAStatistic(Taxa taxonSet) {
@@ -1300,7 +1306,7 @@ public class BeautiOptions extends ModelOptions {
     public Units.Type units = Units.Type.YEARS;
 
     // Operator schedule options
-    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
+    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
     // MCMC options
     public int chainLength = 10000000;
@@ -1347,6 +1353,10 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean useNewGTR() {
         return !useClassicOperatorsAndPriors() || !NEW_GTR_PARAMETERIZATION;
+    }
+
+    public boolean usePInvRandomWalk() {
+        return !useClassicOperatorsAndPriors() || !LOGIT_PINV_KERNEL;
     }
 
     public boolean useNewFrequenciesPrior() {

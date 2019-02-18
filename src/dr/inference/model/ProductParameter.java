@@ -43,6 +43,11 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
         return paramList.get(0).getDimension();
     }
 
+    @Override
+    public boolean isImmutable() {
+        return false;
+    }
+
     protected void storeValues() {
         for (Parameter p : paramList) {
             p.storeParameterValues();

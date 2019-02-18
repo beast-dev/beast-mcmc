@@ -63,7 +63,8 @@ public final class MarkovChain implements Serializable {
     private double bestScore, currentScore, initialScore;
     private long currentLength;
 
-    private boolean useCoercion = true;
+    private boolean useAdaptation = true;
+    private final boolean useSmoothedAcceptanceProbability;
 
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
@@ -74,13 +75,14 @@ public final class MarkovChain implements Serializable {
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
-                       boolean useCoercion) {
+                       boolean useAdaptation, boolean useSmoothedAcceptanceProbability) {
 
         currentLength = 0;
         this.likelihood = likelihood;
         this.schedule = schedule;
         this.acceptor = acceptor;
-        this.useCoercion = useCoercion;
+        this.useAdaptation = useAdaptation;
+        this.useSmoothedAcceptanceProbability = useSmoothedAcceptanceProbability;
 
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
@@ -115,7 +117,7 @@ public final class MarkovChain implements Serializable {
      *
      * @param length number of states to run the chain.
      */
-    public long runChain(long length, boolean disableCoerce) {
+    public long runChain(long length, boolean disableAdaptation) {
 
         likelihood.makeDirty();
         currentScore = evaluate(likelihood);
@@ -419,8 +421,8 @@ public final class MarkovChain implements Serializable {
             // assert Profiler.stopProfile("Restore");
 
 
-            if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {
-                coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
+            if (useAdaptation && !disableAdaptation && mcmcOperator instanceof AdaptableMCMCOperator) {
+                adaptAcceptanceProbability((AdaptableMCMCOperator) mcmcOperator, logr[0]);
             }
 
             if (usingFullEvaluation) {
@@ -529,34 +531,41 @@ public final class MarkovChain implements Serializable {
      * @param op   The operator
      * @param logr
      */
-    private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
+    private void adaptAcceptanceProbability(AdaptableMCMCOperator op, double logr) {
 
         if (DEBUG) {
-            System.out.println("coerceAcceptanceProbability " + isCoercable(op));
+            System.out.println("adaptAcceptanceProbability " + isAdaptable(op));
         }
 
-        if (isCoercable(op)) {
-            final double p = op.getCoercableParameter();
+        if (isAdaptable(op)) {
+            final double p = op.getAdaptableParameter();
 
-            final double i = schedule.getOptimizationTransform(MCMCOperator.Utils.getOperationCount(op));
+            final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
+
+            double acceptance;
+            if (useSmoothedAcceptanceProbability) {
+                acceptance = op.getSmoothedAcceptanceProbability();
+            } else {
+                acceptance = Math.exp(logr);
+            }
 
             final double target = op.getTargetAcceptanceProbability();
 
-            final double newp = p + ((1.0 / (i + 1.0)) * (Math.exp(logr) - target));
+            final double newp = p + ((1.0 / i) * (acceptance - target));
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
-                op.setCoercableParameter(newp);
+                op.setAdaptableParameter(newp);
                 if (DEBUG) {
-                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " current: " + acceptance);
                 }
             }
         }
     }
 
-    private boolean isCoercable(CoercableMCMCOperator op) {
+    private boolean isAdaptable(AdaptableMCMCOperator op) {
 
-        return op.getMode() == CoercionMode.COERCION_ON
-                || (op.getMode() != CoercionMode.COERCION_OFF && useCoercion);
+        return op.getMode() == AdaptationMode.ADAPTATION_ON
+                || (op.getMode() != AdaptationMode.ADAPTATION_OFF && useAdaptation);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {

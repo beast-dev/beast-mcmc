@@ -91,11 +91,6 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return "Only works for diagonal column precision matrices for a LatentFactorModel with a gamma prior";
-    }
-
-    @Override
     public String getOperatorName() {
         return "Latent Factor Model Precision Gibbs Operator";
     }

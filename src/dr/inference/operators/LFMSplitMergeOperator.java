@@ -10,7 +10,7 @@ import dr.math.distributions.NormalDistribution;
 /**
  * @author Max Tolkoff
  */
-public class LFMSplitMergeOperator extends AbstractCoercableOperator {
+public class LFMSplitMergeOperator extends AbstractAdaptableOperator {
 
     NormalDistribution drawDistribution;
     AdaptableSizeFastMatrixParameter factors;
@@ -31,7 +31,7 @@ public class LFMSplitMergeOperator extends AbstractCoercableOperator {
                                  AdaptableSizeFastMatrixParameter denseLoadings, AdaptableSizeFastMatrixParameter sparseLoadings,
                                  AdaptableSizeFastMatrixParameter cutoffs, FullyConjugateMultivariateTraitLikelihood tree){
 
-        super(CoercionMode.DEFAULT);
+        super(AdaptationMode.DEFAULT);
         setWeight(weight);
 
         drawDistribution = new NormalDistribution(0, Math.sqrt(initialVariance));
@@ -42,12 +42,6 @@ public class LFMSplitMergeOperator extends AbstractCoercableOperator {
         this.tree = tree;
         GaussianProcessFromTree treeDraw = new GaussianProcessFromTree(tree);
         this.treeDraw = treeDraw;
-    }
-
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override
@@ -100,13 +94,13 @@ public class LFMSplitMergeOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
 //        return Math.log(drawDistribution.getSD());
         return 0;
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 //        drawDistribution.setSD(Math.exp(value));
 
     }
@@ -115,6 +109,11 @@ public class LFMSplitMergeOperator extends AbstractCoercableOperator {
     public double getRawParameter() {
 //        return drawDistribution.getSD();
         return 0;
+    }
+
+    @Override
+    public String getAdaptableParameterName() {
+        return "";
     }
 
     private double increment(){

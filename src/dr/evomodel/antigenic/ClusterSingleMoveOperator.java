@@ -201,9 +201,9 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
     }
 
     public String getPerformanceSuggestion() {
-        if (Utils.getAcceptanceProbability(this) < getMinimumAcceptanceLevel()) {
+        if (getAcceptanceProbability() < getMinimumAcceptanceLevel()) {
             return "";
-        } else if (Utils.getAcceptanceProbability(this) > getMaximumAcceptanceLevel()) {
+        } else if (getAcceptanceProbability() > getMaximumAcceptanceLevel()) {
             return "";
         } else {
             return "";

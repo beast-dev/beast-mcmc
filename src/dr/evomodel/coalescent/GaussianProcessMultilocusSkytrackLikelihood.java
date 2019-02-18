@@ -152,7 +152,7 @@ public class GaussianProcessMultilocusSkytrackLikelihood extends GaussianProcess
 //        numCoalEvents = new double[fieldLength];
 //        storedNumCoalEvents = new double[fieldLength];
 
-//        setupGMRFWeights();
+//        setupGPWeights();
         setupSufficientStatistics();
 
 //        addStatistic(new DeltaStatistic());
@@ -511,7 +511,7 @@ public class GaussianProcessMultilocusSkytrackLikelihood extends GaussianProcess
 //        return logLikelihood + logFieldLikelihood;
     }
 
-//    protected void setupGMRFWeights() {
+//    protected void setupGPWeights() {
 //
 //        //setupSufficientStatistics();
 //

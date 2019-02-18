@@ -40,6 +40,7 @@ import java.util.List;
 /**
  * @author shhn001
  */
+@Deprecated
 public class TreeSpaceLogger {
 
     private String[] trees;

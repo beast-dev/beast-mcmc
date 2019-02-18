@@ -780,6 +780,11 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         String[] lastToken = new String[1];
         HashMap<String, Taxon> translationList = readTranslationList(taxonList, lastToken);
 
+        if (useTaxonListNumbering && translationList.size() != taxonList.getTaxonCount()) {
+            throw new ImportException("Mismatch in taxa count in tree file (" + translationList.size() +
+            ") and <taxa> block (" + taxonList.getTaxonCount() + ")");
+        }
+
         boolean done = false;
         do {
 

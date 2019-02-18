@@ -44,8 +44,8 @@ import dr.evomodel.arg.ARGRatePrior;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -61,7 +61,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  */
 
-public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
+public class ARGAddRemoveEventOperator extends AbstractAdaptableOperator {
 
     public static final String ADD_PROBABILITY = "addProbability";
     public static final String ARG_EVENT_OPERATOR = "ARGEventOperator";
@@ -86,7 +86,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     private ARGRatePrior ratePrior;
 
 
-    //	private int mode = CoercableMCMCOperator.COERCION_OFF;
+    //	private int mode = AdaptableMCMCOperator.ADAPTATION_OFF;
     private CompoundParameter internalNodeParameters;
     private CompoundParameter internalAndRootNodeParameters;
     private CompoundParameter nodeRates;
@@ -94,7 +94,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
     private int tossSize = -1;
 
 
-    public ARGAddRemoveEventOperator(ARGModel arg, int weight, double size, CoercionMode mode,
+    public ARGAddRemoveEventOperator(ARGModel arg, int weight, double size, AdaptationMode mode,
                                      CompoundParameter param1,
                                      CompoundParameter param2,
                                      CompoundParameter param3,
@@ -102,7 +102,7 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
                                      ARGPartitionLikelihood partLike,
                                      ARGRatePrior ratePrior,
                                      int tossSize) {
-        super(mode);
+        super(mode, 0.5);
         this.arg = arg;
         this.size = size;
         this.internalNodeParameters = param1;
@@ -1497,11 +1497,12 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return size;
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         setSize(value);
     }
 
@@ -1509,28 +1510,14 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
         return size;
     }
 
+    @Override
+    public String getAdaptableParameterName() {
+        return null;
+    }
+
 //	public int getMode() {
 //		return mode;
 //	}
-
-    public double getTargetAcceptanceProbability() {
-        return 0.5;
-    }
-
-
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-//		double targetProb = getTargetAcceptanceProbability();
-
-//		double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting addProbability closer to 0.5";
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting addProbability value closer to 0.5";
-        } else return "";
-    }
 
     public String getOperatorName() {
         return ARG_EVENT_OPERATOR;
@@ -1548,16 +1535,16 @@ public class ARGAddRemoveEventOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//			int mode = CoercableMCMCOperator.DEFAULT;
+//			int mode = AdaptableMCMCOperator.DEFAULT;
 //			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 //				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-//					mode = CoercableMCMCOperator.COERCION_ON;
+//					mode = AdaptableMCMCOperator.ADAPTATION_ON;
 //				} else {
-//					mode = CoercableMCMCOperator.COERCION_OFF;
+//					mode = AdaptableMCMCOperator.ADAPTATION_OFF;
 //				}
 //			}
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             ARGModel treeModel = (ARGModel) xo.getChild(ARGModel.class);
 

@@ -37,7 +37,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  * Time: 12:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FactorIndependenceOperator extends AbstractCoercableOperator {
+public class FactorIndependenceOperator extends AbstractAdaptableOperator {
     private static final String FACTOR_OPERATOR = "factorOperator";
     private LatentFactorModel LFM;
     private MatrixParameter diffusionPrecision;
@@ -48,7 +48,7 @@ public class FactorIndependenceOperator extends AbstractCoercableOperator {
     private boolean randomScan;
     private double scaleFactor;
 
-    public FactorIndependenceOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, CoercionMode mode) {
+    public FactorIndependenceOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, AdaptationMode mode) {
         super(mode);
         this.scaleFactor = scaleFactor;
         this.LFM = LFM;
@@ -129,11 +129,6 @@ public class FactorIndependenceOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public String getPerformanceSuggestion() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public String getOperatorName() {
         return FACTOR_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
     }
@@ -166,17 +161,22 @@ public class FactorIndependenceOperator extends AbstractCoercableOperator {
 
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
         return scaleFactor;
+    }
+
+    @Override
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 }

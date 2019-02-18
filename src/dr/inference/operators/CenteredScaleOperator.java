@@ -37,14 +37,14 @@ import dr.math.MathUtils;
 
 // AR - I don't see how this can work...
 @Deprecated
-public class CenteredScaleOperator extends AbstractCoercableOperator {
+public class CenteredScaleOperator extends AbstractAdaptableOperator {
 
     public CenteredScaleOperator(Parameter parameter) {
-        super(CoercionMode.DEFAULT);
+        super(AdaptationMode.DEFAULT);
         this.parameter = parameter;
     }
 
-    public CenteredScaleOperator(Parameter parameter, double scale, int weight, CoercionMode mode) {
+    public CenteredScaleOperator(Parameter parameter, double scale, double weight, AdaptationMode mode) {
         super(mode);
         this.parameter = parameter;
         this.scaleFactor = scale;
@@ -99,11 +99,12 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -111,21 +112,8 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public String toString() {

@@ -27,31 +27,12 @@ package dr.inference.operators;
 
 import dr.inference.model.Likelihood;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
-    public double getTargetAcceptanceProbability() {
-        return targetAcceptanceProb;
-    }
-
-    public void setTargetAcceptanceProbability(double tap) {
-        targetAcceptanceProb = tap;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.05;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.50;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.10;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.40;
-    }
+    public final static int SMOOTHED_ACCEPTANCE_WINDOW_SIZE = 100;
 
     public abstract String getOperatorName();
 
@@ -64,7 +45,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     public void setPathParameter(double beta) {
         throw new IllegalArgumentException("Path parameter has no effect on Metropolis-Hastings kernels." +
-        "\nGibbs samplers need an implementation for use in power-posteriors");
+                "\nGibbs samplers need an implementation for use in power-posteriors");
     }
 
     /**
@@ -88,19 +69,26 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
             acceptCount += 1;
             sumDeviation += deviation;
 
-//            spanDeviation[0] = Math.min(spanDeviation[0], deviation);
-//            spanDeviation[1] = Math.max(spanDeviation[1], deviation);
-//            spanCount += 1;
+            windowAcceptance.addLast(1);
+            if (windowAcceptance.size() > SMOOTHED_ACCEPTANCE_WINDOW_SIZE) {
+                windowAcceptance.removeFirst();
+            }
         } else {
             throw new RuntimeException(
                     "Accept/reject methods called twice without operate called in between!");
         }
     }
 
+
     public void reject() {
         if( !operateAllowed ) {
             operateAllowed = true;
             rejectCount += 1;
+
+            windowAcceptance.addLast(0);
+            if (windowAcceptance.size() > SMOOTHED_ACCEPTANCE_WINDOW_SIZE) {
+                windowAcceptance.removeFirst();
+            }
         } else {
             throw new RuntimeException(
                     "Accept/reject methods called twice without operate called in between!");
@@ -113,6 +101,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         rejectCount = 0;
         lastDeviation = 0.0;
         sumDeviation = 0.0;
+
+        windowAcceptance.clear();
     }
 
     public final long getCount() {
@@ -151,20 +141,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         this.sumDeviation = sumDeviation;
     }
 
-//    public double getSpan(boolean reset) {
-//        double span = 0;
-//        if( spanDeviation[1] > spanDeviation[0] && spanCount > 2000 ) {
-//            span = spanDeviation[1] - spanDeviation[0];
-//
-//            if( reset ) {
-//                spanDeviation[0] = Double.MAX_VALUE;
-//                spanDeviation[1] = -Double.MAX_VALUE;
-//                spanCount = 0;
-//            }
-//        }
-//        return span;
-//    }
-
     public final double operate() {
         if( operateAllowed ) {
             operateAllowed = false;
@@ -185,8 +161,18 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         }
     }
 
+    @Override
     public final double getAcceptanceProbability() {
         return (double) acceptCount / (double) (acceptCount + rejectCount);
+    }
+
+    @Override
+    public final double getSmoothedAcceptanceProbability() {
+        int prob = 0;
+        for (int accept : windowAcceptance) {
+            prob += accept;
+        }
+        return (double) prob / (double) (windowAcceptance.size());
     }
 
     /**
@@ -225,10 +211,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private double lastDeviation = 0.0;
 
     private boolean operateAllowed = true;
-    private double targetAcceptanceProb = 0.234;
 
     private long sumEvaluationTime = 0;
 
-//    private final double[] spanDeviation = {Double.MAX_VALUE, -Double.MAX_VALUE};
-//    private int spanCount = 0;
+    private Deque<Integer> windowAcceptance = new ArrayDeque<Integer>();
 }

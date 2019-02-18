@@ -26,8 +26,8 @@
 package dr.inferencexml.operators;
 
 import dr.inference.model.MatrixParameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.MVOUCovarianceOperator;
 import dr.xml.*;
@@ -48,7 +48,7 @@ public class MVOUCovarianceOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double mixingFactor = xo.getDoubleAttribute(MIXING_FACTOR);
         int priorDf = xo.getIntegerAttribute(PRIOR_DF);
@@ -93,7 +93,7 @@ public class MVOUCovarianceOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MIXING_FACTOR),
             AttributeRule.newIntegerRule(PRIOR_DF),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
 //                new ElementRule(Parameter.class),
 //                new ElementRule(VARIANCE_MATRIX,
 //                        new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),

@@ -27,15 +27,14 @@ package dr.inference.operators.hmc.deprecated;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.*;
-import dr.inference.operators.hmc.deprecated.AbstractHamiltonianMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 
 /**
  * Created by max on 12/2/15.
  */
 @Deprecated
-public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
+public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator {
     private LatentFactorModel lfm;
     private FullyConjugateMultivariateTraitLikelihood tree;
     private MatrixParameterInterface factors;
@@ -50,7 +49,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private Parameter missingIndicator;
 
 
-    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
+    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, AdaptationMode mode, double stepSize, int nSteps, double momentumSd){
         super(mode, momentumSd);
         setWeight(weight);
         this.lfm = lfm;
@@ -69,23 +68,18 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    protected void setAdaptableParameterValue(double value) {
         stepSize = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
         return stepSize;
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override

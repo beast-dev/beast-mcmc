@@ -856,7 +856,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            String name = (!options.useClassicOperatorsAndPriors() ? "rwPInv" : "uniformPInv");
+            String name = (options.usePInvRandomWalk() ? "rwPInv" : "uniformPInv");
             if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1." + name));

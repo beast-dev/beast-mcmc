@@ -32,9 +32,11 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evoxml.util.DataTypeUtils;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -42,6 +44,9 @@ import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 import dr.xml.XORRule;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Filip Bielejec
@@ -53,6 +58,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
     public static final String FROM = "from";
     public static final String TO = "to";
     public static final String EVERY = "every";
+    public static final String DATA_TYPE = "dataType";
 	
 	@Override
 	public String getParserName() {
@@ -75,6 +81,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
         int from = 0;
         int to = -1;
         int every = xo.getAttribute(EVERY, 1);
+        DataType dataType = null;
 		
 		if (xo.hasAttribute(FROM)) {
 			from = xo.getIntegerAttribute(FROM) - 1;
@@ -101,10 +108,40 @@ public class PartitionParser extends AbstractXMLObjectParser {
 					"Illegal 'every' attribute in patterns element");
 		}// END: every check
 
+		if (xo.hasAttribute(DATA_TYPE)){
+			dataType = DataTypeUtils.getDataType(xo);
+		}
+
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 		
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
-		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+
+		//FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+
+		FrequencyModel freqModel;
+
+		List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
+		for (int i = 0; i < xo.getChildCount(); i++) {
+			Object cxo = xo.getChild(i);
+			if (cxo instanceof FrequencyModel) {
+				freqModels.add((FrequencyModel) cxo);
+			}
+		}
+
+		if(freqModels.size()==1){
+			freqModel = freqModels.get(0);
+		}else{
+			double [] freqParameter = new double[freqModels.size()*freqModels.get(0).getFrequencyCount()];
+			int index = 0;
+			for(int i = 0; i < freqModels.size(); i++){
+				for(int j = 0; j < freqModels.get(i).getFrequencyCount(); j++){
+					freqParameter[index] = (freqModels.get(i).getFrequency(j))/freqModels.size();
+					index++;
+				}
+			}
+			freqModel = new FrequencyModel(dataType, freqParameter);
+		}
+
 		Sequence rootSequence = (Sequence) xo.getChild(Sequence.class);
 		
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
@@ -119,8 +156,8 @@ public class PartitionParser extends AbstractXMLObjectParser {
 			branchModel = new HomogeneousBranchModel(substitutionModel);
 		
 		}
-		
-		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every);
+
+		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every, dataType);
 
 		if (rootSequence != null) {
 				partition.setRootSequence(rootSequence);
@@ -145,12 +182,13 @@ public class PartitionParser extends AbstractXMLObjectParser {
 								"Determines how many sites are selected. A value of 3 will select every third site starting from <b>"
 										+ FROM
 										+ "</b>, default is 1 (every site)"), //
+				AttributeRule.newStringRule(DataType.DATA_TYPE, true),
 				new ElementRule(TreeModel.class), //
 				new XORRule(new ElementRule(BranchModel.class),
 						new ElementRule(SubstitutionModel.class), false), //
 				new ElementRule(GammaSiteRateModel.class), //
 				new ElementRule(BranchRateModel.class, true), //
-				new ElementRule(FrequencyModel.class), //
+				new ElementRule(FrequencyModel.class, 1, Integer.MAX_VALUE), //
 				new ElementRule(Sequence.class, true) //
 		};
 		

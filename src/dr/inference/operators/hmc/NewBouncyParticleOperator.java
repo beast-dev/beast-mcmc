@@ -27,21 +27,16 @@ package dr.inference.operators.hmc;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
-import dr.util.Transform;
 
 /**
  * @author Zhenyu Zhang
@@ -76,10 +71,10 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
 
 
-    public NewBouncyParticleOperator(CoercionMode mode, double weight,
+    public NewBouncyParticleOperator(AdaptationMode mode, double weight,
                                      TreeDataLikelihood treeDataLikelihood,
                                      ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                     String traitName,Parameter parameter, double drawVariance) {
+                                     String traitName, Parameter parameter, double drawVariance) {
 
         setWeight(weight);
 
@@ -124,11 +119,6 @@ public class NewBouncyParticleOperator extends SimpleMCMCOperator {
 
         return MultivariateTraitDebugUtilities.getTreeVariance(tree, 1.0,
                 /*Double.POSITIVE_INFINITY*/ priorSampleSize);
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override

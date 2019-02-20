@@ -131,7 +131,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                         double n = Math.abs(numeratorMatrix.component(i, j));
                         double d = Math.abs(otherMatrix.component(i, j));
 
-                        destination.set(i, j, n / (n + d));
+                        if (n == 0 && d == 0) {
+                            destination.set(i, j, 0);
+                        } else {
+                            destination.set(i, j, n / (n + d));
+                        }
 
                     }
                 }
@@ -149,7 +153,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                 Matrix M2 = getMatrixSqrt(M1, true); //M2 = inv(sqrt(numeratorMatrix + otherMatrix))
                 Matrix M3 = M2.product(numeratorMatrix.product(M2));//M3 = inv(sqrt(numeratorMatrix + otherMatrix)) *
                 //                                            numeratorMatrix * inv(sqrt(numeratorMatrix + otherMatrix))
-                System.arraycopy(M3, 0, destination, 0, dim * dim);
+                for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++) {
+                        destination.set(i, j, M3.component(i, j));
+                    }
+                }
 
             }
         };
@@ -197,7 +205,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     private void updateVarianceComponents() {
 
-        int n = tree.getExternalNodeCount();
+        double n = tree.getExternalNodeCount();
 
         double diffusionScale = (treeSums.diagonalSum / n - treeSums.totalSum / (n * n));
         double samplingScale = (n - 1) / n;

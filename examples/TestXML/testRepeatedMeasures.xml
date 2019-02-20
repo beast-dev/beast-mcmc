@@ -90,9 +90,7 @@
 		<matrixParameter idref="precisionMatrix"/>
 	</matrixInverse>
 
-	<varianceProportionStatistic id="varianceLog"
-								 computeOffDiagonal="true"
-								 removeMissingBranches="true">
+	<varianceProportionStatistic id="varianceLog" matrixRatio="symmetricDivision">
 		<traitDataLikelihood idref="traitLikelihood"/>
 		<treeModel idref = "treeModel"/>
 		<repeatedMeasuresModel idref = "repeatedMeasures"/>
@@ -198,12 +196,13 @@
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
-			<column label="Sampling Precision" dp="4" width="12">
-				<matrixParameter idref="samplingPrecision"/>
-			</column>
-			<column label="Trait Precision" dp="4" width="12">
-				<matrixParameter idref="precisionMatrix"/>
-			</column>
+			<!--<column label="Sampling Precision" dp="4" width="12">-->
+				<!--<matrixParameter idref="samplingPrecision"/>-->
+			<!--</column>-->
+			<!--<column label="Trait Precision" dp="4" width="12">-->
+				<!--<matrixParameter idref="precisionMatrix"/>-->
+			<!--</column>-->
+			<variancePorportionStatistic idref="varianceLog"/>
 		</log>
 		<log id="fileLog" logEvery="100" fileName="precision_log.log">
 			<posterior idref="posterior"/>

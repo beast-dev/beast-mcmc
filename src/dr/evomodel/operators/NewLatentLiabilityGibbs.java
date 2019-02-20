@@ -82,6 +82,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     //    private MaskIndices maskIndices;
     private final MaskIndicesDelegate maskDelegate;
     private final Boolean missingByColumn;
+    private final int[] needSampling;
 
     private double[] fcdMean;
     private double[][] fcdPrecision;
@@ -113,6 +114,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         this.missingByColumn = missingByColumn;
         this.mask = mask;
         this.maskDelegate = new MaskIndicesDelegate();
+        this.needSampling = setupNeedSampling();
 //        setupMaskDelegate();
 //        setupmask();
         this.fcdMean = new double[dim];
@@ -130,8 +132,11 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     public double doOperation() {
 
-        final int pos = MathUtils.nextInt(treeModel.getExternalNodeCount());
-        NodeRef node = treeModel.getExternalNode(pos);
+        final int m = needSampling.length;
+        final int pos = MathUtils.nextInt(m);
+
+
+        NodeRef node = treeModel.getExternalNode(needSampling[pos]);
 
         final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(treeModel, node);
         final WrappedNormalSufficientStatistics statistic = allStatistics.get(0);
@@ -405,6 +410,22 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
         }
 
 
+    }
+
+    private int[] setupNeedSampling() {
+        int n = treeModel.getExternalNodeCount();
+        List<Integer> sampleList = new ArrayList<Integer>();
+
+        for (int i = 0; i < n; i++) {
+
+            int obsDim = maskDelegate.getObservedIndices(i).length;
+
+            if (obsDim != dim) {
+                sampleList.add(i);
+            }
+        }
+
+        return convertListToArray(sampleList);
     }
 
     @SuppressWarnings("unchecked")

@@ -564,7 +564,7 @@ public class MissingOps {
                     int index = zeroIndices[i];
                     destination.set(index, index, Double.POSITIVE_INFINITY);
                 }
-                
+
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
             }
         }
@@ -752,15 +752,18 @@ public class MissingOps {
                                        final double[] tmp) {
         weightedSum(ipartial, ibo, Pi, jpartial, jbo, Pj, dimTrait, tmp);
         for (int g = 0; g < dimTrait; ++g) {
-            double sum = 0.0;
-            for (int h = 0; h < dimTrait; ++h) {
-                // TODO Fix conditions
-                if (!Double.isInfinite(Vk.unsafe_get(g, g)) && !Double.isInfinite(Vk.unsafe_get(h, h))) {
-                    sum += Vk.unsafe_get(g, h) * tmp[h];
+            if (!Double.isInfinite(Vk.unsafe_get(g, g))) {
+                double sum = 0.0;
+                for (int h = 0; h < dimTrait; ++h) {
+                    if (!Double.isInfinite(Vk.unsafe_get(h, h))) {
+
+                        sum += Vk.unsafe_get(g, h) * tmp[h];
+
+                    }
                 }
+                kpartial[kbo + g] = sum;
 
             }
-            kpartial[kbo + g] = sum;
         }
     }
 

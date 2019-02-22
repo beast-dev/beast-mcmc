@@ -4,17 +4,18 @@ import org.ejml.data.DenseMatrix64F;
 
 public class PermutationIndices {
 
-    final DenseMatrix64F matrix;
-    final int dim;
+    private final DenseMatrix64F matrix;
+    private final int dim;
 
-    int zeroCount;
-    int nonZeroFiniteCount;
-    int infiniteCount;
+    private int zeroCount;
+    private int nonZeroFiniteCount;
+    private int infiniteCount;
 
-    int[] nonZeroFiniteIndices;
-    int[] zeroIndices;
+    private int[] nonZeroFiniteIndices;
+    private int[] zeroIndices;
+    private int[] infiniteIndices;
 
-    public PermutationIndices(DenseMatrix64F matrix) {
+    PermutationIndices(DenseMatrix64F matrix) {
 
         this.matrix = matrix;
         dim = matrix.getNumCols();
@@ -32,6 +33,7 @@ public class PermutationIndices {
         }
     }
 
+    @SuppressWarnings("unused")
     public int getNumberOfZeroDiagonals() {
         return zeroCount;
     }
@@ -40,6 +42,7 @@ public class PermutationIndices {
         return nonZeroFiniteCount;
     }
 
+    @SuppressWarnings("unused")
     public int getNumberOfInfiniteDiagonals() {
         return infiniteCount;
     }
@@ -58,17 +61,28 @@ public class PermutationIndices {
         return zeroIndices;
     }
 
+    @SuppressWarnings("unused")
+    public int[] getInfiniteIndices() {
+        if (infiniteIndices == null) {
+            makeIndices();
+        }
+        return infiniteIndices;
+    }
+
     private void makeIndices() {
         nonZeroFiniteIndices = new int[nonZeroFiniteCount];
         zeroIndices = new int[zeroCount];
+        infiniteIndices = new int[infiniteCount];
 
         int zeroIndex = 0;
         int nonZeroFiniteIndex = 0;
+        int infiniteIndex = 0;
 
         for (int i = 0; i < dim; ++i) {
             double diagonal = matrix.get(i, i);
             if (Double.isInfinite(diagonal)) {
-                // Do nothing, unless we ever need infiniteIndices
+                infiniteIndices[infiniteIndex] = i;
+                ++infiniteIndex;
             } else if (diagonal == 0.0) {
                 zeroIndices[zeroIndex] = i;
                 ++zeroIndex;

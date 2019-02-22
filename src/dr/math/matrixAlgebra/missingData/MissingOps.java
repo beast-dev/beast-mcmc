@@ -14,9 +14,7 @@ import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.SingularOps;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
 import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
@@ -416,74 +414,7 @@ public class MissingOps {
 
         return result;
     }
-
-//    public static InversionResult safeInvert(ReadableMatrix source, WritableMatrix destination, boolean getDeterminant) {
-//
-//        final int dim = source.getMajorDim();
-//        final int finiteCount = countFiniteNonZeroDiagonals(source);
-//        double det = 0;
-//
-//        if (finiteCount == dim) {
-//
-//            DenseMatrix64F result = new DenseMatrix64F(dim, dim);
-//            DenseMatrix64F copyOfSource = copy(source);
-//            if (getDeterminant) {
-//                det = invertAndGetDeterminant(copyOfSource, result);
-//            } else {
-//                CommonOps.invert(copyOfSource, result);
-//            }
-//
-//            copy(result, destination);
-//
-//            return new InversionResult(FULLY_OBSERVED, dim, det);
-//        }
-//
-//        return null;
-//    }
-
-
-//TODO: deprecate class in favor of lazy PermutationIndices
-
-    private static class MissingPartition {
-        final int[] fInds;
-        final int[] zInds;
-        final int[] infInds;
-
-        private MissingPartition(DenseMatrix64F matrix) {
-            int dim = matrix.numCols;
-            assert (dim == matrix.numRows);
-            final List<Integer> finiteIndices = new ArrayList<Integer>();
-            final List<Integer> zeroIndices = new ArrayList<Integer>();
-            final List<Integer> infiniteIndices = new ArrayList<Integer>();
-            for (int i = 0; i < dim; i++) {
-                double x = matrix.get(i, i);
-                if (x == 0) {
-                    zeroIndices.add(i);
-                } else if (Double.isInfinite(x)) {
-                    infiniteIndices.add(i);
-                } else {
-                    finiteIndices.add(i);
-                }
-            }
-
-            this.fInds = new int[finiteIndices.size()];
-            for (int i = 0; i < finiteIndices.size(); i++) {
-                fInds[i] = finiteIndices.get(i);
-            }
-
-            this.zInds = new int[zeroIndices.size()];
-            for (int i = 0; i < zeroIndices.size(); i++) {
-                zInds[i] = zeroIndices.get(i);
-            }
-
-            this.infInds = new int[infiniteIndices.size()];
-            for (int i = 0; i < infiniteIndices.size(); i++) {
-                infInds[i] = infiniteIndices.get(i);
-            }
-
-        }
-    }
-
+    
     public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 
         final int dim = source.getNumCols();

@@ -34,6 +34,7 @@ import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -67,7 +68,7 @@ public class MultivariateTraitDebugUtilities {
 
     public static void insertPrecision(Tree tree, NodeRef parent, NodeRef child, double[][] matrix, double normalization) {
         matrix[parent.getNumber()][child.getNumber()] =
-                           matrix[child.getNumber()][parent.getNumber()] =-1.0 / (tree.getBranchLength(child) * normalization);
+                matrix[child.getNumber()][parent.getNumber()] = -1.0 / (tree.getBranchLength(child) * normalization);
         recurseGraph(tree, child, matrix, normalization);
 
     }
@@ -203,5 +204,96 @@ public class MultivariateTraitDebugUtilities {
             }
             return loadingsFactorsVariance;
         }
+    }
+
+    private enum Accumulator {
+
+        OFF_DIAGONAL {
+            @Override
+            BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                      BranchCumulant cumulant1, double length1) {
+                return new BranchCumulant(
+                        cumulant0.nTaxa + cumulant1.nTaxa,
+                        cumulant0.sharedLength + cumulant1.sharedLength +
+                                (cumulant0.nTaxa - 1) * cumulant0.nTaxa * length0 +
+                                (cumulant1.nTaxa - 1) * cumulant1.nTaxa * length1
+                );
+            }
+        },
+        DIAGONAL {
+            @Override
+            BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                      BranchCumulant cumulant1, double length1) {
+                return new BranchCumulant(
+                        cumulant0.nTaxa + cumulant1.nTaxa,
+                        cumulant0.sharedLength + cumulant1.sharedLength +
+                                cumulant0.nTaxa * length0 +
+                                cumulant1.nTaxa * length1
+                );
+            }
+        };
+
+        abstract BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                           BranchCumulant cumulant1, double length1);
+
+        private class BranchCumulant {
+
+            final int nTaxa;
+            final double sharedLength;
+
+            BranchCumulant(int nTaxa, double sharedLength) {
+                this.nTaxa = nTaxa;
+                this.sharedLength = sharedLength;
+            }
+        }
+
+
+        private BranchCumulant postOrderAccumulation(Tree tree,
+                                                     NodeRef node,
+                                                     BranchRates branchRates) {
+            if (tree.isExternal(node)) {
+
+                return new BranchCumulant(1, 0);
+
+            } else {
+
+                NodeRef child0 = tree.getChild(node, 0);
+                NodeRef child1 = tree.getChild(node, 1);
+
+                BranchCumulant cumulant0 = postOrderAccumulation(tree, child0, branchRates);
+                BranchCumulant cumulant1 = postOrderAccumulation(tree, child1, branchRates);
+
+                double length0 = tree.getBranchLength(child0);
+                double length1 = tree.getBranchLength(child1);
+
+                if (branchRates != null) {
+                    length0 *= branchRates.getBranchRate(tree, child0);
+                    length1 *= branchRates.getBranchRate(tree, child1);
+                }
+
+                return accumulate(
+                        cumulant0, length0,
+                        cumulant1, length1
+                );
+            }
+        }
+    }
+
+    public static double getVarianceOffDiagonalSum(Tree tree,
+                                                   BranchRates branchRates,
+                                                   double normalization) {
+
+        Accumulator.BranchCumulant cumulant = Accumulator.OFF_DIAGONAL.postOrderAccumulation(
+                tree, tree.getRoot(), branchRates);
+        return cumulant.sharedLength * normalization;
+    }
+
+    public static double getVarianceDiagonalSum(Tree tree,
+                                                BranchRates branchRates,
+                                                double normalization) {
+
+        Accumulator.BranchCumulant cumulant = Accumulator.DIAGONAL.postOrderAccumulation(
+                tree, tree.getRoot(), branchRates);
+        return cumulant.sharedLength * normalization;
     }
 }

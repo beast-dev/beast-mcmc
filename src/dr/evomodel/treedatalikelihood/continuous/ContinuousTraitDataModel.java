@@ -36,12 +36,15 @@ import java.util.*;
 public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
 
     private final CompoundParameter parameter;
+    //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
     private final List<Integer> missingIndices;
     private final List<Integer> originalMissingIndices;
 
     final int numTraits;
     final int dimTrait;
     private final PrecisionType precisionType;
+
+    private final boolean[] missingVector;
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
@@ -57,6 +60,15 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.dimTrait = dimTrait;
         this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
         this.precisionType = precisionType;
+
+        boolean[] missingVector = null;
+        if (useMissingIndices == true){
+            missingVector = new boolean[parameter.getDimension()];
+            for (int index : missingIndices){
+                missingVector[index] = true;
+            }
+        }
+        this.missingVector = missingVector;
     }
 
     public boolean bufferTips() { return true; }
@@ -74,6 +86,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public CompoundParameter getParameter() { return parameter; }
 
     public List<Integer> getMissingIndices() { return missingIndices; }
+
+    public boolean[] getMissingVector() {return missingVector; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
@@ -175,7 +189,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
                 partial[offset + j] = p.getParameterValue(pIndex);
 
-                final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
+                final boolean missing = missingVector != null && missingVector[missingIndex];
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);

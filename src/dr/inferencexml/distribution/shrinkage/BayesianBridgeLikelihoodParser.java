@@ -23,32 +23,47 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.distribution;
+package dr.inferencexml.distribution.shrinkage;
 
-import dr.inference.distribution.ScaleMixtureOfNormalsDistributionModel;
+import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
+import dr.inference.distribution.shrinkage.JointBayesianBridge;
+import dr.inference.distribution.shrinkage.MarginalBayesianBridge;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class ScaledMixtureOfNormalsDistributionModelParser extends AbstractXMLObjectParser {
+public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
-    private static final String MIXTURE_DISTRIBUTION_MODEL = "scaledMixtureOfNormalsDistributionModel";
+    public static final String BAYESIAN_BRIDGE = "bayesianBridge";
     private static final String GLOBAL_SCALE = "globalScale";
     private static final String LOCAL_SCALE = "localScale";
+    private static final String EXPONENT = "exponent";
 
     public String getParserName() {
-        return MIXTURE_DISTRIBUTION_MODEL;
+        return BAYESIAN_BRIDGE;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        Parameter coefficients = (Parameter) xo.getChild(Parameter.class);
+
         XMLObject globalXo = xo.getChild(GLOBAL_SCALE);
-        Parameter globalParameter = (Parameter) globalXo.getChild(Parameter.class);
+        Parameter globalScale = (Parameter) globalXo.getChild(Parameter.class);
 
-        XMLObject localXo = xo.getChild(LOCAL_SCALE);
-        Parameter localParameter = (Parameter) localXo.getChild(Parameter.class);
+        Parameter localScale = null;
+        if (xo.hasChildNamed(LOCAL_SCALE)) {
+            XMLObject localXo = xo.getChild(LOCAL_SCALE);
+            localScale = (Parameter) localXo.getChild(Parameter.class);
+        }
 
-        return new ScaleMixtureOfNormalsDistributionModel(globalParameter, localParameter);
+        XMLObject exponentXo = xo.getChild(EXPONENT);
+        Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
+
+        if (localScale != null) {
+            return new JointBayesianBridge(coefficients, globalScale, localScale, exponent);
+        } else {
+            return new MarginalBayesianBridge(coefficients, globalScale, exponent);
+        }
     }
 
     //************************************************************************
@@ -60,10 +75,13 @@ public class ScaledMixtureOfNormalsDistributionModelParser extends AbstractXMLOb
     }
 
     private final XMLSyntaxRule[] rules = {
+            new ElementRule(Parameter.class),
             new ElementRule(GLOBAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(EXPONENT,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
-                    new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+                    new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
     };
 
     public String getParserDescription() {
@@ -72,7 +90,6 @@ public class ScaledMixtureOfNormalsDistributionModelParser extends AbstractXMLOb
     }
 
     public Class getReturnType() {
-        return ScaleMixtureOfNormalsDistributionModel.class;
+        return BayesianBridgeLikelihood.class;
     }
-
 }

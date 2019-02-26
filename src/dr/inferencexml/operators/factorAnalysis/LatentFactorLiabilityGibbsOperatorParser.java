@@ -1,4 +1,4 @@
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.evomodel.continuous.OrderedLatentLiabilityLikelihood;
 import dr.inference.model.LatentFactorModel;

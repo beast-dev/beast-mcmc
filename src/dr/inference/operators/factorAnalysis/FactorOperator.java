@@ -23,9 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.inference.model.*;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;

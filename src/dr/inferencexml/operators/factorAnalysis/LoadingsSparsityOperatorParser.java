@@ -1,8 +1,8 @@
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.operators.LoadingsGibbsTruncatedOperator;
-import dr.inference.operators.LoadingsSparsityOperator;
+import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
+import dr.inference.operators.factorAnalysis.LoadingsSparsityOperator;
 import dr.xml.*;
 
 public class LoadingsSparsityOperatorParser extends AbstractXMLObjectParser {

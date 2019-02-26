@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
@@ -31,8 +31,8 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.operators.LoadingsGibbsOperator;
-import dr.inference.operators.LoadingsGibbsTruncatedOperator;
+import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
+import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
 import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
 import dr.xml.*;

@@ -1,12 +1,14 @@
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.inference.distribution.RowDimensionPoissonPrior;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
-import dr.inference.model.LatentFactorModel;
 import dr.inference.model.Likelihood;
 import dr.inference.operators.*;
+import dr.inference.operators.factorAnalysis.FactorRJMCMCOperator;
+import dr.inference.operators.factorAnalysis.FactorTreeGibbsOperator;
+import dr.inference.operators.factorAnalysis.LoadingsSparsityOperator;
 import dr.xml.*;
 
 /**

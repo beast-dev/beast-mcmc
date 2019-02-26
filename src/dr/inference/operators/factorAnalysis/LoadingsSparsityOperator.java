@@ -1,9 +1,11 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.operators.SimpleMCMCOperator;
+import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
 import dr.math.MathUtils;
 
-public class LoadingsSparsityOperator extends SimpleMCMCOperator{
+public class LoadingsSparsityOperator extends SimpleMCMCOperator {
     public LoadingsSparsityOperator(double weight, LoadingsGibbsTruncatedOperator loadingsGibbs, MatrixParameterInterface sparse){
 
         setWeight(weight);

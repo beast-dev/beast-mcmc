@@ -1,9 +1,12 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.continuous.GibbsSampleFromTreeInterface;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.PathDependent;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.Matrix;

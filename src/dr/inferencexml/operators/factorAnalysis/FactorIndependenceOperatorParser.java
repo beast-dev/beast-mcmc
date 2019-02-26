@@ -1,5 +1,5 @@
 /*
- * FactorGibbsOperatorParser.java
+ * FactorIndependenceOperatorParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,31 +23,36 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.FactorGibbsOperator;
+import dr.inference.operators.AdaptationMode;
+import dr.inference.operators.factorAnalysis.FactorIndependenceOperator;
 import dr.xml.*;
 
 /**
  * @author Max Tolkoff
  */
-public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
-    private final String FACTOR_GIBBS_SAMPLER = "factorGibbsOperator";
+public class FactorIndependenceOperatorParser extends AbstractXMLObjectParser {
+    private final String FACTOR_INDEPENDENCE_OPERATOR = "factorIndependenceOperator";
     private final String WEIGHT = "weight";
     private final String RANDOM_SCAN = "randomScan";
+    private final String SCALE_FACTOR = "scaleFactor";
 
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
+        String scaleFactorTemp = (String) xo.getAttribute(SCALE_FACTOR);
+        double scaleFactor = Double.parseDouble(scaleFactorTemp);
         String weightTemp = (String) xo.getAttribute(WEIGHT);
         double weight = Double.parseDouble(weightTemp);
         DiagonalMatrix diffusionMatrix;
         diffusionMatrix = (DiagonalMatrix) xo.getChild(DiagonalMatrix.class);
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
-        return new FactorGibbsOperator(LFM, weight, randomScan, diffusionMatrix);
+        return new FactorIndependenceOperator(LFM, weight, randomScan, diffusionMatrix, scaleFactor, mode);
     }
 
     @Override
@@ -60,6 +65,7 @@ public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
 //            new ElementRule(CompoundParameter.class),
             new ElementRule(DiagonalMatrix.class),
             AttributeRule.newDoubleRule(WEIGHT),
+            AttributeRule.newDoubleRule(SCALE_FACTOR),
     };
 
     @Override
@@ -69,11 +75,11 @@ public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return FactorGibbsOperator.class;
+        return FactorIndependenceOperator.class;
     }
 
     @Override
     public String getParserName() {
-        return FACTOR_GIBBS_SAMPLER;
+        return FACTOR_INDEPENDENCE_OPERATOR;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * FactorOperatorParser.java
+ * LatentFactorModelPrecisionGibbsOperatorParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,36 +23,39 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
-import dr.inference.model.DiagonalMatrix;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.FactorOperator;
+import dr.inference.operators.LatentFactorModelPrecisionGibbsOperator;
 import dr.xml.*;
 
 /**
- * @author Max Tolkoff
+ * Created by max on 6/12/14.
  */
-public class FactorOperatorParser extends AbstractXMLObjectParser {
-    private final String FACTOR_OPERATOR = "factorOperator";
-    private final String WEIGHT = "weight";
-    private final String RANDOM_SCAN = "randomScan";
-    private final String SCALE_FACTOR = "scaleFactor";
+public class LatentFactorModelPrecisionGibbsOperatorParser extends AbstractXMLObjectParser {
+    public final String LATENT_FACTOR_MODEL_PRECISION_OPERATOR = "latentFactorModelPrecisionOperator";
+    public final String WEIGHT = "weight";
+    public final String RANDOM_SCAN = "randomScan";
+    public final String PATH_PARAMETER = "pathParameter";
 
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        AdaptationMode mode = AdaptationMode.parseMode(xo);
-        String scaleFactorTemp = (String) xo.getAttribute(SCALE_FACTOR);
-        double scaleFactor = Double.parseDouble(scaleFactorTemp);
         String weightTemp = (String) xo.getAttribute(WEIGHT);
         double weight = Double.parseDouble(weightTemp);
-        DiagonalMatrix diffusionMatrix;
-        diffusionMatrix = (DiagonalMatrix) xo.getChild(DiagonalMatrix.class);
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
+        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
-        return new FactorOperator(LFM, weight, randomScan, diffusionMatrix, scaleFactor, mode);
+        LatentFactorModelPrecisionGibbsOperator lfmOp = new LatentFactorModelPrecisionGibbsOperator(LFM, prior, weight, randomScan);
+        if(xo.hasAttribute(PATH_PARAMETER)){
+            System.out.println("WARNING: Setting Path Parameter is intended for debugging purposes only!");
+            lfmOp.setPathParameter(xo.getDoubleAttribute(PATH_PARAMETER));
+        }
+
+        return lfmOp;
+
+
     }
 
     @Override
@@ -62,24 +65,24 @@ public class FactorOperatorParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LatentFactorModel.class),
+            new ElementRule(DistributionLikelihood.class),
 //            new ElementRule(CompoundParameter.class),
-            new ElementRule(DiagonalMatrix.class),
             AttributeRule.newDoubleRule(WEIGHT),
-            AttributeRule.newDoubleRule(SCALE_FACTOR),
+            AttributeRule.newDoubleRule(PATH_PARAMETER, true),
     };
 
     @Override
     public String getParserDescription() {
-        return null;
+        return "Gibbs sampler for the precision of a factor analysis model";
     }
 
     @Override
     public Class getReturnType() {
-        return FactorOperator.class;
+        return LatentFactorModelPrecisionGibbsOperator.class;
     }
 
     @Override
     public String getParserName() {
-        return FACTOR_OPERATOR;
+        return LATENT_FACTOR_MODEL_PRECISION_OPERATOR;
     }
 }

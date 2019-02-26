@@ -23,12 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.LoadingsIndependenceOperator;
+import dr.inference.operators.factorAnalysis.LoadingsIndependenceOperator;
 import dr.xml.*;
 
 /**

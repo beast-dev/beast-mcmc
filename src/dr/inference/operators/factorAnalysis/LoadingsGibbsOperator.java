@@ -23,13 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.PathDependent;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;

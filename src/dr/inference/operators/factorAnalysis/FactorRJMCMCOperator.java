@@ -1,15 +1,18 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.*;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.LatentFactorModelPrecisionGibbsOperator;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
 /**
  * Created by max on 4/29/16.
  */
-public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOperator{
+public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOperator {
 
     GaussianProcessFromTree randomTree;
     AdaptableSizeFastMatrixParameter factors;

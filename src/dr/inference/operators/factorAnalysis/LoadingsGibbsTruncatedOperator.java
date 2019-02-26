@@ -1,9 +1,12 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LatentFactorModelInterface;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.PathDependent;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -11,7 +14,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 /**
  * Created by max on 2/4/16.
  */
-public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements PathDependent, GibbsOperator{
+public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implements PathDependent, GibbsOperator {
     Likelihood prior;
     LatentFactorModelInterface LFM;
     double[][] precisionArray;

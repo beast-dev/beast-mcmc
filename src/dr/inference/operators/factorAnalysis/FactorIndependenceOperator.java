@@ -1,5 +1,5 @@
 /*
- * FactorGibbsOperator.java
+ * FactorIndependenceOperator.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,9 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.inference.model.*;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -37,8 +39,8 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  * Time: 12:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
-    private static final String FACTOR_GIBBS_OPERATOR = "factorGibbsOperator";
+public class FactorIndependenceOperator extends AbstractAdaptableOperator {
+    private static final String FACTOR_OPERATOR = "factorOperator";
     private LatentFactorModel LFM;
     private MatrixParameter diffusionPrecision;
     double[][] precision;
@@ -46,8 +48,11 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     double[] midMean;
     private int numFactors;
     private boolean randomScan;
+    private double scaleFactor;
 
-    public FactorGibbsOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision) {
+    public FactorIndependenceOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, AdaptationMode mode) {
+        super(mode);
+        this.scaleFactor = scaleFactor;
         this.LFM = LFM;
         setWeight(weight);
         this.randomScan = randomScan;
@@ -127,14 +132,14 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
 
     @Override
     public String getOperatorName() {
-        return FACTOR_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
+        return FACTOR_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void randomDraw(int i, double[][] variance) {
         double[] nextValue;
         getMean(i, variance, midMean, mean);
 
-        nextValue = MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
+        nextValue = MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance, scaleFactor);
 
         copy(nextValue, i);
     }
@@ -157,4 +162,23 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     }
 
 
+    @Override
+    public double getAdaptableParameter() {
+        return Math.log(scaleFactor);
+    }
+
+    @Override
+    public void setAdaptableParameter(double value) {
+        scaleFactor = Math.exp(value);
+    }
+
+    @Override
+    public double getRawParameter() {
+        return scaleFactor;
+    }
+
+    @Override
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
+    }
 }

@@ -27,7 +27,7 @@ package dr.inferencexml.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.LatentFactorModelPrecisionGibbsOperator;
+import dr.inference.operators.factorAnalysis.LatentFactorModelPrecisionGibbsOperator;
 import dr.xml.*;
 
 /**

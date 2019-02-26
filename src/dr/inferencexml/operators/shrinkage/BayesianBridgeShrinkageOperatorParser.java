@@ -1,12 +1,13 @@
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.shrinkage;
 
 import dr.inference.distribution.IndependentInverseGammaDistributionModel;
-import dr.inference.distribution.ShrinkageGibbsOperator;
 import dr.inference.model.Parameter;
+import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.xml.*;
 
-public class ShrinkageGibbsOperatorParser extends AbstractXMLObjectParser{
-    private final static String SHRINKAGE_GIBBS_OPERATOR = "shrinkageGibbsOperator";
+public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectParser {
+
+    private final static String BAYESIAN_BRIDGE_PARSER = "shrinkageGibbsOperator";
     private final static String LOCAL_PRIOR = "localPrior";
     private final static String GLOBAL_PRIOR = "globalPrior";
     private final static String DATA = "data";
@@ -14,14 +15,7 @@ public class ShrinkageGibbsOperatorParser extends AbstractXMLObjectParser{
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        IndependentInverseGammaDistributionModel localPrior = (IndependentInverseGammaDistributionModel) xo.getChild(LOCAL_PRIOR).getChild(IndependentInverseGammaDistributionModel.class);
-        IndependentInverseGammaDistributionModel globalPrior = (IndependentInverseGammaDistributionModel) xo.getChild(GLOBAL_PRIOR).getChild(IndependentInverseGammaDistributionModel.class);
-        Parameter data = (Parameter) xo.getChild(DATA).getChild(Parameter.class);
-
-        double weight = xo.getDoubleAttribute(WEIGHT);
-
-
-        return new ShrinkageGibbsOperator(weight, localPrior, globalPrior, data);
+        return new BayesianBridgeShrinkageOperator();
     }
 
     @Override
@@ -49,11 +43,11 @@ public class ShrinkageGibbsOperatorParser extends AbstractXMLObjectParser{
 
     @Override
     public Class getReturnType() {
-        return ShrinkageGibbsOperator.class;
+        return BayesianBridgeShrinkageOperator.class;
     }
 
     @Override
     public String getParserName() {
-        return SHRINKAGE_GIBBS_OPERATOR;
+        return BAYESIAN_BRIDGE_PARSER;
     }
 }

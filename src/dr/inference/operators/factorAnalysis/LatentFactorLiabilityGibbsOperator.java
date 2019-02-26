@@ -1,17 +1,19 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.continuous.OrderedLatentLiabilityLikelihood;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 
 /**
  * Created by Max on 9/1/16.
  */
-public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
+public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     LatentFactorModel lfm;
     OrderedLatentLiabilityLikelihood liabilityLikelihood;

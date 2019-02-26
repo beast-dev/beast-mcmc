@@ -1,8 +1,8 @@
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
-import dr.inference.operators.LFMSplitMergeOperator;
+import dr.inference.operators.factorAnalysis.LFMSplitMergeOperator;
 import dr.xml.*;
 
 /**

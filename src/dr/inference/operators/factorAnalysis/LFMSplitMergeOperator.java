@@ -1,8 +1,10 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.NormalDistribution;

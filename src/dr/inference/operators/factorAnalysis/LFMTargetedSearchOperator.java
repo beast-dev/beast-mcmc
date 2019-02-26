@@ -1,8 +1,9 @@
-package dr.inference.operators;
+package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 

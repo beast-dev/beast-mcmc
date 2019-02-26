@@ -8,6 +8,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.operators.*;
 import dr.inference.operators.factorAnalysis.FactorRJMCMCOperator;
 import dr.inference.operators.factorAnalysis.FactorTreeGibbsOperator;
+import dr.inference.operators.factorAnalysis.LatentFactorModelPrecisionGibbsOperator;
 import dr.inference.operators.factorAnalysis.LoadingsSparsityOperator;
 import dr.xml.*;
 

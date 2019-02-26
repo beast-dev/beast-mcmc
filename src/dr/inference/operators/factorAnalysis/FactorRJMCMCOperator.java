@@ -2,10 +2,8 @@ package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.DeterminentalPointProcessPrior;
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.*;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.LatentFactorModelPrecisionGibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 

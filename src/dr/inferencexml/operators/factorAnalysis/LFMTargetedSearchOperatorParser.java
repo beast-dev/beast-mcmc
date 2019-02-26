@@ -1,10 +1,7 @@
-package dr.inferencexml.operators;
+package dr.inferencexml.operators.factorAnalysis;
 
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
-import dr.inference.operators.LFMTargetedSearchOperator;
-import dr.util.Transform;
+import dr.inference.operators.factorAnalysis.LFMTargetedSearchOperator;
 import dr.xml.*;
 
 import java.util.*;

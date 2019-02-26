@@ -2,7 +2,7 @@ package dr.inferencexml.operators.factorAnalysis;
 
 import dr.evomodel.continuous.OrderedLatentLiabilityLikelihood;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.LatentFactorLiabilityGibbsOperator;
+import dr.inference.operators.factorAnalysis.LatentFactorLiabilityGibbsOperator;
 import dr.xml.*;
 
 /**

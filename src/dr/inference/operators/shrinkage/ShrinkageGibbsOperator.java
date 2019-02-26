@@ -1,5 +1,6 @@
-package dr.inference.distribution;
+package dr.inference.operators.shrinkage;
 
+import dr.inference.distribution.IndependentInverseGammaDistributionModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;

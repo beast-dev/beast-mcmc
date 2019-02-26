@@ -1,7 +1,7 @@
 package dr.inferencexml.operators.shrinkage;
 
 import dr.inference.distribution.IndependentInverseGammaDistributionModel;
-import dr.inference.distribution.ShrinkageGibbsOperator;
+import dr.inference.operators.shrinkage.ShrinkageGibbsOperator;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

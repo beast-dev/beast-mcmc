@@ -1,6 +1,7 @@
 package dr.math.matrixAlgebra.missingData;
 
 import dr.inference.model.MatrixParameterInterface;
+import dr.math.Polynomial;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
@@ -414,7 +415,7 @@ public class MissingOps {
 
         return result;
     }
-    
+
     public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 
         final int dim = source.getNumCols();
@@ -459,11 +460,11 @@ public class MissingOps {
 
         final int dim = source.getNumCols();
         final PermutationIndices permutationIndices = new PermutationIndices(source);
-        final int finiteCount = permutationIndices.getNumberOfNonZeroFiniteDiagonals();
+        final int finiteNonZeroCount = permutationIndices.getNumberOfNonZeroFiniteDiagonals();
 
         double det = 0;
 
-        if (finiteCount == dim) {
+        if (finiteNonZeroCount == dim) {
             if (getDeterminant) {
                 det = invertAndGetDeterminant(source, destination);
             } else {
@@ -471,18 +472,48 @@ public class MissingOps {
             }
             return new InversionResult(FULLY_OBSERVED, dim, det);
         } else {
-            if (finiteCount == 0) {
-                Arrays.fill(destination.getData(), 0);
-                return new InversionResult(NOT_OBSERVED, 0, 0);
+            Arrays.fill(destination.getData(), 0);
+            if (finiteNonZeroCount == 0) {
+                //TODO: should NOT_OBSERVED vs FULLY_OBSERVED depend on whether this is a variance vs precision matrix?
+                int infCount = permutationIndices.getNumberOfInfiniteDiagonals();
+
+                if (infCount == dim) { //All infinity on diagonals of original matrix
+
+                    return new InversionResult(NOT_OBSERVED, 0, 0);
+
+                } else {
+
+                    int zeroCount = permutationIndices.getNumberOfZeroDiagonals();
+
+                    if (zeroCount == dim) { //All zero on diagonals of original matrix
+                        for (int i = 0; i < dim; i++) {
+                            destination.set(i, i, Double.POSITIVE_INFINITY);
+                        }
+                        return new InversionResult(FULLY_OBSERVED, dim, Double.POSITIVE_INFINITY);
+
+                    } else { //Both zeros and infinities (but no non-zero finite entries) on diagonal
+                        int[] zeroInds = permutationIndices.getZeroIndices();
+                        int[] infInds = permutationIndices.getInfiniteIndices();
+                        for (int i : zeroInds) {
+                            destination.set(i, i, Double.POSITIVE_INFINITY);
+                        }
+                        //TODO: not sure what to do here with regard to dimension (it could be zeroCount or infCount
+                        //TODO: depending on whether this is a variance or precision matrix respectively.
+                        System.err.println("Warning: safeInvert2 in MissingOps is not designed to invert matrices " +
+                                "with both zero and infinite diagonal entries.");
+                        return new InversionResult(PARTIALLY_OBSERVED, zeroCount, Double.POSITIVE_INFINITY);
+                    }
+                }
+
             } else {
 
                 final int[] finiteIndices = permutationIndices.getNonZeroFiniteIndices();
                 final int[] zeroIndices = permutationIndices.getZeroIndices();
 
-                final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
+                final DenseMatrix64F subSource = new DenseMatrix64F(finiteNonZeroCount, finiteNonZeroCount);
                 gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
 
-                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
+                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteNonZeroCount, finiteNonZeroCount);
                 if (getDeterminant) {
                     det = invertAndGetDeterminant(subSource, inverseSubSource);
                 } else {
@@ -496,7 +527,7 @@ public class MissingOps {
                     destination.set(index, index, Double.POSITIVE_INFINITY);
                 }
 
-                return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
+                return new InversionResult(PARTIALLY_OBSERVED, finiteNonZeroCount, det);
             }
         }
     }

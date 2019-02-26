@@ -1,4 +1,4 @@
-package dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures;
+package dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;

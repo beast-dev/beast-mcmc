@@ -14,9 +14,11 @@ import static dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperato
 
 public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implements GibbsOperator {
 
+    private final Parameter coefficient;
     private final Parameter globalScale;
     private final Parameter localScale;
     private final Parameter regressionExponent;
+    private final int dim;
 
     private final GammaDistribution globalScalePrior;
 
@@ -26,12 +28,13 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
                                            double weight) {
         setWeight(weight);
 
+        this.coefficient = bayesianBridge.getParameter();
         this.globalScale = bayesianBridge.getGlobalScale();
         this.localScale = bayesianBridge.getLocalScale();
         this.regressionExponent = bayesianBridge.getExponent();
+        this.dim = coefficient.getDimension();
 
         this.globalScalePrior = globalScalePrior;
-
     }
 
     @Override
@@ -57,7 +60,7 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         double priorScale = globalScalePrior.getScale();
         double exponent = regressionExponent.getParameterValue(0);
 
-        double shape = localScale.getDimension() / exponent;
+        double shape = dim / exponent;
         double rate = absSumBeta();
 
         if (priorShape > 0.0) {
@@ -75,8 +78,8 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
 
         double exponent = regressionExponent.getParameterValue(0);
         double sum = 0.0;
-        for (int i = 0; i < localScale.getDimension(); ++i) {
-            sum += Math.pow(Math.abs(localScale.getParameterValue(i)), exponent);
+        for (int i = 0; i < dim; ++i) {
+            sum += Math.pow(Math.abs(coefficient.getParameterValue(i)), exponent);
         }
 
         return sum;

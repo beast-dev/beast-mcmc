@@ -1,5 +1,5 @@
 /*
- * StandardizeTraits.java
+ * StandarizeTraits.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -174,9 +174,10 @@ public class StandardizeTraits {
     private void updateValues(MatrixParameterInterface matrix, final MeanVariance mv, int major, boolean byColumn) {
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
-        final int minorDim = (byColumn ? matrix.getColumnDimension() : matrix.getRowDimension());
-
+        final int rowDim = matrix.getRowDimension();
         final double sd = Math.sqrt(mv.variance);
+
+        int offset = byColumn ? dim * major : major;
 
         for (int index = 0; index < dim; ++index) {
 
@@ -184,10 +185,13 @@ public class StandardizeTraits {
             final int col = byColumn ? major : index;
 
             double x = matrix.getParameterValue(row, col);
-            if (!Double.isNaN(x) && !missing[col * minorDim + row]) {
+            if (!Double.isNaN(x) && !missing[offset]) {
                 x = (x - mv.mean) / sd * targetSd;
                 matrix.setParameterValueQuietly(row, col, x);
             }
+
+            offset += byColumn ? 1 : rowDim;
+
         }
 
         matrix.fireParameterChangedEvent();
@@ -223,24 +227,23 @@ public class StandardizeTraits {
         int c = 0;
 
         final int dim = (byColumn ? matrix.getRowDimension() : matrix.getColumnDimension());
-        final int minorDim = (byColumn ? matrix.getColumnDimension() : matrix.getRowDimension());
+        final int rowDim = matrix.getRowDimension();
 
+        int offset = byColumn ? dim * major : major;
         for (int index = 0; index < dim; ++index) {
-
-            final int row = byColumn ? index : major;
-            final int col = byColumn ? major : index;
-
-            double x = matrix.getParameterValue(row, col);
-            if (!Double.isNaN(x) && !missing[col * minorDim + row]) {
+            double x = byColumn ? matrix.getParameterValue(index, major) : matrix.getParameterValue(major, index);
+            if (!Double.isNaN(x) && !missing[offset]) {
                 s += x;
                 ss += x * x;
                 ++c;
             }
+
+            offset += byColumn ? 1 : rowDim;
         }
 
         MeanVariance mv = new MeanVariance();
         mv.mean = s / c;
-        mv.variance =  ss / c - mv.mean * mv.mean;
+        mv.variance = ss / c - mv.mean * mv.mean;
         mv.count = c;
 
         return mv;

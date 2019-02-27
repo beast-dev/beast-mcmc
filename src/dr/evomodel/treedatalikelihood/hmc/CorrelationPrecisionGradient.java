@@ -25,9 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
@@ -37,7 +39,7 @@ import dr.math.matrixAlgebra.Vector;
  * @author Marc A. Suchard
  */
 
-public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
+public class CorrelationPrecisionGradient extends AbstractPrecisionGradient implements HessianWrtParameterProvider {
 
     public CorrelationPrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                                         Likelihood likelihood,
@@ -50,8 +52,6 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
     public Parameter getParameter() {
         return compoundSymmetricMatrix.getUntransformedOffDiagonalParameter();
     }
-
-
 
 
     @Override
@@ -112,4 +112,15 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient {
         return getGradientCorrelation(gradient);
     }
 
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+
+        NumericalHessianFromGradient hessianFromGradient = new NumericalHessianFromGradient(this);
+        return hessianFromGradient.getDiagonalHessianLogDensity();
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        return new double[0][];
+    }
 }

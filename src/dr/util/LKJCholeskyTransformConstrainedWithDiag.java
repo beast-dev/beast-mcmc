@@ -1,5 +1,9 @@
 package dr.util;
 
+
+/**
+ * @author Zhenyu Zhang
+ */
 public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransformConstrained {
 
     private int CPCdimension;
@@ -82,7 +86,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
         for (int i = 0; i < length; i++) {
             for (int j = 0; j < length; j++) {
                 if (i >= CPCdimension || j >= CPCdimension) {
-                    if(i == j){
+                    if (i == j) {
                         appendedJacobian[i][j] = 1;
                     }
                 } else {
@@ -100,5 +104,9 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
         System.arraycopy(choleskyOrCPCs, 0, concatenatedArray, 0, CPCdimension);
         System.arraycopy(diagonals, 0, concatenatedArray, CPCdimension, dim);
         return concatenatedArray;
+    }
+
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
     }
 }

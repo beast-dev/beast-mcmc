@@ -43,6 +43,7 @@ import dr.inference.model.Variable;
  * @author Alexei Drummond
  * @author Marc A. Suchard
  */
+@Deprecated // no apparent use of this
 public abstract class AbstractTreeParameterModel<T> extends AbstractModel implements TreeTrait<T> {
 
     protected final TreeModel tree;

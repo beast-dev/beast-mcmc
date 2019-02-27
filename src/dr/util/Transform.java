@@ -656,18 +656,18 @@ public interface Transform {
 
         public double updateGradientLogDensity(double gradient, double value) {
             // 1 - value^2 : gradient of inverse (value is untransformed)
-            // -1 - 2*value : gradient of log jacobian of inverse
+            // - 2*value : gradient of log jacobian of inverse
             return (1.0 - value * value) * gradient  - 2 * value;
         }
 
         protected double getGradientLogJacobianInverse(double value) {
-            // -1 - 2*value : gradient of log jacobian of inverse (value is transformed)
+            // - 2*value : gradient of log jacobian of inverse (value is transformed)
             return  - 2 * inverse(value);
         }
 
         @Override
         public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
-            throw new RuntimeException("Not yet implemented");
+            return (1.0 - value * value) * (diagonalHessian * (1.0 - value * value) - 2.0 * gradient * value - 2.0);
         }
 
         @Override
@@ -1037,7 +1037,12 @@ public interface Transform {
 
         @Override
         public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
-            throw new RuntimeException("not implemented yet");
+
+            return outer.updateDiagonalHessianLogDensity(
+                    inner.updateDiagonalHessianLogDensity(diagonalHessian, gradient, value,from, to),
+                    inner.updateGradientLogDensity(gradient, value, from, to),
+                    inner.transform(value, from, to),
+                    from, to);
         }
 
         @Override

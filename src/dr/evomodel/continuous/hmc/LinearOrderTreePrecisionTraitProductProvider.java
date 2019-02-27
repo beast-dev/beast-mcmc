@@ -180,10 +180,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     @Override
     public double getTimeScale() {
 
-        if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
-            return roughTimeGuess;
-        }
-        return getRoughLowerBoundforTravelTime();
+        return roughTimeGuess;
+        //return getRoughLowerBoundforTravelTime(); //todo: may need this lower bound one day
     }
 
     @Override
@@ -199,14 +197,6 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         return 0.0;
     }
 
-    public double getTimeScale(double y) {
-
-        if (roughTimeGuess > 0.0) { // TODO Super bad, some delegate for re-use with other Providers
-            return roughTimeGuess;
-        }
-        return getRoughLowerBoundforTravelTime();
-    }
-    
     private double getMaxEigenvalueAsTravelTime() {
 
         // TODO Lots of bad magic numbers

@@ -32,7 +32,7 @@ import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.repeatedMeasures.dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
+import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.GammaDistribution;

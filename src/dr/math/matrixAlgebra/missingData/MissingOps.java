@@ -472,8 +472,8 @@ public class MissingOps {
             }
             return new InversionResult(FULLY_OBSERVED, dim, det);
         } else {
-            Arrays.fill(destination.getData(), 0);
             if (finiteNonZeroCount == 0) {
+                Arrays.fill(destination.getData(), 0);
                 //TODO: should NOT_OBSERVED vs FULLY_OBSERVED depend on whether this is a variance vs precision matrix?
                 int infCount = permutationIndices.getNumberOfInfiniteDiagonals();
 

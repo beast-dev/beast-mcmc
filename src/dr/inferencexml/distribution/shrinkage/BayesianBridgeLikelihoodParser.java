@@ -54,6 +54,11 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(LOCAL_SCALE)) {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
+
+            if (localScale.getDimension() != coefficients.getDimension()) {
+                throw new XMLParseException("Local scale dimension (" + localScale.getDimension()
+                        + ") != coefficient dimension (" + coefficients.getDimension() + ")");
+            }
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);

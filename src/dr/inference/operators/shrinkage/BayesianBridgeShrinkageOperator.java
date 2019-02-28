@@ -119,12 +119,20 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         //            for beta_j in beta_with_shrinkage
         //        ])
         //        lshrink = np.sqrt(lshrink_sq)
+
+        //        # TODO: Pick the lower and upper bound more carefully.
+        //        if np.any(lshrink == 0):
+        //            warn_message_only(
+        //                "Local shrinkage parameter under-flowed. Replacing with a small number.")
+        //            lshrink[lshrink == 0] = 10e-16
+        //        elif np.any(np.isinf(lshrink)):
+        //            warn_message_only(
+        //                "Local shrinkage parameter under-flowed. Replacing with a large number.")
+        //            lshrink[np.isinf(lshrink)] = 2.0 / gshrink
+        //
+        //        return lshrink
     }
-
-
 }
-
-
 
 //    def slice_sample_global_shrinkage(
 //            self, gshrink, beta_with_shrinkage, global_scale, reg_exponent):
@@ -153,24 +161,3 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
 //        gshrink = 1 / phi ** (1 / reg_exponent)
 //
 //        return gshrink
-
-
-//       def update_local_shrinkage(self, gshrink, beta_with_shrinkage, reg_exponent):
-//
-//        lshrink_sq = 1 / np.array([
-//            2 * self.rg.tilted_stable(reg_exponent / 2, (beta_j / gshrink) ** 2)
-//            for beta_j in beta_with_shrinkage
-//        ])
-//        lshrink = np.sqrt(lshrink_sq)
-//
-//        # TODO: Pick the lower and upper bound more carefully.
-//        if np.any(lshrink == 0):
-//            warn_message_only(
-//                "Local shrinkage parameter under-flowed. Replacing with a small number.")
-//            lshrink[lshrink == 0] = 10e-16
-//        elif np.any(np.isinf(lshrink)):
-//            warn_message_only(
-//                "Local shrinkage parameter under-flowed. Replacing with a large number.")
-//            lshrink[np.isinf(lshrink)] = 2.0 / gshrink
-//
-//        return lshrink

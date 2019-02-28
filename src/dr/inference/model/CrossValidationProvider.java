@@ -21,9 +21,6 @@ public interface CrossValidationProvider {
     String getName(int dim);
 
 
-
-
-
     public class CrossValidator extends Statistic.Abstract {
         final CrossValidationProvider provider;
         final double[] squaredErrors;
@@ -72,7 +69,7 @@ public interface CrossValidationProvider {
         public double getStatisticValue(int dim) {
 
             //TODO: add variable listeners as needed
-            if (dim == 0){
+            if (dim == 0) {
                 this.inferredParameter = provider.getInferredParameter();
                 this.truthParameter = provider.getTrueParameter();
                 updateSquaredErrors();

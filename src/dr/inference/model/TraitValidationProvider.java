@@ -170,7 +170,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
             String inferredValuesName = xo.getStringAttribute(INFERRED_NAME);
 
             if (useTreeTraits && inferredValuesName == null) {
-                throw new XMLParseException("If " + TREE_TRAITS + "=true, you must provide attribute " +
+                throw new XMLParseException("If " + TREE_TRAITS + "=\"true\", you must provide attribute " +
                         INFERRED_NAME + "=<traitName>.");
             }
 
@@ -186,6 +186,11 @@ public class TraitValidationProvider implements CrossValidationProvider {
             Parameter missingParameter = null;
             if (xo.hasChildNamed(MASK)) {
                 missingParameter = (Parameter) xo.getElementFirstChild(MASK);
+            }
+
+            if (missingParameter != null && useTreeTraits) {
+                throw new XMLParseException(PARSER_NAME + " should not have both " + MASK + " element and " +
+                        TREE_TRAITS + "=\"true\".");
             }
 
             String id = xo.getId();

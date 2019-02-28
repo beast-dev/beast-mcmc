@@ -1,4 +1,4 @@
-package dr.util;
+package dr.inference.model;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
@@ -6,7 +6,6 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;

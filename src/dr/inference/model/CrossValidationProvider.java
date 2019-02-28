@@ -1,4 +1,4 @@
-package dr.util;
+package dr.inference.model;
 
 import dr.inference.model.Parameter;
 import dr.inference.loggers.LogColumn;

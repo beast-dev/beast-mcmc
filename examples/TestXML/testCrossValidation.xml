@@ -3,25 +3,25 @@
     <taxa id="taxa">
         <taxon id="A">
             <attr name="X">10 NA 1</attr>
-            <attr name="X2">0.5 0.5 0.5</attr>
+            <attr name="X2">10 0.5 1</attr>
 
         </taxon>
         <taxon id="B">
             <attr name="X">NA NA 2</attr>
-            <attr name="X2">0.5 0.5 0.5</attr>
+            <attr name="X2">-1 1.5 2</attr>
         </taxon>
         <taxon id="C">
             <attr name="X">NA 0 NA</attr>
-            <attr name="X2">0.5 0.5 0.5</attr>
+            <attr name="X2">0.5 0 0.5</attr>
 
         </taxon>
         <taxon id="D">
             <attr name="X">-20 3 4</attr>
-            <attr name="X2">0.5 0.5 0.5</attr>
+            <attr name="X2">-20 3 4</attr>
         </taxon>
         <taxon id="E">
             <attr name="X">100 0 NA</attr>
-            <attr name="X2">0.5 0.5 0.5</attr>
+            <attr name="X2">100 0 -2</attr>
         </taxon>
     </taxa>
 
@@ -58,28 +58,31 @@
         </precisionMatrix>
     </multivariateDiffusionModel>
 
-    <repeatedMeasuresModel id="repeatedMeasures" traitName="X">
-        <treeModel idref="treeModel"/>
-        <traitParameter>
-            <parameter idref="leafTraits"/>
-        </traitParameter>
+    <!--<repeatedMeasuresModel id="repeatedMeasures" traitName="X">-->
+        <!--<treeModel idref="treeModel"/>-->
+        <!--<traitParameter>-->
+            <!--<parameter idref="leafTraits"/>-->
+        <!--</traitParameter>-->
+        <!--&lt;!&ndash;<samplingPrecision>&ndash;&gt;-->
+        <!--&lt;!&ndash;<parameter id="gamma" value="2 3"/>&ndash;&gt;-->
+        <!--&lt;!&ndash;</samplingPrecision>&ndash;&gt;-->
         <!--<samplingPrecision>-->
-        <!--<parameter id="gamma" value="2 3"/>-->
+            <!--<matrixParameter id="samplingPrecision">-->
+                <!--<parameter value="3.0 0.3 -0.2"/>-->
+                <!--<parameter value="0.3 2.0 0.1"/>-->
+                <!--<parameter value="-0.2 0.1 1.0"/>-->
+            <!--</matrixParameter>-->
         <!--</samplingPrecision>-->
-        <samplingPrecision>
-            <matrixParameter id="samplingPrecision">
-                <parameter value="3.0 0.3 -0.2"/>
-                <parameter value="0.3 2.0 0.1"/>
-                <parameter value="-0.2 0.1 1.0"/>
-            </matrixParameter>
-        </samplingPrecision>
-        <multivariateDiffusionModel idref="diffusionModel"/>
-    </repeatedMeasuresModel>
+        <!--<multivariateDiffusionModel idref="diffusionModel"/>-->
+    <!--</repeatedMeasuresModel>-->
 
     <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
-        <repeatedMeasuresModel idref="repeatedMeasures"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
         <conjugateRootPrior>
             <meanParameter>
                 <parameter id="mean" value="0.0 0.0 0"/>
@@ -88,24 +91,11 @@
                 <parameter value="0.001"/>
             </priorSampleSize>
         </conjugateRootPrior>
+        <!--<missingIndicator>-->
+            <!--<parameter id="missingParameter"/>-->
+        <!--</missingIndicator>-->
+
     </traitDataLikelihood>
-
-    <traitLogger id="traitLog" traitName="X" nodes="root">
-        <traitDataLikelihood idref="traitLikelihood"/>
-        <treeModel idref="treeModel"/>
-    </traitLogger>
-
-
-    <matrixInverse id="diffVariance">
-        <matrixParameter idref="precisionMatrix"/>
-    </matrixInverse>
-
-    <varianceProportionStatistic id="varianceLog" matrixRatio="symmetricDivision">
-        <traitDataLikelihood idref="traitLikelihood"/>
-        <treeModel idref = "treeModel"/>
-        <repeatedMeasuresModel idref = "repeatedMeasures"/>
-        <multivariateDiffusionModel idref = "diffusionModel"/>
-    </varianceProportionStatistic>
 
 
     <multivariateWishartPrior id="precisionPrior" df="3">
@@ -121,22 +111,18 @@
         </data>
     </multivariateWishartPrior>
 
-    <!--<gammaPrior id="gammaPrior" shape="2" scale="0.5" offset="0.0">-->
-    <!--<parameter idref="gamma"/>-->
-    <!--</gammaPrior>-->
-
-    <multivariateWishartPrior id="samplingPrior" df="3">
-        <scaleMatrix>
-            <matrixParameter>
-                <parameter value="2 0 0"/>
-                <parameter value="0 2 0"/>
-                <parameter value="0 0 2"/>
-            </matrixParameter>
-        </scaleMatrix>
-        <data>
-            <matrixParameter idref="samplingPrecision"/>
-        </data>
-    </multivariateWishartPrior>
+    <!--<multivariateWishartPrior id="samplingPrior" df="3">-->
+        <!--<scaleMatrix>-->
+            <!--<matrixParameter>-->
+                <!--<parameter value="2 0 0"/>-->
+                <!--<parameter value="0 2 0"/>-->
+                <!--<parameter value="0 0 2"/>-->
+            <!--</matrixParameter>-->
+        <!--</scaleMatrix>-->
+        <!--<data>-->
+            <!--<matrixParameter idref="samplingPrecision"/>-->
+        <!--</data>-->
+    <!--</multivariateWishartPrior>-->
 
     <operators id="operators" optimizationSchedule="log">
 
@@ -147,37 +133,44 @@
             <multivariateWishartPrior idref="precisionPrior"/>
         </precisionGibbsOperator>
 
-        <precisionGibbsOperator weight="1">
-            <repeatedMeasuresWishartStatistics>
-                <repeatedMeasuresModel idref="repeatedMeasures"/>
-                <traitDataLikelihood idref="traitLikelihood"/>
-                <wishartStatistics idref="treeWishartStatistics"/>
-            </repeatedMeasuresWishartStatistics>
-            <multivariateWishartPrior idref="samplingPrior"/>
-        </precisionGibbsOperator>
+        <!--<newLatentLiabilityGibbsOperator weight="1000" missingByColumn="false">-->
+            <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+            <!--<dummyLatentTruncationProvider>-->
+                <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+            <!--</dummyLatentTruncationProvider>-->
+            <!--<CompoundParameter idref="leafTraits"/>-->
+            <!--<mask>-->
+                <!--<parameter idref="missingParameter"/>-->
+            <!--</mask>-->
+        <!--</newLatentLiabilityGibbsOperator>-->
+
+
+        <!--<precisionGibbsOperator weight="1">-->
+            <!--<repeatedMeasuresWishartStatistics>-->
+                <!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
+                <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+                <!--<wishartStatistics idref="treeWishartStatistics"/>-->
+            <!--</repeatedMeasuresWishartStatistics>-->
+            <!--<multivariateWishartPrior idref="samplingPrior"/>-->
+        <!--</precisionGibbsOperator>-->
     </operators>
 
-    <repeatedMeasuresTraitLogger id="rmLogger">
-        <repeatedMeasuresModel idref="repeatedMeasures"/>
-        <traitDataLikelihood idref="traitLikelihood"/>
-    </repeatedMeasuresTraitLogger>
 
-    <traitValidation id="validation" traitName="X2">
+    <traitValidation id="validation" traitName="X2" inferredTrait="X" useTreeTraits="true">
         <traitDataLikelihood idref="traitLikelihood"/>
         <traitParameter>
             <parameter idref="leafTraitsTrue"/>
         </traitParameter>
+        <!--<mask>-->
+            <!--<parameter idref="missingParameter"/>-->
+        <!--</mask>-->
     </traitValidation>
 
-    <report>
-        With likelihood =
-        <traitDataLikelihood idref="traitLikelihood"/>
-    </report>
 
     <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
-                <gammaPrior idref="samplingPrior"/>
+                <!--<gammaPrior idref="samplingPrior"/>-->
                 <multivariateWishartPrior idref="precisionPrior"/>
             </prior>
             <likelihood>
@@ -189,24 +182,13 @@
             <column label="Posterior" dp="4" width="12">
                 <posterior idref="posterior"/>
             </column>
-            <!--<column label="Sampling Precision" dp="4" width="12">-->
-            <!--<matrixParameter idref="samplingPrecision"/>-->
-            <!--</column>-->
-            <!--<column label="Trait Precision" dp="4" width="12">-->
-            <!--<matrixParameter idref="precisionMatrix"/>-->
-            <!--</column>-->
-            <variancePorportionStatistic idref="varianceLog"/>
+            <traitValidation idref="validation"/>
+
         </log>
         <log id="fileLog" logEvery="100" fileName="precision_log.log">
             <posterior idref="posterior"/>
             <prior idref="prior"/>
             <likelihood idref="traitLikelihood"/>
-            <matrixParameter idref="samplingPrecision"/>
-            <matrixParameter idref="precisionMatrix"/>
-            <traitLogger idref="traitLog"/>
-            <variancePorportionStatistic idref="varianceLog"/>
-            <matrixInverse idref="diffVariance"/>
-            <repeatedMeasuresTraitLogger idref="rmLogger"/>
             <traitValidation idref="validation"/>
         </log>
     </mcmc>

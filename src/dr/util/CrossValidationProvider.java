@@ -24,12 +24,12 @@ public interface CrossValidationProvider {
 
 
 
-    public class CrossValidator extends Statistic.Abstract implements VariableListener {
+    public class CrossValidator extends Statistic.Abstract {
         final CrossValidationProvider provider;
         final double[] squaredErrors;
         final int[] relevantDims;
-        final Parameter truthParameter;
-        final Parameter inferredParameter;
+        Parameter truthParameter;
+        Parameter inferredParameter;
         final int dimStat;
         boolean statKnown = false;
 
@@ -39,15 +39,15 @@ public interface CrossValidationProvider {
 
             this.dimStat = relevantDims.length;
             this.squaredErrors = new double[dimStat];
-            this.truthParameter = provider.getTrueParameter();
-            this.inferredParameter = provider.getInferredParameter();
-
-            inferredParameter.addParameterListener(this);
+//            this.truthParameter = provider.getTrueParameter();
+//            this.inferredParameter = provider.getInferredParameter();
 
 
         }
 
         private void updateSquaredErrors() {
+
+
             for (int i = 0; i < dimStat; i++) {
                 double truth = truthParameter.getParameterValue(relevantDims[i]);
                 double inferred = inferredParameter.getParameterValue(relevantDims[i]);
@@ -71,7 +71,10 @@ public interface CrossValidationProvider {
         @Override
         public double getStatisticValue(int dim) {
 
-            if (!statKnown) {
+            //TODO: add variable listeners as needed
+            if (dim == 0){
+                this.inferredParameter = provider.getInferredParameter();
+                this.truthParameter = provider.getTrueParameter();
                 updateSquaredErrors();
             }
 
@@ -79,9 +82,5 @@ public interface CrossValidationProvider {
         }
 
 
-        @Override
-        public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-            statKnown = false;
-        }
     }
 }

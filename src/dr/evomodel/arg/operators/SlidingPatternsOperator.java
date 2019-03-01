@@ -111,11 +111,12 @@ public class SlidingPatternsOperator extends AbstractAdaptableOperator {
         return 0;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         windowSize = (int) Math.exp(value);
     }
 

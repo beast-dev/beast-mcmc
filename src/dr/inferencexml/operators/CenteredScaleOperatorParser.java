@@ -49,11 +49,7 @@ public class CenteredScaleOperatorParser extends AbstractXMLObjectParser {
 
         double scale = xo.getDoubleAttribute(SCALE_FACTOR);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        CenteredScaleOperator op = new CenteredScaleOperator(parameter);
-        op.setWeight(weight);
-        op.scaleFactor = scale;
-        op.mode = AdaptationMode.parseMode(xo);
-        return op;
+        return new CenteredScaleOperator(parameter, scale, weight, AdaptationMode.parseMode(xo));
     }
 
     public String getParserDescription() {

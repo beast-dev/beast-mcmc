@@ -50,7 +50,7 @@ public class DiscretizedLocationOperator extends AbstractAdaptableOperator {
     public static final String RANDOMIZE = "randomize";
 
     public DiscretizedLocationOperator(AbstractMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, AdaptationMode mode) {
-        super(mode);
+        super(mode, 0.5);
         this.treeModel = traitModel.getTreeModel();
         this.traitName = traitModel.getTraitName();
         this.onlyInternalNodes = onlyInternalNodes;
@@ -208,11 +208,12 @@ public class DiscretizedLocationOperator extends AbstractAdaptableOperator {
         return Math.log(value - 1);
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return autoOptimize;
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         autoOptimize = value;
     }
 
@@ -228,10 +229,6 @@ public class DiscretizedLocationOperator extends AbstractAdaptableOperator {
 //    public double getScaleFactor() {
 //        return scaleFactor;
 //    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.50;
-    }
 
     public final String getPerformanceSuggestion() {
 

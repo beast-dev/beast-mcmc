@@ -100,11 +100,12 @@ public class GaussianProcessDrawOperator extends AbstractAdaptableOperator {
         return parameter.getParameterName();
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 

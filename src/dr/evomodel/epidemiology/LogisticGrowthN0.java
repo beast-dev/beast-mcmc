@@ -104,7 +104,7 @@ public class LogisticGrowthN0 extends ExponentialGrowth {
      * a = (q/exp(q*T50))
      * k = N0*(1+exp(q*T50))*x - (1/q)exp(q*T50)
      *
-     * For large x, W0(x) is approximately equal to ln(x) - ln(ln(x)); if q*exp(-q*k)/a rounds to infinity, we log it
+     * For large x, W(x) is approximately equal to ln(x) - ln(ln(x)); if q*exp(-q*k)/a rounds to infinity, we log it
      * and use this instead
      */
     public double getInverseIntensity(double x) {

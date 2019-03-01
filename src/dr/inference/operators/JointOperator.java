@@ -34,19 +34,18 @@ import java.util.ArrayList;
 /**
  * @author Marc A. Suchard
  */
-public class JointOperator extends SimpleMCMCOperator implements AdaptableMCMCOperator {
+public class JointOperator extends AbstractAdaptableOperator {
 
     private final ArrayList<SimpleMCMCOperator> operatorList;
     private final ArrayList<Integer> operatorToOptimizeList;
 
     private int currentOptimizedOperator;
-    private final double targetProbability;
 
-    public JointOperator(double weight, double targetProb) {
+    public JointOperator(double weight, double targetAcceptanceProbability) {
+        super(AdaptationMode.DEFAULT, targetAcceptanceProbability);
 
         operatorList = new ArrayList<SimpleMCMCOperator>();
         operatorToOptimizeList = new ArrayList<Integer>();
-        targetProbability = targetProb;
 
         setWeight(weight);
     }
@@ -78,7 +77,8 @@ public class JointOperator extends SimpleMCMCOperator implements AdaptableMCMCOp
 
 //    private double old;
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         if (operatorToOptimizeList.size() > 0) {
             currentOptimizedOperator = operatorToOptimizeList.get(MathUtils.nextInt(operatorToOptimizeList.size()));
             return ((AdaptableMCMCOperator) operatorList.get(currentOptimizedOperator)).getAdaptableParameter();
@@ -86,7 +86,7 @@ public class JointOperator extends SimpleMCMCOperator implements AdaptableMCMCOp
         throw new IllegalArgumentException();
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         if (operatorToOptimizeList.size() > 0) {
             ((AdaptableMCMCOperator) operatorList.get(currentOptimizedOperator)).setAdaptableParameter(value);
             return;
@@ -99,7 +99,7 @@ public class JointOperator extends SimpleMCMCOperator implements AdaptableMCMCOp
         return operatorList.size();
     }
 
-    public double getRawParamter(int i) {
+    public double getRawParameter(int i) {
         if (i < 0 || i >= operatorList.size())
             throw new IllegalArgumentException();
         return ((AdaptableMCMCOperator) operatorList.get(i)).getRawParameter();
@@ -107,7 +107,6 @@ public class JointOperator extends SimpleMCMCOperator implements AdaptableMCMCOp
 
 
     public double getRawParameter() {
-
         throw new RuntimeException("More than one raw parameter for a joint operator");
     }
 
@@ -152,33 +151,29 @@ public class JointOperator extends SimpleMCMCOperator implements AdaptableMCMCOp
         return "";
     }
 
-    public double getTargetAcceptanceProbability() {
-        return targetProbability;
-    }
-
     public double getMinimumAcceptanceLevel() {
-        double min = targetProbability - 0.2;
+        double min = getTargetAcceptanceProbability() - 0.2;
         if (min < 0)
             min = 0.01;
         return min;
     }
 
     public double getMaximumAcceptanceLevel() {
-        double max = targetProbability + 0.2;
+        double max = getTargetAcceptanceProbability() + 0.2;
         if (max > 1)
             max = 0.9;
         return max;
     }
 
     public double getMinimumGoodAcceptanceLevel() {
-        double min = targetProbability - 0.1;
+        double min = getTargetAcceptanceProbability() - 0.1;
         if (min < 0)
             min = 0.01;
         return min;
     }
 
     public double getMaximumGoodAcceptanceLevel() {
-        double max = targetProbability + 0.2;
+        double max = getTargetAcceptanceProbability() + 0.2;
         if (max > 1)
             max = 0.9;
         return max;

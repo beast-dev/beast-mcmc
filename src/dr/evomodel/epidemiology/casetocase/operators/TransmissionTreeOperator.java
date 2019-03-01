@@ -200,14 +200,16 @@ public class TransmissionTreeOperator extends AbstractAdaptableOperator {
         return out;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    public double getAdaptableParameterValue() {
         if(innerOperator instanceof AdaptableMCMCOperator){
             return ((AdaptableMCMCOperator) innerOperator).getAdaptableParameter();
         }
         throw new IllegalArgumentException();
     }
 
-    public void setAdaptableParameter(double value) {
+    @Override
+    public void setAdaptableParameterValue(double value) {
         if(innerOperator instanceof AdaptableMCMCOperator){
             ((AdaptableMCMCOperator) innerOperator).setAdaptableParameter(value);
             return;
@@ -215,6 +217,7 @@ public class TransmissionTreeOperator extends AbstractAdaptableOperator {
         throw new IllegalArgumentException();
     }
 
+    @Override
     public double getRawParameter() {
         if(innerOperator instanceof AdaptableMCMCOperator){
             return ((AdaptableMCMCOperator) innerOperator).getRawParameter();
@@ -222,6 +225,7 @@ public class TransmissionTreeOperator extends AbstractAdaptableOperator {
         throw new IllegalArgumentException();
     }
 
+    @Override
     public String getAdaptableParameterName() {
         if(innerOperator instanceof AdaptableMCMCOperator) {
             return ((AdaptableMCMCOperator) innerOperator).getAdaptableParameterName();

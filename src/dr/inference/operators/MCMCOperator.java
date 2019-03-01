@@ -130,16 +130,16 @@ public interface MCMCOperator extends Serializable {
 
     long getTotalEvaluationTime();
 
-    class Utils {
+    /**
+     * Get to total average acceptance probability
+     * @return
+     */
+    double getAcceptanceProbability();
 
-        public static double getAcceptanceProbability(MCMCOperator op) {
-            final long accepted = op.getAcceptCount();
-            final long rejected = op.getRejectCount();
-            return (double) accepted / (double) (accepted + rejected);
-        }
+    /**
+     * Get the acceptance probability over a window of operations
+     * @return
+     */
+     double getSmoothedAcceptanceProbability();
 
-        public static long getOperationCount(MCMCOperator op) {
-            return op.getAcceptCount() + op.getRejectCount();
-        }
-    }
 }

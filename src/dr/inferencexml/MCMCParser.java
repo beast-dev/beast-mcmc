@@ -90,6 +90,8 @@ public class MCMCParser extends AbstractXMLObjectParser {
             adaptationTarget = Double.parseDouble(System.getProperty("mcmc.adaptation_target"));
         }
 
+        boolean useSmoothAcceptanceRatio = xo.getAttribute(SMOOTHED_ACCEPTANCE_RATIO, false);
+
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
 
         long fullEvaluationCount = 1000;
@@ -113,6 +115,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 useAdaptation,
                 adaptationDelay,
                 adaptationTarget,
+                useSmoothAcceptanceRatio,
                 temperature);
 
         OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
@@ -281,6 +284,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
             AttributeRule.newIntegerRule(ADAPTATION_DELAY, true),
             AttributeRule.newIntegerRule(AUTO_OPTIMIZE_DELAY, true),
+            AttributeRule.newBooleanRule(SMOOTHED_ACCEPTANCE_RATIO, true),
             AttributeRule.newIntegerRule(PRE_BURNIN, true),
             AttributeRule.newDoubleRule(TEMPERATURE, true),
             AttributeRule.newIntegerRule(FULL_EVALUATION, true),
@@ -300,6 +304,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public static final String PRE_BURNIN = "preBurnin";
     public static final String ADAPTATION_DELAY = "adaptationDelay";
     public static final String AUTO_OPTIMIZE_DELAY = "autoOptimizeDelay";
+    public static final String SMOOTHED_ACCEPTANCE_RATIO = "smoothAcceptanceRatio";
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String FULL_EVALUATION = "fullEvaluation";

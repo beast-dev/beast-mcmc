@@ -77,9 +77,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
 
-        super(mode);
+
+        super(mode, 0.8); // setTargetAcceptanceProbability(0.8); // Stan default
+
         setWeight(weight);
-        setTargetAcceptanceProbability(0.8); // Stan default
 
         this.gradientProvider = gradientProvider;
         this.runtimeOptions = runtimeOptions;
@@ -388,12 +389,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
-    public double getAdaptableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         if (DEBUG) {
             System.err.println("Setting adaptable parameter: " + getAdaptableParameter() + " -> " + value);
         }

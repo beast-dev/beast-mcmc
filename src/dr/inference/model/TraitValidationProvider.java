@@ -167,7 +167,13 @@ public class TraitValidationProvider implements CrossValidationProvider {
             TreeModel treeModel = (TreeModel) treeLikelihood.getTree();
 
             Boolean useTreeTraits = xo.getAttribute(TREE_TRAITS, false);
-            String inferredValuesName = xo.getStringAttribute(INFERRED_NAME);
+
+            String inferredValuesName = null;
+
+            if (xo.hasAttribute(INFERRED_NAME)) {
+                inferredValuesName = xo.getStringAttribute(INFERRED_NAME);
+            }
+
 
             if (useTreeTraits && inferredValuesName == null) {
                 throw new XMLParseException("If " + TREE_TRAITS + "=\"true\", you must provide attribute " +
@@ -213,7 +219,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
 //                    }),
                     new ElementRule(TreeDataLikelihood.class),
                     AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-                    AttributeRule.newBooleanRule(TREE_TRAITS),
+                    AttributeRule.newBooleanRule(TREE_TRAITS, true),
                     AttributeRule.newStringRule(INFERRED_NAME, true),
                     new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

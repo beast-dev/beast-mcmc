@@ -25,14 +25,11 @@
 
 package dr.evomodel.substmodel.nucleotide;
 
-import dr.evomodel.substmodel.BaseSubstitutionModel;
-import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
+import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
-import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
@@ -51,7 +48,8 @@ import java.util.Arrays;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class HKY extends BaseSubstitutionModel implements Citable, ParameterReplaceableSubstitutionModel {
+public class HKY extends BaseSubstitutionModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
 
     private Parameter kappaParameter = null;
 
@@ -77,6 +75,21 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
         addVariable(kappaParameter);
         kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
+        Statistic tsTvStatistic = new Statistic.Abstract() {
+
+            public String getStatisticName() {
+                return "tsTv";
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public double getStatisticValue(int dim) {
+                return getTsTv();
+            }
+
+        };
         addStatistic(tsTvStatistic);
     }
 
@@ -96,33 +109,31 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
         return kappaParameter.getParameterValue(0);
     }
 
-    /**
-     * set ts/tv
-     * @param tsTv
-     */
-    public void setTsTv(double tsTv) {
-        double freqA = freqModel.getFrequency(0);
-        double freqC = freqModel.getFrequency(1);
-        double freqG = freqModel.getFrequency(2);
-        double freqT = freqModel.getFrequency(3);
-        double freqR = freqA + freqG;
-        double freqY = freqC + freqT;
-        setKappa((tsTv * freqR * freqY) / (freqA * freqG + freqC * freqT));
-    }
+//    /**
+//     * set ts/tv
+//     * @param tsTv
+//     */
+//    public void setTsTv(double tsTv) {
+//        double freqA = freqModel.getFrequency(0);
+//        double freqC = freqModel.getFrequency(1);
+//        double freqG = freqModel.getFrequency(2);
+//        double freqT = freqModel.getFrequency(3);
+//        double freqR = freqA + freqG;
+//        double freqY = freqC + freqT;
+//        setKappa((tsTv * freqR * freqY) / (freqA * freqG + freqC * freqT));
+//    }
 
     /**
      * @return tsTv
      */
-    public double getTsTv() {
+    private double getTsTv() {
         double freqA = freqModel.getFrequency(0);
         double freqC = freqModel.getFrequency(1);
         double freqG = freqModel.getFrequency(2);
         double freqT = freqModel.getFrequency(3);
         double freqR = freqA + freqG;
         double freqY = freqC + freqT;
-        double tsTv = (getKappa() * (freqA * freqG + freqC * freqT)) / (freqR * freqY);
-
-        return tsTv;
+        return (getKappa() * (freqA * freqG + freqC * freqT)) / (freqR * freqY);
     }
 
     protected void frequenciesChanged() {
@@ -219,22 +230,6 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
     // Private stuff
     //
 
-    private Statistic tsTvStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "tsTv";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int dim) {
-            return getTsTv();
-        }
-
-    };
-
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.SUBSTITUTION_MODELS;
@@ -300,99 +295,75 @@ public class HKY extends BaseSubstitutionModel implements Citable, ParameterRepl
 
     }
 
-    @Override
-    public Parameter getReplaceableParameter() {
-        return kappaParameter;
-    }
-
     /**
      * Generate a replicate of itself with new kappaParamter.
-     * @param oldParameter
-     * @param newParameter
+     * @param oldParameters
+     * @param newParameters
      */
     @Override
-    public HKY replaceParameter(Parameter oldParameter, Parameter newParameter) {
-        if (oldParameter == kappaParameter) {
-            return new HKY(newParameter, freqModel);
-        } else if (oldParameter == freqModel.getFrequencyParameter()) {
-            return new HKY(kappaParameter, new FrequencyModel(freqModel.getDataType(), newParameter));
-        } else {
-            throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+    public HKY factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencies = freqModel;
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++){
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+            if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            } else if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
+            } else {
+                throw new RuntimeException("Parameter not found in HKY SubstitutionModel.");
+            }
+        }
+        return new HKY(kappa, frequencies);
+    }
+
+
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+
+        byte[] rateMap = new byte[rateCount];
+        Arrays.fill(rateMap, (byte) 0);
+        rateMap[1] = rateMap[4] = 1;
+
+        for (int i = 0; i < rateCount; ++i) {
+            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
+                    this);
         }
     }
 
     @Override
-    public double[][] getDifferentialMassMatrix(double time, Parameter parameter) {
-        if (parameter == kappaParameter) {
-            EigenDecomposition eigenDecomposition = getEigenDecomposition();
-            double[] eigenValues = eigenDecomposition.getEigenValues();
-            WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
-            WrappedMatrix inverseEigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getInverseEigenVectors(), 0, stateCount, stateCount);
-
-            double[] pi = freqModel.getFrequencies();
-
-            final double normalization = setupMatrix();
-            final double[] Q = new double[stateCount * stateCount];
-            getInfinitesimalMatrix(Q);
-            // normalizationGradient = piG*piA + piT*piC + piA*piG + piC*piT
-            final double normalizationGradient = 2.0 * (pi[2] * pi[0] + pi[3] * pi[1]);
-
-            final double[] rates = new double[6];
-            Arrays.fill(rates, 0.0);
-            rates[1] = rates[4] = 1.0 / normalization;
-
-            WrappedMatrix.ArrayOfArray differentialMassMatrix = new WrappedMatrix.ArrayOfArray(new double[stateCount][stateCount]);
-            setupQMatrix(rates, pi, differentialMassMatrix.getArrays());
-            makeValid(differentialMassMatrix.getArrays(), stateCount);
-
-            final double tmpMultiplier = normalizationGradient / normalization;
-
-            for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) - Q[i * stateCount + j] * tmpMultiplier);
-                }
-            }
-
-            getTripleMatrixMultiplication(inverseEigenVectors, differentialMassMatrix, eigenVectors);
-
-            for (int i = 0; i < stateCount; i++) {
-                for (int j = 0; j < stateCount; j++) {
-                    if (i == j || eigenValues[i] == eigenValues[j]) {
-                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * time);
-                    } else {
-                        differentialMassMatrix.set(i, j, differentialMassMatrix.get(i, j) * (1.0 - Math.exp((eigenValues[j] - eigenValues[i]) * time)) / (eigenValues[i] - eigenValues[j]));
-                    }
-                }
-            }
-
-            getTripleMatrixMultiplication(eigenVectors, differentialMassMatrix, inverseEigenVectors);
-
-            return differentialMassMatrix.getArrays();
-
-        } else {
-            throw new RuntimeException("Not yet implemented");
-        }
+    public double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies) {
+        return getNormalizationValue(differentialMassMatrix, frequencies);
     }
 
-    private void getTripleMatrixMultiplication(ReadableMatrix leftMatrix, WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
 
-        double[][] tmpMatrix = new double[stateCount][stateCount];
-
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                for (int k = 0; k < stateCount; k++) {
-                    tmpMatrix[i][j] += middleMatrix.get(i, k) * rightMatrix.get(k, j);
-                }
-            }
+    @Override
+    public WrtParameter factory(Parameter parameter) {
+        WrtHKYModelParameter wrt;
+        if (parameter == kappaParameter) {
+            wrt = WrtHKYModelParameter.KAPPA;
+        } else {
+            throw new RuntimeException("Not yet implemented!");
         }
+        return wrt;
+    }
 
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                double sumProduct = 0.0;
-                for (int k = 0; k < stateCount; k++) {
-                    sumProduct += leftMatrix.get(i, k) * tmpMatrix[k][j];
+    enum WrtHKYModelParameter implements WrtParameter {
+        KAPPA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant,
+                                  DifferentiableSubstitutionModel substitutionModel) {
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 1.0 / normalizingConstant; // synonymous transition
                 }
-                middleMatrix.set(i, j, sumProduct);
+                throw new IllegalArgumentException("Invalid switch case");
             }
         }
     }

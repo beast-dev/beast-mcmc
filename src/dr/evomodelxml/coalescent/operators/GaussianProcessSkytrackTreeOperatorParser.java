@@ -28,14 +28,10 @@ package dr.evomodelxml.coalescent.operators;
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
-import dr.math.MathUtils;
 import dr.xml.*;
-
-import java.io.IOException;
-import java.util.logging.*;
 
 /**
  *
@@ -84,8 +80,8 @@ public class GaussianProcessSkytrackTreeOperatorParser extends AbstractXMLObject
 
 
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
-        if (mode == CoercionMode.DEFAULT) mode = CoercionMode.COERCION_ON;
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
+        if (mode == AdaptationMode.DEFAULT) mode = AdaptationMode.ADAPTATION_ON;
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -130,7 +126,7 @@ public class GaussianProcessSkytrackTreeOperatorParser extends AbstractXMLObject
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(SCALE_FACTOR),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
 //            AttributeRule.newDoubleRule(STOP_VALUE, true),
 //            AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
 //            AttributeRule.newBooleanRule(OLD_SKYRIDE, true),

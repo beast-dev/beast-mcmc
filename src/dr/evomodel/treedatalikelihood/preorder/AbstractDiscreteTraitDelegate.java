@@ -42,8 +42,11 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
+public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
         implements TreeTrait.TraitInfo<double[]> {
+
+    public static String GRADIENT_TRAIT_NAME = "Gradient";
+    public static String HESSIAN_TRAIT_NAME = "Hessian";
 
     public AbstractDiscreteTraitDelegate(String name,
                                          Tree tree,
@@ -88,8 +91,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     public void simulate(final int[] operations, final int operationCount,
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes
-        this.simulateRoot(rootNodeNumber); //set up pre-order partials at root node first
-        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);  // Update all nodes with no rescaling
+        this.simulateRoot(rootNodeNumber);
+        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
 
         double[] patternGradient = new double[patternCount * (tree.getNodeCount() - 1)];
         getPatternGradientHessian(tree, patternGradient, null);
@@ -127,13 +130,21 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         throw new RuntimeException("Not used with BEAGLE");
     }
 
+    protected String getGradientTraitName() {
+        return GRADIENT_TRAIT_NAME;
+    }
+
+    protected String getHessianTraitName() {
+        return HESSIAN_TRAIT_NAME;
+    }
+
     @Override
     protected void constructTraits(Helper treeTraitHelper) {
 //        treeTraitHelper.addTrait(factory(this));
         treeTraitHelper.addTrait(new TreeTrait.DA() {
             @Override
             public String getTraitName() {
-                return "Gradient";
+                return getGradientTraitName();
             }
 
             @Override
@@ -155,7 +166,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         treeTraitHelper.addTrait(new TreeTrait.DA() {
             @Override
             public String getTraitName() {
-                return "Hessian";
+                return getHessianTraitName();
             }
 
             @Override
@@ -176,7 +187,7 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     }
 
     public static String getName(String name) {
-        return "Gradient";
+        return GRADIENT_TRAIT_NAME;
     }
 
     @Override
@@ -284,6 +295,8 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         return gradient.clone();
     }
 
+    abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
+
     private void getPatternGradientHessian(Tree tree, double[] patternGradient, double[] patternDiagonalHessian) {
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
@@ -291,19 +304,29 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
         final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
         final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
 
+        cacheDifferentialMassMatrix(tree, patternDiagonalHessian != null);
+
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                firstDervIndices[u]  = evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
-                secondDeriveIndices[u] = evolutionaryProcessDelegate.getSquaredInfinitesimalMatrixBufferIndex(nodeNum);
+                firstDervIndices[u]  = getFirstDerivativeMatrixBufferIndex(nodeNum);
+                secondDeriveIndices[u] = getSecondDerivativeMatrixBufferIndex(nodeNum);
                 u++;
             }
         }
         beagle.calculateEdgeDerivative(postBufferIndices, preBufferIndices, getPostOrderPartialIndex(rootNumber),
                 firstDervIndices, secondDeriveIndices, 0, 0, 0, new int[]{Beagle.NONE},
                 tree.getNodeCount() - 1, patternGradient, patternDiagonalHessian);
+    }
+
+    protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
+        return evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
+    }
+
+    protected int getSecondDerivativeMatrixBufferIndex(int nodeNum) {
+        return evolutionaryProcessDelegate.getInfinitesimalSquaredMatrixBufferIndex(nodeNum);
     }
 
 //    private double[] getTrait(Tree tree, NodeRef node, MatrixChoice matrixChoice) {
@@ -479,17 +502,17 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private final BeagleDataLikelihoodDelegate likelihoodDelegate;
-    private final Beagle beagle;
-    private final EvolutionaryProcessDelegate evolutionaryProcessDelegate;
-    private final SiteRateModel siteRateModel;
-    private final PatternList patternList;
+    protected final BeagleDataLikelihoodDelegate likelihoodDelegate;
+    protected final Beagle beagle;
+    protected EvolutionaryProcessDelegate evolutionaryProcessDelegate;
+    protected final SiteRateModel siteRateModel;
+    protected final PatternList patternList;
 
-    private final int patternCount;
-    private final int stateCount;
-    private final int categoryCount;
-    private final int preOrderPartialOffset;
-    private final int preOrderScaleBufferOffset;
+    protected final int patternCount;
+    protected final int stateCount;
+    protected final int categoryCount;
+    protected int preOrderPartialOffset;
+    protected int preOrderScaleBufferOffset;
 
 //    private final double[] postOrderPartial;
 //    private final double[] preOrderPartial;
@@ -502,11 +525,11 @@ public class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.Abs
 //    private final double[] grandNumeratorIncrementLowerBound;
 //    private final double[] grandNumeratorIncrementUpperBound;
 
-    private final double[] gradient;
+    protected final double[] gradient;
 
-    private static final boolean COUNT_TOTAL_OPERATIONS = true;
-    private long simulateCount = 0;
-    private long getTraitCount = 0;
-    private long updatePrePartialCount = 0;
+    protected static final boolean COUNT_TOTAL_OPERATIONS = true;
+    protected long simulateCount = 0;
+    protected long getTraitCount = 0;
+    protected long updatePrePartialCount = 0;
 }
 

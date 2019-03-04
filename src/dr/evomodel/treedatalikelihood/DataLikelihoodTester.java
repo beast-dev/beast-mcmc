@@ -139,7 +139,7 @@ public class DataLikelihoodTester {
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                false);
+                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -164,7 +164,7 @@ public class DataLikelihoodTester {
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                false);
+                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
 
         treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -186,51 +186,59 @@ public class DataLikelihoodTester {
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 1):");
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                Collections.singletonList((PatternList)patterns),
-                Collections.singletonList((BranchModel)branchModel),
-                Collections.singletonList((SiteRateModel)siteRateModel),
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    Collections.singletonList((PatternList)patterns),
+                    Collections.singletonList((BranchModel)branchModel),
+                    Collections.singletonList((SiteRateModel)siteRateModel),
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood);
+            System.out.println("logLikelihood = " + logLikelihood);
 
-        hky.setKappa(5.0);
-        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5):");
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            hky.setKappa(5.0);
+            System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 5):");
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood);
-        hky.setKappa(1.0);
+            System.out.println("logLikelihood = " + logLikelihood);
+            hky.setKappa(1.0);
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 1 partition (kappa = 10):");
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                Collections.singletonList((PatternList)patterns),
-                Collections.singletonList((BranchModel)branchModel2),
-                Collections.singletonList((SiteRateModel)siteRateModel2),
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    Collections.singletonList((PatternList)patterns),
+                    Collections.singletonList((BranchModel)branchModel2),
+                    Collections.singletonList((SiteRateModel)siteRateModel2),
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood);
+            System.out.println("logLikelihood = " + logLikelihood);
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
 
@@ -246,23 +254,27 @@ public class DataLikelihoodTester {
         branchModels.add(branchModel);
         branchModels.add(branchModel2);
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                branchModels,
-                siteRateModels,
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: this is 2x the logLikelihood of the 2nd partition)\n\n");
+            System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: this is 2x the logLikelihood of the 2nd partition)\n\n");
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         System.exit(0);
 
@@ -336,6 +348,7 @@ public class DataLikelihoodTester {
         //START ADDITIONAL TEST #2 - Guy Baele
 
         System.out.println("-- Test #2 SiteRateModels -- ");
+
         logLikelihood = treeDataLikelihood.getLogLikelihood();
         System.out.println("logLikelihood = " + logLikelihood);
 
@@ -343,31 +356,35 @@ public class DataLikelihoodTester {
         siteRateModels = new ArrayList<SiteRateModel>();
         siteRateModels.add(siteRateModel);
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                branchModels,
-                siteRateModels,
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+            System.out.println("logLikelihood = " + logLikelihood + "\n");
 
-        System.out.print("Adjust alpha in shared siteRateModel: ");
-        siteRateModel.setAlpha(0.4);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only adjusted alpha for partition 1)");
-        siteRateModel.setAlpha(0.5);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + "\n\n");
+            System.out.print("Adjust alpha in shared siteRateModel: ");
+            siteRateModel.setAlpha(0.4);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
+            System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: same logLikelihood as only adjusted alpha for partition 1)");
+            siteRateModel.setAlpha(0.5);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
+            System.out.println("logLikelihood = " + logLikelihood + "\n\n");
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         //END ADDITIONAL TEST - Guy Baele
 
@@ -388,43 +405,47 @@ public class DataLikelihoodTester {
         siteRateModels.add(siteRateModel);
         siteRateModels.add(siteRateModel2);
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                branchModels,
-                siteRateModels,
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+            System.out.println("logLikelihood = " + logLikelihood + "\n");
 
-        System.out.print("Adjust kappa in partition 1: ");
-        hky.setKappa(5.0);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: logLikelihood has not changed?)");
+            System.out.print("Adjust kappa in partition 1: ");
+            hky.setKappa(5.0);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
+            System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: logLikelihood has not changed?)");
 
-        System.out.print("Return kappa in partition 1 to original value: ");
-        hky.setKappa(1.0);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+            System.out.print("Return kappa in partition 1 to original value: ");
+            hky.setKappa(1.0);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
+            System.out.println("logLikelihood = " + logLikelihood + "\n");
 
-        System.out.print("Adjust kappa in partition 2: ");
-        hky2.setKappa(11.0);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood);
+            System.out.print("Adjust kappa in partition 2: ");
+            hky2.setKappa(11.0);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
+            System.out.println("logLikelihood = " + logLikelihood);
 
-        System.out.print("Return kappa in partition 2 to original value: ");
-        hky2.setKappa(10.0);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-        System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n\n");
+            System.out.print("Return kappa in partition 2 to original value: ");
+            hky2.setKappa(10.0);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
+            System.out.println("logLikelihood = " + logLikelihood + " (i.e. reject: OK)\n\n");
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         //END ADDITIONAL TEST - Guy Baele
 
@@ -443,7 +464,7 @@ public class DataLikelihoodTester {
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                false);
+                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
                 dataLikelihoodDelegateOne,
@@ -469,7 +490,7 @@ public class DataLikelihoodTester {
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                false);
+                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(
                 dataLikelihoodDelegateTwo,
@@ -480,77 +501,89 @@ public class DataLikelihoodTester {
 
         System.out.println("BeagleDataLikelihoodDelegate logLikelihood partition 2 (kappa = 10) = " + logLikelihood + "\n");
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                Collections.singletonList((PatternList)patterns),
-                Collections.singletonList((BranchModel)branchModel),
-                Collections.singletonList((SiteRateModel)siteRateModel),
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    Collections.singletonList((PatternList)patterns),
+                    Collections.singletonList((BranchModel)branchModel),
+                    Collections.singletonList((SiteRateModel)siteRateModel),
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 1):");
-        System.out.println("logLikelihood = " + logLikelihood);
+            System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 1):");
+            System.out.println("logLikelihood = " + logLikelihood);
 
-        hky.setKappa(10.0);
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            hky.setKappa(10.0);
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 10):");
-        System.out.println("logLikelihood = " + logLikelihood);
+            System.out.print("Test MultiPartitionDataLikelihoodDelegate 1st partition (kappa = 10):");
+            System.out.println("logLikelihood = " + logLikelihood);
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
-        hky.setKappa(1.0);
+        try {
+            hky.setKappa(1.0);
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                Collections.singletonList((PatternList)morePatterns),
-                Collections.singletonList((BranchModel)branchModel2),
-                Collections.singletonList((SiteRateModel)siteRateModel2),
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    Collections.singletonList((PatternList)morePatterns),
+                    Collections.singletonList((BranchModel)branchModel2),
+                    Collections.singletonList((SiteRateModel)siteRateModel2),
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.print("Test MultiPartitionDataLikelihoodDelegate 2nd partition (kappa = 10):");
-        System.out.println("logLikelihood = " + logLikelihood + "\n");
+            System.out.print("Test MultiPartitionDataLikelihoodDelegate 2nd partition (kappa = 10):");
+            System.out.println("logLikelihood = " + logLikelihood + "\n");
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         patternLists = new ArrayList<PatternList>();
         patternLists.add(patterns);
         patternLists.add(morePatterns);
 
-        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                branchModels,
-                siteRateModels,
-                true,
-                PartialsRescalingScheme.NONE,
-                false);
+        try {            
+            multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+                    treeModel,
+                    patternLists,
+                    branchModels,
+                    siteRateModels,
+                    true,
+                    PartialsRescalingScheme.NONE,
+                    false);
 
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
+            treeDataLikelihood = new TreeDataLikelihood(
+                    multiPartitionDataLikelihoodDelegate,
+                    treeModel,
+                    branchRateModel);
 
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
+            logLikelihood = treeDataLikelihood.getLogLikelihood();
 
-        System.out.print("Test MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
+            System.out.print("Test MultiPartitionDataLikelihoodDelegate 2 partitions (kappa = 1, 10): ");
 
-        System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: should be the sum of both separate logLikelihoods)\nKappa value of partition 2 is used to compute logLikelihood for both partitions?");
+            System.out.println("logLikelihood = " + logLikelihood + " (NOT OK: should be the sum of both separate logLikelihoods)\nKappa value of partition 2 is used to compute logLikelihood for both partitions?");
+        } catch (DataLikelihoodDelegate.DelegateTypeException dte) {
+            System.out.print("Failed to create multiPartitionDataLikelihoodDelegate instance (wrong resource type or no partitions, needs to be CUDA or OpenCL device with multiple partitions)");
+        }
 
         //END ADDITIONAL TEST - Guy Baele
 

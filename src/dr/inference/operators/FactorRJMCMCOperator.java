@@ -77,12 +77,6 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
         storeDimensions();
     }
 
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
-
     @Override
     public String getOperatorName() {
         return "FactorRJMCMCOperator";

@@ -105,7 +105,7 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        final CoercionMode mode = CoercionMode.parseMode(xo);
+        final AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         final Scalable[] upArgs = getArgs(xo.getChild(UP));
         final Scalable[] dnArgs = getArgs(xo.getChild(DOWN));
@@ -140,7 +140,7 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(SCALE_FACTOR),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
 
             // Allow an arbitrary number of Parameters or Scalable in up or down
             new ElementRule(UP, ee, 1, Integer.MAX_VALUE),

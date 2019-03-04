@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
+import dr.inference.model.Statistic;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 
@@ -41,7 +42,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
-public class SubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
+public class SubtreeSlideOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
 
     private static final boolean DEBUG = false;
 
@@ -51,10 +52,12 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
     private final boolean scaledDirichletBranches;
-    private CoercionMode mode = CoercionMode.DEFAULT;
+    private AdaptationMode mode = AdaptationMode.DEFAULT;
+    private final double targetAcceptance;
 
     public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
-                                boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches, CoercionMode mode) {
+                                boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches,
+                                AdaptationMode mode, double targetAcceptance) {
         this.tree = tree;
         setWeight(weight);
 
@@ -73,6 +76,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         this.scaledDirichletBranches = scaleDirichletBranches;
 
         this.mode = mode;
+        this.targetAcceptance = targetAcceptance;
     }
 
     /**
@@ -346,11 +350,11 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(getSize());
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         setSize(Math.exp(value));
     }
 
@@ -358,26 +362,37 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         return getSize();
     }
 
-    public CoercionMode getMode() {
+    @Override
+    public final double getTargetAcceptanceProbability() {
+        return targetAcceptance;
+    }
+
+    public double getMinimumAcceptanceLevel() {
+        return 0.1;
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return 0.4;
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.20;
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.30;
+    }
+
+    public AdaptationMode getMode() {
         return mode;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
+    public String getAdaptableParameterName() {
+        return "size";
     }
 
-
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
+    public final String getPerformanceSuggestion() {
+        return null;
     }
 
     public String getOperatorName() {

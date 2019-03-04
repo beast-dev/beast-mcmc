@@ -25,8 +25,6 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
-import dr.evolution.tree.NodeRef;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
@@ -143,6 +141,12 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         double minTime = Double.MAX_VALUE;
 
         for (int i = 0, len = position.getDim(); i < len; ++i) {
+
+            // TODO Here is where we check that x_j > x_i for categorical dimensions
+
+            // TODO I believe we can simply the condition below (for fixed boundaries) with:
+            // double travelTime = -position.get(i) / velocity.get(i); // This is only true for boundaries at 0
+            // if (travelTime > 0.0 && missingDataMask[positionIndex] == 0.0)
 
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
             if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {

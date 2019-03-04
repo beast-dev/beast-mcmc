@@ -25,13 +25,14 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evomodel.substmodel.FrequencyModel;
 import dr.app.bss.Utils;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.substmodel.CodonFromNucleotideFrequencyModel;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -47,247 +48,249 @@ import java.util.logging.Logger;
  */
 public class FrequencyModelParser extends AbstractXMLObjectParser {
 
-	public static final String FREQUENCIES = "frequencies";
-	public static final String FREQUENCY_MODEL = "frequencyModel";
-	public static final String NORMALIZE = "normalize";
-	public static final String COMPRESS = "compress";
+    public static final String FREQUENCIES = "frequencies";
+    public static final String FREQUENCY_MODEL = "frequencyModel";
+    public static final String NORMALIZE = "normalize";
+    private static final String COMPRESS = "compress";
 
-	public static final String COMPOSITION = "composition";
-	public static final String FREQ_3x4 = "3x4";
-	public static final String[] COMPOSITION_TYPES = new String[] { FREQ_3x4 };
+    private static final String COMPOSITION = "composition";
+    private static final String FREQ_3x4 = "3x4";
+    private static final String CODON_FROM_NUCLEOTIDE = "codonFromNucleotide";
+    private static final String[] COMPOSITION_TYPES = new String[]{FREQ_3x4};
 
-	public String getParserName() {
-		return FREQUENCY_MODEL;
-	}
+    public String getParserName() {
+        return FREQUENCY_MODEL;
+    }
 
-	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		DataType dataType = DataTypeUtils.getDataType(xo);
+        DataType dataType = DataTypeUtils.getDataType(xo);
 
-		Parameter freqsParam = (Parameter) xo.getElementFirstChild(FREQUENCIES);
-		double[] frequencies = null;
+        Parameter freqsParam = (Parameter) xo.getElementFirstChild(FREQUENCIES);
+        double[] frequencies = null;
 
-		for (int i = 0; i < xo.getChildCount(); i++) {
-			Object obj = xo.getChild(i);
-			if (obj instanceof PatternList) {
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            Object obj = xo.getChild(i);
+            if (obj instanceof PatternList) {
 
-				PatternList patternList = (PatternList) obj;
-				if (xo.getAttribute(COMPRESS, false)
-						&& (patternList.getDataType() instanceof HiddenDataType)) {
+                PatternList patternList = (PatternList) obj;
+                if (xo.getAttribute(COMPRESS, false)
+                        && (patternList.getDataType() instanceof HiddenDataType)) {
 
-					double[] hiddenFrequencies = patternList
-							.getStateFrequencies();
-					int hiddenCount = ((HiddenDataType) patternList
-							.getDataType()).getHiddenClassCount();
-					int baseStateCount = hiddenFrequencies.length / hiddenCount;
-					frequencies = new double[baseStateCount];
-					for (int j = 0; j < baseStateCount; ++j) {
-						for (int k = 0; k < hiddenCount; ++k) {
-							frequencies[j] += hiddenFrequencies[j + k
-									* baseStateCount];
-						}
-					}
+                    double[] hiddenFrequencies = patternList
+                            .getStateFrequencies();
+                    int hiddenCount = ((HiddenDataType) patternList
+                            .getDataType()).getHiddenClassCount();
+                    int baseStateCount = hiddenFrequencies.length / hiddenCount;
+                    frequencies = new double[baseStateCount];
+                    for (int j = 0; j < baseStateCount; ++j) {
+                        for (int k = 0; k < hiddenCount; ++k) {
+                            frequencies[j] += hiddenFrequencies[j + k
+                                    * baseStateCount];
+                        }
+                    }
 
-				} else {
+                } else {
 
-					// TODO
-					if (xo.hasAttribute(COMPOSITION)) {
+                    // TODO
+                    if (xo.hasAttribute(COMPOSITION)) {
 
-						String type = xo.getStringAttribute(COMPOSITION);
-						if (type.equalsIgnoreCase(FREQ_3x4)) {
+                        String type = xo.getStringAttribute(COMPOSITION);
+                        if (type.equalsIgnoreCase(FREQ_3x4)) {
 
-							frequencies = getEmpirical3x4Freqs(patternList);
+                            frequencies = getEmpirical3x4Freqs(patternList);
 
-						}
+                        }
 
-					} else {
+                    } else {
 
-					frequencies = patternList.getStateFrequencies();
-					
-					} // END: composition check
-					
-				}
-				break;
-			}// END: patternList check
-		}
+                        frequencies = patternList.getStateFrequencies();
 
-		StringBuilder sb = new StringBuilder(
-				"\nCreating state frequencies model '"
-						+ freqsParam.getParameterName() + "': ");
-		if (frequencies != null) {
+                    } // END: composition check
 
-			if (freqsParam.getDimension() != frequencies.length) {
-				throw new XMLParseException(
-						"dimension of frequency parameter and number of sequence states don't match.");
-			}
+                }
+                break;
+            }// END: patternList check
+        }
 
-			for (int j = 0; j < frequencies.length; j++) {
-				freqsParam.setParameterValue(j, frequencies[j]);
-			}
+        StringBuilder sb = new StringBuilder(
+                "\nCreating state frequencies model '"
+                        + freqsParam.getParameterName() + "': ");
+        if (frequencies != null) {
 
-			sb.append("Using empirical frequencies from data ");
+            if (freqsParam.getDimension() != frequencies.length) {
+                throw new XMLParseException(
+                        "dimension of frequency parameter and number of sequence states don't match.");
+            }
 
-		} else {
-			sb.append("Initial frequencies ");
-		}
-		sb.append("= {");
+            for (int j = 0; j < frequencies.length; j++) {
+                freqsParam.setParameterValue(j, frequencies[j]);
+            }
 
-		if (xo.getAttribute(NORMALIZE, false)) {
-			double sum = 0;
-			for (int j = 0; j < freqsParam.getDimension(); j++)
-				sum += freqsParam.getParameterValue(j);
-			for (int j = 0; j < freqsParam.getDimension(); j++) {
-				if (sum != 0)
-					freqsParam.setParameterValue(j,
-							freqsParam.getParameterValue(j) / sum);
-				else
-					freqsParam.setParameterValue(j,
-							1.0 / freqsParam.getDimension());
-			}
-		}
+            sb.append("Using empirical frequencies from data ");
 
-		NumberFormat format = NumberFormat.getNumberInstance();
-		format.setMaximumFractionDigits(5);
+        } else {
+            sb.append("Initial frequencies ");
+        }
+        sb.append("= {");
 
-		sb.append(format.format(freqsParam.getParameterValue(0)));
-		for (int j = 1; j < freqsParam.getDimension(); j++) {
-			sb.append(", ");
-			sb.append(format.format(freqsParam.getParameterValue(j)));
-		}
-		sb.append("}");
-		Logger.getLogger("dr.evomodel").info(sb.toString());
+        if (xo.getAttribute(NORMALIZE, false)) {
+            double sum = 0;
+            for (int j = 0; j < freqsParam.getDimension(); j++)
+                sum += freqsParam.getParameterValue(j);
+            for (int j = 0; j < freqsParam.getDimension(); j++) {
+                if (sum != 0)
+                    freqsParam.setParameterValue(j,
+                            freqsParam.getParameterValue(j) / sum);
+                else
+                    freqsParam.setParameterValue(j,
+                            1.0 / freqsParam.getDimension());
+            }
+        }
 
-		return new FrequencyModel(dataType, freqsParam);
-	}// END: parseXMLObject
+        NumberFormat format = NumberFormat.getNumberInstance();
+        format.setMaximumFractionDigits(5);
 
-	private double[] getEmpirical3x4Freqs(PatternList patternList) {
+        sb.append(format.format(freqsParam.getParameterValue(0)));
+        for (int j = 1; j < freqsParam.getDimension(); j++) {
+            sb.append(", ");
+            sb.append(format.format(freqsParam.getParameterValue(j)));
+        }
+        sb.append("}");
+        Logger.getLogger("dr.evomodel").info(sb.toString());
 
-		DataType nucleotideDataType = Nucleotides.INSTANCE;
-		Codons codonDataType = Codons.UNIVERSAL; 
-        List<String> stopCodonsList =  Arrays.asList(Utils.STOP_CODONS);
-		
-		int cStateCount = codonDataType.getStateCount(); 
-		int nStateCount = nucleotideDataType.getStateCount(); 
-		int npos = 3;  
-		
-		double[] stopCodonFreqs = new double[Utils.STOP_CODONS.length];
-		double counts[][] = new double[nStateCount][npos];
-		int countsPos[] = new int[npos];
-		
-		int patternCount = patternList.getPatternCount();
-		for (int i = 0; i < patternCount; i++) {
-			
-			int[] sitePatterns = patternList.getPattern(i);
-			for (int k = 0; k < sitePatterns.length; k++) {
-			
-				int codonState = sitePatterns[k];
-				int[] nucleotideStates = codonDataType.getTripletStates(codonState);
-				
-				String triplet = codonDataType.getTriplet(codonState);
-				
+        if (dataType instanceof Codons && xo.getAttribute(CODON_FROM_NUCLEOTIDE, false)) {
+
+            FrequencyModel nucleotideFrequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqsParam);
+            Parameter codonFrequencies = new Parameter.Default(dataType.getStateCount(), 1.0 / dataType.getStateCount());
+            codonFrequencies.setId(xo.getId());
+
+            return new CodonFromNucleotideFrequencyModel((Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
+
+        } else {
+            return new FrequencyModel(dataType, freqsParam);
+        }
+    }// END: parseXMLObject
+
+    private double[] getEmpirical3x4Freqs(PatternList patternList) {
+
+        DataType nucleotideDataType = Nucleotides.INSTANCE;
+        Codons codonDataType = Codons.UNIVERSAL;
+        List<String> stopCodonsList = Arrays.asList(Utils.STOP_CODONS);
+
+        int cStateCount = codonDataType.getStateCount();
+        int nStateCount = nucleotideDataType.getStateCount();
+        int nPosition = 3;
+
+        double[] stopCodonFreqs = new double[Utils.STOP_CODONS.length];
+        double counts[][] = new double[nStateCount][nPosition];
+        int countsPos[] = new int[nPosition];
+
+        int patternCount = patternList.getPatternCount();
+        for (int i = 0; i < patternCount; i++) {
+
+            int[] sitePatterns = patternList.getPattern(i);
+            for (int codonState : sitePatterns) {
+
+                int[] nucleotideStates = codonDataType.getTripletStates(codonState);
+
+                String triplet = codonDataType.getTriplet(codonState);
+
 //				if(triplet.equals("TAA")) {
 //					System.err.println(triplet);
 //				}
-				
-				if(stopCodonsList.contains(triplet)) {
-					
-					int stopCodonIndex = stopCodonsList.indexOf(triplet);
-					stopCodonFreqs[stopCodonIndex]++;
-					
-				}//END: stopCodon check
-				
-				for(int pos = 0; pos < npos; pos++) {
-					
-					int nucleotideState = nucleotideStates[pos];
-					counts[nucleotideState][pos]++;
-					countsPos[pos]++;
-					
-				}//END: nucleotide positions loop
-				
-			}//END: sitePatterns loop
-		}// sites loop
-		
-		int total = 0;
-		for (int pos = 0; pos < npos; pos++) {
 
-			int totalPos = countsPos[pos];
-			for (int s = 0; s < nStateCount; s++) {
-				counts[s][pos] = counts[s][pos] / totalPos;
-			}//END: nucleotide states loop
-			
-			total += totalPos;
-		}//END: nucleotide positions loop
+                if (stopCodonsList.contains(triplet)) {
+
+                    int stopCodonIndex = stopCodonsList.indexOf(triplet);
+                    stopCodonFreqs[stopCodonIndex]++;
+
+                } //END: stopCodon check
+
+                for (int pos = 0; pos < nPosition; pos++) {
+
+                    int nucleotideState = nucleotideStates[pos];
+                    counts[nucleotideState][pos]++;
+                    countsPos[pos]++;
+
+                } //END: nucleotide positions loop
+
+            } //END: sitePatterns loop
+        } // sites loop
+
+        int total = 0;
+        for (int pos = 0; pos < nPosition; pos++) {
+
+            int totalPos = countsPos[pos];
+            for (int s = 0; s < nStateCount; s++) {
+                counts[s][pos] = counts[s][pos] / totalPos;
+            }//END: nucleotide states loop
+
+            total += totalPos;
+        }//END: nucleotide positions loop
 
 //		Utils.printArray(stopCodonFreqs);
 //		System.out.println(stopCodonFreqs.length);
-		
-		// add stop codon frequencies
-		double pi = 0.0;
-		for(int i=0;i<stopCodonFreqs.length;i++) {
-			double freq = stopCodonFreqs[i] / total;
-			pi += freq;
-		}
-		
+
+        // add stop codon frequencies
+        double pi = 0.0;
+        for (double stopCodonFreq : stopCodonFreqs) {
+            double freq = stopCodonFreq / total;
+            pi += freq;
+        }
+
 //		System.out.println(pi);
-		
-		double[] freqs = new double[cStateCount];
-		Arrays.fill(freqs, 1.0);
-		for (int codonState = 0; codonState < cStateCount; codonState++) {
-			
-			int[] nucleotideStates = codonDataType.getTripletStates(codonState);
-			for (int pos = 0; pos < npos; pos++) {
-				
-				int nucleotide = nucleotideStates[pos];
-				freqs[codonState] *= counts[nucleotide][pos];
-				
-			}// END: nucleotide positions loop
-			
-			// TODO: stop codons freqs
-			freqs[codonState] = freqs[codonState] / (1-pi);
-			
-		}//END: codon states loop
-		
-		
-		
-		
-		
-		
-		
-		
-		return freqs;
-	}// END: getEmpirical3x4Freqs
+
+        double[] freqs = new double[cStateCount];
+        Arrays.fill(freqs, 1.0);
+        for (int codonState = 0; codonState < cStateCount; codonState++) {
+
+            int[] nucleotideStates = codonDataType.getTripletStates(codonState);
+            for (int pos = 0; pos < nPosition; pos++) {
+
+                int nucleotide = nucleotideStates[pos];
+                freqs[codonState] *= counts[nucleotide][pos];
+
+            }// END: nucleotide positions loop
+
+            // TODO: stop codons freqs
+            freqs[codonState] = freqs[codonState] / (1 - pi);
+
+        }//END: codon states loop
 
 
-	public String getParserDescription() {
-		return "A model of equilibrium base frequencies.";
-	}
+        return freqs;
+    }// END: getEmpirical3x4Freqs
 
-	public Class getReturnType() {
-		return FrequencyModel.class;
-	}
 
-	public XMLSyntaxRule[] getSyntaxRules() {
-		return rules;
-	}
+    public String getParserDescription() {
+        return "A model of equilibrium base frequencies.";
+    }
 
-	private final XMLSyntaxRule[] rules = {
+    public Class getReturnType() {
+        return FrequencyModel.class;
+    }
 
-			new StringAttributeRule(COMPOSITION, "Composition type",
-					COMPOSITION_TYPES, true),
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
 
-			AttributeRule.newBooleanRule(NORMALIZE, true),
-			AttributeRule.newBooleanRule(COMPRESS, true),
+    private final XMLSyntaxRule[] rules = {
 
-			new ElementRule(PatternList.class, "Initial value", 0, 1),
+            new StringAttributeRule(COMPOSITION, "Composition type",
+                    COMPOSITION_TYPES, true),
 
-			new XORRule(new StringAttributeRule(DataType.DATA_TYPE,
-					"The type of sequence data",
-					DataType.getRegisteredDataTypeNames(), false),
-					new ElementRule(DataType.class)),
+            AttributeRule.newBooleanRule(NORMALIZE, true),
+            AttributeRule.newBooleanRule(COMPRESS, true),
 
-			new ElementRule(FREQUENCIES, new XMLSyntaxRule[] { new ElementRule(
-					Parameter.class) }),
+            new ElementRule(PatternList.class, "Initial value", 0, 1),
 
-	};
+            new XORRule(new StringAttributeRule(DataType.DATA_TYPE,
+                    "The type of sequence data",
+                    DataType.getRegisteredDataTypeNames(), false),
+                    new ElementRule(DataType.class)),
 
+            new ElementRule(FREQUENCIES, new XMLSyntaxRule[]{new ElementRule(
+                    Parameter.class)}),
+    };
 }

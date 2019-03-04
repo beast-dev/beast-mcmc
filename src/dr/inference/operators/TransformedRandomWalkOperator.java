@@ -39,7 +39,7 @@ import dr.util.Transform;
  *
  * @author Guy Baele
  */
-public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
+public class TransformedRandomWalkOperator extends AbstractAdaptableOperator {
 
     private Parameter parameter = null;
     private final Transform[] transformations;
@@ -56,17 +56,17 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
         absorbing
     }
 
-    public TransformedRandomWalkOperator(Parameter parameter, Transform[] transformations, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
+    public TransformedRandomWalkOperator(Parameter parameter, Transform[] transformations, double windowSize, BoundaryCondition bc, double weight, AdaptationMode mode) {
         this(parameter, transformations, null, windowSize, bc, weight, mode);
     }
 
     public TransformedRandomWalkOperator(Parameter parameter, Transform[] transformations, Parameter updateIndex, double windowSize, BoundaryCondition bc,
-            double weight, CoercionMode mode) {
+            double weight, AdaptationMode mode) {
         this(parameter, transformations, updateIndex, windowSize, bc, weight, mode, null, null);
     }
 
     public TransformedRandomWalkOperator(Parameter parameter, Transform[] transformations, Parameter updateIndex, double windowSize, BoundaryCondition bc,
-            double weight, CoercionMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
+                                         double weight, AdaptationMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
         super(mode);
         this.parameter = parameter;
         this.transformations = transformations;
@@ -185,11 +185,11 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
         windowSize = Math.exp(value);
     }
 
@@ -197,38 +197,8 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
         return windowSize;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
     public String toString() {

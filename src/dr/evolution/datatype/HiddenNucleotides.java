@@ -62,4 +62,8 @@ public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
     public int getHiddenClassCount() {
         return hiddenClassCount;
     }
+
+    public String getDescription() {
+        return DESCRIPTION + hiddenClassCount;
+    }
 }

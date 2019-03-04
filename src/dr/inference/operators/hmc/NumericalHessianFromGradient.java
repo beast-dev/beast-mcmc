@@ -13,13 +13,21 @@ import dr.math.MachineAccuracy;
 public class NumericalHessianFromGradient implements HessianWrtParameterProvider {
     GradientWrtParameterProvider gradientProvider;
 
-    NumericalHessianFromGradient(GradientWrtParameterProvider gradientWrtParameterProvider) {
+    public NumericalHessianFromGradient(GradientWrtParameterProvider gradientWrtParameterProvider) {
         this.gradientProvider = gradientWrtParameterProvider;
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        throw new RuntimeException("Not yet implemented");
+
+        final int dim = gradientProvider.getDimension();
+        double[][] numericalHessian = getNumericalHessianCentral(); //todo: no need to get the full hessian if only need the diagonals
+        double[] numericalHessianDiag = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            numericalHessianDiag[i] = numericalHessian[i][i];
+        }
+        return numericalHessianDiag;
     }
 
     @Override

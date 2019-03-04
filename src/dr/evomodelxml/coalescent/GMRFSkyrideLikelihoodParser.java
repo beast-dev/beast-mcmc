@@ -66,8 +66,13 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PLOIDY = "ploidy";
     public static final String COVARIATES = "covariates";
     public static final String COLUMN_MAJOR = "columnMajor";
+    public static final String FIRST_OBSERVED_INDEX = "firstObservedIndex";
     public static final String LAST_OBSERVED_INDEX = "lastObservedIndex";
     public static final String COV_PREC_PARAM = "covariatePrecision";
+    public static final String COV_PREC_REC = "covariatePrecisionRecent";
+    public static final String COV_PREC_DIST = "covariatePrecisionDistant";
+    public static final String REC_INDICES = "covIndicesMissingRecent";
+    public static final String DIST_INDICES = "covIndicesMissingDistant";
 
 
     public String getParserName() {
@@ -139,6 +144,17 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             phi = (Parameter) cxo.getChild(Parameter.class);
         }
 
+        List<Parameter> firstObservedIndex = null;
+        if (xo.hasChildNamed(FIRST_OBSERVED_INDEX)) {
+            firstObservedIndex = new ArrayList<Parameter>();
+            cxo = xo.getChild(FIRST_OBSERVED_INDEX);
+            final int numInd = cxo.getChildCount();
+
+            for(int i=0; i< numInd; ++i) {
+                firstObservedIndex.add((Parameter) cxo.getChild(i));
+            }
+        }
+
         List<Parameter> lastObservedIndex = null;
         if (xo.hasChildNamed(LAST_OBSERVED_INDEX)) {
             lastObservedIndex = new ArrayList<Parameter>();
@@ -197,15 +213,72 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
         }
 
-        List<Parameter> covPrecParam = null;
-        if (xo.hasChildNamed(COV_PREC_PARAM)){
-            covPrecParam = new ArrayList<Parameter>();
-            cxo = xo.getChild(COV_PREC_PARAM);
-            final int numCovPrec = cxo.getChildCount();
+        List<Parameter> covPrecParamRecent = null;
+        List<Parameter> covPrecParamDistant = null;
 
-            for(int i=0; i < numCovPrec; ++i){
-                covPrecParam.add((Parameter) cxo.getChild(i));
+        if(xo.hasChildNamed(COV_PREC_REC)){
+            covPrecParamRecent = new ArrayList<Parameter>();
+            cxo = xo.getChild(COV_PREC_REC);
+            for(int i = 0; i < cxo.getChildCount(); ++i){
+                covPrecParamRecent.add((Parameter) cxo.getChild(i));
             }
+        }
+
+        if(xo.hasChildNamed(COV_PREC_DIST)){
+            covPrecParamDistant = new ArrayList<Parameter>();
+            cxo = xo.getChild(COV_PREC_DIST);
+            for(int i = 0; i < cxo.getChildCount(); ++i){
+                covPrecParamDistant.add((Parameter) cxo.getChild(i));
+            }
+        }
+
+        if (xo.hasChildNamed(COV_PREC_PARAM)){
+           // covPrecParam = new ArrayList<Parameter>();
+            if(firstObservedIndex != null) {
+                covPrecParamRecent = new ArrayList<Parameter>();
+            }
+            if(lastObservedIndex != null) {
+                covPrecParamDistant = new ArrayList<Parameter>();
+            }
+            cxo = xo.getChild(COV_PREC_PARAM);
+
+            for(int i=0; i < cxo.getChildCount(); ++i){
+                //covPrecParam.add((Parameter) cxo.getChild(i));
+                if(firstObservedIndex != null) {
+                    covPrecParamRecent.add((Parameter) cxo.getChild(i));
+                }
+                if(lastObservedIndex != null) {
+                    covPrecParamDistant.add((Parameter) cxo.getChild(i));
+                }
+            }
+        }
+
+        if((covPrecParamDistant == null && lastObservedIndex != null) || (covPrecParamDistant != null && lastObservedIndex == null)){
+            throw new XMLParseException("Must specify both lastObservedIndex and covariatePrecision");
+        }
+
+        if((covPrecParamRecent == null && firstObservedIndex != null) || (covPrecParamRecent != null && firstObservedIndex == null)){
+            throw new XMLParseException("Must specify both firstObservedIndex and covariatePrecision");
+        }
+
+        Parameter recentIndices = null;
+        if (xo.getChild(REC_INDICES) != null) {
+            cxo = xo.getChild(REC_INDICES);
+            recentIndices = (Parameter) cxo.getChild(Parameter.class);
+        }
+
+        if(firstObservedIndex == null && recentIndices != null){
+            throw new XMLParseException("Cannot specify covIndicesMissingRecent without specifying firstObservedIndex");
+        }
+
+        Parameter distantIndices = null;
+        if (xo.getChild(DIST_INDICES) != null) {
+            cxo = xo.getChild(DIST_INDICES);
+            distantIndices = (Parameter) cxo.getChild(Parameter.class);
+        }
+
+        if(lastObservedIndex == null && distantIndices != null){
+            throw new XMLParseException("Cannot specify covIndicesMissingDistant without specifying lastObservedIndex");
         }
 
         List<MatrixParameter> covariates = null;
@@ -247,7 +320,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             if (xo.getChild(GRID_POINTS) != null) {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                        lastObservedIndex, covPrecParam, betaList);
+                        firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
             } else {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);

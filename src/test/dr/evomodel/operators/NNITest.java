@@ -72,7 +72,7 @@ public class NNITest extends OperatorAssert{
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
 
         NNI operator = new NNI(treeModel, 1.0);
-        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, CoercionMode.COERCION_ON, 1.0);
+        ScaleOperator scaleOperator = new ScaleOperator(rootParameter, 0.75, AdaptationMode.ADAPTATION_ON, 1.0);
         UniformOperator uniformOperator = new UniformOperator(internalHeights, 1.0);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();

@@ -233,11 +233,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             System.err.println("draw: " + new Vector(draw));
         }
     }
-    
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
-    }
+
+//    @Override
+//    public String getPerformanceSuggestion() {
+//        return null;
+//    }
 
     @Override
     public String getOperatorName() { return "newLoadingsGibbsOperator"; }

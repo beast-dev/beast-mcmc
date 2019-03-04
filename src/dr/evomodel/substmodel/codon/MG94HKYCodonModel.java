@@ -25,11 +25,12 @@
 
 package dr.evomodel.substmodel.codon;
 
-import dr.evomodel.substmodel.DefaultEigenSystem;
-import dr.evomodel.substmodel.EigenSystem;
-import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
+
+import java.util.List;
 
 /**
  * Muse-Gaut model of codon evolution
@@ -41,29 +42,17 @@ import dr.inference.model.Parameter;
 public class MG94HKYCodonModel extends MG94CodonModel {
 
     protected Parameter kappaParameter;
-//    protected Parameter AtoC_Parameter;
-//    protected Parameter AtoG_Parameter;
-//    protected Parameter AtoT_Parameter;
-//    protected Parameter CtoG_Parameter;
-//    protected Parameter CtoT_Parameter;
-//    protected Parameter GtoT_Parameter;
 
-    public MG94HKYCodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter, Parameter kappaParameter,
-                             FrequencyModel freqModel) {
+    public MG94HKYCodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter,
+                             Parameter kappaParameter, FrequencyModel freqModel) {
         this(codonDataType, alphaParameter, betaParameter, kappaParameter, freqModel,
                 new DefaultEigenSystem(codonDataType.getStateCount()));
     }
 
-    public MG94HKYCodonModel(Codons codonDataType,
+    private MG94HKYCodonModel(Codons codonDataType,
                              Parameter alphaParameter,
                              Parameter betaParameter,
                              Parameter kappaParameter,
-//                          Parameter AtoC_Parameter,
-//                          Parameter AtoG_Parameter,
-//                          Parameter AtoT_Parameter,
-//                          Parameter CtoG_Parameter,
-//                          Parameter CtoT_Parameter,
-//                          Parameter GtoT_Parameter,
                              FrequencyModel freqModel, EigenSystem eigenSystem) {
         super(codonDataType, alphaParameter, betaParameter, freqModel, eigenSystem);
 
@@ -105,4 +94,80 @@ public class MG94HKYCodonModel extends MG94CodonModel {
         }
     }
 
+    @Override
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+
+        Parameter alpha = alphaParameter;
+        Parameter beta = betaParameter;
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencyModel = freqModel;
+
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++) {
+
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+
+            if (oldParameter == alphaParameter) {
+                alpha = newParameter;
+            } else if (oldParameter == betaParameter) {
+                beta = newParameter;
+            } else if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            } else {
+                throw new RuntimeException("Not yet implemented!");
+            }
+        }
+        return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencyModel);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter) {
+        WrtMG94HKYModelParameter wrt;
+        if (parameter == alphaParameter) {
+            wrt = WrtMG94HKYModelParameter.ALPHA;
+        } else if (parameter == betaParameter) {
+            wrt = WrtMG94HKYModelParameter.BETA;
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+        return wrt;
+    }
+
+    enum WrtMG94HKYModelParameter implements WrtParameter {
+        ALPHA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant,
+                                  DifferentiableSubstitutionModel substitutionModel) {
+                MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
+                final double numSynTransitions = thisSubstitutionModel.getNumSynTransitions();
+                final double kappa = thisSubstitutionModel.getKappa();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return kappa / normalizingConstant / numSynTransitions; // synonymous transition
+                    case 2: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transversion
+                    case 3: return 0.0;
+                    case 4: return 0.0;
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        },
+        BETA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant, DifferentiableSubstitutionModel substitutionModel) {
+                MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
+                final double numNonsynTransitions = thisSubstitutionModel.getNumNonsynTransitions();
+                final double kappa = thisSubstitutionModel.getKappa();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 0.0;
+                    case 2: return 0.0;
+                    case 3: return kappa / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                    case 4: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        }
+    }
 }

@@ -27,8 +27,8 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
@@ -83,7 +83,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        int nSteps = xo.getIntegerAttribute(N_STEPS);
+        int nSteps = xo.getAttribute(N_STEPS, 10);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         int runMode = parseRunMode(xo);
 
@@ -98,7 +98,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 
-        CoercionMode coercionMode = CoercionMode.parseMode(xo);
+        AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -135,11 +135,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         );
 
         if (runMode == 0) {
-            return new HamiltonianMonteCarloOperator(coercionMode, weight, derivative,
+            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                     parameter, transform, mask,
                     runtimeOptions, preconditioningType);
         } else {
-            return new NoUTurnOperator(coercionMode, weight, derivative,
+            return new NoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
                     stepSize, nSteps);
         }
@@ -152,9 +152,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newIntegerRule(N_STEPS),
+            AttributeRule.newIntegerRule(N_STEPS, true),
             AttributeRule.newDoubleRule(STEP_SIZE),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),

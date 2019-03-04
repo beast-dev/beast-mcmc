@@ -27,15 +27,14 @@ package dr.evomodel.substmodel;
 
 import dr.inference.model.Parameter;
 
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
 public interface ParameterReplaceableSubstitutionModel extends SubstitutionModel {
 
-    Parameter getReplaceableParameter();
-
-    SubstitutionModel replaceParameter(Parameter oldParameter, Parameter newParameter);
-
-    double[][] getDifferentialMassMatrix(double time, Parameter parameter);
+    ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters);
+    
 }

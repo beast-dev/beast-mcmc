@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchModel.Mapping;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
 
 import java.util.ArrayList;
@@ -85,31 +84,35 @@ public interface BranchSpecificSubstitutionModelProvider {
 
     class Default extends Base implements BranchSpecificSubstitutionModelProvider {
 
-        private final ArbitraryBranchRates branchRates;
-        private final List<SubstitutionModel> substitutionModelList;
+//        private final CompoundParameter branchParameter;
         private final TreeModel tree;
 
-        public Default(ArbitraryBranchRates branchRates, List<SubstitutionModel> substitutionModelList,
+        public Default(List<SubstitutionModel> substitutionModelList,
                        TreeModel tree) {
-            this.branchRates = branchRates;
+//            this.branchParameter = branchParameter;
             this.substitutionModelList = substitutionModelList;
             this.tree = tree;
+            assert(substitutionModelList.size() == tree.getNodeCount());
+        }
+
+        private int getParameterIndexFromNode(NodeRef node) {
+            return node.getNumber();
         }
 
         @Override
         public SubstitutionModel getSubstitutionModel(Tree tree, NodeRef node) {
-            return substitutionModelList.get(branchRates.getParameterIndexFromNode(node));
+            return substitutionModelList.get(getParameterIndexFromNode(node));
         }
 
         @Override
         public SubstitutionModel getRootSubstitutionModel() {
-            return substitutionModelList.get(branchRates.getParameterIndexFromNode(tree.getRoot()));
+            return substitutionModelList.get(getParameterIndexFromNode(tree.getRoot()));
         }
 
         @Override
         public Mapping getBranchModelMapping(final NodeRef node) {
             return new BranchModel.Mapping() {
-                public int[] getOrder() {return new int[] {branchRates.getParameterIndexFromNode(node)};}
+                public int[] getOrder() {return new int[] {getParameterIndexFromNode(node)};}
 
                 @Override
                 public double[] getWeights() {

@@ -27,8 +27,7 @@ package dr.inference.operators.hmc.deprecated;
 
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
-import dr.inference.operators.hmc.deprecated.AbstractHamiltonianMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 
 /**
  * Created by max on 1/11/16.
@@ -47,7 +46,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     private int nSteps;
 
 
-    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameterInterface loadings){
+    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, AdaptationMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameterInterface loadings){
         super(mode , momentumSd);
         setWeight(weight);
         this.lfm = lfm;
@@ -63,23 +62,18 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     }
 
     @Override
-    public double getCoercableParameter() {
+    public double getAdaptableParameter() {
         return 0;
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameter(double value) {
 
     }
 
     @Override
     public double getRawParameter() {
         return 0;
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override

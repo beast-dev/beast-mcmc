@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 
 import java.io.Serializable;
 
@@ -47,7 +48,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
-    private final boolean cacheQMatrices;
+
+    private final PreOrderSettings settings;
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -56,11 +58,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param branchModel Describes which substitution models use on each branch
      */
     public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, 0, false);
+        this(tree, branchModel, 0, PreOrderSettings.getDefault());
     }
 
     public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
-        this(tree, branchModel, partitionNumber, false);
+        this(tree, branchModel, partitionNumber, PreOrderSettings.getDefault());
     }
 
     /**
@@ -69,8 +71,9 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
      * @param tree
      * @param branchModel Describes which substitution models use on each branch
      * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
+     * @param settings PreOrder derivative settings
      */
-    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, boolean cacheQMatrices) {
+    public HomogenousSubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, PreOrderSettings settings) {
 
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
@@ -84,14 +87,9 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         // two matrices for each node less the root
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
 
-        this.cacheQMatrices = cacheQMatrices;
+        this.settings = settings;
 
     }// END: Constructor
-
-    @Override
-    public boolean cacheInfinitesimalMatrices() {
-        return this.cacheQMatrices;
-    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {
@@ -114,13 +112,58 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     }
 
     @Override
-    public int getSquaredInfinitesimalMatrixBufferIndex(int branchIndex) {
+    public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
         return matrixBufferHelper.getBufferCount() + getEigenBufferCount() + getEigenIndex(0);
     }
 
+    private int getInfinitesimalMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchRateDerivative) {
+            return 2 * getEigenBufferCount();
+        } else {
+            return 0;
+        }
+    }
+
+    private int getDifferentialMassMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchInfinitesimalDerivative) {
+            return 2 * (nodeCount - 1);
+        } else {
+            return 0;
+        }
+    }
+
     @Override
-    public int getInfinitesimalMatrixBufferCount() {
-        return 2 * getEigenBufferCount();
+    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
+        int bufferIndex = matrixBufferHelper.getBufferCount() + getInfinitesimalMatrixBufferCount(settings) + branchIndex;
+        return bufferIndex;
+    }
+
+    @Override
+    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
+        return getFirstOrderDifferentialMatrixBufferIndex(branchIndex) + nodeCount - 1;
+    }
+
+    @Override
+    public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        assert(bufferIndex == 0);
+        beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(0), differentialMatrix, 0.0);
+    }
+
+    @Override
+    public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        assert(bufferIndex == 0);
+        beagle.setTransitionMatrix(getInfinitesimalSquaredMatrixBufferIndex(0), differentialMatrix, 0.0);
+    }
+
+    @Override
+    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
+        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix, 0.0);
+    }
+
+    @Override
+    public int getCachedMatrixBufferCount(PreOrderSettings settings) {
+        int matrixBufferCount = getInfinitesimalMatrixBufferCount(settings) + getDifferentialMassMatrixBufferCount(settings);
+        return matrixBufferCount;
     }
 
     @Override
@@ -161,25 +204,6 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
                 ed.getEigenVectors(),
                 ed.getInverseEigenVectors(),
                 ed.getEigenValues());
-
-        // TODO Why is this here?  Are these matrices only needed right before `beagle.calculateEdgeDerivative()` is called?
-        if (cacheQMatrices) {
-            final int stateCount = substitutionModel.getDataType().getStateCount();
-            double[] infinitesimalMatrix = new double[stateCount * stateCount];
-            double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
-            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(0), infinitesimalMatrix, 0.0);
-            for (int l = 0; l < stateCount; l++) {
-                for (int j = 0; j < stateCount; j++) {
-                    double sumOverState = 0.0;
-                    for (int k = 0; k < stateCount; k++) {
-                        sumOverState += infinitesimalMatrix[l * stateCount + k] * infinitesimalMatrix[k * stateCount + j];
-                    }
-                    infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
-                }
-            }
-            beagle.setTransitionMatrix(getSquaredInfinitesimalMatrixBufferIndex(0), infinitesimalMatrixSquared, 0.0);
-        }
     }
 
     @Override

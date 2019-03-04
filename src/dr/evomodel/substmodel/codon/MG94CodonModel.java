@@ -25,14 +25,15 @@
 
 package dr.evomodel.substmodel.codon;
 
-import dr.evomodel.substmodel.DefaultEigenSystem;
-import dr.evomodel.substmodel.EigenSystem;
-import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,13 +45,14 @@ import java.util.List;
  * @author Guy Baele
  * @author Philippe lemey
  */
-public class MG94CodonModel extends AbstractCodonModel implements Citable {
+public class MG94CodonModel extends AbstractCodonModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
 
     protected Parameter alphaParameter;
     protected Parameter betaParameter;
 
-    protected final int numSynTransitions;
-    protected final int numNonsynTransitions;
+    final int numSynTransitions;
+    final int numNonsynTransitions;
 
     public MG94CodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter,
                           FrequencyModel freqModel) {
@@ -58,7 +60,7 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable {
                 new DefaultEigenSystem(codonDataType.getStateCount()));
     }
 
-    public MG94CodonModel(Codons codonDataType,
+    MG94CodonModel(Codons codonDataType,
                           Parameter alphaParameter,
                           Parameter betaParameter,
                           FrequencyModel freqModel, EigenSystem eigenSystem) {
@@ -167,9 +169,100 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable {
                     new Author("SV", "Muse"),
                     new Author("BS", "Gaut")
             },
-            "A likelihood approach for comparing synonymous and nonsynonymous nucleotide substitution rates, with application to the chloroplast genome",
+            "A likelihood approach for comparing synonymous and non-synonymous nucleotide substitution rates, with application to the chloroplast genome",
             1994,
-            "Mol Biol Evol",
+            "Molecular Biology and Evolution",
             11, 715, 724
     );
+
+    @Override
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter alpha = alphaParameter;
+        Parameter beta = betaParameter;
+        FrequencyModel frequencyModel = freqModel;
+
+        assert(oldParameters.size() == newParameters.size());
+
+        for (int i = 0; i < oldParameters.size(); i++) {
+
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+
+            if (oldParameter == alphaParameter) {
+                alpha = newParameter;
+            } else if (oldParameters == betaParameter) {
+                beta = newParameter;
+            } else {
+                throw new RuntimeException("Not yet implemented!");
+            }
+        }
+        return new MG94CodonModel(codonDataType, alpha, beta, frequencyModel);
+    }
+
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+
+        for (int i = 0; i < rateCount; ++i) {
+            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
+                    this);
+        }
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies) {
+        final double alphaPlusBetaInverse = 1.0 / (getAlpha() + getBeta());
+        return getNormalizationValue(differentialMassMatrix, frequencies) - alphaPlusBetaInverse;
+    }
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter) {
+        WrtMG94ModelParameter wrt;
+        if (parameter == alphaParameter) {
+            wrt = WrtMG94ModelParameter.ALPHA;
+        } else if (parameter == betaParameter) {
+            wrt = WrtMG94ModelParameter.BETA;
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+        return wrt;
+    }
+
+
+    enum WrtMG94ModelParameter implements WrtParameter {
+        ALPHA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant,
+                                  DifferentiableSubstitutionModel substitutionModel) {
+                MG94CodonModel thisSubstitutionModel = (MG94CodonModel) substitutionModel;
+                final double numSynTransitions = thisSubstitutionModel.getNumSynTransitions();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transition
+                    case 2: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transversion
+                    case 3: return 0.0;
+                    case 4: return 0.0;
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        },
+        BETA {
+            @Override
+            public double getRate(int switchCase, double normalizingConstant, DifferentiableSubstitutionModel substitutionModel) {
+                MG94CodonModel thisSubstitutionModel = (MG94CodonModel) substitutionModel;
+                final double numNonsynTransitions = thisSubstitutionModel.getNumNonsynTransitions();
+                switch (switchCase) {
+                    case 0: return 0.0;
+                    case 1: return 0.0;
+                    case 2: return 0.0;
+                    case 3: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                    case 4: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                }
+                throw new IllegalArgumentException("Invalid switch case");
+            }
+        }
+    }
 }

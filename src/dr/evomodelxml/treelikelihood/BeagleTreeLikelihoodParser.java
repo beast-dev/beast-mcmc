@@ -61,6 +61,9 @@ import java.util.Set;
 public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
+    public static final String BEAGLE_THREAD_COUNT = "beagle.thread.count";
+    public static final String THREAD_COUNT = "thread.count";
+    public static final String THREADS = "threads";
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
@@ -164,6 +167,24 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
+        int beagleThreadCount = -1;
+        if (System.getProperty(BEAGLE_THREAD_COUNT) != null) {
+            beagleThreadCount = Integer.parseInt(System.getProperty(BEAGLE_THREAD_COUNT));
+        }
+
+        if (beagleThreadCount == -1) {
+            // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
+            int threadCount = xo.getAttribute(THREADS, -1);
+
+            if (System.getProperty(THREAD_COUNT) != null) {
+                threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
+            }
+        
+            // Todo: allow for different number of threads per beagle instance according to pattern counts
+            if (threadCount >= 0) {
+                System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / instanceCount));
+            }
+        }
 
         if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
             return createTreeLikelihood(

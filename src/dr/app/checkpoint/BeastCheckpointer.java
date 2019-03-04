@@ -33,13 +33,10 @@ import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
-import dr.inference.state.Factory;
-import dr.inference.state.StateLoader;
-import dr.inference.state.StateSaver;
-import dr.inference.state.StateSaverChainListener;
+import dr.inference.state.*;
 import dr.math.MathUtils;
 
 import java.io.*;
@@ -51,7 +48,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Guy Baele
  */
-public class BeastCheckpointer implements StateLoader, StateSaver {
+public class BeastCheckpointer implements StateLoaderSaver {
 
     private static final boolean DEBUG = false;
 
@@ -62,17 +59,22 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
     public final static String SAVE_STATE_FILE = "save.state.file";
     public final static String SAVE_STATE_AT = "save.state.at";
     public final static String SAVE_STATE_EVERY = "save.state.every";
+    public final static String SAVE_STEM = "save.state.stem";
 
     public final static String FORCE_RESUME = "force.resume";
 
     private final String loadStateFileName;
     private final String saveStateFileName;
 
+    private final String stemFileName;
+
     private boolean forceResume = false;
 
     public BeastCheckpointer() {
         loadStateFileName = System.getProperty(LOAD_STATE_FILE, null);
         saveStateFileName = System.getProperty(SAVE_STATE_FILE, null);
+
+        stemFileName = System.getProperty(SAVE_STEM, null);
 
         final List<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 
@@ -99,6 +101,27 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             public MarkovChainListener[] getStateSaverChainListeners() {
                 return listeners.toArray(new MarkovChainListener[0]);
             }
+
+            @Override
+            public StateLoaderSaver getStateLoaderSaver(final File loadFile, final File saveFile) {
+                return new StateLoaderSaver() {
+
+                    @Override
+                    public boolean saveState(MarkovChain markovChain, long state, double lnL) {
+                        return BeastCheckpointer.this.writeStateToFile(saveFile, state, lnL, markovChain);
+                    }
+
+                    @Override
+                    public long loadState(MarkovChain markovChain, double[] savedLnL) {
+                        return BeastCheckpointer.this.readStateFromFile(loadFile, markovChain, savedLnL);
+                    }
+
+                    @Override
+                    public void checkLoadState(double savedLnL, double lnL) {
+                        // do nothing.
+                    }
+                };
+            }
         };
 
     }
@@ -109,9 +132,13 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
 
     @Override
     public boolean saveState(MarkovChain markovChain, long state, double lnL) {
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
-        String fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
-
+        String fileName = "";
+        if (stemFileName != null) {
+            fileName = stemFileName + "_" + state;
+        } else {
+            String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+            fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
+        }
         return writeStateToFile(new File(fileName), state, lnL, markovChain);
     }
 
@@ -170,12 +197,12 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                         threshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
                     }
                     if (Math.abs(lnL - savedLnL) > threshold) {
-                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                        throw new RuntimeException("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
                                 ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
                                 "\nYour XML may require the construction of a randomly generated starting tree. " +
                                 "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
                     } else {
-                        System.out.println("Dumped lnL does not match loaded state: stored lnL: " + savedLnL +
+                        System.out.println("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
                         ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
                         "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
                     }
@@ -190,7 +217,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         }
     }
 
-    private boolean writeStateToFile(File file, long state, double lnL, MarkovChain markovChain) {
+    protected boolean writeStateToFile(File file, long state, double lnL, MarkovChain markovChain) {
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
 
         OutputStream fileOut = null;
@@ -215,16 +242,17 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
             out.println(lnL);
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                out.print("parameter");
-                out.print("\t");
-                out.print(parameter.getParameterName());
-                out.print("\t");
-                out.print(parameter.getDimension());
-                for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                if (!parameter.isImmutable()) {
+                    out.print("parameter");
                     out.print("\t");
-                    out.print(parameter.getParameterUntransformedValue(dim));
+                    out.print(parameter.getParameterName());
+                    out.print("\t");
+                    out.print(parameter.getDimension());
+                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                        out.print("\t");
+                        out.print(parameter.getParameterUntransformedValue(dim));
+                    }
                 }
-                out.println();
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -236,9 +264,9 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 out.print(operator.getAcceptCount());
                 out.print("\t");
                 out.print(operator.getRejectCount());
-                if (operator instanceof CoercableMCMCOperator) {
+                if (operator instanceof AdaptableMCMCOperator) {
                     out.print("\t");
-                    out.print(((CoercableMCMCOperator)operator).getCoercableParameter());
+                    out.print(((AdaptableMCMCOperator)operator).getAdaptableParameter());
                 }
                 out.println();
             }
@@ -332,7 +360,7 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
         return true;
     }
 
-    private long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
+    protected long readStateFromFile(File file, MarkovChain markovChain, double[] lnL) {
         OperatorSchedule operatorSchedule = markovChain.getSchedule();
 
         long state = -1;
@@ -439,11 +467,11 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                 }
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));
-                if (operator instanceof CoercableMCMCOperator) {
+                if (operator instanceof AdaptableMCMCOperator) {
                     if (fields.length != 5) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
-                    ((CoercableMCMCOperator)operator).setCoercableParameter(Double.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
                 }
             }
 
@@ -556,10 +584,10 @@ public class BeastCheckpointer implements StateLoader, StateSaver {
                                 }
                                 fields = line.split("\t");
                                 parents[Integer.parseInt(fields[0])] = Integer.parseInt(fields[1]);
-                               // childOrder[i] = Integer.parseInt(fields[2]);
+                                // childOrder[i] = Integer.parseInt(fields[2]);
                                 childOrder[Integer.parseInt(fields[0])] = Integer.parseInt(fields[2]);
                                 for (int j = 0; j < linkedModels.get(model.getId()).size(); j++) {
-                                 //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
+                                    //   traitValues[j][i] = Double.parseDouble(fields[3+j]);
                                     traitValues[j][Integer.parseInt(fields[0])] = Double.parseDouble(fields[3+j]);
                                 }
                             }

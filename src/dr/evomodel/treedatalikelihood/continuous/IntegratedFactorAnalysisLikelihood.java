@@ -477,7 +477,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 //System.err.println("\n");
             }
 
-            final double factorLogDeterminant = Math.log(ci.getDeterminant());
+            final double factorLogDeterminant = ci.getLogDeterminant();
             double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
 //                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);

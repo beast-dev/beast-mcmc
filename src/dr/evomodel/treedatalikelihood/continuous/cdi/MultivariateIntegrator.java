@@ -471,7 +471,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
                 remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
 //                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
-                        (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
+                        (ci.getLogDeterminant() + cj.getLogDeterminant() + ck.getLogDeterminant())
                         - 0.5 * SS;
 
                 // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
@@ -481,9 +481,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                    System.err.println("\t\t\tSSj = " + (SSj));
 //                    System.err.println("\t\t\tSSk = " + (SSk));
                     System.err.println("\t\t\tSS = " + (SS));
-                    System.err.println("\t\t\tdetI = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetJ = " + Math.log(cj.getDeterminant()));
-                    System.err.println("\t\t\tdetK = " + Math.log(ck.getDeterminant()));
+                    System.err.println("\t\t\tdetI = " + ci.getLogDeterminant());
+                    System.err.println("\t\t\tdetJ = " + cj.getLogDeterminant());
+                    System.err.println("\t\t\tdetK = " + ck.getLogDeterminant());
                     System.err.println("\t\tremainder: " + remainder);
                 }
 

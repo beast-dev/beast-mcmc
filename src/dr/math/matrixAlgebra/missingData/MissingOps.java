@@ -370,7 +370,7 @@ public class MissingOps {
         InversionResult result;
 
         if (finiteCount == 0) {
-            result = new InversionResult(NOT_OBSERVED, 0, 0);
+            result = new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
         } else {
 //            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
 //            solver.setA(source);
@@ -384,7 +384,7 @@ public class MissingOps {
 
             SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(source.getNumRows(), source.getNumCols(), false, false, false);
             if (!svd.decompose(source)) {
-                if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, 0);
+                if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
                 throw new RuntimeException("SVD decomposition failed");
             }
             double[] values = svd.getSingularValues();
@@ -430,14 +430,14 @@ public class MissingOps {
         return ir;
     }
 
-    public static InversionResult safeSolve(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X, boolean getDeterminant) {
+    public static InversionResult safeSolve(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X, boolean getLogDeterminant) {
 
         final int finiteCount = countFiniteNonZeroDiagonals(A);
 
         InversionResult result;
         if (finiteCount == 0) {
             Arrays.fill(X.getData(), 0);
-            result = new InversionResult(NOT_OBSERVED, 0, 0);
+            result = new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
         } else {
 
             LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
@@ -448,13 +448,13 @@ public class MissingOps {
             int dim = 0;
             double logDet = 0;
 
-            if (getDeterminant) {
+            if (getLogDeterminant) {
 //                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
 //                double[] values = svd.getSingularValues();
 
                 SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
                 if (!svd.decompose(A)) {
-                    if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, 0);
+                    if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
                     throw new RuntimeException("SVD decomposition failed");
                 }
                 double[] values = svd.getSingularValues();
@@ -555,7 +555,7 @@ public class MissingOps {
 
     //TODO: Just have one safeInvert function after checking to make sure it doesn't break anything
     // TODO: change all inversion to return logDeterminant
-    public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
+    public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination, boolean getLogDeterminant) {
 
         final int dim = source.getNumCols();
         final PermutationIndices permutationIndices = new PermutationIndices(source);
@@ -564,7 +564,7 @@ public class MissingOps {
         double logDet = 0;
 
         if (finiteNonZeroCount == dim) {
-            if (getDeterminant) {
+            if (getLogDeterminant) {
                 logDet = invertAndGetDeterminant(source, destination, true);
             } else {
 //                CommonOps.invert(source, destination);
@@ -579,7 +579,7 @@ public class MissingOps {
 
                 if (infCount == dim) { //All infinity on diagonals of original matrix
 
-                    return new InversionResult(NOT_OBSERVED, 0, 0);
+                    return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
 
                 } else {
 
@@ -589,7 +589,7 @@ public class MissingOps {
                         for (int i = 0; i < dim; i++) {
                             destination.set(i, i, Double.POSITIVE_INFINITY);
                         }
-                        return new InversionResult(FULLY_OBSERVED, dim, Double.POSITIVE_INFINITY);
+                        return new InversionResult(FULLY_OBSERVED, dim, Double.POSITIVE_INFINITY, true);
 
                     } else { //Both zeros and infinities (but no non-zero finite entries) on diagonal
                         int[] zeroInds = permutationIndices.getZeroIndices();
@@ -601,7 +601,7 @@ public class MissingOps {
                         //TODO: depending on whether this is a variance or precision matrix respectively.
                         System.err.println("Warning: safeInvert2 in MissingOps is not designed to invert matrices " +
                                 "with both zero and infinite diagonal entries.");
-                        return new InversionResult(PARTIALLY_OBSERVED, zeroCount, Double.POSITIVE_INFINITY);
+                        return new InversionResult(PARTIALLY_OBSERVED, zeroCount, Double.POSITIVE_INFINITY, true);
                     }
                 }
 
@@ -614,7 +614,7 @@ public class MissingOps {
                 gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
 
                 final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteNonZeroCount, finiteNonZeroCount);
-                if (getDeterminant) {
+                if (getLogDeterminant) {
                     logDet = invertAndGetDeterminant(subSource, inverseSubSource, true);
                 } else {
 //                    CommonOps.invert(subSource, inverseSubSource);

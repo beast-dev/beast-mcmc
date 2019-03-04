@@ -102,7 +102,7 @@ public class RepeatedMeasuresTraitDataModel extends
 
 
         DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
-        MissingOps.safeInvert(V, P, false);
+        MissingOps.safeInvert2(V, P, false);
 
         MissingOps.unwrap(P, partial, dimTrait);
         MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);

@@ -1,7 +1,6 @@
 package dr.math.matrixAlgebra.missingData;
 
 import dr.inference.model.MatrixParameterInterface;
-import dr.math.Polynomial;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
@@ -515,44 +514,44 @@ public class MissingOps {
 //        }
 //    }
 
-    public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
-
-        final int dim = source.getNumCols();
-        final int finiteCount = countFiniteNonZeroDiagonals(source);
-        double logDet = 0;
-
-        if (finiteCount == dim) {
-            if (getDeterminant) {
-                logDet = invertAndGetDeterminant(source, destination, true);
-            } else {
-//                CommonOps.invert(copyOfSource, result);
-                symmPosDefInvert(source, destination);
-            }
-            return new InversionResult(FULLY_OBSERVED, dim, logDet, true);
-        } else {
-            if (finiteCount == 0) {
-                Arrays.fill(destination.getData(), 0);
-                return new InversionResult(NOT_OBSERVED, 0, 0);
-            } else {
-                final int[] finiteIndices = new int[finiteCount];
-                getFiniteNonZeroDiagonalIndices(source, finiteIndices);
-
-                final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
-                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
-
-                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
-                if (getDeterminant) {
-                    logDet = invertAndGetDeterminant(subSource, inverseSubSource, true);
-                } else {
-                    CommonOps.invert(subSource, inverseSubSource);
-                }
-
-                scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
-
-                return new InversionResult(PARTIALLY_OBSERVED, finiteCount, logDet, true);
-            }
-        }
-    }
+//    public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
+//
+//        final int dim = source.getNumCols();
+//        final int finiteCount = countFiniteNonZeroDiagonals(source);
+//        double logDet = 0;
+//
+//        if (finiteCount == dim) {
+//            if (getDeterminant) {
+//                logDet = invertAndGetDeterminant(source, destination, true);
+//            } else {
+////                CommonOps.invert(copyOfSource, result);
+//                symmPosDefInvert(source, destination);
+//            }
+//            return new InversionResult(FULLY_OBSERVED, dim, logDet, true);
+//        } else {
+//            if (finiteCount == 0) {
+//                Arrays.fill(destination.getData(), 0);
+//                return new InversionResult(NOT_OBSERVED, 0, 0);
+//            } else {
+//                final int[] finiteIndices = new int[finiteCount];
+//                getFiniteNonZeroDiagonalIndices(source, finiteIndices);
+//
+//                final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
+//                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
+//
+//                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
+//                if (getDeterminant) {
+//                    logDet = invertAndGetDeterminant(subSource, inverseSubSource, true);
+//                } else {
+//                    CommonOps.invert(subSource, inverseSubSource);
+//                }
+//
+//                scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
+//
+//                return new InversionResult(PARTIALLY_OBSERVED, finiteCount, logDet, true);
+//            }
+//        }
+//    }
 
     //TODO: Just have one safeInvert function after checking to make sure it doesn't break anything
     // TODO: change all inversion to return logDeterminant

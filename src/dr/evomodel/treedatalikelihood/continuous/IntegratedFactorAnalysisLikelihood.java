@@ -47,7 +47,7 @@ import java.util.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
 import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
@@ -512,7 +512,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         unwrap(precision, partials, partialsOffset + numFactors);
 
         if (STORE_VARIANCE) {
-            safeInvert(precision, variance, true);
+            safeInvert2(precision, variance, true);
             unwrap(variance, partials, partialsOffset + numFactors + numFactors * numFactors);
         }
 

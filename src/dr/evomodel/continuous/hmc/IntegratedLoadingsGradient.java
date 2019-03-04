@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider.castTreeTrait;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 import static dr.math.matrixAlgebra.missingData.MissingOps.weightedAverage;
 
 /**
@@ -137,7 +137,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         final WrappedMatrix wV12 = new WrappedMatrix.WrappedDenseMatrix(v12);
 
         MissingOps.add(p1, p2, wP12);
-        safeInvert(p12, v12, false);
+        safeInvert2(p12, v12, false);
 
         weightedAverage(m1, p1, m2, p2, m12, wV12, dimFactors);
 

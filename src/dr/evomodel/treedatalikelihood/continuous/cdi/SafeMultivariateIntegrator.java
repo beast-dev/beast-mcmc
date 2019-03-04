@@ -202,7 +202,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             CommonOps.add(Pk, Pjp, Pip);
 
             final DenseMatrix64F Vip = matrix1;
-            safeInvert(Pip, Vip, false);
+            safeInvert2(Pip, Vip, false);
 
             final double[] delta = vectorDelta;
             computeDelta(jbo, jdo, delta);
@@ -221,7 +221,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             inflateBranch(Vdi, Vip, Vi);
 
             final DenseMatrix64F Pi = matrixPk;
-            safeInvert(Vi, Pi, false);
+            safeInvert2(Vi, Pi, false);
 
             // X. Store precision results for node
             unwrap(Pi, preOrderPartials, ibo + dimTrait);
@@ -485,7 +485,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
             assert !allZeroOrInfinite(Vip) :  "Zero-length branch on data is not allowed.";
-            ci = safeInvert(Vip, Pip, getDeterminant);
+            ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
 
@@ -493,7 +493,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd); // TODO Fix
             CommonOps.add(Pi, Pdi, tmp1);
             final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
-            safeInvert(tmp1, tmp2, false);
+            safeInvert2(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
             if (getDeterminant && getEffectiveDimension(iBuffer) == 0) ci = safeDeterminant(tmp1, false);

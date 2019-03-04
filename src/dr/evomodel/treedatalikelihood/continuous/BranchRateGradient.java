@@ -37,7 +37,6 @@ import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -49,7 +48,7 @@ import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
 
 /**
@@ -300,7 +299,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Reporta
                 CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
 
                 DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
-                safeInvert(totalP, totalV, false);
+                safeInvert2(totalP, totalV, false);
 
                 DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
                 safeWeightedAverage(

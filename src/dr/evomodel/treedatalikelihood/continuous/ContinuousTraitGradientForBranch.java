@@ -36,7 +36,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
 
 /**
@@ -165,7 +165,7 @@ public interface ContinuousTraitGradientForBranch {
             CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
 
             DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
-            safeInvert(totalP, totalV, false);
+            safeInvert2(totalP, totalV, false);
 
             DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
             safeWeightedAverage(

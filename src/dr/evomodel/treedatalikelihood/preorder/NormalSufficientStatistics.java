@@ -4,7 +4,7 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 
 /**
  * @author Marc A. Suchard
@@ -72,7 +72,7 @@ public class NormalSufficientStatistics {
     public double getVariance(int row, int col) {
         if (variance == null) {
             variance = new DenseMatrix64F(precision.numRows, precision.numCols);
-            safeInvert(precision, variance, false);
+            safeInvert2(precision, variance, false);
         }
 
         return variance.unsafe_get(row, col);
@@ -88,7 +88,7 @@ public class NormalSufficientStatistics {
     public DenseMatrix64F getRawVariance() {
         if (variance == null) { // TODO Code duplication
             variance = new DenseMatrix64F(precision.numRows, precision.numCols);
-            safeInvert(precision, variance, false);
+            safeInvert2(precision, variance, false);
         }
 
         return variance;

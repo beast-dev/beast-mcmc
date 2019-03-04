@@ -51,7 +51,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         CommonOps.add(rootPrec, priorPrec, totalPrec);
 
         final DenseMatrix64F totalVar = new DenseMatrix64F(dimTrait, dimTrait);
-        safeInvert(totalPrec, totalVar, false);
+        safeInvert2(totalPrec, totalVar, false);
 
         final double[] tmp = new double[dimTrait];
         final double[] mean = new double[dimTrait];
@@ -222,7 +222,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
                     CommonOps.add(cP0, cP1, cP2); //TODO: Shouldn't P0 = 0 always in this situation ?
 
-                    safeInvert(cP2, cV2, false);
+                    safeInvert2(cP2, cV2, false);
 
                     // TODO Drift?
 //                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
@@ -336,7 +336,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
             CommonOps.add(P0, P1, P2);
-            safeInvert(P2, V2, false);
+            safeInvert2(P2, V2, false);
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
             final WrappedMatrix C2;

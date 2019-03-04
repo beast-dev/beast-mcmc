@@ -148,7 +148,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
                 assert (!allZeroDiagonals(Pj));
 
-                safeInvert(Pj, Vj, false);
+                safeInvert2(Pj, Vj, false);
             }
 
             // B. Inflate variance along sibling branch using matrix inversion
@@ -158,7 +158,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pjp = matrixPjp;
-            safeInvert(Vjp, Pjp, false);
+            safeInvert2(Vjp, Pjp, false);
 
 //                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pip = matrixPip;
@@ -166,7 +166,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vip = matrix0;
-            safeInvert(Pip, Vip, false);
+            safeInvert2(Pip, Vip, false);
 
             // C. Compute prePartial mean
 //                final double[] tmp = new double[dimTrait];
@@ -195,7 +195,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pi = matrixPk;
-            safeInvert(Vi, Pi, false);
+            safeInvert2(Vi, Pi, false);
 
             // X. Store precision results for node
             unwrap(Pi, preOrderPartials, ibo + dimTrait);

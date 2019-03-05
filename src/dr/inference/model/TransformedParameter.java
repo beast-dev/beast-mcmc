@@ -133,8 +133,15 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         final double[] lower = new double[dim];
         final double[] upper = new double[dim];
         for (int i = 0; i < dim; ++i) {
-            lower[i] = inverse(bounds.getLowerLimit(i));
-            upper[i] = inverse(bounds.getUpperLimit(i));
+            final double transformedLowerBound = transform(bounds.getLowerLimit(i));
+            final double transformedUpperBound = transform(bounds.getUpperLimit(i));
+            if (transformedLowerBound < transformedUpperBound) {
+                lower[i] = transformedLowerBound;
+                upper[i] = transformedUpperBound;
+            } else {
+                lower[i] = transformedUpperBound;
+                upper[i] = transformedLowerBound;
+            }
         }
         transformedBounds = new DefaultBounds(upper, lower);
 

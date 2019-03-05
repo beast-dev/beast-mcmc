@@ -436,20 +436,20 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         storedLogFieldLikelihood = logFieldLikelihood;
     }
 
-    protected void swapParameters(Parameter firstParameter, Parameter secondParameter) {
-        Parameter tmp = firstParameter;
-        firstParameter = secondParameter;
-        secondParameter = tmp;
-    }
-
 
     protected void restoreState() {
         super.restoreState();
         // TODO Just swap pointers XJ: there you go
 //        System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
 //        System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
-        swapParameters(coalescentIntervals, storedCoalescentIntervals);
-        swapParameters(sufficientStatistics, storedSufficientStatistics);
+
+        Parameter tmp = coalescentIntervals;
+        coalescentIntervals = storedCoalescentIntervals;
+        storedCoalescentIntervals = tmp;
+        tmp = sufficientStatistics;
+        sufficientStatistics = storedSufficientStatistics;
+        storedSufficientStatistics = tmp;
+
         weightMatrix = storedWeightMatrix;
         logFieldLikelihood = storedLogFieldLikelihood;
     }

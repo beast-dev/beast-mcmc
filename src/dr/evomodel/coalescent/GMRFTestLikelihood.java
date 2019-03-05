@@ -70,16 +70,24 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 	protected void storeState() {
 		super.storeState();
-		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
-		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
+//		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
+//		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
+		for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
+			storedCoalescentIntervals.setParameterValueQuietly(i, coalescentIntervals.getParameterValue(i));
+			storedSufficientStatistics.setParameterValueQuietly(i, sufficientStatistics.getParameterValue(i));
+		}
+		storedCoalescentIntervals.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
+		storedSufficientStatistics.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
 		storedWeightMatrix = weightMatrix.copy();
 	}
 
 
 	protected void restoreState() {
 		super.restoreState();
-		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
-		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
+//		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
+//		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
+        swapParameters(coalescentIntervals, storedCoalescentIntervals);
+        swapParameters(sufficientStatistics, storedSufficientStatistics);
 		weightMatrix = storedWeightMatrix;
 
 	}
@@ -106,10 +114,10 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 //            }
 //        }
 
-		coalescentIntervals = intervalsParameter.getParameterValues();
-		sufficientStatistics = statsParameter.getParameterValues();
-		storedCoalescentIntervals = new double[coalescentIntervals.length];
-		storedSufficientStatistics = new double[sufficientStatistics.length];
+		coalescentIntervals = new Parameter.Default(intervalsParameter.getParameterValues());
+		sufficientStatistics = new Parameter.Default(statsParameter.getParameterValues());
+		storedCoalescentIntervals = new Parameter.Default(coalescentIntervals.getDimension());
+		storedSufficientStatistics = new Parameter.Default(sufficientStatistics.getDimension());
 
 		//Set up the weight Matrix
 		double[] offdiag = new double[fieldLength - 1];
@@ -119,7 +127,7 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 		//First set up the offdiagonal entries;
 		for (int i = 0; i < fieldLength - 1; i++) {
-			offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
+			offdiag[i] = -2.0 / (coalescentIntervals.getParameterValue(i) + coalescentIntervals.getParameterValue(i + 1));
 		}
 
 		//Then set up the diagonal entries;

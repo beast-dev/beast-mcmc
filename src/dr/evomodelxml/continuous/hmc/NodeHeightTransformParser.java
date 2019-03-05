@@ -58,7 +58,9 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        return new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+        NodeHeightTransform nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+        nodeHeightTransform.transform(nodeHeightParameter.getParameterValues(), 0, nodeHeightParameter.getDimension());
+        return nodeHeightTransform;
     }
 
     @Override

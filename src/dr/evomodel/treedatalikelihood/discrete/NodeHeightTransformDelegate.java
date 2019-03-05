@@ -186,6 +186,7 @@ public class NodeHeightTransformDelegate extends AbstractModel {
                 nodeHeights.setParameterValueQuietly(indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount(), nodeHeight);
             }
         }
+        tree.pushTreeChangedEvent();
     }
 
     @Override

@@ -147,9 +147,13 @@ public class NodeHeightTransformDelegate extends AbstractModel {
     }
 
     public void setNodeHeights(double[] nodeHeights) {
-        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
-            tree.setNodeHeight(tree.getNode(indexHelper.getNodeNumberFromParameterIndex(i)), nodeHeights[i - tree.getExternalNodeCount()]);
+        if (nodeHeights.length != this.nodeHeights.getDimension()) {
+            throw new RuntimeException("Dimension mismatch!");
         }
+        for (int i = 0; i < nodeHeights.length; i++) {
+            this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
+        }
+        tree.pushTreeChangedEvent();
     }
 
     public void updateRatios() {

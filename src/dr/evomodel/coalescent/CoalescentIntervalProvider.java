@@ -48,4 +48,6 @@ public interface CoalescentIntervalProvider {
 
     public double getCoalescentEventsStatisticValue(int i);
 
+    void setupCoalescentIntervals();
+
 }

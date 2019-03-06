@@ -390,6 +390,11 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return sufficientStatistics.getParameterValue(i);
     }
 
+    @Override
+    public void setupCoalescentIntervals() {
+        setupSufficientStatistics();
+    }
+
     public double[] getCoalescentIntervalHeights() {
         makeIntervalsKnown();
         double[] a = new double[coalescentIntervals.getDimension()];

@@ -724,6 +724,11 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         matricesKnown = false;
     }
 
+    @Override
+    public void setupCoalescentIntervals() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
     /**
      * Private class that allows for objects that hold the computed probability distribution of lineages among demes
      */

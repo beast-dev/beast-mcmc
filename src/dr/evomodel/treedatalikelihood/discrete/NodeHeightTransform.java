@@ -46,7 +46,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
                                TreeModel tree,
                                BranchRateModel branchrateModel) {
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate.Ratios(tree, nodeHeights, ratios, branchrateModel);
     }
 
     @Override
@@ -56,9 +56,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public double[] transform(double[] values, int from, int to) {
-        nodeHeightTransformDelegate.setNodeHeights(values);
-        nodeHeightTransformDelegate.updateRatios();
-        return nodeHeightTransformDelegate.getRatios();
+        return nodeHeightTransformDelegate.transform(values, from, to);
     }
 
     @Override
@@ -68,9 +66,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public double[] inverse(double[] values, int from, int to) {
-        nodeHeightTransformDelegate.setRatios(values);
-        nodeHeightTransformDelegate.updateNodeHeights();
-        return nodeHeightTransformDelegate.getNodeHeights();
+        return nodeHeightTransformDelegate.inverse(values, from, to);
     }
 
     @Override
@@ -101,19 +97,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     public String getReport() {
-        nodeHeightTransformDelegate.updateRatios();
-        StringBuilder sb = new StringBuilder();
-        sb.append("NodeHeight ratios: ").append(new dr.math.matrixAlgebra.Vector(nodeHeightTransformDelegate.getRatios()));
-        sb.append("\n");
-
-//        Parameter testRatios = new Parameter.Default(tree.getNodeCount() - tree.getExternalNodeCount() - 1, 0.99);
-//        inverse(testRatios.getParameterValues());
-//
-//        sb.append("New NodeHeights: ").append(new dr.math.matrixAlgebra.Vector(nodeHeightTransformDelegate.getNodeHeights()));
-//        sb.append("\n");
-//        sb.append(tree.getNewick()).append("\n");
-
-        return sb.toString();
+        return nodeHeightTransformDelegate.getReport();
     }
 
     @Override

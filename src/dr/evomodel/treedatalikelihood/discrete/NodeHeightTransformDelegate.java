@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.CoalescentIntervalProvider;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -89,6 +90,50 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
     abstract double[] inverse(double[] values, int from, int to);
 
     abstract String getReport();
+
+    public static class CoalescentIntervals extends NodeHeightTransformDelegate {
+
+        private CoalescentIntervalProvider coalescentIntervalProvider;
+        private Parameter coalescentIntervals;
+
+        public CoalescentIntervals(TreeModel treeModel,
+                                   Parameter nodeHeights,
+                                   Parameter coalescentIntervals,
+                                   CoalescentIntervalProvider coalescentIntervalProvider) {
+
+            super(treeModel, nodeHeights);
+
+            this.coalescentIntervalProvider = coalescentIntervalProvider;
+            this.coalescentIntervals = coalescentIntervals;
+        }
+
+        @Override
+        double[] transform(double[] values, int from, int to) {
+            setNodeHeights(values);
+            coalescentIntervalProvider.setupCoalescentIntervals();
+            return coalescentIntervals.getParameterValues();
+        }
+
+        @Override
+        double[] inverse(double[] values, int from, int to) {
+            return new double[0];
+        }
+
+        @Override
+        String getReport() {
+            return null;
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+    }
 
 
     public static class Ratios extends NodeHeightTransformDelegate {

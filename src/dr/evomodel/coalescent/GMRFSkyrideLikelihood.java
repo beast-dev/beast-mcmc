@@ -546,6 +546,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return betaParameter;
     }
 
+    public Parameter getCoalescentIntervals() {
+        return coalescentIntervals;
+    }
+
     public MatrixParameter getDesignMatrix() {
         return dMatrix;
     }

@@ -431,17 +431,20 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
      * @param tree         given tree
      * @param times        array to fill with times
      * @param childs       array to fill with descendents count
+     * @param nodeNumbers  array to fill with nodeNumbers
      */
     private static void collectAllTimes(Tree tree, NodeRef top, NodeRef[] excludeBelow,
-                                        ArrayList<ComparableDouble> times, ArrayList<Integer> childs) {
+                                        ArrayList<ComparableDouble> times, ArrayList<Integer> childs,
+                                        ArrayList<Integer> nodeNumbers) {
 
         times.add(new ComparableDouble(tree.getNodeHeight(top)));
         childs.add(tree.getChildCount(top));
+        nodeNumbers.add(top.getNumber());
 
         for (int i = 0; i < tree.getChildCount(top); i++) {
             NodeRef child = tree.getChild(top, i);
             if (excludeBelow == null) {
-                collectAllTimes(tree, child, excludeBelow, times, childs);
+                collectAllTimes(tree, child, excludeBelow, times, childs, nodeNumbers);
             } else {
                 // check if this subtree is included in the coalescent density
                 boolean include = true;
@@ -452,7 +455,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                     }
                 }
                 if (include)
-                    collectAllTimes(tree, child, excludeBelow, times, childs);
+                    collectAllTimes(tree, child, excludeBelow, times, childs, nodeNumbers);
             }
         }
     }
@@ -475,7 +478,8 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
         ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
         ArrayList<Integer> childs = new ArrayList<Integer>();
-        collectAllTimes(tree, root, exclude, times, childs);
+        ArrayList<Integer> nodeNumbers = new ArrayList<Integer>();
+        collectAllTimes(tree, root, exclude, times, childs, nodeNumbers);
         int[] indices = new int[times.size()];
 
         HeapSort.sort(times, indices);

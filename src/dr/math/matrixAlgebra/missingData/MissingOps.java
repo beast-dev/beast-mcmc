@@ -643,6 +643,28 @@ public class MissingOps {
         }
     }
 
+    public static void safeMult(DenseMatrix64F sourceA, DenseMatrix64F sourceB, DenseMatrix64F destination) {
+
+        final int dim = sourceA.getNumCols();
+        assert ((dim == sourceA.getNumRows()) && dim == sourceB.getNumCols() && dim == sourceB.getNumRows()) :
+                "In safeMult, A and B must be square with the same dimension.";
+        final PermutationIndices permutationIndicesA = new PermutationIndices(sourceA);
+        final int infiniteCountA = permutationIndicesA.getNumberOfInfiniteDiagonals();
+        final PermutationIndices permutationIndicesB = new PermutationIndices(sourceB);
+        final int infiniteCountB = permutationIndicesB.getNumberOfInfiniteDiagonals();
+
+        if (infiniteCountA == 0 && infiniteCountB == 0) {
+            CommonOps.mult(sourceA, sourceB, destination);
+        } else if (infiniteCountA == dim) {
+            CommonOps.scale(1.0, sourceA, destination);
+        } else if (infiniteCountB == dim) {
+            CommonOps.scale(1.0, sourceB, destination);
+        } else {
+            throw new RuntimeException("Partial safeMult not yet implemented.");
+        }
+    }
+
+
     public static void matrixVectorMultiple(final DenseMatrix64F A,
                                             final WrappedVector x,
                                             final WrappedVector y,

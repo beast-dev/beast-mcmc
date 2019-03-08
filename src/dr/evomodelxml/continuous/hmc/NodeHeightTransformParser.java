@@ -27,6 +27,7 @@ package dr.evomodelxml.continuous.hmc;
 
 
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.CoalescentIntervalProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
@@ -42,23 +43,42 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     public static final String NAME = "nodeHeightTransform";
     private static final String NODEHEIGHT = "nodeHeights";
     private static final String RATIO = "ratios";
+    private static final String COALESCENT_INTERVAL = "coalescentIntervals";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         XMLObject cxo = xo.getChild(NODEHEIGHT);
         Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        XMLObject dxo = xo.getChild(RATIO);
-        Parameter ratioParameter = (Parameter) dxo.getChild(Parameter.class);
-
-        if (ratioParameter.getDimension() == 1) {
-            ratioParameter.setDimension(nodeHeightParameter.getDimension());
+        Parameter ratioParameter = null;
+        if (xo.hasChildNamed(RATIO)) {
+            ratioParameter = (Parameter) xo.getChild(RATIO).getChild(Parameter.class);
         }
-        ratioParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ratioParameter.getDimension()));
+
+        if (ratioParameter != null) {
+            if (ratioParameter.getDimension() == 1) {
+                ratioParameter.setDimension(nodeHeightParameter.getDimension());
+            }
+            ratioParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ratioParameter.getDimension()));
+        }
+
+        Parameter coalescentIntervals = null;
+        CoalescentIntervalProvider coalescentIntervalProvider = null;
+        if (xo.hasChildNamed(COALESCENT_INTERVAL)) {
+            cxo = xo.getChild(COALESCENT_INTERVAL);
+            coalescentIntervals = (Parameter) cxo.getChild(Parameter.class);
+            coalescentIntervalProvider = (CoalescentIntervalProvider) cxo.getChild(CoalescentIntervalProvider.class);
+        }
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        NodeHeightTransform nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+
+        NodeHeightTransform nodeHeightTransform;
+        if (ratioParameter != null) {
+            nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+        } else {
+            nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, coalescentIntervals, tree, coalescentIntervalProvider);
+        }
         nodeHeightTransform.transform(nodeHeightParameter.getParameterValues(), 0, nodeHeightParameter.getDimension());
         return nodeHeightTransform;
     }
@@ -66,7 +86,9 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
+                new XORRule(new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
+                        new ElementRule(COALESCENT_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class), new ElementRule(CoalescentIntervalProvider.class)})
+                        ),
                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class)

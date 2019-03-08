@@ -50,6 +50,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String GROUP_SIZES = "groupSizes";
     public static final String PRECISION_PARAMETER = "precisionParameter";
     public static final String POPULATION_TREE = "populationTree";
+    public static final String COALESCENT_INTERVAL = "coalescentIntervals";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
     public static final String BETA_PARAMETER = "betaParameter";
     public static final String SINGLE_BETA = "singleBeta";
@@ -90,6 +91,14 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
+
+        cxo = xo.getChild(COALESCENT_INTERVAL);
+        Parameter coalescentIntervals = (Parameter) cxo.getChild(Parameter.class);
+        if (coalescentIntervals == null) {
+            coalescentIntervals = new Parameter.Default(popParameter.getDimension());
+        } else if (coalescentIntervals.getDimension() != popParameter.getDimension()) {
+            coalescentIntervals.setDimension(popParameter.getDimension());
+        }
 
         cxo = xo.getChild(POPULATION_TREE);
 
@@ -314,7 +323,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
             return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
+                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, coalescentIntervals);
 
         } else {
             if (xo.getChild(GRID_POINTS) != null) {

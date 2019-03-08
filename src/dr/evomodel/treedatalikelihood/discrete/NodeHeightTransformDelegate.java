@@ -105,6 +105,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
             this.coalescentIntervalProvider = coalescentIntervalProvider;
             this.coalescentIntervals = coalescentIntervals;
+            addVariable(coalescentIntervals);
         }
 
         @Override
@@ -131,7 +132,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+//            setNodeHeights(inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension()));
         }
     }
 

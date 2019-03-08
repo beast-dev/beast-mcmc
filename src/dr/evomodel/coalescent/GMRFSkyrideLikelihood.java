@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -38,8 +37,6 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.NotConvergedException;
-import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
@@ -103,7 +100,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
         this(wrapTree(tree), popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing,
-                rescaleByRootHeight);
+                rescaleByRootHeight, new Parameter.Default(popParameter.getDimension()));
     }
 
     private static List<Tree> wrapTree(Tree tree) {
@@ -115,6 +112,13 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
+        this(treeList, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight, new Parameter.Default(popParameter.getDimension()));
+    }
+
+    public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
+                                 Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+                                 boolean timeAwareSmoothing, boolean rescaleByRootHeight,
+                                 Parameter coalescentIntervals) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
@@ -158,7 +162,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 //        storedCoalescentIntervals = new double[fieldLength];
 //        sufficientStatistics = new double[fieldLength];
 //        storedSufficientStatistics = new double[fieldLength];
-        coalescentIntervals = new Parameter.Default(fieldLength);
+
+//        coalescentIntervals = new Parameter.Default(fieldLength);
+        this.coalescentIntervals = coalescentIntervals;
         storedCoalescentIntervals = new Parameter.Default(fieldLength);
         sufficientStatistics = new Parameter.Default(fieldLength);
         storedSufficientStatistics = new Parameter.Default(fieldLength);

@@ -478,7 +478,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
     public interface IntervalNodeMapping {
 
-        void mapNodeInterval(int nodeNumber, int intervalNumber);
+        void addNode(int nodeNumbe);
         void setIntervalStartIndices(int intervalCount);
         void initializeMaps();
 
@@ -498,9 +498,12 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 intervalNumberOfNodes = new int[2 * maxIntervalCount];
             }
 
-            public void mapNodeInterval(int nodeNumber, int intervalNumber) {
+            public void addNode(int nodeNumber) {
                 nodeNumbersInIntervals[nextIndex] = nodeNumber;
                 nextIndex++;
+            }
+
+            private void mapNodeInterval(int nodeNumber, int intervalNumber) {
                 if (intervalNumberOfNodes[2 * nodeNumber] == -1 || intervalNumberOfNodes[2 * nodeNumber] == intervalNumber) {
                     intervalNumberOfNodes[2 * nodeNumber] = intervalNumber;
                 } else if (intervalNumberOfNodes[2 * nodeNumber + 1] == -1) {
@@ -516,14 +519,17 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 nextIndex--;
 
                 int index = 1;
+                mapNodeInterval(nodeNumbersInIntervals[0], 0);
 
                 for (int i = 1; i < intervalCount; i++) {
 
                     while(nodeNumbersInIntervals[index] != nodeNumbersInIntervals[index - 1]) {
+                        mapNodeInterval(nodeNumbersInIntervals[index], i - 1);
                         index++;
                     }
 
                     intervalStartIndices[i] = index;
+                    mapNodeInterval(nodeNumbersInIntervals[index], i);
                     index++;
 
                 }
@@ -595,7 +601,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
             final double finish = times.get(indices[i]).doubleValue();
             double next = finish;
-            intervalNodeMapping.mapNodeInterval(nodeNumbers.get(indices[i]), intervalCount);
+            intervalNodeMapping.addNode(nodeNumbers.get(indices[i]));
 
             while (Math.abs(next - finish) < MULTIFURCATION_LIMIT) {
                 final int children = childs.get(indices[i]);
@@ -608,7 +614,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 if (i == times.size()) break;
 
                 next = times.get(indices[i]).doubleValue();
-                intervalNodeMapping.mapNodeInterval(nodeNumbers.get(indices[i]), intervalCount);
+                intervalNodeMapping.addNode(nodeNumbers.get(indices[i]));
             }
             //System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
             if (lineagesAdded > 0) {

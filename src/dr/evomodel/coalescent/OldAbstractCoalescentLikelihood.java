@@ -742,6 +742,10 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
         return true;
     }
 
+    public IntervalNodeMapping getIntervalNodeMapping() {
+        return intervalNodeMapping;
+    }
+
     public String toString() {
         return getId(); // Double.toString(getLogLikelihood());
     }

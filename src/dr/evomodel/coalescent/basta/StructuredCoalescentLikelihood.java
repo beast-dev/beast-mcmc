@@ -34,6 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -726,6 +727,11 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
 
     @Override
     public void setupCoalescentIntervals() {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public OldAbstractCoalescentLikelihood.IntervalNodeMapping getIntervalNodeMapping() {
         throw new RuntimeException("Not yet implemented!");
     }
 

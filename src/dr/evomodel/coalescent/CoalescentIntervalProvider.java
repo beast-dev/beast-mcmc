@@ -50,4 +50,6 @@ public interface CoalescentIntervalProvider {
 
     void setupCoalescentIntervals();
 
+    OldAbstractCoalescentLikelihood.IntervalNodeMapping getIntervalNodeMapping();
+
 }

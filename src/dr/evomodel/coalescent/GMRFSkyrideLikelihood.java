@@ -163,6 +163,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         sufficientStatistics = new Parameter.Default(fieldLength);
         storedSufficientStatistics = new Parameter.Default(fieldLength);
 
+        coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount());
+
         setupGMRFWeights();
 
         addStatistic(new DeltaStatistic());
@@ -260,22 +262,36 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return getId() + "(" + Double.toString(getLogLikelihood()) + ")";
     }
 
+    IntervalNodeMapping coalesentIntervalNodeMapping;
+
     protected void setupSufficientStatistics() {
         int index = 0;
 
         double length = 0;
         double weight = 0;
+        coalesentIntervalNodeMapping.initializeMaps();
         for (int i = 0; i < getIntervalCount(); i++) {
             length += getInterval(i);
             weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
+
+            int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
+            for (int j = 0; j < nodeNumbers.length - 1; j++) {
+                coalesentIntervalNodeMapping.addNode(nodeNumbers[j]);
+            }
             if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                 coalescentIntervals.setParameterValue(index, length);
                 sufficientStatistics.setParameterValue(index, weight / 2.0);
+                coalesentIntervalNodeMapping.addNode(nodeNumbers[nodeNumbers.length - 1]);
                 index++;
                 length = 0;
                 weight = 0;
             }
         }
+        coalesentIntervalNodeMapping.setIntervalStartIndices(index);
+    }
+
+    public IntervalNodeMapping getIntervalNodeMapping() {
+        return coalesentIntervalNodeMapping;
     }
 
     protected double getFieldScalar() {

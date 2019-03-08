@@ -4,17 +4,17 @@ import dr.xml.*;
 
 public class MatrixValidationProvider implements CrossValidationProvider {
 
-    final MatrixParameter trueParameter;
-    final MatrixParameter inferredParameter;
-    final int dimParameter;
-    final int[] relevantDimensions;
-    final String[] colNames;
+    private final MatrixParameter trueParameter;
+    private final MatrixParameter inferredParameter;
+    private final int[] relevantDimensions;
+    private final String[] colNames;
+    private final String sumName;
 
     MatrixValidationProvider(MatrixParameter trueParameter, MatrixParameter inferredParameter, String id) {
         this.trueParameter = trueParameter;
         this.inferredParameter = inferredParameter;
 
-        this.dimParameter = trueParameter.getDimension();
+        int dimParameter = trueParameter.getDimension();
 
         this.relevantDimensions = new int[dimParameter];
         for (int i = 0; i < dimParameter; i++) {
@@ -32,6 +32,7 @@ public class MatrixValidationProvider implements CrossValidationProvider {
 
         }
 
+        sumName = id + ".TotalSum";
 
     }
 
@@ -55,11 +56,18 @@ public class MatrixValidationProvider implements CrossValidationProvider {
         return colNames[dim];
     }
 
+    @Override
+    public String getNameSum(int dim) {
+        return sumName;
+    }
+
+    //TODO: Merge with TraitValidationProvider parser ?
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
         final static String PARSER_NAME = "matrixValidation";
         final static String TRUE_PARAMETER = "trueParameter";
         final static String INFERRED_PARAMETER = "inferredParameter";
+        final static String LOG_SUM = "logSum";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -82,16 +90,23 @@ public class MatrixValidationProvider implements CrossValidationProvider {
 
             MatrixValidationProvider provider = new MatrixValidationProvider(trueParameter, inferredParameter, id);
 
-            CrossValidator crossValidator = new CrossValidator(provider);
+            boolean logSum = xo.getAttribute(LOG_SUM, false);
 
-            return crossValidator;
+            if (logSum) return new CrossValidatorSum(provider);
+            return new CrossValidator(provider);
 
         }
 
         @Override
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
-
+                    AttributeRule.newBooleanRule(LOG_SUM, true),
+                    new ElementRule(TRUE_PARAMETER, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }),
+                    new ElementRule(INFERRED_PARAMETER, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    })
             };
         }
 

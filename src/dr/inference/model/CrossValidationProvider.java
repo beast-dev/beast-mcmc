@@ -1,15 +1,5 @@
 package dr.inference.model;
 
-import dr.inference.model.Parameter;
-import dr.inference.loggers.LogColumn;
-import dr.inference.model.Statistic;
-import dr.inference.model.Variable;
-import dr.inference.model.VariableListener;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-
 public interface CrossValidationProvider {
 
     Parameter getTrueParameter();
@@ -20,15 +10,17 @@ public interface CrossValidationProvider {
 
     String getName(int dim);
 
+    String getNameSum(int dim);
 
-    public class CrossValidator extends Statistic.Abstract {
-        final CrossValidationProvider provider;
-        final double[] squaredErrors;
-        final int[] relevantDims;
-        Parameter truthParameter;
-        Parameter inferredParameter;
-        final int dimStat;
-        boolean statKnown = false;
+
+    class CrossValidator extends Statistic.Abstract {
+        protected final CrossValidationProvider provider;
+        private final double[] squaredErrors;
+        private final int[] relevantDims;
+        private Parameter truthParameter;
+        private Parameter inferredParameter;
+        private final int dimStat;
+//        boolean statKnown = false;
 
         CrossValidator(CrossValidationProvider provider) {
             this.provider = provider;
@@ -76,6 +68,36 @@ public interface CrossValidationProvider {
             }
 
             return squaredErrors[dim];
+        }
+
+
+    }
+
+    class CrossValidatorSum extends CrossValidator {
+
+        CrossValidatorSum(CrossValidationProvider provider) {
+            super(provider);
+        }
+
+        @Override
+        public String getDimensionName(int dim) {
+            return provider.getNameSum(dim);
+        }
+
+        @Override
+        public int getDimension() {
+            return 1;
+        }
+
+
+        @Override
+        public double getStatisticValue(int dim) {
+            double sum = 0;
+            for (int i = 0; i < super.getDimension(); i++) {
+                sum += super.getStatisticValue(i);
+            }
+
+            return sum;
         }
 
 

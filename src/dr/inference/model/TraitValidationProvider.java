@@ -1,32 +1,32 @@
 package dr.inference.model;
 
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.xml.*;
 
-import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-
-
 import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
 public class TraitValidationProvider implements CrossValidationProvider {
 
-    final Parameter trueTraits;
-    final Parameter inferredTraits;
-    final int[] missingInds;
-    final String[] dimNames;
-    final int dimTrait;
-    final ContinuousTraitPartialsProvider dataModel;
-    final TreeDataLikelihood treeLikehoood;
-    final TreeTrait treeTrait;
+    private final Parameter trueTraits;
+    private final Parameter inferredTraits;
+    private final int[] missingInds;
+    private final String[] dimNames;
+    private final String sumName;
+    private final int dimTrait;
+    private final ContinuousTraitPartialsProvider dataModel;
+    private final TreeDataLikelihood treeLikehoood;
+    private final TreeTrait treeTrait;
 
     TraitValidationProvider(Parameter trueTraits,
                             ContinuousTraitPartialsProvider dataModel,
-                            TreeModel treeModel,
+                            Tree treeModel,
                             String id,
                             Parameter missingParameter,
                             Boolean useTreeTraits,
@@ -58,6 +58,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
         dimNames = new String[nMissing];
 
         setupDimNames(treeModel, id);
+        sumName = getSumName(id);
 
     }
 
@@ -98,10 +99,15 @@ public class TraitValidationProvider implements CrossValidationProvider {
 
     }
 
-    private void setupDimNames(TreeModel treeModel, String id) {
+    private String getId(String id) {
         if (id == null) {
             id = PARSER.getParserName();
         }
+        return id;
+    }
+
+    private void setupDimNames(Tree treeModel, String id) {
+        id = getId(id);
         int dim = 0;
         for (int i : missingInds) {
             int taxonInd = i / dimTrait;
@@ -110,6 +116,11 @@ public class TraitValidationProvider implements CrossValidationProvider {
             dimNames[dim] = id + "." + taxonName + (traitInd + 1);
             dim += 1;
         }
+    }
+
+    private String getSumName(String id) {
+        id = getId(id);
+        return id + ".TotalSum";
     }
 
     @Override
@@ -144,12 +155,18 @@ public class TraitValidationProvider implements CrossValidationProvider {
         return dimNames[dim];
     }
 
+    @Override
+    public String getNameSum(int dim) {
+        return sumName;
+    }
+
     public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
 
         final static String PARSER_NAME = "traitValidation";
         final static String MASK = "mask";
         final static String TREE_TRAITS = "useTreeTraits";
         final static String INFERRED_NAME = "inferredTrait";
+        final static String LOG_SUM = "logSum";
 
 
         @Override
@@ -164,7 +181,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
 
 
             ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
-            TreeModel treeModel = (TreeModel) treeLikelihood.getTree();
+            Tree treeModel = treeLikelihood.getTree();
 
             Boolean useTreeTraits = xo.getAttribute(TREE_TRAITS, false);
 
@@ -205,9 +222,10 @@ public class TraitValidationProvider implements CrossValidationProvider {
             TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
                     missingParameter, useTreeTraits, treeLikelihood, inferredValuesName);
 
-            CrossValidator crossValidator = new CrossValidator(provider);
+            boolean logSum = xo.getAttribute(LOG_SUM, false);
 
-            return crossValidator;
+            if (logSum) return new CrossValidatorSum(provider);
+            return new CrossValidator(provider);
 
         }
 
@@ -221,6 +239,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
                     AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
                     AttributeRule.newBooleanRule(TREE_TRAITS, true),
                     AttributeRule.newStringRule(INFERRED_NAME, true),
+                    AttributeRule.newBooleanRule(LOG_SUM, true),
                     new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     }),

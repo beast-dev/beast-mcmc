@@ -26,15 +26,17 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.*;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
-import dr.math.matrixAlgebra.Matrix;
 
 import java.util.List;
 
@@ -54,7 +56,7 @@ public class RepeatedMeasuresTraitDataModel extends
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
                                           List<Integer> missingIndices,
-                                          boolean[] missindIndicators,
+//                                          boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
@@ -119,8 +121,8 @@ public class RepeatedMeasuresTraitDataModel extends
         return samplingPrecision;
     }
 
-    private void recomputeVariance(){
-        if (!varianceKnown){
+    private void recomputeVariance() {
+        if (!varianceKnown) {
             samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
             varianceKnown = true;
         }
@@ -168,22 +170,25 @@ public class RepeatedMeasuresTraitDataModel extends
                     cxo.getChild(MatrixParameterInterface.class);
 
             String traitName = returnValue.traitName;
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                    xo.getChild(MultivariateDiffusionModel.class);
+            //TODO diffusionModel was only used for the dimension.
+            // But this should be the same as the samplingPrecision dimension ?
+//            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
+//                    xo.getChild(MultivariateDiffusionModel.class);
 
-            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
-            for (int i : missingIndices) {
-                missingIndicators[i] = true;
-            }
-
+            //TODO: This was never used.
+//            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
+//            for (int i : missingIndices) {
+//                missingIndicators[i] = true;
+//            }
 
             return new RepeatedMeasuresTraitDataModel(
                     traitName,
                     traitParameter,
                     missingIndices,
-                    missingIndicators,
+//                    missingIndicators,
                     true,
-                    diffusionModel.getPrecisionParameter().getRowDimension(),
+                    samplingPrecision.getColumnDimension(),
+//                    diffusionModel.getPrecisionParameter().getRowDimension(),
                     samplingPrecision
             );
         }
@@ -222,6 +227,6 @@ public class RepeatedMeasuresTraitDataModel extends
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
-            new ElementRule(MultivariateDiffusionModel.class),
+//            new ElementRule(MultivariateDiffusionModel.class),
     };
 }

@@ -155,7 +155,7 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
         dataModelRepeatedMeasures = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
                 traitParameter,
                 missingIndices,
-                new boolean[3],
+//                new boolean[3],
                 true,
                 dimTrait,
                 samplingPrecisionParameter);

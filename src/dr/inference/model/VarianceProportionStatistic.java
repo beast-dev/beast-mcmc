@@ -38,12 +38,12 @@ import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
@@ -66,13 +66,13 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private final MultivariateDiffusionModel diffusionModel;
     private final RepeatedMeasuresTraitDataModel dataModel;
     private final TreeDataLikelihood treeLikelihood;
-    private Matrix diffusionProportion;
+    private DenseMatrix64F diffusionProportion;
     private TreeVarianceSums treeSums;
     private Matrix diffusionVariance;
     private Matrix samplingVariance;
 
-    private Matrix diffusionComponent;
-    private Matrix samplingComponent;
+    private DenseMatrix64F diffusionComponent;
+    private DenseMatrix64F samplingComponent;
 
     private boolean treeKnown = false;
     private boolean varianceKnown = false;
@@ -95,9 +95,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.dimTrait = dataModel.getTraitDimension();
         this.diffusionVariance = new Matrix(dimTrait, dimTrait);
         this.samplingVariance = new Matrix(dimTrait, dimTrait);
-        this.diffusionProportion = new Matrix(dimTrait, dimTrait);
-        this.diffusionComponent = new Matrix(dimTrait, dimTrait);
-        this.samplingComponent = new Matrix(dimTrait, dimTrait);
+        this.diffusionProportion = new DenseMatrix64F(dimTrait, dimTrait);
+        this.diffusionComponent = new DenseMatrix64F(dimTrait, dimTrait);
+        this.samplingComponent = new DenseMatrix64F(dimTrait, dimTrait);
 
 
         this.treeSums = new TreeVarianceSums(0, 0);
@@ -129,14 +129,15 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private enum MatrixRatios {
         ELEMENT_WISE {
             @Override
-            void setMatrixRatio(Matrix numeratorMatrix, Matrix otherMatrix, Matrix destination) {
-                int dim = destination.rows();
+            void setMatrixRatio(DenseMatrix64F numeratorMatrix, DenseMatrix64F otherMatrix,
+                                DenseMatrix64F destination) {
+                int dim = destination.numRows;
 
                 for (int i = 0; i < dim; i++) {
                     for (int j = 0; j < dim; j++) {
 
-                        double n = Math.abs(numeratorMatrix.component(i, j));
-                        double d = Math.abs(otherMatrix.component(i, j));
+                        double n = Math.abs(numeratorMatrix.get(i, j));
+                        double d = Math.abs(otherMatrix.get(i, j));
 
                         if (n == 0 && d == 0) {
                             destination.set(i, j, 0);
@@ -151,25 +152,33 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         },
         SYMMETRIC_DIVISION {
             @Override
-            void setMatrixRatio(Matrix numeratorMatrix, Matrix otherMatrix, Matrix destination)
+            void setMatrixRatio(DenseMatrix64F numeratorMatrix, DenseMatrix64F otherMatrix, DenseMatrix64F destination)
                     throws IllegalDimension {
 
-                int dim = destination.rows();
 
-                Matrix M1 = numeratorMatrix.add(otherMatrix); //M1 = numeratorMatrix + otherMatrix
-                Matrix M2 = getMatrixSqrt(M1, true); //M2 = inv(sqrt(numeratorMatrix + otherMatrix))
-                Matrix M3 = M2.product(numeratorMatrix.product(M2));//M3 = inv(sqrt(numeratorMatrix + otherMatrix)) *
-                //                                            numeratorMatrix * inv(sqrt(numeratorMatrix + otherMatrix))
-                for (int i = 0; i < dim; i++) {
-                    for (int j = 0; j < dim; j++) {
-                        destination.set(i, j, M3.component(i, j));
-                    }
-                }
+                //TODO: implement for eigendecomposition with DensMatrix64F
+
+                System.err.println(this.name() + " not yet implemented for " + SYMMETRIC_DIVISION + ".");
+
+
+//                int dim = destination.numRows;
+
+//
+//                Matrix M1 = numeratorMatrix.add(otherMatrix); //M1 = numeratorMatrix + otherMatrix
+//                Matrix M2 = getMatrixSqrt(M1, true); //M2 = inv(sqrt(numeratorMatrix + otherMatrix))
+//                Matrix M3 = M2.product(numeratorMatrix.product(M2));//M3 = inv(sqrt(numeratorMatrix + otherMatrix)) *
+//                //                                            numeratorMatrix * inv(sqrt(numeratorMatrix + otherMatrix))
+//                for (int i = 0; i < dim; i++) {
+//                    for (int j = 0; j < dim; j++) {
+//                        destination.set(i, j, M3.component(i, j));
+//                    }
+//                }
 
             }
         };
 
-        abstract void setMatrixRatio(Matrix numeratorMatrix, Matrix otherMatrix, Matrix destination)
+        abstract void setMatrixRatio(DenseMatrix64F numeratorMatrix, DenseMatrix64F otherMatrix,
+                                     DenseMatrix64F destination)
                 throws IllegalDimension;
     }
 
@@ -271,7 +280,17 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private void updateSamplingVariance() {
         //TODO: make sure you do diffusion variance THEN sampling variance
         //TODO: compute sampling variance from diffusion variance and total variance
-        samplingVariance = dataModel.getSamplingVariance();
+        if (useEmpiricalVariance) {
+            //TODO: make sure they're using simulated values and not the zeros
+            double[] data = dataModel.getParameter().getParameterValues();
+            int nTaxa = tree.getExternalNodeCount();
+            computeVariance(samplingComponent, data, nTaxa, dimTrait);
+
+            CommonOps.addEquals(samplingComponent, -1, diffusionComponent);
+
+        } else {
+            samplingVariance = dataModel.getSamplingVariance();
+        }
     }
 
     private void updateDiffusionVariance() {
@@ -279,9 +298,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
             updateEmpiricalDiffusionVariance();
 
-        }
+        } else {
 
-        diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+            diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+        }
     }
 
     private void updateEmpiricalDiffusionVariance() {
@@ -289,36 +309,37 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         String key = REALIZED_TIP_TRAIT + "." + dataModel.getTraitName();
         TreeTrait trait = treeLikelihood.getTreeTrait(key);
         double[] tipTraits = (double[]) trait.getTrait(treeLikelihood.getTree(), null);
-
-        double[] sumVec = new double[dimTrait];
-
-        //TODO: fill diffusionComponent with zeros
-
         int nTaxa = tree.getExternalNodeCount();
 
-        DenseMatrix64F mat = new DenseMatrix64F(dimTrait, dimTrait);
+        computeVariance(diffusionComponent, tipTraits, nTaxa, dimTrait);
+    }
 
-        for (int i = 0; i < nTaxa; i++) {
-            int offset = dimTrait * i;
-            //TODO: only compute off diagonals once
-            for (int j = 0; j < dimTrait; j++) {
+    private void computeVariance(DenseMatrix64F matrix, double[] data, int numRows, int numCols) {
 
-                sumVec[j] = sumVec[j] + tipTraits[offset + j];
+        double[] buffer = new double[numRows];
+        DenseMatrix64F sumVec = new DenseMatrix64F(numRows, 1);
+        DenseMatrix64F matrixBuffer = new DenseMatrix64F(numCols, numCols);
 
-                for (int k = 0; k < dimTrait; k++) {
-                    double val = diffusionComponent.component(j, k) + tipTraits[offset + j] * tipTraits[offset + k];
-                    diffusionComponent.set(j, k, val);
-                }
-            }
+
+        Arrays.fill(matrix.getData(), 0);
+
+
+        for (int i = 0; i < numRows; i++) {
+            int offset = numCols * i;
+
+            DenseMatrix64F wrapper = MissingOps.wrap(data, offset, numCols, 1, buffer);
+
+            CommonOps.multTransB(wrapper, wrapper, matrixBuffer);
+
+            CommonOps.addEquals(matrix, matrixBuffer);
+
+            CommonOps.addEquals(sumVec, wrapper);
 
         }
 
-        for (int j = 0; j < dimTrait; j++){
-            for (int k = 0; k < dimTrait; k++){
-                double val = diffusionComponent.component(j, k) - (1.0 / nTaxa) * sumVec[j] * sumVec[k];
-                diffusionComponent.set(j, k, val);
-            }
-        }
+        CommonOps.multTransB(sumVec, sumVec, matrixBuffer);
+
+        CommonOps.addEquals(matrix, -1 / numRows, matrixBuffer);
 
 
     }
@@ -364,7 +385,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         int d1 = dim / dimTrait;
         int d2 = dim - d1 * dimTrait;
-        return diffusionProportion.component(d1, d2);
+        return diffusionProportion.get(d1, d2);
 
     }
 

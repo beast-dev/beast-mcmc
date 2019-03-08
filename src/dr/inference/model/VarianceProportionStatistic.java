@@ -28,6 +28,7 @@ package dr.inference.model;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.RateRescalingScheme;
@@ -38,9 +39,13 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
 /**
  * A Statistic class that computes the expected proportion of the variance in the data due to diffusion on the tree
@@ -75,6 +80,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private final MatrixRatios ratio;
 
     private final int dimTrait;
+
+    private final static boolean useEmpiricalVariance = true;
 
 
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
@@ -262,11 +269,58 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
     private void updateSamplingVariance() {
+        //TODO: make sure you do diffusion variance THEN sampling variance
+        //TODO: compute sampling variance from diffusion variance and total variance
         samplingVariance = dataModel.getSamplingVariance();
     }
 
     private void updateDiffusionVariance() {
+        if (useEmpiricalVariance) {
+
+            updateEmpiricalDiffusionVariance();
+
+        }
+
         diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+    }
+
+    private void updateEmpiricalDiffusionVariance() {
+
+        String key = REALIZED_TIP_TRAIT + "." + dataModel.getTraitName();
+        TreeTrait trait = treeLikelihood.getTreeTrait(key);
+        double[] tipTraits = (double[]) trait.getTrait(treeLikelihood.getTree(), null);
+
+        double[] sumVec = new double[dimTrait];
+
+        //TODO: fill diffusionComponent with zeros
+
+        int nTaxa = tree.getExternalNodeCount();
+
+        DenseMatrix64F mat = new DenseMatrix64F(dimTrait, dimTrait);
+
+        for (int i = 0; i < nTaxa; i++) {
+            int offset = dimTrait * i;
+            //TODO: only compute off diagonals once
+            for (int j = 0; j < dimTrait; j++) {
+
+                sumVec[j] = sumVec[j] + tipTraits[offset + j];
+
+                for (int k = 0; k < dimTrait; k++) {
+                    double val = diffusionComponent.component(j, k) + tipTraits[offset + j] * tipTraits[offset + k];
+                    diffusionComponent.set(j, k, val);
+                }
+            }
+
+        }
+
+        for (int j = 0; j < dimTrait; j++){
+            for (int k = 0; k < dimTrait; k++){
+                double val = diffusionComponent.component(j, k) - (1.0 / nTaxa) * sumVec[j] * sumVec[k];
+                diffusionComponent.set(j, k, val);
+            }
+        }
+
+
     }
 
 

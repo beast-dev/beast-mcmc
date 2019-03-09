@@ -103,8 +103,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionModel = diffusionModel;
         this.dataModel = dataModel;
         this.dimTrait = dataModel.getTraitDimension();
-        this.diffusionVariance = new Matrix(dimTrait, dimTrait);
-        this.samplingVariance = new Matrix(dimTrait, dimTrait);
+        this.diffusionVariance = null;
+        this.samplingVariance = null;
         this.diffusionProportion = new DenseMatrix64F(dimTrait, dimTrait);
         this.diffusionComponent = new DenseMatrix64F(dimTrait, dimTrait);
         this.samplingComponent = new DenseMatrix64F(dimTrait, dimTrait);
@@ -179,7 +179,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
                 //TODO: implement for eigendecomposition with DensMatrix64F
 
-                System.err.println(this.name() + " not yet implemented for " + SYMMETRIC_DIVISION + ".");
+                throw new RuntimeException(SYMMETRIC_DIVISION + " not yet implemented.");
 
 
 //                int dim = destination.numRows;
@@ -278,10 +278,10 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             normalization = tree.getNodeHeight(tree.getRoot());
         } else if (rescalingScheme == RateRescalingScheme.TREE_LENGTH) {
             //TODO: find function that returns tree length
-            System.err.println("VarianceProportionStatistic not yet implemented for " +
+            throw new RuntimeException("VarianceProportionStatistic not yet implemented for " +
                     "traitDataLikelihood argument useTreeLength='true'.");
         } else if (rescalingScheme != RateRescalingScheme.NONE) {
-            System.err.println("VarianceProportionStatistic not yet implemented for RateRescalingShceme" +
+            throw new RuntimeException("VarianceProportionStatistic not yet implemented for RateRescalingShceme" +
                     rescalingScheme.getText() + ".");
         }
 
@@ -289,24 +289,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         treeSums.totalSum = (diagonalSum + offDiagonalSum) / normalization;
     }
 
-    private void updateSamplingVariance() {
-
-        samplingVariance = dataModel.getSamplingVariance();
-
-    }
-
-    private void updateDiffusionVariance() {
-
-        diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
-
-    }
-
 
     //TODO: move to difference class
     private void computeVariance(DenseMatrix64F matrix, double[] data, int numRows, int numCols) {
 
         double[] buffer = new double[numRows];
-        DenseMatrix64F sumVec = new DenseMatrix64F(numRows, 1);
+        DenseMatrix64F sumVec = new DenseMatrix64F(numCols, 1);
         DenseMatrix64F matrixBuffer = new DenseMatrix64F(numCols, numCols);
 
         Arrays.fill(matrix.getData(), 0);
@@ -323,7 +311,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         }
 
         CommonOps.multTransB(sumVec, sumVec, matrixBuffer);
-        CommonOps.addEquals(matrix, -1 / numRows, matrixBuffer);
+        CommonOps.addEquals(matrix, -1.0 / numRows, matrixBuffer);
+        CommonOps.scale(1.0 / numRows, matrix);
 
 
     }
@@ -379,15 +368,15 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         if (!varianceKnown) {
 
-            if (useEmpiricalVariance) {
+            if (!useEmpiricalVariance) {
 
-            } else {
-                updateSamplingVariance();
-                updateDiffusionVariance();
-            }
-            if (!forceResample) {
+                samplingVariance = dataModel.getSamplingVariance();
+                diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
+
                 varianceKnown = true;
+
             }
+
             needToUpdate = true;
 
         }

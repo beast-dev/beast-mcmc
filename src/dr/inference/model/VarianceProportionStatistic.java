@@ -40,6 +40,7 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.missingData.MissingOps;
+import dr.util.Attribute;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -62,6 +63,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private static final String MATRIX_RATIO = "matrixRatio";
     private static final String ELEMENTWISE = "elementWise";
     private static final String SYMMETRIC_DIVISION = "symmetricDivision";
+    private static final String EMPIRICAL = "useEmpiricalVariance";
+    private static final String FORCE_SAMPLING = "forceSampling";
 
     private final TreeModel tree;
     private final MultivariateDiffusionModel diffusionModel;
@@ -82,9 +85,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     private final int dimTrait;
 
-    private final static boolean useEmpiricalVariance = true;
+    private final boolean useEmpiricalVariance;
 
-    private final static boolean forceResample = true;
+    private final boolean forceResample;
 
     private final RepeatedMeasuresTraitSimulator traitSimulator;
 
@@ -92,7 +95,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
                                        MultivariateDiffusionModel diffusionModel,
-                                       MatrixRatios ratio) {
+                                       MatrixRatios ratio,
+                                       boolean useEmpiricalVariance,
+                                       boolean forceResample) {
         this.tree = tree;
         this.treeLikelihood = treeLikelihood;
         this.diffusionModel = diffusionModel;
@@ -103,6 +108,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.diffusionProportion = new DenseMatrix64F(dimTrait, dimTrait);
         this.diffusionComponent = new DenseMatrix64F(dimTrait, dimTrait);
         this.samplingComponent = new DenseMatrix64F(dimTrait, dimTrait);
+        this.useEmpiricalVariance = useEmpiricalVariance;
+        this.forceResample = forceResample;
 
 
         this.treeSums = new TreeVarianceSums(0, 0);
@@ -446,12 +453,17 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                         " with one of the following values: " + MatrixRatios.values());
             }
 
+            boolean empirical = xo.getAttribute(EMPIRICAL, false);
+            boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, false);
+
             return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
-                    ratio);
+                    ratio, empirical, forceSampling);
         }
 
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(MATRIX_RATIO, false),
+                AttributeRule.newStringRule(FORCE_SAMPLING, true),
+                AttributeRule.newStringRule(EMPIRICAL, true),
                 new ElementRule(TreeModel.class),
                 new ElementRule(TreeDataLikelihood.class),
                 new ElementRule(RepeatedMeasuresTraitDataModel.class),

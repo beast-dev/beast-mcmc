@@ -285,7 +285,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
                 coalesentIntervalNodeMapping.addNode(nodeNumbers[j]);
             }
             if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
-                coalescentIntervals.setParameterValue(index, length);
+                coalescentIntervals.setParameterValueQuietly(index, length);
                 sufficientStatistics.setParameterValue(index, weight / 2.0);
                 coalesentIntervalNodeMapping.addNode(nodeNumbers[nodeNumbers.length - 1]);
                 index++;

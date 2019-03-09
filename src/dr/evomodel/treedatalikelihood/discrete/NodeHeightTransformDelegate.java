@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.CoalescentIntervalProvider;
+import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -95,6 +96,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         private CoalescentIntervalProvider coalescentIntervalProvider;
         private Parameter coalescentIntervals;
+        private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
         public CoalescentIntervals(TreeModel treeModel,
                                    Parameter nodeHeights,
@@ -105,6 +107,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
             this.coalescentIntervalProvider = coalescentIntervalProvider;
             this.coalescentIntervals = coalescentIntervals;
+            this.intervalNodeMapping = coalescentIntervalProvider.getIntervalNodeMapping();
             addVariable(coalescentIntervals);
         }
 
@@ -117,7 +120,18 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         @Override
         double[] inverse(double[] values, int from, int to) {
-            return new double[0];
+            if (values.length != coalescentIntervals.getDimension()) {
+                throw new RuntimeException("Dimension mismatch!");
+            }
+
+            double currentHeight = 0.0;
+
+            for (int i = 0; i < values.length; i++) {
+                int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
+                currentHeight += values[i];
+                tree.setNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 1]), currentHeight);
+            }
+            return nodeHeights.getParameterValues();
         }
 
         @Override
@@ -132,7 +146,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//            setNodeHeights(inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension()));
+            setNodeHeights(inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension()));
         }
     }
 

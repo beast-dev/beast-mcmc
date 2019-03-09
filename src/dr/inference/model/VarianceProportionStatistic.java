@@ -83,6 +83,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     private final static boolean useEmpiricalVariance = true;
 
+    private final static boolean forceResample = true;
+
 
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
@@ -103,9 +105,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.treeSums = new TreeVarianceSums(0, 0);
 
         tree.addModelListener(this);
-
-        diffusionModel.getPrecisionParameter().addParameterListener(this);
-        dataModel.getPrecisionMatrix().addParameterListener(this);
+        if (useEmpiricalVariance && !forceResample) {
+            dataModel.getParameter().addParameterListener(this);
+        } else {
+            diffusionModel.getPrecisionParameter().addParameterListener(this);
+            dataModel.getPrecisionMatrix().addParameterListener(this);
+        }
 
         this.ratio = ratio;
     }
@@ -187,64 +192,54 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         ratio.setMatrixRatio(diffusionComponent, samplingComponent, diffusionProportion);
     }
 
-    /**
-     * recalculates the diffusionProportion statistic based on current parameters
-     */
-    //TODO: Move method below to a different class
-    private static Matrix getMatrixSqrt(Matrix M, Boolean invert) {
-        DoubleMatrix2D S = new DenseDoubleMatrix2D(M.toComponents());
-        RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(S, 100);
-        DoubleMatrix1D eigenValues = eigenDecomp.getRealEigenvalues();
-        int dim = eigenValues.size();
-        for (int i = 0; i < dim; i++) {
-            double value = Math.sqrt(eigenValues.get(i));
-            if (invert) {
-                value = 1 / value;
-            }
-            eigenValues.set(i, value);
-        }
-
-        DoubleMatrix2D eigenVectors = eigenDecomp.getV();
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                eigenVectors.set(i, j, eigenVectors.get(i, j) * eigenValues.get(j));
-
-            }
-        }
-        DoubleMatrix2D storageMatrix = new DenseDoubleMatrix2D(dim, dim);
-        eigenVectors.zMult(eigenDecomp.getV(), storageMatrix, 1, 0, false, true);
-
-
-        return new Matrix(storageMatrix.toArray());
-
-    }
 
     private void updateVarianceComponents() {
 
-        double n = tree.getExternalNodeCount();
+        if (useEmpiricalVariance) {
 
-        double diffusionScale = (treeSums.diagonalSum / n - treeSums.totalSum / (n * n));
-        double samplingScale = (n - 1) / n;
+            String key = REALIZED_TIP_TRAIT + "." + dataModel.getTraitName();
+            TreeTrait trait = treeLikelihood.getTreeTrait(key);
+            double[] tipTraits = (double[]) trait.getTrait(treeLikelihood.getTree(), null);
+            double[] data = dataModel.getParameter().getParameterValues();
 
-        for (int i = 0; i < dimTrait; i++) {
+            int nTaxa = tree.getExternalNodeCount();
 
-            diffusionComponent.set(i, i, diffusionScale * diffusionVariance.component(i, i));
-            samplingComponent.set(i, i, samplingScale * samplingVariance.component(i, i));
-
-            for (int j = i + 1; j < dimTrait; j++) {
-
-                double diffValue = diffusionScale * diffusionVariance.component(i, j);
-                double sampValue = samplingScale * samplingVariance.component(i, j);
-
-                diffusionComponent.set(i, j, diffValue);
-                samplingComponent.set(i, j, sampValue);
-
-                diffusionComponent.set(j, i, diffValue);
-                samplingComponent.set(j, i, sampValue);
-
+            if (forceResample) {
+                //TODO: use repeatedMeasuresTraitSimulator to force sampling
             }
-        }
 
+            computeVariance(diffusionComponent, tipTraits, nTaxa, dimTrait);
+            computeVariance(samplingComponent, data, nTaxa, dimTrait);
+
+            CommonOps.addEquals(samplingComponent, -1, diffusionComponent);
+
+
+        } else {
+            double n = tree.getExternalNodeCount();
+
+            double diffusionScale = (treeSums.diagonalSum / n - treeSums.totalSum / (n * n));
+            double samplingScale = (n - 1) / n;
+
+            for (int i = 0; i < dimTrait; i++) {
+
+                diffusionComponent.set(i, i, diffusionScale * diffusionVariance.component(i, i));
+                samplingComponent.set(i, i, samplingScale * samplingVariance.component(i, i));
+
+                for (int j = i + 1; j < dimTrait; j++) {
+
+                    double diffValue = diffusionScale * diffusionVariance.component(i, j);
+                    double sampValue = samplingScale * samplingVariance.component(i, j);
+
+                    diffusionComponent.set(i, j, diffValue);
+                    samplingComponent.set(i, j, sampValue);
+
+                    diffusionComponent.set(j, i, diffValue);
+                    samplingComponent.set(j, i, sampValue);
+
+                }
+            }
+
+        }
     }
 
 
@@ -278,51 +273,26 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
     private void updateSamplingVariance() {
-        //TODO: make sure you do diffusion variance THEN sampling variance
-        //TODO: compute sampling variance from diffusion variance and total variance
-        if (useEmpiricalVariance) {
-            //TODO: make sure they're using simulated values and not the zeros
-            double[] data = dataModel.getParameter().getParameterValues();
-            int nTaxa = tree.getExternalNodeCount();
-            computeVariance(samplingComponent, data, nTaxa, dimTrait);
 
-            CommonOps.addEquals(samplingComponent, -1, diffusionComponent);
+        samplingVariance = dataModel.getSamplingVariance();
 
-        } else {
-            samplingVariance = dataModel.getSamplingVariance();
-        }
     }
 
     private void updateDiffusionVariance() {
-        if (useEmpiricalVariance) {
 
-            updateEmpiricalDiffusionVariance();
+        diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
 
-        } else {
-
-            diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
-        }
     }
 
-    private void updateEmpiricalDiffusionVariance() {
 
-        String key = REALIZED_TIP_TRAIT + "." + dataModel.getTraitName();
-        TreeTrait trait = treeLikelihood.getTreeTrait(key);
-        double[] tipTraits = (double[]) trait.getTrait(treeLikelihood.getTree(), null);
-        int nTaxa = tree.getExternalNodeCount();
-
-        computeVariance(diffusionComponent, tipTraits, nTaxa, dimTrait);
-    }
-
+    //TODO: move to difference class
     private void computeVariance(DenseMatrix64F matrix, double[] data, int numRows, int numCols) {
 
         double[] buffer = new double[numRows];
         DenseMatrix64F sumVec = new DenseMatrix64F(numRows, 1);
         DenseMatrix64F matrixBuffer = new DenseMatrix64F(numCols, numCols);
 
-
         Arrays.fill(matrix.getData(), 0);
-
 
         for (int i = 0; i < numRows; i++) {
             int offset = numCols * i;
@@ -330,17 +300,44 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             DenseMatrix64F wrapper = MissingOps.wrap(data, offset, numCols, 1, buffer);
 
             CommonOps.multTransB(wrapper, wrapper, matrixBuffer);
-
             CommonOps.addEquals(matrix, matrixBuffer);
-
             CommonOps.addEquals(sumVec, wrapper);
 
         }
 
         CommonOps.multTransB(sumVec, sumVec, matrixBuffer);
-
         CommonOps.addEquals(matrix, -1 / numRows, matrixBuffer);
 
+
+    }
+
+    //TODO: Move method below to a different class
+    //TODO: implement this for DenseMatrix64F rather than Matrix
+    private static Matrix getMatrixSqrt(Matrix M, Boolean invert) {
+        DoubleMatrix2D S = new DenseDoubleMatrix2D(M.toComponents());
+        RobustEigenDecomposition eigenDecomp = new RobustEigenDecomposition(S, 100);
+        DoubleMatrix1D eigenValues = eigenDecomp.getRealEigenvalues();
+        int dim = eigenValues.size();
+        for (int i = 0; i < dim; i++) {
+            double value = Math.sqrt(eigenValues.get(i));
+            if (invert) {
+                value = 1 / value;
+            }
+            eigenValues.set(i, value);
+        }
+
+        DoubleMatrix2D eigenVectors = eigenDecomp.getV();
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                eigenVectors.set(i, j, eigenVectors.get(i, j) * eigenValues.get(j));
+
+            }
+        }
+        DoubleMatrix2D storageMatrix = new DenseDoubleMatrix2D(dim, dim);
+        eigenVectors.zMult(eigenDecomp.getV(), storageMatrix, 1, 0, false, true);
+
+
+        return new Matrix(storageMatrix.toArray());
 
     }
 
@@ -365,9 +362,15 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         if (!varianceKnown) {
 
-            updateSamplingVariance();
-            updateDiffusionVariance();
-            varianceKnown = true;
+            if (useEmpiricalVariance) {
+
+            } else {
+                updateSamplingVariance();
+                updateDiffusionVariance();
+            }
+            if (!forceResample) {
+                varianceKnown = true;
+            }
             needToUpdate = true;
 
         }

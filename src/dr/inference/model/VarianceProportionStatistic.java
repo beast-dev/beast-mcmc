@@ -35,6 +35,7 @@ import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitSimulator;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -85,6 +86,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     private final static boolean forceResample = true;
 
+    private final RepeatedMeasuresTraitSimulator traitSimulator;
+
 
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
@@ -110,6 +113,12 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         } else {
             diffusionModel.getPrecisionParameter().addParameterListener(this);
             dataModel.getPrecisionMatrix().addParameterListener(this);
+        }
+
+        if (forceResample) {
+            this.traitSimulator = new RepeatedMeasuresTraitSimulator(dataModel, treeLikelihood);
+        } else {
+            this.traitSimulator = null;
         }
 
         this.ratio = ratio;
@@ -200,13 +209,14 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             String key = REALIZED_TIP_TRAIT + "." + dataModel.getTraitName();
             TreeTrait trait = treeLikelihood.getTreeTrait(key);
             double[] tipTraits = (double[]) trait.getTrait(treeLikelihood.getTree(), null);
+
+            if (forceResample) {
+                traitSimulator.simulateMissingData(tipTraits);
+            }
+
             double[] data = dataModel.getParameter().getParameterValues();
 
             int nTaxa = tree.getExternalNodeCount();
-
-            if (forceResample) {
-                //TODO: use repeatedMeasuresTraitSimulator to force sampling
-            }
 
             computeVariance(diffusionComponent, tipTraits, nTaxa, dimTrait);
             computeVariance(samplingComponent, data, nTaxa, dimTrait);

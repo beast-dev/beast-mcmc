@@ -114,10 +114,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         this.treeSums = new TreeVarianceSums(0, 0);
 
-        tree.addModelListener(this);
-        if (useEmpiricalVariance && !forceResample) {
-            dataModel.getParameter().addParameterListener(this);
-        } else {
+        if (!useEmpiricalVariance) {
+            tree.addModelListener(this);
             diffusionModel.getPrecisionParameter().addParameterListener(this);
             dataModel.getPrecisionMatrix().addParameterListener(this);
         }
@@ -358,27 +356,32 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         boolean needToUpdate = false;
 
-        if (!treeKnown) {
+        if (useEmpiricalVariance) {
 
-            updateTreeSums();
-            treeKnown = true;
-            needToUpdate = true;
+            if (dim == 0) {
+                needToUpdate = true;
+            }
 
-        }
+        } else {
 
-        if (!varianceKnown) {
+            if (!treeKnown) {
 
-            if (!useEmpiricalVariance) {
+                updateTreeSums();
+                treeKnown = true;
+                needToUpdate = true;
+
+            }
+
+            if (!varianceKnown) {
 
                 samplingVariance = dataModel.getSamplingVariance();
                 diffusionVariance = new Matrix(diffusionModel.getPrecisionmatrix()).inverse();
 
                 varianceKnown = true;
 
+                needToUpdate = true;
+
             }
-
-            needToUpdate = true;
-
         }
 
         if (needToUpdate) {

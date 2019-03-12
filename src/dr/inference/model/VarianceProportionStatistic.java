@@ -48,6 +48,7 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
+import static java.lang.Math.sqrt;
 
 /**
  * A Statistic class that computes the expected proportion of the variance in the data due to diffusion on the tree
@@ -63,6 +64,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     private static final String MATRIX_RATIO = "matrixRatio";
     private static final String ELEMENTWISE = "elementWise";
     private static final String SYMMETRIC_DIVISION = "symmetricDivision";
+    private static final String CO_HERITABILITY = "coheritability";
     private static final String EMPIRICAL = "useEmpiricalVariance";
     private static final String FORCE_SAMPLING = "forceSampling";
 
@@ -194,6 +196,30 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 //                }
 
             }
+        },
+        CO_HERITABILITY {
+            @Override
+            void setMatrixRatio(DenseMatrix64F numeratorMatrix, DenseMatrix64F otherMatrix,
+                                DenseMatrix64F destination) {
+
+                for (int i = 0; i < destination.numRows; i++) {
+
+                    double val = numeratorMatrix.get(i, i) / (numeratorMatrix.get(i, i) + otherMatrix.get(i, i));
+                    destination.set(i, i, val);
+                    for (int j = i + 1; j < destination.numRows; j++) {
+
+                        double rg = numeratorMatrix.get(i, j);
+                        double vi = numeratorMatrix.get(i, i) + otherMatrix.get(i, i);
+                        double vj = numeratorMatrix.get(j, j) + otherMatrix.get(j, j);
+
+                        val = rg / sqrt(vi * vj);
+
+                        destination.set(i, j, val);
+                        destination.set(j, i, val);
+
+                    }
+                }
+            }
         };
 
         abstract void setMatrixRatio(DenseMatrix64F numeratorMatrix, DenseMatrix64F otherMatrix,
@@ -323,7 +349,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         DoubleMatrix1D eigenValues = eigenDecomp.getRealEigenvalues();
         int dim = eigenValues.size();
         for (int i = 0; i < dim; i++) {
-            double value = Math.sqrt(eigenValues.get(i));
+            double value = sqrt(eigenValues.get(i));
             if (invert) {
                 value = 1 / value;
             }
@@ -352,7 +378,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
     @Override
-    public String getDimensionName(int dim){
+    public String getDimensionName(int dim) {
         int row = dim / dimTrait;
         int col = dim - row * dimTrait;
         return getStatisticName() + (row + 1) + (col + 1);
@@ -447,6 +473,8 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
                 ratio = MatrixRatios.ELEMENT_WISE;
             } else if (ratioString.equalsIgnoreCase(SYMMETRIC_DIVISION)) {
                 ratio = MatrixRatios.SYMMETRIC_DIVISION;
+            } else if (ratioString.equalsIgnoreCase(CO_HERITABILITY)) {
+                ratio = MatrixRatios.CO_HERITABILITY;
             } else {
                 throw new RuntimeException(PARSER_NAME + " must have attibute " + MATRIX_RATIO +
                         " with one of the following values: " + MatrixRatios.values());

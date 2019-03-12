@@ -352,6 +352,13 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
     }
 
     @Override
+    public String getDimensionName(int dim){
+        int row = dim / dimTrait;
+        int col = dim - row * dimTrait;
+        return getStatisticName() + (row + 1) + (col + 1);
+    }
+
+    @Override
     public double getStatisticValue(int dim) {
 
         boolean needToUpdate = false;

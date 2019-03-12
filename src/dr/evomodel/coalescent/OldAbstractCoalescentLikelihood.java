@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import java.util.Arrays;
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ScaledDemographic;
@@ -40,6 +39,7 @@ import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Forms a base class for a number of coalescent likelihood calculators.
@@ -515,8 +515,10 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
             public void setIntervalStartIndices(int intervalCount) {
 
-                nodeNumbersInIntervals[nextIndex - 1] = 0;
-                nextIndex--;
+                if (nodeNumbersInIntervals[nextIndex - 1] == nodeNumbersInIntervals[nextIndex - 2]) {
+                    nodeNumbersInIntervals[nextIndex - 1] = 0;
+                    nextIndex--;
+                }
 
                 int index = 1;
                 mapNodeInterval(nodeNumbersInIntervals[0], 0);

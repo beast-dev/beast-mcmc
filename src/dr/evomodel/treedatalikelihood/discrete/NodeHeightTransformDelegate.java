@@ -129,8 +129,10 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
             for (int i = 0; i < values.length; i++) {
                 int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
                 currentHeight += values[i];
-                tree.setNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 1]), currentHeight);
+                TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
+                node.heightParameter.setParameterValueQuietly(0, currentHeight);
             }
+            tree.pushTreeChangedEvent();
             return nodeHeights.getParameterValues();
         }
 

@@ -74,16 +74,29 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
     @Override
     public double[] getGradientLogDensity() {
 
-        double[] gradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];
-        double[] sufficientStatistics = skyrideLikelihood.getSufficientStatistics();
+        double[] nodeHeightGradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];
         double[] gamma = skyrideLikelihood.getPopSizeParameter().getParameterValues();
-        Parameter coalescentIntervals = skyrideLikelihood.getCoalescentIntervals();
 
-        for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
-            gradient[i] = - sufficientStatistics[i] / coalescentIntervals.getParameterValue(i) * Math.exp(-gamma[i]);
+        int index = 0;
+        for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
+            if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
+                if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1) {
+                    weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);
+                }
+                nodeHeightGradient[index] = weight / 2.0;
+                index++;
+            }
+        }
+        double[] intervalGradient = new double[nodeHeightGradient.length];
+        double accumulatedGradient = 0.0;
+        for (int i = nodeHeightGradient.length - 1; i > -1; i--) {
+            accumulatedGradient += nodeHeightGradient[i];
+            intervalGradient[i] = accumulatedGradient;
         }
 
-        return gradient;
+        return intervalGradient;
+//        return nodeHeightGradient;
     }
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
@@ -114,10 +127,45 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         }
     };
 
+    private MultivariateFunction numeric2 = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            double[] transformedValues = nodeHeightTransform.transform(argument);
+
+            for (int i = 0; i < argument.length; ++i) {
+                getParameter().setParameterValue(i, transformedValues[i]);
+            }
+
+            skyrideLikelihood.makeDirty();
+            return skyrideLikelihood.getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return nodeHeightTransform.transform(getParameter().getParameterValues()).length;
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
     @Override
     public String getReport() {
         double[] savedValues = getParameter().getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(numeric1, getParameter().getParameterValues());
+        for (int i = 0; i < savedValues.length; ++i) {
+            getParameter().setParameterValue(i, savedValues[i]);
+        }
+        double[] nodeHeights = nodeHeightTransform.inverse(getParameter().getParameterValues());
+        double[] testGradient2 = NumericalDerivative.gradient(numeric2, nodeHeights);
         for (int i = 0; i < savedValues.length; ++i) {
             getParameter().setParameterValue(i, savedValues[i]);
         }
@@ -126,6 +174,8 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+        sb.append("\n");
+        sb.append("numeric wrt nodeHeight: ").append(new dr.math.matrixAlgebra.Vector(testGradient2));
         sb.append("\n");
 
         return sb.toString();

@@ -207,11 +207,19 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final double[] delta = vectorDelta;
             computeDelta(jbo, jdo, delta);
 
-            final double[] tmp = vector0;
-            weightedAverage(preOrderPartials, kbo, Pk,
-                    delta, 0, QjPjp,
-                    preOrderPartials, ibo, Vip,
-                    dimTrait, tmp);
+//            final double[] tmp = vector0;
+//            weightedAverage(preOrderPartials, kbo, Pk,
+//                    delta, 0, QjPjp,
+//                    preOrderPartials, ibo, Vip,
+//                    dimTrait, tmp);
+            safeWeightedAverage(
+                    new WrappedVector.Raw(preOrderPartials, kbo, dimTrait),
+                    Pk,
+                    new WrappedVector.Raw(delta, 0, dimTrait),
+                    QjPjp,
+                    new WrappedVector.Raw(preOrderPartials, ibo, dimTrait),
+                    Vip,
+                    dimTrait);
 
             scaleAndDriftMean(ibo, imo, ido);
 

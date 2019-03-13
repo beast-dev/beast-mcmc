@@ -17,6 +17,7 @@ import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.inference.model.*;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -43,6 +44,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
     private ContinuousTraitPartialsProvider dataModel;
     private ContinuousTraitPartialsProvider dataModelIntegrated;
     private ConjugateRootTraitPrior rootPrior;
+    private ConjugateRootTraitPrior rootPriorInf;
     private ConjugateRootTraitPrior rootPriorIntegrated;
 
     private MultivariateDiffusionModel diffusionModelFactor;
@@ -113,6 +115,23 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         parser.addXMLObjectParser(new ParameterParser());
         parser.parse(new StringReader(s), true);
         rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
+
+        // Root prior Inf
+        String sInf = "<beast>\n" +
+                "    <conjugateRootPrior>\n" +
+                "        <meanParameter>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 -2.0\"/>\n" +
+                "        </meanParameter>\n" +
+                "        <priorSampleSize>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"Infinity\"/>\n" +
+                "        </priorSampleSize>\n" +
+                "    </conjugateRootPrior>\n" +
+                "</beast>";
+        XMLParser parserInf = new XMLParser(true, true, true, null);
+        parserInf.addXMLObjectParser(new AttributeParser());
+        parserInf.addXMLObjectParser(new ParameterParser());
+        parserInf.parse(new StringReader(sInf), true);
+        rootPriorInf = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parserInf.getRoot(), dimTrait);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
@@ -206,18 +225,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodBM", dataLikelihood);
 
-        double integratedLikelihood = dataLikelihood.getLogLikelihood();
-
-        assertEquals("likelihoodBM", format.format(logDatumLikelihood), format.format(integratedLikelihood));
-
-        System.out.println("likelihoodBM: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -230,21 +241,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         double[] expectedTraits = new double[]{-1.0, 2.0, 0.0, 0.45807521679597646, 2.6505355982097605, 3.4693334367360538, 0.5, 2.64206285585883, 5.5, 2.0, 5.0, -8.0, 11.0, 1.0, -1.5, 1.0, 2.5, 4.0};
         double[] traits = parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
+        System.err.println(new Vector(traits));
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
 
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
-
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodBMInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
 
     }
 
@@ -271,18 +278,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodDrift", dataLikelihood);
 
-        assertEquals("likelihoodDrift",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodDrift: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -299,17 +298,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
 
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodDriftInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
     }
 
     public void testLikelihoodDriftRelaxed() {
@@ -340,18 +335,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodDriftRelaxed", dataLikelihood);
 
-        assertEquals("likelihoodDriftRelaxed",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodDriftRelaxed: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -367,17 +354,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodDriftRelaxedInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodDiagonalOU() {
@@ -408,18 +391,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodDiagonalOU", dataLikelihood);
 
-        assertEquals("likelihoodDiagonalOU",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodDiagonalOU: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -435,17 +410,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodDiagonalOUInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodDiagonalOURelaxed() {
@@ -482,18 +453,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodDiagonalOURelaxed", dataLikelihood);
 
-        assertEquals("likelihoodDiagonalOURelaxed",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodDiagonalOURelaxed: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -509,17 +472,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodDiagonalOURelaxedInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodDiagonalOUBM() {
@@ -550,31 +509,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
-
-        assertEquals("likelihoodDiagonalOU",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodDiagonalOU: " + format.format(logDatumLikelihood));
+        testLikelihood("likelihoodDiagonalOUBM", dataLikelihood);
 
         // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL,
-                false);
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodDiagonalOUBMInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodFullOU() {
@@ -609,18 +554,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodFullOU", dataLikelihood);
 
-        assertEquals("likelihoodFullOU",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodFullOU: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -636,17 +573,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodFullOUInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodFullOURelaxed() {
@@ -686,18 +619,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        testLikelihood("likelihoodFullOURelaxed", dataLikelihood);
 
-        assertEquals("likelihoodFullOURelaxed",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodFullOURelaxed: " + format.format(logDatumLikelihood));
+        // Conditional moments (preorder)
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -713,17 +638,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
-        // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodFullOURelaxedInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodFullAndDiagonalOU() {
@@ -812,30 +733,10 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
-
-        assertEquals("likelihoodFullOURelaxed",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodFullOURelaxed: " + format.format(logDatumLikelihood));
+        testLikelihood("likelihoodFullIOU", dataLikelihood);
 
         // Conditional moments (preorder)
-//        new TreeTipGradient("" +
-//                "trait", dataLikelihood, likelihoodDelegate, null);
-//        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-//                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-//                TreeTraitLogger.NodeRestriction.EXTERNAL);
-//
-//        String moments = treeTraitLogger.getReport();
-//        double[] partials = parseVector(moments, "\t");
-//        testCMeans(s, "cMean ", partials);
-//        testCVariances(s, "cVar ", partials);
+//        testConditionalMoments(dataLikelihood, likelihoodDelegate);
     }
 
     public void testLikelihoodFullNonSymmetricOU() {
@@ -870,30 +771,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
-
-        assertEquals("likelihoodFullNonSymmetricOU",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodFullNonSymmetricOU: " + format.format(logDatumLikelihood));
+        testLikelihood("likelihoodFullNonSymmetricOU", dataLikelihood);
 
         // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodFullNonSymmetricOUInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     public void testLikelihoodFullOUNonSymmetricRelaxed() {
@@ -933,30 +821,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Likelihood Computation
         TreeDataLikelihood dataLikelihood = new TreeDataLikelihood(likelihoodDelegate, treeModel, rateModel);
 
-        String s = dataLikelihood.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihood = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
-
-        assertEquals("likelihoodFullNonSymmetricOURelaxed",
-                format.format(logDatumLikelihood),
-                format.format(dataLikelihood.getLogLikelihood()));
-
-        System.out.println("likelihoodFullNonSymmetricOURelaxed: " + format.format(logDatumLikelihood));
+        testLikelihood("likelihoodFullNonSymmetricOURelaxed", dataLikelihood);
 
         // Conditional moments (preorder)
-        new TreeTipGradient("" +
-                "trait", dataLikelihood, likelihoodDelegate, null);
-        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
-                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
-                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
+        testConditionalMoments(dataLikelihood, likelihoodDelegate);
 
-        String moments = treeTraitLogger.getReport();
-        double[] partials = parseVector(moments, "\t");
-        testCMeans(s, "cMean ", partials);
-        testCVariances(s, "cVar ", partials);
+        // Fixed Root
+        ContinuousDataLikelihoodDelegate likelihoodDelegateInf = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModel, rootPriorInf, rateTransformation, rateModel, true);
+        TreeDataLikelihood dataLikelihoodInf = new TreeDataLikelihood(likelihoodDelegateInf, treeModel, rateModel);
+        testLikelihood("likelihoodFullNonSymmetricOURelaxedInf", dataLikelihoodInf);
+        testConditionalMoments(dataLikelihoodInf, likelihoodDelegateInf);
     }
 
     //// Factor Model //// *********************************************************************************************
@@ -984,19 +859,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-        assertEquals("likelihoodBMFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodBMFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1040,20 +903,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-
-        assertEquals("likelihoodDriftFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodDriftFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1100,20 +950,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-
-        assertEquals("likelihoodDriftRelaxedFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodDriftRelaxedFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1161,20 +998,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-
-        assertEquals("likelihoodDiagonalOUFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodDiagonalOUFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1224,20 +1048,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-
-        assertEquals("likelihoodDiagonalOURelaxedFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodDiagonalOURelaxedFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1289,20 +1100,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-
-        assertEquals("likelihoodFullOUFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodFullOUFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1357,20 +1155,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
-
-        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
-        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
-
-
-        assertEquals("likelihoodFullRelaxedOUFactor",
-                format.format(logDatumLikelihoodFactor),
-                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+        testLikelihood("likelihoodFullRelaxedOUFactor", dataModelFactor, dataLikelihoodFactors);
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
@@ -1472,7 +1257,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         return gradient;
     }
 
-    private void testCMeans(String s, String name, double[] partials) {
+    private void testCMeans(TreeDataLikelihood dataLikelihood, String name, double[] partials) {
+        String s = dataLikelihood.getReport();
         int offset = 0;
         int indBeg = 0;
         for (int tip = 0; tip < nTips; tip++) {
@@ -1481,7 +1267,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
             double[] vector = parseVector(s.substring(indBeg, indEnd), ",");
             for (int i = 0; i < vector.length; i++) {
 //                System.out.println("cMean Mat: " + vector[i]);
-//                System.out.println("cMean preorder: " + partials[offset + i]);
+                System.out.println("cMean preorder: " + partials[offset + i]);
                 assertEquals("cMean " + tip + "; " + i,
                         format.format(partials[offset + i]),
                         format.format(vector[i]));
@@ -1490,7 +1276,8 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         }
     }
 
-    private void testCVariances(String s, String name, double[] partials) {
+    private void testCVariances(TreeDataLikelihood dataLikelihood, String name, double[] partials) {
+        String s = dataLikelihood.getReport();
         int offset = 0;
         int indBeg = 0;
         for (int tip = 0; tip < nTips; tip++) {
@@ -1506,5 +1293,50 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
             }
             offset += dimTrait + 2 * dimTrait * dimTrait + 1;
         }
+    }
+
+    private double getLogDatumLikelihood(TreeDataLikelihood dataLikelihood) {
+        String s = dataLikelihood.getReport();
+        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
+        int indLikEnd = s.indexOf("\n", indLikBeg);
+        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
+        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
+        return Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+    }
+
+    private void testLikelihood(String message, TreeDataLikelihood dataLikelihood) {
+        double logDatumLikelihood = getLogDatumLikelihood(dataLikelihood);
+        double integratedLikelihood = dataLikelihood.getLogLikelihood();
+        assertEquals(message, format.format(logDatumLikelihood), format.format(integratedLikelihood));
+        System.out.println(message + format.format(logDatumLikelihood));
+    }
+
+    private void testLikelihood(String message, IntegratedFactorAnalysisLikelihood dataModelFactor, TreeDataLikelihood dataLikelihoodFactors) {
+        String sf = dataModelFactor.getReport();
+        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
+        int indLikEndF = sf.indexOf("\n", indLikBegF);
+        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
+        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
+        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
+
+        double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
+        double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
+
+        assertEquals(message,
+                format.format(logDatumLikelihoodFactor),
+                format.format(likelihoodFactorData + likelihoodFactorDiffusion));
+    }
+
+    private void testConditionalMoments(TreeDataLikelihood dataLikelihood, ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        new TreeTipGradient("" +
+                "trait", dataLikelihood, likelihoodDelegate, null);
+        TreeTraitLogger treeTraitLogger = new TreeTraitLogger(treeModel,
+                new TreeTrait[]{dataLikelihood.getTreeTrait("fcd.trait")},
+                TreeTraitLogger.NodeRestriction.EXTERNAL, false);
+
+        String moments = treeTraitLogger.getReport();
+        double[] partials = parseVector(moments, "\t");
+        testCMeans(dataLikelihood, "cMean ", partials);
+        testCVariances(dataLikelihood, "cVar ", partials);
     }
 }

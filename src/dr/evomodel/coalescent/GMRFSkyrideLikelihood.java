@@ -100,7 +100,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
         this(wrapTree(tree), popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing,
-                rescaleByRootHeight, new Parameter.Default(popParameter.getDimension()));
+                rescaleByRootHeight, null);
     }
 
     private static List<Tree> wrapTree(Tree tree) {
@@ -112,7 +112,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
-        this(treeList, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight, new Parameter.Default(popParameter.getDimension()));
+        this(treeList, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight, null);
     }
 
     public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
@@ -164,12 +164,17 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 //        storedSufficientStatistics = new double[fieldLength];
 
 //        coalescentIntervals = new Parameter.Default(fieldLength);
-        this.coalescentIntervals = coalescentIntervals;
+        if (coalescentIntervals == null) {
+            coalesentIntervalNodeMapping = new IntervalNodeMapping.None();
+            this.coalescentIntervals = new Parameter.Default(popParameter.getDimension());
+        } else {
+            coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount());
+            this.coalescentIntervals = coalescentIntervals;
+        }
         storedCoalescentIntervals = new Parameter.Default(fieldLength);
         sufficientStatistics = new Parameter.Default(fieldLength);
         storedSufficientStatistics = new Parameter.Default(fieldLength);
 
-        coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount());
 
         setupGMRFWeights();
 

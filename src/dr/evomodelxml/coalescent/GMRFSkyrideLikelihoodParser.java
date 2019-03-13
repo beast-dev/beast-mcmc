@@ -93,11 +93,12 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(COALESCENT_INTERVAL);
-        Parameter coalescentIntervals = (Parameter) cxo.getChild(Parameter.class);
-        if (coalescentIntervals == null) {
-            coalescentIntervals = new Parameter.Default(popParameter.getDimension());
-        } else if (coalescentIntervals.getDimension() != popParameter.getDimension()) {
-            coalescentIntervals.setDimension(popParameter.getDimension());
+        Parameter coalescentIntervals = null;
+        if (cxo != null) {
+            coalescentIntervals = (Parameter) cxo.getChild(Parameter.class);
+            if (coalescentIntervals.getDimension() != popParameter.getDimension()) {
+                coalescentIntervals.setDimension(popParameter.getDimension());
+            }
         }
 
         cxo = xo.getChild(POPULATION_TREE);

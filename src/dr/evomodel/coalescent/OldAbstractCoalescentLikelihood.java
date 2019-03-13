@@ -574,6 +574,34 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 return nodeNumbers;
             }
         }
+
+        class None implements IntervalNodeMapping {
+
+            @Override
+            public void addNode(int nodeNumbe) {
+                // Do nothing
+            }
+
+            @Override
+            public void setIntervalStartIndices(int intervalCount) {
+                // Do nothing
+            }
+
+            @Override
+            public void initializeMaps() {
+                // Do nothing
+            }
+
+            @Override
+            public int[] getIntervalsForNode(int nodeNumber) {
+                throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
+            }
+
+            @Override
+            public int[] getNodeNumbersForInterval(int interval) {
+                throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
+            }
+        }
     }
 
     private static void getTreeIntervals(Tree tree, NodeRef root, NodeRef[] exclude, XTreeIntervals ti, IntervalNodeMapping intervalNodeMapping) {

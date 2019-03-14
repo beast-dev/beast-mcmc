@@ -412,7 +412,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             lineageCounts = new int[maxIntervalCount];
             storedIntervals = new double[maxIntervalCount];
             storedLineageCounts = new int[maxIntervalCount];
-            intervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount());
+            intervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount(), tree);
         }
 
         XTreeIntervals ti = new XTreeIntervals(intervals, lineageCounts);
@@ -484,6 +484,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
         int[] getIntervalsForNode(int nodeNumber);
         int[] getNodeNumbersForInterval(int interval);
+        double[] sortByNodeNumbers(double[] byIntervalOrder);
 
         class Default implements IntervalNodeMapping {
             final int[] nodeNumbersInIntervals;
@@ -491,11 +492,13 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             final int[] intervalNumberOfNodes;
             private int nextIndex = 0;
             private int nIntervals;
+            private Tree tree;
 
-            public Default (int maxIntervalCount) {
+            public Default (int maxIntervalCount, Tree tree) {
                 nodeNumbersInIntervals = new int[2 * maxIntervalCount];
                 intervalStartIndices = new int[maxIntervalCount];
                 intervalNumberOfNodes = new int[2 * maxIntervalCount];
+                this.tree = tree;
             }
 
             public void addNode(int nodeNumber) {
@@ -536,6 +539,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
                 }
 
+                while(index < nextIndex) {
+                    mapNodeInterval(nodeNumbersInIntervals[index], intervalCount - 1);
+                    index++;
+                }
+
                 nIntervals = intervalCount;
             }
 
@@ -573,6 +581,21 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 }
                 return nodeNumbers;
             }
+
+            @Override
+            public double[] sortByNodeNumbers(double[] byIntervalOrder) {
+                double[] sortedValues = new double[byIntervalOrder.length];
+                int[] nodeIndices = new int[byIntervalOrder.length];
+                ArrayList<ComparableDouble> mappedIntervals = new ArrayList<ComparableDouble>();
+                for (int i = 0; i < nodeIndices.length; i++) {
+                    mappedIntervals.add(new ComparableDouble(getIntervalsForNode(i + tree.getExternalNodeCount())[0]));
+                }
+                HeapSort.sort(mappedIntervals, nodeIndices);
+                for (int i = 0; i < nodeIndices.length; i++) {
+                    sortedValues[nodeIndices[i]] = byIntervalOrder[i];
+                }
+                return sortedValues;
+            }
         }
 
         class None implements IntervalNodeMapping {
@@ -599,6 +622,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
             @Override
             public int[] getNodeNumbersForInterval(int interval) {
+                throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
+            }
+
+            @Override
+            public double[] sortByNodeNumbers(double[] byIntervalOrder) {
                 throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
             }
         }

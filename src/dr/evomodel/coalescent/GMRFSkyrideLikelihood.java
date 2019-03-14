@@ -168,7 +168,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
             coalesentIntervalNodeMapping = new IntervalNodeMapping.None();
             this.coalescentIntervals = new Parameter.Default(popParameter.getDimension());
         } else {
-            coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount());
+            coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount(), tree);
             this.coalescentIntervals = coalescentIntervals;
         }
         storedCoalescentIntervals = new Parameter.Default(fieldLength);

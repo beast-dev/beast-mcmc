@@ -139,7 +139,7 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
 
     @Override
     public String toSymmetricString() {
-        throw new RuntimeException("Not yet implemented");
+        return MatrixParameter.toSymmetricString(this);
     }
 
     @Override

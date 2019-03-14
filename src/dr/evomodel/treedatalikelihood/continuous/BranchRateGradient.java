@@ -233,13 +233,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
         NormalSufficientStatistics jointStatistics = ((ContinuousTraitGradientForBranch.Default) branchProvider).computeJointStatistics(child, parent);
 
-        ((ContinuousTraitGradientForBranch.Default) branchProvider).MakeDeltaVector(vector0, jointStatistics, parent);
+        ((ContinuousTraitGradientForBranch.Default) branchProvider).makeDeltaVector(vector0, jointStatistics, parent);
         DenseMatrix64F delta =vector0; // delta is expectation vector M_i - n_i
 
         DenseMatrix64F Qi = parent.getRawPrecision();
         DenseMatrix64F Vi = jointStatistics.getRawVariance();
 
-        ((ContinuousTraitGradientForBranch.Default) branchProvider).MakeGradientMatrices0(matrix1, matrix0, statistics, differentialScaling);
+        ((ContinuousTraitGradientForBranch.Default) branchProvider).makeGradientMatrices0(matrix1, matrix0, statistics, differentialScaling);
         DenseMatrix64F logDetComponent = matrix0;
         DenseMatrix64F quadraticComponent = matrix1;
 
@@ -270,7 +270,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
             hess1 -= VdQuadraticComponent1.unsafe_get(row, row);
         }
 
-        ((ContinuousTraitGradientForBranch.Default) branchProvider).MakeGradientMatrices1(matrix2, quadraticComponent, jointStatistics);
+        ((ContinuousTraitGradientForBranch.Default) branchProvider).makeGradientMatrices1(matrix2, quadraticComponent, jointStatistics);
         DenseMatrix64F additionalVariance = matrix2;
 
         DenseMatrix64F quadrupleComponent = matrix0;
@@ -343,7 +343,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 vector0 = new DenseMatrix64F(dim, 1);
             }
 
-//             TODO: (Alex) remove code duplication from getGradientForBranch (HERE)
             @Override
             public double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
 
@@ -355,17 +354,16 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     System.err.println("B = " + statistics.toVectorizedString());
                 }
 
+//                if (DEBUG) {
+//                    System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+//                    System.err.println("\tSi = " + NormalSufficientStatistics.toVectorizedString(Si));
+//                }
+
                 DenseMatrix64F Qi = parent.getRawPrecision();
-                DenseMatrix64F Si = matrix1; //new DenseMatrix64F(dim, dim); // matrix1;
-                CommonOps.scale(differentialScaling, branch.getRawVariance(), Si);
 
-                if (DEBUG) {
-                    System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
-                    System.err.println("\tSi = " + NormalSufficientStatistics.toVectorizedString(Si));
-                }
-
-                DenseMatrix64F logDetComponent = matrix0; //new DenseMatrix64F(dim, dim); //matrix0;
-                CommonOps.mult(Qi, Si, logDetComponent);
+                DenseMatrix64F logDetComponent = matrix0;
+                DenseMatrix64F quadraticComponent = matrix1;
+                makeGradientMatrices0(quadraticComponent, logDetComponent, statistics, differentialScaling);
 
                 double grad1 = 0.0;
                 for (int row = 0; row < dim; ++row) {
@@ -376,24 +374,21 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     System.err.println("grad1 = " + grad1);
                 }
 
-                DenseMatrix64F quadraticComponent = matrix1; //new DenseMatrix64F(dim, dim); //matrix1;
-                CommonOps.mult(logDetComponent, Qi, quadraticComponent);
 
-                if (DEBUG) {
-                    System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
-                    System.err.println("\tQQ = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
-                }
+//                if (DEBUG) {
+//                    System.err.println("\tQi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+//                    System.err.println("\tQQ = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
+//                }
 
                 NormalSufficientStatistics jointStatistics = computeJointStatistics(child, parent);
 
                 DenseMatrix64F additionalVariance = matrix0; //new DenseMatrix64F(dim, dim);
-                CommonOps.mult(quadraticComponent, jointStatistics.getRawVariance(), additionalVariance);
+                makeGradientMatrices1(additionalVariance, quadraticComponent,
+                        jointStatistics);
+
+
                 DenseMatrix64F delta = vector0;
-                for (int row = 0; row < dim; ++row) {
-                    delta.unsafe_set(row, 0,
-                            jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row)
-                    );
-                }
+                makeDeltaVector(delta, jointStatistics, parent);
 
                 double grad2 = 0.0;
                 for (int row = 0; row < dim; ++row) {
@@ -468,7 +463,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
             }
 
 
-            public void MakeGradientMatrices0(DenseMatrix64F matrix1, DenseMatrix64F logDetComponent,
+            public void makeGradientMatrices0(DenseMatrix64F matrix1, DenseMatrix64F logDetComponent,
                                              BranchSufficientStatistics statistics, double differentialScaling) {
 
                 final NormalSufficientStatistics parent = statistics.getParent();
@@ -480,13 +475,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 CommonOps.mult(logDetComponent, Qi, matrix1); //matrix1 = QuadraticComponent
 
             }
-            public void MakeGradientMatrices1(DenseMatrix64F additionalVariance, DenseMatrix64F quadraticComponent,
+            public void makeGradientMatrices1(DenseMatrix64F additionalVariance, DenseMatrix64F quadraticComponent,
                                               NormalSufficientStatistics jointStatistics) {
 
                 CommonOps.mult(quadraticComponent, jointStatistics.getRawVariance(), additionalVariance);
             }
 
-            public void MakeDeltaVector(DenseMatrix64F delta, NormalSufficientStatistics jointStatistics,
+            public void makeDeltaVector(DenseMatrix64F delta, NormalSufficientStatistics jointStatistics,
                                         NormalSufficientStatistics parent){
                 for (int row = 0; row < dim; ++row) {
                     delta.unsafe_set(row, 0,

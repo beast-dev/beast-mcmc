@@ -39,6 +39,10 @@ import dr.xml.*;
 public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "gmrfSkyrideGradient";
+    private static final String WRT_PARAMETER = "wrtParameter";
+
+    private final String COALESCENT_INTERVAL = "coalescentInterval";
+    private final String NODE_HEIGHT = "nodeHeight";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -46,16 +50,19 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         GMRFSkyrideLikelihood skyrideLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
-        GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(skyrideLikelihood, parameter);
+        String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
+        GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
 
         NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
 
-        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, nodeHeightTransform);
+        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, parameter, nodeHeightTransform);
     }
 
-    private GMRFSkyrideGradient.WrtParameter setupWrtParameter(GMRFSkyrideLikelihood skyrideLikelihood, Parameter parameter) {
-        if (parameter == skyrideLikelihood.getCoalescentIntervals()) {
+    private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {
+        if (wrtParameterCase.equalsIgnoreCase(COALESCENT_INTERVAL)) {
             return GMRFSkyrideGradient.WrtParameter.COALESCENT_INTERVAL;
+        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHT)) {
+            return GMRFSkyrideGradient.WrtParameter.NODE_HEIGHTS;
         }
         else {
             throw new RuntimeException("Not yet implemented!");
@@ -68,6 +75,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(Parameter.class),
             new ElementRule(GMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),

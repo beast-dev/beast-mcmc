@@ -41,18 +41,20 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
 
     protected GMRFSkyrideLikelihood skyrideLikelihood;
     private WrtParameter wrtParameter;
+    private Parameter parameter;
     final private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
     final NodeHeightTransform nodeHeightTransform;
 
     public GMRFSkyrideGradient(GMRFSkyrideLikelihood gmrfSkyrideLikelihood,
                                WrtParameter wrtParameter,
+                               Parameter parameter,
                                NodeHeightTransform nodeHeightTransform) {
 
         this.skyrideLikelihood = gmrfSkyrideLikelihood;
         this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
         this.wrtParameter = wrtParameter;
         this.nodeHeightTransform = nodeHeightTransform;
-
+        this.parameter = parameter;
     }
 
 
@@ -63,7 +65,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
 
     @Override
     public Parameter getParameter() {
-        return wrtParameter.getParameter(skyrideLikelihood);
+        return parameter;
     }
 
     @Override
@@ -73,30 +75,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
 
     @Override
     public double[] getGradientLogDensity() {
-
-        double[] nodeHeightGradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];
-        double[] gamma = skyrideLikelihood.getPopSizeParameter().getParameterValues();
-
-        int index = 0;
-        for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
-            if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
-                double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
-                if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1) {
-                    weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);
-                }
-                nodeHeightGradient[index] = weight / 2.0;
-                index++;
-            }
-        }
-        double[] intervalGradient = new double[nodeHeightGradient.length];
-        double accumulatedGradient = 0.0;
-        for (int i = nodeHeightGradient.length - 1; i > -1; i--) {
-            accumulatedGradient += nodeHeightGradient[i];
-            intervalGradient[i] = accumulatedGradient;
-        }
-
-        return intervalGradient;
-//        return nodeHeightGradient;
+        return wrtParameter.getGradientLogDensity(skyrideLikelihood, intervalNodeMapping);
     }
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
@@ -127,45 +106,10 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         }
     };
 
-    private MultivariateFunction numeric2 = new MultivariateFunction() {
-        @Override
-        public double evaluate(double[] argument) {
-
-            double[] transformedValues = nodeHeightTransform.transform(argument);
-
-            for (int i = 0; i < argument.length; ++i) {
-                getParameter().setParameterValue(i, transformedValues[i]);
-            }
-
-            skyrideLikelihood.makeDirty();
-            return skyrideLikelihood.getLogLikelihood();
-        }
-
-        @Override
-        public int getNumArguments() {
-            return nodeHeightTransform.transform(getParameter().getParameterValues()).length;
-        }
-
-        @Override
-        public double getLowerBound(int n) {
-            return 0;
-        }
-
-        @Override
-        public double getUpperBound(int n) {
-            return Double.POSITIVE_INFINITY;
-        }
-    };
-
     @Override
     public String getReport() {
         double[] savedValues = getParameter().getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(numeric1, getParameter().getParameterValues());
-        for (int i = 0; i < savedValues.length; ++i) {
-            getParameter().setParameterValue(i, savedValues[i]);
-        }
-        double[] nodeHeights = nodeHeightTransform.inverse(getParameter().getParameterValues());
-        double[] testGradient2 = NumericalDerivative.gradient(numeric2, nodeHeights);
         for (int i = 0; i < savedValues.length; ++i) {
             getParameter().setParameterValue(i, savedValues[i]);
         }
@@ -175,8 +119,6 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         sb.append("\n");
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");
-        sb.append("numeric wrt nodeHeight: ").append(new dr.math.matrixAlgebra.Vector(testGradient2));
-        sb.append("\n");
 
         return sb.toString();
     }
@@ -185,12 +127,51 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
 
         COALESCENT_INTERVAL {
             @Override
-            public Parameter getParameter(GMRFSkyrideLikelihood skyrideLikelihood) {
-                return skyrideLikelihood.getCoalescentIntervals();
+            double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
+                                           OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
+                double[] unSortedNodeHeightGradient = super.getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
+                double[] intervalGradient = new double[unSortedNodeHeightGradient.length];
+                double accumulatedGradient = 0.0;
+                for (int i = unSortedNodeHeightGradient.length - 1; i > -1; i--) {
+                    accumulatedGradient += unSortedNodeHeightGradient[i];
+                    intervalGradient[i] = accumulatedGradient;
+                }
+                return intervalGradient;
+            }
+        },
+
+        NODE_HEIGHTS {
+            @Override
+            double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
+                                           OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
+                double[] unSortedNodeHeightGradient = getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
+                double[] sortedNodeHeightGradient = intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
+                return sortedNodeHeightGradient;
             }
         };
 
-        abstract Parameter getParameter(GMRFSkyrideLikelihood skyrideLikelihood);
+        abstract double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
+                                                OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping);
+
+        double[] getGradientLogDensityWrtUnsortedNodeHeight(GMRFSkyrideLikelihood skyrideLikelihood) {
+            double[] unSortedNodeHeightGradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];
+            double[] gamma = skyrideLikelihood.getPopSizeParameter().getParameterValues();
+
+            int index = 0;
+            for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
+                if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                    double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
+                    if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1) {
+                        weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);
+                    }
+                    unSortedNodeHeightGradient[index] = weight / 2.0;
+                    index++;
+                }
+            }
+            return unSortedNodeHeightGradient;
+        };
+
+
 
     }
 

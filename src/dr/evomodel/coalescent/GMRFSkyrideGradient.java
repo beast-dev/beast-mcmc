@@ -115,7 +115,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
+        sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
         sb.append("\n");
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");

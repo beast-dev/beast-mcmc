@@ -77,8 +77,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
 
-
-        super(mode, 0.8); // setTargetAcceptanceProbability(0.8); // Stan default
+        super(mode, 0.8); // Stan default
 
         setWeight(weight);
 

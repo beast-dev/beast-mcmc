@@ -79,7 +79,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
 
-        nodeCount = tree.getNodeCount();
+        this.nodeCount = tree.getNodeCount();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);

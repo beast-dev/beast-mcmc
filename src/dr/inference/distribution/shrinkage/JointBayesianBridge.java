@@ -20,6 +20,9 @@ public class JointBayesianBridge extends BayesianBridgeLikelihood {
         for (int i = 0; i < dim; ++i) {
             sum += NormalDistribution.logPdf(coefficients.getParameterValue(i), 0, getStandardDeviation(i));
         }
+
+        // TODO Add density of localScale variables
+
         return sum;
     }
 

@@ -461,6 +461,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 //        System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
         for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
             storedCoalescentIntervals.setParameterValueQuietly(i, coalescentIntervals.getParameterValue(i));
+        }
+        for (int i = 0; i < sufficientStatistics.getDimension(); i++) {
             storedSufficientStatistics.setParameterValueQuietly(i, sufficientStatistics.getParameterValue(i));
         }
         storedCoalescentIntervals.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);

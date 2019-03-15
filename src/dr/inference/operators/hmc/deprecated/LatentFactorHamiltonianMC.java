@@ -34,7 +34,7 @@ import dr.math.MathUtils;
  * Created by max on 12/2/15.
  */
 @Deprecated
-public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
+public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator {
     private LatentFactorModel lfm;
     private FullyConjugateMultivariateTraitLikelihood tree;
     private MatrixParameterInterface factors;
@@ -68,12 +68,12 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
     @Override
-    public double getAdaptableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setAdaptableParameter(double value) {
+    protected void setAdaptableParameterValue(double value) {
         stepSize = Math.exp(value);
     }
 

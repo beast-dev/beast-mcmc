@@ -76,7 +76,7 @@ public class TipLeapOperatorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
 
-        return new SubtreeLeapOperator(treeModel, taxa, weight, size, targetAcceptance, distanceKernel, mode);
+        return new SubtreeLeapOperator(treeModel, taxa, weight, size, distanceKernel, mode, targetAcceptance);
     }
 
     public String getParserDescription() {

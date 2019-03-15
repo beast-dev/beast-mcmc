@@ -131,11 +131,12 @@ public class DeltaExchangeOperator extends AbstractAdaptableOperator {
         return parameter.getParameterName();
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(delta);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         delta = Math.exp(value);
     }
 

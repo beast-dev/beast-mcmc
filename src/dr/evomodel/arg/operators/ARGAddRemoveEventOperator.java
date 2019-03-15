@@ -102,7 +102,7 @@ public class ARGAddRemoveEventOperator extends AbstractAdaptableOperator {
                                      ARGPartitionLikelihood partLike,
                                      ARGRatePrior ratePrior,
                                      int tossSize) {
-        super(mode);
+        super(mode, 0.5);
         this.arg = arg;
         this.size = size;
         this.internalNodeParameters = param1;
@@ -1497,11 +1497,12 @@ public class ARGAddRemoveEventOperator extends AbstractAdaptableOperator {
         this.size = size;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return size;
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         setSize(value);
     }
 
@@ -1517,10 +1518,6 @@ public class ARGAddRemoveEventOperator extends AbstractAdaptableOperator {
 //	public int getMode() {
 //		return mode;
 //	}
-
-    public double getTargetAcceptanceProbability() {
-        return 0.5;
-    }
 
     public String getOperatorName() {
         return ARG_EVENT_OPERATOR;

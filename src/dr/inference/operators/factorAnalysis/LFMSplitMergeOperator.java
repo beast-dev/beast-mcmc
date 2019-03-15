@@ -96,13 +96,13 @@ public class LFMSplitMergeOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-    public double getAdaptableParameter() {
+    protected double getAdaptableParameterValue() {
 //        return Math.log(drawDistribution.getSD());
         return 0;
     }
 
     @Override
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 //        drawDistribution.setSD(Math.exp(value));
 
     }

@@ -36,7 +36,7 @@ import java.util.List;
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule extends Serializable {
-    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.LOG;
+    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
 
     /**
      * @return Choose the next operator.
@@ -86,7 +86,7 @@ public interface OperatorSchedule extends Serializable {
         },
         POWER("power") {
             @Override public double transform(double d) {
-                return Math.pow(d / 1.0E6, 0.55); // c = 5/9, B = 1e6
+                return Math.pow(d, 0.55); // c = 5/9
             }
         };
 

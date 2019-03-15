@@ -42,7 +42,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
-public class SubtreeSlideOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
+public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
     private static final boolean DEBUG = false;
 
@@ -58,6 +58,8 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Adapta
     public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
                                 boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches,
                                 AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
         this.tree = tree;
         setWeight(weight);
 
@@ -350,49 +352,24 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Adapta
         this.size = size;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(getSize());
     }
 
-    public void setAdaptableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
+    @Override
     public double getRawParameter() {
         return getSize();
     }
 
     @Override
-    public final double getTargetAcceptanceProbability() {
-        return targetAcceptance;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public AdaptationMode getMode() {
-        return mode;
-    }
-
     public String getAdaptableParameterName() {
         return "size";
-    }
-
-    public final String getPerformanceSuggestion() {
-        return null;
     }
 
     public String getOperatorName() {

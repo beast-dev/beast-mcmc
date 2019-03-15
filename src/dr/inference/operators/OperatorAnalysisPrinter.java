@@ -58,6 +58,7 @@ public class OperatorAnalysisPrinter {
                 formatter.formatToFieldWidth("Time", 9) +
                 formatter.formatToFieldWidth("Time/Op", 9) +
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
+                formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
                 (useAdaptation ? "" : " Performance suggestion"));
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
@@ -67,22 +68,24 @@ public class OperatorAnalysisPrinter {
                 JointOperator jointOp = (JointOperator) op;
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                                    + formattedParameterString(jointOp.getSubOperator(k))
-                                    + formattedCountString(op)
-                                    + formattedTimeString(op)
-                                    + formattedTimePerOpString(op)
-                                    + formattedProbString(jointOp)
-                                    + (useAdaptation ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
+                            + formattedParameterString(jointOp.getSubOperator(k))
+                            + formattedCountString(op)
+                            + formattedTimeString(op)
+                            + formattedTimePerOpString(op)
+                            + formattedProbString(jointOp)
+                            + formattedSmoothedProbString(op)
+                            + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                     );
                 }
             } else {
                 out.println(formattedOperatorName(op.getOperatorName())
-                                + formattedParameterString(op)
-                                + formattedCountString(op)
-                                + formattedTimeString(op)
-                                + formattedTimePerOpString(op)
-                                + formattedProbString(op)
-                                + (useAdaptation ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
+                        + formattedParameterString(op)
+                        + formattedCountString(op)
+                        + formattedTimeString(op)
+                        + formattedTimePerOpString(op)
+                        + formattedProbString(op)
+                        + formattedSmoothedProbString(op)
+                        + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
                 );
             }
 
@@ -118,7 +121,12 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedProbString(MCMCOperator op) {
-        final double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+        final double acceptanceProb = op.getAcceptanceProbability();
+        return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
+    }
+
+    private static String formattedSmoothedProbString(MCMCOperator op) {
+        final double acceptanceProb = op.getSmoothedAcceptanceProbability();
         return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
     }
 

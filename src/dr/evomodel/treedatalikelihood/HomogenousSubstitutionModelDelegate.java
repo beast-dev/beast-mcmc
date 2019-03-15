@@ -44,11 +44,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     private final SubstitutionModel substitutionModel;
 
     private final int eigenCount = 1;
-    private final int nodeCount;
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
+    private final int nodeCount;
     private final PreOrderSettings settings;
 
     /**
@@ -78,8 +78,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
-        
-        nodeCount = tree.getNodeCount();
+
+        this.nodeCount = tree.getNodeCount();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, partitionNumber);

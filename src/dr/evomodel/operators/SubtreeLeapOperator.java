@@ -58,7 +58,7 @@ import java.util.Map;
  * @author Mathieu Fourment
  * @version $Id$
  */
-public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
+public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
     public enum DistanceKernelType {
         NORMAL("normal") {
@@ -93,8 +93,6 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     private double size;
 
     private final TreeModel tree;
-    private final AdaptationMode mode;
-    private final double targetAcceptance;
     private final DistanceKernelType distanceKernel;
 
     private final List<NodeRef> tips;
@@ -109,13 +107,13 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param distanceKernel the distribution from which to draw the patristic distance 
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
         this.tree = tree;
         setWeight(weight);
         this.size = size;
-        this.targetAcceptance = targetAcceptance;
         this.distanceKernel = distanceKernel;
-        this.mode = mode;
         this.tips = null;
     }
 
@@ -128,13 +126,13 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
         this.tree = tree;
         setWeight(weight);
         this.size = size;
-        this.targetAcceptance = targetAcceptance;
         this.distanceKernel = distanceKernel;
-        this.mode = mode;
         this.tips = new ArrayList<NodeRef>();
 
         for (Taxon taxon : taxa) {
@@ -362,45 +360,19 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         this.size = size;
     }
 
-    public double getAdaptableParameter() {
-        return Math.log(getSize());
-    }
-
-    public void setAdaptableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
-    public double getRawParameter() {
-        return getSize();
-    }
-
-    public AdaptationMode getMode() {
-        return mode;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-        return null;
+    @Override
+    protected double getAdaptableParameterValue() {
+        return Math.log(getSize());
     }
 
     @Override
-    public double getTargetAcceptanceProbability() {
-        return targetAcceptance;
+    public double getRawParameter() {
+        return getSize();
     }
 
     public String getAdaptableParameterName() {

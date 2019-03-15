@@ -52,7 +52,7 @@ public interface AdaptableMCMCOperator extends MCMCOperator {
      * <p/>
      * From MarkovChain.adaptAcceptanceProbability:
      * <p/>
-     * new parameter = old parameter + 1/(1+N) * (current-step acceptance probability - target probabilitity),
+     * new parameter = old parameter + 1/(1+N) * (current-step acceptance probability - target probability),
      * <p/>
      * where N is some function of the number of operator trials.
      *
@@ -60,13 +60,20 @@ public interface AdaptableMCMCOperator extends MCMCOperator {
      */
     double getAdaptableParameter();
 
+    double getTargetAcceptanceProbability();
+
     /**
-     * Sets the coercable parameter value. A coercable parameter must have a range from -infinity to +infinity with a preference for
-     * small numbers.
+     * Sets the adaptable parameter value.
      *
-     * @param value the value to set the coercible parameter to
+     * @param value the value to set the adaptable parameter to
      */
     void setAdaptableParameter(double value);
+
+    /**
+     * returns the number of times the setAdaptableParameter method has been called
+     * @return the count
+     */
+    long getAdaptationCount();
 
     /**
      * @return the underlying tuning parameter value
@@ -74,8 +81,6 @@ public interface AdaptableMCMCOperator extends MCMCOperator {
     double getRawParameter();
 
     String getAdaptableParameterName();
-
-    double getTargetAcceptanceProbability();
 
     double getMinimumAcceptanceLevel();
 

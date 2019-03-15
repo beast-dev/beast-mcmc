@@ -195,7 +195,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
     public final String getPerformanceSuggestion() {
 
-        double prob = Utils.getAcceptanceProbability(this);
+        double prob = getAcceptanceProbability();
         double targetProb = getTargetAcceptanceProbability();
 
         double maxDelta = 0;

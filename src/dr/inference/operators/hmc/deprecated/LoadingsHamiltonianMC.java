@@ -62,12 +62,12 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     }
 
     @Override
-    public double getAdaptableParameter() {
+    protected double getAdaptableParameterValue() {
         return 0;
     }
 
     @Override
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 
     }
 

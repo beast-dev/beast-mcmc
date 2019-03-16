@@ -546,13 +546,6 @@ public interface Parameter extends Statistic, Variable<Double> {
             System.arraycopy(values, 0, this.values, 0, values.length);
         }
 
-        public void substituteBuffer(double[] values) {
-            if (this.values.length != values.length) {
-                throw new RuntimeException("Dimension mismatch!");
-            }
-            this.values = values;
-        }
-
         public Default(String id, int dimension, double initialValue) {
             this(dimension, initialValue);
             setId(id);
@@ -782,6 +775,13 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
     }
 
+//    class Wrapped extends Default {
+//        public Wrapped(double[] buffer) {
+//            super(0.0);
+//            this.values
+//        }
+//    }
+
     class DefaultBounds implements Bounds<Double> {
 
         public DefaultBounds(double upper, double lower, int dimension) {
@@ -834,6 +834,52 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         private final double[] uppers, lowers;
+    }
+
+    abstract class Proxy extends Parameter.Abstract {
+
+        private final String name;
+
+        public Proxy(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getParameterName() {
+            return name;
+        }
+
+        @Override
+        public void addBounds(Bounds<Double> bounds) {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        public Bounds<Double> getBounds() {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        public void addDimension(int index, double value) {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        public double removeDimension(int index) {
+            throw new RuntimeException("Not implemented for proxy '" + name + "'");
+        }
+
+        @Override
+        protected void storeValues() { }
+
+        @Override
+        protected void restoreValues() { }
+
+        @Override
+        protected void acceptValues() { }
+
+        @Override
+        protected void adoptValues(Parameter source) { }
     }
 
 }

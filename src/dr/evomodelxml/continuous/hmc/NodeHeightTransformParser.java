@@ -72,7 +72,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
             if (coalescentIntervals.getDimension() != intervals.length) {
                 throw new RuntimeException("Coalescent interval parameter should have dimension of " + skyrideLikelihood.getPopSizeParameter().getDimension() + "!\n");
             }
-            coalescentIntervals.substituteBuffer(intervals);
+            //coalescentIntervals.substituteBuffer(intervals); // TODO This probably won't work due to Parameter double-buffering
         }
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);

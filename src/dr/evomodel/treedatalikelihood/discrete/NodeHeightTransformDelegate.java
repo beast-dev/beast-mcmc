@@ -34,10 +34,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -150,6 +147,42 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
             inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension());
         }
+
+        private void updateAllNodeHeights() {
+            double[] intervals = skyrideLikelihood.getCoalescentIntervals();
+            inverse(intervals, 0, intervals.length);
+        }
+
+        private Parameter createProxyForCoalescentIntervals() {
+            return new Parameter.Proxy("coalescentIntervals") {
+
+                @Override
+                public double getParameterValue(int dim) {
+                    return skyrideLikelihood.getCoalescentInterval(dim);
+                }
+
+                @Override
+                public void setParameterValue(int dim, double value) {
+                    setParameterValueQuietly(dim, value);
+                    updateAllNodeHeights(); // This function is very expensive, avoid
+                }
+
+                @Override
+                public void setParameterValueQuietly(int dim, double value) {
+                    skyrideLikelihood.getCoalescentIntervals()[dim] = value; // TODO I don't like this at all -- very intrusive
+                }
+
+                @Override
+                public void setParameterValueNotifyChangedAll(int dim, double value) {
+                    setParameterValue(dim, value);
+                }
+
+                @Override
+                public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
+                    updateAllNodeHeights();
+                }
+            };
+        }
     }
 
 
@@ -226,7 +259,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
             epoch.addInternalNode(node);
             nodeEpochMap.put(node.getNumber(), epoch);
 
-            Epoch endingEpoch = nodeEpochMap.getOrDefault(otherChild.getNumber(), null);
+            Epoch endingEpoch = nodeEpochMap.get(otherChild.getNumber());
             if (endingEpoch != null) {
                 endingEpoch.endEpoch(node, epoch);
             }

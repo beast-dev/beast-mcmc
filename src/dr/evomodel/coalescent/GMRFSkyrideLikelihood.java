@@ -203,9 +203,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 //        return coalescentIntervals.clone();
 //    }
 //
-//    public double[] getCoalescentIntervals() {
-//        return coalescentIntervals;
-//    }
+    public double[] getCoalescentIntervals() {
+        return coalescentIntervals;
+    }
 
     public void initializationReport() {
         System.out.println("Creating a GMRF smoothed skyride model:");

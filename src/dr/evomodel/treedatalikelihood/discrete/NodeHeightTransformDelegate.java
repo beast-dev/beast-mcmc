@@ -27,7 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.CoalescentIntervalProvider;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -94,27 +94,27 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
     public static class CoalescentIntervals extends NodeHeightTransformDelegate {
 
-        private CoalescentIntervalProvider coalescentIntervalProvider;
+        private GMRFSkyrideLikelihood skyrideLikelihood;
         private Parameter coalescentIntervals;
         private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
         public CoalescentIntervals(TreeModel treeModel,
                                    Parameter nodeHeights,
                                    Parameter coalescentIntervals,
-                                   CoalescentIntervalProvider coalescentIntervalProvider) {
+                                   GMRFSkyrideLikelihood skyrideLikelihood) {
 
             super(treeModel, nodeHeights);
 
-            this.coalescentIntervalProvider = coalescentIntervalProvider;
+            this.skyrideLikelihood = skyrideLikelihood;
             this.coalescentIntervals = coalescentIntervals;
-            this.intervalNodeMapping = coalescentIntervalProvider.getIntervalNodeMapping();
+            this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
             addVariable(coalescentIntervals);
         }
 
         @Override
         double[] transform(double[] values, int from, int to) {
             setNodeHeights(values);
-            coalescentIntervalProvider.setupCoalescentIntervals();
+            skyrideLikelihood.setupCoalescentIntervals();
             return coalescentIntervals.getParameterValues();
         }
 

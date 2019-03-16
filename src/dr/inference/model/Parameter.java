@@ -546,6 +546,13 @@ public interface Parameter extends Statistic, Variable<Double> {
             System.arraycopy(values, 0, this.values, 0, values.length);
         }
 
+        public void substituteBuffer(double[] values) {
+            if (this.values.length != values.length) {
+                throw new RuntimeException("Dimension mismatch!");
+            }
+            this.values = values;
+        }
+
         public Default(String id, int dimension, double initialValue) {
             this(dimension, initialValue);
             setId(id);

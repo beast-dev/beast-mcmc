@@ -70,12 +70,8 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 	protected void storeState() {
 		super.storeState();
-//		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
+		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
 		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
-		for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
-			storedCoalescentIntervals.setParameterValueQuietly(i, coalescentIntervals.getParameterValue(i));
-		}
-		storedCoalescentIntervals.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
 		storedWeightMatrix = weightMatrix.copy();
 	}
 
@@ -84,12 +80,12 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 		super.restoreState();
 //		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
 //		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
-        Parameter tmp = coalescentIntervals;
+		double[] tmp = coalescentIntervals;
         coalescentIntervals = storedCoalescentIntervals;
         storedCoalescentIntervals = tmp;
-        double[] tmpArray = sufficientStatistics;
+        tmp = sufficientStatistics;
         sufficientStatistics = storedSufficientStatistics;
-        storedSufficientStatistics = tmpArray;
+        storedSufficientStatistics = tmp;
 
 		weightMatrix = storedWeightMatrix;
 
@@ -117,9 +113,9 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 //            }
 //        }
 
-		coalescentIntervals = new Parameter.Default(intervalsParameter.getParameterValues());
-		sufficientStatistics = new double[statsParameter.getDimension()];
-		storedCoalescentIntervals = new Parameter.Default(coalescentIntervals.getDimension());
+		coalescentIntervals = intervalsParameter.getParameterValues();
+		sufficientStatistics = statsParameter.getParameterValues();
+		storedCoalescentIntervals = new double[coalescentIntervals.length];
 		storedSufficientStatistics = new double[sufficientStatistics.length];
 
 		//Set up the weight Matrix
@@ -130,7 +126,7 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 		//First set up the offdiagonal entries;
 		for (int i = 0; i < fieldLength - 1; i++) {
-			offdiag[i] = -2.0 / (coalescentIntervals.getParameterValue(i) + coalescentIntervals.getParameterValue(i + 1));
+			offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]);
 		}
 
 		//Then set up the diagonal entries;

@@ -178,13 +178,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         // Field length must be set by this point
         wrapSetupIntervals();
 
-//        coalescentIntervals = new double[oldFieldLength];
-//        storedCoalescentIntervals = new double[oldFieldLength];
+        coalescentIntervals = new double[oldFieldLength];
+        storedCoalescentIntervals = new double[oldFieldLength];
         sufficientStatistics = new double[fieldLength];
         storedSufficientStatistics = new double[fieldLength];
-
-        coalescentIntervals = new Parameter.Default(oldFieldLength);
-        storedCoalescentIntervals = new Parameter.Default(oldFieldLength);
 
         numCoalEvents = new double[fieldLength];
         storedNumCoalEvents = new double[fieldLength];
@@ -376,13 +373,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
 
         wrapSetupIntervals();
-//        coalescentIntervals = new double[oldFieldLength];
-//        storedCoalescentIntervals = new double[oldFieldLength];
+        coalescentIntervals = new double[oldFieldLength];
+        storedCoalescentIntervals = new double[oldFieldLength];
         sufficientStatistics = new double[fieldLength];
         storedSufficientStatistics = new double[fieldLength];
-
-        coalescentIntervals = new Parameter.Default(oldFieldLength);
-        storedCoalescentIntervals = new Parameter.Default(oldFieldLength);
 
         numCoalEvents = new double[fieldLength];
         storedNumCoalEvents = new double[fieldLength];

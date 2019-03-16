@@ -68,13 +68,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     protected Parameter betaParameter;
     //	protected double[] gmrfWeights;
     protected int fieldLength;
-//    protected double[] coalescentIntervals;
-//    protected double[] storedCoalescentIntervals;
+    protected double[] coalescentIntervals;
+    protected double[] storedCoalescentIntervals;
     protected double[] sufficientStatistics;
     protected double[] storedSufficientStatistics;
-    protected Parameter coalescentIntervals;
-    protected Parameter storedCoalescentIntervals;
-
 
     //changed from private to protected
     protected double logFieldLikelihood;
@@ -98,7 +95,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
         this(wrapTree(tree), popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing,
-                rescaleByRootHeight, null);
+                rescaleByRootHeight, false);
     }
 
     private static List<Tree> wrapTree(Tree tree) {
@@ -110,13 +107,13 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
-        this(treeList, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight, null);
+        this(treeList, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight, false);
     }
 
     public GMRFSkyrideLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
                                  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                  boolean timeAwareSmoothing, boolean rescaleByRootHeight,
-                                 Parameter coalescentIntervals) {
+                                 boolean buildIntervalNodeMapping) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
@@ -156,20 +153,17 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
         // Field length must be set by this point
         wrapSetupIntervals();
-//        coalescentIntervals = new double[fieldLength];
-//        storedCoalescentIntervals = new double[fieldLength];
+        coalescentIntervals = new double[fieldLength];
+        storedCoalescentIntervals = new double[fieldLength];
         sufficientStatistics = new double[fieldLength];
         storedSufficientStatistics = new double[fieldLength];
 
 //        coalescentIntervals = new Parameter.Default(fieldLength);
-        if (coalescentIntervals == null) {
-            coalesentIntervalNodeMapping = new IntervalNodeMapping.None();
-            this.coalescentIntervals = new Parameter.Default(popParameter.getDimension());
-        } else {
+        if (buildIntervalNodeMapping) {
             coalesentIntervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount(), tree);
-            this.coalescentIntervals = coalescentIntervals;
+        } else {
+            coalesentIntervalNodeMapping = new IntervalNodeMapping.None();
         }
-        storedCoalescentIntervals = new Parameter.Default(fieldLength);
 
 
         setupGMRFWeights();
@@ -287,7 +281,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
                 coalesentIntervalNodeMapping.addNode(nodeNumbers[j]);
             }
             if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
-                coalescentIntervals.setParameterValueQuietly(index, length);
+                coalescentIntervals[index] = length;
                 sufficientStatistics[index] = weight / 2.0;
                 coalesentIntervalNodeMapping.addNode(nodeNumbers[nodeNumbers.length - 1]);
                 index++;
@@ -330,7 +324,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
         } else {
             for (int i = 0; i < fieldLength - 1; i++) {
-                offdiag[i] = -2.0 / (coalescentIntervals.getParameterValue(i) + coalescentIntervals.getParameterValue(i + 1)) * getFieldScalar();
+                offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getFieldScalar();
             }
         }
 
@@ -390,12 +384,12 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
     public int getCoalescentIntervalDimension() {
         makeIntervalsKnown();
-        return coalescentIntervals.getDimension();
+        return coalescentIntervals.length;
     }
 
     public double getCoalescentInterval(int i) {
         makeIntervalsKnown();
-        return coalescentIntervals.getParameterValue(i);
+        return coalescentIntervals[i];
     }
 
     /*public int getCoalescentIntervalLineageCount(int i) {
@@ -422,12 +416,12 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
     public double[] getCoalescentIntervalHeights() {
         makeIntervalsKnown();
-        double[] a = new double[coalescentIntervals.getDimension()];
+        double[] a = new double[coalescentIntervals.length];
 
-        a[0] = coalescentIntervals.getParameterValue(0);
+        a[0] = coalescentIntervals[0];
 
         for (int i = 1; i < a.length; i++) {
-            a[i] = a[i - 1] + coalescentIntervals.getParameterValue(i);
+            a[i] = a[i - 1] + coalescentIntervals[i];
         }
         return a;
     }
@@ -453,13 +447,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 
     protected void storeState() {
         super.storeState();
-//        System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
+        System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
         System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
-        for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
-            storedCoalescentIntervals.setParameterValueQuietly(i, coalescentIntervals.getParameterValue(i));
-        }
-
-        storedCoalescentIntervals.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
 
         storedWeightMatrix = weightMatrix.copy();
         storedLogFieldLikelihood = logFieldLikelihood;
@@ -472,12 +461,12 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
 //        System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
 //        System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
 
-        Parameter tmp = coalescentIntervals;
+        double[] tmp = coalescentIntervals;
         coalescentIntervals = storedCoalescentIntervals;
         storedCoalescentIntervals = tmp;
-        double[] tmpArray = sufficientStatistics;
+        tmp = sufficientStatistics;
         sufficientStatistics = storedSufficientStatistics;
-        storedSufficientStatistics = tmpArray;
+        storedSufficientStatistics = tmp;
 
         weightMatrix = storedWeightMatrix;
         logFieldLikelihood = storedLogFieldLikelihood;
@@ -575,10 +564,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return betaParameter;
     }
 
-    public Parameter getCoalescentIntervals() {
-        return coalescentIntervals;
-    }
-
     public MatrixParameter getDesignMatrix() {
         return dMatrix;
     }
@@ -586,10 +571,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     public double calculateWeightedSSE() {
         double weightedSSE = 0;
         double currentPopSize = popSizeParameter.getParameterValue(0);
-        double currentInterval = coalescentIntervals.getParameterValue(0);
+        double currentInterval = coalescentIntervals[0];
         for (int j = 1; j < fieldLength; j++) {
             double nextPopSize = popSizeParameter.getParameterValue(j);
-            double nextInterval = coalescentIntervals.getParameterValue(j);
+            double nextInterval = coalescentIntervals[j];
             double delta = nextPopSize - currentPopSize;
             double weight = (currentInterval + nextInterval) / 2.0;
             weightedSSE += delta * delta / weight;

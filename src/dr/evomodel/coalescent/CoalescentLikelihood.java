@@ -113,8 +113,4 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	/** The demographic model. */
 	private DemographicModel demoModel = null;
 
-	@Override
-	public void setupCoalescentIntervals() {
-		setupIntervals();
-	}
 }

@@ -408,7 +408,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return sufficientStatistics[i];
     }
 
-    @Override
     public void setupCoalescentIntervals() {
         setupIntervals();
         setupSufficientStatistics();

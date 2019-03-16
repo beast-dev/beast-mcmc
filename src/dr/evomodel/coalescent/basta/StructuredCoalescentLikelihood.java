@@ -36,14 +36,15 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Guy Baele
@@ -723,16 +724,6 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
     public void makeDirty() {
         likelihoodKnown = false;
         matricesKnown = false;
-    }
-
-    @Override
-    public void setupCoalescentIntervals() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
-    @Override
-    public OldAbstractCoalescentLikelihood.IntervalNodeMapping getIntervalNodeMapping() {
-        throw new RuntimeException("Not yet implemented!");
     }
 
     /**

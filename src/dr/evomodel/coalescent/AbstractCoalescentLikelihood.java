@@ -311,11 +311,6 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     }
 
-    @Override
-    public OldAbstractCoalescentLikelihood.IntervalNodeMapping getIntervalNodeMapping() {
-        throw new RuntimeException("Not yet implemented!");
-    }
-
     // ****************************************************************
     // Inner classes
     // ****************************************************************

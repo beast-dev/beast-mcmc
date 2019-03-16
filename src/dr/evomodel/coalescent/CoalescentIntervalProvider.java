@@ -25,8 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalType;
-
 /**
  * @author Guy Baele
  * @author Marc A. Suchard
@@ -47,9 +45,5 @@ public interface CoalescentIntervalProvider {
     public int getNumberOfCoalescentEvents();
 
     public double getCoalescentEventsStatisticValue(int i);
-
-    void setupCoalescentIntervals();
-
-    OldAbstractCoalescentLikelihood.IntervalNodeMapping getIntervalNodeMapping();
 
 }

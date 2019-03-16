@@ -71,13 +71,11 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 	protected void storeState() {
 		super.storeState();
 //		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
-//		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
+		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
 		for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
 			storedCoalescentIntervals.setParameterValueQuietly(i, coalescentIntervals.getParameterValue(i));
-			storedSufficientStatistics.setParameterValueQuietly(i, sufficientStatistics.getParameterValue(i));
 		}
 		storedCoalescentIntervals.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
-		storedSufficientStatistics.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
 		storedWeightMatrix = weightMatrix.copy();
 	}
 
@@ -89,9 +87,9 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
         Parameter tmp = coalescentIntervals;
         coalescentIntervals = storedCoalescentIntervals;
         storedCoalescentIntervals = tmp;
-        tmp = sufficientStatistics;
+        double[] tmpArray = sufficientStatistics;
         sufficientStatistics = storedSufficientStatistics;
-        storedSufficientStatistics = tmp;
+        storedSufficientStatistics = tmpArray;
 
 		weightMatrix = storedWeightMatrix;
 
@@ -120,9 +118,9 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 //        }
 
 		coalescentIntervals = new Parameter.Default(intervalsParameter.getParameterValues());
-		sufficientStatistics = new Parameter.Default(statsParameter.getParameterValues());
+		sufficientStatistics = new double[statsParameter.getDimension()];
 		storedCoalescentIntervals = new Parameter.Default(coalescentIntervals.getDimension());
-		storedSufficientStatistics = new Parameter.Default(sufficientStatistics.getDimension());
+		storedSufficientStatistics = new double[sufficientStatistics.length];
 
 		//Set up the weight Matrix
 		double[] offdiag = new double[fieldLength - 1];

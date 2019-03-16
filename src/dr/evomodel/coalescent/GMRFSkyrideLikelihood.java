@@ -70,12 +70,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     protected int fieldLength;
 //    protected double[] coalescentIntervals;
 //    protected double[] storedCoalescentIntervals;
-//    protected double[] sufficientStatistics;
-//    protected double[] storedSufficientStatistics;
+    protected double[] sufficientStatistics;
+    protected double[] storedSufficientStatistics;
     protected Parameter coalescentIntervals;
     protected Parameter storedCoalescentIntervals;
-    protected Parameter sufficientStatistics;
-    protected Parameter storedSufficientStatistics;
 
 
     //changed from private to protected
@@ -160,8 +158,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         wrapSetupIntervals();
 //        coalescentIntervals = new double[fieldLength];
 //        storedCoalescentIntervals = new double[fieldLength];
-//        sufficientStatistics = new double[fieldLength];
-//        storedSufficientStatistics = new double[fieldLength];
+        sufficientStatistics = new double[fieldLength];
+        storedSufficientStatistics = new double[fieldLength];
 
 //        coalescentIntervals = new Parameter.Default(fieldLength);
         if (coalescentIntervals == null) {
@@ -172,8 +170,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
             this.coalescentIntervals = coalescentIntervals;
         }
         storedCoalescentIntervals = new Parameter.Default(fieldLength);
-        sufficientStatistics = new Parameter.Default(fieldLength);
-        storedSufficientStatistics = new Parameter.Default(fieldLength);
 
 
         setupGMRFWeights();
@@ -267,7 +263,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     }
 
     public double[] getSufficientStatistics() {
-        return sufficientStatistics.getParameterValues();
+        return sufficientStatistics;
     }
 
     public String toString() {
@@ -292,7 +288,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
             }
             if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                 coalescentIntervals.setParameterValueQuietly(index, length);
-                sufficientStatistics.setParameterValue(index, weight / 2.0);
+                sufficientStatistics[index] = weight / 2.0;
                 coalesentIntervalNodeMapping.addNode(nodeNumbers[nodeNumbers.length - 1]);
                 index++;
                 length = 0;
@@ -415,7 +411,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     }
 
     public double getCoalescentEventsStatisticValue(int i) {
-        return sufficientStatistics.getParameterValue(i);
+        return sufficientStatistics[i];
     }
 
     @Override
@@ -458,15 +454,12 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     protected void storeState() {
         super.storeState();
 //        System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
-//        System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
+        System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
         for (int i = 0; i < coalescentIntervals.getDimension(); i++) {
             storedCoalescentIntervals.setParameterValueQuietly(i, coalescentIntervals.getParameterValue(i));
         }
-        for (int i = 0; i < sufficientStatistics.getDimension(); i++) {
-            storedSufficientStatistics.setParameterValueQuietly(i, sufficientStatistics.getParameterValue(i));
-        }
+
         storedCoalescentIntervals.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
-        storedSufficientStatistics.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
 
         storedWeightMatrix = weightMatrix.copy();
         storedLogFieldLikelihood = logFieldLikelihood;
@@ -482,9 +475,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         Parameter tmp = coalescentIntervals;
         coalescentIntervals = storedCoalescentIntervals;
         storedCoalescentIntervals = tmp;
-        tmp = sufficientStatistics;
+        double[] tmpArray = sufficientStatistics;
         sufficientStatistics = storedSufficientStatistics;
-        storedSufficientStatistics = tmp;
+        storedSufficientStatistics = tmpArray;
 
         weightMatrix = storedWeightMatrix;
         logFieldLikelihood = storedLogFieldLikelihood;
@@ -510,7 +503,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         double[] currentGamma = popSizeParameter.getParameterValues();
 
         for (int i = 0; i < fieldLength; i++) {
-            currentLike += -currentGamma[i] - sufficientStatistics.getParameterValue(i) * Math.exp(-currentGamma[i]);
+            currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
         }
 
         return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);

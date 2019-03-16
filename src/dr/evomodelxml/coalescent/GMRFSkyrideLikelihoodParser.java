@@ -369,7 +369,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
-            AttributeRule.newBooleanRule(OLD_SKYRIDE, true)
+            AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
+            AttributeRule.newBooleanRule(BUILD_MAPPING, true)
     };
 
 }

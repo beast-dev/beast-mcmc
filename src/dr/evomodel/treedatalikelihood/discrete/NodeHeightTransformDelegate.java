@@ -97,7 +97,7 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         public CoalescentIntervals(TreeModel treeModel,
                                    Parameter nodeHeights,
-                                   Parameter coalescentIntervals,
+                                   Parameter coalescentIntervals,  // TODO probably don't need
                                    GMRFSkyrideLikelihood skyrideLikelihood) {
 
             super(treeModel, nodeHeights);
@@ -106,6 +106,9 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
             this.coalescentIntervals = coalescentIntervals;
             this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
             addVariable(coalescentIntervals);
+
+            addVariable(nodeHeights);
+            this.proxyValuesKnown = false;
         }
 
         @Override
@@ -145,31 +148,40 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-            inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension());
+            if (variable == coalescentIntervals) {
+                inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension());
+
+            }
+            proxyValuesKnown = false;
         }
 
-        private void updateAllNodeHeights() {
-            double[] intervals = skyrideLikelihood.getCoalescentIntervals();
-            inverse(intervals, 0, intervals.length);
-        }
+        private boolean proxyValuesKnown;
 
         private Parameter createProxyForCoalescentIntervals() {
-            return new Parameter.Proxy("coalescentIntervals") {
+            return new Parameter.Proxy("coalescentIntervals",
+                    skyrideLikelihood.getCoalescentIntervalDimension()) {
 
-                @Override
-                public double getParameterValue(int dim) {
-                    return skyrideLikelihood.getCoalescentInterval(dim);
+                private double[] proxy;
+
+                {
+                    proxy = new double[dim];
                 }
 
                 @Override
-                public void setParameterValue(int dim, double value) {
+                public double getParameterValue(int dim) {
+                    updateCoalescentIntervals();
+                    return proxy[dim];
+                }
+
+                @Override
+                public void setParameterValue(int dim, double value) { // This function is very expensive, avoid repeated calls
                     setParameterValueQuietly(dim, value);
-                    updateAllNodeHeights(); // This function is very expensive, avoid
+                    updateAllNodeHeights();
                 }
 
                 @Override
                 public void setParameterValueQuietly(int dim, double value) {
-                    skyrideLikelihood.getCoalescentIntervals()[dim] = value; // TODO I don't like this at all -- very intrusive
+                    proxy[dim] = value;
                 }
 
                 @Override
@@ -180,6 +192,19 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
                 @Override
                 public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
                     updateAllNodeHeights();
+                }
+
+                private void updateCoalescentIntervals() {
+                    if (!proxyValuesKnown) {
+                         System.arraycopy(skyrideLikelihood.getCoalescentIntervals(), 0,
+                                 proxy, 0, proxy.length);
+                         proxyValuesKnown = true;
+                     }
+                }
+
+                private void updateAllNodeHeights() {
+                    updateCoalescentIntervals();
+                    inverse(proxy, 0, proxy.length);
                 }
             };
         }

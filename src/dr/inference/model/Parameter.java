@@ -839,9 +839,16 @@ public interface Parameter extends Statistic, Variable<Double> {
     abstract class Proxy extends Parameter.Abstract {
 
         private final String name;
+        protected final int dim;
 
-        public Proxy(String name) {
+        public Proxy(String name, int dim) {
             this.name = name;
+            this.dim = dim;
+        }
+
+        @Override
+        public int getDimension() {
+            return dim;
         }
 
         @Override

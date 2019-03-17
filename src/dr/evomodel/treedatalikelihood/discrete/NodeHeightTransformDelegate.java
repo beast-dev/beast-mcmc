@@ -152,11 +152,6 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//            if (variable == coalescentIntervals) {
-//                // TODO I believe this is unnecessary once we start using the proxy
-//                // TODO for XJ: test with operators
-//                inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension());
-//            }
             proxyValuesKnown = false;
         }
 

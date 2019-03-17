@@ -36,10 +36,7 @@ import dr.evomodel.treedatalikelihood.*;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
@@ -56,6 +53,7 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
         this.tree = treeModel;
         this.nodeHeights = nodeHeights;
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
+        addVariable(nodeHeights);
     }
 
     public void setNodeHeights(double[] nodeHeights) {
@@ -104,11 +102,11 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
             super(treeModel, nodeHeights);
 
             this.skyrideLikelihood = skyrideLikelihood;
-            this.coalescentIntervals = createProxyForCoalescentIntervals();
             this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
+            this.coalescentIntervals = createProxyForCoalescentIntervals();
+            this.coalescentIntervals.addBounds(new CoalescentIntervalBounds());
             addVariable(coalescentIntervals);
 
-            addVariable(nodeHeights);
             this.proxyValuesKnown = false;
         }
 
@@ -169,6 +167,7 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
                     skyrideLikelihood.getCoalescentIntervalDimension()) {
 
                 private double[] proxy;
+                private Bounds<Double> bounds = null;
 
                 {
                     proxy = new double[dim];
@@ -184,6 +183,7 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
                 public void setParameterValue(int dim, double value) { // This function is very expensive, avoid repeated calls
                     setParameterValueQuietly(dim, value);
                     updateAllNodeHeights();
+                    proxyValuesKnown = false;
                 }
 
                 @Override
@@ -197,16 +197,34 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
                 }
 
                 @Override
+                public void addBounds(Bounds<Double> boundary) {
+                    if (bounds == null) {
+                        bounds = boundary;
+                    } else {
+                        throw new RuntimeException("Not yet implemented for multiple use of addBounds.");
+                    }
+                }
+
+                @Override
+                public Bounds<Double> getBounds() {
+                    if (bounds == null) {
+                        throw new NullPointerException(getParameterName() + " parameter: Bounds not set");
+                    }
+                    return bounds;
+                }
+
+                @Override
                 public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
                     updateAllNodeHeights();
                 }
 
                 private void updateCoalescentIntervals() {
                     if (!proxyValuesKnown) {
-                         System.arraycopy(skyrideLikelihood.getCoalescentIntervals(), 0,
-                                 proxy, 0, proxy.length);
-                         proxyValuesKnown = true;
-                     }
+                        System.arraycopy(skyrideLikelihood.getCoalescentIntervals(), 0,
+                                proxy, 0, proxy.length);
+                        ((CoalescentIntervalBounds) getBounds()).setupBounds();
+                        proxyValuesKnown = true;
+                    }
                 }
 
                 private void updateAllNodeHeights() {
@@ -214,6 +232,53 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
                     inverse(proxy, 0, proxy.length);
                 }
             };
+        }
+
+        private class CoalescentIntervalBounds implements Bounds<Double> {
+
+            private double[] upperBounds;
+            private double[] lowerBounds;
+
+
+            public CoalescentIntervalBounds() {
+                this.upperBounds = new double[coalescentIntervals.getDimension()];
+                this.lowerBounds = new double[coalescentIntervals.getDimension()];
+                Arrays.fill(lowerBounds, 0.0);
+                setupBounds();
+            }
+
+            public void setupBounds() {
+                if (!proxyValuesKnown) {
+
+                    for (int i = 0; i < coalescentIntervals.getDimension() - 1; i++) {
+
+                        int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
+                        final int lastNode = nodeNumbers[nodeNumbers.length - 2];
+                        final int nextNode = intervalNodeMapping.getNodeNumbersForInterval(i + 1)[1];
+
+                        upperBounds[i] = tree.getNodeHeight(tree.getNode(nextNode)) - tree.getNodeHeight(tree.getNode(lastNode));
+                    }
+                    upperBounds[upperBounds.length - 1] = Double.POSITIVE_INFINITY;
+                }
+            }
+
+
+            @Override
+            public Double getUpperLimit(int dimension) {
+                setupBounds();
+                return upperBounds[dimension];
+            }
+
+            @Override
+            public Double getLowerLimit(int dimension) {
+                setupBounds();
+                return lowerBounds[dimension];
+            }
+
+            @Override
+            public int getBoundsDimension() {
+                return coalescentIntervals.getDimension();
+            }
         }
     }
 
@@ -245,7 +310,6 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
 
 
             addModel(treeModel);
-            addVariable(nodeHeights);
             addVariable(ratios);
             constructEpochs();
         }

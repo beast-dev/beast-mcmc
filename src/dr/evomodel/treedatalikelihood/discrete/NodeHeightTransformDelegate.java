@@ -45,7 +45,7 @@ import java.util.Map;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-abstract class NodeHeightTransformDelegate extends AbstractModel {
+public abstract class NodeHeightTransformDelegate extends AbstractModel {
     protected TreeModel tree;
     protected Parameter nodeHeights;
     protected TreeParameterModel indexHelper;
@@ -89,6 +89,8 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
     abstract String getReport();
 
+    abstract Parameter getParameter();
+
     public static class CoalescentIntervals extends NodeHeightTransformDelegate {
 
         private GMRFSkyrideLikelihood skyrideLikelihood;
@@ -97,13 +99,12 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         public CoalescentIntervals(TreeModel treeModel,
                                    Parameter nodeHeights,
-                                   Parameter coalescentIntervals,  // TODO probably don't need
                                    GMRFSkyrideLikelihood skyrideLikelihood) {
 
             super(treeModel, nodeHeights);
 
             this.skyrideLikelihood = skyrideLikelihood;
-            this.coalescentIntervals = coalescentIntervals;
+            this.coalescentIntervals = createProxyForCoalescentIntervals();
             this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
             addVariable(coalescentIntervals);
 
@@ -142,16 +143,22 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
         }
 
         @Override
+        Parameter getParameter() {
+            return coalescentIntervals;
+        }
+
+        @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         }
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-            if (variable == coalescentIntervals) {
-                // TODO I believe this is unnecessary once we start using the proxy
-                inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension());
-            }
+//            if (variable == coalescentIntervals) {
+//                // TODO I believe this is unnecessary once we start using the proxy
+//                // TODO for XJ: test with operators
+//                inverse(coalescentIntervals.getParameterValues(), 0, coalescentIntervals.getDimension());
+//            }
             proxyValuesKnown = false;
         }
 
@@ -393,6 +400,11 @@ abstract class NodeHeightTransformDelegate extends AbstractModel {
 //            sb.append("\n");
 //            sb.append(tree.getNewick()).append("\n");
             return sb.toString();
+        }
+
+        @Override
+        Parameter getParameter() {
+            return ratios;
         }
 
         private class Epoch implements Comparable {

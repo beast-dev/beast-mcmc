@@ -51,11 +51,14 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     }
 
     public NodeHeightTransform(Parameter nodeHeights,
-                               Parameter coalescentIntervals,
                                TreeModel tree,
                                GMRFSkyrideLikelihood skyrideLikelihood) {
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate.CoalescentIntervals(tree, nodeHeights, coalescentIntervals, skyrideLikelihood);
+        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate.CoalescentIntervals(tree, nodeHeights, skyrideLikelihood);
+    }
+
+    public Parameter getParameter() {
+        return nodeHeightTransformDelegate.getParameter();
     }
 
     @Override

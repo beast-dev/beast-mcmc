@@ -62,17 +62,11 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
             ratioParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ratioParameter.getDimension()));
         }
 
-        Parameter.Default coalescentIntervals = null;
+        Parameter coalescentIntervals = null;
         GMRFSkyrideLikelihood skyrideLikelihood = null;
         if (xo.hasChildNamed(COALESCENT_INTERVAL)) {
             cxo = xo.getChild(COALESCENT_INTERVAL);
-            coalescentIntervals = (Parameter.Default) cxo.getChild(Parameter.class);
             skyrideLikelihood = (GMRFSkyrideLikelihood) cxo.getChild(GMRFSkyrideLikelihood.class);
-            double[] intervals = skyrideLikelihood.getCoalescentIntervals();
-            if (coalescentIntervals.getDimension() != intervals.length) {
-                throw new RuntimeException("Coalescent interval parameter should have dimension of " + skyrideLikelihood.getPopSizeParameter().getDimension() + "!\n");
-            }
-            //coalescentIntervals.substituteBuffer(intervals); // TODO This probably won't work due to Parameter double-buffering
         }
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
@@ -82,7 +76,11 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         if (ratioParameter != null) {
             nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
         } else {
-            nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, coalescentIntervals, tree, skyrideLikelihood);
+            nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, tree, skyrideLikelihood);
+            coalescentIntervals = nodeHeightTransform.getParameter();
+            cxo = xo.getChild(COALESCENT_INTERVAL);
+            coalescentIntervals.setId(cxo.getId());
+            cxo.setNativeObject(coalescentIntervals);
         }
         nodeHeightTransform.transform(nodeHeightParameter.getParameterValues(), 0, nodeHeightParameter.getDimension());
         return nodeHeightTransform;
@@ -92,7 +90,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new XORRule(new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
-                        new ElementRule(COALESCENT_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class), new ElementRule(GMRFSkyrideLikelihood.class)})
+                        new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class, "Construct a proxy parameter for coalescent intervals from the Skyride likelihood.")
                         ),
                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
                 new ElementRule(TreeModel.class),

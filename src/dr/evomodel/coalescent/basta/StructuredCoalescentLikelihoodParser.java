@@ -28,6 +28,7 @@ package dr.evomodel.coalescent.basta;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -43,7 +44,7 @@ import java.util.List;
 public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String STRUCTURED_COALESCENT = "structuredCoalescent";
-
+    public static final String TYPE = "type";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
@@ -77,18 +78,21 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) xo.getChild(GeneralSubstitutionModel.class);
         Parameter popSizes = (Parameter) xo.getChild(Parameter.class);
 
-        if ((generalSubstitutionModel.getDataType().getStateCount() != popSizes.getDimension()) && (popSizes.getDimension() != 1)) {
-            throw new XMLParseException("Mismatch between rate matrix and deme count.");
+        if (popSizes.getDimension() != 1) {
+            if (generalSubstitutionModel.getDataType().getStateCount() != popSizes.getDimension()) {
+                throw new XMLParseException("Mismatch between rate matrix and deme count.");
+            }
         }
 
         if (treeModel != null) {
             try {
-                return new StructuredCoalescentLikelihood(treeModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
@@ -118,6 +122,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newIntegerRule(SUBINTERVALS, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
+            new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(Parameter.class, true)
     };

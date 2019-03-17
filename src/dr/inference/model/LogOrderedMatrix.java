@@ -143,10 +143,8 @@ public class LogOrderedMatrix implements Loggable {
 
         if (DEBUG) {
             System.err.println("Order by: " + orderBy.name());
-            int idx = 0;
             for (Map.Entry<Double, Integer> entry : tree.entrySet()) {
                 System.err.println("\t" + entry.getKey() + " " + entry.getValue());
-                ++idx;
             }
             System.err.print("\t\t");
             for (int i : orderMap) {
@@ -157,7 +155,7 @@ public class LogOrderedMatrix implements Loggable {
     }
     
     private String getName(int row, int col) {
-        return "ordered." + matrix.getParameterName() + "." + row + "." + col;
+        return "ordered." + matrix.getParameterName() + "." + (col + 1) + "." + (row + 1);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

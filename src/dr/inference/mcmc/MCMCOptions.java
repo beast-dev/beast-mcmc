@@ -42,6 +42,7 @@ public class MCMCOptions {
     private final int minOperatorCountForFullEvaluation;
     private final double evaluationTestThreshold;
     private final boolean useAdaptation;
+    private final boolean smoothAcceptanceProbability;
     private final long adaptationDelay;
     private final double adaptationTarget;
     private final double temperature;
@@ -51,7 +52,7 @@ public class MCMCOptions {
      * @param chainLength
      */
     public MCMCOptions(long chainLength) {
-        this(chainLength, 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, true, 0, 0.234, 1.0);
+        this(chainLength, 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, true, 0, 0.234, false, 1.0);
     }
 
     /**
@@ -65,7 +66,7 @@ public class MCMCOptions {
      * @param temperature
      */
     public MCMCOptions(long chainLength, long fullEvaluationCount, int minOperatorCountForFullEvaluation,
-                       double evaluationTestThreshold, boolean useAdaptation, long adaptationDelay, double adaptationTarget,
+                       double evaluationTestThreshold, boolean useAdaptation, long adaptationDelay, double adaptationTarget, boolean smoothAcceptanceProbability,
                        double temperature) {
         this.chainLength = chainLength;
         this.fullEvaluationCount = fullEvaluationCount;
@@ -74,6 +75,7 @@ public class MCMCOptions {
         this.useAdaptation = useAdaptation;
         this.adaptationDelay = adaptationDelay;
         this.adaptationTarget = adaptationTarget;
+        this.smoothAcceptanceProbability = smoothAcceptanceProbability;
         this.temperature = temperature;
     }
 
@@ -102,6 +104,10 @@ public class MCMCOptions {
 
     public final double getAdaptationTarget() {
         return adaptationTarget;
+    }
+
+    public boolean useSmoothedAcceptanceProbability() {
+        return smoothAcceptanceProbability;
     }
 
     public final double getTemperature() {

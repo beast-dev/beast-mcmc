@@ -349,12 +349,13 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
         return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
 //        return Math.log(scaleFactor);
         return Math.sqrt(scaleFactor - 1);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 //        scaleFactor = Math.exp(value);
         scaleFactor = 1 + value * value;
     }

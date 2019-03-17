@@ -201,7 +201,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 
 		public double getDoubleValue() {
-			return MCMCOperator.Utils.getAcceptanceProbability(op);
+			return op.getAcceptanceProbability();
 		}
 	}
 

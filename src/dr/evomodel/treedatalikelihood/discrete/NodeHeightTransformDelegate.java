@@ -231,29 +231,42 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
 
         private class CoalescentIntervalBounds implements Bounds<Double> {
 
+            private final int dim;
             private double[] upperBounds;
             private double[] lowerBounds;
 
 
             public CoalescentIntervalBounds() {
-                this.upperBounds = new double[coalescentIntervals.getDimension()];
-                this.lowerBounds = new double[coalescentIntervals.getDimension()];
-                Arrays.fill(lowerBounds, 0.0);
+                this.dim = coalescentIntervals.getDimension();
+                this.upperBounds = new double[dim];
+                this.lowerBounds = new double[dim];
                 setupBounds();
             }
 
             public void setupBounds() {
                 if (!proxyValuesKnown) {
 
-                    for (int i = 0; i < coalescentIntervals.getDimension() - 1; i++) {
-
-                        int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
-                        final int lastNode = nodeNumbers[nodeNumbers.length - 2];
-                        final int nextNode = intervalNodeMapping.getNodeNumbersForInterval(i + 1)[1];
-
-                        upperBounds[i] = tree.getNodeHeight(tree.getNode(nextNode)) - tree.getNodeHeight(tree.getNode(lastNode));
+                    double maxIncrease = Double.POSITIVE_INFINITY;
+                    upperBounds[dim - 1] = Double.POSITIVE_INFINITY;
+                    for (int i = dim - 2; i > -1; i--) {
+                        int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i + 1);
+                        final double currentIncrease = tree.getNodeHeight(tree.getNode(nodeNumbers[1])) - skyrideLikelihood.getCoalescentInterval(i + 1);
+                        if (maxIncrease > currentIncrease) {
+                            maxIncrease = currentIncrease;
+                        }
+                        upperBounds[i] = skyrideLikelihood.getCoalescentInterval(i) + maxIncrease;
                     }
-                    upperBounds[upperBounds.length - 1] = Double.POSITIVE_INFINITY;
+
+                    double maxDecrease = Double.POSITIVE_INFINITY;
+                    for (int i = dim - 1; i > -1; i--) {
+                        int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
+                        final double currentDecrease = tree.getNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 1]))
+                                - tree.getNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 2]));
+                        if (maxDecrease > currentDecrease) {
+                            maxDecrease = currentDecrease;
+                        }
+                        lowerBounds[i] = skyrideLikelihood.getCoalescentInterval(i) - maxDecrease;
+                    }
                 }
             }
 
@@ -272,7 +285,7 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
 
             @Override
             public int getBoundsDimension() {
-                return coalescentIntervals.getDimension();
+                return dim;
             }
         }
     }

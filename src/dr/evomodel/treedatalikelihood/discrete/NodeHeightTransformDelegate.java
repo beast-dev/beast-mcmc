@@ -250,7 +250,7 @@ public abstract class NodeHeightTransformDelegate extends AbstractModel {
                     upperBounds[dim - 1] = Double.POSITIVE_INFINITY;
                     for (int i = dim - 2; i > -1; i--) {
                         int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i + 1);
-                        final double currentIncrease = tree.getNodeHeight(tree.getNode(nodeNumbers[1])) - skyrideLikelihood.getCoalescentInterval(i + 1);
+                        final double currentIncrease = tree.getNodeHeight(tree.getNode(nodeNumbers[1])) - tree.getNodeHeight(tree.getNode(nodeNumbers[0]));
                         if (maxIncrease > currentIncrease) {
                             maxIncrease = currentIncrease;
                         }

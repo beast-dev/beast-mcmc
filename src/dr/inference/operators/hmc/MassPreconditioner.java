@@ -30,32 +30,32 @@ public interface MassPreconditioner {
 
         NONE("none") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
                 return new NoPreconditioning(gradient.getDimension());
             }
         },
         DIAGONAL("diagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
-                return new DiagonalPreconditioning((HessianWrtParameterProvider) gradient, transform);
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+                return new DiagonalPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory);
             }
         },
         FULL("full") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
                 return new FullPreconditioning((HessianWrtParameterProvider) gradient, transform);
             }
         },
         SECANT("secant") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
-                SecantHessian secantHessian = new SecantHessian(gradient, 3);  // TODO make size an option
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+                SecantHessian secantHessian = new SecantHessian(gradient, options.preconditioningMemory);
                 return new Secant(secantHessian, transform);
             }
         },
         ADAPTIVE("adaptive") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
 //                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
                 AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
                 return new AdaptivePreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension());
@@ -68,7 +68,7 @@ public interface MassPreconditioner {
             this.name = name;
         }
 
-        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform);
+        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options);
 
         public String getName() { return name; }
 
@@ -152,13 +152,25 @@ public interface MassPreconditioner {
 
     class DiagonalPreconditioning extends HessianBased {
 
-        private AdaptableVector.Default adaptiveDiagonalHessian;
+        private AdaptableVector adaptiveDiagonalHessian;
 
         DiagonalPreconditioning(HessianWrtParameterProvider hessian,
                                 Transform transform) {
-            super(hessian, transform);
-            this.adaptiveDiagonalHessian = new AdaptableVector.Default(hessian.getDimension());
+            this(hessian, transform, 0);
         }
+
+        DiagonalPreconditioning(HessianWrtParameterProvider hessian,
+                                Transform transform,
+                                int memorySize) {
+            super(hessian, transform);
+            if (memorySize > 0) {
+                this.adaptiveDiagonalHessian = new AdaptableVector.LimitedMemory(hessian.getDimension(), memorySize);
+            } else {
+                this.adaptiveDiagonalHessian = new AdaptableVector.Default(hessian.getDimension());
+            }
+        }
+
+
 
         @Override
         protected void initializeMass() {

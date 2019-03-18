@@ -65,7 +65,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this(mode, weight, gradientProvider,
                 parameter, transform, mask,
                 new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0, gradientCheckTolerance,
+                        0, 0, 0,
+                        0, gradientCheckTolerance,
                         10, 0.1),
                 MassPreconditioner.Type.NONE
         );
@@ -84,7 +85,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this.gradientProvider = gradientProvider;
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
-        this.preconditioning = preconditioningType.factory(gradientProvider, transform);
+        this.preconditioning = preconditioningType.factory(gradientProvider, transform, runtimeOptions);
         this.parameter = parameter;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
@@ -308,19 +309,22 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final double randomStepCountFraction;
         final int preconditioningUpdateFrequency;
         final int preconditioningDelay;
+        final int preconditioningMemory;
         final int gradientCheckCount;
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
 
-        public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency,
-                       int preconditioningDelay, int gradientCheckCount, double gradientCheckTolerance,
+        public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
+                       int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
+                       int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
             this.preconditioningDelay = preconditioningDelay;
+            this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;

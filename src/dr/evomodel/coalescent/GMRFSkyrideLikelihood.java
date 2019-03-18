@@ -176,7 +176,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         setupIntervals();
     }
 
-    protected void setTree(List<Tree> treeList) {
+    protected int setTree(List<Tree> treeList) {
         if (treeList.size() != 1) {
             throw new RuntimeException("GMRFSkyrideLikelihood only implemented for one tree");
         }
@@ -185,6 +185,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
+        return 1;
     }
 
 //    public double[] getCopyOfCoalescentIntervals() {

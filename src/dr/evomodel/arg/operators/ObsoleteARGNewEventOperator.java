@@ -625,11 +625,12 @@ public class ObsoleteARGNewEventOperator extends AbstractAdaptableOperator {
         this.size = size;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(getSize());
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 

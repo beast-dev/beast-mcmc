@@ -44,7 +44,7 @@ public class CenteredScaleOperator extends AbstractAdaptableOperator {
         this.parameter = parameter;
     }
 
-    public CenteredScaleOperator(Parameter parameter, double scale, int weight, AdaptationMode mode) {
+    public CenteredScaleOperator(Parameter parameter, double scale, double weight, AdaptationMode mode) {
         super(mode);
         this.parameter = parameter;
         this.scaleFactor = scale;
@@ -99,11 +99,12 @@ public class CenteredScaleOperator extends AbstractAdaptableOperator {
         return parameter.getParameterName();
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 

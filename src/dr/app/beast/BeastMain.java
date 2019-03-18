@@ -191,7 +191,8 @@ public class BeastMain {
 
                     // turn off all messages for subsequent reads of the file (they will be the same as the
                     // first time).
-                    messageHandler.setLevel(Level.OFF);
+                    logger.setLevel(Level.OFF);
+
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
 
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
@@ -202,7 +203,7 @@ public class BeastMain {
                 }
 
                 // restart messages
-                messageHandler.setLevel(Level.ALL);
+                logger.setLevel(Level.ALL);
 
                 MCMCMC mc3 = new MCMCMC(chains, options);
                 Thread thread = new Thread(mc3);

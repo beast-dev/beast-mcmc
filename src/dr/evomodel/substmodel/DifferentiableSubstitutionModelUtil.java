@@ -68,7 +68,7 @@ public class DifferentiableSubstitutionModelUtil {
 
     }
 
-    private static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
+    public static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
                                                       WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
 
         double[][] tmpMatrix = new double[stateCount][stateCount];

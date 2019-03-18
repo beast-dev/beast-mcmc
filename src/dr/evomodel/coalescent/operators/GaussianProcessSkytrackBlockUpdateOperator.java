@@ -1567,7 +1567,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 
     public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double prob = getAcceptanceProbability();
 
 //        double prob = Utils.getAcceptanceProbability(this);
         double targetProb = getTargetAcceptanceProbability();

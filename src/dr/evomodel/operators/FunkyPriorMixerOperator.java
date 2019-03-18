@@ -239,7 +239,7 @@ public class FunkyPriorMixerOperator extends
 
     public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double prob = getAcceptanceProbability();
         double targetProb = getTargetAcceptanceProbability();
 
 //        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);

@@ -529,14 +529,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         for (int i = 0; i < numTrees; i++) {
             ploidyFactor = 1 / getPopulationFactor(i);
-//            currentTimeIndex = 0;
-//            currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//            nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//            while (nextTime <= currentTime) {
-//                currentTimeIndex++;
-//                currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//                nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//            }
             currentTimeIndex = moveToNextTimeIndex(i, 0, currentAndNextTime);
 
             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
@@ -568,16 +560,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                         numCoalEvents[currentGridIndex]++;
                     }
                     sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-//                    currentAndNextTime[0] = currentAndNextTime[1];
                     currentTimeIndex++;
                     currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-//                    currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//
-//                    while (nextTime <= currentTime) {
-//                        currentTimeIndex++;
-//                        currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//                        nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                    }
 
                     numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
 
@@ -605,15 +589,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                         if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
                             numCoalEvents[currentGridIndex]++;
                         }
-//                        currentAndNextTime[0] = currentAndNextTime[1];
                         currentTimeIndex++;
                         currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-//                        currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                        while (currentAndNextTime[1] <= currentAndNextTime[0]) {
-//                            currentTimeIndex++;
-//                            currentAndNextTime[0] = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//                            currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                        }
 
                         numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
 
@@ -624,15 +601,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                             }
                             sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
 
-//                            currentAndNextTime[0] = currentAndNextTime[1];
                             currentTimeIndex++;
                             currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-//                            currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                            while (currentAndNextTime[1] <= currentAndNextTime[0]) {
-//                                currentTimeIndex++;
-//                                currentAndNextTime[0] = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//                                currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                            }
 
                             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
 
@@ -653,19 +623,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                     numCoalEvents[currentGridIndex]++;
                 }
 
-//                currentAndNextTime[0] = currentAndNextTime[1];
                 currentTimeIndex++;
 
                 while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
 
                     currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-
-//                    currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                    while (currentAndNextTime[1] <= currentAndNextTime[0]) {
-//                        currentTimeIndex++;
-//                        currentAndNextTime[0] = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//                        currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                    }
 
                     numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
 
@@ -690,17 +652,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                     }
                     sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
 
-//                    currentAndNextTime[0] = currentAndNextTime[1];
                     currentTimeIndex++;
                     if ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
                         currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
-//                        currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//
-//                        while (currentAndNextTime[1] <= currentAndNextTime[0]) {
-//                            currentTimeIndex++;
-//                            currentAndNextTime[0] = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-//                            currentAndNextTime[1] = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
-//                        }
 
                         numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
 

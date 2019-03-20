@@ -39,7 +39,7 @@ import dr.xml.Reportable;
  */
 public class NodeHeightTransform extends Transform.MultivariateTransform implements Reportable {
 
-    private NodeHeightTransformDelegate nodeHeightTransformDelegate;
+    private AbstractNodeHeightTransformDelegate nodeHeightTransformDelegate;
     private TreeModel tree;
 
     public NodeHeightTransform(Parameter nodeHeights,
@@ -47,14 +47,14 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
                                TreeModel tree,
                                BranchRateModel branchrateModel) {
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate.Ratios(tree, nodeHeights, ratios, branchrateModel);
+        this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
     }
 
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
                                GMRFSkyrideLikelihood skyrideLikelihood) {
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightTransformDelegate.CoalescentIntervals(tree, nodeHeights, skyrideLikelihood);
+        this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
     }
 
     public Parameter getParameter() {

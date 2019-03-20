@@ -82,9 +82,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         @Override
         public double evaluate(double[] argument) {
 
-            for (int i = 0; i < argument.length; ++i) {
-                getParameter().setParameterValue(i, argument[i]);
-            }
+            wrtParameter.update(nodeHeightTransform, argument);
 
             skyrideLikelihood.makeDirty();
             return skyrideLikelihood.getLogLikelihood();
@@ -138,6 +136,11 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
                 }
                 return intervalGradient;
             }
+
+            @Override
+            void update(NodeHeightTransform nodeHeightTransform, double[] values) {
+                nodeHeightTransform.inverse(values);
+            }
         },
 
         NODE_HEIGHTS {
@@ -148,10 +151,17 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
                 double[] sortedNodeHeightGradient = intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
                 return sortedNodeHeightGradient;
             }
+
+            @Override
+            void update(NodeHeightTransform nodeHeightTransform, double[] values) {
+                nodeHeightTransform.transform(values);
+            }
         };
 
         abstract double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
                                                 OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping);
+
+        abstract void update(NodeHeightTransform nodeHeightTransform, double[] values);
 
         double[] getGradientLogDensityWrtUnsortedNodeHeight(GMRFSkyrideLikelihood skyrideLikelihood) {
             double[] unSortedNodeHeightGradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];

@@ -8,6 +8,7 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
@@ -496,13 +497,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Conditional simulations
         MathUtils.setSeed(17890826);
-        double[] traitsOUBM = getConditionalSimulations(dataLikelihoodOUBM, likelihoodDelegateOUBM, diffusionModel, dataModel, rootPriorInf);
+        double[] traitsOUBM = getConditionalSimulations(dataLikelihoodOUBM, likelihoodDelegateOUBM, diffusionModel, dataModel, rootPriorInf, treeModel, rateTransformation);
         System.err.println(new Vector(traitsOUBM));
         MathUtils.setSeed(17890826);
-        double[] traitsOU = getConditionalSimulations(dataLikelihoodOU, likelihoodDelegateOU, diffusionModel, dataModel, rootPriorInf);
+        double[] traitsOU = getConditionalSimulations(dataLikelihoodOU, likelihoodDelegateOU, diffusionModel, dataModel, rootPriorInf, treeModel, rateTransformation);
         System.err.println(new Vector(traitsOU));
         MathUtils.setSeed(17890826);
-        double[] traitsBM = getConditionalSimulations(dataLikelihoodBM, likelihoodDelegateBM, diffusionModel, dataModel, rootPriorInf);
+        double[] traitsBM = getConditionalSimulations(dataLikelihoodBM, likelihoodDelegateBM, diffusionModel, dataModel, rootPriorInf, treeModel, rateTransformation);
         System.err.println(new Vector(traitsBM));
 
         // Check that missing dimensions with the same process have the same values
@@ -1082,7 +1083,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                 format.format(likelihoodFactorDataDiagonal + likelihoodFactorDiffusionDiagonal));
     }
 
-    private double[] parseVectorLine(String s, String sep) {
+    private static double[] parseVectorLine(String s, String sep) {
         String[] vectorString = s.split(sep);
         double[] vec = new double[vectorString.length];
         vec[0] = Double.parseDouble(vectorString[0].substring(1));
@@ -1140,7 +1141,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         }
     }
 
-    private double getLogDatumLikelihood(TreeDataLikelihood dataLikelihood) {
+    static double getLogDatumLikelihood(TreeDataLikelihood dataLikelihood) {
         String s = dataLikelihood.getReport();
         int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
         int indLikEnd = s.indexOf("\n", indLikBeg);
@@ -1156,13 +1157,17 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         System.out.println(message + format.format(logDatumLikelihood));
     }
 
-    private void testLikelihood(String message, IntegratedFactorAnalysisLikelihood dataModelFactor, TreeDataLikelihood dataLikelihoodFactors) {
+    static double getLogDatumLikelihood(IntegratedFactorAnalysisLikelihood dataModelFactor) {
         String sf = dataModelFactor.getReport();
         int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
         int indLikEndF = sf.indexOf("\n", indLikBegF);
         char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
         sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
+        return Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
+    }
+
+    private void testLikelihood(String message, IntegratedFactorAnalysisLikelihood dataModelFactor, TreeDataLikelihood dataLikelihoodFactors) {
+        double logDatumLikelihoodFactor = getLogDatumLikelihood(dataModelFactor);
 
         double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
         double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
@@ -1191,43 +1196,24 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             double[] expectedTraits) {
-        double[] traits = getConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior);
+        double[] traits = getConditionalSimulations(dataLikelihood, likelihoodDelegate, diffusionModel, dataModel, rootPrior, treeModel, rateTransformation);
 
         for (int i = 0; i < traits.length; i++) {
             assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
         }
     }
 
-    private double[] getConditionalSimulations(TreeDataLikelihood dataLikelihood,
-                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                               MultivariateDiffusionModel diffusionModel,
-                                               ContinuousTraitPartialsProvider dataModel,
-                                               ConjugateRootTraitPrior rootPrior) {
+    static double[] getConditionalSimulations(TreeDataLikelihood dataLikelihood,
+                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                              MultivariateDiffusionModel diffusionModel,
+                                              ContinuousTraitPartialsProvider dataModel,
+                                              ConjugateRootTraitPrior rootPrior,
+                                              TreeModel treeModel,
+                                              ContinuousRateTransformation rateTransformation) {
         ProcessSimulationDelegate simulationDelegate =
                 new MultivariateConditionalOnTipsRealizedDelegate("dataModel", treeModel,
                         diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         ProcessSimulation simulationProcess = new ProcessSimulation(dataLikelihood, simulationDelegate);
-        simulationProcess.cacheSimulatedTraits(null);
-        TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
-
-        return parseVectorLine(treeTrait[0].getTraitString(treeModel, null), ",");
-    }
-
-    private void testConditionalSimulationsFactor(TreeDataLikelihood dataLikelihoodFactor,
-                                                  ContinuousDataLikelihoodDelegate likelihoodDelegateFactor,
-                                                  double[] expectedTraits) {
-        double[] traits = getConditionalSimulationsFactor(dataLikelihoodFactor, likelihoodDelegateFactor);
-        for (int i = 0; i < traits.length; i++) {
-            assertEquals(format.format(expectedTraits[i]), format.format(traits[i]));
-        }
-    }
-
-    private double[] getConditionalSimulationsFactor(TreeDataLikelihood dataLikelihoodFactor,
-                                                     ContinuousDataLikelihoodDelegate likelihoodDelegateFactor) {
-        ProcessSimulationDelegate simulationDelegate =
-                new MultivariateConditionalOnTipsRealizedDelegate("dataModel", treeModel,
-                        diffusionModelFactor, dataModelFactor, rootPrior, rateTransformation, likelihoodDelegateFactor);
-        ProcessSimulation simulationProcess = new ProcessSimulation(dataLikelihoodFactor, simulationDelegate);
         simulationProcess.cacheSimulatedTraits(null);
         TreeTrait[] treeTrait = simulationProcess.getTreeTraits();
 

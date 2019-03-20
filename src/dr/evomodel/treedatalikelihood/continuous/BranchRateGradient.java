@@ -521,14 +521,20 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         }
     };
 
-    @Override
-    public String getReport() {
-
+    public double[] getNumericalGradient() {
         double[] savedValues = rateParameter.getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
         for (int i = 0; i < savedValues.length; ++i) {
             rateParameter.setParameterValue(i, savedValues[i]);
         }
+
+        return testGradient;
+    }
+
+    @Override
+    public String getReport() {
+
+        double[] testGradient = getNumericalGradient();
 
         NumericalHessianFromGradient numericalHessianFromGradient = new NumericalHessianFromGradient(this);
 
@@ -544,8 +550,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         sb.append("\n");
         sb.append("Another numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(numericalHessianFromGradient.getDiagonalHessianLogDensity()));
         sb.append("\n");
-
-
+        
         return sb.toString();
     }
 

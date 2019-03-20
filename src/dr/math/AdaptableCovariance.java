@@ -86,7 +86,7 @@ public class AdaptableCovariance {
         return result;
     }
 
-    public static class WithSubsampling extends AdaptableCovariance {
+    public static class WithSubsampling extends AdaptableCovariance { // TODO `static` here is wrong; will cause bug when initiated more than once
 
 //        final int maxUpdates;
         final int minCounts;

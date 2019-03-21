@@ -54,8 +54,7 @@ import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
+import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * @author Marc A. Suchard
@@ -409,6 +408,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     System.err.println("\tchild mean = " + NormalSufficientStatistics.toVectorizedString(child.getRawMean()));
                     System.err.println("\tjoint variance = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawVariance()));
                     System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
+                    System.err.println("\tchild precisio = " + NormalSufficientStatistics.toVectorizedString(child.getRawPrecision()));
                     System.err.println("\tquadratic      = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
                     System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
                     System.err.println("delta: " + NormalSufficientStatistics.toVectorizedString(delta));
@@ -447,7 +447,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
 
                 DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
-                safeInvert(totalP, totalV, false);
+                safeInvert2(totalP, totalV, false);
 
                 DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
                 safeWeightedAverage(
@@ -550,7 +550,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         sb.append("\n");
         sb.append("Another numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(numericalHessianFromGradient.getDiagonalHessianLogDensity()));
         sb.append("\n");
-        
+
         return sb.toString();
     }
 

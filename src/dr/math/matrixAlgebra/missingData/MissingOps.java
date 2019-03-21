@@ -471,25 +471,34 @@ public class MissingOps {
             }
             return new InversionResult(FULLY_OBSERVED, dim, det);
         } else {
-            if (finiteCount == 0) {
+
+            final int infiniteCount = permutationIndices.getNumberOfInfiniteDiagonals();
+
+            if (infiniteCount == dim) {
+
                 Arrays.fill(destination.getData(), 0);
                 return new InversionResult(NOT_OBSERVED, 0, 0);
+
             } else {
 
-                final int[] finiteIndices = permutationIndices.getNonZeroFiniteIndices();
                 final int[] zeroIndices = permutationIndices.getZeroIndices();
 
-                final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
-                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
+                if (finiteCount > 0) {
 
-                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
-                if (getDeterminant) {
-                    det = invertAndGetDeterminant(subSource, inverseSubSource);
-                } else {
-                    CommonOps.invert(subSource, inverseSubSource);
+                    final int[] finiteIndices = permutationIndices.getNonZeroFiniteIndices();
+
+                    final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
+                    gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
+
+                    final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
+                    if (getDeterminant) {
+                        det = invertAndGetDeterminant(subSource, inverseSubSource);
+                    } else {
+                        CommonOps.invert(subSource, inverseSubSource);
+                    }
+
+                    scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
                 }
-
-                scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
 
                 for (int i = 0; i < zeroIndices.length; i++) {
                     int index = zeroIndices[i];

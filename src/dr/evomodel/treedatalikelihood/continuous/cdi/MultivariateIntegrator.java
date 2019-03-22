@@ -775,7 +775,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
 
-        final DenseMatrix64F Pi = statistics.getParent().getRawPrecision();
+        final DenseMatrix64F Pi = statistics.getAbove().getRawPrecision();
         final DenseMatrix64F Vdi = statistics.getBranch().getRawVariance();
 
         DenseMatrix64F VdPi = matrix0;

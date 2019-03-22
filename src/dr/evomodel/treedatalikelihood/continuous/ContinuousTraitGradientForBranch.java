@@ -85,30 +85,30 @@ public interface ContinuousTraitGradientForBranch {
         public double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node,
                                              boolean getGradientQ, boolean getGradientN) {
             // Joint Statistics
-            final NormalSufficientStatistics child = statistics.getChild();
-            final NormalSufficientStatistics parent = statistics.getParent();
-            NormalSufficientStatistics jointStatistics = computeJointStatistics(child, parent);
+            final NormalSufficientStatistics below = statistics.getBelow();
+            final NormalSufficientStatistics above = statistics.getAbove();
+            NormalSufficientStatistics jointStatistics = computeJointStatistics(below, above);
 
-            DenseMatrix64F Qi = parent.getRawPrecision();
-            DenseMatrix64F Wi = parent.getRawVariance();
+            DenseMatrix64F Qi = above.getRawPrecision();
+            DenseMatrix64F Wi = above.getRawVariance();
             DenseMatrix64F Vi = jointStatistics.getRawVariance();
 
             if (DEBUG) {
                 System.err.println("B = " + statistics.toVectorizedString());
                 System.err.println("\tjoint mean = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawMean()));
-                System.err.println("\tparent mean = " + NormalSufficientStatistics.toVectorizedString(parent.getRawMean()));
-                System.err.println("\tchild mean = " + NormalSufficientStatistics.toVectorizedString(child.getRawMean()));
+                System.err.println("\tabove mean = " + NormalSufficientStatistics.toVectorizedString(above.getRawMean()));
+                System.err.println("\tbelow mean = " + NormalSufficientStatistics.toVectorizedString(below.getRawMean()));
                 System.err.println("\tjoint variance Vi = " + NormalSufficientStatistics.toVectorizedString(Vi));
-                System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
-                System.err.println("\tparent variance Wi = " + NormalSufficientStatistics.toVectorizedString(Wi));
-                System.err.println("\tparent precision Qi = " + NormalSufficientStatistics.toVectorizedString(Qi));
+                System.err.println("\tbelow variance = " + NormalSufficientStatistics.toVectorizedString(below.getRawVariance()));
+                System.err.println("\tabove variance Wi = " + NormalSufficientStatistics.toVectorizedString(Wi));
+                System.err.println("\tabove precision Qi = " + NormalSufficientStatistics.toVectorizedString(Qi));
             }
 
             // Delta
             DenseMatrix64F delta = vector0;
             for (int row = 0; row < dim; ++row) {
                 delta.unsafe_set(row, 0,
-                        jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row)
+                        jointStatistics.getRawMean().unsafe_get(row, 0) - above.getMean(row)
                 );
             }
 
@@ -158,21 +158,21 @@ public interface ContinuousTraitGradientForBranch {
 
         }
 
-        private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics child,
-                                                                  NormalSufficientStatistics parent) {
+        private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics below,
+                                                                  NormalSufficientStatistics above) {
 
             DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
-            CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
+            CommonOps.add(below.getRawPrecision(), above.getRawPrecision(), totalP);
 
             DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
             safeInvert2(totalP, totalV, false);
 
             DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
             safeWeightedAverage(
-                    new WrappedVector.Raw(child.getRawMean().getData(), 0, dim),
-                    child.getRawPrecision(),
-                    new WrappedVector.Raw(parent.getRawMean().getData(), 0, dim),
-                    parent.getRawPrecision(),
+                    new WrappedVector.Raw(below.getRawMean().getData(), 0, dim),
+                    below.getRawPrecision(),
+                    new WrappedVector.Raw(above.getRawMean().getData(), 0, dim),
+                    above.getRawPrecision(),
                     new WrappedVector.Raw(mean.getData(), 0, dim),
                     totalV,
                     dim);
@@ -224,7 +224,7 @@ public interface ContinuousTraitGradientForBranch {
             DenseMatrix64F gradMatQ = matrixJacobianQ;
             CommonOps.scale(scaling, statistics.getBranch().getRawVariance(), gradMatQ);
 
-            DenseMatrix64F Qi = statistics.getParent().getRawPrecision();
+            DenseMatrix64F Qi = statistics.getAbove().getRawPrecision();
             DenseMatrix64F temp = matrix0;
             CommonOps.mult(Qi, gradMatQ, temp);
             CommonOps.mult(-1.0, temp, Qi, gradMatQ);

@@ -701,11 +701,13 @@ public class MissingOps {
             double sum = 0.0;
             boolean iInf = Double.isInfinite(Pi.unsafe_get(g, g));
             boolean jInf = Double.isInfinite(Pj.unsafe_get(g, g));
+            boolean iZero = Pi.unsafe_get(g, g) == 0.0;
+            boolean jZero = Pj.unsafe_get(g, g) == 0.0;
             if (iInf && jInf) {
                 throw new IllegalArgumentException("Both precision matrices are infinite in dimension " + g);
-            } else if (iInf) {
+            } else if (iInf || jZero) {
                 sum = mi.get(g);
-            } else if (jInf) {
+            } else if (jInf || iZero) {
                 sum = mj.get(g);
             } else {
                 for (int h = 0; h < dimTrait; ++h) {
@@ -719,7 +721,7 @@ public class MissingOps {
 
         for (int g = 0; g < dimTrait; ++g) {
             double sum = 0.0;
-            if (Vk.unsafe_get(g, g) == 0.0) {
+            if (Vk.unsafe_get(g, g) == 0.0 || Pi.unsafe_get(g, g) == 0.0 || Pj.unsafe_get(g, g) == 0.0) {
                 sum = tmp[g];
             } else {
                 for (int h = 0; h < dimTrait; ++h) {

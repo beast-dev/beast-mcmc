@@ -448,6 +448,14 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         );
     }
 
+    @Override
+    public void reject() {
+        super.reject();
+        preconditioning.storeSecant(
+                new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
+                new WrappedVector.Raw(leapFrogEngine.getLastPosition()));
+    }
+
     protected InstabilityHandler getDefaultInstabilityHandler() {
         if (DEBUG) {
             return InstabilityHandler.DEBUG;

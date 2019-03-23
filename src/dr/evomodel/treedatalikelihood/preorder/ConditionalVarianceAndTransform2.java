@@ -5,6 +5,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.gatherRowsAndColumns;
+import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 
 /**
  * @author Marc A. Suchard
@@ -38,7 +39,7 @@ public class ConditionalVarianceAndTransform2 {
     private double[][] cholesky = null;
     private DenseMatrix64F sBarInv = null;
 
-    ConditionalVarianceAndTransform2(final DenseMatrix64F variance,
+    public ConditionalVarianceAndTransform2(final DenseMatrix64F variance,
                                             final int[] missingIndices, final int[] notMissingIndices) {
 
         assert (missingIndices.length + notMissingIndices.length == variance.getNumRows());
@@ -145,7 +146,7 @@ public class ConditionalVarianceAndTransform2 {
 //        return affineTransform;
 //    }
 
-    final DenseMatrix64F getConditionalVariance() {
+    public final DenseMatrix64F getConditionalVariance() {
         return sBar;
     }
 

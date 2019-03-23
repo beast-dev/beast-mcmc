@@ -510,6 +510,21 @@ public class MissingOps {
         }
     }
 
+    public static void safeAdd(DenseMatrix64F source0, DenseMatrix64F source1, DenseMatrix64F destination) {
+        CommonOps.add(source0, source1, destination);
+
+        for (int i = 0; i < destination.numCols; ++i) {
+            if (Double.isInfinite(destination.unsafe_get(i, i))) {
+                for (int j = 0; j < destination.numRows; ++j) {
+                    if (i != j) {
+                        destination.unsafe_set(i, j, 0.0);
+                        destination.unsafe_set(j, i, 0.0);
+                    }
+                }
+            }
+        }
+    }
+
     public static void matrixVectorMultiple(final DenseMatrix64F A,
                                             final WrappedVector x,
                                             final WrappedVector y,

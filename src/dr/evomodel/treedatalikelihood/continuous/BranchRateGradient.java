@@ -466,7 +466,8 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     precision = new DenseMatrix64F(dim, dim);
                     mean = new DenseMatrix64F(dim, 1);
 
-                    if ((indices.getNumberOfZeroDiagonals() == 0) || (indices.getNumberOfInfiniteDiagonals() == 0)) { // Old method
+                    if (indices.getNumberOfZeroDiagonals() == 0 ||
+                            indices.getNumberOfInfiniteDiagonals() == 0) { // Old method
 
                         CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), precision);
                         safeInvert2(precision, variance, false);
@@ -481,49 +482,43 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                                 dim);
 
                     } else {
+                        
+                        if (indices.getNumberOfNonZeroFiniteDiagonals() != 0) {
+                            throw new RuntimeException("Unsure if this works for latent trait child");
+                            // TODO Probably need to add in child.precision somewhere below
+                        }
 
                         DenseMatrix64F conditionalVariance = new DenseMatrix64F(dim, dim);
                         safeInvert2(parent.getRawPrecision(), conditionalVariance, false);
 
-                        DenseMatrix64F savedConditionalVariance = conditionalVariance.copy();
-
-                        // TODO Does not currently work when all values are missing
-
                         ConditionalVarianceAndTransform2 transform = new ConditionalVarianceAndTransform2(
-                                savedConditionalVariance,
+                                conditionalVariance,
                                 indices.getZeroIndices(),
                                 indices.getInfiniteIndices()
                         );
 
-                        DenseMatrix64F saved2 = transform.getConditionalVariance();
-
-                        scatterRowsAndColumns(saved2, conditionalVariance, indices.getZeroIndices(), indices.getZeroIndices(), true);
-
-                        for (int infiniteIndex : indices.getInfiniteIndices()) {
-                            conditionalVariance.unsafe_set(infiniteIndex, infiniteIndex, Double.POSITIVE_INFINITY);
-                        }
+                        scatterRowsAndColumns(transform.getConditionalVariance(), conditionalVariance,
+                                indices.getZeroIndices(), indices.getZeroIndices(), true);
 
                         DenseMatrix64F conditionalPrecision = new DenseMatrix64F(dim, dim);
                         safeInvert2(conditionalVariance, conditionalPrecision, false);
 
-                        CommonOps.add(child.getRawPrecision(), conditionalPrecision, precision);
-                        safeInvert2(precision, variance, false);
-
                         WrappedVector result = transform.getConditionalMean(child.getRawMean().getData(), 0,
                                 parent.getRawMean().getData(), 0);
 
-                        DenseMatrix64F meanCopy = mean.copy();
-
                         int index = 0;
                         for (int zero : indices.getZeroIndices()) {
-                            mean.unsafe_set(0, zero, result.get(index++));
+                            mean.unsafe_set(zero, 0, result.get(index++));
                         }
 
                         for (int infinite : indices.getInfiniteIndices()) {
-                            mean.unsafe_set(0, infinite, child.getMean(infinite));
+                            mean.unsafe_set(infinite, 0, child.getMean(infinite));
+                            conditionalPrecision.unsafe_set(infinite, infinite, Double.POSITIVE_INFINITY);
+                            conditionalVariance.unsafe_set(infinite, infinite, 0.0);
                         }
 
-//                        System.err.println("Done");
+                        precision = conditionalPrecision;
+                        variance = conditionalVariance;
                     }
                 }
 

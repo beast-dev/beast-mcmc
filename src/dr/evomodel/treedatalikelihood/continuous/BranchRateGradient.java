@@ -25,31 +25,28 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.app.beauti.types.SequenceErrorType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.*;
+import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform2;
+import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.PermutationIndices;
 import dr.xml.Reportable;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.Vector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -469,8 +466,8 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                     precision = new DenseMatrix64F(dim, dim);
                     mean = new DenseMatrix64F(dim, 1);
 
-                    if (indices.getNumberOfZeroDiagonals() == 0) { // Old method
-                        
+                    if ((indices.getNumberOfZeroDiagonals() == 0) || (indices.getNumberOfInfiniteDiagonals() == 0)) { // Old method
+
                         CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), precision);
                         safeInvert2(precision, variance, false);
 
@@ -499,7 +496,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                         );
 
                         DenseMatrix64F saved2 = transform.getConditionalVariance();
-                        
+
                         scatterRowsAndColumns(saved2, conditionalVariance, indices.getZeroIndices(), indices.getZeroIndices(), true);
 
                         for (int infiniteIndex : indices.getInfiniteIndices()) {
@@ -516,7 +513,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                                 parent.getRawMean().getData(), 0);
 
                         DenseMatrix64F meanCopy = mean.copy();
-                        
+
                         int index = 0;
                         for (int zero : indices.getZeroIndices()) {
                             mean.unsafe_set(0, zero, result.get(index++));
@@ -526,7 +523,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                             mean.unsafe_set(0, infinite, child.getMean(infinite));
                         }
 
-                        System.err.println("Done");
+//                        System.err.println("Done");
                     }
                 }
 

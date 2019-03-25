@@ -139,13 +139,14 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
 
         assertEquals("length", gradient1.length, gradient2.length);
         for (int i = 0; i < gradient1.length; i++) {
+            assertEquals("numeric " + i,
+                    gradient1[i],
+                    numericalGradient[i], 1E-4);
+        }
+        for (int i = 0; i < gradient1.length; i++) {
             assertEquals("gradient " + i,
                     format.format(gradient1[i]),
                     format.format(gradient2[i]));
-
-            assertEquals("numeric " + i,
-                    gradient1[i],
-                    numericalGradient[i], 1E-3);
         }
     }
 }

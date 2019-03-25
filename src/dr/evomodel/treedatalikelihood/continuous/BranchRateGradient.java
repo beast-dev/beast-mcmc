@@ -244,7 +244,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         DenseMatrix64F quadraticComponent = matrix1;
 
         DenseMatrix64F squareLogDetComponent = matrix2;
-        CommonOps.multInner(logDetComponent, squareLogDetComponent);
+        CommonOps.mult(logDetComponent, logDetComponent, squareLogDetComponent);
 
         //The diagonal hessian for observed data only requires hess0 and
         double hess0 = 0.0;
@@ -625,7 +625,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         return sb.toString();
     }
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     @Override
     public LogColumn[] getColumns() {

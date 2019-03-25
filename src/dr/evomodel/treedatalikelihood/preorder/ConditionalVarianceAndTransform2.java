@@ -5,7 +5,6 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.gatherRowsAndColumns;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
 
 /**
  * @author Marc A. Suchard

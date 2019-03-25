@@ -113,6 +113,18 @@ public class MissingOps {
         }
     }
 
+    public static void copyRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
+                                          final int[] rowIndices, final int[] colIndices, final boolean clear) {
+        if (clear) {
+            Arrays.fill(destination.getData(), 0.0);
+        }
+        for (int row : rowIndices) {
+            for (int col : colIndices) {
+                destination.unsafe_set(row, col, source.unsafe_get(row, col));
+            }
+        }
+    }
+
     public static void scatterRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
                                              final int[] rowIdices, final int[] colIndices, final boolean clear) {
         if (clear) {

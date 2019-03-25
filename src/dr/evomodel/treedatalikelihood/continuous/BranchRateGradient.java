@@ -31,10 +31,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
-import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalVarianceAndTransform2;
-import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
@@ -488,37 +485,30 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                             // TODO Probably need to add in child.precision somewhere below
                         }
 
-                        DenseMatrix64F conditionalVariance = new DenseMatrix64F(dim, dim);
-                        safeInvert2(parent.getRawPrecision(), conditionalVariance, false);
-
-                        ConditionalVarianceAndTransform2 transform = new ConditionalVarianceAndTransform2(
-                                conditionalVariance,
+                        ConditionalPrecisionAndTransform2 transform = new ConditionalPrecisionAndTransform2(
+                                parent.getRawPrecision(),
                                 indices.getZeroIndices(),
                                 indices.getInfiniteIndices()
                         );
 
-                        scatterRowsAndColumns(transform.getConditionalVariance(), conditionalVariance,
-                                indices.getZeroIndices(), indices.getZeroIndices(), true);
-
-                        DenseMatrix64F conditionalPrecision = new DenseMatrix64F(dim, dim);
-                        safeInvert2(conditionalVariance, conditionalPrecision, false);
-
-                        WrappedVector result = transform.getConditionalMean(child.getRawMean().getData(), 0,
+                        double[] result = transform.getConditionalMean(child.getRawMean().getData(), 0,
                                 parent.getRawMean().getData(), 0);
+
+                        copyRowsAndColumns(parent.getRawPrecision(), precision,
+                                  indices.getZeroIndices(), indices.getZeroIndices(), false);
+
+                        scatterRowsAndColumns(transform.getConditionalVariance(), variance,
+                                indices.getZeroIndices(), indices.getZeroIndices(), false);
 
                         int index = 0;
                         for (int zero : indices.getZeroIndices()) {
-                            mean.unsafe_set(zero, 0, result.get(index++));
+                            mean.unsafe_set(zero, 0, result[index++]);
                         }
 
                         for (int infinite : indices.getInfiniteIndices()) {
                             mean.unsafe_set(infinite, 0, child.getMean(infinite));
-                            conditionalPrecision.unsafe_set(infinite, infinite, Double.POSITIVE_INFINITY);
-                            conditionalVariance.unsafe_set(infinite, infinite, 0.0);
+                            precision.unsafe_set(infinite, infinite, Double.POSITIVE_INFINITY);
                         }
-
-                        precision = conditionalPrecision;
-                        variance = conditionalVariance;
                     }
                 }
 

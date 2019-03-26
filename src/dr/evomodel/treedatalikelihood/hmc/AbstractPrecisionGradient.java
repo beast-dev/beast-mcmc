@@ -26,7 +26,10 @@
 package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.*;
+import dr.inference.model.CachedMatrixInverse;
+import dr.inference.model.CompoundSymmetricMatrix;
+import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 import org.ejml.data.DenseMatrix64F;
@@ -184,7 +187,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     }
 
     // Gradient w.r.t. diagonal
-    double[] getGradientDiagonal(double[] gradient){
+    double[] getGradientDiagonal(double[] gradient) {
 
         gradient = compoundSymmetricMatrix.updateGradientDiagonal(gradient);
 

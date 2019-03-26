@@ -32,12 +32,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
-import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
 
 /**
  * @author Marc A. Suchard
@@ -126,7 +122,7 @@ public interface ContinuousTraitGradientForBranch {
             if (getGradientN) getGradientNForBranch(Qi, delta, gradN);
 
             if (tree.isRoot(node)) {
-                return chainRuleRoot(node, gradQ, gradN);
+                return chainRuleRoot(statistics, node, gradQ, gradN);
             } else {
                 return chainRule(statistics, node, gradQ, gradN);
             }
@@ -135,7 +131,8 @@ public interface ContinuousTraitGradientForBranch {
         abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
                                     DenseMatrix64F gradQ, DenseMatrix64F gradN);
 
-        abstract double[] chainRuleRoot(NodeRef node, DenseMatrix64F gradQ, DenseMatrix64F gradN);
+        abstract double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
+                                        DenseMatrix64F gradQ, DenseMatrix64F gradN);
 
         private void getGradientQForBranch(DenseMatrix64F Wi, DenseMatrix64F Vi, DenseMatrix64F delta,
                                            DenseMatrix64F grad) {
@@ -160,28 +157,6 @@ public interface ContinuousTraitGradientForBranch {
                 System.err.println("\tgradientNi = " + NormalSufficientStatistics.toVectorizedString(grad));
             }
 
-        }
-
-        private NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics below,
-                                                                  NormalSufficientStatistics above) {
-
-            DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
-            CommonOps.add(below.getRawPrecision(), above.getRawPrecision(), totalP);
-
-            DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
-            safeInvert2(totalP, totalV, false);
-
-            DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
-            safeWeightedAverage(
-                    new WrappedVector.Raw(below.getRawMean().getData(), 0, dim),
-                    below.getRawPrecision(),
-                    new WrappedVector.Raw(above.getRawMean().getData(), 0, dim),
-                    above.getRawPrecision(),
-                    new WrappedVector.Raw(mean.getData(), 0, dim),
-                    totalV,
-                    dim);
-
-            return new NormalSufficientStatistics(mean, totalP, totalV);
         }
 
         static final boolean DEBUG = false;
@@ -253,7 +228,8 @@ public interface ContinuousTraitGradientForBranch {
         }
 
         @Override
-        public double[] chainRuleRoot(NodeRef node, DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+        public double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
+                                      DenseMatrix64F gradQ, DenseMatrix64F gradN) {
 
             return new double[1];
 
@@ -298,48 +274,65 @@ public interface ContinuousTraitGradientForBranch {
 
         public enum DerivationParameter {
             WRT_PRECISION {
-                @Override
-                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi,
-                                                      BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-                    cdi.getPrecisionPreOrderDerivative(statistics, gradientQ);
+//                @Override
+//                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi,
+//                                                      BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+//                    cdi.getPrecisionPreOrderDerivative(statistics, gradientQ);
+//                }
+                public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi,
+                                                     BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+                    cdi.getVariancePreOrderDerivative(statistics, gradientQ);
                 }
             },
             WRT_DRIFT {
+//                @Override
+//                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+//                    throw new RuntimeException("not yet implemented");
+//                }
                 @Override
-                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+                public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
                     throw new RuntimeException("not yet implemented");
                 }
             },
             WRT_SELECTION_STRENGTH {
+//                @Override
+//                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+//                    throw new RuntimeException("not yet implemented");
+//                }
                 @Override
-                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
+                public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
                     throw new RuntimeException("not yet implemented");
                 }
             };
 
-            abstract void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
+//            abstract void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
+            abstract void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
+
         }
 
         @Override
         public double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
                                   DenseMatrix64F gradQ, DenseMatrix64F gradN) {
 
-            derivationParameter.preOrderGradientPrecision(cdi, statistics, gradQ);
+            derivationParameter.preOrderGradientVariance(cdi, statistics, gradQ);
 
-            return chainRuleRoot(node, gradQ, gradN);
+            removeMissing(gradQ, statistics.getMissing());
 
-        }
-
-        @Override
-        public double[] chainRuleRoot(NodeRef node, DenseMatrix64F gradQ, DenseMatrix64F gradN) {
-
-            diffusionProcessDelegate.getGradientPrecision(getScalarNode(node), gradQ);
+            diffusionProcessDelegate.getGradientVariance(getScalarNode(node), gradQ);
 
             if (DEBUG) {
                 System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQ));
             }
 
             return gradQ.getData();
+
+        }
+
+        @Override
+        public double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
+                                      DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+
+            return chainRule(statistics, node, gradQ, gradN);
 
         }
 
@@ -353,9 +346,18 @@ public interface ContinuousTraitGradientForBranch {
 
         private double getScalarNode(NodeRef node) {
             if (tree.isRoot(node)) {
-                return likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
+                return 1.0 / likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
             } else {
-                return cdi.getInverseBranchLength(getActiveMatrixIndex(node));
+                return 1.0 / cdi.getInverseBranchLength(getActiveMatrixIndex(node));
+            }
+        }
+
+        private void removeMissing(DenseMatrix64F M, int[] missing) {
+            for (int m : missing) {
+                for (int j = 0; j < M.getNumCols(); j++) {
+                    M.unsafe_set(m, j, 0.0);
+                    M.unsafe_set(j, m, 0.0);
+                }
             }
         }
     }

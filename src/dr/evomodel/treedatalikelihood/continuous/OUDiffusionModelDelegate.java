@@ -131,7 +131,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     }
 
     @Override
-    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
+    public void getGradientVariance(double scalar, DenseMatrix64F gradient) {
         throw new RuntimeException("not yet implemented");
     }
 

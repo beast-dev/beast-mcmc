@@ -48,10 +48,8 @@ import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.io.StringReader;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Paul Bastide
@@ -69,9 +67,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     private ContinuousTraitPartialsProvider dataModelMissing;
     private ConjugateRootTraitPrior rootPrior;
 
-    private Boolean fixedRoot = true;
+    private Boolean fixedRoot = false;
 
-    private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+    private double delta;
 
     public PrecisionGradientTest(String name) {
         super(name);
@@ -80,7 +78,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        format.setMaximumFractionDigits(1);
+        delta = 1E-3;
 
         dim = 6;
 
@@ -94,7 +92,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         precisionMatrix = new CompoundSymmetricMatrix(diagonal, offDiagonal, true, true);
 
-        Parameter diagonalVar = new Parameter.Default(new double[]{1.0, 20.0, 30.0, 40.0, 50.0, 60.0});
+        Parameter diagonalVar = new Parameter.Default(new double[]{10.0, 20.0, 30.0, 40.0, 50.0, 60.0});
 
         precisionMatrixInv = new CachedMatrixInverse("var",
                 new CompoundSymmetricMatrix(diagonalVar, offDiagonal, true, false));
@@ -111,9 +109,17 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         List<Integer> missingIndices = new ArrayList<Integer>();
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(3);
-        missingIndices.add(4);
-        missingIndices.add(5);
+        missingIndices.add(6);
+        missingIndices.add(7);
+        missingIndices.add(8);
+        missingIndices.add(9);
+        missingIndices.add(10);
+        missingIndices.add(11);
+        missingIndices.add(13);
+        missingIndices.add(15);
+        missingIndices.add(25);
+        missingIndices.add(29);
+
 
         // Tree
         createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
@@ -124,7 +130,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-        final String rootVal = fixedRoot ? "Infinity" : "0";
+        final String rootVal = fixedRoot ? "Infinity" : "0.1";
         String s = "<beast>\n" +
                 "    <conjugateRootPrior>\n" +
                 "        <meanParameter>\n" +
@@ -223,8 +229,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientAnalyticalW.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalyticalW[k]),
-                    format.format(gradientNumeric[k]));
+                    gradientAnalyticalW[k],
+                    gradientNumeric[k],
+                    delta);
         }
 
         // Correlation Gradient Branch Specific
@@ -238,8 +245,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalyticalBS[k]),
-                    format.format(gradientAnalyticalW[k]));
+                    gradientAnalyticalBS[k],
+                    gradientAnalyticalW[k],
+                    delta);
         }
 
         // Diagonal Gradient
@@ -254,8 +262,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalW.length; k++) {
             assertEquals("gradient diagonal k=" + k,
-                    format.format(gradientDiagonalAnalyticalW[k]),
-                    format.format(gradientDiagonalNumeric[k]));
+                    gradientDiagonalAnalyticalW[k],
+                    gradientDiagonalNumeric[k],
+                    delta);
         }
 
         // Diagonal Gradient Branch Specific
@@ -269,8 +278,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientDiagonalAnalyticalBS[k]),
-                    format.format(gradientDiagonalAnalyticalW[k]));
+                    gradientDiagonalAnalyticalBS[k],
+                    gradientDiagonalAnalyticalW[k],
+                    delta);
         }
     }
 
@@ -340,8 +350,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientAnalyticalW.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalyticalW[k]),
-                    format.format(gradientNumeric[k]));
+                    gradientAnalyticalW[k],
+                    gradientNumeric[k],
+                    delta);
         }
 
         // Correlation Gradient Branch Specific
@@ -355,8 +366,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalyticalBS[k]),
-                    format.format(gradientAnalyticalW[k]));
+                    gradientAnalyticalBS[k],
+                    gradientAnalyticalW[k],
+                    delta);
         }
 
         // Diagonal Gradient
@@ -371,8 +383,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalW.length; k++) {
             assertEquals("gradient diagonal k=" + k,
-                    format.format(gradientDiagonalAnalyticalW[k]),
-                    format.format(gradientDiagonalNumeric[k]));
+                    gradientDiagonalAnalyticalW[k],
+                    gradientDiagonalNumeric[k],
+                    delta);
         }
 
         // Diagonal Gradient Branch Specific
@@ -386,8 +399,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientDiagonalAnalyticalBS[k]),
-                    format.format(gradientDiagonalAnalyticalW[k]));
+                    gradientDiagonalAnalyticalBS[k],
+                    gradientDiagonalAnalyticalW[k],
+                    delta);
         }
     }
 
@@ -473,8 +487,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientAnalyticalBS[k]),
-                    format.format(gradientNumeric[k]));
+                    gradientAnalyticalBS[k],
+                    gradientNumeric[k],
+                    delta);
         }
 
         // Diagonal Gradient Branch Specific
@@ -489,8 +504,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientDiagonalAnalyticalBS[k]),
-                    format.format(gradientDiagonalNumeric[k]));
+                    gradientDiagonalAnalyticalBS[k],
+                    gradientDiagonalNumeric[k],
+                    delta);
         }
     }
 
@@ -543,20 +559,21 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         GradientWrtPrecisionProvider gPPBranchSpecific = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
 
         // Correlation Gradient Branch Specific
-//        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
-//
-//        String sBS = gradientProviderBranchSpecific.getReport();
-//        System.err.println(sBS);
-//        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
-//        double[] gradientNumeric = parseGradient(sBS, "numeric (with Cholesky):");
-//
-//        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
 
-//        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
-//            assertEquals("gradient correlation k=" + k,
-//                    format.format(gradientAnalyticalBS[k]),
-//                    format.format(gradientNumeric[k]));
-//        }
+        String sBS = gradientProviderBranchSpecific.getReport();
+        System.err.println(sBS);
+        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
+        double[] gradientNumeric = parseGradient(sBS, "numeric (with Cholesky):");
+
+        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+
+        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    gradientAnalyticalBS[k],
+                    gradientNumeric[k],
+                    delta);
+        }
 
         // Diagonal Gradient Branch Specific
         DiagonalPrecisionGradient gradientDiagonalProviderBS = new DiagonalPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrix);
@@ -570,8 +587,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientDiagonalAnalyticalBS[k]),
-                    format.format(gradientDiagonalNumeric[k]));
+                    gradientDiagonalAnalyticalBS[k],
+                    gradientDiagonalNumeric[k],
+                    delta);
         }
     }
 
@@ -624,20 +642,21 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         GradientWrtPrecisionProvider gPPBranchSpecific = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
 
         // Correlation Gradient Branch Specific
-//        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrixInv);
-//
-//        String sBS = gradientProviderBranchSpecific.getReport();
-//        System.err.println(sBS);
-//        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
-//        double[] gradientNumeric = parseGradient(sBS, "numeric (with Cholesky):");
-//
-//        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+        CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrixInv);
 
-//        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
-//            assertEquals("gradient correlation k=" + k,
-//                    format.format(gradientAnalyticalBS[k]),
-//                    format.format(gradientNumeric[k]));
-//        }
+        String sBS = gradientProviderBranchSpecific.getReport();
+        System.err.println(sBS);
+        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
+        double[] gradientNumeric = parseGradient(sBS, "numeric (with Cholesky):");
+
+        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+
+        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
+            assertEquals("gradient correlation k=" + k,
+                    gradientAnalyticalBS[k],
+                    gradientNumeric[k],
+                    delta);
+        }
 
         // Diagonal Gradient Branch Specific
         DiagonalPrecisionGradient gradientDiagonalProviderBS = new DiagonalPrecisionGradient(gPPBranchSpecific, dataLikelihood, precisionMatrixInv);
@@ -651,8 +670,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
         for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
             assertEquals("gradient correlation k=" + k,
-                    format.format(gradientDiagonalAnalyticalBS[k]),
-                    format.format(gradientDiagonalNumeric[k]));
+                    gradientDiagonalAnalyticalBS[k],
+                    gradientDiagonalNumeric[k],
+                    delta);
         }
     }
 }

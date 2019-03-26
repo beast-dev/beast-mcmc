@@ -1,5 +1,7 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
+import dr.math.matrixAlgebra.missingData.PermutationIndices;
+
 /**
  * @author Marc A. Suchard
  */
@@ -27,5 +29,10 @@ public class BranchSufficientStatistics {
 
     public String toVectorizedString() {
         return below.toVectorizedString() + " / " + branch.toVectorizedString() + " / " + above.toVectorizedString();
+    }
+
+    public int[] getMissing() {
+        PermutationIndices indices = new PermutationIndices(getBelow().getRawPrecision());
+        return indices.getZeroIndices();
     }
 }

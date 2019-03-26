@@ -127,6 +127,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
 
+    void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+
     class Basic implements ContinuousDiffusionIntegrator {
 
 //        private int instance = -1;
@@ -969,6 +971,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+            throw new RuntimeException("Not implemented for unsafe integrators.");
+        }
+
+        public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
             throw new RuntimeException("Not implemented for unsafe integrators.");
         }
 

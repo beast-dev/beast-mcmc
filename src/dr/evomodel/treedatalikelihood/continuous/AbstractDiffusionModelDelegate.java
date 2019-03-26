@@ -204,7 +204,13 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
-        if (Double.isFinite(scalar)) CommonOps.scale(scalar, gradient);
+    public void getGradientVariance(double scalar, DenseMatrix64F gradient) {
+        if (scalar == 0.0) {
+            for (int i = 0; i < gradient.getNumElements(); i++) {
+                gradient.set(i, 0.0);
+            }
+        } else {
+            CommonOps.scale(scalar, gradient);
+        }
     }
 }

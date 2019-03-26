@@ -786,5 +786,16 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         CommonOps.multTransA(VdPi, temp, gradient);
     }
 
+    public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+
+        final DenseMatrix64F Pi = statistics.getAbove().getRawPrecision();
+        
+        DenseMatrix64F temp = matrix1;
+
+        CommonOps.mult(gradient, Pi, temp);
+        CommonOps.multTransA(Pi, temp, gradient);
+        CommonOps.scale(-1, gradient);
+    }
+
     double[] inverseDiffusions;
 }

@@ -70,7 +70,7 @@ public interface DiffusionProcessDelegate extends Model {
 
     boolean isIntegratedProcess();
 
-    void getGradientPrecision(double scalar, DenseMatrix64F gradient);
+    void getGradientVariance(double scalar, DenseMatrix64F gradient);
 
     void storeState();
 

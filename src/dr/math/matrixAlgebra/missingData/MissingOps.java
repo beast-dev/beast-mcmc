@@ -129,6 +129,18 @@ public class MissingOps {
         }
     }
 
+    public static void copyRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
+                                          final int[] rowIndices, final int[] colIndices, final boolean clear) {
+        if (clear) {
+            Arrays.fill(destination.getData(), 0.0);
+        }
+        for (int row : rowIndices) {
+            for (int col : colIndices) {
+                destination.unsafe_set(row, col, source.unsafe_get(row, col));
+            }
+        }
+    }
+
     public static void scatterRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
                                              final int[] rowIdices, final int[] colIndices, final boolean clear) {
         if (clear) {
@@ -664,6 +676,21 @@ public class MissingOps {
         }
     }
 
+
+//    public static void safeAdd(DenseMatrix64F source0, DenseMatrix64F source1, DenseMatrix64F destination) {
+//        CommonOps.add(source0, source1, destination);
+//
+//        for (int i = 0; i < destination.numCols; ++i) {
+//            if (Double.isInfinite(destination.unsafe_get(i, i))) {
+//                for (int j = 0; j < destination.numRows; ++j) {
+//                    if (i != j) {
+//                        destination.unsafe_set(i, j, 0.0);
+//                        destination.unsafe_set(j, i, 0.0);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     public static void matrixVectorMultiple(final DenseMatrix64F A,
                                             final WrappedVector x,

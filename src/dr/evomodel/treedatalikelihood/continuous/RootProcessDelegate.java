@@ -76,7 +76,9 @@ public interface RootProcessDelegate extends Model {
             this.priorBufferIndexOffset = partialBufferCount;
             priorBufferIndex = new BufferIndexHelper(1, 0);
 
-            addModel(prior);
+            if (prior != null) {
+                addModel(prior);
+            }
 
             updatePrior = true;
         }

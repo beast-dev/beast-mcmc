@@ -87,7 +87,11 @@ public interface ContinuousTraitGradientForBranch {
             // Joint Statistics
             final NormalSufficientStatistics below = statistics.getBelow();
             final NormalSufficientStatistics above = statistics.getAbove();
-            NormalSufficientStatistics jointStatistics = computeJointStatistics(below, above);
+            NormalSufficientStatistics jointStatistics =
+                    BranchRateGradient.ContinuousTraitGradientForBranch.Default.computeJointStatistics(
+                            below, above, dim
+                    );
+//                    computeJointStatistics(child, parent);
 
             DenseMatrix64F Qi = above.getRawPrecision();
             DenseMatrix64F Wi = above.getRawVariance();

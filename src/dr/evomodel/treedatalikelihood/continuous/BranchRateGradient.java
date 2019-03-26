@@ -508,8 +508,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
                 DenseMatrix64F precision = new DenseMatrix64F(dim, dim);
                 DenseMatrix64F variance = new DenseMatrix64F(dim, dim);
-
-
+                
                 if (indices.getNumberOfNonZeroFiniteDiagonals() != 0) {
                     throw new RuntimeException("Unsure if this works for latent trait child");
                     // TODO Probably need to add in child.precision somewhere below

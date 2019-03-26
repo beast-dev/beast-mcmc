@@ -40,9 +40,11 @@ import dr.evolution.io.NexusImporter.NexusBlock;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.util.DataTable;
 import org.jdom.JDOMException;
 
 import java.io.*;
@@ -267,7 +269,7 @@ public class DataModelImporter {
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
-    }
+}
 
     public Map importFromTreeFile(String fileName, Map dataModel) throws IOException, Importer.ImportException {
         Tree tree = null;
@@ -310,6 +312,52 @@ public class DataModelImporter {
         return (value.equals("?") || value.equals("NA") || value.length() == 0);
     }
 
+    /**
+     * Adds a taxonSet entry to the dataModel
+     *
+     * @param fileName - The name of a tsv file with headers where the first column is taxon and the second is the set name
+     * @param dataModel
+     * @throws IOException
+     * @throws Importer.ImportException
+     */
+    public void importTaxonSets(String fileName, Map dataModel) throws IOException, Importer.ImportException{
+        try {
+            DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(fileName));
+            String[] taxonNames = dataTable.getRowLabels();
+
+            //   To hold the taxon sets with Key= taxonSet id, value= Taxa
+            HashMap<String,Taxa> taxonSet = new HashMap<String,Taxa>();
+            for (int i = 0; i < dataTable.getRowCount(); i++) {
+                String taxonSetName = dataTable.getData()[i][0];
+
+                // if the taxon set is not in taxonSet add it
+                if(!taxonSet.containsKey(taxonSetName)){
+                       taxonSet.put(taxonSetName,new Taxa(taxonSetName));
+                }
+                //Add taxon to the appropriate taxon set
+                taxonSet.get(taxonSetName).addTaxon(new Taxon(taxonNames[i]));
+            }
+
+
+            List<Map> tss = new ArrayList<Map>();
+
+            for (TaxonList tl : taxonSet.values()) {
+                checkTaxonList(tl,guesser);
+                Map ts = new HashMap();
+                ts.put("id", tl.getId());
+                ts.put("taxa", createTaxonList(tl));
+
+                tss.add(ts);
+                }
+            dataModel.put("taxonSets", tss);
+
+        }catch (IOException e){
+            throw new IOException(e.getMessage());
+        }
+        catch(Importer.ImportException e){
+            throw new Importer.ImportException(e.getMessage());
+        }
+    }
 //    public void importTraits(final File file, Map dataModel) throws Exception {
 //        List<TraitData> importedTraits = new ArrayList<TraitData>();
 //        Taxa taxa = options.taxonList;

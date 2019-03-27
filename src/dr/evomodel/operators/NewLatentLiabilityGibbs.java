@@ -35,6 +35,7 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.continuous.DummyLatentTruncationProvider;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -44,6 +45,7 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -257,7 +259,11 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         double[] newValue = getNodeTrait(node);
 
-        return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
+        if (latentLiability instanceof DummyLatentTruncationProvider) {
+            return 0;
+        } else {
+            return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
+        }
     }
 
 //    private void addMaskOnContiuousTraits(int nodeNumber) {

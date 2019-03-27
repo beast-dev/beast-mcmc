@@ -348,7 +348,7 @@ public interface ContinuousTraitGradientForBranch {
             if (tree.isRoot(node)) {
                 return 1.0 / likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
             } else {
-                return 1.0 / cdi.getInverseBranchLength(getActiveMatrixIndex(node));
+                return cdi.getBranchLength(getActiveMatrixIndex(node));
             }
         }
 

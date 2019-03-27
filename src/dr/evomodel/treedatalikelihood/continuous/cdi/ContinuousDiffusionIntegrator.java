@@ -49,7 +49,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getPostOrderPartial(int bufferIndex, final double[] partial);
 
-    double getInverseBranchLength(int bufferIndex); // TODO Get rid of inverse
+    double getBranchLength(int bufferIndex);
 
     void getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
 
@@ -234,8 +234,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public double getInverseBranchLength(int bufferIndex) {
-            return 1.0 / branchLengths[bufferIndex * dimMatrix];
+        public double getBranchLength(int bufferIndex) {
+            return branchLengths[bufferIndex * dimMatrix];
         }
 
         @Override
@@ -260,7 +260,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert (precision != null);
             assert (precision.length >= dimTrait * dimTrait);
 
-            double scalar = getInverseBranchLength(bufferIndex);
+            double scalar = 1.0 / getBranchLength(bufferIndex);
             for (int i = 0; i < dimTrait * dimTrait; ++i) { // TODO Write generic function for WrappedVector?
                 precision[i] = scalar * diffusions[precisionOffset + i];
             }

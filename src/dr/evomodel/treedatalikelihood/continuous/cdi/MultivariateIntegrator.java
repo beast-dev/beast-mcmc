@@ -793,8 +793,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         DenseMatrix64F temp = matrix1;
 
         CommonOps.mult(gradient, Pi, temp);
-        CommonOps.multTransA(Pi, temp, gradient);
-        CommonOps.scale(-1, gradient);
+        CommonOps.multTransA(-1.0, Pi, temp, gradient);
     }
 
     double[] inverseDiffusions;

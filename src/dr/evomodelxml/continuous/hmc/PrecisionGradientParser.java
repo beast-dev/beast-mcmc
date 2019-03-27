@@ -97,7 +97,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                     new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                             dim, tree, continuousData,
-                            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
             BranchSpecificGradient branchSpecificGradient =
                     new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 

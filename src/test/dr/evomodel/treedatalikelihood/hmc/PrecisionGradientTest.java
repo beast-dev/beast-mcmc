@@ -210,7 +210,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
 
@@ -332,7 +332,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
 
@@ -469,7 +469,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
 
@@ -552,7 +552,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrix);
 
@@ -635,7 +635,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, precisionMatrixInv);
 

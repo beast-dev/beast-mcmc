@@ -87,7 +87,6 @@ public interface ContinuousTraitGradientForBranch {
                     BranchRateGradient.ContinuousTraitGradientForBranch.Default.computeJointStatistics(
                             below, above, dim
                     );
-//                    computeJointStatistics(child, parent);
 
             DenseMatrix64F Qi = above.getRawPrecision();
             DenseMatrix64F Wi = above.getRawVariance();
@@ -273,39 +272,25 @@ public interface ContinuousTraitGradientForBranch {
         }
 
         public enum DerivationParameter {
-            WRT_PRECISION {
-//                @Override
-//                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi,
-//                                                      BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-//                    cdi.getPrecisionPreOrderDerivative(statistics, gradientQ);
-//                }
+            WRT_VARIANCE {
                 public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi,
                                                      BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
                     cdi.getVariancePreOrderDerivative(statistics, gradientQ);
                 }
             },
             WRT_DRIFT {
-//                @Override
-//                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-//                    throw new RuntimeException("not yet implemented");
-//                }
                 @Override
                 public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
                     throw new RuntimeException("not yet implemented");
                 }
             },
             WRT_SELECTION_STRENGTH {
-//                @Override
-//                public void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-//                    throw new RuntimeException("not yet implemented");
-//                }
                 @Override
                 public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
                     throw new RuntimeException("not yet implemented");
                 }
             };
 
-//            abstract void preOrderGradientPrecision(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
             abstract void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
 
         }

@@ -25,12 +25,14 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
+import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -131,8 +133,35 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     }
 
     @Override
-    public void getGradientVariance(double scalar, DenseMatrix64F gradient) {
-        throw new RuntimeException("not yet implemented");
+    public void getGradientVariance(NodeRef node,
+                                    ContinuousDiffusionIntegrator cdi,
+                                    ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                    DenseMatrix64F gradient) {
+        if (tree.isRoot(node)) {
+            super.getGradientVariance(node, cdi, likelihoodDelegate, gradient);
+        } else {
+            actualizeGradient(cdi, node.getNumber(), gradient);
+        }
+
+    }
+
+    private void actualizeGradient(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
+        double[] actualization = new double[dim * dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
+        double[] attenuation = elasticModel.getStrengthOfSelectionMatrixAsVector();
+        // Actualization
+        DenseMatrix64F A = DenseMatrix64F.wrap(dim, dim, actualization);
+        DenseMatrix64F temp = new DenseMatrix64F(dim, dim);
+        CommonOps.multTransB(gradient, A, temp);
+        CommonOps.multAdd(-1.0, A, temp, gradient);
+        // Derivation of stationary variance wrt variance
+        DenseMatrix64F factor = DenseMatrix64F.wrap(dim * dim, dim * dim,
+                KroneckerOperation.sum(attenuation, dim, attenuation, dim));
+        CommonOps.invert(factor);
+        DenseMatrix64F temp1 = DenseMatrix64F.wrap(dim * dim, 1, gradient.getData());
+        DenseMatrix64F temp2 = new DenseMatrix64F(dim * dim, 1);
+        CommonOps.mult(factor, temp1, temp2);
+        gradient.setData(temp2.getData());
     }
 
     @Override

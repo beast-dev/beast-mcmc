@@ -303,7 +303,7 @@ public interface ContinuousTraitGradientForBranch {
 
             removeMissing(gradQ, statistics.getMissing());
 
-            diffusionProcessDelegate.getGradientVariance(getScalarNode(node), gradQ);
+            diffusionProcessDelegate.getGradientVariance(node, cdi, likelihoodDelegate, gradQ);
 
             if (DEBUG) {
                 System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQ));
@@ -321,21 +321,22 @@ public interface ContinuousTraitGradientForBranch {
 
         }
 
+
 //        private int getPreOrderPartialIndex(NodeRef node) {
 //            return likelihoodDelegate.getPartialBufferCount() + node.getNumber();
 //        }
 
-        private int getActiveMatrixIndex(NodeRef node) {
-            return likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
-        }
+//        private int getActiveMatrixIndex(NodeRef node) {
+//            return likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
+//        }
 
-        private double getScalarNode(NodeRef node) {
-            if (tree.isRoot(node)) {
-                return 1.0 / likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
-            } else {
-                return cdi.getBranchLength(getActiveMatrixIndex(node));
-            }
-        }
+//        private double getScalarNode(NodeRef node) {
+//            if (tree.isRoot(node)) {
+//                return 1.0 / likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
+//            } else {
+//                return cdi.getBranchLength(getActiveMatrixIndex(node));
+//            }
+//        }
 
         private void removeMissing(DenseMatrix64F M, int[] missing) {
             for (int m : missing) {

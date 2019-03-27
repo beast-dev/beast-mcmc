@@ -106,29 +106,32 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
 
         DenseMatrix64F rotMat = wrap(rotation, 0, dimProcess, dimProcess);
         DenseMatrix64F variance = wrap(inverseDiffusions, offset, dimProcess, dimProcess);
-        transformMatrix(variance, rotMat);
+        transformMatrix(variance, rotMat, isActualizationSymmetric);
         double[] transVar = new double[matrixSize];
         unwrap(variance, transVar, 0);
         scaleInv(transVar, 0, scales, stationaryVariances, offset, matrixSize);
     }
 
-    private void transformMatrix(DenseMatrix64F matrix, DenseMatrix64F rotation) {
-        if (isActualizationSymmetric) {
+    public static void transformMatrix(DenseMatrix64F matrix, DenseMatrix64F rotation, Boolean isSymmetric) {
+        if (isSymmetric) {
             transformMatrixSymmetric(matrix, rotation);
         } else {
             transformMatrixGeneral(matrix, rotation);
         }
     }
 
-    private void transformMatrixGeneral(DenseMatrix64F matrix, DenseMatrix64F rotation) {
-        DenseMatrix64F tmp = new DenseMatrix64F(dimProcess, dimProcess);
-        CommonOps.invert(rotation); // Warning: side effect on rotation matrix.
-        CommonOps.mult(rotation, matrix, tmp);
-        CommonOps.multTransB(tmp, rotation, matrix);
+    private static void transformMatrixGeneral(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        int dim = matrix.getNumRows();
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
+        DenseMatrix64F rotationInverse = new DenseMatrix64F(dim, dim);
+        CommonOps.invert(rotation, rotationInverse);
+        CommonOps.mult(rotationInverse, matrix, tmp);
+        CommonOps.multTransB(tmp, rotationInverse, matrix);
     }
 
-    private void transformMatrixSymmetric(DenseMatrix64F matrix, DenseMatrix64F rotation) {
-        DenseMatrix64F tmp = new DenseMatrix64F(dimProcess, dimProcess);
+    private static void transformMatrixSymmetric(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        int dim = matrix.getNumRows();
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
         CommonOps.multTransA(rotation, matrix, tmp);
         CommonOps.mult(tmp, rotation, matrix);
     }
@@ -141,8 +144,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         unwrap(matrix, matrixDouble, matrixOffset);
     }
 
-    private void transformMatrixBack(DenseMatrix64F matrix, DenseMatrix64F rotation) {
-        DenseMatrix64F tmp = new DenseMatrix64F(dimProcess, dimProcess);
+    public static void transformMatrixBack(DenseMatrix64F matrix, DenseMatrix64F rotation) {
+        int dim = matrix.getNumRows();
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
         CommonOps.multTransB(matrix, rotation, tmp);
         CommonOps.mult(rotation, tmp, matrix);
     }

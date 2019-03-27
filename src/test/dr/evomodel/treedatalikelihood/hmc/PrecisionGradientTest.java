@@ -72,7 +72,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     private ContinuousRateTransformation rateTransformation;
     private BranchRateModel rateModel;
 
-    private Boolean fixedRoot = false;
+    private Boolean fixedRoot = true;
 
     private double delta;
 
@@ -194,7 +194,6 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     }
 
     public void testGradientDriftWithMissing() {
-        System.out.println("\nTest gradient precision.");
 
         // Diffusion
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
@@ -223,7 +222,6 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     }
 
     public void testGradientOUWithMissing() {
-        System.out.println("\nTest gradient variance with missing.");
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
@@ -261,6 +259,41 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         System.out.println("\nTest OU gradient variance.");
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModel, precisionMatrixInv, false);
         System.out.println("\nTest OU gradient variance with missing.");
+        testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv, false);
+
+    }
+
+    public void testGradientDiagonalOUWithMissing() {
+
+        // Diffusion
+        List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.4", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.5", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{-2.0})));
+
+        DiagonalMatrix strengthOfSelectionMatrixParam
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.1, 1.0, 5.0, 10.0, 50.0}));
+
+        // Wrt Precision
+        DiffusionProcessDelegate diffusionProcessDelegate
+                = new OUDiffusionModelDelegate(treeModel, diffusionModel,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+        System.out.println("\nTest Diagonal OU gradient precision.");
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precisionMatrix, false);
+        System.out.println("\nTest Diagonal OU gradient precision with missing.");
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelMissing, precisionMatrix, false);
+
+        // Wrt Variance
+        DiffusionProcessDelegate diffusionProcessDelegateVariance
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelVar,
+                optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
+
+        System.out.println("\nTest Diagonal OU gradient variance.");
+        testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModel, precisionMatrixInv, false);
+        System.out.println("\nTest Diagonal OU gradient variance with missing.");
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv, false);
 
     }

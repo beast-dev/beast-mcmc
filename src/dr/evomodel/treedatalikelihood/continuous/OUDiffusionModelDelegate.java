@@ -31,6 +31,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
@@ -140,12 +141,44 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         if (tree.isRoot(node)) {
             super.getGradientVariance(node, cdi, likelihoodDelegate, gradient);
         } else {
-            actualizeGradient(cdi, node.getNumber(), gradient);
+            if (hasDiagonalActualization()) {
+                actualizeGradientDiagonal(cdi, node.getNumber(), gradient);
+            } else {
+                actualizeGradient(cdi, node.getNumber(), gradient);
+            }
         }
 
     }
 
     private void actualizeGradient(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
+        double[] attenuationRotation = elasticModel.getEigenVectorsStrengthOfSelection();
+        DenseMatrix64F P = wrap(attenuationRotation, 0, dim, dim);
+
+        SafeMultivariateActualizedWithDriftIntegrator.transformMatrix(gradient, P, elasticModel.isSymmetric());
+
+        actualizeGradientDiagonal(cdi, nodeIndex, gradient);
+
+        SafeMultivariateActualizedWithDriftIntegrator.transformMatrixBack(gradient, P);
+
+    }
+
+    private void actualizeGradientDiagonal(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
+        double[] attenuation = elasticModel.getEigenValuesStrengthOfSelection();
+        double edgeLength = cdi.getBranchLength(getMatrixBufferOffsetIndex(nodeIndex));
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                gradient.unsafe_set(i, j,
+                        factorFunction(attenuation[i] + attenuation[j], edgeLength) * gradient.unsafe_get(i, j));
+            }
+        }
+    }
+
+    private static double factorFunction(double x, double l) {
+        if (x == 0) return l;
+        return (1 - Math.exp(- x * l)) / x;
+    }
+
+    private void actualizeGradientOld(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
         double[] actualization = new double[dim * dim];
         cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
         double[] attenuation = elasticModel.getStrengthOfSelectionMatrixAsVector();

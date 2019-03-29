@@ -67,7 +67,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         } else if (parameter instanceof CompoundSymmetricMatrix) {
 
             this.compoundSymmetricMatrix = (CompoundSymmetricMatrix) parameter;
-            this.variance = new CachedMatrixInverse("", parameter);
+            this.variance = new CachedMatrixInverse("", precision);
             this.parametrization = Parametrization.AS_PRECISION;
 
         } else {
@@ -80,6 +80,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         this.gradientWrtPrecisionProvider = gradientWrtPrecisionProvider;
         this.likelihood = likelihood;
         this.dim = parameter.getColumnDimension();
+
     }
 
     enum Parametrization {
@@ -124,13 +125,24 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     public double[] getGradientLogDensity() {
 
         // parameters
+        if (parametrization == Parametrization.AS_PRECISION) {
+            ((CachedMatrixInverse) variance).forceComputeInverse(); // ensure that variance is up to date
+        }
         double[] vecV = flatten(variance.getParameterAsMatrix());
         double[] vecP = flatten(precision.getParameterAsMatrix());
+        if (DEBUG) {
+            System.err.println("vecV: " + new dr.math.matrixAlgebra.Vector(vecV));
+            System.err.println("vecP: " + new dr.math.matrixAlgebra.Vector(vecP));
+        }
 //        double[] diagQ = compoundSymmetricMatrix.getDiagonal();
 //        double[] vecC = flatten(compoundSymmetricMatrix.getCorrelationMatrix());
 
         // Gradient w.r.t. precision
         double[] gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV);
+
+        if (DEBUG) {
+            System.err.println("Gradient Precision: " + new dr.math.matrixAlgebra.Vector(gradient));
+        }
 
         // Handle inverse
         gradient = parametrization.chainRule(gradient, vecP, vecV);
@@ -144,6 +156,10 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         if (CHECK_GRADIENT) {
             System.err.println(checkNumeric(gradient));
+        }
+
+        if (DEBUG) {
+            System.err.println("Gradient Parameter: " + new dr.math.matrixAlgebra.Vector(gradient));
         }
 
         return gradient;
@@ -295,4 +311,6 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             }
         }
     }
+
+    private static final boolean DEBUG = false;
 }

@@ -102,6 +102,7 @@ public class BranchConditionalDistributionDelegate extends
             cdi.getRootMatrices(likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
                     branchPrecision, branchDisplacement, branchActualization);
         } else {
+            //TODO: This does not seem to work when cdi is MultivariateIntegrator (problem with `precisionOffset`)
             cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
         }
         cdi.getPreOrderPartial(nodeNumber, abovePartial);

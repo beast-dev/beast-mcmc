@@ -31,7 +31,8 @@ public class TraitValidationProvider implements CrossValidationProvider {
                             Parameter missingParameter,
                             Boolean useTreeTraits,
                             TreeDataLikelihood treeLikelihood,
-                            String inferredValuesName) {
+                            String inferredValuesName,
+                            List<Integer> trueMissingIndices) {
 
 
         this.trueTraits = trueTraits;
@@ -50,7 +51,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
         this.dimTrait = dataModel.getTraitDimension();
         this.dataModel = dataModel;
 
-        this.missingInds = setupMissingInds(missingParameter);
+        this.missingInds = setupMissingInds(missingParameter, trueMissingIndices);
 
         int nMissing = missingInds.length;
 
@@ -62,11 +63,12 @@ public class TraitValidationProvider implements CrossValidationProvider {
 
     }
 
-    private int[] setupMissingInds(Parameter missingParameter) {
+    private int[] setupMissingInds(Parameter missingParameter, List<Integer> trueMissing) {
         int[] missingInds;
         int nMissing = 0;
         if (missingParameter == null) {
             List<Integer> missingList = dataModel.getMissingIndices();
+            missingList.removeAll(trueMissing);
             nMissing = missingList.size();
 
             missingInds = new int[nMissing];
@@ -77,8 +79,10 @@ public class TraitValidationProvider implements CrossValidationProvider {
 
         } else {
 
+
             for (int i = 0; i < missingParameter.getSize(); i++) {
-                if (missingParameter.getParameterValue(i) == 1.0) {
+                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissing.contains(i)) {
+                    //TODO: search more efficiently through the `trueMissing` array
                     nMissing += 1;
                 }
             }
@@ -87,7 +91,8 @@ public class TraitValidationProvider implements CrossValidationProvider {
             int counter = 0;
 
             for (int i = 0; i < missingParameter.getSize(); i++) {
-                if (missingParameter.getParameterValue(i) == 1.0) {
+                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissing.contains(i)) {
+                    //TODO: (see above)
                     missingInds[counter] = i;
                     counter += 1;
                 }
@@ -206,6 +211,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
                             treeModel, true);
 
             Parameter trueParameter = returnValue.traitParameter;
+            List<Integer> trueMissing = returnValue.missingIndices;
             Parameter missingParameter = null;
             if (xo.hasChildNamed(MASK)) {
                 missingParameter = (Parameter) xo.getElementFirstChild(MASK);
@@ -220,7 +226,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
 
 
             TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
-                    missingParameter, useTreeTraits, treeLikelihood, inferredValuesName);
+                    missingParameter, useTreeTraits, treeLikelihood, inferredValuesName, trueMissing);
 
             boolean logSum = xo.getAttribute(LOG_SUM, false);
 

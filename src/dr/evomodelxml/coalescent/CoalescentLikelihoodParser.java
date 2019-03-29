@@ -28,10 +28,7 @@ package dr.evomodelxml.coalescent;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.CoalescentLikelihood;
-import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodel.coalescent.MultiLociTreeSet;
-import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.*;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
@@ -46,6 +43,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
     public static final String MODEL = "model";
     public static final String POPULATION_TREE = "populationTree";
     public static final String POPULATION_FACTOR = "factor";
+    public static final String INVERVALS = "intervals";
 
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
@@ -62,6 +60,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
         List<TreeModel> trees = new ArrayList<TreeModel>();
         List<Double> popFactors = new ArrayList<Double>();
         MultiLociTreeSet treesSet = demoModel instanceof MultiLociTreeSet ? (MultiLociTreeSet) demoModel : null;
+        MultiTreeIntervals multiTreeIntervals = null;
 
         for (int k = 0; k < xo.getChildCount(); ++k) {
             final Object child = xo.getChild(k);
@@ -73,6 +72,9 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
                     trees.add(t);
 
                     popFactors.add(cxo.getAttribute(POPULATION_FACTOR, 1.0));
+                }
+                else if (cxo.getName().equals(INVERVALS)) {
+                    multiTreeIntervals = (MultiTreeIntervals) cxo.getChild(MultiTreeIntervals.class);
                 }
             }
 //                in the future we may have arbitrary multi-loci element
@@ -86,7 +88,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
             treeModel = trees.get(0);
         } else if (trees.size() > 1) {
             treesSet = new MultiLociTreeSet.Default(trees, popFactors);
-        } else if (!(trees.size() == 0 && treesSet != null)) {
+        } else if (!(trees.size() == 0 && treesSet != null) && multiTreeIntervals==null ) {
             throw new XMLParseException("Incorrectly constructed likelihood element");
         }
 
@@ -111,16 +113,19 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
-        } else {
-            if (includeSubtree != null || excludeSubtrees.size() > 0) {
-                throw new XMLParseException("Include/Exclude taxa not supported for multi locus sets");
-            }
-            // Use old code for multi locus sets.
-            // This is a little unfortunate but the current code is using AbstractCoalescentLikelihood as
-            // a base - and modifing it will probsbly result in a bigger mess.
-            return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
+        } else if(multiTreeIntervals != null) {
+            return new MultiTreeIntervalCoalescentLikelihood(multiTreeIntervals,demoModel);
         }
-    }
+        else{
+                if (includeSubtree != null || excludeSubtrees.size() > 0) {
+                    throw new XMLParseException("Include/Exclude taxa not supported for multi locus sets");
+                }
+                // Use old code for multi locus sets.
+                // This is a little unfortunate but the current code is using AbstractCoalescentLikelihood as
+                // a base - and modifing it will probsbly result in a bigger mess.
+                return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
+            }
+        }
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
@@ -142,6 +147,10 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(MODEL, new XMLSyntaxRule[]{
                     new ElementRule(DemographicModel.class)
             }, "The demographic model which describes the effective population size over time"),
+
+            new ElementRule(INVERVALS, new XMLSyntaxRule[]{
+                    new ElementRule(MultiTreeIntervals.class)
+            }, "The interval list from which the coalescent likelihood will be calculated"),
 
             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(POPULATION_FACTOR, true),

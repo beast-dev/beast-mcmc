@@ -191,7 +191,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
             }
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef node = tree.getInternalNode(i);
-                intervals.addCoalescentEvent(tree.getNodeTaxon(node).getHeight());
+                intervals.addCoalescentEvent(tree.getNodeHeight(node));
             }
             // add the nothing event at the top of the stem of the root of each subtree.
             intervals.addNothingEvent(cutoffTime);
@@ -223,6 +223,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         intervalsKnown = false;
+        fireModelChanged();
     }
 
     @Override

@@ -64,8 +64,6 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
         if (includeSubtree != null) {
             includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
-        } else {
-            includedLeafSet = null;
         }
 
         if (excludeSubtrees != null) {
@@ -88,9 +86,18 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
 
         addStatistic(new DeltaStatistic());
-
-        likelihoodKnown = false;
     }
+
+    public AbstractCoalescentLikelihood( String name, MultiTreeIntervals multiTreeIntervals){
+        super(name);
+
+        addStatistic(new DeltaStatistic());
+        addModel(multiTreeIntervals);
+        eventsKnown=true; // because the interval changes are handled by MultiTreeIntervals
+
+    }
+
+
 
     // **************************************************************
     // ModelListener IMPLEMENTATION
@@ -340,8 +347,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      * The tree.
      */
     private Tree tree = null;
-    private final Set<String> includedLeafSet;
-    private final Set[] excludedLeafSets;
+    private Set<String> includedLeafSet = null;
+    private Set[] excludedLeafSets = null;
 
     /**
      * The intervals.

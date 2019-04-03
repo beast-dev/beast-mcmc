@@ -63,10 +63,8 @@ import java.util.List;
 import static org.ejml.alg.dense.mult.MatrixVectorMult.mult;
 import static org.ejml.alg.dense.mult.MatrixVectorMult.multAdd;
 
-//TODO: if we want to keep this functionality (i.e. so others can compare the speeds), then we should write a new
-//class since at this point I've broken the original class by making it a Gibbs operator
 
-public class NewLatentLiabilityGibbs extends SimpleMCMCOperator implements GibbsOperator {
+public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
     private static final String NEW_LATENT_LIABILITY_GIBBS_OPERATOR = "newlatentLiabilityGibbsOperator";
     private static final String MAX_ATTEMPTS = "numAttempts";
@@ -263,7 +261,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator implements Gibbs
         double[] newValue = getNodeTrait(node);
 
         if (latentLiability instanceof DummyLatentTruncationProvider) {
-            return 0;
+            return Double.POSITIVE_INFINITY;
         } else {
             return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
         }
@@ -478,11 +476,6 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator implements Gibbs
 
             TreeDataLikelihood traitModel = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             LatentTruncation LLModel = (LatentTruncation) xo.getChild(LatentTruncation.class);
-            if (!(LLModel instanceof DummyLatentTruncationProvider)) {
-                throw new XMLParseException("The " + NEW_LATENT_LIABILITY_GIBBS_OPERATOR + " in this branch is " +
-                        "currently implemented as a Gibbs operator and will only provide valid results with a " +
-                        DummyLatentTruncationProvider.class + " latent truncation provider.");
-            }
 
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
             int numAttempts = xo.getAttribute(MAX_ATTEMPTS, 100000);

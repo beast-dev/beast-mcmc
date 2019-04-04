@@ -34,6 +34,8 @@ public interface MassPreconditioner {
 
     void updateMass();
 
+    ReadableVector doCollision(int[] indices, ReadableVector momentum);
+
     enum Type {
 
         NONE("none") {
@@ -127,6 +129,22 @@ public interface MassPreconditioner {
         public void updateMass() {
             // Do nothing
         }
+
+        @Override
+        public ReadableVector doCollision(int[] indices, ReadableVector momentum) {
+            if (indices.length != 2) {
+                throw new RuntimeException("Not implemented for more than two dimensions yet.");
+            }
+            WrappedVector updatedMomentum = new WrappedVector.Raw(new double[momentum.getDim()]);
+
+            for (int i = 0; i < momentum.getDim(); i++) {
+                updatedMomentum.set(i, momentum.get(i));
+            }
+
+            updatedMomentum.set(indices[0], momentum.get(indices[1]));
+            updatedMomentum.set(indices[1], momentum.get(indices[0]));
+            return updatedMomentum;
+        }
     }
 
     abstract class AbstractMassPreconditioning implements MassPreconditioner {
@@ -171,6 +189,10 @@ public interface MassPreconditioner {
             initializeMass();
         }
 
+        @Override
+        public ReadableVector doCollision(int[] indices, ReadableVector momentum) {
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     abstract class DiagonalPreconditioning extends AbstractMassPreconditioning {
@@ -206,6 +228,30 @@ public interface MassPreconditioner {
         @Override
         public double getVelocity(int i, ReadableVector momentum) {
             return momentum.get(i) * inverseMass[i];
+        }
+
+        @Override
+        public ReadableVector doCollision(int[] indices, ReadableVector momentum) {
+            if (indices.length != 2) {
+                throw new RuntimeException("Not implemented for more than two dimensions yet.");
+            }
+
+            WrappedVector updatedMomentum = new WrappedVector.Raw(new double[momentum.getDim()]);
+
+            for (int i = 0; i < momentum.getDim(); i++) {
+                updatedMomentum.set(i, momentum.get(i));
+            }
+
+            final int index1 = indices[0];
+            final int index2 = indices[1];
+            final double updatedMomentum1 = ((inverseMass[index2] - inverseMass[index1]) * momentum.get(index1)
+                    + 2.0 * inverseMass[index2] * momentum.get(index2)) / (inverseMass[index1] + inverseMass[index2]);
+            final double updatedMomentum2 = ((inverseMass[index1] - inverseMass[index2]) * momentum.get(index2)
+                    + 2.0 * inverseMass[index1] * momentum.get(index1)) / (inverseMass[index1] + inverseMass[index2]);
+
+            updatedMomentum.set(index1, updatedMomentum1);
+            updatedMomentum.set(index2, updatedMomentum2);
+            return updatedMomentum;
         }
     }
 

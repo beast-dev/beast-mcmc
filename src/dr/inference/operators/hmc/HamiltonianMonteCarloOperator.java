@@ -25,19 +25,19 @@
 
 package dr.inference.operators.hmc;
 
-import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PathGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.GeneralOperator;
+import dr.inference.operators.PathDependent;
+import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.inference.operators.PathDependent;
-import dr.math.MathUtils;
 import dr.util.Transform;
 
 /**
@@ -51,8 +51,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
     final LeapFrogEngine leapFrogEngine;
-    private final Parameter parameter;
-    final MassPreconditioner preconditioning;
+    protected final Parameter parameter;
+    protected final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
     protected final double[] mask;
     protected final Transform transform;
@@ -90,7 +90,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this.mask = buildMask(maskParameter);
         this.transform = transform;
 
-        this.leapFrogEngine = (transform != null ?
+        this.leapFrogEngine = constructLeapFrogEngine(transform);
+    }
+
+    protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
+        return (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,
                         getDefaultInstabilityHandler(), preconditioning, mask) :
                 new LeapFrogEngine.Default(parameter,

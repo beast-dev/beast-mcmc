@@ -113,6 +113,18 @@ public class MissingOps {
         }
     }
 
+    public static void copyRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
+                                          final int[] rowIndices, final int[] colIndices, final boolean clear) {
+        if (clear) {
+            Arrays.fill(destination.getData(), 0.0);
+        }
+        for (int row : rowIndices) {
+            for (int col : colIndices) {
+                destination.unsafe_set(row, col, source.unsafe_get(row, col));
+            }
+        }
+    }
+
     public static void scatterRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
                                              final int[] rowIdices, final int[] colIndices, final boolean clear) {
         if (clear) {
@@ -471,25 +483,34 @@ public class MissingOps {
             }
             return new InversionResult(FULLY_OBSERVED, dim, det);
         } else {
-            if (finiteCount == 0) {
+
+            final int infiniteCount = permutationIndices.getNumberOfInfiniteDiagonals();
+
+            if (infiniteCount == dim) {
+
                 Arrays.fill(destination.getData(), 0);
                 return new InversionResult(NOT_OBSERVED, 0, 0);
+
             } else {
 
-                final int[] finiteIndices = permutationIndices.getNonZeroFiniteIndices();
                 final int[] zeroIndices = permutationIndices.getZeroIndices();
 
-                final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
-                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
+                if (finiteCount > 0) {
 
-                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
-                if (getDeterminant) {
-                    det = invertAndGetDeterminant(subSource, inverseSubSource);
-                } else {
-                    CommonOps.invert(subSource, inverseSubSource);
+                    final int[] finiteIndices = permutationIndices.getNonZeroFiniteIndices();
+
+                    final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
+                    gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
+
+                    final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
+                    if (getDeterminant) {
+                        det = invertAndGetDeterminant(subSource, inverseSubSource);
+                    } else {
+                        CommonOps.invert(subSource, inverseSubSource);
+                    }
+
+                    scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
                 }
-
-                scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
 
                 for (int i = 0; i < zeroIndices.length; i++) {
                     int index = zeroIndices[i];
@@ -497,6 +518,21 @@ public class MissingOps {
                 }
 
                 return new InversionResult(PARTIALLY_OBSERVED, finiteCount, det);
+            }
+        }
+    }
+
+    public static void safeAdd(DenseMatrix64F source0, DenseMatrix64F source1, DenseMatrix64F destination) {
+        CommonOps.add(source0, source1, destination);
+
+        for (int i = 0; i < destination.numCols; ++i) {
+            if (Double.isInfinite(destination.unsafe_get(i, i))) {
+                for (int j = 0; j < destination.numRows; ++j) {
+                    if (i != j) {
+                        destination.unsafe_set(i, j, 0.0);
+                        destination.unsafe_set(j, i, 0.0);
+                    }
+                }
             }
         }
     }

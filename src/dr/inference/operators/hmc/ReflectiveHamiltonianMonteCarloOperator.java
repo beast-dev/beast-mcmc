@@ -26,9 +26,6 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evolution.tree.NodeRef;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
@@ -262,71 +259,4 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         abstract void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum, int[] indices, double time);
     }
 
-    class NodeHeightBounds implements GraphicalParameterBound {
-
-        final Parameter nodeHeight;
-        final TreeModel treeModel;
-        final private TreeParameterModel nodeHeightModel;
-
-        NodeHeightBounds(Parameter nodeHeight,
-                         TreeModel treeModel) {
-
-            this.nodeHeight = nodeHeight;
-            this.treeModel = treeModel;
-
-            this.nodeHeightModel = new TreeParameterModel(treeModel, nodeHeight, true);
-
-        }
-
-        @Override
-        public Parameter getParameter() {
-            return nodeHeight;
-        }
-
-        @Override
-        public int[] getConnectedParameterIndices(int index) {
-            NodeRef nodeRef = treeModel.getNode(index);
-            int nodeCount = 0;
-            for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
-                if (treeModel.isExternal(treeModel.getChild(nodeRef, i))) {
-                    nodeCount++;
-                }
-            }
-            if (treeModel.isRoot(nodeRef)) {
-                nodeCount++;
-            }
-            int[] connectedIndices = new int[nodeCount];
-            for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
-                NodeRef childNode = treeModel.getChild(nodeRef, i);
-                if (!treeModel.isExternal(childNode)) {
-                    connectedIndices[i] = childNode.getNumber();
-                }
-            }
-            if (!treeModel.isRoot(nodeRef)) {
-                connectedIndices[nodeCount - 1] = treeModel.getParent(nodeRef).getNumber();
-            }
-            return connectedIndices;
-        }
-
-        @Override
-        public double getFixedLowerBound(int index) {
-            NodeRef nodeRef = treeModel.getNode(index);
-            double lowerBound = Double.NEGATIVE_INFINITY;
-            for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
-                NodeRef childNode = treeModel.getChild(nodeRef, i);
-                if (treeModel.isExternal(childNode)) {
-                    if (treeModel.getNodeHeight(childNode) > lowerBound) {
-                        lowerBound = treeModel.getNodeHeight(childNode);
-                    }
-                }
-            }
-            return lowerBound;
-        }
-
-        @Override
-        public double getFixedUpperBound(int index) {
-            return Double.POSITIVE_INFINITY;
-        }
-
-    }
 }

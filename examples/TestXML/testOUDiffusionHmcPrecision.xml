@@ -131,7 +131,7 @@
                     <parameter id="precision.diagonal" value="1.0 1.0 1.0 1.0" lower="0.0 0.0 0.0 0.0"/>
                 </diagonal>
                 <offDiagonal>
-                    <parameter id="precision.correlation" value="0.0 0.0 0.0 0.0 0.0 0.0" />
+                    <parameter id="precision.correlation" value="-0.14706428225581453   0.030842075413863475    -0.17716146663954863    -0.019807783472491455   -0.25534962773853354    -0.3075826187310739" />
                 </offDiagonal>
             </compoundSymmetricMatrix>
         </precisionMatrix>
@@ -368,6 +368,7 @@ Count: 754
  			drawVariance="1.0">
  			<gradient idref="precisionDiagonalGradientPreOrder"/>
             <parameter idref="precision.diagonal"/>
+            <transform type="log"/>
  		</hamiltonianMonteCarloOperator>
 	</operators>
 
@@ -376,38 +377,6 @@ Count: 754
             <parameter idref="precision.diagonal"/>
         </randomWalkOperator>
 	</operators>
-
-	<mcmc id="mcmc.diagonal.randomWalk" chainLength="1000000" autoOptimize="false">
-		<posterior>
-            <prior>
-                <logNormalPrior idref="prior.diagonal"/>
-            </prior>
-            <likelihood id="likelihood.diagonal.randomWalk">
-                <traitDataLikelihood idref="ouLikelihood"/>
-                <dummyLikelihood>
-                    <parameter idref="precisionMatrix"/>
-                </dummyLikelihood>
-            </likelihood>
-		</posterior>
-		<operators idref="ouOperators.diagonal.randomWalk"/>
-
-		<log logEvery="10000">
-			<column label="Likelihood" dp="4" width="12">
-				<likelihood idref="likelihood.diagonal.randomWalk"/>
-			</column>
-			<column label="Prior" dp="4" width="12">
-                <logNormalPrior idref="prior.diagonal"/>
-			</column>
-			<column label="precision" dp="4" width="12">
-                <matrixParameter idref="precisionMatrix"/>
-			</column>
-		</log>
-		<log logEvery="1000" fileName="testOUDIffusionDiagonalRandomWalk.log">
-				<likelihood idref="likelihood.diagonal.randomWalk"/>
-                <logNormalPrior idref="prior.diagonal"/>
-                <matrixParameter idref="precision.diagonal"/>
-		</log>
-	</mcmc>
 
 	<mcmc id="mcmc.diagonal.hmcVanilla" chainLength="100000" autoOptimize="false">
 		<posterior>
@@ -436,6 +405,38 @@ Count: 754
 		</log>
 		<log logEvery="100" fileName="testOUDIffusionDiagonalHmcVanilla.log">
 				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
+                <logNormalPrior idref="prior.diagonal"/>
+                <matrixParameter idref="precision.diagonal"/>
+		</log>
+	</mcmc>
+
+	<mcmc id="mcmc.diagonal.randomWalk" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <logNormalPrior idref="prior.diagonal"/>
+            </prior>
+            <likelihood id="likelihood.diagonal.randomWalk">
+                <traitDataLikelihood idref="ouLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="precisionMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="ouOperators.diagonal.randomWalk"/>
+
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.diagonal.randomWalk"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <logNormalPrior idref="prior.diagonal"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testOUDIffusionDiagonalRandomWalk.log">
+				<likelihood idref="likelihood.diagonal.randomWalk"/>
                 <logNormalPrior idref="prior.diagonal"/>
                 <matrixParameter idref="precision.diagonal"/>
 		</log>
@@ -472,6 +473,32 @@ Count: 754
     </report>
 
 <!--
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.randomWalk  -700.6742   1.4237  -700.3171   -703.4329   -698.709    821.8422    -700.7973   -699.3847   
+prior.diagonal  -2.3444 0.1569  -2.3392 -2.634  -2.0361 777.7932    -2.4349 -2.2193 
+precision.diagonal1 0.9158  0.1282  0.912   0.6827  1.1726  801.8193    0.7869  0.9573  
+precision.diagonal2 0.6316  0.0875  0.6263  0.4574  0.7939  901 0.5663  0.6797  
+precision.diagonal3 0.3343  0.0454  0.3314  0.2515  0.4262  901 0.3004  0.3592  
+precision.diagonal4 0.2515  0.0356  0.2503  0.1832  0.3165  901 0.2157  0.2626  
+
+burnIn   <= 10000,   maxState  = 100000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.hmcVanilla  -700.6441   1.4002  -700.382    -703.4688   -698.7407   687.6694    -700.6259   -699.2039   
+prior.diagonal  -2.3442 0.1583  -2.3352 -2.6708 -2.0514 901 -2.3976 -2.1866 
+precision.diagonal1 0.9113  0.123   0.9051  0.6766  1.1346  901 0.7898  0.9635  
+precision.diagonal2 0.6342  0.0895  0.6314  0.4609  0.8153  780.9611    0.5677  0.685   
+precision.diagonal3 0.3338  0.0458  0.3316  0.2465  0.4217  858.7327    0.2981  0.3547  
+precision.diagonal4 0.2501  0.0347  0.2474  0.1938  0.3246  901 0.2213  0.2644
+
+Gradient is taken with respect to the transformed paramter values.
+Untransformed X: [ 0.9114437258663086, 0.6297956950724906, 0.32488748398925926, 0.24387871776612993]
+X: [ -0.09272542471079993, -0.46235980572680757, -1.124276359704503, -1.4110842355989135]
+Gradient: [ 1.0913892494295023E-5, -1.3266889407323604E-5, -3.741743844021884E-6, -4.487528234958531E-6]
+Gradient type: numerical
+Fx: 698.6725628087515
+Time: 0.055s
+Count: 72
 
 -->
 </beast>

@@ -105,7 +105,7 @@ public interface GradientWrtPrecisionProvider {
 
         public double[] getGradientWrtPrecision(double[] vecV) {
             double[] gradient = branchSpecificGradient.getGradientLogDensity(); // Get gradient wrt variance
-            AbstractPrecisionGradient.MultivariateChainRule ruleI = new AbstractPrecisionGradient.MultivariateChainRule.InverseGeneral(vecV);
+            MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecV);
             return ruleI.chainGradient(gradient);
         }
 

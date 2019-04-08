@@ -31,7 +31,10 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateDiagonalActualizedWithDriftIntegrator;
+import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
@@ -40,6 +43,7 @@ import org.ejml.ops.CommonOps;
 import java.util.List;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrapDiagonal;
 
 /**
  * A simple OU diffusion model delegate with branch-specific drift and constant diffusion
@@ -134,12 +138,12 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     }
 
     @Override
-    public void getGradientVariance(NodeRef node,
-                                    ContinuousDiffusionIntegrator cdi,
-                                    ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                    DenseMatrix64F gradient) {
+    public void getGradientVarianceWrtVariance(NodeRef node,
+                                               ContinuousDiffusionIntegrator cdi,
+                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                               DenseMatrix64F gradient) {
         if (tree.isRoot(node)) {
-            super.getGradientVariance(node, cdi, likelihoodDelegate, gradient);
+            super.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradient);
         } else {
             if (hasDiagonalActualization()) {
                 actualizeGradientDiagonal(cdi, node.getNumber(), gradient);
@@ -175,7 +179,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     private static double factorFunction(double x, double l) {
         if (x == 0) return l;
-        return (1 - Math.exp(- x * l)) / x;
+        return (1 - Math.exp(-x * l)) / x;
     }
 
     private void actualizeGradientOld(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {

@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.hmc.MultivariateChainRule;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import org.ejml.data.DenseMatrix64F;
@@ -51,7 +52,7 @@ public interface ContinuousTraitGradientForBranch {
 
     abstract class Default implements ContinuousTraitGradientForBranch {
 
-        private final DenseMatrix64F matrixGradientQ;
+        private final DenseMatrix64F matrixGradientQInv;
         private final DenseMatrix64F matrixGradientN;
         private final DenseMatrix64F vector0;
 
@@ -62,7 +63,7 @@ public interface ContinuousTraitGradientForBranch {
             this.dim = dim;
             this.tree = tree;
 
-            matrixGradientQ = new DenseMatrix64F(dim, dim);
+            matrixGradientQInv = new DenseMatrix64F(dim, dim);
             matrixGradientN = new DenseMatrix64F(dim, 1);
             vector0 = new DenseMatrix64F(dim, 1);
         }
@@ -115,26 +116,27 @@ public interface ContinuousTraitGradientForBranch {
                 System.err.println("\tDelta = " + NormalSufficientStatistics.toVectorizedString(delta));
             }
 
-            DenseMatrix64F gradQ = matrixGradientQ;
+            DenseMatrix64F gradQInv = matrixGradientQInv;
             DenseMatrix64F gradN = matrixGradientN;
-            if (getGradientQ) getGradientQForBranch(Wi, Vi, delta, gradQ);
+            if (getGradientQ) getGradientQInvForBranch(Qi, Wi, Vi, delta, gradQInv);
             if (getGradientN) getGradientNForBranch(Qi, delta, gradN);
 
             if (tree.isRoot(node)) {
-                return chainRuleRoot(statistics, node, gradQ, gradN);
+                return chainRuleRoot(statistics, node, gradQInv, gradN);
             } else {
-                return chainRule(statistics, node, gradQ, gradN);
+                return chainRule(statistics, node, gradQInv, gradN);
             }
         }
 
         abstract double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
-                                    DenseMatrix64F gradQ, DenseMatrix64F gradN);
+                                    DenseMatrix64F gradQInv, DenseMatrix64F gradN);
 
         abstract double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
-                                        DenseMatrix64F gradQ, DenseMatrix64F gradN);
+                                        DenseMatrix64F gradQInv, DenseMatrix64F gradN);
 
-        private void getGradientQForBranch(DenseMatrix64F Wi, DenseMatrix64F Vi, DenseMatrix64F delta,
-                                           DenseMatrix64F grad) {
+        private void getGradientQInvForBranch(DenseMatrix64F Qi, DenseMatrix64F Wi,
+                                              DenseMatrix64F Vi, DenseMatrix64F delta,
+                                              DenseMatrix64F grad) {
 
             CommonOps.scale(0.5, Wi, grad);
 
@@ -144,6 +146,13 @@ public interface ContinuousTraitGradientForBranch {
 
             if (DEBUG) {
                 System.err.println("\tgradientQi = " + NormalSufficientStatistics.toVectorizedString(grad));
+            }
+
+            MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(Qi);
+            ruleI.chainGradient(grad);
+
+            if (DEBUG) {
+                System.err.println("\tgradientQiInv = " + NormalSufficientStatistics.toVectorizedString(grad));
             }
 
         }
@@ -163,7 +172,7 @@ public interface ContinuousTraitGradientForBranch {
 
     class RateGradient extends Default {
 
-        private final DenseMatrix64F matrixJacobianQ;
+        private final DenseMatrix64F matrixJacobianQInv;
         private final DenseMatrix64F matrixJacobianN;
         private final DenseMatrix64F matrix0;
 
@@ -174,7 +183,7 @@ public interface ContinuousTraitGradientForBranch {
 
             this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
 
-            matrixJacobianQ = new DenseMatrix64F(dim, dim);
+            matrixJacobianQInv = new DenseMatrix64F(dim, dim);
             matrixJacobianN = new DenseMatrix64F(dim, 1);
             matrix0 = new DenseMatrix64F(dim, dim);
         }
@@ -192,26 +201,19 @@ public interface ContinuousTraitGradientForBranch {
 
         @Override
         public double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
-                                  DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+                                  DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
 
             final double rate = branchRateModel.getBranchRate(tree, node);
             final double differential = branchRateModel.getBranchRateDifferential(tree, node);
             final double scaling = differential / rate;
 
             // Q_i w.r.t. rate
-            DenseMatrix64F gradMatQ = matrixJacobianQ;
-            CommonOps.scale(scaling, statistics.getBranch().getRawVariance(), gradMatQ);
-
-            DenseMatrix64F Qi = statistics.getAbove().getRawPrecision();
-            DenseMatrix64F temp = matrix0;
-            CommonOps.mult(Qi, gradMatQ, temp);
-            CommonOps.mult(-1.0, temp, Qi, gradMatQ);
-
-            double[] gradVecQ = gradMatQ.getData();
+            DenseMatrix64F gradMatQInv = matrixJacobianQInv;
+            CommonOps.scale(scaling, statistics.getBranch().getRawVariance(), gradMatQInv);
 
             double[] gradient = new double[1];
-            for (int i = 0; i < gradVecQ.length; i++) {
-                gradient[0] += gradVecQ[i] * gradQ.get(i);
+            for (int i = 0; i < gradMatQInv.getNumElements(); i++) {
+                gradient[0] += gradMatQInv.get(i) * gradQInv.get(i);
             }
 
             // n_i w.r.t. rate
@@ -228,7 +230,7 @@ public interface ContinuousTraitGradientForBranch {
 
         @Override
         public double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
-                                      DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+                                      DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
 
             return new double[1];
 
@@ -236,9 +238,6 @@ public interface ContinuousTraitGradientForBranch {
     }
 
     class ContinuousProcessParameterGradient extends Default {
-        final DenseMatrix64F matrixJacobianQ;
-        final DenseMatrix64F matrixJacobianN;
-        final DenseMatrix64F matrix0;
 
         ContinuousDataLikelihoodDelegate likelihoodDelegate;
         ContinuousDiffusionIntegrator cdi;
@@ -256,9 +255,6 @@ public interface ContinuousTraitGradientForBranch {
             this.diffusionProcessDelegate = likelihoodDelegate.getDiffusionProcessDelegate();
             this.derivationParameter = derivationParameter;
 
-            matrixJacobianQ = new DenseMatrix64F(dim, dim);
-            matrixJacobianN = new DenseMatrix64F(dim, 1);
-            matrix0 = new DenseMatrix64F(dim, dim);
         }
 
         @Override
@@ -268,75 +264,31 @@ public interface ContinuousTraitGradientForBranch {
 
         @Override
         public int getDimension() {
-            return dim * dim;
-        }
-
-        public enum DerivationParameter {
-            WRT_VARIANCE {
-                public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi,
-                                                     BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-                    cdi.getVariancePreOrderDerivative(statistics, gradientQ);
-                }
-            },
-            WRT_DRIFT {
-                @Override
-                public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-                    throw new RuntimeException("not yet implemented");
-                }
-            },
-            WRT_SELECTION_STRENGTH {
-                @Override
-                public void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ) {
-                    throw new RuntimeException("not yet implemented");
-                }
-            };
-
-            abstract void preOrderGradientVariance(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics, DenseMatrix64F gradientQ);
-
+            return derivationParameter.getDimension(dim);
         }
 
         @Override
         public double[] chainRule(BranchSufficientStatistics statistics, NodeRef node,
-                                  DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+                                  DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
 
-            derivationParameter.preOrderGradientVariance(cdi, statistics, gradQ);
+//            cdi.getVariancePreOrderDerivative(statistics, gradQ);
+            removeMissing(gradQInv, statistics.getMissing());
 
-            removeMissing(gradQ, statistics.getMissing());
-
-            diffusionProcessDelegate.getGradientVariance(node, cdi, likelihoodDelegate, gradQ);
-
-            if (DEBUG) {
-                System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQ));
-            }
-
-            return gradQ.getData();
+            return derivationParameter.chainRule(
+                    cdi, diffusionProcessDelegate, likelihoodDelegate,
+                    statistics, node, gradQInv, gradN);
 
         }
 
         @Override
         public double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
-                                      DenseMatrix64F gradQ, DenseMatrix64F gradN) {
+                                      DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
 
-            return chainRule(statistics, node, gradQ, gradN);
+            return derivationParameter.chainRuleRoot(
+                    cdi, diffusionProcessDelegate, likelihoodDelegate,
+                    statistics, node, gradQInv, gradN);
 
         }
-
-
-//        private int getPreOrderPartialIndex(NodeRef node) {
-//            return likelihoodDelegate.getPartialBufferCount() + node.getNumber();
-//        }
-
-//        private int getActiveMatrixIndex(NodeRef node) {
-//            return likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
-//        }
-
-//        private double getScalarNode(NodeRef node) {
-//            if (tree.isRoot(node)) {
-//                return 1.0 / likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
-//            } else {
-//                return cdi.getBranchLength(getActiveMatrixIndex(node));
-//            }
-//        }
 
         private void removeMissing(DenseMatrix64F M, int[] missing) {
             for (int m : missing) {
@@ -345,6 +297,103 @@ public interface ContinuousTraitGradientForBranch {
                     M.unsafe_set(j, m, 0.0);
                 }
             }
+        }
+
+        public enum DerivationParameter {
+            WRT_VARIANCE {
+                @Override
+                public double[] chainRule(ContinuousDiffusionIntegrator cdi,
+                                          DiffusionProcessDelegate diffusionProcessDelegate,
+                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                          BranchSufficientStatistics statistics, NodeRef node,
+                                          DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+
+                    diffusionProcessDelegate.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradQInv);
+
+                    if (DEBUG) {
+                        System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQInv));
+                    }
+
+                    return gradQInv.getData();
+
+                }
+
+                @Override
+                public double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                              DiffusionProcessDelegate diffusionProcessDelegate,
+                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                              BranchSufficientStatistics statistics, NodeRef node,
+                                              DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+
+                    return chainRule(cdi, diffusionProcessDelegate, likelihoodDelegate, statistics, node, gradQInv, gradN);
+
+                }
+
+                @Override
+                public int getDimension(int dim) {
+                    return dim * dim;
+                }
+            },
+            WRT_DRIFT {
+                @Override
+                public double[] chainRule(ContinuousDiffusionIntegrator cdi,
+                                          DiffusionProcessDelegate diffusionProcessDelegate,
+                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                          BranchSufficientStatistics statistics, NodeRef node,
+                                          DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+                    throw new RuntimeException("not yet implemented");
+                }
+
+                @Override
+                public double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                              DiffusionProcessDelegate diffusionProcessDelegate,
+                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                              BranchSufficientStatistics statistics, NodeRef node,
+                                              DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+                    throw new RuntimeException("not yet implemented");
+                }
+
+                @Override
+                public int getDimension(int dim) {
+                    return dim;
+                }
+            },
+            WRT_DIAGONAL_SELECTION_STRENGTH {
+                @Override
+                public double[] chainRule(ContinuousDiffusionIntegrator cdi,
+                                          DiffusionProcessDelegate diffusionProcessDelegate,
+                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                          BranchSufficientStatistics statistics, NodeRef node,
+                                          DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+                    throw new RuntimeException("not yet implemented");
+                }
+
+                @Override
+                public double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                              DiffusionProcessDelegate diffusionProcessDelegate,
+                                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                              BranchSufficientStatistics statistics, NodeRef node,
+                                              DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
+                    throw new RuntimeException("not yet implemented");
+                }
+
+                @Override
+                public int getDimension(int dim) {
+                    return dim;
+                }
+            };
+
+            abstract double[] chainRule(ContinuousDiffusionIntegrator cdi,
+                                        DiffusionProcessDelegate diffusionProcessDelegate,
+                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                        BranchSufficientStatistics statistics, NodeRef node, DenseMatrix64F gradQInv, DenseMatrix64F gradN);
+
+            abstract double[] chainRuleRoot(ContinuousDiffusionIntegrator cdi,
+                                            DiffusionProcessDelegate diffusionProcessDelegate,
+                                            ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                            BranchSufficientStatistics statistics, NodeRef node, DenseMatrix64F gradQInv, DenseMatrix64F gradN);
+
+            abstract int getDimension(int dim);
         }
     }
 

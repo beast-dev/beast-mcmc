@@ -70,7 +70,7 @@ public interface DiffusionProcessDelegate extends Model {
 
     boolean isIntegratedProcess();
 
-    void getGradientVariance(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
+    void getGradientVarianceWrtVariance(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
 
     void storeState();
 

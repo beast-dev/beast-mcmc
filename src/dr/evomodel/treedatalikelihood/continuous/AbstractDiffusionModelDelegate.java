@@ -205,14 +205,14 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public void getGradientVariance(NodeRef node,
-                                    ContinuousDiffusionIntegrator cdi,
-                                    ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                    DenseMatrix64F gradient) {
-        getGradientVariance(getScalarNode(node, cdi, likelihoodDelegate), gradient);
+    public void getGradientVarianceWrtVariance(NodeRef node,
+                                               ContinuousDiffusionIntegrator cdi,
+                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                               DenseMatrix64F gradient) {
+        getGradientVarianceWrtVariance(getScalarNode(node, cdi, likelihoodDelegate), gradient);
     }
 
-    private void getGradientVariance(double scalar, DenseMatrix64F gradient) {
+    private void getGradientVarianceWrtVariance(double scalar, DenseMatrix64F gradient) {
         if (scalar == 0.0) {
             for (int i = 0; i < gradient.getNumElements(); i++) {
                 gradient.set(i, 0.0);

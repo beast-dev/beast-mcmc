@@ -25,10 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
@@ -125,9 +123,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     int getDimProcess();
 
-    void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+//    void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
 
-    void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+//    void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
 
     class Basic implements ContinuousDiffusionIntegrator {
 
@@ -970,13 +968,13 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             return sb.toString();
         }
 
-        public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
-            throw new RuntimeException("Not implemented for unsafe integrators.");
-        }
-
-        public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
-            throw new RuntimeException("Not implemented for unsafe integrators.");
-        }
+//        public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//            throw new RuntimeException("Not implemented for unsafe integrators.");
+//        }
+//
+//        public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//            throw new RuntimeException("Not implemented for unsafe integrators.");
+//        }
 
         private static boolean DEBUG = false;
     }

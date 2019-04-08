@@ -485,7 +485,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                             final double functionalStepSize) throws NumericInstabilityException;
 
         void updatePosition(final double[] position,
-                            final ReadableVector momentum,
+                            final WrappedVector momentum,
                             final double functionalStepSize);
 
         void setParameter(double[] position);
@@ -549,7 +549,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
-            public void updatePosition(double[] position, ReadableVector momentum,
+            public void updatePosition(double[] position, WrappedVector momentum,
                                        double functionalStepSize) {
 
                 final int dim = momentum.getDim();

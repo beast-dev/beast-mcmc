@@ -81,17 +81,13 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         @Override
-        public void updatePosition(double[] position, ReadableVector momentum,
+        public void updatePosition(double[] position, WrappedVector momentum,
                                    double functionalStepSize) {
 
-            WrappedVector updatedMomentum = new WrappedVector.Raw(new double[momentum.getDim()]);
-            for (int i = 0; i < momentum.getDim(); i++) {
-                updatedMomentum.set(i, momentum.get(i));
-            }
             double collapsedTime = 0.0;
             while (collapsedTime < functionalStepSize) {
-                ReflectionEvent event = nextEvent(position, updatedMomentum, functionalStepSize - collapsedTime);
-                event.doReflection(position, updatedMomentum);
+                ReflectionEvent event = nextEvent(position, momentum, functionalStepSize - collapsedTime);
+                event.doReflection(position, momentum);
                 collapsedTime += event.getEventTime();
             }
         }

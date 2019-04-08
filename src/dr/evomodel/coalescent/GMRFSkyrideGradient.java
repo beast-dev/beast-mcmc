@@ -82,7 +82,14 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         @Override
         public double evaluate(double[] argument) {
 
-            wrtParameter.update(nodeHeightTransform, argument);
+            if (nodeHeightTransform != null) {
+                wrtParameter.update(nodeHeightTransform, argument);
+            } else {
+                for (int i = 0; i < parameter.getDimension(); i++) {
+                    parameter.setParameterValueQuietly(i, argument[i]);
+                }
+                parameter.fireParameterChangedEvent();
+            }
 
             skyrideLikelihood.makeDirty();
             return skyrideLikelihood.getLogLikelihood();
@@ -154,9 +161,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
 
             @Override
             void update(NodeHeightTransform nodeHeightTransform, double[] values) {
-                if (nodeHeightTransform != null) {
-                    nodeHeightTransform.transform(values);
-                }
+                nodeHeightTransform.transform(values);
             }
         };
 

@@ -325,13 +325,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
         assert (stationaryVariances != null);
 
-        final int offset = dimTrait * dimTrait * precisionIndex;
-
-        double[] buffer = new double[dimTrait * dimTrait];
-
-        System.arraycopy(stationaryVariances, offset, buffer, 0, dimTrait * dimTrait);
-
-        return buffer;
+        return getMatrixProcess(precisionIndex, stationaryVariances);
     }
 
     @Override

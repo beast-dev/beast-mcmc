@@ -365,7 +365,17 @@ public interface ContinuousTraitGradientForBranch {
                                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                           BranchSufficientStatistics statistics, NodeRef node,
                                           DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
-                    throw new RuntimeException("not yet implemented");
+
+                    DenseMatrix64F gradQInvDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientVarianceWrtAttenuation(node, cdi, statistics, gradQInv);
+
+                    if (DEBUG) {
+                        System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQInv));
+                    }
+
+//                    DenseMatrix64F gradNDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientDisplacementWrtAttenuation(node, cdi, statistics, gradN);
+
+
+                    return gradQInvDiag.getData();
                 }
 
                 @Override
@@ -374,7 +384,7 @@ public interface ContinuousTraitGradientForBranch {
                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                               BranchSufficientStatistics statistics, NodeRef node,
                                               DenseMatrix64F gradQInv, DenseMatrix64F gradN) {
-                    throw new RuntimeException("not yet implemented");
+                    return new double[likelihoodDelegate.getTraitDim()];
                 }
 
                 @Override

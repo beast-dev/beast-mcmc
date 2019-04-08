@@ -102,6 +102,24 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //        return true;
 //    }
 
+    public double[] getVariance(int precisionIndex) {
+
+        assert (inverseDiffusions != null);
+
+        return getMatrixProcess(precisionIndex, inverseDiffusions);
+    }
+
+    double[] getMatrixProcess(int precisionIndex, double[] matrixProcess) {
+
+        final int offset = dimTrait * dimTrait * precisionIndex;
+
+        double[] buffer = new double[dimTrait * dimTrait];
+
+        System.arraycopy(matrixProcess, offset, buffer, 0, dimTrait * dimTrait);
+
+        return buffer;
+    }
+
     @Override
     public void updatePreOrderPartial(
             final int kBuffer, // parent

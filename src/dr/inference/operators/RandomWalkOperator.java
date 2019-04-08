@@ -159,7 +159,10 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
         double newValue = value;
 
-        if (value < lower) {
+        if (upper == lower) {
+            newValue = upper;
+        }
+        else if (value < lower) {
             if (Double.isInfinite(upper)) {
                 // we are only going to reflect once as the upper bound is at infinity...
                 newValue = lower + (lower - value);

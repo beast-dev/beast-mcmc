@@ -67,6 +67,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     //    public static final String POPULATION_TREE = "populationTree";
     //    public static final String POPULATION_FACTOR = "factor";
     protected MultiLociTreeSet treesSet = null;
+    protected boolean buildIntervalNodeMapping = false;
 
     public enum CoalescentEventType {
         /**
@@ -109,6 +110,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     }
 
     public OldAbstractCoalescentLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
+        this(name, tree, demoModel, setupIntervals, false);
+    }
+
+    public OldAbstractCoalescentLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals,
+                                           boolean buildIntervalNodeMapping) {
         super(name);
 
         this.demoModel = demoModel;
@@ -122,6 +128,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             addModel(demoModel);
         }
 
+        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
         if (setupIntervals) setupIntervals();
 
         addStatistic(new DeltaStatistic());
@@ -412,7 +419,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             lineageCounts = new int[maxIntervalCount];
             storedIntervals = new double[maxIntervalCount];
             storedLineageCounts = new int[maxIntervalCount];
-            intervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount(), tree);
+            if (buildIntervalNodeMapping) {
+                intervalNodeMapping = new IntervalNodeMapping.Default(tree.getNodeCount(), tree);
+            } else {
+                intervalNodeMapping = new IntervalNodeMapping.None();
+            }
         }
 
         XTreeIntervals ti = new XTreeIntervals(intervals, lineageCounts);
@@ -494,10 +505,12 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             private int nIntervals;
             private Tree tree;
 
+            private final int maxIndicesPerNode = 3;
+
             public Default (int maxIntervalCount, Tree tree) {
-                nodeNumbersInIntervals = new int[2 * maxIntervalCount];
+                nodeNumbersInIntervals = new int[maxIndicesPerNode * maxIntervalCount];
                 intervalStartIndices = new int[maxIntervalCount];
-                intervalNumberOfNodes = new int[2 * maxIntervalCount];
+                intervalNumberOfNodes = new int[maxIndicesPerNode * maxIntervalCount];
                 this.tree = tree;
             }
 
@@ -507,13 +520,30 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             }
 
             private void mapNodeInterval(int nodeNumber, int intervalNumber) {
-                if (intervalNumberOfNodes[2 * nodeNumber] == -1 || intervalNumberOfNodes[2 * nodeNumber] == intervalNumber) {
-                    intervalNumberOfNodes[2 * nodeNumber] = intervalNumber;
-                } else if (intervalNumberOfNodes[2 * nodeNumber + 1] == -1) {
-                    intervalNumberOfNodes[2 * nodeNumber + 1] = intervalNumber;
-                } else {
-                    throw new RuntimeException("The node appears in more than two intervals!");
+                int index = 0;
+                while(index < maxIndicesPerNode) {
+                    if (intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + index] == -1) {
+                        intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + index] = intervalNumber;
+                        break;
+                    } else {
+                        index++;
+                    }
                 }
+                if (index == maxIndicesPerNode) {
+                    throw new RuntimeException("The node appears in more than" + maxIndicesPerNode + " intervals!");
+                }
+//                if (intervalNumberOfNodes[maxIndicesPerNode * nodeNumber] == -1 || intervalNumberOfNodes[maxIndicesPerNode * nodeNumber] == intervalNumber) {
+//                    intervalNumberOfNodes[3 * nodeNumber] = intervalNumber;
+//                } else if (intervalNumberOfNodes[2 * nodeNumber + 1] == -1) {
+//                    intervalNumberOfNodes[3 * nodeNumber + 1] = intervalNumber;
+//                } else {
+//                    double[] testIntervals = new double[nIntervals];
+//                    for (int i = 0; i < nIntervals - 1; i++) {
+//                        testIntervals[i] = tree.getNodeHeight(tree.getNode(nodeNumbersInIntervals[intervalStartIndices[i + 1]]))
+//                                - tree.getNodeHeight(tree.getNode(nodeNumbersInIntervals[intervalStartIndices[i]]));
+//                    }
+//                    throw new RuntimeException("The node appears in more than two intervals!");
+//                }
             }
 
             public void setIntervalStartIndices(int intervalCount) {
@@ -556,11 +586,20 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
             @Override
             public int[] getIntervalsForNode(int nodeNumber) {
-                if(intervalNumberOfNodes[2 * nodeNumber + 1] == -1) {
-                    return new int[]{intervalNumberOfNodes[2 * nodeNumber]};
-                } else {
-                    return new int[]{intervalNumberOfNodes[2 * nodeNumber], intervalNumberOfNodes[2 * nodeNumber + 1]};
+                int nonZeros = 0;
+                while(intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + nonZeros] != -1) {
+                    nonZeros++;
                 }
+                int[] result = new int[nonZeros];
+                for(int i = 0; i < nonZeros; i++) {
+                    result[i] = intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + i];
+                }
+                return result;
+//                if(intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + 1] == -1) {
+//                    return new int[]{intervalNumberOfNodes[maxIndicesPerNode * nodeNumber]};
+//                } else {
+//                    return new int[]{intervalNumberOfNodes[maxIndicesPerNode * nodeNumber], intervalNumberOfNodes[maxIndicesPerNode * nodeNumber + 1]};
+//                }
             }
 
             @Override
@@ -575,7 +614,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                     endIndex = intervalStartIndices[interval + 1] - 1;
                 }
 
+                if (endIndex - startIndex + 1 < 0) {
+                    System.err.println("Here");
+                }
                 int[] nodeNumbers = new int[endIndex - startIndex + 1];
+
                 for (int i = 0; i < endIndex - startIndex + 1; i++) {
                     nodeNumbers[i] = nodeNumbersInIntervals[startIndex + i];
                 }
@@ -601,7 +644,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
         class None implements IntervalNodeMapping {
 
             @Override
-            public void addNode(int nodeNumbe) {
+            public void addNode(int nodeNumber) {
                 // Do nothing
             }
 
@@ -675,12 +718,15 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 intervalNodeMapping.addNode(nodeNumbers.get(indices[i]));
             }
             //System.out.println("time = " + finish + " removed = " + lineagesRemoved + " added = " + lineagesAdded);
+
+            boolean doubleCounted = false;
             if (lineagesAdded > 0) {
 
                 if (intervalCount > 0 || ((finish - start) > MULTIFURCATION_LIMIT)) {
                     intervals[intervalCount] = finish - start;
                     lineageCounts[intervalCount] = numLines;
                     intervalCount += 1;
+                    doubleCounted = true;
                 }
 
                 start = finish;
@@ -694,6 +740,10 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 lineageCounts[intervalCount] = numLines;
                 intervalCount += 1;
                 start = finish;
+
+                if (doubleCounted) {
+                    intervalNodeMapping.addNode(nodeNumbers.get(indices[i]));
+                }
             }
             // coalescent event
             numLines -= lineagesRemoved;

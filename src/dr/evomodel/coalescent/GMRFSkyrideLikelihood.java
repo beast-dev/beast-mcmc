@@ -151,6 +151,8 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
             throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
         }
 
+        this.buildIntervalNodeMapping = buildIntervalNodeMapping;
+
         // Field length must be set by this point
         wrapSetupIntervals();
         coalescentIntervals = new double[fieldLength];
@@ -276,14 +278,18 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
             length += getInterval(i);
             weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
 
-            int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
-            for (int j = 0; j < nodeNumbers.length - 1; j++) {
-                coalesentIntervalNodeMapping.addNode(nodeNumbers[j]);
+            int lastNodeNumber = -1;
+            if (buildIntervalNodeMapping) {
+                int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
+                for (int j = 0; j < nodeNumbers.length - 1; j++) {
+                    coalesentIntervalNodeMapping.addNode(nodeNumbers[j]);
+                }
+                lastNodeNumber = nodeNumbers[nodeNumbers.length - 1];
             }
             if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                 coalescentIntervals[index] = length;
                 sufficientStatistics[index] = weight / 2.0;
-                coalesentIntervalNodeMapping.addNode(nodeNumbers[nodeNumbers.length - 1]);
+                coalesentIntervalNodeMapping.addNode(lastNodeNumber);
                 index++;
                 length = 0;
                 weight = 0;

@@ -154,7 +154,9 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
 
             @Override
             void update(NodeHeightTransform nodeHeightTransform, double[] values) {
-                nodeHeightTransform.transform(values);
+                if (nodeHeightTransform != null) {
+                    nodeHeightTransform.transform(values);
+                }
             }
         };
 

@@ -614,9 +614,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                     endIndex = intervalStartIndices[interval + 1] - 1;
                 }
 
-                if (endIndex - startIndex + 1 < 0) {
-                    System.err.println("Here");
-                }
                 int[] nodeNumbers = new int[endIndex - startIndex + 1];
 
                 for (int i = 0; i < endIndex - startIndex + 1; i++) {

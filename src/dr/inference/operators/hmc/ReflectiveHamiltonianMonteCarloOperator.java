@@ -44,19 +44,20 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     private final GraphicalParameterBound treeParameterBound;
 
 
-    ReflectiveHamiltonianMonteCarloOperator(AdaptationMode mode,
-                                            double weight,
-                                            GradientWrtParameterProvider gradientProvider,
-                                            Parameter parameter,
-                                            Transform transform,
-                                            Parameter maskParameter,
-                                            Options runtimeOptions,
-                                            MassPreconditioner.Type preconditioningType,
-                                            GraphicalParameterBound graphicalParameterBound) {
+    public ReflectiveHamiltonianMonteCarloOperator(AdaptationMode mode,
+                                                   double weight,
+                                                   GradientWrtParameterProvider gradientProvider,
+                                                   Parameter parameter,
+                                                   Transform transform,
+                                                   Parameter maskParameter,
+                                                   Options runtimeOptions,
+                                                   MassPreconditioner.Type preconditioningType,
+                                                   GraphicalParameterBound graphicalParameterBound) {
 
         super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioningType);
 
         this.treeParameterBound = graphicalParameterBound;
+        this.leapFrogEngine = constructLeapFrogEngine(transform);
     }
 
     @Override
@@ -90,6 +91,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                 event.doReflection(position, momentum);
                 collapsedTime += event.getEventTime();
             }
+            setParameter(position);
         }
 
         private ReflectionEvent nextEvent(double[] position, WrappedVector momentum, double intervalLength) {
@@ -99,7 +101,13 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         private boolean isReflected(double position, double intendedNewPosition, double bound) {
-            return (position > bound) ? (intendedNewPosition <= bound) : (intendedNewPosition >= bound);
+            if (position > bound) {
+                return intendedNewPosition <= bound;
+            } else if (position < bound) {
+                return intendedNewPosition >= bound;
+            } else {
+                return false;
+            }
         }
 
         private boolean isCollision(double position1, double intendedPosition1,
@@ -127,7 +135,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                     if (j > i) {
                         final double velocity2 = preconditioning.getVelocity(j, momentum);
                         if (isCollision(position[i], intendedNewPosition[i], position[j], intendedNewPosition[j])) {
-                            final double collisionTime = (position[i] - position[j]) / (velocity1 - velocity2);
+                            final double collisionTime = (position[j] - position[i]) / (velocity1 - velocity2);
                             if (collisionTime < firstCollisionTime) {
                                 firstCollisionTime = collisionTime;
                                 index1 = i;
@@ -233,8 +241,16 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum, int[] indices, double time) {
                 updatePosition(position, preconditioning, momentum, time);
                 ReadableVector updatedMomentum = preconditioning.doCollision(indices, momentum);
+
+                double averagePosition = 0.0;
                 for (int index : indices) {
                     momentum.set(index, updatedMomentum.get(index));
+                    averagePosition += position[index];
+                }
+
+                averagePosition = averagePosition / ((double) indices.length);
+                for (int index : indices) {
+                    position[index] = averagePosition;
                 }
             }
         },

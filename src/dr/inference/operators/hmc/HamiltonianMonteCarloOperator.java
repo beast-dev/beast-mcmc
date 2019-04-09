@@ -50,7 +50,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
-    final LeapFrogEngine leapFrogEngine;
+    protected LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
     private final Options runtimeOptions;

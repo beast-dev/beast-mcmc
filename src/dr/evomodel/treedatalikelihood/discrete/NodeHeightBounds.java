@@ -27,7 +27,6 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 
@@ -39,15 +38,14 @@ public class NodeHeightBounds implements GraphicalParameterBound {
 
     final Parameter nodeHeight;
     final TreeModel treeModel;
-    final private TreeParameterModel nodeHeightModel;
+    final private int externalNodeCount;
 
     public NodeHeightBounds(Parameter nodeHeight,
                             TreeModel treeModel) {
 
         this.nodeHeight = nodeHeight;
         this.treeModel = treeModel;
-
-        this.nodeHeightModel = new TreeParameterModel(treeModel, nodeHeight, true);
+        this.externalNodeCount = treeModel.getExternalNodeCount();
 
     }
 
@@ -58,32 +56,32 @@ public class NodeHeightBounds implements GraphicalParameterBound {
 
     @Override
     public int[] getConnectedParameterIndices(int index) {
-        NodeRef nodeRef = treeModel.getNode(index);
+        NodeRef nodeRef = treeModel.getNode(index + externalNodeCount);
         int nodeCount = 0;
         for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
-            if (treeModel.isExternal(treeModel.getChild(nodeRef, i))) {
+            if (!treeModel.isExternal(treeModel.getChild(nodeRef, i))) {
                 nodeCount++;
             }
         }
-        if (treeModel.isRoot(nodeRef)) {
+        if (!treeModel.isRoot(nodeRef)) {
             nodeCount++;
         }
         int[] connectedIndices = new int[nodeCount];
         for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
             NodeRef childNode = treeModel.getChild(nodeRef, i);
             if (!treeModel.isExternal(childNode)) {
-                connectedIndices[i] = childNode.getNumber();
+                connectedIndices[i] = childNode.getNumber() - externalNodeCount;
             }
         }
         if (!treeModel.isRoot(nodeRef)) {
-            connectedIndices[nodeCount - 1] = treeModel.getParent(nodeRef).getNumber();
+            connectedIndices[nodeCount - 1] = treeModel.getParent(nodeRef).getNumber() - externalNodeCount;
         }
         return connectedIndices;
     }
 
     @Override
     public double getFixedLowerBound(int index) {
-        NodeRef nodeRef = treeModel.getNode(index);
+        NodeRef nodeRef = treeModel.getNode(index + externalNodeCount);
         double lowerBound = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
             NodeRef childNode = treeModel.getChild(nodeRef, i);

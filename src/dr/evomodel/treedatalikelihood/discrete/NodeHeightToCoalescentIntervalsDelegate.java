@@ -198,7 +198,9 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
                 upperBounds[dim - 1] = Double.POSITIVE_INFINITY;
                 for (int i = dim - 2; i > -1; i--) {
                     int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i + 1);
-                    final double currentIncrease = tree.getNodeHeight(tree.getNode(nodeNumbers[1])) - tree.getNodeHeight(tree.getNode(nodeNumbers[0]));
+                    final double currentIncrease = nodeNumbers.length > 1 ?
+                            tree.getNodeHeight(tree.getNode(nodeNumbers[1])) - tree.getNodeHeight(tree.getNode(nodeNumbers[0])) :
+                            Double.POSITIVE_INFINITY;
                     if (maxIncrease > currentIncrease) {
                         maxIncrease = currentIncrease;
                     }
@@ -208,8 +210,10 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
                 double maxDecrease = Double.POSITIVE_INFINITY;
                 for (int i = dim - 1; i > -1; i--) {
                     int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
-                    final double currentDecrease = tree.getNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 1]))
-                            - tree.getNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 2]));
+                    final double currentDecrease = nodeNumbers.length > 1 ?
+                            tree.getNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 1]))
+                            - tree.getNodeHeight(tree.getNode(nodeNumbers[nodeNumbers.length - 2])) :
+                            Double.POSITIVE_INFINITY;
                     if (maxDecrease > currentDecrease) {
                         maxDecrease = currentDecrease;
                     }

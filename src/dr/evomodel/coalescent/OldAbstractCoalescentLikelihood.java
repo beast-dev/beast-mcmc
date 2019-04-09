@@ -738,7 +738,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 intervalCount += 1;
                 start = finish;
 
-                if (doubleCounted) {
+                if (doubleCounted || intervalCount == 1) {
                     intervalNodeMapping.addNode(nodeNumbers.get(indices[i]));
                 }
             }

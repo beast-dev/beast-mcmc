@@ -26,6 +26,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
@@ -33,6 +34,7 @@ import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -49,6 +51,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String MODE = "mode";
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
+    private final static String REFLECTIVE = "reflective";
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
@@ -69,6 +72,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         int mode = 0;
         if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(NUTS) == 0) {
             mode = 1;
+        } else if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(REFLECTIVE) == 0) {
+            mode = 2;
         }
         return mode;
     }
@@ -138,14 +143,20 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 maxIterations, reductionFactor
         );
 
+        GraphicalParameterBound graphicalParameterBound = (GraphicalParameterBound) xo.getChild(GraphicalParameterBound.class);
+
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                     parameter, transform, mask,
                     runtimeOptions, preconditioningType);
-        } else {
+        } else if (runMode == 1) {
             return new NoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
                     stepSize, nSteps);
+        } else {
+            return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
+                    parameter, transform, mask,
+                    runtimeOptions, preconditioningType, graphicalParameterBound);
         }
     }
 

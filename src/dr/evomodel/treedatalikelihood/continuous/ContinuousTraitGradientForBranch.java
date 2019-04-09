@@ -372,8 +372,9 @@ public interface ContinuousTraitGradientForBranch {
                         System.err.println("gradQ = " + NormalSufficientStatistics.toVectorizedString(gradQInv));
                     }
 
-//                    DenseMatrix64F gradNDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientDisplacementWrtAttenuation(node, cdi, statistics, gradN);
+                    DenseMatrix64F gradNDiag = ((OUDiffusionModelDelegate) diffusionProcessDelegate).getGradientDisplacementWrtAttenuation(node, cdi, statistics, gradN);
 
+                    CommonOps.addEquals(gradQInvDiag, gradNDiag);
 
                     return gradQInvDiag.getData();
                 }

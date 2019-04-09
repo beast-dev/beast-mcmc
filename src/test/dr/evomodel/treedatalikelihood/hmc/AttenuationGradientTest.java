@@ -99,18 +99,12 @@ public class AttenuationGradientTest extends TraceCorrelationAssert {
 
         // Data
         Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{0, 0, 0, 0, 0, 0});
-        dataTraits[1] = new Parameter.Default("chimp", new double[]{0, 0, 0, 0, 0, 0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0, 0, 0, 0, 0, 0});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{0, 0, 0, 0, 0, 0});
-        dataTraits[4] = new Parameter.Default("orangutan", new double[]{0, 0, 0, 0, 0, 0});
-        dataTraits[5] = new Parameter.Default("siamang", new double[]{0, 0, 0, 0, 0, 0});
-//        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0, 4.0, 5.0, -6.0});
-//        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0, 16.0, 18.0, 20.0});
-//        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5, -5.2, 3.1, 1.1});
-//        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0, -4.0, 3.2, 3.4});
-//        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5, 2.4, -4.2, 6.0});
-//        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
+        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0, 4.0, 5.0, -6.0});
+        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0, 16.0, 18.0, 20.0});
+        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5, -5.2, 3.1, 1.1});
+        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0, -4.0, 3.2, 3.4});
+        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5, 2.4, -4.2, 6.0});
+        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
         CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
 
         List<Integer> missingIndices = new ArrayList<Integer>();
@@ -145,7 +139,7 @@ public class AttenuationGradientTest extends TraceCorrelationAssert {
         String s = "<beast>\n" +
                 "    <conjugateRootPrior>\n" +
                 "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"0.0 0.0 0.0 0.0 0.0 0.0\"/>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5 -2.5 1.3 4.0\"/>\n" +
                 "        </meanParameter>\n" +
                 "        <priorSampleSize>\n" +
                 "            <parameter id=\"sampleSizeRoot\" value=\"" + rootVal + "\"/>\n" +
@@ -176,12 +170,12 @@ public class AttenuationGradientTest extends TraceCorrelationAssert {
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{0})));
-        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{0})));
-        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{0})));
-        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.4", new double[]{0})));
-        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.5", new double[]{0})));
-        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.4", new double[]{1.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.5", new double[]{2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{-2.0})));
 
         DiagonalMatrix strengthOfSelectionMatrixParam
                 = new DiagonalMatrix(new Parameter.Default(new double[]{0.1, 0.5, 1.0, 5.0, 10.0, 50.0}));

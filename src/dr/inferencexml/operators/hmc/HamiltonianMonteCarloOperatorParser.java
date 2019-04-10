@@ -26,15 +26,13 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -143,21 +141,23 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 maxIterations, reductionFactor
         );
 
-        GraphicalParameterBound graphicalParameterBound = (GraphicalParameterBound) xo.getChild(GraphicalParameterBound.class);
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode);
+    }
 
+    protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
+                                                    Parameter parameter, Transform transform, Parameter mask,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    int runMode) {
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                     parameter, transform, mask,
                     runtimeOptions, preconditioningType);
-        } else if (runMode == 1) {
+        } else {
             return new NoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
-                    stepSize, nSteps);
-        } else {
-            return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
-                    parameter, transform, mask,
-                    runtimeOptions, preconditioningType, graphicalParameterBound);
+                    runtimeOptions);
         }
+
     }
 
     @Override
@@ -165,7 +165,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         return rules;
     }
 
-    private final XMLSyntaxRule[] rules = {
+    protected final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newIntegerRule(N_STEPS, true),
             AttributeRule.newDoubleRule(STEP_SIZE),

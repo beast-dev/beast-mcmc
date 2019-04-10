@@ -126,27 +126,32 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             final int dim = position.length;
             double[] intendedNewPosition = getIntendedPosition(position, momentum, intervalLength);
             double firstCollisionTime = intervalLength;
+            double collisionLocation = -1.0;
             ReflectionType type = ReflectionType.None;
             int index1 = -1;
             int index2 = -1;
             for (int i = 0; i < dim; i++) {
                 final double velocity1 = preconditioning.getVelocity(i, momentum);
-                for (int j : graphicalParameterBound.getConnectedParameterIndices(i)) {
-                    if (j > i) {
-                        final double velocity2 = preconditioning.getVelocity(j, momentum);
-                        if (isCollision(position[i], intendedNewPosition[i], position[j], intendedNewPosition[j])) {
-                            final double collisionTime = (position[j] - position[i]) / (velocity1 - velocity2);
-                            if (collisionTime < firstCollisionTime) {
-                                firstCollisionTime = collisionTime;
-                                index1 = i;
-                                index2 = j;
-                                type = ReflectionType.Collision;
+                int[] connectedParameterIndices = graphicalParameterBound.getConnectedParameterIndices(i);
+                if (connectedParameterIndices != null) {
+                    for (int j : graphicalParameterBound.getConnectedParameterIndices(i)) {
+                        if (j > i) {
+                            final double velocity2 = preconditioning.getVelocity(j, momentum);
+                            if (isCollision(position[i], intendedNewPosition[i], position[j], intendedNewPosition[j])) {
+                                final double collisionTime = (position[j] - position[i]) / (velocity1 - velocity2);
+                                if (collisionTime < firstCollisionTime) {
+                                    firstCollisionTime = collisionTime;
+                                    collisionLocation = collisionTime * velocity1 + position[i];
+                                    index1 = i;
+                                    index2 = j;
+                                    type = ReflectionType.Collision;
+                                }
                             }
                         }
                     }
                 }
             }
-            return new ReflectionEvent(type, firstCollisionTime, intervalLength, new int[]{index1, index2});
+            return new ReflectionEvent(type, firstCollisionTime, collisionLocation, intervalLength, new int[]{index1, index2});
         }
 
         private double[] getIntendedPosition(double[] position, ReadableVector momentum, double intervalLength) {
@@ -163,6 +168,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             final int dim = position.length;
             double[] intendedNewPosition = getIntendedPosition(position, momentum, intervalLength);
             double firstReflection = intervalLength;
+            double reflectionLocation = -1.0;
             ReflectionType type = ReflectionType.None;
             int reflectionIndex = -1;
             for (int i = 0; i < dim; i++) {
@@ -177,6 +183,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                         firstReflection = reflectionTime;
                         type = ReflectionType.Reflection;
                         reflectionIndex = i;
+                        reflectionLocation = upperBound;
                     }
                 } else if (isReflected(position[i], intendedNewPosition[i], lowerBound)) {
                     final double reflectionTime = (lowerBound - position[i]) / velocity;
@@ -186,10 +193,11 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                         firstReflection = reflectionTime;
                         type = ReflectionType.Reflection;
                         reflectionIndex = i;
+                        reflectionLocation = lowerBound;
                     }
                 }
             }
-            return new ReflectionEvent(type, firstReflection, intervalLength, new int[]{reflectionIndex});
+            return new ReflectionEvent(type, firstReflection, reflectionLocation, intervalLength, new int[]{reflectionIndex});
         }
 
 
@@ -198,20 +206,20 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     class ReflectionEvent {
         private final ReflectionType type;
         private final double eventTime;
+        private final double eventLocation;
         private final double intervalLength;
         private final int[] indices;
 
         ReflectionEvent(ReflectionType type,
                         double eventTime,
+                        double eventLocation,
                         double intervalLength,
                         int[] indices) {
-            if (eventTime > intervalLength) {
-                throw new RuntimeException("This should not happen.");
-            }
             this.type = type;
             this.eventTime = eventTime;
             this.intervalLength = intervalLength;
             this.indices = indices;
+            this.eventLocation = eventLocation;
         }
 
         public double getEventTime() {
@@ -223,7 +231,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         }
 
         public void doReflection(double[] position, WrappedVector momentum) {
-            type.doReflection(position, preconditioning, momentum, indices, eventTime);
+            type.doReflection(position, preconditioning, momentum, eventLocation, indices, eventTime);
         }
 
     }
@@ -231,32 +239,31 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     enum ReflectionType {
         Reflection {
             @Override
-            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum, int[] indices, double time) {
+            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
+                              double eventLocation, int[] indices, double time) {
                 updatePosition(position, preconditioning, momentum, time);
                 momentum.set(indices[0], -momentum.get(indices[0]));
+                position[indices[0]] = eventLocation;
             }
         },
         Collision {
             @Override
-            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum, int[] indices, double time) {
+            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
+                              double eventLocation, int[] indices, double time) {
                 updatePosition(position, preconditioning, momentum, time);
                 ReadableVector updatedMomentum = preconditioning.doCollision(indices, momentum);
 
-                double averagePosition = 0.0;
                 for (int index : indices) {
                     momentum.set(index, updatedMomentum.get(index));
-                    averagePosition += position[index];
+                    position[index] = eventLocation;
                 }
 
-                averagePosition = averagePosition / ((double) indices.length);
-                for (int index : indices) {
-                    position[index] = averagePosition;
-                }
             }
         },
         None {
             @Override
-            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum, int[] indices, double time) {
+            void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
+                              double eventLocation, int[] indices, double time) {
                 updatePosition(position, preconditioning, momentum, time);
             }
         };
@@ -268,7 +275,8 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             }
         }
 
-        abstract void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum, int[] indices, double time);
+        abstract void doReflection(double[] position, MassPreconditioner preconditioning, WrappedVector momentum,
+                                   double eventLocation, int[] indices, double time);
     }
 
 }

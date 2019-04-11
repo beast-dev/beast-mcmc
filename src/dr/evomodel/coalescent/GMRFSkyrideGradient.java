@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
@@ -37,7 +38,7 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Reportable {
+public class GMRFSkyrideGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     protected GMRFSkyrideLikelihood skyrideLikelihood;
     private WrtParameter wrtParameter;
@@ -118,6 +119,10 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         for (int i = 0; i < savedValues.length; ++i) {
             getParameter().setParameterValue(i, savedValues[i]);
         }
+        double[] testDiagonalHessian = NumericalDerivative.diagonalHessian(numeric1, getParameter().getParameterValues());
+        for (int i = 0; i < savedValues.length; ++i) {
+            getParameter().setParameterValue(i, savedValues[i]);
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
@@ -125,7 +130,22 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");
 
+        sb.append("analytic diagonal Hessian: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
+        sb.append("\n");
+        sb.append("numeric diagonal Hessian: ").append(new dr.math.matrixAlgebra.Vector(testDiagonalHessian));
+        sb.append("\n");
+
         return sb.toString();
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return new double[getDimension()];
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     public enum WrtParameter {
@@ -178,7 +198,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Report
             for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
                 if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
                     double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
-                    if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1) {
+                    if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1 && i < skyrideLikelihood.getIntervalCount() - 1) {
                         weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);
                     }
                     unSortedNodeHeightGradient[index] = weight / 2.0;

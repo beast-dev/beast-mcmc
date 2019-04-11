@@ -450,13 +450,13 @@ public class DataModelImporter {
                 while(attributeIterator.hasNext()){
                     String attributeName = attributeIterator.next();
                     if(!attributeMap.containsKey(attributeName)){
-                        attributeMap.put(attributeName,new HashSet<>());
+                        attributeMap.put(attributeName,new HashSet());
                     }
                    attributeMap.get(attributeName).add(taxon.getAttribute(attributeName));
                 }
             }
             // Now convert the map to the long form used in the dataModel
-            ArrayList<Map> taxaAttributes = new ArrayList<>();
+            ArrayList<Map> taxaAttributes = new ArrayList<Map>();
             for(Map.Entry<String,HashSet> attribute :attributeMap.entrySet()) {
                 Map thisAttribute =new HashMap();
                 thisAttribute.put("id",attribute.getKey());
@@ -541,7 +541,7 @@ public class DataModelImporter {
 
         //Add attributes if present
         Iterator<String> attributeIterator = taxon.getAttributeNames();
-        ArrayList<Map> attributes = new ArrayList<>();
+        ArrayList<Map> attributes = new ArrayList<Map>();
         while(attributeIterator.hasNext()){
             String attributeName = attributeIterator.next();
             Map attribute = new HashMap();

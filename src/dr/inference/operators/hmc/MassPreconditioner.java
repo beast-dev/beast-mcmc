@@ -335,6 +335,12 @@ public interface MassPreconditioner {
         }
 
         @Override
+        protected void initializeMass() {
+            super.initializeMass();
+            adaptiveDiagonal.update(new WrappedVector.Raw(inverseMass));
+        }
+
+        @Override
         protected double[] computeInverseMass() {
 
             if (variance.getUpdateCount() > minimumUpdates) {

@@ -143,6 +143,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
 
         if (shouldUpdatePreconditioning()) {
+            preconditioning.storeSecant(
+                    new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
+                    new WrappedVector.Raw(leapFrogEngine.getLastPosition())
+            );
             preconditioning.updateMass();
         }
 
@@ -440,24 +444,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         };
 
         abstract void checkValue(double x) throws NumericInstabilityException;
-    }
-
-    @Override
-    public void accept(double deviation) {
-
-        super.accept(deviation);
-        preconditioning.storeSecant(
-                new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
-                new WrappedVector.Raw(leapFrogEngine.getLastPosition())
-        );
-    }
-
-    @Override
-    public void reject() {
-        super.reject();
-        preconditioning.storeSecant(
-                new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
-                new WrappedVector.Raw(leapFrogEngine.getLastPosition()));
     }
 
     protected InstabilityHandler getDefaultInstabilityHandler() {

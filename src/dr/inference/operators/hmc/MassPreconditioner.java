@@ -327,6 +327,7 @@ public interface MassPreconditioner {
     class AdaptiveDiagonalPreconditioning extends DiagonalPreconditioning {
 
         private AdaptableVector.AdaptableVariance variance;
+        private final int minimumUpdates = 100;
 
         AdaptiveDiagonalPreconditioning(int dim, Transform transform) {
             super(dim, transform);
@@ -335,9 +336,11 @@ public interface MassPreconditioner {
 
         @Override
         protected double[] computeInverseMass() {
-            double[] newVariance = variance.getVariance();
 
-            adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+            if (variance.getUpdateCount() > minimumUpdates) {
+                double[] newVariance = variance.getVariance();
+                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+            }
 
             return normalizeVector(adaptiveDiagonal.getMean(), dim);
         }

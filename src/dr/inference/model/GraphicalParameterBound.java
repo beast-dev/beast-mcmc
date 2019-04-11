@@ -39,4 +39,34 @@ public interface GraphicalParameterBound {
 
     double getFixedUpperBound(int index);
 
+    class FixedBound implements GraphicalParameterBound {
+
+        private final Parameter parameter;
+        private final Bounds<Double> bounds;
+
+        public FixedBound(Parameter parameter) {
+            this.parameter = parameter;
+            this.bounds = parameter.getBounds();
+        }
+
+        @Override
+        public Parameter getParameter() {
+            return parameter;
+        }
+
+        @Override
+        public int[] getConnectedParameterIndices(int index) {
+            return null;
+        }
+
+        @Override
+        public double getFixedLowerBound(int index) {
+            return bounds.getLowerLimit(index);
+        }
+
+        @Override
+        public double getFixedUpperBound(int index) {
+            return bounds.getUpperLimit(index);
+        }
+    }
 }

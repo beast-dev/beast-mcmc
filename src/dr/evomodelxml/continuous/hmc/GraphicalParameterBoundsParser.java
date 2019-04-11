@@ -27,6 +27,7 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightBounds;
+import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -35,21 +36,27 @@ import dr.xml.*;
  * @author Xiang Ji
  */
 
-public class NodeHeightBoundsParser extends AbstractXMLObjectParser {
+public class GraphicalParameterBoundsParser extends AbstractXMLObjectParser {
 
-    public static final String NAME = "nodeHeightBounds";
+    public static final String NAME = "graphicalParameterBounds";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter nodeHeight = (Parameter) xo.getChild(Parameter.class);
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        return new NodeHeightBounds(nodeHeight, tree);
+        GraphicalParameterBound graphicalParameterBound;
+        if (tree != null) {
+            graphicalParameterBound = new NodeHeightBounds(parameter, tree);
+        } else {
+            graphicalParameterBound = new GraphicalParameterBound.FixedBound(parameter);
+        }
+        return graphicalParameterBound;
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(TreeModel.class),
+                new ElementRule(TreeModel.class, true),
                 new ElementRule(Parameter.class)
         };
     }
@@ -61,7 +68,7 @@ public class NodeHeightBoundsParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return NodeHeightBounds.class;
+        return GraphicalParameterBound.class;
     }
 
     @Override

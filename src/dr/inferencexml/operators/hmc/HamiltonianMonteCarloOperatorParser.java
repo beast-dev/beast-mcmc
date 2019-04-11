@@ -49,7 +49,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String MODE = "mode";
     private final static String NUTS = "nuts";
     private final static String VANILLA = "vanilla";
-    private final static String REFLECTIVE = "reflective";
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
@@ -70,8 +69,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         int mode = 0;
         if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(NUTS) == 0) {
             mode = 1;
-        } else if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(REFLECTIVE) == 0) {
-            mode = 2;
         }
         return mode;
     }

@@ -42,39 +42,51 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuous
 
 public abstract class AbstractContinuousExtensionDelegate {
 
-//    private final double[] sample;
+    final double[] sample;
+    final ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate;
+    final TreeTrait treeTrait;
+    final ContinuousTraitPartialsProvider partialsProvider;
+    final int dimTrait;
+    final int nTaxa;
 
-    AbstractContinuousExtensionDelegate(ProcessSimulationDelegate.AbstractContinuousTraitDelegate
-                                                treeSimulationDelegate) {
+    AbstractContinuousExtensionDelegate(
+            ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate,
+            String traitName
+    ) {
+
+
+        this.sample = new double[treeSimulationDelegate.dimTrait * treeSimulationDelegate.dimNode];
+        //TODO: implement for cases where the dimensionality of the extended sample is not the same as the dimensionality of the tree process (i.e. factors, repeated measurements)
+
+        this.treeSimulationDelegate = treeSimulationDelegate;
+        this.treeTrait = treeSimulationDelegate.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+        this.partialsProvider = treeSimulationDelegate.dataModel;
+        this.dimTrait = partialsProvider.getTraitDimension();
+        this.nTaxa = partialsProvider.getParameter().getParameterCount();
+
 
 
     }
 
+    public double[] getExtendedValues() {
+        return (double[]) treeTrait.getTrait(treeSimulationDelegate.tree, null);
+    }
 
-    public class MultivariateNormalExtensionDelegate extends AbstractContinuousExtensionDelegate {
 
-        private final ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate;
-        private final TreeTrait treeTrait;
-        private final ContinuousTraitPartialsProvider partialsProvider;
-        private final int dimTrait;
-        private final int nTaxa;
+    public static class MultivariateNormalExtensionDelegate extends AbstractContinuousExtensionDelegate {
 
-        MultivariateNormalExtensionDelegate(
+
+        public MultivariateNormalExtensionDelegate(
                 ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate,
-                String traitName,
-                ContinuousTraitPartialsProvider partialsProvider
-
+                String traitName
         ) {
-            super(treeSimulationDelegate);
+            super(treeSimulationDelegate, traitName);
 
-            this.treeSimulationDelegate = treeSimulationDelegate;
-            this.treeTrait = treeSimulationDelegate.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
-            this.partialsProvider = partialsProvider;
-            this.dimTrait = partialsProvider.getTraitDimension();
-            this.nTaxa = partialsProvider.getParameter().getParameterCount();
 
         }
 
+
+        @Override
         public double[] getExtendedValues() {
 
 

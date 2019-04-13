@@ -28,6 +28,9 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.AbstractContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -45,7 +48,7 @@ import java.util.List;
  * @author Gabriel Hassler
  */
 public class RepeatedMeasuresTraitDataModel extends
-        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider {
+        ContinuousTraitDataModel implements ModelExtensionProvider {
 
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
@@ -148,6 +151,12 @@ public class RepeatedMeasuresTraitDataModel extends
         }
     }
 
+    @Override
+    public AbstractContinuousExtensionDelegate getExtensionDelegate(ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate,
+                                                                    String traitName) {
+        return new AbstractContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(treeSimulationDelegate, traitName);
+    }
+
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
@@ -229,4 +238,6 @@ public class RepeatedMeasuresTraitDataModel extends
             }, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
     };
+
+
 }

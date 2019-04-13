@@ -2,9 +2,15 @@ package dr.inference.model;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.treedatalikelihood.ExtendedProcessSimulation;
+import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.preorder.AbstractContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.xml.*;
 
@@ -29,6 +35,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
                             Tree treeModel,
                             String id,
                             Parameter missingParameter,
+                            ProcessSimulation processSimulation,
                             Boolean useTreeTraits,
                             TreeDataLikelihood treeLikelihood,
                             String inferredValuesName,
@@ -221,12 +228,26 @@ public class TraitValidationProvider implements CrossValidationProvider {
                 throw new XMLParseException(PARSER_NAME + " should not have both " + MASK + " element and " +
                         TREE_TRAITS + "=\"true\".");
             }
+            inferredValuesName = dataModel.getParameter().getParameterName();
+
+            ProcessSimulationDelegate.AbstractContinuousTraitDelegate simulationDelegate =
+                    (ProcessSimulationDelegate.AbstractContinuousTraitDelegate) treeLikelihood.getTreeTrait(
+                            REALIZED_TIP_TRAIT + "." + inferredValuesName);
+            ProcessSimulation processSimulation;
+            if (dataModel instanceof ModelExtensionProvider) {
+                AbstractContinuousExtensionDelegate extensionDelegate =
+                        ((ModelExtensionProvider) dataModel).getExtensionDelegate(simulationDelegate, inferredValuesName);
+                processSimulation = new ExtendedProcessSimulation(treeLikelihood, simulationDelegate, extensionDelegate);
+            } else {
+                processSimulation = new ProcessSimulation(treeLikelihood, simulationDelegate);
+            }
+
 
             String id = xo.getId();
 
 
             TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
-                    missingParameter, useTreeTraits, treeLikelihood, inferredValuesName, trueMissing);
+                    missingParameter, processSimulation, useTreeTraits, treeLikelihood, inferredValuesName, trueMissing);
 
             boolean logSum = xo.getAttribute(LOG_SUM, false);
 

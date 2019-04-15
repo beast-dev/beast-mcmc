@@ -122,7 +122,7 @@ public class ContinuousExtensionDelegate {
                         sample[j + offset] = dataParameter.getParameterValue(j + offset);
                     }
                     for (int j = 0; j < partition.nMissing; j++) {
-                        sample[partition.misInds[j] + offset] = draw[partition.misInds[j]];
+                        sample[partition.misInds[j] + offset] = draw[j];
                     }
                 }
 
@@ -132,7 +132,7 @@ public class ContinuousExtensionDelegate {
             }
 
 
-            return null;
+            return sample;
         }
 
         private class IndexPartition {

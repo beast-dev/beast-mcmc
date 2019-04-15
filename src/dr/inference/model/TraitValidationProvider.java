@@ -2,15 +2,11 @@ package dr.inference.model;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.treedatalikelihood.ExtendedProcessSimulation;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.preorder.AbstractContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.xml.*;
 
@@ -21,7 +17,6 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuous
 public class TraitValidationProvider implements CrossValidationProvider {
 
     private final Parameter trueTraits;
-    private final Parameter inferredTraits;
     private final int[] missingInds;
     private final String[] dimNames;
     private final String sumName;
@@ -29,13 +24,14 @@ public class TraitValidationProvider implements CrossValidationProvider {
     private final ContinuousTraitPartialsProvider dataModel;
     private final TreeDataLikelihood treeLikehoood;
     private final TreeTrait treeTrait;
+    private final ContinuousExtensionDelegate extensionDelegate;
+
 
     TraitValidationProvider(Parameter trueTraits,
                             ContinuousTraitPartialsProvider dataModel,
                             Tree treeModel,
                             String id,
                             Parameter missingParameter,
-                            ProcessSimulation processSimulation,
                             Boolean useTreeTraits,
                             TreeDataLikelihood treeLikelihood,
                             String inferredValuesName,
@@ -46,14 +42,15 @@ public class TraitValidationProvider implements CrossValidationProvider {
 
         this.treeLikehoood = treeLikelihood;
 
-        if (!useTreeTraits) {
-            this.treeTrait = null;
-            this.inferredTraits = dataModel.getParameter();
+//        if (!useTreeTraits) {
+//            this.treeTrait = null;
+//            this.inferredTraits = dataModel.getParameter();
+//
+//        } else {
+//            this.treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + inferredValuesName);
+//            this.inferredTraits = new Parameter.Default(inferredValuesName, trueTraits.getDimension());
+//        }
 
-        } else {
-            this.treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + inferredValuesName);
-            this.inferredTraits = new Parameter.Default(inferredValuesName, trueTraits.getDimension());
-        }
 
         this.dimTrait = dataModel.getTraitDimension();
         this.dataModel = dataModel;
@@ -63,7 +60,16 @@ public class TraitValidationProvider implements CrossValidationProvider {
         int nMissing = missingInds.length;
 
 
-        dimNames = new String[nMissing];
+        this.dimNames = new String[nMissing];
+
+
+        this.treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + inferredValuesName);
+
+        if (dataModel instanceof ModelExtensionProvider) {
+            this.extensionDelegate = ((ModelExtensionProvider) dataModel).getExtensionDelegate(treeTrait, treeModel);
+        } else {
+            this.extensionDelegate = new ContinuousExtensionDelegate(treeTrait, treeModel);
+        }
 
         setupDimNames(treeModel, id);
         sumName = getSumName(id);
@@ -136,26 +142,23 @@ public class TraitValidationProvider implements CrossValidationProvider {
     }
 
     @Override
-    public Parameter getTrueParameter() {
-        return trueTraits;
+    public double[] getTrueValues() {
+        return trueTraits.getParameterValues();
     }
 
     @Override
-    public Parameter getInferredParameter() {
-        if (this.treeTrait != null) {
-            updateTraitsFromTree();
-        }
-        return inferredTraits;
+    public double[] getInferredValues() {
+        return extensionDelegate.getExtendedValues();
     }
 
-    private void updateTraitsFromTree() {
-        double[] tipValues = (double[]) treeTrait.getTrait(treeLikehoood.getTree(), null);
-        assert (tipValues.length == inferredTraits.getDimension());
-        for (int i : missingInds) {
-            inferredTraits.setParameterValueQuietly(i, tipValues[i]);
-        }
-        inferredTraits.fireParameterChangedEvent();
-    }
+//    private void updateTraitsFromTree() {
+//        double[] tipValues = (double[]) treeTrait.getTrait(treeLikehoood.getTree(), null);
+//        assert (tipValues.length == inferredTraits.getDimension());
+//        for (int i : missingInds) {
+//            inferredTraits.setParameterValueQuietly(i, tipValues[i]);
+//        }
+//        inferredTraits.fireParameterChangedEvent();
+//    }
 
     @Override
     public int[] getRelevantDimensions() {
@@ -228,26 +231,12 @@ public class TraitValidationProvider implements CrossValidationProvider {
                 throw new XMLParseException(PARSER_NAME + " should not have both " + MASK + " element and " +
                         TREE_TRAITS + "=\"true\".");
             }
-            inferredValuesName = dataModel.getParameter().getParameterName();
-
-            ProcessSimulationDelegate.AbstractContinuousTraitDelegate simulationDelegate =
-                    (ProcessSimulationDelegate.AbstractContinuousTraitDelegate) treeLikelihood.getTreeTrait(
-                            REALIZED_TIP_TRAIT + "." + inferredValuesName);
-            ProcessSimulation processSimulation;
-            if (dataModel instanceof ModelExtensionProvider) {
-                AbstractContinuousExtensionDelegate extensionDelegate =
-                        ((ModelExtensionProvider) dataModel).getExtensionDelegate(simulationDelegate, inferredValuesName);
-                processSimulation = new ExtendedProcessSimulation(treeLikelihood, simulationDelegate, extensionDelegate);
-            } else {
-                processSimulation = new ProcessSimulation(treeLikelihood, simulationDelegate);
-            }
-
 
             String id = xo.getId();
 
 
             TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
-                    missingParameter, processSimulation, useTreeTraits, treeLikelihood, inferredValuesName, trueMissing);
+                    missingParameter, useTreeTraits, treeLikelihood, inferredValuesName, trueMissing);
 
             boolean logSum = xo.getAttribute(LOG_SUM, false);
 

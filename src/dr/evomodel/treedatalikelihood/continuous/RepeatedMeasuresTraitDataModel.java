@@ -26,9 +26,11 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.preorder.AbstractContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -48,7 +50,7 @@ import java.util.List;
  * @author Gabriel Hassler
  */
 public class RepeatedMeasuresTraitDataModel extends
-        ContinuousTraitDataModel implements ModelExtensionProvider {
+        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider, ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
@@ -152,9 +154,14 @@ public class RepeatedMeasuresTraitDataModel extends
     }
 
     @Override
-    public AbstractContinuousExtensionDelegate getExtensionDelegate(ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate,
-                                                                    String traitName) {
-        return new AbstractContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(treeSimulationDelegate, traitName);
+    public ContinuousExtensionDelegate getExtensionDelegate(TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(treeTrait, this, tree);
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance() {
+        double[] buffer = samplingVariance.toArrayComponents();
+        return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
     }
 
     // TODO Move remainder into separate class file

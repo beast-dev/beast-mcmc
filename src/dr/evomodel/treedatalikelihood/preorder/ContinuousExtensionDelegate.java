@@ -27,17 +27,10 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.inference.model.CompoundParameter;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.MissingOps;
-import dr.math.matrixAlgebra.missingData.PermutationIndices;
 import org.ejml.data.DenseMatrix64F;
-
-import java.util.List;
-
-import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
 /**
  * AbstractContinuousExtensionDelegate - interface for a plugin delegate for data simulation NOT on a tree.
@@ -62,6 +55,14 @@ public class ContinuousExtensionDelegate {
 
     public double[] getExtendedValues() {
         return (double[]) treeTrait.getTrait(tree, null);
+    }
+
+    public TreeTrait getTreeTrait() {
+        return treeTrait;
+    }
+
+    public Tree getTree() {
+        return tree;
     }
 
 

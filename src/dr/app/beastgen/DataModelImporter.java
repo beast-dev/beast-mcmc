@@ -537,6 +537,7 @@ public class DataModelImporter {
         t.put("id", taxon.getId());
         if (taxon.getDate() != null) {
             t.put("date", Double.toString(taxon.getDate().getTimeValue()));
+            t.put("uncertainty", Double.toString(taxon.getDate().getUncertainty()));
         }
 
         //Add attributes if present

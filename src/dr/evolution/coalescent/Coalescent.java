@@ -82,6 +82,10 @@ public class Coalescent implements MultivariateFunction, Units {
 
         final int n = intervals.getIntervalCount();
 
+        if (n == 0) {
+            return 0.0;
+        }
+
         double startTime = intervals.getStartTime();
 
         for (int i = 0; i < n; i++) {
@@ -94,6 +98,7 @@ public class Coalescent implements MultivariateFunction, Units {
                 return Double.NEGATIVE_INFINITY;
             }
             final int lineageCount = intervals.getLineageCount(i);
+
 
             final double kChoose2 = Binomial.choose2(lineageCount);
             // common part

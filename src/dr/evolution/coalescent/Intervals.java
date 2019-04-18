@@ -59,6 +59,8 @@ public class Intervals implements IntervalList {
         intervalsKnown = source.intervalsKnown;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
+        intervalCount = source.intervalCount;
+        startTime = source.startTime;
 
         //don't copy the actual events..
         /*
@@ -121,22 +123,30 @@ public class Intervals implements IntervalList {
     }
 
     public int getIntervalCount() {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervalCount;
     }
 
     public double getInterval(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervals[i];
     }
 
     public int getLineageCount(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return lineageCounts[i];
     }
 
     public int getCoalescentEvents(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         if (i < intervalCount - 1) {
             return lineageCounts[i] - lineageCounts[i + 1];
         } else {
@@ -145,18 +155,24 @@ public class Intervals implements IntervalList {
     }
 
     public double getStartTime() {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return startTime;
     }
 
     public IntervalType getIntervalType(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervalTypes[i];
     }
 
     public double getTotalDuration() {
 
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return events[eventCount - 1].time;
     }
 
@@ -251,6 +267,5 @@ public class Intervals implements IntervalList {
     private double[] intervals;
     private int[] lineageCounts;
     private IntervalType[] intervalTypes;
-    //private int[] destinations;
     private int intervalCount = 0;
 }

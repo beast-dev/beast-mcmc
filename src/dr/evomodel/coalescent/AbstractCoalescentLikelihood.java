@@ -52,6 +52,9 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     // PUBLIC STUFF
 
+    @Deprecated
+    // This constructor and all the tree stuff will be removed once StructuredCoalescentLikelihood
+    // is refactored to use TreeIntervals
     public AbstractCoalescentLikelihood(
             String name,
             Tree tree,

@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
@@ -60,7 +61,8 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
         List<TreeModel> trees = new ArrayList<TreeModel>();
         List<Double> popFactors = new ArrayList<Double>();
         MultiLociTreeSet treesSet = demoModel instanceof MultiLociTreeSet ? (MultiLociTreeSet) demoModel : null;
-        MultiTreeIntervals multiTreeIntervals = null;
+
+        IntervalList intervalList = null;
 
         for (int k = 0; k < xo.getChildCount(); ++k) {
             final Object child = xo.getChild(k);
@@ -74,7 +76,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
                     popFactors.add(cxo.getAttribute(POPULATION_FACTOR, 1.0));
                 }
                 else if (cxo.getName().equals(INVERVALS)) {
-                    multiTreeIntervals = (MultiTreeIntervals) cxo.getChild(MultiTreeIntervals.class);
+                    intervalList = (IntervalList) cxo.getChild(MultiTreeIntervals.class);
                 }
             }
 //                in the future we may have arbitrary multi-loci element
@@ -88,44 +90,51 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
             treeModel = trees.get(0);
         } else if (trees.size() > 1) {
             treesSet = new MultiLociTreeSet.Default(trees, popFactors);
-        } else if (!(trees.size() == 0 && treesSet != null) && multiTreeIntervals==null ) {
+        } else if (!(trees.size() == 0 && treesSet != null) && intervalList == null ) {
             throw new XMLParseException("Incorrectly constructed likelihood element");
         }
 
-        TaxonList includeSubtree = null;
-
-        if (xo.hasChildNamed(INCLUDE)) {
-            includeSubtree = (TaxonList) xo.getElementFirstChild(INCLUDE);
-        }
-
-        List<TaxonList> excludeSubtrees = new ArrayList<TaxonList>();
-
-        if (xo.hasChildNamed(EXCLUDE)) {
-            cxo = xo.getChild(EXCLUDE);
-            for (int i = 0; i < cxo.getChildCount(); i++) {
-                excludeSubtrees.add((TaxonList) cxo.getChild(i));
-            }
-        }
-
         if (treeModel != null) {
+
+            TaxonList includeSubtree = null;
+
+            if (xo.hasChildNamed(INCLUDE)) {
+                includeSubtree = (TaxonList) xo.getElementFirstChild(INCLUDE);
+            }
+
+            List<TaxonList> excludeSubtrees = new ArrayList<TaxonList>();
+
+            if (xo.hasChildNamed(EXCLUDE)) {
+                cxo = xo.getChild(EXCLUDE);
+                for (int i = 0; i < cxo.getChildCount(); i++) {
+                    excludeSubtrees.add((TaxonList) cxo.getChild(i));
+                }
+            }
+
+
             try {
-                return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);
+                intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees);
+                // TreeIntervals now deals with all the interval stuff
+//                return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
-        } else if(multiTreeIntervals != null) {
-            return new CoalescentLikelihood(multiTreeIntervals, demoModel);
+
         }
-        else{
-                if (includeSubtree != null || excludeSubtrees.size() > 0) {
-                    throw new XMLParseException("Include/Exclude taxa not supported for multi locus sets");
-                }
-                // Use old code for multi locus sets.
-                // This is a little unfortunate but the current code is using AbstractCoalescentLikelihood as
-                // a base - and modifing it will probsbly result in a bigger mess.
-                return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
+
+        if (intervalList != null) {
+            return new CoalescentLikelihood(intervalList, demoModel);
+        } else {
+            if (xo.hasChildNamed(INCLUDE) || xo.hasChildNamed(EXCLUDE)) {
+                throw new XMLParseException("Include/Exclude taxa not supported for multi locus sets");
             }
+
+            // Use old code for multi locus sets.
+            // This is a little unfortunate but the current code is using AbstractCoalescentLikelihood as
+            // a base - and modifing it will probsbly result in a bigger mess.
+            return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
         }
+    }
 
     //************************************************************************
     // AbstractXMLObjectParser implementation

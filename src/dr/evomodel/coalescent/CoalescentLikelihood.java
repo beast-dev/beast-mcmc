@@ -52,25 +52,25 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 	// PUBLIC STUFF
 
-	/**
-	 * A constructor that takes a tree
-	 * @param tree
-	 * @param includeSubtree
-	 * @param excludeSubtrees
-	 * @param demoModel
-	 * @throws TreeUtils.MissingTaxonException
-	 */
-	public CoalescentLikelihood(Tree tree,
-	                            TaxonList includeSubtree,
-	                            List<TaxonList> excludeSubtrees,
-	                            DemographicModel demoModel) throws TreeUtils.MissingTaxonException {
-
-		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees);
-
-		this.demoModel = demoModel;
-
-		addModel(demoModel);
-	}
+//	/**
+//	 * A constructor that takes a tree
+//	 * @param tree
+//	 * @param includeSubtree
+//	 * @param excludeSubtrees
+//	 * @param demoModel
+//	 * @throws TreeUtils.MissingTaxonException
+//	 */
+//	public CoalescentLikelihood(Tree tree,
+//	                            TaxonList includeSubtree,
+//	                            List<TaxonList> excludeSubtrees,
+//	                            DemographicModel demoModel) throws TreeUtils.MissingTaxonException {
+//
+//		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees);
+//
+//		this.demoModel = demoModel;
+//
+//		addModel(demoModel);
+//	}
 
 	/**
 	 * An alternative constructor that takes an IntervalList

@@ -96,7 +96,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	 * Calculates the log likelihood of this set of coalescent intervals,
 	 * given a demographic model.
 	 */
-	public double calculateLogLikelihood() {
+	protected double calculateLogLikelihood() {
 
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 

@@ -191,7 +191,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      * Calculates the log likelihood of this set of coalescent intervals,
      * given a demographic model.
      */
-    public abstract double calculateLogLikelihood();
+    protected abstract double calculateLogLikelihood();
 
     /**
      * @return the node ref of the MRCA of this coalescent prior in the given tree.

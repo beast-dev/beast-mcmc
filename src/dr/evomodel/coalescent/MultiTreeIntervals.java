@@ -36,11 +36,9 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.util.HeapSort;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -76,6 +74,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
         this.units = this.trees.get(0).getUnits();
 
         this.intervals = new Intervals(maxEventCount);
+        this.storedIntervals = new Intervals(maxEventCount);
     }
 
 
@@ -83,11 +82,11 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * Specifies that the intervals are unknown (i.e., the tree has changed).
      */
     public void setIntervalsUnknown() {
-        intervalsKnown = false;
+        eventsKnown = false;
     }
 
     public int getSampleCount() {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getSampleCount();
@@ -97,7 +96,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * get number of intervals
      */
     public int getIntervalCount() {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getIntervalCount();
@@ -107,7 +106,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * Gets an interval.
      */
     public double getInterval(int i) {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getInterval(i);
@@ -119,7 +118,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * earlier samples are come across.
      */
     public int getLineageCount(int i) {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getLineageCount(i);
@@ -129,7 +128,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * Returns the number coalescent events in an interval
      */
     public int getCoalescentEvents(int i) {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getCoalescentEvents(i);
@@ -139,7 +138,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * Returns the type of interval observed.
      */
     public IntervalType getIntervalType(int i) {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getIntervalType(i);
@@ -151,7 +150,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      */
     public double getTotalDuration() {
 
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.getTotalDuration();
@@ -172,7 +171,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * subsequent interval)
      */
     public boolean isCoalescentOnly() {
-        if (!intervalsKnown) {
+        if (!eventsKnown) {
             calculateIntervals();
         }
         return intervals.isCoalescentOnly();
@@ -201,9 +200,13 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
             intervals.addNothingEvent(cutoffTime);
         }
 
+        // call this to sort and calculate the intervals in the inner
+        // object.
+        intervals.getIntervalCount();
+
         fireModelChanged();
 
-        intervalsKnown = true;
+        eventsKnown = true;
     }
 
     /**
@@ -222,7 +225,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        intervalsKnown = false;
+        eventsKnown = false;
         fireModelChanged();
     }
 
@@ -232,13 +235,24 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     }
 
     /**
-     * Extra functionality to store and restore values for caching
+     * Stores the precalculated state: in this case the intervals
      */
-    public void storeState() {
+    protected void storeState() {
+        // copy the intervals into the storedIntervals
+        storedIntervals.copyIntervals(intervals);
+        storedEventsKnown = eventsKnown;
     }
 
-    public void restoreState() {
-        intervalsKnown = false;
+    /**
+     * Restores the precalculated state: that is the intervals of the tree.
+     */
+    protected void restoreState() {
+        // swap the intervals back
+        Intervals tmp = storedIntervals;
+        storedIntervals = intervals;
+        intervals = tmp;
+
+        eventsKnown = storedEventsKnown;
     }
 
     @Override
@@ -254,11 +268,20 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     private final double cutoffTime;
     private final Type units;
 
-    private final Intervals intervals;
+    /**
+     * The intervals.
+     */
+    private Intervals intervals = null;
 
     /**
-     * are the intervals known?
+     * The stored values for intervals.
      */
-    private boolean intervalsKnown = false;
+    private Intervals storedIntervals = null;
+
+    /**
+     * are the events known?
+     */
+    private boolean eventsKnown = false;
+    private boolean storedEventsKnown = false;
 
 }

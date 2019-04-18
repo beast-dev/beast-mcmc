@@ -88,13 +88,17 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         addStatistic(new DeltaStatistic());
     }
 
-    public AbstractCoalescentLikelihood( String name, MultiTreeIntervals multiTreeIntervals){
+    public AbstractCoalescentLikelihood( String name, IntervalList intervalList){
         super(name);
 
-        addStatistic(new DeltaStatistic());
-        addModel(multiTreeIntervals);
-        eventsKnown=true; // because the interval changes are handled by MultiTreeIntervals
+        this.intervalList = intervalList;
 
+        addStatistic(new DeltaStatistic());
+        if (intervalList instanceof Model) {
+            addModel((Model)intervalList);
+        }
+
+        eventsKnown=true; // because the interval changes are handled by MultiTreeIntervals
     }
 
 
@@ -127,10 +131,12 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      * Stores the precalculated state: in this case the intervals
      */
     protected void storeState() {
-        // copy the intervals into the storedIntervals
-        storedIntervals.copyIntervals(intervals);
+        if (intervals != null) {
+            // copy the intervals into the storedIntervals
+            storedIntervals.copyIntervals(intervals);
+            storedEventsKnown = eventsKnown;
+        }
 
-        storedEventsKnown = eventsKnown;
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
     }
@@ -139,12 +145,15 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      * Restores the precalculated state: that is the intervals of the tree.
      */
     protected void restoreState() {
-        // swap the intervals back
-        Intervals tmp = storedIntervals;
-        storedIntervals = intervals;
-        intervals = tmp;
+        if (intervals != null) {
+            // swap the intervals back
+            Intervals tmp = storedIntervals;
+            storedIntervals = intervals;
+            intervals = tmp;
 
-        eventsKnown = storedEventsKnown;
+            eventsKnown = storedEventsKnown;
+        }
+
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
     }
@@ -161,7 +170,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     }
 
     public double getLogLikelihood() {
-        if (!eventsKnown) {
+        if (intervals != null && !eventsKnown) {
             setupIntervals();
         }
 
@@ -215,7 +224,11 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     }
 
     public IntervalList getIntervals() {
-        return intervals;
+        if (intervals != null) {
+            return intervals;
+        } else {
+            return intervalList;
+        }
     }
 
     /**
@@ -362,6 +375,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;
+
+    private IntervalList intervalList = null;
 
     protected double logLikelihood;
     protected double storedLogLikelihood;

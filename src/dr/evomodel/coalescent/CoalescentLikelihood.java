@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.Coalescent;
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
@@ -50,6 +51,15 @@ import java.util.logging.Logger;
 public final class CoalescentLikelihood extends AbstractCoalescentLikelihood implements Units {
 
 	// PUBLIC STUFF
+
+	/**
+	 * A constructor that takes a tree
+	 * @param tree
+	 * @param includeSubtree
+	 * @param excludeSubtrees
+	 * @param demoModel
+	 * @throws TreeUtils.MissingTaxonException
+	 */
 	public CoalescentLikelihood(Tree tree,
 	                            TaxonList includeSubtree,
 	                            List<TaxonList> excludeSubtrees,
@@ -62,7 +72,23 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		addModel(demoModel);
 	}
 
-    // **************************************************************
+	/**
+	 * An alternative constructor that takes an IntervalList
+	 * @param intervalList
+	 * @param demoModel
+	 * @throws TreeUtils.MissingTaxonException
+	 */
+	public CoalescentLikelihood(IntervalList intervalList,
+								DemographicModel demoModel) {
+
+		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList);
+
+		this.demoModel = demoModel;
+
+		addModel(demoModel);
+	}
+
+	// **************************************************************
 	// Likelihood IMPLEMENTATION
 	// **************************************************************
 
@@ -74,7 +100,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		DemographicFunction demoFunction = demoModel.getDemographicFunction();
 
-		//double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
         double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
 
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {

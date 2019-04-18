@@ -114,7 +114,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
         } else if(multiTreeIntervals != null) {
-            return new MultiTreeIntervalCoalescentLikelihood(multiTreeIntervals,demoModel);
+            return new CoalescentLikelihood(multiTreeIntervals, demoModel);
         }
         else{
                 if (includeSubtree != null || excludeSubtrees.size() > 0) {

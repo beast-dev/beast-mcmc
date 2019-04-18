@@ -6,6 +6,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.coalescent.PiecewisePopulationModel;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.RandomWalkGeneratorParser;
 import dr.math.MathUtils;
@@ -148,9 +149,10 @@ public class RandomWalkGenerator extends AbstractModelLikelihood implements Gaus
 
         DemographicModel Ne = new PiecewisePopulationModel("Ne(t)", N0, epochLengths, false, Units.Type.DAYS);
 
-        CoalescentLikelihood coal = new CoalescentLikelihood(tree, null, null, Ne);
+        TreeIntervals intervalList = new TreeIntervals(tree, null, null);
+        CoalescentLikelihood coalescent = new CoalescentLikelihood(intervalList, Ne);
 
-        double logLik = coal.getLogLikelihood();
+        double logLik = coalescent.getLogLikelihood();
 
         System.out.printf("Loglik = %f\n", logLik);
 

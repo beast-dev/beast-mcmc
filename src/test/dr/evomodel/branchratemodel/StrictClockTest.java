@@ -6,6 +6,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
@@ -61,7 +62,8 @@ public class StrictClockTest extends TraceCorrelationAssert {
         Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 380.0, 0, 38000.0);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
-        CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
+        TreeIntervals intervalList = new TreeIntervals(treeModel, null, null);
+        CoalescentLikelihood coalescent = new CoalescentLikelihood(intervalList, constantModel);
         coalescent.setId("coalescent");
 
         // clock model

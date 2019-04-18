@@ -39,11 +39,8 @@ import java.util.logging.Logger;
 
 
 /**
- * A likelihood function for the coalescent. Takes a tree and a demographic model.
- *
- * Parts of this class were derived from C++ code provided by Oliver Pybus.
- *
- * @version $Id: NewCoalescentLikelihood.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
+ * A likelihood function for the coalescent. Takes an intervalList and a demographic model.
+ * If the interval list is a model then it will listen for changes.
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -52,28 +49,8 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 	// PUBLIC STUFF
 
-//	/**
-//	 * A constructor that takes a tree
-//	 * @param tree
-//	 * @param includeSubtree
-//	 * @param excludeSubtrees
-//	 * @param demoModel
-//	 * @throws TreeUtils.MissingTaxonException
-//	 */
-//	public CoalescentLikelihood(Tree tree,
-//	                            TaxonList includeSubtree,
-//	                            List<TaxonList> excludeSubtrees,
-//	                            DemographicModel demoModel) throws TreeUtils.MissingTaxonException {
-//
-//		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees);
-//
-//		this.demoModel = demoModel;
-//
-//		addModel(demoModel);
-//	}
-
 	/**
-	 * An alternative constructor that takes an IntervalList
+	 * A constructor that takes an IntervalList
 	 * @param intervalList
 	 * @param demoModel
 	 * @throws TreeUtils.MissingTaxonException

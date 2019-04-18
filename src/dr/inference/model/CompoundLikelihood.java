@@ -272,10 +272,14 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
     }
 
     public String getDiagnosis() {
-        return getDiagnosis(0);
+        return getDiagnosis(null);
     }
 
-    public String getDiagnosis(int indent) {
+    public String getDiagnosis(Map<String, Double> densities) {
+        return getDiagnosis(0, densities);
+    }
+
+    public String getDiagnosis(int indent, Map<String, Double> densities) {
         String message = "";
         boolean first = true;
 
@@ -298,7 +302,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
             message += lik.prettyName() + "=";
 
             if( lik instanceof CompoundLikelihood ) {
-                final String d = ((CompoundLikelihood) lik).getDiagnosis(indent < 0 ? -1 : indent + 2);
+                final String d = ((CompoundLikelihood) lik).getDiagnosis(indent < 0 ? -1 : indent + 2, densities);
                 if( d != null && d.length() > 0 ) {
                     message += "(" + d;
 
@@ -321,6 +325,9 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
                     message += "+Inf";
                 } else {
                     message += nf.formatDecimal(logLikelihood, 4);
+                }
+                if (densities != null) {
+                    densities.put(lik.prettyName(), logLikelihood);
                 }
             }
         }

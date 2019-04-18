@@ -34,6 +34,8 @@ import dr.inference.operators.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -191,7 +193,7 @@ public final class MarkovChain implements Serializable {
             double oldScore = currentScore;
             if (usingFullEvaluation) {
                 diagnosticStart = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                        ((CompoundLikelihood) likelihood).getDiagnosis(null) : "";
             }
 
             // assert Profiler.startProfile("Store");
@@ -275,9 +277,11 @@ public final class MarkovChain implements Serializable {
                 }
 
                 String diagnosticOperator = "";
+                Map<String, Double> diagnosticOperatorDensities = null;
                 if (usingFullEvaluation) {
+                    diagnosticOperatorDensities = new HashMap<String, Double>();
                     diagnosticOperator = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                            ((CompoundLikelihood) likelihood).getDiagnosis(diagnosticOperatorDensities) : "";
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
@@ -306,7 +310,7 @@ public final class MarkovChain implements Serializable {
                         Double.isNaN(score) ) {
                     if (likelihood instanceof CompoundLikelihood) {
                         Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error:\n" +
-                                ((CompoundLikelihood)likelihood).getDiagnosis());
+                                ((CompoundLikelihood)likelihood).getDiagnosis(null));
                     } else {
                         Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error.");
                     }
@@ -344,18 +348,32 @@ public final class MarkovChain implements Serializable {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood);
 
+                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();;
                     final String d2 = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                            ((CompoundLikelihood) likelihood).getDiagnosis(densitiesAfter) : "";
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
-                        Logger.getLogger("error").severe(
-                                "State "+currentState+": State was not correctly calculated after an operator move.\n"
-                                        + "Likelihood evaluation: " + score
-                                        + "\nFull Likelihood evaluation: " + testScore
-                                        + "\n" + "Operator: " + mcmcOperator
-                                        + " " + mcmcOperator.getOperatorName()
-                                        + (diagnosticOperator.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticOperator + "\nAfter: " + d2 : "")
-                                        + "\n\n");
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("State "+currentState+": State was not correctly calculated after an operator move.\n"
+                                + "Likelihood evaluation: " + score
+                                + "\nFull Likelihood evaluation: " + testScore
+                                + "\n" + "Operator: " + mcmcOperator
+                                + " " + mcmcOperator.getOperatorName()
+                                + (diagnosticOperator.length() > 0 ? "\n\nDetails\n" +
+                                "Before: " + diagnosticOperator + "\n" +
+                                "After: " + d2 : "")
+                                + "\n\n");
+
+                        sb.append("Discrepancies:\n");
+                        for (String key : diagnosticOperatorDensities.keySet()) {
+                            if (Math.abs(diagnosticOperatorDensities.get(key) - densitiesAfter.get(key)) > evaluationTestThreshold) {
+                                sb.append(key + ": " + diagnosticOperatorDensities.get(key) +
+                                        " -> " + densitiesAfter.get(key) + "\n");
+                            }
+                        }
+                        sb.append("\n");
+
+                        Logger.getLogger("error").severe(sb.toString());
                         fullEvaluationError = true;
                     }
                 }

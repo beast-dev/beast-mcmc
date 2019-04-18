@@ -78,13 +78,15 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     }
 
 
-    /**
-     * Specifies that the intervals are unknown (i.e., the tree has changed).
-     */
-    public void setIntervalsUnknown() {
-        eventsKnown = false;
+    @Override
+    public double getStartTime() {
+        if (!eventsKnown) {
+            calculateIntervals();
+        }
+        return intervals.getStartTime();
     }
 
+    @Override
     public int getSampleCount() {
         if (!eventsKnown) {
             calculateIntervals();
@@ -95,6 +97,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     /**
      * get number of intervals
      */
+    @Override
     public int getIntervalCount() {
         if (!eventsKnown) {
             calculateIntervals();
@@ -105,6 +108,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     /**
      * Gets an interval.
      */
+    @Override
     public double getInterval(int i) {
         if (!eventsKnown) {
             calculateIntervals();
@@ -117,6 +121,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * Required for s-coalescents, where new lineages are added as
      * earlier samples are come across.
      */
+    @Override
     public int getLineageCount(int i) {
         if (!eventsKnown) {
             calculateIntervals();
@@ -127,6 +132,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     /**
      * Returns the number coalescent events in an interval
      */
+    @Override
     public int getCoalescentEvents(int i) {
         if (!eventsKnown) {
             calculateIntervals();
@@ -137,6 +143,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     /**
      * Returns the type of interval observed.
      */
+    @Override
     public IntervalType getIntervalType(int i) {
         if (!eventsKnown) {
             calculateIntervals();
@@ -148,6 +155,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * get the total height of the genealogy represented by these
      * intervals.
      */
+    @Override
     public double getTotalDuration() {
 
         if (!eventsKnown) {
@@ -161,6 +169,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * (i.e. whether is has exactly one coalescent event in each
      * subsequent interval)
      */
+    @Override
     public boolean isBinaryCoalescent() {
         return intervals.isBinaryCoalescent();
     }
@@ -170,6 +179,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      * (i.e. whether is has exactly one or more coalescent event in each
      * subsequent interval)
      */
+    @Override
     public boolean isCoalescentOnly() {
         if (!eventsKnown) {
             calculateIntervals();

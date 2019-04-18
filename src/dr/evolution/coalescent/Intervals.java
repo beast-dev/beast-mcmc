@@ -39,6 +39,8 @@ import java.util.Arrays;
 public class Intervals implements IntervalList {
 
     public Intervals(int maxEventCount) {
+        startTime = Double.POSITIVE_INFINITY;
+
         events = new Event[maxEventCount];
         for (int i = 0; i < maxEventCount; i++) {
             events[i] = new Event();
@@ -73,12 +75,18 @@ public class Intervals implements IntervalList {
     }
 
     public void resetEvents() {
+        startTime = Double.POSITIVE_INFINITY;
+
         intervalsKnown = false;
         eventCount = 0;
         sampleCount = 0;
     }
 
     public void addSampleEvent(double time) {
+        if (time < startTime) {
+            startTime = time;
+        }
+
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.SAMPLE;
         eventCount++;
@@ -134,6 +142,11 @@ public class Intervals implements IntervalList {
         } else {
             return lineageCounts[i] - 1;
         }
+    }
+
+    public double getStartTime() {
+        if (!intervalsKnown) calculateIntervals();
+        return startTime;
     }
 
     public IntervalType getIntervalType(int i) {
@@ -227,6 +240,8 @@ public class Intervals implements IntervalList {
         int info;
 
     }
+
+    private double startTime;
 
     private Event[] events;
     private int eventCount;

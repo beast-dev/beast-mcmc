@@ -80,8 +80,10 @@ public class Coalescent implements MultivariateFunction, Units {
 
         double logL = 0.0;
 
-        double startTime = 0.0;
         final int n = intervals.getIntervalCount();
+
+        double startTime = intervals.getStartTime();
+
         for (int i = 0; i < n; i++) {
 
             final double duration = intervals.getInterval(i);

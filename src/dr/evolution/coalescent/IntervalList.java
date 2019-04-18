@@ -48,6 +48,11 @@ public interface IntervalList extends Units {
 	int getSampleCount();
 
 	/**
+	 * get the time of the first event
+	 */
+	double getStartTime();
+
+	/**
 	 * Gets an interval.
 	 */
 	double getInterval(int i);

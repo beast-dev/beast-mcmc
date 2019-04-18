@@ -219,7 +219,10 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
 
     }
 
-
+    @Override
+    public double getStartTime() {
+        return startTime;
+    }
 
     @Override
     public int getIntervalCount() {
@@ -334,6 +337,8 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
     private Set[] excludedLeafSets = null;
+
+    private double startTime;
 
     /**
      * The intervals.

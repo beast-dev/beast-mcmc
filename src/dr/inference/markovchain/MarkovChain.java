@@ -177,6 +177,7 @@ public final class MarkovChain implements Serializable {
         while (!pleaseStop && (currentState < (currentLength + length))) {
 
             String diagnosticStart = "";
+            Map<String, Double> diagnosticStartDensities = null;
 
             // periodically log states
             fireCurrentModel(currentState, currentModel);
@@ -192,8 +193,9 @@ public final class MarkovChain implements Serializable {
 
             double oldScore = currentScore;
             if (usingFullEvaluation) {
+                diagnosticStartDensities = new HashMap<String, Double>();
                 diagnosticStart = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood) likelihood).getDiagnosis(null) : "";
+                        ((CompoundLikelihood) likelihood).getDiagnosis(diagnosticStartDensities) : "";
             }
 
             // assert Profiler.startProfile("Store");
@@ -359,9 +361,9 @@ public final class MarkovChain implements Serializable {
                                 + "\nFull Likelihood evaluation: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
                                 + " " + mcmcOperator.getOperatorName()
-                                + (diagnosticOperator.length() > 0 ? "\n\nDetails\n" +
-                                "Before: " + diagnosticOperator + "\n" +
-                                "After: " + d2 : "")
+//                                + (diagnosticOperator.length() > 0 ? "\n\nDetails\n" +
+//                                "Before: " + diagnosticOperator + "\n" +
+//                                "After: " + d2 : "")
                                 + "\n\n");
 
                         sb.append("Discrepancies:\n");
@@ -419,20 +421,30 @@ public final class MarkovChain implements Serializable {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood);
 
+                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();;
                     final String d2 = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                            ((CompoundLikelihood) likelihood).getDiagnosis(densitiesAfter) : "";
 
                     if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
-
-
-                        final Logger logger = Logger.getLogger("error");
-                        logger.severe("State "+currentState+": State was not correctly restored after reject step.\n"
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("State "+currentState+": State was not correctly restored after reject step.\n"
                                 + "Likelihood before: " + oldScore
                                 + " Likelihood after: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
                                 + " " + mcmcOperator.getOperatorName()
-                                + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
+//                                + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
                                 + "\n\n");
+
+                        sb.append("Discrepancies:\n");
+                        for (String key : diagnosticStartDensities.keySet()) {
+                            if (Math.abs(diagnosticStartDensities.get(key) - densitiesAfter.get(key)) > evaluationTestThreshold) {
+                                sb.append(key + ": " + diagnosticStartDensities.get(key) +
+                                        " -> " + densitiesAfter.get(key) + "\n");
+                            }
+                        }
+                        sb.append("\n");
+
+                        Logger.getLogger("error").severe(sb.toString());
                         fullEvaluationError = true;
                     }
                 }

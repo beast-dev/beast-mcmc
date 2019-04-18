@@ -113,18 +113,18 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
 //        evaluationCounts = null;
 //        
 //    }
-    
+
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
         if (UNROLL_COMPOUND && addToPool && likelihood instanceof CompoundLikelihood) {
-        	
+
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
                 addLikelihood(l, index, addToPool);
             }
-            
+
         } else {
-        	
+
             if (!likelihoods.contains(likelihood)) {
 
                 likelihoods.add(likelihood);
@@ -133,11 +133,11 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
                 }
 
                 if (likelihood.evaluateEarly()) {
-                	
+
                     earlyLikelihoods.add(likelihood);
-                    
+
                 } else {
-                	
+
                     // late likelihood list is used to evaluate them if the thread pool is not being used...
                     lateLikelihoods.add(likelihood);
 
@@ -149,9 +149,9 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
             } else {
                 throw new IllegalArgumentException("Attempted to add the same likelihood multiple times to CompoundLikelihood.");
             } // END: contains check
-            
+
         }//END: if unroll check
-        
+
     }//END: addLikelihood
 
     public Set<Likelihood> getLikelihoodSet() {
@@ -272,14 +272,10 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
     }
 
     public String getDiagnosis() {
-        return getDiagnosis(null);
+        return getDiagnosis(0);
     }
 
-    public String getDiagnosis(Map<String, Double> densities) {
-        return getDiagnosis(0, densities);
-    }
-
-    public String getDiagnosis(int indent, Map<String, Double> densities) {
+    public String getDiagnosis(int indent) {
         String message = "";
         boolean first = true;
 
@@ -302,7 +298,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
             message += lik.prettyName() + "=";
 
             if( lik instanceof CompoundLikelihood ) {
-                final String d = ((CompoundLikelihood) lik).getDiagnosis(indent < 0 ? -1 : indent + 2, densities);
+                final String d = ((CompoundLikelihood) lik).getDiagnosis(indent < 0 ? -1 : indent + 2);
                 if( d != null && d.length() > 0 ) {
                     message += "(" + d;
 
@@ -326,9 +322,6 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
                 } else {
                     message += nf.formatDecimal(logLikelihood, 4);
                 }
-                if (densities != null) {
-                    densities.put(lik.prettyName(), logLikelihood);
-                }
             }
         }
         message += "\n";
@@ -338,6 +331,20 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
         message += "Total = " + this.getLogLikelihood();
 
         return message;
+    }
+
+    public void getDensities(Map<String, Double> densities) {
+
+        for( Likelihood lik : likelihoods ) {
+
+            if( lik instanceof CompoundLikelihood ) {
+                ((CompoundLikelihood) lik).getDensities(densities);
+            } else {
+
+                final double logLikelihood = lik.getLogLikelihood();
+                densities.put(lik.prettyName(), logLikelihood);
+            }
+        }
     }
 
     public String toString() {
@@ -364,20 +371,20 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
     public int getThreadCount() {
         return threadCount;
     }
-    
+
     public long[] getEvaluationTimes() {
-    	return evaluationTimes;
+        return evaluationTimes;
     }
-    
+
     public int[] getEvaluationCounts() {
-    	return evaluationCounts;
+        return evaluationCounts;
     }
-    
+
     public void resetEvaluationTimes() {
-    	for (int i = 0; i < evaluationTimes.length; i++) {
-    		evaluationTimes[i] = 0;
-    		evaluationCounts[i] = 0;
-    	}
+        for (int i = 0; i < evaluationTimes.length; i++) {
+            evaluationTimes[i] = 0;
+            evaluationCounts[i] = 0;
+        }
     }
 
 

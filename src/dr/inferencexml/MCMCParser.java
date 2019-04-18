@@ -180,7 +180,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         if (initialScore == Double.NEGATIVE_INFINITY) {
             String message = "The initial posterior is zero";
             if (likelihood instanceof CompoundLikelihood) {
-                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis(2, null);
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis(2);
             } else {
                 message += "!";
             }

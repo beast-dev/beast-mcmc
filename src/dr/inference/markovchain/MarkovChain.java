@@ -174,10 +174,9 @@ public final class MarkovChain implements Serializable {
             usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
-        while (!pleaseStop && (currentState < (currentLength + length))) {
+        Map<String, Double> diagnosticDensities = null;
 
-            String diagnosticStart = "";
-            Map<String, Double> diagnosticStartDensities = null;
+        while (!pleaseStop && (currentState < (currentLength + length))) {
 
             // periodically log states
             fireCurrentModel(currentState, currentModel);
@@ -193,9 +192,8 @@ public final class MarkovChain implements Serializable {
 
             double oldScore = currentScore;
             if (usingFullEvaluation) {
-                diagnosticStartDensities = new HashMap<String, Double>();
-                diagnosticStart = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood) likelihood).getDiagnosis(diagnosticStartDensities) : "";
+                diagnosticDensities = new HashMap<String, Double>();
+                ((CompoundLikelihood) likelihood).getDensities(diagnosticDensities);
             }
 
             // assert Profiler.startProfile("Store");
@@ -221,10 +219,10 @@ public final class MarkovChain implements Serializable {
             // The new model is proposed
             // assert Profiler.startProfile("Operate");
 
-                if (DEBUG) {
-                    System.out.println("\n>> Iteration: " + currentState);
-                    System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
-                }
+            if (DEBUG) {
+                System.out.println("\n>> Iteration: " + currentState);
+                System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
+            }
 
             if (mcmcOperator instanceof GeneralOperator) {
                 hastingsRatio = ((GeneralOperator) mcmcOperator).operate(likelihood);
@@ -278,12 +276,10 @@ public final class MarkovChain implements Serializable {
                     mcmcOperator.addEvaluationTime(duration);
                 }
 
-                String diagnosticOperator = "";
                 Map<String, Double> diagnosticOperatorDensities = null;
                 if (usingFullEvaluation) {
                     diagnosticOperatorDensities = new HashMap<String, Double>();
-                    diagnosticOperator = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis(diagnosticOperatorDensities) : "";
+                    ((CompoundLikelihood) likelihood).getDensities(diagnosticOperatorDensities);
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
@@ -312,7 +308,7 @@ public final class MarkovChain implements Serializable {
                         Double.isNaN(score) ) {
                     if (likelihood instanceof CompoundLikelihood) {
                         Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error:\n" +
-                                ((CompoundLikelihood)likelihood).getDiagnosis(null));
+                                ((CompoundLikelihood)likelihood).getDiagnosis());
                     } else {
                         Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error.");
                     }
@@ -351,8 +347,7 @@ public final class MarkovChain implements Serializable {
                     final double testScore = evaluate(likelihood);
 
                     Map<String, Double> densitiesAfter = new HashMap<String, Double>();;
-                    final String d2 = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis(densitiesAfter) : "";
+                    ((CompoundLikelihood) likelihood).getDensities(densitiesAfter);
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();
@@ -361,9 +356,6 @@ public final class MarkovChain implements Serializable {
                                 + "\nFull Likelihood evaluation: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
                                 + " " + mcmcOperator.getOperatorName()
-//                                + (diagnosticOperator.length() > 0 ? "\n\nDetails\n" +
-//                                "Before: " + diagnosticOperator + "\n" +
-//                                "After: " + d2 : "")
                                 + "\n\n");
 
                         sb.append("Discrepancies:\n");
@@ -421,9 +413,8 @@ public final class MarkovChain implements Serializable {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood);
 
-                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();;
-                    final String d2 = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis(densitiesAfter) : "";
+                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();
+                    ((CompoundLikelihood) likelihood).getDensities(densitiesAfter);
 
                     if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();
@@ -432,13 +423,12 @@ public final class MarkovChain implements Serializable {
                                 + " Likelihood after: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
                                 + " " + mcmcOperator.getOperatorName()
-//                                + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
                                 + "\n\n");
 
                         sb.append("Discrepancies:\n");
-                        for (String key : diagnosticStartDensities.keySet()) {
-                            if (Math.abs(diagnosticStartDensities.get(key) - densitiesAfter.get(key)) > evaluationTestThreshold) {
-                                sb.append(key + ": " + diagnosticStartDensities.get(key) +
+                        for (String key : diagnosticDensities.keySet()) {
+                            if (Math.abs(diagnosticDensities.get(key) - densitiesAfter.get(key)) > evaluationTestThreshold) {
+                                sb.append(key + ": " + diagnosticDensities.get(key) +
                                         " -> " + densitiesAfter.get(key) + "\n");
                             }
                         }

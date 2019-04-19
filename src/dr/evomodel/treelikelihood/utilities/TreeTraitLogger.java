@@ -28,12 +28,13 @@ package dr.evomodel.treelikelihood.utilities;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.util.Taxon;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.xml.Report;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,14 +47,16 @@ import java.util.List;
 public class TreeTraitLogger implements Loggable, Reportable {
 
     public TreeTraitLogger(Tree tree, TreeTrait[] traits) {
-        this(tree, traits, NodeRestriction.ALL);
+        this(tree, traits, NodeRestriction.ALL, false);
     }
 
     public TreeTraitLogger(Tree tree,
                            TreeTrait[] traits,
-                           NodeRestriction nodeRestriction) {
+                           NodeRestriction nodeRestriction,
+                           boolean taxonNameExplicit) {
         this.tree = tree;
         this.nodeRestriction = nodeRestriction;
+        this.taxonNameExplicit = taxonNameExplicit;
         addTraits(traits);
     }
 
@@ -62,9 +65,7 @@ public class TreeTraitLogger implements Loggable, Reportable {
             treeTraits = new ArrayList<TreeTrait>();
         }
 
-        for (TreeTrait trait : traits) {
-            treeTraits.add(trait);
-        }
+        treeTraits.addAll(Arrays.asList(traits));
     }
 
     public LogColumn[] getColumns() {
@@ -88,6 +89,12 @@ public class TreeTraitLogger implements Loggable, Reportable {
                 for (int i = nodeRestriction.begin(tree); i < nodeRestriction.end(tree); ++i) {
                     final NodeRef node = tree.getNode(i);
 
+                    String name = null;
+                    if (taxonNameExplicit) {
+                        Taxon taxon = tree.getNodeTaxon(node);
+                        name = (taxon != null) ? taxon.getId() : null;
+                    }
+
                     if (!tree.isRoot(node) || trait.getIntent() == TreeTrait.Intent.NODE) {
 
                         if (trait instanceof TreeTrait.DA) {
@@ -97,7 +104,9 @@ public class TreeTraitLogger implements Loggable, Reportable {
 
                                 final int idx = j;
                                 LogColumn column = new LogColumn.Abstract(trait.getTraitName()
-                                        + "." + (i + 1) + "." + (j + 1)) {
+                                        + "." +
+                                        (name != null ? name : i + 1)
+                                        + "." + (j + 1)) {
                                     @Override
                                     protected String getFormattedValue() {
                                         double[] x = (double[]) trait.getTrait(tree, node);
@@ -131,6 +140,7 @@ public class TreeTraitLogger implements Loggable, Reportable {
     private final Tree tree;
     private List<TreeTrait> treeTraits;
     private final NodeRestriction nodeRestriction;
+    private final boolean taxonNameExplicit;
 
     @Override
     public String getReport() {
@@ -156,6 +166,15 @@ public class TreeTraitLogger implements Loggable, Reportable {
         INTERNAL {
             int begin(Tree tree) { return tree.getExternalNodeCount(); }
             int end(Tree tree) { return tree.getNodeCount(); }
+        },
+        ROOT {
+            int begin(Tree tree) {
+
+                assert (tree.getNode(tree.getRoot().getNumber()) == tree.getRoot());
+
+                return tree.getRoot().getNumber();
+            }
+            int end(Tree tree) { return tree.getRoot().getNumber() + 1; }
         };
 
         abstract int begin(Tree tree);
@@ -166,7 +185,9 @@ public class TreeTraitLogger implements Loggable, Reportable {
              if (lower.compareTo("external") == 0) {
                  return EXTERNAL;
              } else if (lower.compareTo("internal") == 0) {
-                return INTERNAL;
+                 return INTERNAL;
+             } else if (lower.compareTo("root") == 0) {
+                 return ROOT;
             } else {
                  return ALL;
             }

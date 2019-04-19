@@ -26,8 +26,9 @@
 package dr.inference.model;
 
 /**
- * Created by msuchard on 12/30/15.
+ * @author Marc A. Suchard
  */
+
 public interface MatrixParameterInterface extends Parameter {
 
     double getParameterValue(int row, int col);
@@ -61,4 +62,6 @@ public interface MatrixParameterInterface extends Parameter {
     void setAllParameterValuesQuietly(double[] values, int offset);
 
     String toSymmetricString();
+
+    boolean isConstrainedSymmetric();
 }

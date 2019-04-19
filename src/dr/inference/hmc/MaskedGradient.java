@@ -41,6 +41,7 @@ public class MaskedGradient implements GradientWrtParameterProvider, VariableLis
     private final int[] map;
 
     public MaskedGradient(GradientWrtParameterProvider gradient, Parameter mask) {
+
         this.gradient = gradient;
         mask.addVariableListener(this);
 

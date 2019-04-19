@@ -10,6 +10,7 @@
 	<classpathentry kind="lib" path="lib/jebl.jar"/>
 	<classpathentry kind="lib" path="lib/JRI.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.4.jar"/>
+	<classpathentry kind="lib" path="lib/lbfgs4j-0.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/mpj.jar"/>
 	<classpathentry kind="lib" path="lib/mtj.jar"/>
 	<classpathentry kind="lib" path="lib/options.jar"/>

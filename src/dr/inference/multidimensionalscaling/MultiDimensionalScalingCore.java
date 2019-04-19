@@ -101,4 +101,14 @@ public interface MultiDimensionalScalingCore {
      */
     @SuppressWarnings("unused")
     double[] getPairwiseData();
+
+    int getInternalDimension();
+
+    int DEFAULT_DEVICE = -1;
+
+    class CoreInformation {
+        public long flags = 0;
+        public int deviceNumber = DEFAULT_DEVICE;
+        public int numThreads = 1;
+    }
 }

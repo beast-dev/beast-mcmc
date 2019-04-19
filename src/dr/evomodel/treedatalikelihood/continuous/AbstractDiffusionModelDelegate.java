@@ -33,11 +33,14 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.io.Serializable;
 
 /**
  * A simple diffusion model delegate with the same diffusion model over the whole tree
+ *
  * @author Marc A. Suchard
  * @author Andrew Rambaut
  * @version $Id$
@@ -53,7 +56,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     private final BufferIndexHelper matrixBufferHelper;
 
     AbstractDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
-                                          int partitionNumber) {
+                                   int partitionNumber) {
 
         super("AbstractDiffusionModelDelegate");
 
@@ -74,8 +77,23 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
+    public int getEigenBufferOffsetIndex(int i) {
+        return eigenBufferHelper.getOffsetIndex(i);
+    }
+
+    @Override
     public int getMatrixBufferCount() {
         return matrixBufferHelper.getBufferCount();
+    }
+
+    @Override
+    public int getMatrixBufferOffsetIndex(int i) {
+        return matrixBufferHelper.getOffsetIndex(i);
+    }
+
+    @Override
+    public void flipMatrixBufferOffset(int i) {
+        matrixBufferHelper.flipOffset(i);
     }
 
     @Override
@@ -85,7 +103,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
 
     @Override
     public MultivariateDiffusionModel getDiffusionModel(int index) {
-        assert(index == 0);
+        assert (index == 0);
         return diffusionModel;
     }
 
@@ -101,7 +119,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         }
 
         cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                diffusionModel.getPrecisionParameter().getParameterValues(),
+                diffusionModel.getPrecisionmatrixAsVector(),
                 Math.log(diffusionModel.getDeterminantPrecisionMatrix())
 
         );
@@ -131,7 +149,19 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     protected abstract double[] getDriftRates(int[] branchIndices, int updateCount);
 
     @Override
-    public boolean hasDrift() { return false; }
+    public boolean hasDrift() {
+        return false;
+    }
+
+    @Override
+    public boolean hasActualization() {
+        return false;
+    }
+
+    @Override
+    public boolean hasDiagonalActualization() {
+        return false;
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -162,5 +192,10 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     @Override
     protected void acceptState() {
 
+    }
+
+    @Override
+    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
+        CommonOps.scale(scalar, gradient);
     }
 }

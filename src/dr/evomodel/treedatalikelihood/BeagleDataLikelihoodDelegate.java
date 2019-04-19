@@ -25,16 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * BeagleDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -49,7 +39,6 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.Vector;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -58,6 +47,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+/**
+ * BeagleDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @version $Id$
+ */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
 
@@ -104,6 +103,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private static final boolean DEBUG = false;
 
+    public static class PreOrderSettings {
+        boolean usePreOrder;
+        boolean branchRateDerivative;
+        boolean branchInfinitesimalDerivative;
+
+        public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative) {
+            this.usePreOrder = usePreOrder;
+            this.branchRateDerivative = branchRateDerivative;
+            this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
+        }
+
+        public static PreOrderSettings getDefault () {
+            return new PreOrderSettings(false, false, false);
+        }
+    }
+
     /**
      *
      * @param tree Used for configuration - shouldn't be watched for changes
@@ -111,6 +126,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @param patternList List of patterns
      * @param siteRateModel Specifies rates per site
      * @param useAmbiguities Whether to respect state ambiguities in data
+     * @param settings pre-order settings
      */
     public BeagleDataLikelihoodDelegate(Tree tree,
                                         PatternList patternList,
@@ -118,7 +134,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                         SiteRateModel siteRateModel,
                                         boolean useAmbiguities,
                                         PartialsRescalingScheme rescalingScheme,
-                                        boolean delayRescalingUntilUnderflow) {
+                                        boolean delayRescalingUntilUnderflow,
+                                        PreOrderSettings settings) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
@@ -161,6 +178,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         firstRescaleAttempt = true;
 
+        isRestored = false;
+
+        this.settings = settings;
+
         try {
 
             int compactPartialsCount = tipCount;
@@ -173,16 +194,32 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+            scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
-            if (branchModel.getSubstitutionModels().size() == 1) {
-                evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            if (settings.branchInfinitesimalDerivative) {
+                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
             } else {
-                // use a more general delegate that allows different substitution models on different branches and
-                // can do matrix convolution.
 
-                // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
-                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel);
+                if (branchModel.getSubstitutionModels().size() == 1) {
+                    evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+                } else {
+                    // use a more general delegate that allows different substitution models on different branches and
+                    // can do matrix convolution.
+
+                    // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
+                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, settings);
+                }
+            }
+
+            int numPartials = partialBufferHelper.getBufferCount();
+            int numScaleBuffers = scaleBufferHelper.getBufferCount();
+            int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
+
+            // one partial buffer for root node and two for each node including tip nodes (for store restore)
+            if (settings.usePreOrder){
+                numPartials += nodeCount;
+                numScaleBuffers += nodeCount - 1; // don't need to rescale at root
+                numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount(settings);
             }
 
             // Attempt to get the resource order from the System Property
@@ -372,14 +409,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
-                    partialBufferHelper.getBufferCount(),
+                    numPartials,
                     compactPartialsCount,
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    evolutionaryProcessDelegate.getMatrixBufferCount(),
+                    numMatrices,
                     categoryCount,
-                    scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
+                    numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,
                     preferenceFlags,
                     requirementFlags
@@ -421,6 +458,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 useAmbiguities = true;
             }
 
+            //add in logger info for preOrder traversal
+            logger.info("  " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
@@ -510,6 +549,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return RateRescalingScheme.NONE;
     }
 
+    public final BranchModel getBranchModel() {
+        return branchModel;
+    }
+
     public PatternList getPatternList() {
         return this.patternList;
     }
@@ -531,6 +574,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return order;
     }
 
+    public Beagle getBeagleInstance() { return beagle; }
+
     private static List<String> parseSystemPropertyStringArray(String propertyName) {
 
         List<String> order = new ArrayList<String>();
@@ -550,7 +595,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return order;
     }
 
-    private int getScaleBufferCount() {
+    private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;
     }
 
@@ -570,7 +615,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
-            
+
             if (patternList instanceof UncertainSiteList) {
                 ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
                 v += stateCount;
@@ -770,6 +815,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
+            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum) && !recomputeScaleFactors) {
+                System.err.println("Stored partial should not be updated!");
+            }
+
             if (useScaleFactors) {
                 // get the index of this scaling buffer
                 int n = nodeNum - tipCount;
@@ -962,6 +1011,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
+
+        isRestored = false;
     }
 
     /**
@@ -982,6 +1033,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 //            rescalingCount = storedRescalingCount;
         }
 
+        isRestored = true;
+
     }
 
     @Override
@@ -996,6 +1049,30 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     protected void acceptState() {
+    }
+
+    public final boolean isUsePreOrder(){
+        return this.settings.usePreOrder;
+    }
+
+    public final EvolutionaryProcessDelegate getEvolutionaryProcessDelegate(){
+        return this.evolutionaryProcessDelegate;
+    }
+
+    public final SiteRateModel getSiteRateModel(){
+        return this.siteRateModel;
+    }
+
+    public final int getPartialBufferIndex(int nodeNumber) {
+        return partialBufferHelper.getOffsetIndex(nodeNumber);
+    }
+
+    public final int getScaleBufferCount() {
+        return scaleBufferHelper.getBufferCount();
+    }
+
+    public final int getPartialBufferCount() {
+        return partialBufferHelper.getBufferCount();
     }
 
     // **************************************************************
@@ -1074,6 +1151,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private final double[] patternWeights;
 
     /**
+     * if the chain is already restored
+     */
+    private boolean isRestored;
+
+    /**
      * the number of patterns
      */
     private final int patternCount;
@@ -1137,5 +1219,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
      */
     private boolean initialEvaluation = true;
+
+    /**
+     * PreOrder related settings
+     */
+    private PreOrderSettings settings;
+
 
 }

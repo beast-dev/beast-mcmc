@@ -28,6 +28,7 @@ package dr.inference.hmc;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inference.operators.hmc.NumericalHessianFromGradient;
 
 /**
  * @author Max Tolkoff
@@ -45,7 +46,7 @@ public interface GradientWrtParameterProvider {
 
 //    void getGradientLogDensity(double[] destination, int offset);
 
-    class ParameterWrapper implements GradientWrtParameterProvider {
+    class ParameterWrapper implements GradientWrtParameterProvider, HessianWrtParameterProvider{
 
         final GradientProvider provider;
         final Parameter parameter;
@@ -75,6 +76,18 @@ public interface GradientWrtParameterProvider {
         @Override
         public double[] getGradientLogDensity() {
             return provider.getGradientLogDensity(parameter.getParameterValues());
+        }
+
+        @Override
+        public double[] getDiagonalHessianLogDensity() {
+
+            NumericalHessianFromGradient hessianFromGradient = new NumericalHessianFromGradient(this);
+            return hessianFromGradient.getDiagonalHessianLogDensity();
+        }
+
+        @Override
+        public double[][] getHessianLogDensity() {
+            throw new RuntimeException("Not yet implemented");
         }
     }
 }

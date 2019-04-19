@@ -25,7 +25,6 @@
 
 package dr.inference.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
@@ -41,8 +40,8 @@ import java.util.List;
 
 public class CompoundGradient implements GradientWrtParameterProvider {
 
-    private final int dimension;
-    private final List<GradientWrtParameterProvider> derivativeList;
+    protected final int dimension;
+    protected final List<GradientWrtParameterProvider> derivativeList;
     private final Likelihood likelihood;
     private final Parameter parameter;
 
@@ -60,7 +59,12 @@ public class CompoundGradient implements GradientWrtParameterProvider {
 
             int dim = 0;
             for (GradientWrtParameterProvider grad : derivativeList) {
-                likelihoodList.add(grad.getLikelihood());
+                for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
+                    if (!(likelihoodList.contains(likelihood))) {
+                        likelihoodList.add(likelihood);
+                    }
+                }
+
                 Parameter p = grad.getParameter();
                 compoundParameter.addParameter(p);
 
@@ -101,9 +105,7 @@ public class CompoundGradient implements GradientWrtParameterProvider {
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
-
-            System.err.println(grad.getLikelihood().getId() + " " + grad.getParameter().getId());
-
+            
             double[] tmp = grad.getGradientLogDensity();
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();

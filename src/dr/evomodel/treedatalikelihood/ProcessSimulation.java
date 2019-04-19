@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
@@ -63,15 +62,16 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
                 simulationDelegate.getOptimalTraversalType());
 
         treeDataLikelihood.addModelListener(this);
+        treeDataLikelihood.addModelRestoreListener(this);
 
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
 
-        this.operations = new int[tree.getNodeCount() * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
+        this.operations = new int[tree.getNodeCount() * simulationDelegate.getSingleOperationSize()];
 
         validSimulation = false;
     }
-
+    
     public final void cacheSimulatedTraits(final NodeRef node) {
 
         treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
@@ -118,6 +118,6 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
     @Override
     public void modelRestored(Model model) {
-        // Do nothing
+        validSimulation = false;
     }
 }

@@ -84,10 +84,14 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
         return windowSize;
     }
 
+    public final BoundaryCondition getBoundaryCondition() {
+        return boundaryCondition;
+    }
+
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         // a random dimension to perturb
         if (parameter.getDimension() <= 0) {
@@ -244,7 +248,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
+    protected Parameter parameter = null;
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
     private int updateMapSize;

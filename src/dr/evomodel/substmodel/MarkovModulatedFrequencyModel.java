@@ -27,7 +27,6 @@ package dr.evomodel.substmodel;
 
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.LUDecomposition;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -48,7 +47,7 @@ import java.util.List;
 
 public class MarkovModulatedFrequencyModel extends FrequencyModel {
 
-    public MarkovModulatedFrequencyModel(String name, List<FrequencyModel> freqModels, Parameter switchingRates) {
+    MarkovModulatedFrequencyModel(String name, List<FrequencyModel> freqModels, Parameter switchingRates) {
         super(name);
         this.freqModels = freqModels;
         int freqCount = 0;
@@ -66,16 +65,12 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
         totalFreqCount = freqCount;
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
-
-//        if (switchingRates.getDimension() > 2 ||  numBaseModel > 2) {
-//            throw new RuntimeException("MarkovModulatedFrequencyModel not yet implemented for more than 2 hidden classes");
-//        }
-
+        
         baseStationaryDistribution = new double[numBaseModel];
         storedBaseStationaryDistribution = new double[numBaseModel];
         stationaryDistributionKnown = false;
 
-        d = new DenseDoubleMatrix2D(numBaseModel, numBaseModel);
+        DoubleMatrix2D d = new DenseDoubleMatrix2D(numBaseModel, numBaseModel);
         d.set(0, 0, 1.0);
     }
 
@@ -94,47 +89,12 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
                 computeStationaryDistribution(baseStationaryDistribution);
                 stationaryDistributionKnown = true;
             }
-//            relativeFreq *= baseStationaryDistribution[whichModel]; // Try: no adjustment, appears to cause store/restore issue
         }
 
         return relativeFreq;
     }
 
-    private void computeStationaryDistribution(double[] statDistr) {
-
-//        // Uses an eigendecomposition and matrix inverse
-//        DoubleMatrix2D mat = new DenseDoubleMatrix2D(numBaseModel, numBaseModel);
-//        int index = 0;
-//        for (int i = 0; i < numBaseModel; ++i) {
-//            for (int j = i + 1; j < numBaseModel; ++j) {
-//                mat.set(i, j, switchingRates.getParameterValue(index));
-//                index++;
-//            }
-//        }
-//        for (int j = 0; j < numBaseModel; ++j) {
-//            for (int i = j + 1; i < numBaseModel; ++i) {
-//                mat.set(i, j, switchingRates.getParameterValue(index));
-//                index++;
-//            }
-//        }
-//        for (int i = 0; i < numBaseModel; ++i) {
-//            double rowTotal = 0.0;
-//            for (int j = 0; j < numBaseModel; ++j) {
-//                if (i != j) {
-//                    rowTotal += mat.get(i,j);
-//                }
-//            }
-//            mat.set(i,i, -rowTotal);
-//        }
-//
-//        EigenvalueDecomposition ed = new EigenvalueDecomposition(mat);
-//        DoubleMatrix2D eigenVectors = ed.getV();
-//        DoubleMatrix2D b = alg.mult(eigenVectors, alg.mult(d, alg.inverse(eigenVectors)));
-//
-//        for (int i = 0; i < numBaseModel; ++i) {
-//            statDistr[i] = b.get(0,i);
-//        }
-//        System.err.println(new Vector(statDistr));
+    private void computeStationaryDistribution(double[] stationaryDistribution) {
 
         if (allRatesAreZero(switchingRates)) {
             return;
@@ -171,14 +131,13 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
             mat2.set(numBaseModel, i, 1.0);
         }
 
-        LUDecomposition decomp = new LUDecomposition(mat2);
+        LUDecomposition decomposition = new LUDecomposition(mat2);
         DoubleMatrix2D x = new DenseDoubleMatrix2D(numBaseModel + 1, 1);
         x.set(numBaseModel, 0, 1.0);
-        DoubleMatrix2D y = decomp.solve(x);
+        DoubleMatrix2D y = decomposition.solve(x);
         for (int i = 0; i < numBaseModel; ++i) {
-            statDistr[i] = y.get(i, 0);
+            stationaryDistribution[i] = y.get(i, 0);
         }
-        //System.err.println(new Vector(statDistr));              
     }
 
     private static boolean allRatesAreZero(Parameter rates) {
@@ -210,7 +169,6 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-//        System.err.println("MMFM.hMCE : " + model.getId() + " : " + model.getClass().getCanonicalName());
         fireModelChanged();
     }
 
@@ -234,7 +192,4 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
 
     private boolean stationaryDistributionKnown;
     private boolean storedStationaryDistributionKnown;
-
-    private final Algebra alg = new Algebra();
-    private final DoubleMatrix2D d;
 }

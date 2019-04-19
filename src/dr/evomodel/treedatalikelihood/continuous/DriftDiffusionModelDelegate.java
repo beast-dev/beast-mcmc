@@ -1,5 +1,5 @@
 /*
- * HomogenousDiffusionModelDelegate.java
+ * DriftDiffusionModelDelegate.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,25 +25,19 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.inference.model.Model;
 
 import java.util.List;
 
 /**
  * A simple diffusion model delegate with branch-specific drift and constant diffusion
+ *
  * @author Marc A. Suchard
  * @version $Id$
  */
-public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
-
-//    private static final boolean DEBUG = true;
-
-    private final int dim;
-    private final List<BranchRateModel> branchRateModels;
+public final class DriftDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegate {
 
     public DriftDiffusionModelDelegate(Tree tree,
                                        MultivariateDiffusionModel diffusionModel,
@@ -55,73 +49,7 @@ public final class DriftDiffusionModelDelegate extends AbstractDiffusionModelDel
                                         MultivariateDiffusionModel diffusionModel,
                                         List<BranchRateModel> branchRateModels,
                                         int partitionNumber) {
-        super(tree, diffusionModel, partitionNumber);
-        this.branchRateModels = branchRateModels;
-
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
-
-        if (branchRateModels != null) {
-
-            for (BranchRateModel rateModel : branchRateModels) {
-                addModel(rateModel);
-            }
-
-            if (branchRateModels.size() != dim) {
-                throw new IllegalArgumentException("Invalid dimensions");
-            }
-        }
+        super(tree, diffusionModel, branchRateModels, partitionNumber);
     }
 
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-
-        if (branchRateModels.contains(model)) {
-            fireModelChanged(model);
-        } else {
-            super.handleModelChangedEvent(model, object, index);
-        }
-    }
-
-    @Override
-    public boolean hasDrift() { return true; }
-
-    @Override
-    protected double[] getDriftRates(int[] branchIndices, int updateCount) {
-
-        final double[] drift = new double[updateCount * dim];  // TODO Reuse?
-
-        if (branchRateModels != null) {
-
-            int offset = 0;
-            for (int i = 0; i < updateCount; ++i) {
-
-                final NodeRef node = tree.getNode(branchIndices[i]); // TODO Check if correct node
-
-                for (int model = 0; model < dim; ++model) {
-                    drift[offset] = branchRateModels.get(model).getBranchRate(tree, node);
-                    ++offset;
-                }
-            }
-        }
-        return drift;
-    }
-
-    double[] getAccumulativeDrift(final NodeRef node) {
-        final double[] drift = new double[dim];
-        recursivelyAccumulateDrift(node, drift);
-        return drift;
-    }
-
-    private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift) {
-        if (!tree.isRoot(node)) {
-
-            final double length = tree.getBranchLength(node);
-
-            for (int model = 0; model < dim; ++model) {
-                drift[model] += branchRateModels.get(model).getBranchRate(tree, node) * length;
-            }
-
-            recursivelyAccumulateDrift(tree.getParent(node), drift);
-        }
-    }
 }

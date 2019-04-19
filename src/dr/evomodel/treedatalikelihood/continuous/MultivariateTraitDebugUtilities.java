@@ -25,10 +25,16 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.math.KroneckerOperation;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,13 +43,17 @@ import java.util.Set;
  */
 public class MultivariateTraitDebugUtilities {
 
-    public static double getLengthToRoot(final Tree tree, final NodeRef nodeRef) {
+    public static double getLengthToRoot(final Tree tree, final BranchRates branchRates, final NodeRef nodeRef) {
 
         double length = 0;
 
         if (!tree.isRoot(nodeRef)) {
             NodeRef parent = tree.getParent(nodeRef);
-            length += tree.getBranchLength(nodeRef) + getLengthToRoot(tree, parent);
+            double rateScalar = 1.0;
+            if (branchRates != null) {
+                rateScalar = branchRates.getBranchRate(tree, nodeRef);
+            }
+            length += rateScalar * tree.getBranchLength(nodeRef) + getLengthToRoot(tree, branchRates, parent);
         }
 
         return length;
@@ -58,7 +68,7 @@ public class MultivariateTraitDebugUtilities {
 
     public static void insertPrecision(Tree tree, NodeRef parent, NodeRef child, double[][] matrix, double normalization) {
         matrix[parent.getNumber()][child.getNumber()] =
-                           matrix[child.getNumber()][parent.getNumber()] =-1.0 / (tree.getBranchLength(child) * normalization);
+                matrix[child.getNumber()][parent.getNumber()] = -1.0 / (tree.getBranchLength(child) * normalization);
         recurseGraph(tree, child, matrix, normalization);
 
     }
@@ -70,7 +80,7 @@ public class MultivariateTraitDebugUtilities {
         }
     }
 
-    public static double[][] getGraphVariance(final Tree tree, final double normalization, final double priorSampleSize) {
+    public static double[][] getGraphVariance(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
 
         final int nodeCount = tree.getNodeCount();
 //        final double[][] variance = new double[nodeCount + 1][nodeCount + 1];
@@ -79,13 +89,13 @@ public class MultivariateTraitDebugUtilities {
         for (int i = 0; i < nodeCount; i++) {
 
             // Fill in diagonal
-            double marginalTime = getLengthToRoot(tree, tree.getNode(i)) * normalization;
+            double marginalTime = getLengthToRoot(tree, branchRates, tree.getNode(i)) * normalization;
             variance[i][i] = marginalTime;
 
             // Fill in upper right triangle,
             for (int j = i + 1; j < nodeCount; j++) {
                 NodeRef mrca = TreeUtils.getCommonAncestorSafely(tree, tree.getNode(i), tree.getNode(j));
-                variance[i][j] = getLengthToRoot(tree, mrca) * normalization;
+                variance[i][j] = getLengthToRoot(tree, branchRates, mrca) * normalization;
             }
         }
 
@@ -96,7 +106,7 @@ public class MultivariateTraitDebugUtilities {
         return variance;
     }
 
-    public static double[][] getTreeVariance(final Tree tree, final double normalization, final double priorSampleSize) {
+    public static double[][] getTreeVariance(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
 
         final int tipCount = tree.getExternalNodeCount();
 
@@ -105,14 +115,14 @@ public class MultivariateTraitDebugUtilities {
         for (int i = 0; i < tipCount; i++) {
 
             // Fill in diagonal
-            double marginalTime = getLengthToRoot(tree, tree.getExternalNode(i)) * normalization;
+            double marginalTime = getLengthToRoot(tree, branchRates, tree.getExternalNode(i)) * normalization;
             variance[i][i] = marginalTime;
 
             // Fill in upper right triangle,
 
             for (int j = i + 1; j < tipCount; j++) {
                 NodeRef mrca = findMRCA(tree, i, j);
-                variance[i][j] = getLengthToRoot(tree, mrca) * normalization;
+                variance[i][j] = getLengthToRoot(tree, branchRates, mrca) * normalization;
             }
         }
 
@@ -141,33 +151,149 @@ public class MultivariateTraitDebugUtilities {
         }
     }
 
-    public static double[][] getTreeDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+    public static double[][] getTreeDrift(Tree tree, double[] priorMean, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getExternalNodeCount()][dim];
 
-        if (diffusion instanceof DriftDiffusionModelDelegate) {
-            for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
-                drift[tip] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
-                        tree.getExternalNode(tip));
-            }
+        for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
+            drift[tip] = diffusion.getAccumulativeDrift(tree.getExternalNode(tip), priorMean, cdi);
         }
 
         return drift;
     }
 
-    public static double[][] getGraphDrift(Tree tree, DiffusionProcessDelegate diffusion) {
+    public static double[][] getGraphDrift(Tree tree, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
         final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
         final double[][] drift = new double[tree.getNodeCount()][dim];
 
-        if (diffusion instanceof DriftDiffusionModelDelegate) {
-            for (int node = 0; node < tree.getNodeCount(); ++node) {
-                drift[node] = ((DriftDiffusionModelDelegate) diffusion).getAccumulativeDrift(
-                        tree.getNode(node));
-            }
+        final double[] temp = new double[dim];
+
+        for (int node = 0; node < tree.getNodeCount(); ++node) {
+            drift[node] = diffusion.getAccumulativeDrift(tree.getNode(node), temp, cdi);
         }
 
         return drift;
+    }
+
+    public static Matrix getJointVarianceFactor(final double priorSampleSize, double[][] treeVariance, double[][] treeSharedLengths,
+                                                double[][] loadingsVariance, double[][] diffusionVariance,
+                                                DiffusionProcessDelegate diffusionProcessDelegate,
+                                                Matrix Lt) {
+        if (!diffusionProcessDelegate.hasActualization()) {
+
+            double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeVariance, loadingsVariance);
+            Matrix loadingsFactorsVariance = new Matrix(jointVariance);
+            return loadingsFactorsVariance;
+
+        } else {
+
+            double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, diffusionVariance);
+
+            Matrix jointVarianceMatrix = new Matrix(jointVariance);
+
+            double[][] identity = KroneckerOperation.makeIdentityMatrixArray(treeSharedLengths[0].length);
+            Matrix loadingsTree = new Matrix(KroneckerOperation.product(identity, Lt.toComponents()));
+
+            Matrix loadingsFactorsVariance = null;
+            try {
+                loadingsFactorsVariance = loadingsTree.product(jointVarianceMatrix.product(loadingsTree.transpose()));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+            return loadingsFactorsVariance;
+        }
+    }
+
+    private enum Accumulator {
+
+        OFF_DIAGONAL {
+            @Override
+            BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                      BranchCumulant cumulant1, double length1) {
+                return new BranchCumulant(
+                        cumulant0.nTaxa + cumulant1.nTaxa,
+                        cumulant0.sharedLength + cumulant1.sharedLength +
+                                (cumulant0.nTaxa - 1) * cumulant0.nTaxa * length0 +
+                                (cumulant1.nTaxa - 1) * cumulant1.nTaxa * length1
+                );
+            }
+        },
+        DIAGONAL {
+            @Override
+            BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                      BranchCumulant cumulant1, double length1) {
+                return new BranchCumulant(
+                        cumulant0.nTaxa + cumulant1.nTaxa,
+                        cumulant0.sharedLength + cumulant1.sharedLength +
+                                cumulant0.nTaxa * length0 +
+                                cumulant1.nTaxa * length1
+                );
+            }
+        };
+
+        abstract BranchCumulant accumulate(BranchCumulant cumulant0, double length0,
+                                           BranchCumulant cumulant1, double length1);
+
+        private class BranchCumulant {
+
+            final int nTaxa;
+            final double sharedLength;
+
+            BranchCumulant(int nTaxa, double sharedLength) {
+                this.nTaxa = nTaxa;
+                this.sharedLength = sharedLength;
+            }
+        }
+
+
+        private BranchCumulant postOrderAccumulation(Tree tree,
+                                                     NodeRef node,
+                                                     BranchRates branchRates) {
+            if (tree.isExternal(node)) {
+
+                return new BranchCumulant(1, 0);
+
+            } else {
+
+                NodeRef child0 = tree.getChild(node, 0);
+                NodeRef child1 = tree.getChild(node, 1);
+
+                BranchCumulant cumulant0 = postOrderAccumulation(tree, child0, branchRates);
+                BranchCumulant cumulant1 = postOrderAccumulation(tree, child1, branchRates);
+
+                double length0 = tree.getBranchLength(child0);
+                double length1 = tree.getBranchLength(child1);
+
+                if (branchRates != null) {
+                    length0 *= branchRates.getBranchRate(tree, child0);
+                    length1 *= branchRates.getBranchRate(tree, child1);
+                }
+
+                return accumulate(
+                        cumulant0, length0,
+                        cumulant1, length1
+                );
+            }
+        }
+    }
+
+    public static double getVarianceOffDiagonalSum(Tree tree,
+                                                   BranchRates branchRates,
+                                                   double normalization) {
+
+        Accumulator.BranchCumulant cumulant = Accumulator.OFF_DIAGONAL.postOrderAccumulation(
+                tree, tree.getRoot(), branchRates);
+        return cumulant.sharedLength * normalization;
+    }
+
+    public static double getVarianceDiagonalSum(Tree tree,
+                                                BranchRates branchRates,
+                                                double normalization) {
+
+        Accumulator.BranchCumulant cumulant = Accumulator.DIAGONAL.postOrderAccumulation(
+                tree, tree.getRoot(), branchRates);
+        return cumulant.sharedLength * normalization;
     }
 }

@@ -171,6 +171,7 @@
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
+            <zipgroupfileset dir="${lib}" includes="lbfgs4j-0.2.1.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-dense64-0.30.jar"/>
         </jar>
 

@@ -239,6 +239,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                 System.err.println("  AVMVN iterations > burnin");
             }
 
+            // TODO Beginning of adaptable covariance
+
             if (iterations > (burnin+1)) {
 
                 if (iterations % every == 0) {
@@ -308,6 +310,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                 }
 
             }
+
+            // TODO End of adaptable covariance -- move into separate class
 
         } else if (iterations == 1) {
 

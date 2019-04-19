@@ -25,8 +25,13 @@
 
 package dr.inferencexml.hmc;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
+import org.ejml.alg.dense.decomposition.eig.watched.WatchedDoubleStepQREigenvector;
+
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
@@ -35,6 +40,7 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
 
     private final static String MASK = "rotationalTranslationalMask";
     private final static String DIMENSION = "dimension";
+    private final static String RESET = "reset";
 
     @Override
     public String getParserName() {
@@ -51,6 +57,8 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Dimension and parameter length are not divisible");
         }
 
+        boolean reset = xo.getAttribute(RESET, true);
+
         Parameter mask = new Parameter.Default(parameter.getDimension(), 1.0);
 
         int offset = 0;
@@ -58,16 +66,42 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
         // Translational invariance
         for (int i = 0; i < dim; ++i) {
             mask.setParameterValue(offset, 0.0);
+            if (reset) {
+                parameter.setParameterValue(offset, 0.0);
+            }
             ++offset;
         }
+
+        // Reflection invariance
+        if (reset) {
+            parameter.setParameterValue(offset,
+                    Math.abs(parameter.getParameterValue(offset)));
+        }
+
+        // TODO The following does not yet work for masked parameter
+//        double[] lower = new double[parameter.getDimension()];
+//        Arrays.fill(lower, Double.NEGATIVE_INFINITY);
+//
+//        double[] upper = new double[parameter.getDimension()];
+//        Arrays.fill(upper, Double.POSITIVE_INFINITY);
+//
+//        lower[offset] = 0.0;
+//        parameter.addBounds(new Parameter.DefaultBounds(upper, lower));
 
         // Rotational invariance
-        ++offset;
-        for (int i = 1; i < dim; ++i) {
-            mask.setParameterValue(offset, 0.0);
-            ++offset;
-        }
+        for (int column = 1; column < dim; ++column) {
 
+            for (int i = 0; i < dim; ++i) {
+                if (i >= column) {
+                    mask.setParameterValue(offset, 0.0);
+                    if (reset) {
+                        parameter.setParameterValue(offset, 0.0);
+                    }
+                }
+                ++offset;
+            }
+        }
+        
         return mask;
     }
 
@@ -78,6 +112,7 @@ public class RotationTranslationMaskParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIMENSION),
+            AttributeRule.newBooleanRule(RESET, true),
             new ElementRule(Parameter.class),
     };
 

@@ -36,17 +36,11 @@ package dr.evomodel.coalescent.basta;
  */
 
 import beagle.*;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.EvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.HomogenousSubstitutionModelDelegate;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -60,6 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+@Deprecated
 public class BeagleMatrixExponentiationDelegate extends AbstractModel implements Citable {
 
     public static boolean IS_THREAD_COUNT_COMPATIBLE() {
@@ -120,7 +115,8 @@ public class BeagleMatrixExponentiationDelegate extends AbstractModel implements
         branchLengths = new double[this.branchCount];
         storedBranchLengths = new double[this.branchCount];
 
-        evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(substitutionModel, branchCount);
+        evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(
+                null, new HomogeneousBranchModel(substitutionModel));
 
         // Attempt to get the resource order from the System Property
         if (resourceOrder == null) {

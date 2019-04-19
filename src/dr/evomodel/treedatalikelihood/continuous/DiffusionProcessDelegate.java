@@ -25,9 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
+import org.ejml.data.DenseMatrix64F;
 
 /**
  * Implementations of this interface are used to delegate control of diffusion
@@ -43,7 +45,13 @@ public interface DiffusionProcessDelegate extends Model {
 
     int getEigenBufferCount();
 
+    int getEigenBufferOffsetIndex(int i);
+
     int getMatrixBufferCount();
+
+    public int getMatrixBufferOffsetIndex(int i);
+
+    void flipMatrixBufferOffset(int i);
 
     MultivariateDiffusionModel getDiffusionModel(int index);
 
@@ -56,7 +64,17 @@ public interface DiffusionProcessDelegate extends Model {
 
     boolean hasDrift();
 
+    boolean hasActualization();
+
+    boolean hasDiagonalActualization();
+
+    void getGradientPrecision(double scalar, DenseMatrix64F gradient);
+
     void storeState();
 
     void restoreState();
+
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi);
+
+    double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
 }

@@ -35,8 +35,16 @@ import dr.math.MathUtils;
 import dr.math.distributions.CompoundGaussianProcess;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.Vector;
+import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.util.Attribute;
 import dr.util.Transform;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.data.Matrix;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.QRDecomposition;
+import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -229,20 +237,34 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
     private static void rotateNd(double[] x, int dim) {
 
-        for (int d = 1; d < dim; ++d) {
-
-            final double theta = -Math.atan2(x[d], x[0]); // TODO Compute norm and avoid transcendentals
-            final double sin = Math.sin(theta);
-            final double cos = Math.cos(theta);
-
-            int k = 0;
-            for (int i = 0; i < x.length / dim; ++i) {
-                double newX = x[k + 0] * cos - x[k + d] * sin;
-                double newY = x[k + d] * cos + x[k + 0] * sin;
-                x[k + 0] = newX;
-                x[k + d] = newY;
-                k += dim;
+        // Get first `dim` locations
+        DenseMatrix64F matrix = new DenseMatrix64F(dim, dim);
+        for (int row = 0; row < dim; ++row) {
+            for (int col = 0; col < dim; ++col) {
+                matrix.set(row, col, x[col * dim + row]);
             }
+        }
+
+        // Do a QR decomposition
+        QRDecomposition<DenseMatrix64F> qr = DecompositionFactory.qr(dim, dim);
+        qr.decompose(matrix);
+        DenseMatrix64F qm = qr.getQ(null, true);
+        DenseMatrix64F rm = qr.getR(null, true);
+
+        // Reflection invariance
+        if (rm.get(0,0) < 0) {
+            CommonOps.scale(-1, rm);
+            CommonOps.scale(-1, qm);
+        }
+
+        // Compute Q^{-1}
+        DenseMatrix64F qInv = new DenseMatrix64F(dim, dim);
+        CommonOps.transpose(qm, qInv);
+
+        // Apply to each location
+        for (int location = 0; location < x.length / dim; ++location) {
+            WrappedVector locationVector = new WrappedVector.Raw(x, location * dim, dim);
+            MissingOps.matrixVectorMultiple(qInv, locationVector, locationVector, dim);
         }
     }
 
@@ -251,7 +273,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //        if (dim == 2) {
 //            rotate2d(x);
 //        } else {
-            rotateNd(x, dim);
+        rotateNd(x, dim);
 //        }
     }
 

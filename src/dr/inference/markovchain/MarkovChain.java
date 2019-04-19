@@ -263,6 +263,7 @@ public final class MarkovChain implements Serializable {
                 }
 
                 // The new model is evaluated
+                //likelihood.makeDirty(); // TODO: remove after issue #985 https://github.com/beast-dev/beast-mcmc/issues/985
                 score = evaluate(likelihood);
 
                 if (PROFILE) {

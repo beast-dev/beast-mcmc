@@ -94,4 +94,14 @@ public interface XMLSyntaxRule {
      * @return true if rule allows a sub-element with that name
      */
     boolean isLegalSubelementName(String elementName);
+
+    class Utils {
+
+		public static XMLSyntaxRule[] concatenate(XMLSyntaxRule[] lhs, XMLSyntaxRule[] rhs) {
+			XMLSyntaxRule[] sum = new XMLSyntaxRule[lhs.length + rhs.length];
+			System.arraycopy(lhs, 0, sum, 0, lhs.length);
+			System.arraycopy(rhs, 0, sum, lhs.length, rhs.length);
+			return sum;
+		}
+	}
 }

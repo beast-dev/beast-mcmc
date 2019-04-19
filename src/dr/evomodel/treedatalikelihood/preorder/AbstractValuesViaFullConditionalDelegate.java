@@ -28,9 +28,10 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
 //                                                    BranchRateModel rateModel,
                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
-        missingInformation = new PartiallyMissingInformation(tree, dataModel, likelihoodDelegate);
+        missingInformation = new PartiallyMissingInformation(tree, dataModel);
     }
 
+    @Override
     protected double[] getTraitForNode(NodeRef node) {
 
         assert simulationProcess != null;

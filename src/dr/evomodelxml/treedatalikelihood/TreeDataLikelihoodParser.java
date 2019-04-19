@@ -38,6 +38,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -66,6 +67,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String INSTANCE_COUNT = "instanceCount";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
+    public static final String USE_PREORDER = "usePreOrder";
+    public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
+    public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
 
     public static final String PARTITION = "partition";
 
@@ -81,7 +85,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   TipStatesModel tipStatesModel,
                                                   boolean useAmbiguities,
                                                   PartialsRescalingScheme scalingScheme,
-                                                  boolean delayRescalingUntilUnderflow) throws XMLParseException {
+                                                  boolean delayRescalingUntilUnderflow,
+                                                  PreOrderSettings settings) throws XMLParseException {
 
         if (tipStatesModel != null) {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
@@ -146,7 +151,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                         siteRateModels,
                         useAmbiguities,
                         scalingScheme,
-                        delayRescalingUntilUnderflow);
+                        delayRescalingUntilUnderflow
+                        );
 
                 return new TreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -175,7 +181,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     siteRateModels.get(i),
                     useAmbiguities,
                     scalingScheme,
-                    delayRescalingUntilUnderflow);
+                    delayRescalingUntilUnderflow,
+                    settings);
 
             treeDataLikelihoods.add(
                     new TreeDataLikelihood(
@@ -196,6 +203,13 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+        boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
+        boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
+        boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
+        if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
+            throw new RuntimeException("Need to specify derivative types.");
+        }
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative);
 
         // TreeDataLikelihood doesn't currently support Instances defined from the command line
 //        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
@@ -315,7 +329,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 null,
                 useAmbiguities,
                 scalingScheme,
-                delayScaling);
+                delayScaling,
+                settings);
     }
 
     //************************************************************************

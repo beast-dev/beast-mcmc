@@ -65,7 +65,9 @@ public final class MarkovChain implements Serializable {
     private double bestScore, currentScore, initialScore;
     private long currentLength;
 
-    private boolean useAdaptation = true;
+    private final boolean useAdaptation;
+    private boolean isCurrentlyAdapting;
+
     private final boolean useSmoothedAcceptanceProbability;
 
     private final long fullEvaluationCount;
@@ -84,6 +86,7 @@ public final class MarkovChain implements Serializable {
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useAdaptation = useAdaptation;
+        this.isCurrentlyAdapting = useAdaptation;
         this.useSmoothedAcceptanceProbability = useSmoothedAcceptanceProbability;
 
         this.fullEvaluationCount = fullEvaluationCount;
@@ -120,6 +123,8 @@ public final class MarkovChain implements Serializable {
      * @param length number of states to run the chain.
      */
     public long runChain(long length, boolean disableAdaptation) {
+
+        isCurrentlyAdapting = useAdaptation && !disableAdaptation;
 
         likelihood.makeDirty();
         currentScore = evaluate(likelihood);
@@ -442,7 +447,7 @@ public final class MarkovChain implements Serializable {
             // assert Profiler.stopProfile("Restore");
 
 
-            if (useAdaptation && !disableAdaptation && mcmcOperator instanceof AdaptableMCMCOperator) {
+            if (isAdapting(mcmcOperator)) {
                 adaptAcceptanceProbability((AdaptableMCMCOperator) mcmcOperator, logr[0]);
             }
 
@@ -544,21 +549,27 @@ public final class MarkovChain implements Serializable {
         return logPosterior;
     }
 
+    public boolean isAdapting(MCMCOperator operator) {
+        return (isCurrentlyAdapting && operator instanceof AdaptableMCMCOperator);
+    }
+
     /**
      * Updates the proposal parameter, based on the target acceptance
      * probability This method relies on the proposal parameter being a
      * decreasing function of acceptance probability.
      *
      * @param op   The operator
-     * @param logr
+     * @param logr The log likelihood ratio
      */
-    private void adaptAcceptanceProbability(AdaptableMCMCOperator op, double logr) {
+    public void adaptAcceptanceProbability(AdaptableMCMCOperator op, double logr) {
+
+        final boolean isAdaptable = op.getMode() == AdaptationMode.ADAPTATION_ON || (op.getMode() != AdaptationMode.ADAPTATION_OFF);
 
         if (DEBUG) {
-            System.out.println("adaptAcceptanceProbability " + isAdaptable(op));
+            System.out.println("adaptAcceptanceProbability " + isAdaptable);
         }
 
-        if (isAdaptable(op)) {
+        if (isAdaptable) {
             final double p = op.getAdaptableParameter();
 
             final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
@@ -581,12 +592,6 @@ public final class MarkovChain implements Serializable {
                 }
             }
         }
-    }
-
-    private boolean isAdaptable(AdaptableMCMCOperator op) {
-
-        return op.getMode() == AdaptationMode.ADAPTATION_ON
-                || (op.getMode() != AdaptationMode.ADAPTATION_OFF && useAdaptation);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {

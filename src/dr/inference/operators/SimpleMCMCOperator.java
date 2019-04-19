@@ -36,6 +36,13 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
 
     public abstract String getOperatorName();
 
+    public SimpleMCMCOperator() {
+    }
+
+    public SimpleMCMCOperator(double weight) {
+        this.weight = weight;
+    }
+
     /**
      * @return the weight of this operator.
      */

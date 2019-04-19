@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class IndependentEvaluationOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-	public static final String OPERATOR_NAME = "IndependentEvaluationOperator";
+	public static final String OPERATOR_NAME = "independentEvaluationOperator";
 	public static final String OPERATORS = "operators";
 
 	private final CompoundLikelihood likelihoods;

@@ -39,6 +39,7 @@ public class ExponentialExponentialModelParser extends AbstractXMLObjectParser {
 
     public static final String EXPONENTIAL_EXPONENTIAL_MODEL = "exponentialExponential";
     public static final String POPULATION_SIZE = "populationSize";
+    public static final String TRANSITION_POPULATION_SIZE = "transitionPopulationSize";
     public static final String TRANSITION_TIME = "transitionTime";
     public static final String ANCESTRAL_GROWTH_RATE = "ancestralGrowthRate";
     public static final String GROWTH_RATE = "growthRate";
@@ -51,10 +52,19 @@ public class ExponentialExponentialModelParser extends AbstractXMLObjectParser {
 
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-        XMLObject cxo = xo.getChild(POPULATION_SIZE);
-        Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
+        Parameter N0Param = null;
+        Parameter N1Param = null;
 
-        cxo = xo.getChild(GROWTH_RATE);
+        if (xo.hasChildNamed(POPULATION_SIZE)) {
+            XMLObject cxo = xo.getChild(POPULATION_SIZE);
+            N0Param = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            // must be the TRANSITION_POPULATION_SIZE
+            XMLObject cxo = xo.getChild(TRANSITION_POPULATION_SIZE);
+            N1Param = (Parameter) cxo.getChild(Parameter.class);
+        }
+
+        XMLObject cxo = xo.getChild(GROWTH_RATE);
         Parameter growthParam = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(ANCESTRAL_GROWTH_RATE);
@@ -63,12 +73,12 @@ public class ExponentialExponentialModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(TRANSITION_TIME);
         Parameter timeParam = (Parameter) cxo.getChild(Parameter.class);
 
-        return new ExponentialExponentialModel(N0Param, growthParam, ancestralGrowthParam, timeParam, units);
+        return new ExponentialExponentialModel(N0Param, N1Param, growthParam, ancestralGrowthParam, timeParam, units);
     }
 
-    //************************************************************************
-    // AbstractXMLObjectParser implementation
-    //************************************************************************
+//************************************************************************
+// AbstractXMLObjectParser implementation
+//************************************************************************
 
     public String getParserDescription() {
         return "A demographic model of exponential growth followed by a different exponential growth.";
@@ -84,8 +94,12 @@ public class ExponentialExponentialModelParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             XMLUnits.SYNTAX_RULES[0],
-            new ElementRule(POPULATION_SIZE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new XORRule(
+                    new ElementRule(POPULATION_SIZE,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new ElementRule(TRANSITION_POPULATION_SIZE,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+            ),
             new ElementRule(GROWTH_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(ANCESTRAL_GROWTH_RATE,

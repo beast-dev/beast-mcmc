@@ -29,6 +29,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialExponential;
 import dr.evomodelxml.coalescent.ExponentialExponentialModelParser;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 
 /**
  * Exponential growth followed by a different phase of exponential growth.
@@ -117,6 +118,8 @@ public class ExponentialExponentialModel extends DemographicModel {
         transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
                 Double.NEGATIVE_INFINITY, 1));
 
+        addStatistic(new N0Statistic());
+
         setUnits(units);
     }
 
@@ -139,6 +142,30 @@ public class ExponentialExponentialModel extends DemographicModel {
 
         return exponentialExponential;
     }
+
+    // ****************************************************************
+    // Inner classes
+    // ****************************************************************
+
+    /**
+     * This will return the value of N0 irrespective of which parameterization is being used.
+     */
+    public class N0Statistic extends Statistic.Abstract {
+
+        public N0Statistic() {
+            super("N0");
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(int i) {
+            return exponentialExponential.getN0();
+        }
+
+    }
+
 
     //
     // protected stuff

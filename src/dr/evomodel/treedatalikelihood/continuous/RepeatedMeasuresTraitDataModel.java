@@ -154,8 +154,8 @@ public class RepeatedMeasuresTraitDataModel extends
     }
 
     @Override
-    public ContinuousExtensionDelegate getExtensionDelegate(TreeTrait treeTrait, Tree tree) {
-        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(treeTrait, this, tree);
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate, TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait, this, tree);
     }
 
     @Override

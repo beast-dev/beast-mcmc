@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.model.CompoundParameter;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -42,22 +43,33 @@ public class ContinuousExtensionDelegate {
 
     protected final TreeTrait treeTrait;
     protected final Tree tree;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
     public ContinuousExtensionDelegate(
-//            ProcessSimulationDelegate.AbstractContinuousTraitDelegate treeSimulationDelegate,
+            ContinuousDataLikelihoodDelegate likelihoodDelegate,
             TreeTrait treeTrait,
             Tree tree
     ) {
 
         this.treeTrait = treeTrait;
         this.tree = tree;
+        this.likelihoodDelegate = likelihoodDelegate;
     }
 
     public double[] getExtendedValues() {
+        likelihoodDelegate.fireModelChanged(); //Forces new sample
+
+        return (double[]) treeTrait.getTrait(tree, null);
+    }
+
+    public double[] getSuperExtendedValues() { //TODO: remove
+        likelihoodDelegate.fireModelChanged(); //Forces new sample
+
         return (double[]) treeTrait.getTrait(tree, null);
     }
 
     public TreeTrait getTreeTrait() {
+
         return treeTrait;
     }
 
@@ -73,11 +85,12 @@ public class ContinuousExtensionDelegate {
         private final int nTaxa;
 
         public MultivariateNormalExtensionDelegate(
+                ContinuousDataLikelihoodDelegate likelihoodDelegate,
                 TreeTrait treeTrait,
                 ModelExtensionProvider.NormalExtensionProvider dataModel,
                 Tree tree
         ) {
-            super(treeTrait, tree);
+            super(likelihoodDelegate, treeTrait, tree);
             this.dataModel = dataModel;
             this.dimTrait = dataModel.getTraitDimension();
             this.nTaxa = tree.getExternalNodeCount();
@@ -90,7 +103,7 @@ public class ContinuousExtensionDelegate {
         public double[] getExtendedValues() {
 
 
-            double[] treeValues = (double[]) treeTrait.getTrait(tree, null);
+            double[] treeValues = super.getExtendedValues();
             CompoundParameter dataParameter = dataModel.getParameter();
             DenseMatrix64F extensionVar = dataModel.getExtensionVariance();
             boolean[] missingVec = dataModel.getMissingVector();

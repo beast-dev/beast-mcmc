@@ -5,10 +5,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.Taxon;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
-import dr.evomodelxml.treelikelihood.TraitLoggerParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.xml.*;
@@ -70,7 +69,48 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
 
     @Override
     public String getReport() {
-        return null;
+
+        int[] inds = new int[traitDim];
+        for (int i = 0; i < traitDim; i++) {
+            inds[i] = i;
+        }
+
+        int n = 1000000;
+        double[] mus = new double[inds.length];
+        double[][] vars = new double[inds.length][inds.length];
+        for (int i = 0; i < n; i++) {
+            traits = extensionDelegate.getExtendedValues();
+            for (int j = 0; j < inds.length; j++) {
+                double val = traits[inds[j]];
+                mus[j] += val;
+                vars[j][j] += val * val;
+
+                for (int k = (j + 1); k < inds.length; k++) {
+                    double val2 = traits[inds[k]];
+                    vars[j][k] += val * val2;
+                }
+            }
+        }
+
+        for (int i = 0; i < inds.length; i++) {
+            mus[i] = mus[i] / n;
+        }
+        for (int i = 0; i < inds.length; i++) {
+            vars[i][i] = vars[i][i] / n - mus[i] * mus[i];
+
+            for (int j = (i + 1); j < inds.length; j++) {
+                vars[i][j] = vars[i][j] / n - mus[i] * mus[j];
+                vars[j][i] = vars[i][j];
+            }
+        }
+
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(new dr.math.matrixAlgebra.Vector(mus));
+        sb.append("\n\n");
+        sb.append(new dr.math.matrixAlgebra.Matrix(vars));
+
+        return sb.toString();
     }
 
     public static final String MODEL_EXTENSION_LOGGER = "modelExtensionTraitLogger";
@@ -83,12 +123,6 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
             ModelExtensionProvider extensionProvider = (ModelExtensionProvider)
                     xo.getChild(ModelExtensionProvider.class);
 
-            if (extensionProvider == null) {
-                throw new XMLParseException(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD + " must have child of type "
-                        + ContinuousExtensionDelegate.class + " to use " + MODEL_EXTENSION_LOGGER + ". If you are not " +
-                        "using an extended model, use " + TraitLoggerParser.PARSER_NAME + " to log the traits.");
-            }
-
 
             Tree tree = dataLikelihood.getTree();
             String traitName = xo.getStringAttribute(TRAIT_NAME);
@@ -97,7 +131,8 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
 
             TreeTrait treeTrait = dataLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
 
-            ContinuousExtensionDelegate extensionDelegate = extensionProvider.getExtensionDelegate(treeTrait, tree);
+            ContinuousExtensionDelegate extensionDelegate = extensionProvider.getExtensionDelegate(
+                    (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate(), treeTrait, tree);
 
             return new ModelExtensionTraitLogger(extensionDelegate, traitDim);
         }
@@ -109,6 +144,7 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
 
         XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeDataLikelihood.class),
+                new ElementRule(ModelExtensionProvider.class),
                 AttributeRule.newStringRule(TRAIT_NAME)
 
         };

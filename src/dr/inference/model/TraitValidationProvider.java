@@ -66,9 +66,15 @@ public class TraitValidationProvider implements CrossValidationProvider {
         this.treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + inferredValuesName);
 
         if (dataModel instanceof ModelExtensionProvider) {
-            this.extensionDelegate = ((ModelExtensionProvider) dataModel).getExtensionDelegate(treeTrait, treeModel);
+            this.extensionDelegate = ((ModelExtensionProvider) dataModel).getExtensionDelegate(
+                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
+                    treeTrait,
+                    treeModel);
         } else {
-            this.extensionDelegate = new ContinuousExtensionDelegate(treeTrait, treeModel);
+            this.extensionDelegate = new ContinuousExtensionDelegate(
+                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate(),
+                    treeTrait,
+                    treeModel);
         }
 
         setupDimNames(treeModel, id);

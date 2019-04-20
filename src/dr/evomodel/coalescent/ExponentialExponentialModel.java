@@ -95,8 +95,14 @@ public class ExponentialExponentialModel extends DemographicModel {
 
         this.N0Parameter = N0Parameter;
         this.N1Parameter = N1Parameter;
-        addVariable(N0Parameter);
-        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        if (N0Parameter != null) {
+            addVariable(N0Parameter);
+            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
+        if (N1Parameter != null) {
+            addVariable(N1Parameter);
+            N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
 
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);

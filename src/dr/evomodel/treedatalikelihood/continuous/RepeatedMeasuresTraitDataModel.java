@@ -38,6 +38,8 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
@@ -184,6 +186,18 @@ public class RepeatedMeasuresTraitDataModel extends
             XMLObject cxo = xo.getChild(PRECISION);
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
                     cxo.getChild(MatrixParameterInterface.class);
+
+            CholeskyDecomposition chol;
+            try {
+                chol = new CholeskyDecomposition(samplingPrecision.getParameterAsMatrix());
+            } catch (IllegalDimension illegalDimension) {
+                throw new XMLParseException(PRECISION + " must be a square matrix.");
+            }
+
+            if (!chol.isSPD()) {
+                throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
+            }
+
 
             String traitName = returnValue.traitName;
             //TODO diffusionModel was only used for the dimension.

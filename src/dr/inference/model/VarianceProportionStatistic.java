@@ -33,14 +33,14 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitSimulator;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.missingData.MissingOps;
-import dr.util.Attribute;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -91,7 +91,9 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     private final boolean forceResample;
 
-    private final RepeatedMeasuresTraitSimulator traitSimulator;
+    private final ContinuousExtensionDelegate extensionDelegate;
+    private final TreeTrait treeTrait;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
 
     public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
@@ -113,7 +115,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         this.useEmpiricalVariance = useEmpiricalVariance;
         this.forceResample = forceResample;
 
-
         this.treeSums = new TreeVarianceSums(0, 0);
 
         if (!useEmpiricalVariance) {
@@ -122,10 +123,16 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             dataModel.getPrecisionMatrix().addParameterListener(this);
         }
 
-        if (forceResample) {
-            this.traitSimulator = new RepeatedMeasuresTraitSimulator(dataModel, treeLikelihood);
+        if (useEmpiricalVariance) {
+            this.treeTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + dataModel.getTraitName());
+            this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
+            this.extensionDelegate = dataModel.getExtensionDelegate(likelihoodDelegate, treeTrait,
+                    treeLikelihood.getTree());
+
         } else {
-            this.traitSimulator = null;
+            this.treeTrait = null;
+            this.likelihoodDelegate = null;
+            this.extensionDelegate = null;
         }
 
         this.ratio = ratio;
@@ -237,15 +244,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         if (useEmpiricalVariance) {
 
-            String key = REALIZED_TIP_TRAIT + "." + dataModel.getTraitName();
-            TreeTrait trait = treeLikelihood.getTreeTrait(key);
-            double[] tipTraits = (double[]) trait.getTrait(treeLikelihood.getTree(), null);
-
             if (forceResample) {
-                traitSimulator.simulateMissingData(tipTraits);
+                likelihoodDelegate.fireModelChanged(); //Forces new sample
             }
-
-            double[] data = dataModel.getParameter().getParameterValues();
+            double[] tipTraits = (double[]) treeTrait.getTrait(treeLikelihood.getTree(), null);
+            double[] data = extensionDelegate.getExtendedValues(tipTraits);
 
             int nTaxa = tree.getExternalNodeCount();
 
@@ -481,7 +484,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             }
 
             boolean empirical = xo.getAttribute(EMPIRICAL, false);
-            boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, false);
+            boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
 
             return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
                     ratio, empirical, forceSampling);

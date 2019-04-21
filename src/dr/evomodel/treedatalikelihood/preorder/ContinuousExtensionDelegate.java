@@ -62,10 +62,8 @@ public class ContinuousExtensionDelegate {
         return (double[]) treeTrait.getTrait(tree, null);
     }
 
-    public double[] getSuperExtendedValues() { //TODO: remove
-        likelihoodDelegate.fireModelChanged(); //Forces new sample
-
-        return (double[]) treeTrait.getTrait(tree, null);
+    public double[] getExtendedValues(double[] tipTraits) {
+        return tipTraits;
     }
 
     public TreeTrait getTreeTrait() {
@@ -98,12 +96,15 @@ public class ContinuousExtensionDelegate {
 
         }
 
-
         @Override
         public double[] getExtendedValues() {
-
-
             double[] treeValues = super.getExtendedValues();
+            return getExtendedValues(treeValues);
+        }
+
+        @Override
+        public double[] getExtendedValues(double[] treeValues) {
+
             CompoundParameter dataParameter = dataModel.getParameter();
             DenseMatrix64F extensionVar = dataModel.getExtensionVariance();
             boolean[] missingVec = dataModel.getMissingVector();

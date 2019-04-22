@@ -159,7 +159,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
             new ElementRule(INVERVALS, new XMLSyntaxRule[]{
                     new ElementRule(MultiTreeIntervals.class)
-            }, "The interval list from which the coalescent likelihood will be calculated"),
+            }, "The interval list from which the coalescent likelihood will be calculated", 0, Integer.MAX_VALUE),
 
             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(POPULATION_FACTOR, true),

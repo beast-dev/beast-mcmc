@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * This operator takes a list of likelihoods that can be updated independently using the
  * provided nested operator. It will attempt a Metropolis-Hastings update on each of the
- * likelihoods. It acts as a GibbsOperator as the calling MarkovChain assumes the acceptance
+ * likelihoods. It p a GibbsOperator as the calling MarkovChain assumes the acceptance
  * of the result.
  *
  * @author Andrew Rambaut
@@ -165,9 +165,15 @@ public class IndependentEvaluationOperator extends SimpleMCMCOperator implements
 
 			CompoundLikelihood likelihoods = (CompoundLikelihood)xo.getChild(CompoundLikelihood.class);
 			List<MCMCOperator> operators = new ArrayList<MCMCOperator>();
-			for (Object operator : xo.getAllChildren(OPERATORS)) {
+			XMLObject cxo = xo.getChild(OPERATORS);
+			for (Object operator : cxo.getAllChildren(MCMCOperator.class)) {
 				operators.add((MCMCOperator)operator);
 			}
+
+			if (likelihoods.getLikelihoodCount() != operators.size()) {
+				throw new XMLParseException("The number of likelihoods does not match the number of operators");
+			}
+
 			return new IndependentEvaluationOperator(likelihoods, operators, weight);
 		}
 
@@ -183,8 +189,8 @@ public class IndependentEvaluationOperator extends SimpleMCMCOperator implements
 				AttributeRule.newDoubleRule(WEIGHT),
 				new ElementRule(CompoundLikelihood.class),
 				new ElementRule(OPERATORS, new XMLSyntaxRule[]{
-						new ElementRule(MCMCOperator.class)
-				}, "Operators to control", 1, Integer.MAX_VALUE),
+						new ElementRule(MCMCOperator.class, 1, Integer.MAX_VALUE)
+				}, "Operators to control"),
 		};
 
 		public String getParserDescription() {

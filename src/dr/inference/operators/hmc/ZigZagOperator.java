@@ -80,8 +80,8 @@ public class ZigZagOperator extends AbstractParticleOperator {
                 ++count;
             }
 
-            MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(position, velocity);
-            MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum);
+            Boundary.MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(position, velocity);
+            Boundary.MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum);
 
             if (DEBUG) {
                 System.err.println("boundary: " + boundaryBounce);
@@ -165,7 +165,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
     }
 
-    private MinimumTravelInformation getNextGradientBounce(ReadableVector action,
+    private Boundary.MinimumTravelInformation getNextGradientBounce(ReadableVector action,
                                                            ReadableVector gradient,
                                                            ReadableVector momentum) {
 
@@ -181,10 +181,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
             }
         }
 
-        return new MinimumTravelInformation(minimumRoot, index);
+        return new Boundary.MinimumTravelInformation(minimumRoot, index);
     }
 
-    private MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
+    private Boundary.MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
                                                            ReadableVector velocity) {
 
 
@@ -205,7 +205,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
             }
         }
 
-        return new MinimumTravelInformation(minimumTime, index);
+        return new Boundary.MinimumTravelInformation(minimumTime, index);
     }
 
     private static double minimumPositiveRoot(double a,
@@ -281,8 +281,8 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private BounceState doBounce(BounceState initialBounceState,
-                                 MinimumTravelInformation boundaryBounce,
-                                 MinimumTravelInformation gradientBounce,
+                                 Boundary.MinimumTravelInformation boundaryBounce,
+                                 Boundary.MinimumTravelInformation gradientBounce,
                                  WrappedVector position, WrappedVector velocity,
                                  WrappedVector momentum,
                                  WrappedVector gradient, WrappedVector action) {

@@ -70,7 +70,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
             double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
 
             double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
-            MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
+            Boundary.MinimumTravelInformation travelInfo = boundary.getTimeToBoundary(position, velocity);
 
             remainingTime = doBounce(
                     remainingTime, bounceTime, travelInfo,
@@ -82,12 +82,11 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
     }
 
     private double doBounce(double remainingTime, double bounceTime,
-                            MinimumTravelInformation travelInfo,
+                            Boundary.MinimumTravelInformation travelInfo,
                             WrappedVector position, WrappedVector velocity,
                             WrappedVector gradient, ReadableVector Phi_v) {
 
         double timeToBoundary = travelInfo.time;
-        int boundaryIndex = travelInfo.index;
 
         if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
 
@@ -99,8 +98,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
             updatePosition(position, velocity, timeToBoundary);
             updateGradient(gradient, timeToBoundary, Phi_v);
 
-            position.set(boundaryIndex, 0.0);
-            velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
+            boundary.reflect(travelInfo, position, velocity);
 
             remainingTime -= timeToBoundary;
 
@@ -133,33 +131,33 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         return new WrappedVector.Raw(velocity);
     }
 
-    private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
-
-        assert (position.getDim() == velocity.getDim());
-
-        int index = -1;
-        double minTime = Double.MAX_VALUE;
-
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-
-            // TODO Here is where we check that x_j > x_i for categorical dimensions
-
-            // TODO I believe we can simply the condition below (for fixed boundaries) with:
-            // double travelTime = -position.get(i) / velocity.get(i); // This is only true for boundaries at 0
-            // if (travelTime > 0.0 && missingDataMask[positionIndex] == 0.0)
-
-            double travelTime = Math.abs(position.get(i) / velocity.get(i));
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
-
-                if (travelTime < minTime) {
-                    index = i;
-                    minTime = travelTime;
-                }
-            }
-        }
-
-        return new MinimumTravelInformation(minTime, index);
-    }
+//    private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
+//
+//        assert (position.getDim() == velocity.getDim());
+//
+//        int index = -1;
+//        double minTime = Double.MAX_VALUE;
+//
+//        for (int i = 0, len = position.getDim(); i < len; ++i) {
+//
+//            // TODO Here is where we check that x_j > x_i for categorical dimensions
+//
+//            // TODO I believe we can simply the condition below (for fixed boundaries) with:
+//            // double travelTime = -position.get(i) / velocity.get(i); // This is only true for boundaries at 0
+//            // if (travelTime > 0.0 && missingDataMask[positionIndex] == 0.0)
+//
+//            double travelTime = Math.abs(position.get(i) / velocity.get(i));
+//            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
+//
+//                if (travelTime < minTime) {
+//                    index = i;
+//                    minTime = travelTime;
+//                }
+//            }
+//        }
+//
+//        return new MinimumTravelInformation(minTime, index);
+//    }
 
     @SuppressWarnings("all")
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {

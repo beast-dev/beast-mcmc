@@ -63,6 +63,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         setWeight(weight);
         setMissingDataMask();
         checkParameterBounds(parameter);
+
+        boundary = new Boundary.Orthant(missingDataMask);
     }
 
     private void setMissingDataMask() {
@@ -210,18 +212,84 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
-    protected class MinimumTravelInformation {
 
-        final double time;
-        final int index;
+    interface Boundary {
 
-        MinimumTravelInformation(double minTime, int minIndex) {
-            this.time = minTime;
-            this.index = minIndex;
+        class MinimumTravelInformation {
+
+            final double time;
+            final int index;
+            final int index2;
+
+            MinimumTravelInformation(double minTime, int minIndex) {
+                this(minTime, minIndex, 0);
+            }
+
+            MinimumTravelInformation(double minTime, int minIndex, int index2) {
+                this.time = minTime;
+                this.index = minIndex;
+                this.index2 = index2;
+            }
+
+            public String toString() {
+                return "time = " + time + " @ " + index + " and " + index2;
+            }
         }
 
-        public String toString() {
-            return "time = " + time + " @ " + index;
+        MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity);
+
+        void reflect(MinimumTravelInformation travelInfo, WrappedVector position, WrappedVector velocity);
+
+        class Orthant implements Boundary {
+
+            private double[] missingDataMask;
+
+            private Orthant(double[] missingDataMask)   {
+                this.missingDataMask = missingDataMask;
+            }
+
+            public void reflect(MinimumTravelInformation travelInfo, WrappedVector position, WrappedVector velocity) {
+
+                int boundaryIndex = travelInfo.index;
+                position.set(boundaryIndex, 0.0);
+                velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
+            }
+
+            public MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {
+
+                assert (position.getDim() == velocity.getDim());
+
+                int index = -1;
+                double minTime = Double.MAX_VALUE;
+
+                for (int i = 0, len = position.getDim(); i < len; ++i) {
+
+                    // TODO Here is where we check that x_j > x_i for categorical dimensions
+
+//                    double travelTime = -position.get(i) / velocity.get(i); // This is only true for boundaries at 0
+//                    if (travelTime > 0.0 && missingDataMask[i] == 0.0) {
+
+                         double travelTime = Math.abs(position.get(i) / velocity.get(i));
+                         if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
+
+                        if (travelTime < minTime) {
+                            index = i;
+                            minTime = travelTime;
+                        }
+                    }
+                }
+
+                return new MinimumTravelInformation(minTime, index);
+            }
+
+            boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
+
+                if (missingDataMask[positionIndex] == 1.0) {
+                    return false;
+                } else {
+                    return position * velocity < 0.0;
+                }
+            }
         }
     }
 
@@ -252,6 +320,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
+    final BouncyParticleOperator.Boundary boundary;
 
     Preconditioning preconditioning;
     private double[] missingDataMask;

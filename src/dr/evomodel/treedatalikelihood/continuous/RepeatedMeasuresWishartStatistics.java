@@ -30,7 +30,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
     private final int dimTrait;
     private final int nTaxa;
     private final double[] buffer;
-    private final boolean forceResample;
+    private boolean forceResample;
 
     public RepeatedMeasuresWishartStatistics(RepeatedMeasuresTraitDataModel traitModel,
                                              TreeDataLikelihood treeLikelihood,
@@ -83,6 +83,10 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
 
 
         return new WishartSufficientStatistics(nTaxa, outerProduct);
+    }
+
+    public void setForceResample(Boolean b) {
+        forceResample = b;
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * AttenuationGradient.java
+ * DiagonalAttenuationGradient.java
  *
  * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -41,22 +41,22 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  */
 
-public class AttenuationGradient implements GradientWrtParameterProvider, Reportable {
+public class DiagonalAttenuationGradient implements GradientWrtParameterProvider, Reportable {
 
     private final Likelihood likelihood;
     private final int dim;
     private final BranchSpecificGradient branchSpecificGradient;
 
-    private final MatrixParameterInterface attenuation;
+    private final DiagonalMatrix attenuation;
 
-    public AttenuationGradient(BranchSpecificGradient branchSpecificGradient,
-                               Likelihood likelihood,
-                               MatrixParameterInterface parameter) {
+    public DiagonalAttenuationGradient(BranchSpecificGradient branchSpecificGradient,
+                                       Likelihood likelihood,
+                                       MatrixParameterInterface parameter) {
 
-        this.attenuation = parameter;
+        assert (parameter instanceof DiagonalMatrix)
+                : "DiagonalAttenuationGradient can only be applied to a DiagonalMatrix.";
 
-        assert (attenuation instanceof DiagonalMatrix)
-                : "PrecisionGradient can only be applied to a CompoundSymmetricMatrix with off-diagonal as correlation.";
+        this.attenuation = (DiagonalMatrix) parameter;
 
         this.branchSpecificGradient = branchSpecificGradient;
         this.likelihood = likelihood;
@@ -71,7 +71,7 @@ public class AttenuationGradient implements GradientWrtParameterProvider, Report
 
     @Override
     public Parameter getParameter() {
-        return attenuation;
+        return attenuation.getDiagonalParameter();
     }
 
     @Override
@@ -81,7 +81,16 @@ public class AttenuationGradient implements GradientWrtParameterProvider, Report
 
     @Override
     public double[] getGradientLogDensity() {
-        return branchSpecificGradient.getGradientLogDensity();
+        double[] gradient = branchSpecificGradient.getGradientLogDensity();
+        return extractDiagonalGradient(gradient);
+    }
+
+    private double[] extractDiagonalGradient(double[] gradient) {
+        double[] result = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            result[i] = gradient[i];
+        }
+        return result;
     }
 
     String getReportString(double[] analytic, double[] numeric) {
@@ -134,7 +143,7 @@ public class AttenuationGradient implements GradientWrtParameterProvider, Report
 
         System.err.println("Numeric at: \n" + new Vector(attenuation.getParameterValues()));
 
-        double[] storedValues = ((DiagonalMatrix) attenuation).getDiagonalParameter().getParameterValues();
+        double[] storedValues = attenuation.getDiagonalParameter().getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
         for (int i = 0; i < storedValues.length; ++i) {
             attenuation.setParameterValue(i, storedValues[i]);

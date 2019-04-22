@@ -36,7 +36,7 @@ import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.hmc.AttenuationGradient;
+import dr.evomodel.treedatalikelihood.hmc.DiagonalAttenuationGradient;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
@@ -226,9 +226,9 @@ public class AttenuationGradientTest extends TraceCorrelationAssert {
                         dim, treeModel, cdld,
                         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH);
         BranchSpecificGradient branchSpecificGradient =
-                new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, ((DiagonalMatrix) attenuation).getDiagonalParameter());
+                new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, attenuation);
 
-        AttenuationGradient gPPBranchSpecific = new AttenuationGradient(branchSpecificGradient, dataLikelihood, attenuation);
+        DiagonalAttenuationGradient gPPBranchSpecific = new DiagonalAttenuationGradient(branchSpecificGradient, dataLikelihood, attenuation);
 
         // Correlation Gradient Branch Specific
         String sBS = gPPBranchSpecific.getReport();

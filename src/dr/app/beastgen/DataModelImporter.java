@@ -280,6 +280,7 @@ public class DataModelImporter {
 
     public Map importFromTreeFile(String fileName, Map dataModel) throws IOException, Importer.ImportException {
         Tree tree = null;
+        List trees=new ArrayList();
         try {
             Reader reader = new FileReader(fileName);
 
@@ -293,10 +294,16 @@ public class DataModelImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                NexusImporter importer = new NexusImporter(reader);
-                tree = importer.importNextTree();
-
-            } else {
+                    NexusImporter importer = new NexusImporter(reader);
+                    while (importer.hasTree()) {
+                        tree = importer.importNextTree();
+                        HashMap<String, String> treeMap = new HashMap<String, String>();
+                        treeMap.put("id", tree.getId());
+                        treeMap.put("tree", TreeUtils.newick(tree));
+                        //TODO check that tree taxa are in the input list - if not throw a warning.
+                        trees.add(treeMap);
+                    }
+                } else {
                 NewickImporter importer = new NewickImporter(reader);
                 tree = importer.importNextTree();
             }
@@ -308,6 +315,9 @@ public class DataModelImporter {
 
         if (tree != null) {
             dataModel.put("tree", TreeUtils.newick(tree));
+        }
+        if (trees.size() > 0) {
+            dataModel.put("trees", trees);
         }
 
         return dataModel;

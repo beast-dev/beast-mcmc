@@ -29,6 +29,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialExponential;
 import dr.evomodelxml.coalescent.ExponentialExponentialModelParser;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 
 /**
  * Exponential growth followed by a different phase of exponential growth.
@@ -52,6 +53,7 @@ public class ExponentialExponentialModel extends DemographicModel {
 
         this(ExponentialExponentialModelParser.EXPONENTIAL_EXPONENTIAL_MODEL,
                 N0Parameter,
+                null,
                 growthRateParameter,
                 ancestralGrowthRateParameter,
                 transitionTimeParameter,
@@ -61,7 +63,28 @@ public class ExponentialExponentialModel extends DemographicModel {
     /**
      * Construct demographic model with default settings
      */
+    public ExponentialExponentialModel(Parameter N0Parameter, Parameter N1Parameter,
+                                       Parameter growthRateParameter,
+                                       Parameter ancestralGrowthRateParameter,
+                                       Parameter transitionTimeParameter,
+                                       Type units) {
+
+        this(ExponentialExponentialModelParser.EXPONENTIAL_EXPONENTIAL_MODEL,
+                N0Parameter,
+                N1Parameter,
+                growthRateParameter,
+                ancestralGrowthRateParameter,
+                transitionTimeParameter,
+                units);
+    }
+
+    /**
+     * Construct demographic model.
+     * This allows a different parameterization. Either one of N0 or N1 should be non-null (but not both).
+     * N1 is the population size at the transition time, N0 the population size at the present.
+     */
     public ExponentialExponentialModel(String name, Parameter N0Parameter,
+                                       Parameter N1Parameter,
                                        Parameter growthRateParameter,
                                        Parameter ancestralGrowthRateParameter,
                                        Parameter transitionTimeParameter,
@@ -72,8 +95,15 @@ public class ExponentialExponentialModel extends DemographicModel {
         exponentialExponential = new ExponentialExponential(units);
 
         this.N0Parameter = N0Parameter;
-        addVariable(N0Parameter);
-        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.N1Parameter = N1Parameter;
+        if (N0Parameter != null) {
+            addVariable(N0Parameter);
+            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
+        if (N1Parameter != null) {
+            addVariable(N1Parameter);
+            N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
 
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
@@ -88,31 +118,63 @@ public class ExponentialExponentialModel extends DemographicModel {
         transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
                 Double.NEGATIVE_INFINITY, 1));
 
+        addStatistic(new N0Statistic());
+
         setUnits(units);
     }
+
 
 
     // general functions
 
     public DemographicFunction getDemographicFunction() {
-        exponentialExponential.setN0(N0Parameter.getParameterValue(0));
-
         exponentialExponential.setGrowthRate(growthRateParameter.getParameterValue(0));
 
         exponentialExponential.setAncestralGrowthRate(ancestralGrowthRateParameter.getParameterValue(0));
 
         exponentialExponential.setTransitionTime(transitionTimeParameter.getParameterValue(0));
 
+        if (N0Parameter != null) {
+            exponentialExponential.setN0(N0Parameter.getParameterValue(0));
+        } else {
+            exponentialExponential.setN1(N1Parameter.getParameterValue(0));
+        }
+
         return exponentialExponential;
     }
+
+    // ****************************************************************
+    // Inner classes
+    // ****************************************************************
+
+    /**
+     * This will return the value of N0 irrespective of which parameterization is being used.
+     */
+    public class N0Statistic extends Statistic.Abstract {
+
+        public N0Statistic() {
+            super("N0");
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(int i) {
+            return exponentialExponential.getN0();
+        }
+
+    }
+
 
     //
     // protected stuff
     //
 
-    Parameter N0Parameter = null;
-    Parameter growthRateParameter = null;
-    Parameter ancestralGrowthRateParameter = null;
-    Parameter transitionTimeParameter = null;
-    ExponentialExponential exponentialExponential = null;
+    private final Parameter N0Parameter;
+    private final Parameter N1Parameter;
+    private final Parameter growthRateParameter;
+    private final Parameter ancestralGrowthRateParameter;
+    private final Parameter transitionTimeParameter;
+    private final ExponentialExponential exponentialExponential;
 }

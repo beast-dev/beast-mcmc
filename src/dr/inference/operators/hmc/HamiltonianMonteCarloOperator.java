@@ -184,8 +184,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 if (!Double.isNaN(logLikelihood) && !Double.isInfinite(logLikelihood)) {
                     acceptableSize = true;
                 }
-            } catch (AssertionError error) {
-                // Do nothing
             } catch (Exception exception) {
                 // Do nothing
             }
@@ -385,8 +383,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             leapFrogEngine.updatePosition(position, momentum, stepSize);
 
             if (i < (nStepsThisLeap - 1)) {
-                leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                        mask(gradientProvider.getGradientLogDensity(), mask), stepSize);
+
+                try {
+                    leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                            mask(gradientProvider.getGradientLogDensity(), mask), stepSize);
+                } catch (ArithmeticException e) {
+                    throw new NumericInstabilityException();
+                }
             }
         }
 

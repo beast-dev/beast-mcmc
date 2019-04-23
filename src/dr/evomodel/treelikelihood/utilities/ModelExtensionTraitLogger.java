@@ -41,7 +41,7 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
         LogColumn[] columns = new LogColumn[n * traitDim];
 
         for (int i = 0; i < n; i++) {
-            int finalI = i;
+            final int finalI = i;
             NodeRef node = tree.getExternalNode(i);
             Taxon taxon = tree.getNodeTaxon(node);
             String taxonName = (taxon != null) ? taxon.getId() : null;
@@ -49,7 +49,7 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
             for (int j = 0; j < traitDim; j++) {
                 int dim = i * traitDim + j;
 
-                int finalJ = j;
+                final int finalJ = j;
                 columns[dim] = new LogColumn.Abstract(traitName + "." + taxonName + "." + (finalJ + 1)) {
                     @Override
                     protected String getFormattedValue() {

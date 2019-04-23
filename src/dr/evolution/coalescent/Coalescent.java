@@ -129,6 +129,7 @@ public class Coalescent implements MultivariateFunction, Units {
         return logL;
     }
 
+
     /**
      * Calculates the log likelihood of this set of coalescent intervals,
      * using an analytical integration over theta.

@@ -4,6 +4,7 @@ import jebl.evolution.graphs.Node;
 import jebl.evolution.io.ImportException;
 import jebl.evolution.io.NexusImporter;
 import jebl.evolution.trees.RootedTree;
+import jebl.evolution.trees.SortedRootedTree;
 import org.apache.commons.cli.*;
 
 import javax.json.Json;
@@ -21,12 +22,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class AuspiceGenerator {
+    enum SortType {
+        OFF,
+        INCREASING,
+        DECREASING
+    };
 
     private final double youngestDate;
     private final String[] attributeNames;
     private final Map<String, Set<String>> attributeValues = new HashMap<>();
 
-    public AuspiceGenerator(String treeFileName, String[] attributeNames, boolean generateMetadata, String outputStem) {
+    public AuspiceGenerator(String treeFileName, String[] attributeNames, SortType sortType, boolean generateMetadata, String outputStem) {
 
         youngestDate = 2019.0;
 
@@ -40,6 +46,12 @@ public class AuspiceGenerator {
         } catch (ImportException | IOException e) {
             e.printStackTrace();
             return;
+        }
+
+        if (sortType == SortType.INCREASING) {
+            tree = new SortedRootedTree(tree, SortedRootedTree.BranchOrdering.INCREASING_NODE_DENSITY);
+        } else if (sortType == SortType.DECREASING) {
+            tree = new SortedRootedTree(tree, SortedRootedTree.BranchOrdering.DECREASING_NODE_DENSITY);
         }
 
         try {
@@ -304,6 +316,14 @@ public class AuspiceGenerator {
 
         options.addOption("m", "metadata", false, "generate a metadata file");
 
+        options.addOption( Option.builder( "s" )
+                .longOpt("sort")
+                .argName("up/down")
+                .hasArg()
+                .required(false)
+                .desc( "sort the nodes in increasing node density (up) or decreasing (down)" )
+                .type(String.class).build());
+
         options.addOption( Option.builder( "t" )
                 .longOpt("tree")
                 .argName("file name")
@@ -350,6 +370,19 @@ public class AuspiceGenerator {
 
         boolean generateMetadata = cmd.hasOption("m");
 
+        SortType sortType = SortType.OFF;
+
+        if (cmd.hasOption("s")) {
+            String sort = cmd.getOptionValue("s");
+            if (sort.equalsIgnoreCase("up")) {
+                sortType = SortType.INCREASING;
+            } else if (sort.equalsIgnoreCase("down")) {
+                sortType = SortType.DECREASING;
+            } else {
+                System.err.println("Unrecognised sort option: " + sort);
+            }
+        }
+
         String treeFileName = cmd.getOptionValue("t");
         String outputFilename = cmd.getOptionValue("o");
 
@@ -360,7 +393,7 @@ public class AuspiceGenerator {
             System.err.println("output filename stem: " + outputFilename);
         }
 
-        new AuspiceGenerator(treeFileName, attributeNames, generateMetadata, outputFilename);
+        new AuspiceGenerator(treeFileName, attributeNames, sortType, generateMetadata, outputFilename);
 
     }
 

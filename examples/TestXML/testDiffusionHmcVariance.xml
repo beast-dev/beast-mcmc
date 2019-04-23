@@ -113,7 +113,7 @@
     <!-- ************************************************** -->
     <!-- Correlation -->
 
-    <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation">
+    <precisionGradient id="precisionCorrelationGradient" parameter="correlation">
         <wishartStatistics  traitName="simTrait">
             <traitDataLikelihood idref="bmLikelihood"/>
         </wishartStatistics>
@@ -275,7 +275,7 @@ Count: 1131
     <!-- ************************************************** -->
     <!-- Diagonal -->
 
-    <precisionGradient id="precisionDiagonalGradient" parameter="precisionDiagonal">
+    <precisionGradient id="precisionDiagonalGradient" parameter="diagonal">
         <wishartStatistics  traitName="simTrait">
             <traitDataLikelihood idref="bmLikelihood"/>
         </wishartStatistics>

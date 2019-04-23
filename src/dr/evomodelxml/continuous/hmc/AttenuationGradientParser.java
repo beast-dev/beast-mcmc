@@ -57,19 +57,47 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         return PRECISION_GRADIENT;
     }
 
-    private int parseParameterMode(XMLObject xo) throws XMLParseException {
-        // Choose which parameter(s) to update:
-        // 0: full precision
-        // 1: only precision correlation
-        // 2: only precision diagonal
-        int mode = 0;
+    private ParameterMode parseParameterMode(XMLObject xo) throws XMLParseException {
+        // Choose which parameter(s) to update.
+        ParameterMode mode = ParameterMode.WRT_BOTH;
         String parameterString = xo.getAttribute(PARAMETER, ATTENUATION_BOTH).toLowerCase();
         if (parameterString.compareTo(ATTENUATION_CORRELATION) == 0) {
-            mode = 1;
+            mode = ParameterMode.WRT_CORRELATION;
         } else if (parameterString.compareTo(ATTENUATION_DIAGONAL) == 0) {
-            mode = 2;
+            mode = ParameterMode.WRT_DIAGONAL;
         }
         return mode;
+    }
+
+    enum ParameterMode {
+        WRT_BOTH {
+            @Override
+            public Object factory(BranchSpecificGradient branchSpecificGradient,
+                                  TreeDataLikelihood treeDataLikelihood,
+                                  MatrixParameterInterface parameter) {
+                throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
+            }
+        },
+        WRT_CORRELATION {
+            @Override
+            public Object factory(BranchSpecificGradient branchSpecificGradient,
+                                  TreeDataLikelihood treeDataLikelihood,
+                                  MatrixParameterInterface parameter) {
+                throw new RuntimeException("Gradient wrt correlation of attenuation not yet implemented.");
+            }
+        },
+        WRT_DIAGONAL {
+            @Override
+            public Object factory(BranchSpecificGradient branchSpecificGradient,
+                                  TreeDataLikelihood treeDataLikelihood,
+                                  MatrixParameterInterface parameter) {
+                return new DiagonalAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
+            }
+        };
+
+        abstract Object factory(BranchSpecificGradient branchSpecificGradient,
+                                TreeDataLikelihood treeDataLikelihood,
+                                MatrixParameterInterface parameter);
     }
 
     @Override
@@ -93,14 +121,8 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
-        int parameterMode = parseParameterMode(xo);
-        if (parameterMode == 0) {
-            throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
-        } else if (parameterMode == 1) {
-            throw new RuntimeException("Gradient wrt correlation of attenuation not yet implemented.");
-        } else {
-            return new DiagonalAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
-        }
+        ParameterMode parameterMode = parseParameterMode(xo);
+        return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, parameter);
     }
 
     @Override

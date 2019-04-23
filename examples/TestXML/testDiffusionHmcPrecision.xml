@@ -106,7 +106,7 @@
     <!-- ************************************************** -->
     <!-- Correlation -->
 
-    <precisionGradient id="precisionCorrelationGradient" parameter="precisionCorrelation" traitName="simTrait">
+    <precisionGradient id="precisionCorrelationGradient" parameter="correlation" traitName="simTrait">
         <wishartStatistics  traitName="simTrait">
             <traitDataLikelihood idref="bmLikelihood"/>
         </wishartStatistics>
@@ -114,7 +114,7 @@
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>
 
-    <!-- <precisionGradient id="precisionCorrelationGradientPreOrder" parameter="precisionCorrelation" traitName="simTrait"> -->
+    <!-- <precisionGradient id="precisionCorrelationGradientPreOrder" parameter="correlation" traitName="simTrait"> -->
     <!--     <traitDataLikelihood idref="bmLikelihood"/> -->
     <!--     <compoundSymmetricMatrix idref="precision.correlation"/> -->
     <!-- </precisionGradient> -->
@@ -272,7 +272,7 @@ Count: 1131
     <!-- ************************************************** -->
     <!-- Diagonal -->
 
-    <!-- <precisionGradient id="precisionDiagonalGradient" parameter="precisionDiagonal" traitName="simTrait"> -->
+    <!-- <precisionGradient id="precisionDiagonalGradient" parameter="diagonal" traitName="simTrait"> -->
     <!--     <wishartStatistics  traitName="simTrait"> -->
     <!--         <traitDataLikelihood idref="bmLikelihood"/> -->
     <!--     </wishartStatistics> -->
@@ -280,7 +280,7 @@ Count: 1131
     <!--     <compoundSymmetricMatrix idref="precisionMatrix"/> -->
     <!-- </precisionGradient> -->
 
-    <precisionGradient id="precisionDiagonalGradientPreOrder" parameter="precisionDiagonal" traitName="simTrait">
+    <precisionGradient id="precisionDiagonalGradientPreOrder" parameter="diagonal" traitName="simTrait">
         <traitDataLikelihood idref="bmLikelihood"/>
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>

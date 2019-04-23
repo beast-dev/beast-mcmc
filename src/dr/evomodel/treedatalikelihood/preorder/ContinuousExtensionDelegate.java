@@ -30,6 +30,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.model.CompoundParameter;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 
@@ -108,6 +109,8 @@ public class ContinuousExtensionDelegate {
             CompoundParameter dataParameter = dataModel.getParameter();
             DenseMatrix64F extensionVar = dataModel.getExtensionVariance();
             boolean[] missingVec = dataModel.getMissingVector();
+            boolean choleskyKnown = false;
+            double[][] cholesky = null;
 
             int offset = 0;
 
@@ -121,8 +124,16 @@ public class ContinuousExtensionDelegate {
                         sample[j] = dataParameter.getParameterValue(j);
                     }
                 } else if (partition.nMissing == dimTrait) {
-                    //TODO: completely missing
-                    throw new RuntimeException("Not currently implemented for all traits missing.");
+                    double[] mean = new double[dimTrait];
+                    System.arraycopy(treeValues, offset, mean, 0, dimTrait);
+                    if (!choleskyKnown) {
+                        cholesky = CholeskyDecomposition.execute(extensionVar.getData(), 0, dimTrait);
+                        choleskyKnown = true;
+                    }
+                    double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+                    for (int j = offset; j < offset + dimTrait; j++) {
+                        sample[j] = draw[j - offset];
+                    }
                 } else {
                     ConditionalVarianceAndTransform2 transform = new ConditionalVarianceAndTransform2(extensionVar,
                             partition.misInds, partition.obsInds);

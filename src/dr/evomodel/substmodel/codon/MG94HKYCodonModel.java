@@ -51,15 +51,17 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
     protected Parameter betaParameter;
     protected Parameter kappaParameter;
 
-    final int numSynTransitions;
-    final int numNonsynTransitions;
+    private final int numSynTransitions;
+    private final int numNonsynTransitions;
+    private final CodonOptions options;
 
     public MG94HKYCodonModel(Codons codonDataType,
                              Parameter alphaParameter,
                              Parameter betaParameter,
                              Parameter kappaParameter,
-                             FrequencyModel freqModel) {
-        this(codonDataType, alphaParameter, betaParameter, kappaParameter, freqModel,
+                             FrequencyModel freqModel,
+                             CodonOptions options) {
+        this(codonDataType, alphaParameter, betaParameter, kappaParameter, freqModel, options,
                 new DefaultEigenSystem(codonDataType.getStateCount()));
     }
 
@@ -67,7 +69,9 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                       Parameter alphaParameter,
                       Parameter betaParameter,
                       Parameter kappaParameter,
-                      FrequencyModel freqModel, EigenSystem eigenSystem) {
+                      FrequencyModel freqModel,
+                      CodonOptions options,
+                      EigenSystem eigenSystem) {
         super("MG94", codonDataType, freqModel, eigenSystem);
 
         this.alphaParameter = alphaParameter;
@@ -87,6 +91,8 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
 
         numSynTransitions = getNumSynTransitions();
         numNonsynTransitions = getNumNonsynTransitions();
+
+        this.options = options;
     }
 
     private int countRates(int i, int j) {
@@ -100,11 +106,11 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
         return count;
     }
 
-    protected int getNumSynTransitions() {
+    private int getNumSynTransitions() {
         return 2 * countRates(1, 2);
     }
 
-    protected int getNumNonsynTransitions() {
+    private int getNumNonsynTransitions() {
         return 2 * countRates(3, 4);
     }
 
@@ -122,35 +128,33 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
         return norm;
     }
 
-    final boolean asTotalRate = false;
-
-    public double getDS() {
+    private double getDS() {
         double rate = alphaParameter.getParameterValue(0);
-        if (asTotalRate) {
+        if (options.isParameterTotalRate) {
             rate /= numSynTransitions;
         }
         return rate;
     }
 
-    public double getDN() {
+    private double getDN() {
         double rate = betaParameter.getParameterValue(0);
-        if (asTotalRate) {
+        if (options.isParameterTotalRate) {
             rate /= numNonsynTransitions;
         }
         return rate;
     }
 
-    public double getTotalS() {
+    private double getTotalS() {
         double rate = alphaParameter.getParameterValue(0);
-        if (!asTotalRate) {
+        if (!options.isParameterTotalRate) {
             rate *= numSynTransitions;
         }
         return rate;
     }
 
-    public double getTotalN() {
+    private double getTotalN() {
         double rate = betaParameter.getParameterValue(0);
-        if (!asTotalRate) {
+        if (!options.isParameterTotalRate) {
             rate *= numNonsynTransitions;
         }
         return rate;
@@ -245,14 +249,13 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                 throw new RuntimeException("Unknown parameter");
             }
         }
-        return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencyModel);
+        return new MG94HKYCodonModel(codonDataType, alpha, beta, kappa, frequencyModel, options);
     }
 
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
         for (int i = 0; i < rateCount; ++i) {
-            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant, asTotalRate,
-                    this);
+            differentialRates[i] = wrt.getRate(rateMap[i]) / normalizingConstant;
         }
     }
 
@@ -261,7 +264,7 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
         double normalizationRatio = getNormalizationRatioForParameterization();
         double normalizationRatioInverse = normalizationRatio == 1.0 ?
                 0.0 :
-                1.0 / getNormalizationRatioForParameterization() * wrtParameter.getScalar();
+                1.0 / getNormalizationRatioForParameterization() * wrtParameter.getNormalizationDifferential();
         return getNormalizationValue(differentialMassMatrix, frequencies) - normalizationRatioInverse;
         // TODO This is not correct when doNormalization == false
     }
@@ -273,105 +276,54 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
 
     @Override
     public WrtParameter factory(Parameter parameter) {
-        WrtParameter wrt = alphaBetaFactor(parameter);
-        if (wrt == null) {
-            throw new RuntimeException("Unknown parameter");
-        }
-        return wrt;
-    }
 
-    WrtParameter alphaBetaFactor(Parameter parameter) {
         if (parameter == alphaParameter) {
-            return new Alpha(getNumSynTransitions(), asTotalRate);
+            return new Alpha(getNumSynTransitions(), options.isParameterTotalRate);
         } else if (parameter == betaParameter) {
-            return new Beta(getNumNonsynTransitions(), asTotalRate);
+            return new Beta(getNumNonsynTransitions(), options.isParameterTotalRate);
         } else {
-            return null;
+            throw new RuntimeException("Not yet implemented");
         }
     }
-
-
-//    enum WrtMG94ModelParameter implements WrtParameter {
-//        ALPHA {
-//            @Override
-//            public double getRate(int switchCase, double normalizingConstant, boolean asTotal,
-//                                  DifferentiableSubstitutionModel substitutionModel) {
-//                MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
-//                final double numSynTransitions = asTotal ? thisSubstitutionModel.getNumSynTransitions() : 1.0;
-//                switch (switchCase) {
-//                    case 0: return 0.0;
-//                    case 1: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transition
-//                    case 2: return 1.0 / normalizingConstant / numSynTransitions; // synonymous transversion
-//                    case 3: return 0.0;
-//                    case 4: return 0.0;
-//                }
-//                throw new IllegalArgumentException("Invalid switch case");
-//            }
-//
-//            @Override
-//            public double getScalar() {
-//                return 1.0;
-//            }
-//        },
-//        BETA {
-//            @Override
-//            public double getRate(int switchCase, double normalizingConstant, boolean asTotal,
-//                                  DifferentiableSubstitutionModel substitutionModel) {
-//                MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
-//                final double numNonsynTransitions = asTotal ? thisSubstitutionModel.getNumNonsynTransitions() : 1.0;
-//                switch (switchCase) {
-//                    case 0: return 0.0;
-//                    case 1: return 0.0;
-//                    case 2: return 0.0;
-//                    case 3: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
-//                    case 4: return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
-//                }
-//                throw new IllegalArgumentException("Invalid switch case");
-//            }
-//
-//            @Override
-//            public double getScalar() {
-//                return 1.0;
-//            }
-//        }
-//    }
 
     abstract class WrtMG94ModelParameter implements WrtParameter {
 
-        private final int counts;
-        private final boolean asTotal;
+        private final double normalizationDifferential;
+        final double perEventRateScalar;
 
-        WrtMG94ModelParameter(int counts, boolean asTotal) {
-            this.counts = counts;
-            this.asTotal = asTotal;
+        WrtMG94ModelParameter(int eventCount, boolean isParameterTotalRate) {
+            if (isParameterTotalRate) {
+                normalizationDifferential = 1.0;
+                perEventRateScalar = 1.0 / eventCount;
+            } else {
+                normalizationDifferential = eventCount;
+                perEventRateScalar = 1.0;
+            }
         }
 
         @Override
-        public double getScalar() {
-            return asTotal ? 1.0 : counts;
+        public double getNormalizationDifferential() {
+            return normalizationDifferential;
         }
     }
 
     class Alpha extends WrtMG94ModelParameter {
 
-        Alpha(int counts, boolean asTotal) {
-            super(counts, asTotal);
+        Alpha(int eventCount, boolean isParameterTotalRate) {
+            super(eventCount, isParameterTotalRate);
         }
 
         @Override
-        public double getRate(int switchCase, double normalizingConstant, boolean asTotal,
-                              DifferentiableSubstitutionModel substitutionModel) {
-            MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
-            final int events = thisSubstitutionModel.getNumSynTransitions();
-            final double numSynTransitions = asTotal ? events : 1.0;
-            final double kappa = thisSubstitutionModel.getKappa();
+        public double getRate(int switchCase) {
+
+            final double kappa = getKappa();
             switch (switchCase) {
                 case 0:
                     return 0.0;
                 case 1:
-                    return kappa / normalizingConstant / numSynTransitions; // synonymous transition
+                    return kappa * perEventRateScalar; // synonymous transition
                 case 2:
-                    return 1.0 / normalizingConstant / numSynTransitions; // synonymous transversion
+                    return 1.0 * perEventRateScalar;   // synonymous transversion
                 case 3:
                     return 0.0;
                 case 4:
@@ -383,16 +335,14 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
 
     class Beta extends WrtMG94ModelParameter {
 
-        Beta(int counts, boolean asTotal) {
-            super(counts, asTotal);
+        Beta(int eventCount, boolean isParameterTotalRate) {
+            super(eventCount, isParameterTotalRate);
         }
 
         @Override
-        public double getRate(int switchCase, double normalizingConstant, boolean asTotal,
-                              DifferentiableSubstitutionModel substitutionModel) {
-            MG94HKYCodonModel thisSubstitutionModel = (MG94HKYCodonModel) substitutionModel;
-            final double numNonsynTransitions = asTotal ? thisSubstitutionModel.getNumNonsynTransitions() : 1.0;
-            final double kappa = thisSubstitutionModel.getKappa();
+        public double getRate(int switchCase) {
+
+            final double kappa = getKappa();
             switch (switchCase) {
                 case 0:
                     return 0.0;
@@ -401,9 +351,9 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                 case 2:
                     return 0.0;
                 case 3:
-                    return kappa / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                    return kappa * perEventRateScalar; // non-synonymous transversion
                 case 4:
-                    return 1.0 / normalizingConstant / numNonsynTransitions; // non-synonymous transversion
+                    return 1.0 * perEventRateScalar;   // non-synonymous transversion
             }
             throw new IllegalArgumentException("Invalid switch case");
         }

@@ -32,6 +32,7 @@ import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
 import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.codon.GY94CodonModel;
@@ -514,7 +515,8 @@ public class PartitionData implements Serializable {
 			Parameter beta = new Parameter.Default(1, substitutionParameterValues[12]);
 			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[13]);
 			
-			MG94HKYCodonModel mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta, kappa, frequencyModel);
+			MG94HKYCodonModel mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta, kappa,
+					frequencyModel, new CodonOptions());
 
 			branchModel = new HomogeneousBranchModel(mg94);
 			

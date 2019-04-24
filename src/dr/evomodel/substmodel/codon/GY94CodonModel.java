@@ -262,8 +262,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
         for (int i = 0; i < rateCount; ++i) {
-            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant, false,
-                    this);
+            differentialRates[i] = wrt.getRate(rateMap[i]) / normalizingConstant;
         }
     }
 
@@ -279,36 +278,35 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
 
     @Override
     public WrtParameter factory(Parameter parameter) {
-        WrtGY94ModelParameter wrt;
+        WrtParameter wrt;
         if (parameter == omegaParameter) {
-            wrt = WrtGY94ModelParameter.OMEGA;
+            wrt = new Omega();
         } else {
             throw new RuntimeException("Not yet implemented!");
         }
         return wrt;
     }
 
-    enum WrtGY94ModelParameter implements WrtParameter {
-        OMEGA {
-            @Override
-            public double getRate(int switchCase, double normalizingConstant, boolean asTotal,
-                                  DifferentiableSubstitutionModel substitutionModel) {
-                GY94CodonModel thisSubstitutionModel = (GY94CodonModel) substitutionModel;
-                final double kappa = thisSubstitutionModel.getKappa();
-                switch (switchCase) {
-                    case 0: return 0.0;
-                    case 1: return 0.0;
-                    case 2: return 0.0;
-                    case 3: return kappa / normalizingConstant;
-                    case 4: return 1.0 / normalizingConstant;
-                }
-                throw new IllegalArgumentException("Invalid switch case");
-            }
+    class Omega implements WrtParameter {
 
-            @Override
-            public double getScalar() {
-                return 1.0;
+        @Override
+        public double getRate(int switchCase) {
+
+            final double kappa = getKappa();
+            switch (switchCase) {
+                case 0: return 0.0;
+                case 1: return 0.0;
+                case 2: return 0.0;
+                case 3: return kappa;
+                case 4: return 1.0;
             }
+            throw new IllegalArgumentException("Invalid switch case");
         }
+
+        @Override
+        public double getNormalizationDifferential() {
+            return 1.0;
+        }
+
     }
 }

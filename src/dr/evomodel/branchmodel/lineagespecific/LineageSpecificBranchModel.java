@@ -31,6 +31,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
 import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.codon.MG94K80CodonModel;
@@ -238,7 +239,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
             // create substitution model
             Parameter alpha = new Parameter.Default(1, 10);
             Parameter beta = new Parameter.Default(1, 5);
-            MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel);
+            MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel, new CodonOptions());
 
             HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
 

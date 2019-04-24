@@ -41,14 +41,14 @@ public class MG94K80CodonModel extends MG94HKYCodonModel {
     protected Parameter kappaParameter;
 
     public MG94K80CodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter,
-                             FrequencyModel freqModel) {
-        this(codonDataType, alphaParameter, betaParameter, freqModel,
+                             FrequencyModel freqModel, CodonOptions options) {
+        this(codonDataType, alphaParameter, betaParameter, freqModel, options,
                 new DefaultEigenSystem(codonDataType.getStateCount()));
     }
 
     private MG94K80CodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter,
-                              FrequencyModel freqModel, EigenSystem eigenSystem) {
+                              FrequencyModel freqModel, CodonOptions options, EigenSystem eigenSystem) {
         super(codonDataType, alphaParameter, betaParameter, new Parameter.Default(1.0),
-                freqModel, eigenSystem);
+                freqModel, options, eigenSystem);
     }
 }

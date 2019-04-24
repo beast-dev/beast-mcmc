@@ -40,6 +40,7 @@ import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.aminoacid.Blosum62;
 import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
 import dr.evomodel.substmodel.codon.GY94CodonModel;
 import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
@@ -663,7 +664,7 @@ public class BeagleSeqSimTest {
 			Parameter beta = new Parameter.Default(1, 5);
 //			Parameter kappa = new Parameter.Default(1, 1);
 			MG94HKYCodonModel mg94 = new MG94K80CodonModel(Codons.UNIVERSAL, alpha,
-					beta, freqModel);
+					beta, freqModel, new CodonOptions());
 
 			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
 					mg94);

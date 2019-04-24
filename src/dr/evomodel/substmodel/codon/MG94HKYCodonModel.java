@@ -115,7 +115,11 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
     }
 
     private double getNormalizationRatioForParameterization() {
-        return getTotalS() + getTotalN();
+        if (options.isParameterTotalRate) {
+            return getTotalS() + getTotalN();
+        } else {
+            return 1.0;
+        }
         //(numSynTransitions * getAlpha() + numNonsynTransitions * getBeta()) / (numSynTransitions + numNonsynTransitions);
     }
 
@@ -296,7 +300,7 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
                 normalizationDifferential = 1.0;
                 perEventRateScalar = 1.0 / eventCount;
             } else {
-                normalizationDifferential = eventCount;
+                normalizationDifferential = 1.0; // eventCount;
                 perEventRateScalar = 1.0;
             }
         }

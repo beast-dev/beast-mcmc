@@ -113,7 +113,8 @@ public class DifferentiableSubstitutionModelUtil {
         substitutionModel.makeValid(differentialMassMatrix, stateCount);
 
         final double weightedNormalizationGradient
-                = ((DifferentiableSubstitutionModel) substitutionModel).getWeightedNormalizationGradient(differentialMassMatrix, substitutionModel.getFrequencyModel().getFrequencies());
+                = ((DifferentiableSubstitutionModel) substitutionModel).getWeightedNormalizationGradient(
+                        wrt, differentialMassMatrix, substitutionModel.getFrequencyModel().getFrequencies());
 
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {

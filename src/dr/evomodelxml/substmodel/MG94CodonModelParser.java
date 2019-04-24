@@ -26,11 +26,10 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.codon.MG94CodonModel;
 import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
+import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
-import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -73,10 +72,10 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
         Parameter betaParam = (Parameter) xo.getElementFirstChild(BETA);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
-        MG94CodonModel codonModel;
+        MG94HKYCodonModel codonModel;
         if (xo.hasChildNamed(GTR_MODEL)) {
-            //TODO: change this into constructing a MG94CodonModel (needs to be written), which is started underneath
-            codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+            //TODO: change this into constructing a MG94HKYCodonModel (needs to be written), which is started underneath
+            codonModel = new MG94K80CodonModel(codons, alphaParam, betaParam, freqModel);
 
             Parameter rateACValue = null;
             if (xo.hasChildNamed(A_TO_C)) {
@@ -122,16 +121,16 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
         }  else if (xo.hasChildNamed(KAPPA)) {
             Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
             codonModel = new MG94HKYCodonModel(codons, alphaParam, betaParam, kappaParam, freqModel);
-//            System.err.println("setting up MG94HKYCodonModel");
+//            System.err.println("setting up MG94K80CodonModel");
         }  else {
             //resort to standard MG94 without nucleotide rate bias
-            codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+            codonModel = new MG94K80CodonModel(codons, alphaParam, betaParam, freqModel);
         }
 
 
         if (!xo.getAttribute(NORMALIZED, true)) {
 //            codonModel.setNormalization(false);
-//            Logger.getLogger("dr.app.beagle.evomodel").info("MG94CodonModel normalization: false");
+//            Logger.getLogger("dr.app.beagle.evomodel").info("MG94HKYCodonModel normalization: false");
         }
 
         return codonModel;
@@ -146,7 +145,7 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return MG94CodonModel.class;
+        return MG94HKYCodonModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

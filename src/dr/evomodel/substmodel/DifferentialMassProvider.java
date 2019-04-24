@@ -59,10 +59,10 @@ public interface DifferentialMassProvider {
 
         public interface WrtParameter {
 
-            double getRate(int switchCase, double normalizingConstant,
+            double getRate(int switchCase, double normalizingConstant, boolean asTotalEvents,
                            DifferentiableSubstitutionModel substitutionModel);
 
+            double getScalar();
         }
     }
-
 }

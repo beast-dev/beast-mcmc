@@ -262,13 +262,13 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
 
         for (int i = 0; i < rateCount; ++i) {
-            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
+            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant, false,
                     this);
         }
     }
 
     @Override
-    public double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies) {
+    public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] frequencies) {
         return getNormalizationValue(differentialMassMatrix, frequencies);
     }
 
@@ -291,7 +291,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     enum WrtGY94ModelParameter implements WrtParameter {
         OMEGA {
             @Override
-            public double getRate(int switchCase, double normalizingConstant,
+            public double getRate(int switchCase, double normalizingConstant, boolean asTotal,
                                   DifferentiableSubstitutionModel substitutionModel) {
                 GY94CodonModel thisSubstitutionModel = (GY94CodonModel) substitutionModel;
                 final double kappa = thisSubstitutionModel.getKappa();
@@ -303,6 +303,11 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
                     case 4: return 1.0 / normalizingConstant;
                 }
                 throw new IllegalArgumentException("Invalid switch case");
+            }
+
+            @Override
+            public double getScalar() {
+                return 1.0;
             }
         }
     }

@@ -647,7 +647,8 @@ public interface Transform {
         }
 
         public double inverse(double value) {
-            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
+//            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
+            return 1.0 - 2.0 / (Math.exp(2.0 * value) + 1.0);
         }
 
         public double gradientInverse(double value) {

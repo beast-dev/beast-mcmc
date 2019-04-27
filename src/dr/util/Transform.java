@@ -644,12 +644,13 @@ public interface Transform {
     class FisherZTransform extends UnivariableTransform {
 
         public double transform(double value) {
-            return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
+//            return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
+            return FastMath.atanh(value);
         }
 
         public double inverse(double value) {
 //            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
-            return Math.tanh(value);  // optional: FastMath.tanh(value);
+            return FastMath.tanh(value);  // optional: Math.tanh(value);
         }
 
         public double gradientInverse(double value) {

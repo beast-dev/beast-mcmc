@@ -29,6 +29,7 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.XMLObject;
+import org.apache.commons.math.util.FastMath;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -648,7 +649,7 @@ public interface Transform {
 
         public double inverse(double value) {
 //            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
-            return 1.0 - 2.0 / (Math.exp(2.0 * value) + 1.0);
+            return Math.tanh(value);  // optional: FastMath.tanh(value);
         }
 
         public double gradientInverse(double value) {

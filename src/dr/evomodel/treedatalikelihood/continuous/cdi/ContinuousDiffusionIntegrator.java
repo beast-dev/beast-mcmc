@@ -219,7 +219,6 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert(partials != null);
 
             System.arraycopy(partial, 0, partials, dimPartial * bufferIndex, dimPartial);
-            remainders[bufferIndex] = partial[dimPartial - 1];
         }
 
         @Override

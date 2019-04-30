@@ -517,7 +517,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
 
         normalizationConstants[taxon] = constant;
-        partials[partialsOffset + numFactors + 2 * numFactors * numFactors] = constant;
     }
 
     private void computePartialsAndRemainders() {

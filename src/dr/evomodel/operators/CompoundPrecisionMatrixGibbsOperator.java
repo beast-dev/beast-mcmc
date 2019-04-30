@@ -29,7 +29,6 @@ package dr.evomodel.operators;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -79,12 +78,12 @@ public class CompoundPrecisionMatrixGibbsOperator extends SimpleMCMCOperator imp
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            XMLObject diffXO = (XMLObject) xo.getChild(DIFFUSION_OPERATOR);
+            XMLObject diffXO = xo.getChild(DIFFUSION_OPERATOR);
 
             PrecisionMatrixGibbsOperator diffusionOperator =
                     (PrecisionMatrixGibbsOperator) diffXO.getChild(PrecisionMatrixGibbsOperator.class);
 
-            XMLObject resXO = (XMLObject) xo.getChild(RESIDUAL_OPERATOR);
+            XMLObject resXO = xo.getChild(RESIDUAL_OPERATOR);
 
             PrecisionMatrixGibbsOperator residualOperator =
                     (PrecisionMatrixGibbsOperator) resXO.getChild(PrecisionMatrixGibbsOperator.class);

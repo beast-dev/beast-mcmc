@@ -32,6 +32,12 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double logLikelihood;
     private double savedLogLikelihood;
 
+    private final int dim;
+    private double[] increments;
+    private double[] savedIncrements;
+
+    private static final boolean TEST_INCREMENTS = true;
+
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  ArbitraryBranchRates branchRateModel,
                                                  Parameter precision,
@@ -50,6 +56,10 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
         }
+
+        this.dim = branchRateModel.getRateParameter().getDimension();
+        this.increments = new double[dim];
+        this.savedIncrements = new double[dim];
     }
 
     @Override
@@ -86,12 +96,18 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     protected void storeState() {
         savedLikelihoodKnown = likelihoodKnown;
         savedLogLikelihood = logLikelihood;
+
+        System.arraycopy(increments, 0, savedIncrements, 0, dim);
     }
 
     @Override
     protected void restoreState() {
         likelihoodKnown = savedLikelihoodKnown;
         logLikelihood = savedLogLikelihood;
+
+        double[] tmp = savedIncrements;
+        savedIncrements = increments;
+        increments = tmp;
     }
 
     @Override
@@ -135,15 +151,31 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double calculateLogLikelihood() {
         double assumedUntransformedRootRate = 0.0;
         NodeRef root = tree.getRoot();
-        return recursePreOrder(tree.getChild(root, 0), assumedUntransformedRootRate)
+        double preOrderComputation = recursePreOrder(tree.getChild(root, 0), assumedUntransformedRootRate)
                 + recursePreOrder(tree.getChild(root, 1), assumedUntransformedRootRate);
+
+        if (TEST_INCREMENTS) {
+            double logLike = 0;
+            for (int i = 0; i < dim; ++i) {
+                logLike += getLogLikelihoodOfBranch(increments[i]);
+            }
+
+            System.err.println("pre: " + preOrderComputation + " inc: " + logLike);
+        }
+
+        return preOrderComputation;
     }
 
     private double recursePreOrder(NodeRef node, double untransformedParentRate) {
 
-        double untransformedRate = branchRateModel.getUntransformedBranchRate(tree, node);
-        double likelihoodContribution = getLogLikelihoodOfBranch(untransformedParentRate, untransformedRate,
-                tree.getBranchLength(node));
+        final double untransformedRate = branchRateModel.getUntransformedBranchRate(tree, node);
+        final double branchLength = tree.getBranchLength(node);
+        final double rateIncrement = scaling.rescaleIncrement(
+                untransformedRate - untransformedParentRate, branchLength);
+
+        increments[branchRateModel.getParameterIndexFromNode(node)] = rateIncrement;
+
+        double likelihoodContribution = getLogLikelihoodOfBranch(rateIncrement);
 
         if (!tree.isExternal(node)) {
             likelihoodContribution +=
@@ -154,24 +186,24 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         return likelihoodContribution;
     }
 
-    private double getLogLikelihoodOfBranch(double parentValue, double value, double branchLength) {
-        double sd = scaling.getSD(precisionParameter.getParameterValue(0), branchLength);
-        return NormalDistribution.logPdf(value, parentValue, sd);
+    private double getLogLikelihoodOfBranch(double rateIncrement) {
+        final double sd = 1.0 / Math.sqrt(precisionParameter.getParameterValue(0));
+        return NormalDistribution.logPdf(rateIncrement, 0.0, sd);
     }
 
     public enum BranchVarianceScaling {
 
         NONE("none") {
             @Override
-            double getSD(double precision, double branchLength) {
-                return Math.sqrt(1.0 / precision);
+            double rescaleIncrement(double increment, double branchLength) {
+                return increment;
             }
         },
 
         BY_TIME("byTime") {
             @Override
-            double getSD(double precision, double branchLength) {
-                return Math.sqrt(branchLength / precision);
+            double rescaleIncrement(double increment, double branchLength) {
+                return increment / Math.sqrt(branchLength);
             }
         };
 
@@ -181,7 +213,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         private final String name;
 
-        abstract double getSD(double precision, double branchLength);
+        abstract double rescaleIncrement(double increment, double branchLength);
 
         public String getName() {
             return name;

@@ -36,6 +36,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] increments;
     private double[] savedIncrements;
 
+    private Parameter incrementsProxy;
+
     private static final boolean TEST_INCREMENTS = true;
 
     public AutoCorrelatedBranchRatesDistribution(String name,
@@ -189,6 +191,40 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double getLogLikelihoodOfBranch(double rateIncrement) {
         final double sd = 1.0 / Math.sqrt(precisionParameter.getParameterValue(0));
         return NormalDistribution.logPdf(rateIncrement, 0.0, sd);
+    }
+
+    Parameter getIncrementsAsParameter() {
+
+        if (incrementsProxy == null) {
+
+            incrementsProxy = new Parameter.Proxy("incrementsProxy", increments.length) {
+                @Override
+                public double getParameterValue(int dim) {
+                    if (!likelihoodKnown) { // TODO Check to incrementsKnown
+                        logLikelihood = calculateLogLikelihood();
+                        likelihoodKnown = true;
+                    }
+                    return increments[dim];
+                }
+
+                @Override
+                public void setParameterValue(int dim, double value) {
+                    throw new RuntimeException("Cannot set increments directly");
+                }
+
+                @Override
+                public void setParameterValueQuietly(int dim, double value) {
+                    throw new RuntimeException("Cannot set increments directly");
+                }
+
+                @Override
+                public void setParameterValueNotifyChangedAll(int dim, double value) {
+                    throw new RuntimeException("Cannot set increments directly");
+                }
+            };
+        }
+
+        return incrementsProxy;
     }
 
     public enum BranchVarianceScaling {

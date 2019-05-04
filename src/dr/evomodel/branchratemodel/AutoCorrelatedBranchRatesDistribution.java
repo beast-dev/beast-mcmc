@@ -159,22 +159,41 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         return NormalDistribution.logPdf(value, parentValue, sd);
     }
 
-    enum BranchVarianceScaling {
+    public enum BranchVarianceScaling {
 
-        NONE {
+        NONE("none") {
             @Override
             double getSD(double precision, double branchLength) {
                 return Math.sqrt(1.0 / precision);
             }
         },
 
-        BY_TIME {
+        BY_TIME("byTime") {
             @Override
             double getSD(double precision, double branchLength) {
                 return Math.sqrt(branchLength / precision);
             }
         };
 
+        BranchVarianceScaling(String name) {
+            this.name = name;
+        }
+
+        private final String name;
+
         abstract double getSD(double precision, double branchLength);
+
+        public String getName() {
+            return name;
+        }
+
+        public static BranchVarianceScaling parse(String name) {
+            for (BranchVarianceScaling scaling : BranchVarianceScaling.values()) {
+                if (scaling.getName().equalsIgnoreCase(name)) {
+                    return scaling;
+                }
+            }
+            return null;
+        }
     }
 }

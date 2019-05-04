@@ -26,6 +26,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private final Tree tree;
     private final Parameter rateParameter;
 
+    private boolean incrementsKnown = false;
+    private boolean savedIncrementsKnown;
+
     private boolean likelihoodKnown = false;
     private boolean savedLikelihoodKnown;
 
@@ -37,8 +40,6 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] savedIncrements;
 
     private Parameter incrementsProxy;
-
-    private static final boolean TEST_INCREMENTS = true;
 
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  ArbitraryBranchRates branchRateModel,
@@ -86,6 +87,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        incrementsKnown = false;
         likelihoodKnown = false;
     }
 
@@ -96,20 +98,22 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     @Override
     protected void storeState() {
+        savedIncrementsKnown = incrementsKnown;
+        System.arraycopy(increments, 0, savedIncrements, 0, dim);
+
         savedLikelihoodKnown = likelihoodKnown;
         savedLogLikelihood = logLikelihood;
-
-        System.arraycopy(increments, 0, savedIncrements, 0, dim);
     }
 
     @Override
     protected void restoreState() {
-        likelihoodKnown = savedLikelihoodKnown;
-        logLikelihood = savedLogLikelihood;
-
+        incrementsKnown = savedIncrementsKnown;
         double[] tmp = savedIncrements;
         savedIncrements = increments;
         increments = tmp;
+
+        likelihoodKnown = savedLikelihoodKnown;
+        logLikelihood = savedLogLikelihood;
     }
 
     @Override
@@ -150,45 +154,45 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         return null;
     }
 
-    private double calculateLogLikelihood() {
-        double assumedUntransformedRootRate = 0.0;
-        NodeRef root = tree.getRoot();
-        double preOrderComputation = recursePreOrder(tree.getChild(root, 0), assumedUntransformedRootRate)
-                + recursePreOrder(tree.getChild(root, 1), assumedUntransformedRootRate);
-
-        if (TEST_INCREMENTS) {
-            double logLike = 0;
-            for (int i = 0; i < dim; ++i) {
-                logLike += getLogLikelihoodOfBranch(increments[i]);
-            }
-
-            System.err.println("pre: " + preOrderComputation + " inc: " + logLike);
+    private void checkIncrements() {
+        if (!incrementsKnown) {
+            recursePreOrder(tree.getRoot(), 0.0);
+            incrementsKnown = true;
         }
-
-        return preOrderComputation;
     }
 
-    private double recursePreOrder(NodeRef node, double untransformedParentRate) {
+    private double calculateLogLikelihood() {
+        checkIncrements();
 
-        final double untransformedRate = branchRateModel.getUntransformedBranchRate(tree, node);
-        final double branchLength = tree.getBranchLength(node);
-        final double rateIncrement = scaling.rescaleIncrement(
-                untransformedRate - untransformedParentRate, branchLength);
-
-        increments[branchRateModel.getParameterIndexFromNode(node)] = rateIncrement;
-
-        double likelihoodContribution = getLogLikelihoodOfBranch(rateIncrement);
-
-        if (!tree.isExternal(node)) {
-            likelihoodContribution +=
-                    recursePreOrder(tree.getChild(node, 0), untransformedRate) +
-                            recursePreOrder(tree.getChild(node, 1), untransformedRate);
+        double logLike = 0;
+        for (int i = 0; i < dim; ++i) {
+            logLike += getLogLikelihoodOfBranch(increments[i]);
         }
 
-        return likelihoodContribution;
+        return logLike;
+    }
+
+    private void recursePreOrder(NodeRef node, double untransformedParentRate) {
+
+        if (!tree.isRoot(node)) {
+            final double untransformedRate = branchRateModel.getUntransformedBranchRate(tree, node);
+            final double branchLength = tree.getBranchLength(node);
+            final double rateIncrement = scaling.rescaleIncrement(
+                    untransformedRate - untransformedParentRate, branchLength);
+
+            increments[branchRateModel.getParameterIndexFromNode(node)] = rateIncrement;
+
+            untransformedParentRate = untransformedRate;
+        }
+
+        if (!tree.isExternal(node)) {
+            recursePreOrder(tree.getChild(node, 0), untransformedParentRate);
+            recursePreOrder(tree.getChild(node, 1), untransformedParentRate);
+        }
     }
 
     private double getLogLikelihoodOfBranch(double rateIncrement) {
+        // TODO Delegate to a DistributionLikelihood using proxy
         final double sd = 1.0 / Math.sqrt(precisionParameter.getParameterValue(0));
         return NormalDistribution.logPdf(rateIncrement, 0.0, sd);
     }
@@ -200,10 +204,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             incrementsProxy = new Parameter.Proxy("incrementsProxy", increments.length) {
                 @Override
                 public double getParameterValue(int dim) {
-                    if (!likelihoodKnown) { // TODO Check to incrementsKnown
-                        logLikelihood = calculateLogLikelihood();
-                        likelihoodKnown = true;
-                    }
+                    checkIncrements();
                     return increments[dim];
                 }
 

@@ -111,7 +111,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision
 
-        return transform.transform(rates.getNodeValue(tree, node), tree, node);
+        return transform.transform(getUntransformedBranchRate(tree, node), tree, node);
+    }
+
+    public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+        return rates.getNodeValue(tree, node);
     }
 
     public int getParameterIndexFromNode(final NodeRef node) {
@@ -169,6 +173,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
         }
         return transform;
+    }
+
+    public Tree getTree() {
+        return rates.getTreeModel();
     }
 
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {

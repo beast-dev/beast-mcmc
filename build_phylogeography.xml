@@ -26,7 +26,7 @@
 
     <target name="compile" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath">
+        <javac source="1.8" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/phylogeography/tools/**"/>
             <include name="dr/app/beast/**"/>
             <include name="dr/app/tools/**"/>
@@ -66,6 +66,23 @@
             </fileset>
             <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="**/jdom.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-cli-1.4.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/javax.json.jar"/>
+        </jar>
+
+        <jar jarfile="${dist}/beast2auspice.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="dr.app.phylogeography.tools.AuspiceGenerator"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/phylogeography/tools/**/*.class"/>
+                <include name="dr/app/beast/BeastVersion.class"/>
+            </fileset>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jdom.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-cli-1.4.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/javax.json.jar"/>
         </jar>
     </target>
 
@@ -87,6 +104,7 @@
         </copy>
 
         <copy file="${dist}/phylogeography.jar" todir="${package_dir}/lib"/>
+        <copy file="${dist}/beast2auspice.jar" todir="${package_dir}/lib"/>
         <copy file="${common_dir}/README.txt" todir="${package_dir}"/>
 
         <tar destfile="${release_dir}/${name}_v${version}.tgz" compression="gzip">

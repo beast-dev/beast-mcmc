@@ -170,11 +170,11 @@ public class NewickParser extends AbstractXMLObjectParser {
 
                 if (i == 0) {
                     fixedDiff = diff;
-                } else if (Math.abs(diff - fixedDiff) > 1e-5) {
-                    translateNodes = false;
+//                } else if (Math.abs(diff - fixedDiff) > 1e-5) {
+//                    translateNodes = false;
                 }
 
-                if (Math.abs(diff) > 1e-8 && (i == 0 || !translateNodes) ) {
+                if (Math.abs(diff) > 1e-8 && i > 0 && !translateNodes ) {
 
                     System.out.println("  Changing height of node " + tree.getTaxon(node.getNumber()) + " from " + nodeHeight + " to " + height);
                     tree.setNodeHeight(node, height);
@@ -182,22 +182,22 @@ public class NewickParser extends AbstractXMLObjectParser {
             }
 
             if (translateNodes) {
-                System.out.println("  Changing height of all nodes by " + fixedDiff);
+                System.out.println("  Changing height of all nodes in tree " + tree.getId() + " by " + fixedDiff);
+
+                for (int i = 0; i < tree.getNodeCount(); i++) {
+                    NodeRef node = tree.getNode(i);
+
+                    dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(node, dr.evolution.util.Date.DATE);
+
+                    if (date != null) {
+                        double height = Taxon.getHeightFromDate(date);
+                        tree.setNodeHeight(node, height);
+                    } else if (translateNodes) {
+                        tree.setNodeHeight(node, tree.getNodeHeight(node) + fixedDiff);
+                    }
+
+                }// END: i loop
             }
-
-            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                NodeRef node = tree.getInternalNode(i);
-
-                dr.evolution.util.Date date = (dr.evolution.util.Date) tree.getNodeAttribute(node, dr.evolution.util.Date.DATE);
-
-                if (date != null) {
-                    double height = Taxon.getHeightFromDate(date);
-                    tree.setNodeHeight(node, height);
-                } else if (translateNodes) {
-                    tree.setNodeHeight(node, tree.getNodeHeight(node) + fixedDiff);
-                }
-
-            }// END: i loop
 
             MutableTree.Utils.correctHeightsForTips(tree);
 

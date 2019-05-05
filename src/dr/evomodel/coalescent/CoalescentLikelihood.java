@@ -48,19 +48,36 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	// PUBLIC STUFF
 
 	/**
-	 * A constructor that takes an IntervalList
-	 * @param intervalList
-	 * @param demographicModel
-	 * @throws TreeUtils.MissingTaxonException
+	 * A constructor that takes an IntervalList. This is uses the older DemographicModel which
+	 * is no deprecated but left here for backwards compatibility
+	 * @param intervalList the interval list
+	 * @param demographicModel a demographic model
 	 */
 	public CoalescentLikelihood(IntervalList intervalList,
 								DemographicModel demographicModel) {
 
 		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList);
 
+		this.populationSizeModel = null;
 		this.demographicModel = demographicModel;
 
 		addModel(demographicModel);
+	}
+
+	/**
+	 * A constructor that takes an IntervalList
+	 * @param intervalList the interval list
+	 * @param populationSizeModel a population size model
+	 */
+	public CoalescentLikelihood(IntervalList intervalList,
+								PopulationSizeModel populationSizeModel) {
+
+		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList);
+
+		this.populationSizeModel = populationSizeModel;
+		this.demographicModel = null;
+
+		addModel(populationSizeModel);
 	}
 
 	// **************************************************************
@@ -73,10 +90,18 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	 */
 	protected double calculateLogLikelihood() {
 
-		DemographicFunction demoFunction = demographicModel.getDemographicFunction();
+		double lnL;
 
-        double lnL =  calculateLogLikelihood(demoFunction);
+		if (populationSizeModel != null) {
+			PopulationSizeFunction popFunction = populationSizeModel.getPopulationSizeFunction();
 
+			lnL = calculateLogLikelihood(popFunction);
+
+		} else {
+			DemographicFunction demoFunction = demographicModel.getDemographicFunction();
+
+			lnL = calculateLogLikelihood(demoFunction);
+		}
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
 			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() + " is " + Double.toString(lnL));
 		}
@@ -143,6 +168,47 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return logL;
 	}
 
+	protected double calculateLogLikelihood(PopulationSizeFunction populationSizeFunction) {
+
+		double logL = 0.0;
+
+		IntervalList intervals = getIntervalList();
+
+		final int n = intervals.getIntervalCount();
+
+		if (n == 0) {
+			return 0.0;
+		}
+
+		double startTime = intervals.getStartTime();
+
+		for (int i = 0; i < n; i++) {
+
+			final double duration = intervals.getInterval(i);
+			final double finishTime = startTime + duration;
+
+			final double intervalArea = populationSizeFunction.getIntegral(startTime, finishTime);
+			if( intervalArea == 0 && duration != 0 ) {
+				return Double.NEGATIVE_INFINITY;
+			}
+			final int lineageCount = intervals.getLineageCount(i);
+
+
+			final double kChoose2 = Binomial.choose2(lineageCount);
+
+			// common part
+			logL += -kChoose2 * intervalArea;
+
+			if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+				logL -= populationSizeFunction.getLogDemographic(finishTime);
+			}
+
+			startTime = finishTime;
+		}
+
+		return logL;
+	}
 
 	// **************************************************************
 	// Units IMPLEMENTATION
@@ -170,6 +236,9 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	// Private and protected stuff
 	// ****************************************************************
 
+	/** the population size model */
+	private final PopulationSizeModel populationSizeModel;
+
 	/** The demographic model. */
-	private DemographicModel demographicModel = null;
+	private final DemographicModel demographicModel;
 }

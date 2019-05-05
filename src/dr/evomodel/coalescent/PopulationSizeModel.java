@@ -33,25 +33,21 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
- * This interface provides methods that describe a demographic model.
- * <p/>
- * Parts of this class were derived from C++ code provided by Oliver Pybus.
+ * This interface provides a model that returns a PopulationSizeFunction.
  *
  * @author Andrew Rambaut
- * @author Alexei Drummond
- * @author Korbinian Strimmer
- * @version $Id: DemographicModel.java,v 1.28 2005/09/26 14:27:38 rambaut Exp $
  */
-@Deprecated
-public abstract class DemographicModel extends AbstractModel implements Units {
+public abstract class PopulationSizeModel extends AbstractModel implements Units {
 
-    public DemographicModel(String name) {
+    public PopulationSizeModel(String name, boolean inLogSpace, Type units) {
         super(name);
+        this.inLogSpace = inLogSpace;
+        setUnits(units);
     }
 
     // general functions
 
-    public abstract DemographicFunction getDemographicFunction();
+    public abstract PopulationSizeFunction getPopulationSizeFunction();
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -98,4 +94,10 @@ public abstract class DemographicModel extends AbstractModel implements Units {
     public Type getUnits() {
         return units;
     }
+
+    public boolean isInLogSpace() {
+        return inLogSpace;
+    }
+
+    private final boolean inLogSpace;
 }

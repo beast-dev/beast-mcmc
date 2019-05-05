@@ -38,38 +38,44 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  * @author Xiang Ji
  */
 
-public class BayesianBridgeLikelihood extends AbstractModelLikelihood
+public abstract class OldBayesianBridgeLikelihood extends AbstractModelLikelihood
         implements BayesianBridgeStatisticsProvider, GradientWrtParameterProvider {
 
-    public BayesianBridgeLikelihood(Parameter coefficients,
-                             BayesianBridgeDistributionModel distribution) {
+    OldBayesianBridgeLikelihood(Parameter coefficients,
+                                Parameter globalScale,
+                                Parameter exponent) {
 
         super(BAYESIAN_BRIDGE);
 
         this.coefficients = coefficients;
-        this.distribution = distribution;
+        this.globalScale = globalScale;
+        this.exponent = exponent;
+
         this.dim = coefficients.getDimension();
 
-        addModel(distribution);
         addVariable(coefficients);
+        addVariable(globalScale);
+        addVariable(exponent);
     }
 
-    public Parameter getGlobalScale() { return distribution.getGlobalScale(); }
+    abstract double calculateLogLikelihood();
 
-    public Parameter getExponent() { return distribution.getExponent(); }
+    abstract double[] calculateGradientLogDensity();
 
-    public Parameter getLocalScale() {return distribution.getLocalScale(); }
+    public Parameter getGlobalScale() { return globalScale; }
+
+    public Parameter getExponent() { return exponent; }
+
+    public abstract Parameter getLocalScale();
 
     public double getCoefficient(int i) { return coefficients.getParameterValue(i); }
 
     @Override
-    public double getLogLikelihood() {
-        return distribution.logPdf(coefficients.getParameterValues());
-    }
+    public double getLogLikelihood() { return calculateLogLikelihood(); }
 
     @Override
     public double[] getGradientLogDensity() {
-        return distribution.gradientLogPdf(coefficients.getParameterValues());
+        return calculateGradientLogDensity();
     }
 
     @Override
@@ -102,6 +108,7 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
         // no intermediates need to be recalculated...
     }
 
+
     @Override
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
        // no intermediates need to be recalculated...
@@ -122,7 +129,8 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     } // no additional state needs accepting
 
     final Parameter coefficients;
-    final BayesianBridgeDistributionModel distribution;
+    final Parameter globalScale;
+    final Parameter exponent;
 
     final int dim;
 }

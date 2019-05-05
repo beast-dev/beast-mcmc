@@ -3,11 +3,11 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MarginalizedAlphaStableDistribution;
 
-public class MarginalBayesianBridge extends BayesianBridgeLikelihood {
+public class OldMarginalBayesianBridge extends OldBayesianBridgeLikelihood {
 
-    public MarginalBayesianBridge(Parameter coefficients,
-                                  Parameter globalScale,
-                                  Parameter exponent) {
+    public OldMarginalBayesianBridge(Parameter coefficients,
+                                     Parameter globalScale,
+                                     Parameter exponent) {
         super(coefficients, globalScale, exponent);
     }
 

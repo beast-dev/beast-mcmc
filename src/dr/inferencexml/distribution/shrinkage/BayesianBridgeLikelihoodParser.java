@@ -25,9 +25,7 @@
 
 package dr.inferencexml.distribution.shrinkage;
 
-import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
-import dr.inference.distribution.shrinkage.JointBayesianBridge;
-import dr.inference.distribution.shrinkage.MarginalBayesianBridge;
+import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -38,6 +36,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     private static final String GLOBAL_SCALE = "globalScale";
     private static final String LOCAL_SCALE = "localScale";
     private static final String EXPONENT = "exponent";
+    private static final String OLD = "old";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE;
@@ -64,10 +63,22 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        boolean old = xo.getAttribute(OLD, true);
+
         if (localScale != null) {
-            return new JointBayesianBridge(coefficients, globalScale, localScale, exponent);
+            if (old) {
+                return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
+            } else {
+                return new BayesianBridgeLikelihood(coefficients,
+                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent));
+            }
         } else {
-            return new MarginalBayesianBridge(coefficients, globalScale, exponent);
+            if (old) {
+                return new OldMarginalBayesianBridge(coefficients, globalScale, exponent);
+            } else {
+                return new BayesianBridgeLikelihood(coefficients,
+                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent));
+            }
         }
     }
 
@@ -87,6 +98,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+            AttributeRule.newBooleanRule(OLD, true),
     };
 
     public String getParserDescription() {

@@ -6,9 +6,11 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
+import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -156,8 +158,14 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     @Override
     public List<Citation> getCitations() {
-        return null;
+        return Collections.singletonList(CITATION);
     }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+            },
+            Citation.Status.IN_PREPARATION
+    );
 
     private void checkIncrements() {
         if (!incrementsKnown) {

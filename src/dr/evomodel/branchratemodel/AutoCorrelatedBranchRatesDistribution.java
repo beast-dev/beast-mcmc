@@ -121,6 +121,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     }
 
+    public double getIncrement(int index) {
+        checkIncrements();
+        return increments[index];
+    }
+
     @Override
     public Model getModel() {
         return this;

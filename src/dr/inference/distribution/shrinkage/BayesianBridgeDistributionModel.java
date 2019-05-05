@@ -117,7 +117,7 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
 
     @Override
     public String getType() {
-        return null;
+        return TYPE;
     }
 
     final Parameter globalScale;

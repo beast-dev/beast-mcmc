@@ -1,7 +1,7 @@
 /*
  * MultivariateNormalDistributionModelParser.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,21 +30,18 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
 
-    public static final String BAYESIAN_BRIDGE = "bayesianBridge";
-    static final String GLOBAL_SCALE = "globalScale";
-    static final String LOCAL_SCALE = "localScale";
-    static final String EXPONENT = "exponent";
-    private static final String OLD = "old";
+public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectParser {
+
+
+    public static final String BAYESIAN_BRIDGE_DISTRIBUTION = "bayesianBridgeDistribution";
 
     public String getParserName() {
-        return BAYESIAN_BRIDGE;
+        return BAYESIAN_BRIDGE_DISTRIBUTION;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        Parameter coefficients = (Parameter) xo.getChild(Parameter.class);
 
         XMLObject globalXo = xo.getChild(GLOBAL_SCALE);
         Parameter globalScale = (Parameter) globalXo.getChild(Parameter.class);
@@ -53,32 +50,15 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(LOCAL_SCALE)) {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
-
-            if (localScale.getDimension() != coefficients.getDimension()) {
-                throw new XMLParseException("Local scale dimension (" + localScale.getDimension()
-                        + ") != coefficient dimension (" + coefficients.getDimension() + ")");
-            }
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
-        boolean old = xo.getAttribute(OLD, true);
-
         if (localScale != null) {
-            if (old) {
-                return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
-            } else {
-                return new BayesianBridgeLikelihood(coefficients,
-                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent));
-            }
+            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent);
         } else {
-            if (old) {
-                return new OldMarginalBayesianBridge(coefficients, globalScale, exponent);
-            } else {
-                return new BayesianBridgeLikelihood(coefficients,
-                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent));
-            }
+            return new MarginalBayesianBridgeDistributionModel(globalScale, exponent);
         }
     }
 
@@ -91,14 +71,12 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(Parameter.class),
             new ElementRule(GLOBAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(EXPONENT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
-            AttributeRule.newBooleanRule(OLD, true),
     };
 
     public String getParserDescription() {
@@ -107,6 +85,6 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return BayesianBridgeLikelihood.class;
+        return BayesianBridgeDistributionModel.class;
     }
 }

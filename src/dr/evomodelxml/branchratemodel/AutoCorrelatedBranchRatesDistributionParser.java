@@ -27,7 +27,7 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
-import dr.inference.model.Parameter;
+import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.xml.*;
 
 /**
@@ -44,11 +44,14 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
-        Parameter precision = (Parameter) xo.getChild(Parameter.class);
+
+        ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
+                           xo.getChild(ParametricMultivariateDistributionModel.class);
+
         AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling = parseScaling(xo);
                 parseScaling(xo);
 
-        return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, precision, scaling);
+        return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution, scaling);
     }
 
     //************************************************************************
@@ -86,7 +89,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(ArbitraryBranchRates.class),
-            new ElementRule(Parameter.class),
+            new ElementRule(ParametricMultivariateDistributionModel.class),
             AttributeRule.newStringRule(SCALING, true),
     };
 }

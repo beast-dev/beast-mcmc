@@ -3,9 +3,9 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
-import dr.math.distributions.NormalDistribution;
 import dr.util.Citable;
 import dr.util.Citation;
 
@@ -20,7 +20,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         implements GradientWrtParameterProvider, Citable {
 
     private final ArbitraryBranchRates branchRateModel;
-    private final Parameter precisionParameter;
+    private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
 
     private final Tree tree;
@@ -39,22 +39,20 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] increments;
     private double[] savedIncrements;
 
-    private Parameter incrementsProxy;
-
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  ArbitraryBranchRates branchRateModel,
-                                                 Parameter precision,
+                                                 ParametricMultivariateDistributionModel distribution,
                                                  BranchVarianceScaling scaling) {
         super(name);
         this.branchRateModel = branchRateModel;
-        this.precisionParameter = precision;
+        this.distribution = distribution;
         this.scaling = scaling;
 
         this.tree = branchRateModel.getTree();
         this.rateParameter = branchRateModel.getRateParameter();
 
         addModel(branchRateModel);
-        addVariable(precision);
+        addModel(distribution);
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
@@ -168,13 +166,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private double calculateLogLikelihood() {
         checkIncrements();
-
-        double logLike = 0;
-        for (int i = 0; i < dim; ++i) {
-            logLike += getLogLikelihoodOfBranch(increments[i]);
-        }
-
-        return logLike;
+        return distribution.logPdf(increments);
     }
 
     private void recursePreOrder(NodeRef node, double untransformedParentRate) {
@@ -195,44 +187,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             recursePreOrder(tree.getChild(node, 1), untransformedParentRate);
         }
     }
-
-    private double getLogLikelihoodOfBranch(double rateIncrement) {
-        // TODO Delegate to a DistributionLikelihood using proxy
-        final double sd = 1.0 / Math.sqrt(precisionParameter.getParameterValue(0));
-        return NormalDistribution.logPdf(rateIncrement, 0.0, sd);
-    }
-
-    Parameter getIncrementsAsParameter() {
-
-        if (incrementsProxy == null) {
-
-            incrementsProxy = new Parameter.Proxy("incrementsProxy", increments.length) {
-                @Override
-                public double getParameterValue(int dim) {
-                    checkIncrements();
-                    return increments[dim];
-                }
-
-                @Override
-                public void setParameterValue(int dim, double value) {
-                    throw new RuntimeException("Cannot set increments directly");
-                }
-
-                @Override
-                public void setParameterValueQuietly(int dim, double value) {
-                    throw new RuntimeException("Cannot set increments directly");
-                }
-
-                @Override
-                public void setParameterValueNotifyChangedAll(int dim, double value) {
-                    throw new RuntimeException("Cannot set increments directly");
-                }
-            };
-        }
-
-        return incrementsProxy;
-    }
-
+    
     public enum BranchVarianceScaling {
 
         NONE("none") {

@@ -10,7 +10,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodels.ConstantPopulationModel;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.speciation.BirthDeathGernhard08Model;

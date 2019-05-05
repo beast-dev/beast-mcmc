@@ -23,10 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.EmergingEpidemicModelParser;
 import dr.inference.model.Parameter;

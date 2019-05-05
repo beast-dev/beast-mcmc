@@ -1,5 +1,5 @@
 /*
- * ConstantExponentialModel.java
+ * LogisticGrowthModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
-import dr.evolution.coalescent.ConstExponential;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evomodelxml.coalescent.ConstantExponentialModelParser;
+import dr.evolution.coalescent.LogisticGrowth;
+import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodelxml.coalescent.LogisticGrowthModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -37,48 +38,50 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Exponential growth from a constant ancestral population size.
+ * Logistic growth.
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ConstantExponentialModel.java,v 1.8 2005/10/28 02:49:17 alexei Exp $
+ * @version $Id: LogisticGrowthModel.java,v 1.21 2005/05/24 20:25:57 rambaut Exp $
  */
-public class ConstantExponentialModel extends DemographicModel implements Citable {
+public class LogisticGrowthModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
     //
+
     /**
      * Construct demographic model with default settings
      */
-    public ConstantExponentialModel(Parameter N0Parameter, Parameter timeParameter,
-                                    Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
+    public LogisticGrowthModel(Parameter N0Parameter, Parameter growthRateParameter,
+                               Parameter shapeParameter, double alpha, Type units,
+                               boolean usingGrowthRate) {
 
-        this(ConstantExponentialModelParser.CONSTANT_EXPONENTIAL_MODEL, N0Parameter, timeParameter, growthRateParameter, units, usingGrowthRate);
+        this(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, N0Parameter, growthRateParameter, shapeParameter, alpha, units, usingGrowthRate);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public ConstantExponentialModel(String name, Parameter N0Parameter, Parameter timeParameter,
-                                    Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
+    public LogisticGrowthModel(String name, Parameter N0Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units, boolean usingGrowthRate) {
 
         super(name);
 
-        constExponential = new ConstExponential(units);
+        logisticGrowth = new LogisticGrowth(units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.timeParameter = timeParameter;
-        addVariable(timeParameter);
-        timeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
+        this.shapeParameter = shapeParameter;
+        addVariable(shapeParameter);
+        shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.alpha = alpha;
         this.usingGrowthRate = usingGrowthRate;
 
         setUnits(units);
@@ -89,20 +92,19 @@ public class ConstantExponentialModel extends DemographicModel implements Citabl
 
     public DemographicFunction getDemographicFunction() {
 
-        double time = timeParameter.getParameterValue(0);
-        double N0 = N0Parameter.getParameterValue(0);
-        double growthRate = growthRateParameter.getParameterValue(0);
+        logisticGrowth.setN0(N0Parameter.getParameterValue(0));
 
-        if (!usingGrowthRate) {
-            double doublingTime = growthRate;
-            growthRate = Math.log(2) / doublingTime;
+        if (usingGrowthRate) {
+            double r = growthRateParameter.getParameterValue(0);
+            logisticGrowth.setGrowthRate(r);
+        } else {
+            double doublingTime = growthRateParameter.getParameterValue(0);
+            logisticGrowth.setDoublingTime(doublingTime);
         }
 
-        constExponential.setGrowthRate(growthRate);
-        constExponential.setN0(N0);
-        constExponential.setN1(N0 * Math.exp(-time * growthRate));
+        logisticGrowth.setTime50(shapeParameter.getParameterValue(0));
 
-        return constExponential;
+        return logisticGrowth;
     }
 
     //
@@ -110,9 +112,10 @@ public class ConstantExponentialModel extends DemographicModel implements Citabl
     //
 
     Parameter N0Parameter = null;
-    Parameter timeParameter = null;
     Parameter growthRateParameter = null;
-    ConstExponential constExponential = null;
+    Parameter shapeParameter = null;
+    double alpha = 0.5;
+    LogisticGrowth logisticGrowth = null;
     boolean usingGrowthRate = true;
 
     @Override
@@ -122,7 +125,7 @@ public class ConstantExponentialModel extends DemographicModel implements Citabl
 
     @Override
     public String getDescription() {
-        return "Constant-Exponential Coalescent";
+        return "Logistic Growth Coalescent";
     }
 
     @Override

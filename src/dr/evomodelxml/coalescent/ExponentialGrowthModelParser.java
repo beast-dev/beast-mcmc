@@ -26,7 +26,7 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ExponentialGrowthModel;
+import dr.evomodel.coalescent.demographicmodels.ExponentialGrowthModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;

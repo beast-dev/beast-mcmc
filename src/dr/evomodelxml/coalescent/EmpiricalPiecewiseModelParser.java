@@ -26,7 +26,7 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.EmpiricalPiecewiseModel;
+import dr.evomodel.coalescent.demographicmodels.EmpiricalPiecewiseModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;

@@ -1,7 +1,7 @@
 package test.dr.inference.prior;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodels.ConstantPopulationModel;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;

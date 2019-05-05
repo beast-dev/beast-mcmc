@@ -12,7 +12,7 @@ import dr.evolution.tree.SimpleTree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodels.ConstantPopulationModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Parameter;

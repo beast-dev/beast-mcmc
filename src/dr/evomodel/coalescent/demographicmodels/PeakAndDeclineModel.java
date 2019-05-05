@@ -1,5 +1,5 @@
 /*
- * AsymptoticGrowthModel.java
+ * PeakAndDeclineModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,18 +23,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.FlexibleGrowth;
-import dr.evomodelxml.coalescent.AsymptoticGrowthModelParser;
+import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodelxml.coalescent.PeakAndDeclineModelParser;
 import dr.inference.model.Parameter;
 
 /**
  * Growth starts at zero at time zero, peaks and declines
  *
  */
-public class AsymptoticGrowthModel extends DemographicModel {
+public class PeakAndDeclineModel extends DemographicModel {
 
     //
     // Public stuff
@@ -43,29 +44,34 @@ public class AsymptoticGrowthModel extends DemographicModel {
     /**
      * Construct demographic model with default settings
      */
-    public AsymptoticGrowthModel(Parameter asymptoteValueParameter, Parameter shapeParameter, Type units) {
+    public PeakAndDeclineModel(Parameter peakValueParameter, Parameter shapeParameter, Parameter peakTimeParameter,
+                               Type units) {
 
-        this(AsymptoticGrowthModelParser.ASYMPTOTIC_GROWTH_MODEL, asymptoteValueParameter, shapeParameter, units);
+        this(PeakAndDeclineModelParser.PEAK_AND_DECLINE_MODEL, peakValueParameter, shapeParameter, peakTimeParameter,
+                units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public AsymptoticGrowthModel(String name, Parameter asymptoteValueParameter, Parameter shapeParameter,
-                                 Type units) {
+    public PeakAndDeclineModel(String name, Parameter peakValueParameter, Parameter shapeParameter,
+                               Parameter peakTimeParameter, Type units) {
 
         super(name);
 
         flexibleGrowth = new FlexibleGrowth(units);
 
-        this.asyptoteValue = asymptoteValueParameter;
-        addVariable(asymptoteValueParameter);
-        asymptoteValueParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.peakValueParameter = peakValueParameter;
+        addVariable(peakValueParameter);
+        peakValueParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
+        this.peakTimeParameter = peakTimeParameter;
+        addVariable(peakTimeParameter);
+        peakTimeParameter.addBounds(new Parameter.DefaultBounds(0, Double.NEGATIVE_INFINITY, 1));
 
         this.shapeParameter = shapeParameter;
         addVariable(shapeParameter);
-        shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
+        shapeParameter.addBounds(new Parameter.DefaultBounds(0, Double.NEGATIVE_INFINITY, 1));
 
 
         setUnits(units);
@@ -76,17 +82,17 @@ public class AsymptoticGrowthModel extends DemographicModel {
 
     public DemographicFunction getDemographicFunction() {
 
-        double asymptoteValue = asyptoteValue.getParameterValue(0);
+        double peakTimeValue = peakTimeParameter.getParameterValue(0);
+        double peakValueValue = peakValueParameter.getParameterValue(0);
         double shapeValue = shapeParameter.getParameterValue(0);
 
-
-
-        double flexibleN0 = asymptoteValue/shapeValue;
+        double flexibleN0 = peakValueValue*(1-shapeValue)/(shapeValue*peakTimeValue);
+        double flexibleK = (-shapeValue/Math.pow(-peakTimeValue, shapeValue-1));
 
 
         flexibleGrowth.setN0(flexibleN0);
-        flexibleGrowth.setK(shapeValue);
-        flexibleGrowth.setR(0);
+        flexibleGrowth.setK(flexibleK);
+        flexibleGrowth.setR(shapeValue);
 
 
 
@@ -97,8 +103,9 @@ public class AsymptoticGrowthModel extends DemographicModel {
     // protected stuff
     //
 
-    Parameter asyptoteValue = null;
+    Parameter peakValueParameter = null;
     Parameter shapeParameter = null;
+    Parameter peakTimeParameter = null;
     FlexibleGrowth flexibleGrowth = null;
 
 }

@@ -1,5 +1,5 @@
 /*
- * ConstantLogisticModel.java
+ * ExponentialConstantModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
-import dr.evolution.coalescent.ConstLogistic;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evomodelxml.coalescent.ConstantLogisticModelParser;
+import dr.evolution.coalescent.ExpConstant;
+import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodelxml.coalescent.ExponentialConstantModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -37,13 +38,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Logistic growth from a constant ancestral population size.
+ * Exponential growth followed by constant size.
  *
- * @author Alexei Drummond
- * @author Andrew Rambaut
- * @version $Id: ConstantLogisticModel.java,v 1.7 2005/04/11 11:24:39 alexei Exp $
+ * @author Matthew Hall
  */
-public class ConstantLogisticModel extends DemographicModel implements Citable {
+public class ExponentialConstantModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -52,37 +51,42 @@ public class ConstantLogisticModel extends DemographicModel implements Citable {
     /**
      * Construct demographic model with default settings
      */
-    public ConstantLogisticModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
+    public ExponentialConstantModel(Parameter N0Parameter,
+                                    Parameter growthRateParameter,
+                                    Parameter transitionTimeParameter,
+                                    Type units) {
 
-        this(ConstantLogisticModelParser.CONSTANT_LOGISTIC_MODEL, N0Parameter, N1Parameter, growthRateParameter, shapeParameter, alpha, units);
+        this(ExponentialConstantModelParser.EXPONENTIAL_CONSTANT_MODEL,
+                N0Parameter,
+                growthRateParameter,
+                transitionTimeParameter,
+                units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    private ConstantLogisticModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
+    public ExponentialConstantModel(String name, Parameter N0Parameter,
+                                    Parameter growthRateParameter,
+                                    Parameter transitionTimeParameter,
+                                    Type units) {
 
         super(name);
 
-        constLogistic = new ConstLogistic(units);
+        exponentialConstant = new ExpConstant(units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.N1Parameter = N1Parameter;
-        addVariable(N1Parameter);
-        N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.shapeParameter = shapeParameter;
-        addVariable(shapeParameter);
-        shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
-        this.alpha = alpha;
+        this.transitionTimeParameter = transitionTimeParameter;
+        addVariable(transitionTimeParameter);
+        transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
+                Double.NEGATIVE_INFINITY, 1));
 
         setUnits(units);
     }
@@ -91,33 +95,23 @@ public class ConstantLogisticModel extends DemographicModel implements Citable {
     // general functions
 
     public DemographicFunction getDemographicFunction() {
-        constLogistic.setN0(N0Parameter.getParameterValue(0));
-        constLogistic.setN1(N1Parameter.getParameterValue(0));
+        exponentialConstant.setN0(N0Parameter.getParameterValue(0));
 
-        double r = growthRateParameter.getParameterValue(0);
-        constLogistic.setGrowthRate(r);
+        exponentialConstant.setGrowthRate(growthRateParameter.getParameterValue(0));
 
-        // AER 24/02/03
-        // logisticGrowth.setShape(Math.exp(shapeParameter.getParameterValue(0)));
+        exponentialConstant.setTransitionTime(transitionTimeParameter.getParameterValue(0));
 
-        // New parameterization of logistic shape to be the time at which the
-        // population reached some proportion alpha:
-        double C = ((1.0 - alpha) * Math.exp(-r * shapeParameter.getParameterValue(0))) / alpha;
-        constLogistic.setShape(C);
-
-        return constLogistic;
+        return exponentialConstant;
     }
 
     //
     // protected stuff
     //
 
-    private Parameter N0Parameter = null;
-    private Parameter N1Parameter = null;
-    private Parameter growthRateParameter = null;
-    private Parameter shapeParameter = null;
-    private double alpha = 0.5;
-    private ConstLogistic constLogistic = null;
+    Parameter N0Parameter = null;
+    Parameter growthRateParameter = null;
+    Parameter transitionTimeParameter = null;
+    ExpConstant exponentialConstant = null;
 
     @Override
     public Citation.Category getCategory() {
@@ -126,7 +120,7 @@ public class ConstantLogisticModel extends DemographicModel implements Citable {
 
     @Override
     public String getDescription() {
-        return "Constant-Logistic Coalescent";
+        return "Exponential-Constant Coalescent";
     }
 
     @Override

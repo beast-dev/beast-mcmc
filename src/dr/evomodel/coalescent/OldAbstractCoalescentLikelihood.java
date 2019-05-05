@@ -55,6 +55,7 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
+@Deprecated
 public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood implements  Units {
 
     // PUBLIC STUFF

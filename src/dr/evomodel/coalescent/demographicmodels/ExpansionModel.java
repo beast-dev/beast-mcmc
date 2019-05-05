@@ -1,5 +1,5 @@
 /*
- * ExponentialConstantModel.java
+ * ExpansionModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExpConstant;
-import dr.evomodelxml.coalescent.ExponentialConstantModelParser;
+import dr.evolution.coalescent.Expansion;
+import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodelxml.coalescent.ExpansionModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -37,11 +38,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Exponential growth followed by constant size.
+ * Exponential growth from a constant ancestral population size.
  *
- * @author Matthew Hall
+ * @author Alexei Drummond
+ * @author Andrew Rambaut
+ * @version $Id: ExpansionModel.java,v 1.5 2005/05/24 20:25:57 rambaut Exp $
  */
-public class ExponentialConstantModel extends DemographicModel implements Citable {
+public class ExpansionModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -50,42 +53,35 @@ public class ExponentialConstantModel extends DemographicModel implements Citabl
     /**
      * Construct demographic model with default settings
      */
-    public ExponentialConstantModel(Parameter N0Parameter,
-                                    Parameter growthRateParameter,
-                                    Parameter transitionTimeParameter,
-                                    Type units) {
+    public ExpansionModel(Parameter N0Parameter, Parameter N1Parameter,
+                          Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 
-        this(ExponentialConstantModelParser.EXPONENTIAL_CONSTANT_MODEL,
-                N0Parameter,
-                growthRateParameter,
-                transitionTimeParameter,
-                units);
+        this(ExpansionModelParser.EXPANSION_MODEL, N0Parameter, N1Parameter, growthRateParameter, units, usingGrowthRate);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public ExponentialConstantModel(String name, Parameter N0Parameter,
-                                    Parameter growthRateParameter,
-                                    Parameter transitionTimeParameter,
-                                    Type units) {
+    public ExpansionModel(String name, Parameter N0Parameter, Parameter N1Parameter,
+                          Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 
         super(name);
 
-        exponentialConstant = new ExpConstant(units);
+        expansion = new Expansion(units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
+        this.N1Parameter = N1Parameter;
+        addVariable(N1Parameter);
+        N1Parameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.transitionTimeParameter = transitionTimeParameter;
-        addVariable(transitionTimeParameter);
-        transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
-                Double.NEGATIVE_INFINITY, 1));
+        this.usingGrowthRate = usingGrowthRate;
 
         setUnits(units);
     }
@@ -94,13 +90,23 @@ public class ExponentialConstantModel extends DemographicModel implements Citabl
     // general functions
 
     public DemographicFunction getDemographicFunction() {
-        exponentialConstant.setN0(N0Parameter.getParameterValue(0));
 
-        exponentialConstant.setGrowthRate(growthRateParameter.getParameterValue(0));
+        double N0 = N0Parameter.getParameterValue(0);
+        double N1 = N1Parameter.getParameterValue(0);
+        double growthRate = growthRateParameter.getParameterValue(0);
 
-        exponentialConstant.setTransitionTime(transitionTimeParameter.getParameterValue(0));
+        if (usingGrowthRate) {
+            expansion.setGrowthRate(growthRate);
+        } else {
+            double doublingTime = growthRate;
+            growthRate = Math.log(2) / doublingTime;
+            expansion.setDoublingTime(doublingTime);
+        }
 
-        return exponentialConstant;
+        expansion.setN0(N0);
+        expansion.setProportion(N1);
+
+        return expansion;
     }
 
     //
@@ -108,9 +114,10 @@ public class ExponentialConstantModel extends DemographicModel implements Citabl
     //
 
     Parameter N0Parameter = null;
+    Parameter N1Parameter = null;
     Parameter growthRateParameter = null;
-    Parameter transitionTimeParameter = null;
-    ExpConstant exponentialConstant = null;
+    Expansion expansion = null;
+    boolean usingGrowthRate = true;
 
     @Override
     public Citation.Category getCategory() {
@@ -119,7 +126,7 @@ public class ExponentialConstantModel extends DemographicModel implements Citabl
 
     @Override
     public String getDescription() {
-        return "Exponential-Constant Coalescent";
+        return "Expansion Coalescent";
     }
 
     @Override

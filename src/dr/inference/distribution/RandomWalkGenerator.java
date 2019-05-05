@@ -5,7 +5,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodel.coalescent.PiecewisePopulationModel;
+import dr.evomodel.coalescent.demographicmodels.PiecewisePopulationModel;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.RandomWalkGeneratorParser;
@@ -13,11 +13,6 @@ import dr.math.MathUtils;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Transform;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by mkarcher on 4/3/17.

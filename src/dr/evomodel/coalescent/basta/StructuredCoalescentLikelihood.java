@@ -31,12 +31,14 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -52,7 +54,7 @@ import java.util.*;
  * "New routes to phylogeography: a Bayesian structured coalescent approximation".
  * PLOS Genetics 11, e1005421; doi: 10.1371/journal.pgen.1005421
  */
-public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood implements Citable {
+public class StructuredCoalescentLikelihood extends AbstractModelLikelihood implements Units, Citable {
 
     private static final boolean DEBUG = false;
     private static final boolean MATRIX_DEBUG = false;
@@ -65,7 +67,7 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                                           GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
                                           TaxonList includeSubtree, List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
-        super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, tree, includeSubtree, excludeSubtrees);
+        super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT);
 
         this.treeModel = (TreeModel)tree;
         this.patternList = patternList;
@@ -116,6 +118,19 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
+    public final Model getModel() {
+        return this;
+    }
+
+    public double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+
+        return logLikelihood;
+    }
+
     /**
      * Calculates the log likelihood of this set of coalescent intervals,
      * given a demographic model.
@@ -135,14 +150,6 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         }
 
         logLikelihood = traverseTree(treeModel, treeModel.getRoot(), patternList);
-        return logLikelihood;
-    }
-
-    public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
         return logLikelihood;
     }
 
@@ -719,6 +726,11 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         logLikelihood = storedLogLikelihood;
     }
 
+    @Override
+    protected void acceptState() {
+        // do nothing
+    }
+
     public void makeDirty() {
         likelihoodKnown = false;
         matricesKnown = false;
@@ -932,6 +944,11 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************
+
+    protected double logLikelihood;
+    protected double storedLogLikelihood;
+    protected boolean likelihoodKnown = false;
+    protected boolean storedLikelihoodKnown = false;
 
     //the tree model
     private TreeModel treeModel;

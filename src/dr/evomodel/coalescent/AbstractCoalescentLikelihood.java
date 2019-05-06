@@ -65,11 +65,9 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // **************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == intervalList) {
-            likelihoodKnown = false;
-        } else {
-            throw new IllegalArgumentException("Responding to event from unknown model object");
-        }
+        // something the likelihood is listening to has changed so flag the likelihood to update
+
+        likelihoodKnown = false;
     }
 
     // **************************************************************

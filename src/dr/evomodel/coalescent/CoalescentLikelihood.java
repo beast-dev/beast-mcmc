@@ -31,6 +31,7 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
+import dr.inference.model.Model;
 import dr.math.Binomial;
 
 import java.util.logging.Logger;

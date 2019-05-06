@@ -114,7 +114,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return transform.transform(getUntransformedBranchRate(tree, node), tree, node);
     }
 
-    public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+    private double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
         return rates.getNodeValue(tree, node);
     }
 

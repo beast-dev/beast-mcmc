@@ -24,6 +24,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private final ArbitraryBranchRates branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
+    private final boolean log;
 
     private final Tree tree;
     private final Parameter rateParameter;
@@ -44,11 +45,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  ArbitraryBranchRates branchRateModel,
                                                  ParametricMultivariateDistributionModel distribution,
-                                                 BranchVarianceScaling scaling) {
+                                                 BranchVarianceScaling scaling,
+                                                 boolean log) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.distribution = distribution;
         this.scaling = scaling;
+        this.log = log;
 
         this.tree = branchRateModel.getTree();
         this.rateParameter = branchRateModel.getRateParameter();
@@ -63,6 +66,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         this.dim = branchRateModel.getRateParameter().getDimension();
         this.increments = new double[dim];
         this.savedIncrements = new double[dim];
+
+        if (dim != distribution.getMean().length) {
+            throw new RuntimeException("Dimension mismatch in AutoCorrelatedRatesDistribution. " +
+                    dim + " != " + distribution.getMean().length);
+        }
     }
 
     @Override
@@ -180,7 +188,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private void recursePreOrder(NodeRef node, double untransformedParentRate) {
 
         if (!tree.isRoot(node)) {
-            final double untransformedRate = branchRateModel.getUntransformedBranchRate(tree, node);
+            final double untransformedRate = transform(branchRateModel.getUntransformedBranchRate(tree, node));
             final double branchLength = tree.getBranchLength(node);
             final double rateIncrement = scaling.rescaleIncrement(
                     untransformedRate - untransformedParentRate, branchLength);
@@ -194,6 +202,10 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             recursePreOrder(tree.getChild(node, 0), untransformedParentRate);
             recursePreOrder(tree.getChild(node, 1), untransformedParentRate);
         }
+    }
+
+    private double transform(double x) {
+        return log ? Math.log(x) : x;
     }
     
     public enum BranchVarianceScaling {

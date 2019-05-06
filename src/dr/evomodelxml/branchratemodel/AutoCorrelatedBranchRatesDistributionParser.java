@@ -36,6 +36,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
     private static final String AUTO_CORRELATED_RATES = "autoCorrelatedRatesPrior";
     private static final String SCALING = "scaling";
+    private static final String LOG = "log";
 
     public String getParserName() {
         return AUTO_CORRELATED_RATES;
@@ -51,7 +52,10 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
         AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling = parseScaling(xo);
                 parseScaling(xo);
 
-        return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution, scaling);
+        boolean log = xo.getAttribute(LOG, false);
+
+        return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
+                scaling, log);
     }
 
     //************************************************************************
@@ -91,5 +95,6 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
             new ElementRule(ArbitraryBranchRates.class),
             new ElementRule(ParametricMultivariateDistributionModel.class),
             AttributeRule.newStringRule(SCALING, true),
+            AttributeRule.newBooleanRule(LOG, true),
     };
 }

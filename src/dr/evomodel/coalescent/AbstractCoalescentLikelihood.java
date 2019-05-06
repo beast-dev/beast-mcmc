@@ -25,16 +25,9 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.IntervalType;
-import dr.evolution.coalescent.Intervals;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
 import dr.inference.model.*;
-import dr.math.Binomial;
 
 
 /**
@@ -108,7 +101,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         return this;
     }
 
-    public double getLogLikelihood() {
+    public final double getLogLikelihood() {
         if (!likelihoodKnown) {
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
@@ -128,7 +121,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected abstract double calculateLogLikelihood();
 
 
-    public IntervalList getIntervalList() {
+    protected final IntervalList getIntervalList() {
             return intervalList;
     }
 

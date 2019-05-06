@@ -1,5 +1,5 @@
 /*
- * LogisticGrowthModel.java
+ * ConstantLogisticModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
+import dr.evolution.coalescent.ConstLogistic;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.LogisticGrowth;
-import dr.evomodelxml.coalescent.LogisticGrowthModelParser;
+import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodelxml.coalescent.ConstantLogisticModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -37,13 +38,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Logistic growth.
+ * Logistic growth from a constant ancestral population size.
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: LogisticGrowthModel.java,v 1.21 2005/05/24 20:25:57 rambaut Exp $
+ * @version $Id: ConstantLogisticModel.java,v 1.7 2005/04/11 11:24:39 alexei Exp $
  */
-public class LogisticGrowthModel extends DemographicModel implements Citable {
+public class ConstantLogisticModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -52,25 +53,27 @@ public class LogisticGrowthModel extends DemographicModel implements Citable {
     /**
      * Construct demographic model with default settings
      */
-    public LogisticGrowthModel(Parameter N0Parameter, Parameter growthRateParameter,
-                               Parameter shapeParameter, double alpha, Type units,
-                               boolean usingGrowthRate) {
+    public ConstantLogisticModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
 
-        this(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, N0Parameter, growthRateParameter, shapeParameter, alpha, units, usingGrowthRate);
+        this(ConstantLogisticModelParser.CONSTANT_LOGISTIC_MODEL, N0Parameter, N1Parameter, growthRateParameter, shapeParameter, alpha, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public LogisticGrowthModel(String name, Parameter N0Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units, boolean usingGrowthRate) {
+    private ConstantLogisticModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter shapeParameter, double alpha, Type units) {
 
         super(name);
 
-        logisticGrowth = new LogisticGrowth(units);
+        constLogistic = new ConstLogistic(units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.N1Parameter = N1Parameter;
+        addVariable(N1Parameter);
+        N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
@@ -81,7 +84,6 @@ public class LogisticGrowthModel extends DemographicModel implements Citable {
         shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.alpha = alpha;
-        this.usingGrowthRate = usingGrowthRate;
 
         setUnits(units);
     }
@@ -90,32 +92,33 @@ public class LogisticGrowthModel extends DemographicModel implements Citable {
     // general functions
 
     public DemographicFunction getDemographicFunction() {
+        constLogistic.setN0(N0Parameter.getParameterValue(0));
+        constLogistic.setN1(N1Parameter.getParameterValue(0));
 
-        logisticGrowth.setN0(N0Parameter.getParameterValue(0));
+        double r = growthRateParameter.getParameterValue(0);
+        constLogistic.setGrowthRate(r);
 
-        if (usingGrowthRate) {
-            double r = growthRateParameter.getParameterValue(0);
-            logisticGrowth.setGrowthRate(r);
-        } else {
-            double doublingTime = growthRateParameter.getParameterValue(0);
-            logisticGrowth.setDoublingTime(doublingTime);
-        }
+        // AER 24/02/03
+        // logisticGrowth.setShape(Math.exp(shapeParameter.getParameterValue(0)));
 
-        logisticGrowth.setTime50(shapeParameter.getParameterValue(0));
+        // New parameterization of logistic shape to be the time at which the
+        // population reached some proportion alpha:
+        double C = ((1.0 - alpha) * Math.exp(-r * shapeParameter.getParameterValue(0))) / alpha;
+        constLogistic.setShape(C);
 
-        return logisticGrowth;
+        return constLogistic;
     }
 
     //
     // protected stuff
     //
 
-    Parameter N0Parameter = null;
-    Parameter growthRateParameter = null;
-    Parameter shapeParameter = null;
-    double alpha = 0.5;
-    LogisticGrowth logisticGrowth = null;
-    boolean usingGrowthRate = true;
+    private Parameter N0Parameter = null;
+    private Parameter N1Parameter = null;
+    private Parameter growthRateParameter = null;
+    private Parameter shapeParameter = null;
+    private double alpha = 0.5;
+    private ConstLogistic constLogistic = null;
 
     @Override
     public Citation.Category getCategory() {
@@ -124,7 +127,7 @@ public class LogisticGrowthModel extends DemographicModel implements Citable {
 
     @Override
     public String getDescription() {
-        return "Logistic Growth Coalescent";
+        return "Constant-Logistic Coalescent";
     }
 
     @Override

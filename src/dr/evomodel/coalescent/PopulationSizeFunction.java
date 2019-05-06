@@ -1,5 +1,5 @@
 /*
- * BayesianSkylinePopSizeStatistic.java
+ * PopulationSizeFunction.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,36 +25,31 @@
 
 package dr.evomodel.coalescent;
 
-import dr.inference.model.Statistic;
+import dr.evolution.util.Units;
+import dr.math.Binomial;
+import dr.math.MathUtils;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
+import org.apache.commons.math.analysis.UnivariateRealFunction;
+import org.apache.commons.math.analysis.integration.RombergIntegrator;
 
-@Deprecated
-public class BayesianSkylinePopSizeStatistic extends Statistic.Abstract{
+/**
+ * This interface provides a function of population size over time
+ * @author Andrew Rambaut
+ */
+public interface PopulationSizeFunction extends Units {
 
-	public double time;
-	public BayesianSkylineLikelihood bsl;
+	/**
+	 * @param t time
+	 * @return value of the function log N(t) at time t
+	 */
+	double getLogDemographic(double t);
 
-	public BayesianSkylinePopSizeStatistic(double time, 
-			BayesianSkylineLikelihood bsl){
-		this.time = time;
-		this.bsl = bsl;
-	}
-	
-	public int getDimension() {
-		return 1;
-	}
-
-	public double getStatisticValue(int dim) {
-		double[] heights = bsl.getGroupHeights();
-		double[] sizes = bsl.getPopSizeParameter().getParameterValues();
-		
-		
-		for(int i = 0; i < heights.length; i++){
-			if(this.time < heights[i]){
-				return sizes[i];
-			}
-		}
-		
-		return Double.NaN;
-	}
-
+	/**
+	 * Calculates the integral 1/N(x) dx between start and finish.
+     * @param start  point
+     * @param finish point
+     * @return integral value
+     */
+	double getIntegral(double start, double finish);
 }

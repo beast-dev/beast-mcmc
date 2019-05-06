@@ -1,5 +1,5 @@
 /*
- * ExpansionModel.java
+ * ConstantExponentialModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent;
+package dr.evomodel.coalescent.demographicmodels;
 
+import dr.evolution.coalescent.ConstExponential;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.Expansion;
-import dr.evomodelxml.coalescent.ExpansionModelParser;
+import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodelxml.coalescent.ConstantExponentialModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -41,40 +42,39 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ExpansionModel.java,v 1.5 2005/05/24 20:25:57 rambaut Exp $
+ * @version $Id: ConstantExponentialModel.java,v 1.8 2005/10/28 02:49:17 alexei Exp $
  */
-public class ExpansionModel extends DemographicModel implements Citable {
+public class ConstantExponentialModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
     //
-
     /**
      * Construct demographic model with default settings
      */
-    public ExpansionModel(Parameter N0Parameter, Parameter N1Parameter,
-                          Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
+    public ConstantExponentialModel(Parameter N0Parameter, Parameter timeParameter,
+                                    Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 
-        this(ExpansionModelParser.EXPANSION_MODEL, N0Parameter, N1Parameter, growthRateParameter, units, usingGrowthRate);
+        this(ConstantExponentialModelParser.CONSTANT_EXPONENTIAL_MODEL, N0Parameter, timeParameter, growthRateParameter, units, usingGrowthRate);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public ExpansionModel(String name, Parameter N0Parameter, Parameter N1Parameter,
-                          Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
+    public ConstantExponentialModel(String name, Parameter N0Parameter, Parameter timeParameter,
+                                    Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 
         super(name);
 
-        expansion = new Expansion(units);
+        constExponential = new ConstExponential(units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.N1Parameter = N1Parameter;
-        addVariable(N1Parameter);
-        N1Parameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        this.timeParameter = timeParameter;
+        addVariable(timeParameter);
+        timeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
@@ -90,22 +90,20 @@ public class ExpansionModel extends DemographicModel implements Citable {
 
     public DemographicFunction getDemographicFunction() {
 
+        double time = timeParameter.getParameterValue(0);
         double N0 = N0Parameter.getParameterValue(0);
-        double N1 = N1Parameter.getParameterValue(0);
         double growthRate = growthRateParameter.getParameterValue(0);
 
-        if (usingGrowthRate) {
-            expansion.setGrowthRate(growthRate);
-        } else {
+        if (!usingGrowthRate) {
             double doublingTime = growthRate;
             growthRate = Math.log(2) / doublingTime;
-            expansion.setDoublingTime(doublingTime);
         }
 
-        expansion.setN0(N0);
-        expansion.setProportion(N1);
+        constExponential.setGrowthRate(growthRate);
+        constExponential.setN0(N0);
+        constExponential.setN1(N0 * Math.exp(-time * growthRate));
 
-        return expansion;
+        return constExponential;
     }
 
     //
@@ -113,9 +111,9 @@ public class ExpansionModel extends DemographicModel implements Citable {
     //
 
     Parameter N0Parameter = null;
-    Parameter N1Parameter = null;
+    Parameter timeParameter = null;
     Parameter growthRateParameter = null;
-    Expansion expansion = null;
+    ConstExponential constExponential = null;
     boolean usingGrowthRate = true;
 
     @Override
@@ -125,7 +123,7 @@ public class ExpansionModel extends DemographicModel implements Citable {
 
     @Override
     public String getDescription() {
-        return "Expansion Coalescent";
+        return "Constant-Exponential Coalescent";
     }
 
     @Override

@@ -49,6 +49,7 @@ import java.util.List;
  *
  * @author Alexei Drummond
  */
+@Deprecated
 public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF

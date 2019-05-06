@@ -56,11 +56,17 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         XMLObject cxo = xo.getChild(MODEL);
-        DemographicModel demoModel = (DemographicModel) cxo.getChild(DemographicModel.class);
+        PopulationSizeModel populationSizeModel = (PopulationSizeModel) cxo.getChild(PopulationSizeModel.class);
+
+        DemographicModel demographicModel = null;
+        if (populationSizeModel == null) {
+            demographicModel = (DemographicModel) cxo.getChild(DemographicModel.class);
+        }
 
         List<TreeModel> trees = new ArrayList<TreeModel>();
         List<Double> popFactors = new ArrayList<Double>();
-        MultiLociTreeSet treesSet = demoModel instanceof MultiLociTreeSet ? (MultiLociTreeSet) demoModel : null;
+
+        MultiLociTreeSet treesSet = (demographicModel instanceof MultiLociTreeSet ? (MultiLociTreeSet) demographicModel : null);
 
         IntervalList intervalList = null;
 
@@ -123,8 +129,15 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (intervalList != null) {
-            return new CoalescentLikelihood(intervalList, demoModel);
+            if (demographicModel != null) {
+                return new CoalescentLikelihood(intervalList, demographicModel);
+            }
+
+            return new CoalescentLikelihood(intervalList, populationSizeModel);
         } else {
+            // a multilocus treeset is being used...
+            // needs updating...
+
             if (xo.hasChildNamed(INCLUDE) || xo.hasChildNamed(EXCLUDE)) {
                 throw new XMLParseException("Include/Exclude taxa not supported for multi locus sets");
             }
@@ -132,7 +145,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
             // Use old code for multi locus sets.
             // This is a little unfortunate but the current code is using AbstractCoalescentLikelihood as
             // a base - and modifing it will probsbly result in a bigger mess.
-            return new OldAbstractCoalescentLikelihood(treesSet, demoModel);
+            return new OldAbstractCoalescentLikelihood(treesSet, demographicModel);
         }
     }
 
@@ -153,8 +166,11 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(MODEL, new XMLSyntaxRule[]{
-                    new ElementRule(DemographicModel.class)
+            new ElementRule(MODEL, new XMLSyntaxRule[] {
+                    new XORRule(
+                            new ElementRule(DemographicModel.class),
+                            new ElementRule(PopulationSizeModel.class)
+                    )
             }, "The demographic model which describes the effective population size over time"),
 
             new ElementRule(INVERVALS, new XMLSyntaxRule[]{

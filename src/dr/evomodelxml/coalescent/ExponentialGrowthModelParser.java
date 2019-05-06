@@ -26,10 +26,14 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.ConstantPopulationSizeModel;
+import dr.evomodel.coalescent.ExponentialPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodels.ExponentialGrowthModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import static dr.evomodelxml.coalescent.ConstantPopulationModelParser.LOG_SPACE;
 
 /**
  * Parses an element from an DOM document into a ExponentialGrowth.
@@ -52,6 +56,7 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
+        boolean logSpace = cxo.getAttribute(LOG_SPACE, false);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
         Parameter rParam;
         boolean usingGrowthRate = true;
@@ -65,7 +70,11 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
             usingGrowthRate = false;
         }
 
-        return new ExponentialGrowthModel(N0Param, rParam, units, usingGrowthRate);
+        if (logSpace) {
+            return new ExponentialPopulationSizeModel(N0Param, rParam, logSpace, units);
+        } else {
+            return new ExponentialGrowthModel(N0Param, rParam, units, usingGrowthRate);
+        }
     }
 
     //************************************************************************
@@ -86,7 +95,9 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(POPULATION_SIZE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[] {
+                            AttributeRule.newBooleanRule(LOG_SPACE, false, "Is this parameter in log space?"),
+                            new ElementRule(Parameter.class)}),
             new XORRule(
 
                     new ElementRule(GROWTH_RATE,

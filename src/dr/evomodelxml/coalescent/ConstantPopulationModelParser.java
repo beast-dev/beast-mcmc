@@ -26,6 +26,7 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.ConstantPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodels.ConstantPopulationModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
@@ -38,6 +39,7 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
 
     public static String CONSTANT_POPULATION_MODEL = "constantSize";
     public static String POPULATION_SIZE = "populationSize";
+    public static String LOG_SPACE = "logSpace";
 
     public String getParserName() {
         return CONSTANT_POPULATION_MODEL;
@@ -48,9 +50,14 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
+        boolean logSpace = cxo.getAttribute(LOG_SPACE, false);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
 
-        return new ConstantPopulationModel(N0Param, units);
+        if (logSpace) {
+            return new ConstantPopulationSizeModel(N0Param, logSpace, units);
+        } else {
+            return new ConstantPopulationModel(N0Param, units);
+        }
     }
 
 
@@ -73,7 +80,11 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             XMLUnits.UNITS_RULE,
             new ElementRule(POPULATION_SIZE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newBooleanRule(LOG_SPACE, false, "Is this parameter in log space?"),
+                            new ElementRule(Parameter.class)
+                    }
+            )
     };
 
 }

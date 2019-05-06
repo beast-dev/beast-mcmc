@@ -188,7 +188,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private void recursePreOrder(NodeRef node, double untransformedParentRate) {
 
         if (!tree.isRoot(node)) {
-            final double untransformedRate = transform(branchRateModel.getBranchRate(tree, node));
+            final double untransformedRate = transform(branchRateModel.getUntransformedBranchRate(tree, node));
             final double branchLength = tree.getBranchLength(node);
             final double rateIncrement = scaling.rescaleIncrement(
                     untransformedRate - untransformedParentRate, branchLength);

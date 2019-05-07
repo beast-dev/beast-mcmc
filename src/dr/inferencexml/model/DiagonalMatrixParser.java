@@ -25,7 +25,6 @@
 
 package dr.inferencexml.model;
 
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -37,7 +36,6 @@ import dr.xml.*;
 public class DiagonalMatrixParser extends AbstractXMLObjectParser {
 
     public final static String MATRIX_PARAMETER = "diagonalMatrix";
-    public final static String DIMENSION = "dimension";
 
     public String getParserName() {
         return MATRIX_PARAMETER;
@@ -47,15 +45,6 @@ public class DiagonalMatrixParser extends AbstractXMLObjectParser {
 
 
         Parameter diagonalParameter = (Parameter) xo.getChild(Parameter.class);
-
-        final int dim = xo.getAttribute(DIMENSION, diagonalParameter.getDimension());
-        if (dim > diagonalParameter.getDimension() && diagonalParameter.getDimension() == 1) {
-            CompoundParameter newDiagonalParameter = new CompoundParameter(diagonalParameter.getParameterName());
-            for (int i = 0; i < dim; i++) {
-                newDiagonalParameter.addParameter(diagonalParameter);
-            }
-            diagonalParameter = newDiagonalParameter;
-        }
 
         return new DiagonalMatrix(diagonalParameter);
     }
@@ -74,7 +63,6 @@ public class DiagonalMatrixParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(Parameter.class, 1, 1),
-            AttributeRule.newIntegerRule(DIMENSION, true)
     };
 
     public Class getReturnType() {

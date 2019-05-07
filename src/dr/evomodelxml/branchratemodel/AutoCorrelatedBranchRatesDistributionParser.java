@@ -1,5 +1,5 @@
 /*
- * ArbitraryBranchRatesParser.java
+ * AutoCorrelatedBranchRatesDistributionParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *

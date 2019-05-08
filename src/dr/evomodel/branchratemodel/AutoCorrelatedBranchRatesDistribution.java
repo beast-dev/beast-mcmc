@@ -90,7 +90,18 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     @Override
     public double[] getGradientLogDensity() {
-        throw new RuntimeException("Not yet implemented");
+
+        if (!(distribution instanceof GradientProvider)) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        GradientProvider incrementGradientProvider = (GradientProvider) distribution;
+        checkIncrements();
+        double[] gradientWrtIncrement = incrementGradientProvider.getGradientLogDensity(increments);
+
+        double[] gradientWrtBranch = new double[dim];
+        recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrement);
+        return gradientWrtBranch;
     }
 
     @Override
@@ -201,6 +212,31 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         if (!tree.isExternal(node)) {
             recursePreOrder(tree.getChild(node, 0), untransformedParentRate);
             recursePreOrder(tree.getChild(node, 1), untransformedParentRate);
+        }
+    }
+
+    private void recurseGradientPreOrder(NodeRef node,
+                                         double[] gradientWrtBranch,
+                                         double[] gradientWrtIncrement) {
+
+        int index = branchRateModel.getParameterIndexFromNode(node);
+
+        if (!tree.isRoot(node)) {
+            gradientWrtBranch[index] += gradientWrtIncrements[index];
+        }
+
+        if (!tree.isExternal(node)) {
+
+            NodeRef child0 = tree.getChild(node, 0);
+            NodeRef child1 = tree.getChild(node, 1);
+
+            if (!tree.isRoot(node)) {
+                gradientWrtBranch[index] -= gradientWrtIncrement[branchRateModel.getParameterIndexFromNode(child0)];
+                gradientWrtBranch[index] -= gradientWrtIncrement[branchRateModel.getParameterIndexFromNode(child1)];
+            }
+
+            recurseGradientPreOrder(child0, gradientWrtBranch, gradientWrtIncrement);
+            recurseGradientPreOrder(child1, gradientWrtBranch, gradientWrtIncrement);
         }
     }
 

@@ -127,6 +127,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         checkIncrements();
         double[] gradientWrtIncrement = incrementGradientProvider.getGradientLogDensity(increments);
 
+        for (int i = 0; i < dim; i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                gradientWrtIncrement[i] = scaling.rescaleIncrement(gradientWrtIncrement[i], tree.getBranchLength(node));
+            }
+        }
+
         double[] gradientWrtBranch = new double[dim];
         recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrement);
         return gradientWrtBranch;

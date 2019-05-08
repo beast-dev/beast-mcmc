@@ -222,7 +222,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         int index = branchRateModel.getParameterIndexFromNode(node);
 
         if (!tree.isRoot(node)) {
-            gradientWrtBranch[index] += gradientWrtIncrements[index];
+            gradientWrtBranch[index] += gradientWrtIncrement[index];
         }
 
         if (!tree.isExternal(node)) {

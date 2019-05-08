@@ -31,9 +31,12 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.xml.Reportable;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +47,7 @@ import java.util.List;
  * @author Philippe Lemey
  */
 public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikelihood
-        implements GradientWrtParameterProvider, Citable {
+        implements GradientWrtParameterProvider, Citable, Reportable {
 
     private final ArbitraryBranchRates branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
@@ -268,7 +271,60 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double transform(double x) {
         return log ? Math.log(x) : x;
     }
-    
+
+    private MultivariateFunction numeric1 = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            for (int i = 0; i < argument.length; ++i) {
+                rateParameter.setParameterValue(i, argument[i]);
+            }
+
+            makeDirty();
+            return getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return rateParameter.getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
+
+    public double[] getNumericalGradient() {
+        double[] savedValues = rateParameter.getParameterValues();
+        double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
+        for (int i = 0; i < savedValues.length; ++i) {
+            rateParameter.setParameterValue(i, savedValues[i]);
+        }
+
+        return testGradient;
+    }
+
+    @Override
+    public String getReport() {
+
+        double[] testGradient = getNumericalGradient();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
+        sb.append("\n");
+        sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
+        sb.append("\n");
+
+        return sb.toString();
+    }
+
+
     public enum BranchVarianceScaling {
 
         NONE("none") {

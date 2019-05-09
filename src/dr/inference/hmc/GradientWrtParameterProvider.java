@@ -31,7 +31,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.xml.Reportable;
 
 import java.util.logging.Logger;
 
@@ -48,8 +47,6 @@ public interface GradientWrtParameterProvider {
     int getDimension();
 
     double[] getGradientLogDensity();
-
-//    void getGradientLogDensity(double[] destination, int offset);
 
     class ParameterWrapper implements GradientWrtParameterProvider, HessianWrtParameterProvider{
 
@@ -155,7 +152,7 @@ public interface GradientWrtParameterProvider {
             parameter.fireParameterChangedEvent();
         }
 
-        public double[] getNumericalGradient() {
+        private double[] getNumericalGradient() {
 
             double[] savedValues = parameter.getParameterValues();
             double[] testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());

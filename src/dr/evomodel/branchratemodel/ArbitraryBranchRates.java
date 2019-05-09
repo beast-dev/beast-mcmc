@@ -122,6 +122,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return rates.getParameterIndexFromNodeNumber(node.getNumber());
     }
 
+    public int getNodeNumberFromParameterIndex(final int index) {
+        return rates.getNodeNumberFromParameterIndex(index);
+    }
+
     public Parameter getRateParameter() { return rateParameter; }
 
     public boolean usingReciprocal() {

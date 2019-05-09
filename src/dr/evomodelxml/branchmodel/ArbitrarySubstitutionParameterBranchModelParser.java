@@ -27,7 +27,6 @@ package dr.evomodelxml.branchmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -61,35 +60,40 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         }
 
         XMLObject cxo = xo.getChild(BRANCH_SPECIFIC_PARAMETER);
-        XMLObject dxo = xo.getChild(SINGLE_RATE);
+//        XMLObject dxo = xo.getChild(SINGLE_RATE);
 
 
         BranchSpecificSubstitutionModelProvider substitutionModelProvider;
         ArbitrarySubstitutionParameterBranchModel branchParameterModel;
 
-        assert (dxo.getChildCount() == cxo.getChildCount());
+//        assert (dxo.getChildCount() == cxo.getChildCount());
 
+
+        List<Parameter> oldParameters = new ArrayList<Parameter>();
         List<BranchParameter> parameterList = new ArrayList<BranchParameter>();
         for (int i = 0; i < cxo.getChildCount(); i++) {
 
-            Parameter rootParameter = (Parameter) dxo.getChild(i);
-            ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) cxo.getChild(i);
-            BranchParameter branchParameter = new BranchParameter("branchSpecific.substitution.parameter",
-                    tree,
-                    branchRateModel,
-                    rootParameter);
-            branchParameter.setId("branchSpecific." + rootParameter.getId());
+//            Parameter rootParameter = (Parameter) dxo.getChild(i);
+//            ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) cxo.getChild(i);
+//            BranchParameter branchParameter = new BranchParameter("branchSpecific.substitution.parameter",
+//                    tree,
+//                    branchRateModel,
+//                    rootParameter);
+//            branchParameter.setId("branchSpecific." + rootParameter.getId());
+//            parameterList.add(branchParameter);
+//            xo.setNativeObject(branchParameter);
+            BranchParameter branchParameter = (BranchParameter) cxo.getChild(i);
             parameterList.add(branchParameter);
-            xo.setNativeObject(branchParameter);
+            oldParameters.add(branchParameter.getRootParameter());
         }
 
         List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
 
         ParameterReplaceableSubstitutionModel rootSubstitutionModel = (ParameterReplaceableSubstitutionModel) substitutionModel;
-        List<Parameter> oldParameters = parseParameters(dxo);
+//        List<Parameter> oldParameters = parseParameters(dxo);
 //        List<Parameter> branchParameters = parseParameters(cxo);
 
-        final int parameterCount = oldParameters.size();
+        final int parameterCount = parameterList.size();
         int v = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); ++nodeNum) {
 
@@ -101,12 +105,12 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
 
             if (tree.isRoot(node)) {
                 for (int i = 0; i < parameterCount; i++) {
-                    BranchParameter branchParameter = (BranchParameter) parameterList.get(i);
-                    newParameters.add(branchParameter.getParameter(tree.getNodeCount() - 1));
+                    BranchParameter branchParameter = parameterList.get(i);
+                    newParameters.add(branchParameter.getRootParameter());
                 }
             } else {
                 for (int i = 0; i < parameterCount; i++) {
-                    BranchParameter branchParameter = (BranchParameter) parameterList.get(i);
+                    BranchParameter branchParameter = parameterList.get(i);
                     newParameters.add(branchParameter.getParameter(v));
                 }
                 v++;
@@ -143,12 +147,12 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
                 new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
                 new ElementRule(BRANCH_SPECIFIC_PARAMETER,
                         new XMLSyntaxRule[]{
-                                new ElementRule(ArbitraryBranchRates.class, "The branch-specific substitution parameter handled by BranchRateModels.", 1, Integer.MAX_VALUE),
+                                new ElementRule(BranchParameter.class, "The branch-specific substitution parameter stored by BranchRateModels.", 1, Integer.MAX_VALUE),
                         }),
-                new ElementRule(SINGLE_RATE,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class, "The substitution parameter to be replaced.", 1, Integer.MAX_VALUE),
-                        })
+//                new ElementRule(SINGLE_RATE,
+//                        new XMLSyntaxRule[]{
+//                                new ElementRule(Parameter.class, "The substitution parameter to be replaced.", 1, Integer.MAX_VALUE),
+//                        })
         };
     }
 

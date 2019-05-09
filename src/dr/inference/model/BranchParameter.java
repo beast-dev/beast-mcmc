@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates.BranchRateTransform;
-import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc Suchard
@@ -37,40 +36,13 @@ import dr.evomodel.tree.TreeModel;
  */
 public class BranchParameter extends Parameter.Abstract implements VariableListener, ModelListener {
 
-//    final private CompoundParameter parameter;
     final private CompoundParameter parameter;
     final private ArbitraryBranchRates branchRateModel;
     final private Parameter rootParameter;
-//    final private BranchRateTransform transform;
-    final private TreeModel tree;
-//    final private TreeParameterModel indexHelper;
-//    private Boolean addedTransformedParameter = false;
-//    private List<IndividualBranchParameter> transformedParameter = new ArrayList<IndividualBranchParameter>();
-
-//    public BranchParameter(String name,
-//                           CompoundParameter parameter,
-//                           Parameter rootParameter,
-//                           TreeModel tree,
-//                           BranchRateTransform transform) {
-//
-//        super(name);
-//
-//        this.parameter =  parameter;
-//        this.rootParameter = rootParameter;
-//        this.transform = transform;
-//        this.tree = tree;
-//        this.indexHelper = new TreeParameterModel(tree, parameter, false, TreeTrait.Intent.BRANCH);
-//        this.parameter.addVariableListener(this);
-//        this.rootParameter.addVariableListener(this);
-//        if (transform instanceof Model) {
-//            ((Model) transform).addModelListener(this);
-//        }
-//
-//        this.addedTransformedParameter = false;
-//    }
+    final private Tree tree;
 
     public BranchParameter(String name,
-                           TreeModel tree,
+                           Tree tree,
                            ArbitraryBranchRates branchRateModel,
                            Parameter rootParameter) {
         super(name);
@@ -93,17 +65,9 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         return compoundParameter;
     }
 
-//    public void addTransformedParameterList(List<IndividualBranchParameter> transformedParameter) {
-//        if (addedTransformedParameter) {
-//            throw new RuntimeException("Should be called only once.");
-//        } else {
-//            if (transformedParameter.size() != tree.getNodeCount()) {
-//                throw new RuntimeException("Size mismatch!");
-//            }
-//            this.transformedParameter = transformedParameter;
-//            addedTransformedParameter = true;
-//        }
-//    }
+    public Parameter getRootParameter() {
+        return rootParameter;
+    }
 
     public BranchSpecificProxyParameter getParameter(int dim) {
         return (BranchSpecificProxyParameter) parameter.getParameter(dim);
@@ -228,10 +192,10 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     private class BranchSpecificProxyParameter extends Parameter.Proxy {
         private ArbitraryBranchRates branchRateModel;
         private final int nodeNum;
-        private TreeModel tree;
+        private Tree tree;
 
         private BranchSpecificProxyParameter(ArbitraryBranchRates branchRateModel,
-                                             TreeModel tree,
+                                             Tree tree,
                                              int nodeNum) {
             super("BranchSpecificProxyParameter." + Integer.toString(nodeNum), 1);
             this.branchRateModel = branchRateModel;
@@ -276,112 +240,4 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
             return branchRateModel.getRateParameter().getBounds();
         }
     }
-
-//    public static class IndividualBranchParameter extends Parameter.Abstract implements VariableListener, ModelListener {
-//
-//        final private Parameter parameter;
-//        final private BranchParameter branchParameter;
-//        final private int nodeNum;
-//
-//        public IndividualBranchParameter(BranchParameter branchParameter, int nodeNum, Parameter rootParameter) {
-//            this.branchParameter = branchParameter;
-//            this.nodeNum = nodeNum;
-//            this.parameter = new Parameter.Default(branchParameter.getParameterValue(nodeNum));
-////            if (!(parameter.getDimension() == 1)) {
-////                throw new RuntimeException("Individual parameter can only be one dimensional.");
-////            }
-//            this.parameter.addVariableListener(this);
-//            this.branchParameter.addParameterListener(this);
-//
-//        }
-//
-//        public BranchParameter getBranchParameter() {
-//            return branchParameter;
-//        }
-//
-//        @Override
-//        public double getParameterValue(int dim) {
-//            if (dim > 0) {
-//                throw new RuntimeException("Should be one dimensional!");
-//            }
-//            return branchParameter.getParameterValue(nodeNum);
-//        }
-//
-//        @Override
-//        public void setParameterValue(int dim, double value) {
-//            branchParameter.setParameterValue(nodeNum, value);
-//        }
-//
-//        @Override
-//        public void setParameterValueQuietly(int dim, double value) {
-//            branchParameter.setParameterValueQuietly(nodeNum, value);
-//        }
-//
-//        @Override
-//        public void setParameterValueNotifyChangedAll(int dim, double value) {
-//            branchParameter.setParameterValueNotifyChangedAll(nodeNum, value);
-//        }
-//
-//        @Override
-//        public String getParameterName() {
-//            return branchParameter.getParameterName() + "." + nodeNum;
-//        }
-//
-//        @Override
-//        public void addBounds(Bounds<Double> bounds) {
-//            parameter.addBounds(bounds);
-//        }
-//
-//        @Override
-//        public Bounds<Double> getBounds() {
-//            return parameter.getBounds();
-//        }
-//
-//        @Override
-//        public void addDimension(int index, double value) {
-//            throw new RuntimeException("Fixed dimension should not be changed.");
-//        }
-//
-//        @Override
-//        public double removeDimension(int index) {
-//            throw new RuntimeException("Fixed dimension should not be changed.");
-//        }
-//
-//        @Override
-//        protected void storeValues() {
-//            parameter.storeParameterValues();
-//            branchParameter.setParameterValueQuietly(nodeNum, parameter.getParameterValue(0));
-//        }
-//
-//        @Override
-//        protected void restoreValues() {
-//            parameter.restoreParameterValues();
-//            branchParameter.setParameterValueQuietly(nodeNum, parameter.getParameterValue(0));
-//        }
-//
-//        @Override
-//        protected void acceptValues() {
-//            parameter.acceptParameterValues();
-//        }
-//
-//        @Override
-//        protected void adoptValues(Parameter source) {
-//            parameter.adoptParameterValues(source);
-//        }
-//
-//        @Override
-//        public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-//            fireParameterChangedEvent(index, type);
-//        }
-//
-//        @Override
-//        public void modelChangedEvent(Model model, Object object, int index) {
-//            fireParameterChangedEvent();
-//        }
-//
-//        @Override
-//        public void modelRestored(Model model) {
-//
-//        }
-//    }
 }

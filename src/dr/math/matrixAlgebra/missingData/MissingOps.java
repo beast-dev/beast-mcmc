@@ -25,6 +25,8 @@ import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
  */
 public class MissingOps {
 
+    private static final double TOLERANCE = 1e-10;
+
     public static DenseMatrix64F wrap(final double[] source, final int offset,
                                       final int numRows, final int numCols) {
         double[] buffer = new double[numRows * numCols];
@@ -393,7 +395,7 @@ public class MissingOps {
             double logDet = 0;
             for (int i = 0; i < values.length; i++) {
                 final double lambda = values[i];
-                if (lambda > 0.0) {
+                if (lambda > TOLERANCE) {
                     logDet += Math.log(lambda);
                     ++dim;
                 }

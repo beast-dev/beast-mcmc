@@ -1,7 +1,7 @@
 /*
  * AutoCorrelatedBranchRatesDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,8 +31,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -119,24 +117,40 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     @Override
     public double[] getGradientLogDensity() {
 
+        double[] gradientWrtIncrements = getGradientWrtIncrements();
+
+        double[] gradientWrtBranch = new double[dim];
+        recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrements);
+        return gradientWrtBranch;
+    }
+
+    double[] getGradientWrtIncrements() {
+
         if (!(distribution instanceof GradientProvider)) {
             throw new RuntimeException("Not yet implemented");
         }
 
         GradientProvider incrementGradientProvider = (GradientProvider) distribution;
         checkIncrements();
-        double[] gradientWrtIncrement = incrementGradientProvider.getGradientLogDensity(increments);
+        double[] gradientWrtIncrements = incrementGradientProvider.getGradientLogDensity(increments);
+        rescaleGradientWrtIncrements(gradientWrtIncrements);
 
+        return gradientWrtIncrements;
+    }
+
+    Tree getTree() { return tree; }
+
+    ArbitraryBranchRates getBranchRateModel() { return branchRateModel; }
+
+    private void rescaleGradientWrtIncrements(double[] gradientWrtIncrements) {
         for (int i = 0; i < dim; i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                gradientWrtIncrement[i] = scaling.rescaleIncrement(gradientWrtIncrement[i], tree.getBranchLength(node));
+                int index = branchRateModel.getParameterIndexFromNode(node);
+                gradientWrtIncrements[index] = scaling.rescaleIncrement(
+                        gradientWrtIncrements[index], tree.getBranchLength(node));
             }
         }
-
-        double[] gradientWrtBranch = new double[dim];
-        recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrement);
-        return gradientWrtBranch;
     }
 
     @Override
@@ -279,58 +293,16 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         return log ? Math.log(x) : x;
     }
 
-    private MultivariateFunction numeric1 = new MultivariateFunction() {
-        @Override
-        public double evaluate(double[] argument) {
-
-            for (int i = 0; i < argument.length; ++i) {
-                rateParameter.setParameterValue(i, argument[i]);
-            }
-
-            makeDirty();
-            return getLogLikelihood();
-        }
-
-        @Override
-        public int getNumArguments() {
-            return rateParameter.getDimension();
-        }
-
-        @Override
-        public double getLowerBound(int n) {
-            return 0;
-        }
-
-        @Override
-        public double getUpperBound(int n) {
-            return Double.POSITIVE_INFINITY;
-        }
-    };
-
-    public double[] getNumericalGradient() {
-        double[] savedValues = rateParameter.getParameterValues();
-        double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
-        for (int i = 0; i < savedValues.length; ++i) {
-            rateParameter.setParameterValue(i, savedValues[i]);
-        }
-
-        return testGradient;
+    double inverseTransform(double x) {
+        return log ? Math.exp(x) : x;
     }
 
     @Override
     public String getReport() {
-
-        double[] testGradient = getNumericalGradient();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
-        sb.append("\n");
-        sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
-        sb.append("\n");
-
-        return sb.toString();
+        return new CheckGradientNumerically(this,
+                0.0, Double.POSITIVE_INFINITY, null
+        ).toString();
     }
-
 
     public enum BranchVarianceScaling {
 

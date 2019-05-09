@@ -42,7 +42,7 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
         implements BayesianBridgeStatisticsProvider, GradientWrtParameterProvider {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
-                             BayesianBridgeDistributionModel distribution) {
+                                    BayesianBridgeDistributionModel distribution) {
 
         super(BAYESIAN_BRIDGE);
 
@@ -121,8 +121,7 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     protected void acceptState() {
     } // no additional state needs accepting
 
-    final Parameter coefficients;
-    final BayesianBridgeDistributionModel distribution;
-
-    final int dim;
+    private final Parameter coefficients;
+    private final BayesianBridgeDistributionModel distribution;
+    private final int dim;
 }

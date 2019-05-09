@@ -27,7 +27,7 @@ package dr.evomodelxml.branchmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.substmodel.BranchSpecificSubstitutionModelProvider;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -73,12 +73,14 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
         for (int i = 0; i < cxo.getChildCount(); i++) {
 
             Parameter rootParameter = (Parameter) dxo.getChild(i);
-            BranchRateModel branchRateModel = (BranchRateModel) cxo.getChild(i);
-            BranchParameter branchParameter = new BranchParameter("branchSpecific." + rootParameter.getId(),
+            ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) cxo.getChild(i);
+            BranchParameter branchParameter = new BranchParameter("branchSpecific.substitution.parameter",
                     tree,
                     branchRateModel,
                     rootParameter);
+            branchParameter.setId("branchSpecific." + rootParameter.getId());
             parameterList.add(branchParameter);
+            xo.setNativeObject(branchParameter);
         }
 
         List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
@@ -141,7 +143,7 @@ public class ArbitrarySubstitutionParameterBranchModelParser extends AbstractXML
                 new ElementRule(SubstitutionModel.class, "The substitution model throughout the tree."),
                 new ElementRule(BRANCH_SPECIFIC_PARAMETER,
                         new XMLSyntaxRule[]{
-                                new ElementRule(BranchRateModel.class, "The branch-specific substitution parameter handled by BranchRateModels.", 1, Integer.MAX_VALUE),
+                                new ElementRule(ArbitraryBranchRates.class, "The branch-specific substitution parameter handled by BranchRateModels.", 1, Integer.MAX_VALUE),
                         }),
                 new ElementRule(SINGLE_RATE,
                         new XMLSyntaxRule[]{

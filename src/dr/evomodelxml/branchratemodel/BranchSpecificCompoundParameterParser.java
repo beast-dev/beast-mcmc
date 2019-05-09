@@ -25,17 +25,12 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Marc Suchard
@@ -66,7 +61,7 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
 //        if (transform == null) {
 //            transform = new ArbitraryBranchRates.BranchRateTransform.None();
 //        }
-        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
         BranchParameter branchParameter = new BranchParameter(
                 xo.getName(),
@@ -75,27 +70,27 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
                 rootParameter
                 );
 
-        List<BranchParameter.IndividualBranchParameter> individualBranchParameterList = new ArrayList<BranchParameter.IndividualBranchParameter>();
-        BranchParameter.IndividualBranchParameter rootBranchParameter = null;
-        int v = 0;
-        for (int i = 0; i < numNodes; i++) {
-            NodeRef node = treeModel.getNode(i);
-            BranchParameter.IndividualBranchParameter individualBranchParameter;
-            if (treeModel.isRoot(node)) {
-                rootBranchParameter =
+//        List<BranchParameter.IndividualBranchParameter> individualBranchParameterList = new ArrayList<BranchParameter.IndividualBranchParameter>();
+//        BranchParameter.IndividualBranchParameter rootBranchParameter = null;
+//        int v = 0;
+//        for (int i = 0; i < numNodes; i++) {
+//            NodeRef node = treeModel.getNode(i);
+//            BranchParameter.IndividualBranchParameter individualBranchParameter;
+//            if (treeModel.isRoot(node)) {
+//                rootBranchParameter =
+////                        new BranchParameter.IndividualBranchParameter(branchParameter, numNodes - 1, rootParameter);
 //                        new BranchParameter.IndividualBranchParameter(branchParameter, numNodes - 1, rootParameter);
-                        new BranchParameter.IndividualBranchParameter(branchParameter, numNodes - 1, rootParameter);
-            } else {
-                individualBranchParameter =
-//                        new BranchParameter.IndividualBranchParameter(branchParameter, v, compoundParameter.getParameter(v));
-                        new BranchParameter.IndividualBranchParameter(branchParameter, v, rootParameter);
-                v++;
-                individualBranchParameterList.add(individualBranchParameter);
-            }
-        }
-        assert(rootBranchParameter != null);
-        individualBranchParameterList.add(rootBranchParameter);
-        branchParameter.addTransformedParameterList(individualBranchParameterList);
+//            } else {
+//                individualBranchParameter =
+////                        new BranchParameter.IndividualBranchParameter(branchParameter, v, compoundParameter.getParameter(v));
+//                        new BranchParameter.IndividualBranchParameter(branchParameter, v, rootParameter);
+//                v++;
+//                individualBranchParameterList.add(individualBranchParameter);
+//            }
+//        }
+//        assert(rootBranchParameter != null);
+//        individualBranchParameterList.add(rootBranchParameter);
+//        branchParameter.addTransformedParameterList(individualBranchParameterList);
         return branchParameter;
     }
 
@@ -104,7 +99,7 @@ public class BranchSpecificCompoundParameterParser extends AbstractXMLObjectPars
         return new XMLSyntaxRule[]{
                 new ElementRule(BRANCH_PARAMETER,
                         new XMLSyntaxRule[]{
-                                new ElementRule(BranchRateModel.class, "The branch-specific substitution parameter.", 1, Integer.MAX_VALUE),
+                                new ElementRule(ArbitraryBranchRates.class, "The branch-specific substitution parameter.", 1, Integer.MAX_VALUE),
                         }),
                 new ElementRule(TreeModel.class),
                 new ElementRule(ROOT_PARAMETER,

@@ -42,47 +42,22 @@ public class ExponentialPopulationSizeModel extends PopulationSizeModel {
     /**
      * Construct demographic model with default settings
      */
-    public ExponentialPopulationSizeModel(Parameter N0Parameter, Parameter rateParameter, boolean inLogSpace, Type units) {
+    public ExponentialPopulationSizeModel(Parameter N0Parameter, Parameter rateParameter, Type units) {
 
-        this(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, N0Parameter, rateParameter, inLogSpace, units);
+        this(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, N0Parameter, rateParameter, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public ExponentialPopulationSizeModel(String name, Parameter N0Parameter, Parameter rateParameter, boolean inLogSpace, Type units) {
+    public ExponentialPopulationSizeModel(String name, Parameter N0Parameter, Parameter rateParameter, Type units) {
 
-        super(name, inLogSpace, units);
-
-        this.N0Parameter = N0Parameter;
-        addVariable(N0Parameter);
+        super(name, N0Parameter, units);
 
         this.rateParameter = rateParameter;
         addVariable(rateParameter);
 
-        if (isInLogSpace()) {
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        } else {
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        }
-
         rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-    }
-
-    public double getN0() {
-        if (isInLogSpace()) {
-            return Math.exp(N0Parameter.getParameterValue(0));
-        } else {
-            return N0Parameter.getParameterValue(0);
-        }
-    }
-
-    public double getLogN0() {
-        if (isInLogSpace()) {
-            return N0Parameter.getParameterValue(0);
-        } else {
-            return Math.log(N0Parameter.getParameterValue(0));
-        }
     }
 
     public double getGrowthRate() {
@@ -94,38 +69,43 @@ public class ExponentialPopulationSizeModel extends PopulationSizeModel {
      * @return the function
      */
     public PopulationSizeFunction getPopulationSizeFunction() {
-        return new PopulationSizeFunction() {
-            @Override
-            public double getLogDemographic(double t) {
-                return getLogN0() + (-t * getGrowthRate());
-            }
-
-            @Override
-            public double getIntegral(double startTime, double finishTime) {
-                double r = getGrowthRate();
-                if (r == 0.0) {
-                    return (finishTime - startTime) / getN0();
-                } else {
-                    return (Math.exp(finishTime * r) - Math.exp(startTime * r)) / getN0() / r;
+        if (populationSizeFunction == null) {
+            populationSizeFunction = new PopulationSizeFunction() {
+                @Override
+                public double getLogDemographic(double t) {
+                    return getLogN0() + (-t * getGrowthRate());
                 }
-            }
 
-            @Override
-            public Type getUnits() {
-                return ExponentialPopulationSizeModel.this.getUnits();
-            }
+                @Override
+                public double getIntegral(double startTime, double finishTime) {
+                    double r = getGrowthRate();
+                    if (r == 0.0) {
+                        return (finishTime - startTime) / getN0();
+                    } else {
+                        return (Math.exp(finishTime * r) - Math.exp(startTime * r)) / getN0() / r;
+                    }
+                }
 
-            @Override
-            public void setUnits(Type units) {
-                throw new UnsupportedOperationException();
-            }
-        };
+                @Override
+                public Type getUnits() {
+                    return ExponentialPopulationSizeModel.this.getUnits();
+                }
+
+                @Override
+                public void setUnits(Type units) {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+
+        return populationSizeFunction;
     }
 
     //
     // protected stuff
     //
 
-    private final Parameter N0Parameter;
     private final Parameter rateParameter;
+
+    private PopulationSizeFunction populationSizeFunction = null;
 }

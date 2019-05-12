@@ -53,32 +53,7 @@ public class ConstantPopulationSizeModel extends PopulationSizeModel {
      */
     public ConstantPopulationSizeModel(String name, Parameter N0Parameter, boolean inLogSpace, Type units) {
 
-        super(name, inLogSpace, units);
-
-        this.N0Parameter = N0Parameter;
-        addVariable(N0Parameter);
-
-        if (isInLogSpace()) {
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        } else {
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        }
-    }
-
-    public double getN0() {
-        if (isInLogSpace()) {
-            return Math.exp(N0Parameter.getParameterValue(0));
-        } else {
-            return N0Parameter.getParameterValue(0);
-        }
-    }
-
-    public double getLogN0() {
-        if (isInLogSpace()) {
-            return N0Parameter.getParameterValue(0);
-        } else {
-            return Math.log(N0Parameter.getParameterValue(0));
-        }
+        super(name, N0Parameter, units);
     }
 
     /**
@@ -109,9 +84,4 @@ public class ConstantPopulationSizeModel extends PopulationSizeModel {
         };
     }
 
-    //
-    // protected stuff
-    //
-
-    private final Parameter N0Parameter;
 }

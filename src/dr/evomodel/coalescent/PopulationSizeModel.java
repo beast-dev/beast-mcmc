@@ -39,15 +39,41 @@ import dr.inference.model.Variable;
  */
 public abstract class PopulationSizeModel extends AbstractModel implements Units {
 
-    public PopulationSizeModel(String name, boolean inLogSpace, Type units) {
+    public PopulationSizeModel(String name, Parameter N0Parameter, Type units) {
         super(name);
-        this.inLogSpace = inLogSpace;
+
+        this.N0Parameter = N0Parameter;
+        addVariable(N0Parameter);
+
+        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+
         setUnits(units);
     }
 
     // general functions
 
     public abstract PopulationSizeFunction getPopulationSizeFunction();
+
+    /**
+     * Package private because this is used by the PiecewisePopulationSizeModel to chain epochs
+     * together. Sets the parameter quietly to avoid sending further update messages.
+     *
+     * @param logN0 the log N0
+     */
+    final void setLogN0(double logN0) {
+        N0Parameter.setParameterValueQuietly(0, logN0);
+
+    }
+
+    public final double getN0() {
+        return Math.exp(N0Parameter.getParameterValue(0));
+    }
+
+    public final double getLogN0() {
+        return N0Parameter.getParameterValue(0);
+    }
+
+    private final Parameter N0Parameter;
 
     // **************************************************************
     // Model IMPLEMENTATION
@@ -95,9 +121,4 @@ public abstract class PopulationSizeModel extends AbstractModel implements Units
         return units;
     }
 
-    public boolean isInLogSpace() {
-        return inLogSpace;
-    }
-
-    private final boolean inLogSpace;
 }

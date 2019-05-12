@@ -50,7 +50,7 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
-        boolean logSpace = cxo.getAttribute(LOG_SPACE, false);
+        boolean logSpace = cxo.getAttribute(LOG_SPACE, true);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
 
         if (logSpace) {

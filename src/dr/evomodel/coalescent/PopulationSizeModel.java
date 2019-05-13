@@ -83,11 +83,11 @@ public abstract class PopulationSizeModel extends AbstractModel implements Units
     // **************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        // no intermediates need to be recalculated...
+        fireModelChanged();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // no intermediates need to be recalculated...
+        fireModelChanged();
     }
 
     protected void storeState() {

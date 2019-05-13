@@ -50,7 +50,7 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
-        boolean logSpace = cxo.getAttribute(LOG_SPACE, true);
+        boolean logSpace = cxo.getAttribute(LOG_SPACE, false);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
 
         if (logSpace) {
@@ -82,7 +82,7 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
             XMLUnits.UNITS_RULE,
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[]{
-                            AttributeRule.newBooleanRule(LOG_SPACE, false, "Is this parameter in log space?"),
+                            AttributeRule.newBooleanRule(LOG_SPACE, true, "Is this parameter in log space?"),
                             new ElementRule(Parameter.class)
                     }
             )

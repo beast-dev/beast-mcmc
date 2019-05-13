@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.Model;

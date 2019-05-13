@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -39,13 +38,17 @@ import dr.inference.model.Variable;
  */
 public abstract class PopulationSizeModel extends AbstractModel implements Units {
 
-    public PopulationSizeModel(String name, Parameter N0Parameter, Type units) {
+    public PopulationSizeModel(String name, Parameter logN0Parameter, Type units) {
         super(name);
 
-        this.N0Parameter = N0Parameter;
-        addVariable(N0Parameter);
-
-        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        if (logN0Parameter != null) {
+            this.logN0Parameter = logN0Parameter;
+            logN0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        } else {
+            // used to store the parameter value when used in a multi-epoch chain
+            this.logN0Parameter = new Parameter.Default(1);
+        }
+        addVariable(this.logN0Parameter);
 
         setUnits(units);
     }
@@ -61,19 +64,19 @@ public abstract class PopulationSizeModel extends AbstractModel implements Units
      * @param logN0 the log N0
      */
     final void setLogN0(double logN0) {
-        N0Parameter.setParameterValueQuietly(0, logN0);
+        logN0Parameter.setParameterValueQuietly(0, logN0);
 
     }
 
     public final double getN0() {
-        return Math.exp(N0Parameter.getParameterValue(0));
+        return Math.exp(logN0Parameter.getParameterValue(0));
     }
 
     public final double getLogN0() {
-        return N0Parameter.getParameterValue(0);
+        return logN0Parameter.getParameterValue(0);
     }
 
-    private final Parameter N0Parameter;
+    private final Parameter logN0Parameter;
 
     // **************************************************************
     // Model IMPLEMENTATION

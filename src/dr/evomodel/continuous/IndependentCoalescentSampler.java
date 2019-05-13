@@ -34,7 +34,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;

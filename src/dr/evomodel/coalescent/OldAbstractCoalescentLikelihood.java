@@ -31,6 +31,7 @@ import dr.evolution.coalescent.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.model.*;

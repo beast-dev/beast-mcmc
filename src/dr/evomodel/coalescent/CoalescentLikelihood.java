@@ -28,10 +28,9 @@ package dr.evomodel.coalescent;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
-import dr.inference.model.Model;
 import dr.math.Binomial;
 
 import java.util.logging.Logger;

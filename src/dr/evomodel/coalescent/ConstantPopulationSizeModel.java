@@ -25,10 +25,7 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.ConstantPopulation;
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.wrightfisher.Population;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.inference.model.Parameter;
 
 /**
@@ -40,20 +37,21 @@ public class ConstantPopulationSizeModel extends PopulationSizeModel {
     //
     // Public stuff
     //
+
     /**
      * Construct demographic model with default settings
      */
-    public ConstantPopulationSizeModel(Parameter N0Parameter, boolean inLogSpace, Type units) {
+    public ConstantPopulationSizeModel(Parameter logN0Parameter, Type units) {
 
-        this(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, N0Parameter, inLogSpace, units);
+        this(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, logN0Parameter, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public ConstantPopulationSizeModel(String name, Parameter N0Parameter, boolean inLogSpace, Type units) {
+    public ConstantPopulationSizeModel(String name, Parameter logN0Parameter, Type units) {
 
-        super(name, N0Parameter, units);
+        super(name, logN0Parameter, units);
     }
 
     /**

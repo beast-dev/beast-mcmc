@@ -25,7 +25,7 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -46,20 +46,17 @@ public class LogisticPopulationSizeModel extends PopulationSizeModel implements 
     /**
      * Construct demographic model with default settings
      */
-    public LogisticPopulationSizeModel(Parameter N0Parameter, Parameter rateParameter, Parameter shapeParameter, boolean inLogSpace, Type units) {
+    public LogisticPopulationSizeModel(Parameter logN0Parameter, Parameter rateParameter, Parameter shapeParameter, Type units) {
 
-        this(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, N0Parameter, rateParameter, shapeParameter, inLogSpace, units);
+        this(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, logN0Parameter, rateParameter, shapeParameter, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public LogisticPopulationSizeModel(String name, Parameter N0Parameter, Parameter rateParameter, Parameter shapeParameter, boolean inLogSpace, Type units) {
+    public LogisticPopulationSizeModel(String name, Parameter logN0Parameter, Parameter rateParameter, Parameter shapeParameter, Type units) {
 
-        super(name, inLogSpace, units);
-
-        this.N0Parameter = N0Parameter;
-        addVariable(N0Parameter);
+        super(name, logN0Parameter, units);
 
         this.rateParameter = rateParameter;
         addVariable(rateParameter);
@@ -67,31 +64,9 @@ public class LogisticPopulationSizeModel extends PopulationSizeModel implements 
         this.shapeParameter = shapeParameter;
         addVariable(shapeParameter);
 
-        if (isInLogSpace()) {
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        } else {
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        }
-
         rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
 
         shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-    }
-
-    public double getN0() {
-        if (isInLogSpace()) {
-            return Math.exp(N0Parameter.getParameterValue(0));
-        } else {
-            return N0Parameter.getParameterValue(0);
-        }
-    }
-
-    public double getLogN0() {
-        if (isInLogSpace()) {
-            return N0Parameter.getParameterValue(0);
-        } else {
-            return Math.log(N0Parameter.getParameterValue(0));
-        }
     }
 
     public double getGrowthRate() {
@@ -160,7 +135,6 @@ public class LogisticPopulationSizeModel extends PopulationSizeModel implements 
     // protected stuff
     //
 
-    private final Parameter N0Parameter;
     private final Parameter rateParameter;
     private final Parameter shapeParameter;
 }

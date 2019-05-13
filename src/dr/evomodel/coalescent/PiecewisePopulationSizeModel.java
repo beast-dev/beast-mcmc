@@ -45,7 +45,12 @@ public class PiecewisePopulationSizeModel extends PopulationSizeModel {
     //
 
     /**
-     * Construct piecewise model with from list of epochs
+     * Construct piecewise model with from list of epochs. The N0 parameter represents the population size
+     * at the present (time = 0) and then the epochs occur going back in time for the durations given by the
+     * epochDurations parameter (with the last epoch stretching to infinity). The population size at the
+     * start of the next epoch is given by the previous one. Thus these epoch population size models should
+     * be created without their own N0 parameters.
+     *
      * @param N0Parameter the population size at the present
      * @param epochs a list of population size models
      * @param epochDurations the duration of each epoch (for all but the last epoch)
@@ -145,20 +150,32 @@ public class PiecewisePopulationSizeModel extends PopulationSizeModel {
                 public double getIntegral(double startTime, double finishTime) {
                     setupEpochs();
 
-                    throw new UnsupportedOperationException("not implemented yet");
+                    double integral = 0.0;
+                    double t0 = startTime;
+                    double t1 = finishTime;
 
-//                    double integral = 0.0;
-//                    double t0 = startTime;
-//                    double t1;
-//
-//                    int epochIndex = 0;
-//                    while (t0 > epochDurations.getParameterValue(epochIndex)) {
-//                        epochIndex += 1;
-//                    }
-//                    integral += epochs.get(epochIndex).getPopulationSizeFunction().getIntegral(t0, t1)
-//                    epochTime -= epochDurations.getParameterValue(epochIndex);
-//
-//                    return integral;
+                    int epochIndex = 0;
+
+                    // crawl until we find the epoch that contains the start time
+                    while (t0 > epochDurations.getParameterValue(epochIndex)) {
+                        t0 -= epochDurations.getParameterValue(epochIndex);
+                        epochIndex += 1;
+                    }
+
+                    // now crawl until we find the epoch that contains the finish time, adding
+                    // all the piece-wise integrals as we go
+                    while (t1 > epochDurations.getParameterValue(epochIndex)) {
+                        integral += epochs.get(epochIndex).getPopulationSizeFunction()
+                                .getIntegral(t0, epochDurations.getParameterValue(epochIndex));
+                        t0 = 0;
+                        t1 -= epochDurations.getParameterValue(epochIndex);
+                        epochIndex += 1;
+                    }
+
+                    // add the final piece of integral
+                    integral += epochs.get(epochIndex).getPopulationSizeFunction().getIntegral(t0, t1);
+
+                    return integral;
                 }
 
                 @Override

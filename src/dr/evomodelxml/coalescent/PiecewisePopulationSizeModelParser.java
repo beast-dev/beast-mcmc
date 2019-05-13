@@ -25,16 +25,13 @@
 
 package dr.evomodelxml.coalescent;
 
-import com.sun.javafx.tools.packager.Param;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.PiecewisePopulationSizeModel;
 import dr.evomodel.coalescent.PopulationSizeModel;
-import dr.evomodel.coalescent.demographicmodels.PiecewisePopulationModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,9 +43,6 @@ public class PiecewisePopulationSizeModelParser extends AbstractXMLObjectParser 
     public static final String EPOCHS = "epochs";
     public static final String POPULATION_SIZE = "populationSize";
     public static final String EPOCH_DURATIONS = "epochDurations";
-
-    public static final String WIDTHS = "widths";
-    public static final String LINEAR = "linear";
 
     public String getParserName() {
         return PIECEWISE_POPULATION_SIZE;
@@ -62,11 +56,14 @@ public class PiecewisePopulationSizeModelParser extends AbstractXMLObjectParser 
         Parameter populationSize = (Parameter)xo.getElementFirstChild(POPULATION_SIZE);
 
         XMLObject cxo = xo.getChild(EPOCHS);
-        List<PopulationSizeModel> populationSizeModels = cxo.getAllChildren(PopulationSizeModel.class);
+        List<PopulationSizeModel> epochs = cxo.getAllChildren(PopulationSizeModel.class);
 
-        return new PiecewisePopulationSizeModel(PIECEWISE_POPULATION_SIZE, populationSize,
-                populationSizeModels,
-                epochDurations, units);
+        if (epochDurations.getDimension() != epochs.size() - 1) {
+            throw new XMLParseException("The dimension of the epoch duration parameter should be one fewer than the number of epochs.");
+        }
+
+        return new PiecewisePopulationSizeModel(PIECEWISE_POPULATION_SIZE,
+                populationSize, epochs, epochDurations, units);
     }
 
 

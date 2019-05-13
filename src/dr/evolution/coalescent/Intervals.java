@@ -136,6 +136,13 @@ public class Intervals implements IntervalList {
         return intervals[i];
     }
 
+    public double getIntervalTime(int i){
+        if (!intervalsKnown){
+            calculateIntervals();
+        }
+        return events[i].time;
+    }
+
     public int getLineageCount(int i) {
         if (!intervalsKnown) {
             calculateIntervals();
@@ -184,7 +191,7 @@ public class Intervals implements IntervalList {
         return true;
     }
 
-    private void calculateIntervals() {
+    public void calculateIntervals() {
 
         if (eventCount < 2) {
             throw new IllegalArgumentException("Too few events to construct intervals");

@@ -114,6 +114,21 @@ public class ColouredTreeIntervals implements StructuredIntervalList {
     }
 
     /**
+     * Returns the time of the start of an interval
+     */
+    public double getIntervalTime(int i){
+        if (i == 0) return getEvent(i).time;
+        return getEvent(i - 1).time;
+    }
+
+    /**
+     * Recalculates all the intervals from the tree model.
+     */
+    public void calculateIntervals(){
+        // fill in
+    }
+
+    /**
      * @param population the population of interest
      * @return the number of lineages residing in the given population over this interval.
      */

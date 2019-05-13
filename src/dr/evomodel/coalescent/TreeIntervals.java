@@ -178,7 +178,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     /**
      * Recalculates all the intervals from the tree model.
      */
-    protected final void setupIntervals() {
+    public final void calculateIntervals() {
 
         intervals.resetEvents();
         collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
@@ -227,7 +227,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public int getIntervalCount() {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.getIntervalCount();
     }
@@ -235,7 +235,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public int getSampleCount() {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.getSampleCount();
     }
@@ -243,23 +243,32 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public double getInterval(int i) {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.getInterval(i);
     }
 
     @Override
+    public double getIntervalTime(int i) {
+        if(!eventsKnown){
+            calculateIntervals();
+        }
+        return intervals.getIntervalTime(i);
+    }
+
+    @Override
     public int getLineageCount(int i) {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
+        if (i >= getIntervalCount()) throw new IllegalArgumentException();
         return intervals.getLineageCount(i);
     }
 
     @Override
     public int getCoalescentEvents(int i) {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.getCoalescentEvents(i);
     }
@@ -267,7 +276,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public IntervalType getIntervalType(int i) {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.getIntervalType(i);
     }
@@ -275,7 +284,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public double getTotalDuration() {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.getTotalDuration();
     }
@@ -283,7 +292,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public boolean isBinaryCoalescent() {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.isBinaryCoalescent();
     }
@@ -291,7 +300,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     @Override
     public boolean isCoalescentOnly() {
         if (!eventsKnown) {
-            setupIntervals();
+            calculateIntervals();
         }
         return intervals.isCoalescentOnly();
     }

@@ -44,7 +44,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
     public static final String MODEL = "model";
     public static final String POPULATION_TREE = "populationTree";
     public static final String POPULATION_FACTOR = "factor";
-    public static final String INVERVALS = "intervals";
+    public static final String INTERVALS = "intervals";
 
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
@@ -81,7 +81,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
                     popFactors.add(cxo.getAttribute(POPULATION_FACTOR, 1.0));
                 }
-                else if (cxo.getName().equals(INVERVALS)) {
+                else if (cxo.getName().equals(INTERVALS)) {
                     intervalList = (IntervalList) cxo.getChild(MultiTreeIntervals.class);
                 }
             }
@@ -173,7 +173,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
                     )
             }, "The demographic model which describes the effective population size over time"),
 
-            new ElementRule(INVERVALS, new XMLSyntaxRule[]{
+            new ElementRule(INTERVALS, new XMLSyntaxRule[]{
                     new ElementRule(MultiTreeIntervals.class)
             }, "The interval list from which the coalescent likelihood will be calculated", 0, Integer.MAX_VALUE),
 

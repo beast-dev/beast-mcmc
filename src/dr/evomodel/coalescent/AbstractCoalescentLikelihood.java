@@ -52,6 +52,10 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         }
     }
 
+    AbstractCoalescentLikelihood(String name) {
+        super(name);
+    }
+
 
     // **************************************************************
     // ModelListener IMPLEMENTATION
@@ -61,6 +65,9 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         // something the likelihood is listening to has changed so flag the likelihood to update
 
         likelihoodKnown = false;
+        if (model instanceof IntervalList) {
+            intervalsKnown = false;
+        }
     }
 
     // **************************************************************
@@ -80,6 +87,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
+        storedIntervalsKnown = intervalsKnown;
     }
 
     /**
@@ -88,6 +96,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+        intervalsKnown = storedIntervalsKnown;
     }
 
     protected final void acceptState() {
@@ -179,6 +188,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
     protected boolean storedLikelihoodKnown = false;
+    protected boolean intervalsKnown = false;
+    protected boolean storedIntervalsKnown = false;
 
 //    private double[] coalescentEventStatisticValues;
 }

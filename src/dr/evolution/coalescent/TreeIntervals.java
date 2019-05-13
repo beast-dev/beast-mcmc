@@ -234,7 +234,7 @@ public class TreeIntervals implements IntervalList {
     /**
      * Recalculates all the intervals for the given tree.
      */
-    private void calculateIntervals() {
+    public void calculateIntervals() {
 
         int nodeCount = tree.getNodeCount();
 

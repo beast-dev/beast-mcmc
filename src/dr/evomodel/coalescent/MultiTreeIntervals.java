@@ -117,6 +117,17 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     }
 
     /**
+     * Returns the time of the start of an interval
+     */
+    @Override
+    public double getIntervalTime(int i) {
+        if(!eventsKnown){
+            calculateIntervals();
+        }
+        return intervals.getIntervalTime(i);
+    }
+
+    /**
      * Returns the number of uncoalesced lineages within this interval.
      * Required for s-coalescents, where new lineages are added as
      * earlier samples are come across.
@@ -190,7 +201,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     /**
      * Recalculates all the intervals for the given tree.
      */
-    private void calculateIntervals() {
+    public void calculateIntervals() {
 
         intervals.resetEvents();
         for (Tree tree : trees) {

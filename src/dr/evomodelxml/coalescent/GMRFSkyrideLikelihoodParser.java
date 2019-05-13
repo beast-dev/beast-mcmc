@@ -26,8 +26,6 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.tree.TreeUtils;
-import dr.evomodel.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
@@ -95,23 +93,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        List<IntervalList> intervalsList = new ArrayList<IntervalList>();
-
-        if(xo.getChild(POPULATION_TREE) != null){
-            cxo = xo.getChild(POPULATION_TREE);
-            for (int i = 0; i < cxo.getChildCount(); i++){
-                Object testObject = cxo.getChild(i);
-                if(testObject instanceof Tree){
-                    TreeIntervals treeIntervals;
-                    try {
-                        treeIntervals = new TreeIntervals((Tree) testObject, null, null);
-                    } catch (TreeUtils.MissingTaxonException mte) {
-                        throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
-                    }
-                    intervalsList.add(treeIntervals);
-                }
-            }
-        }
+        /*
+        cxo = xo.getChild(POPULATION_TREE);
 
         /*
         List<Tree> treeList = new ArrayList<Tree>();
@@ -120,7 +103,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             if (testObject instanceof Tree) {
                 treeList.add((TreeModel) testObject);
             }
-        } */
+        }
+        */
 
         if (xo.getChild(INTERVALS) != null) {
             cxo = xo.getChild(INTERVALS);
@@ -130,6 +114,16 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 if (testObject instanceof IntervalList) {
                     intervalsList.add((IntervalList) testObject);
                 }
+            }
+        }
+
+        cxo = xo.getChild(INTERVALS);
+
+        List<IntervalList> intervalsList = new ArrayList<IntervalList>();
+        for (int i = 0; i < cxo.getChildCount(); i++){
+            Object testObject = cxo.getChild(i);
+            if(testObject instanceof IntervalList){
+                intervalsList.add((IntervalList) testObject);
             }
         }
 
@@ -201,7 +195,9 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             cxo = xo.getChild(PLOIDY);
             ploidyFactors = (Parameter) cxo.getChild(Parameter.class);
         } else {
+            // ploidyFactors = new Parameter.Default(PLOIDY, treeList.size());
             ploidyFactors = new Parameter.Default(PLOIDY, intervalsList.size());
+            //for (int i = 0; i < treeList.size(); i++) {
             for(int i = 0; i < intervalsList.size(); i++){
                 ploidyFactors.setParameterValue(i, 1.0);
             }
@@ -233,6 +229,9 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
         }
 
+        // if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
+        //     throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
+
         if (dMatrix != null) {
             if (dMatrix.getRowDimension() != popParameter.getDimension())
                 throw new XMLParseException("Design matrix row dimension must equal the population parameter length.");
@@ -260,6 +259,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (xo.hasChildNamed(COV_PREC_PARAM)){
+            // covPrecParam = new ArrayList<Parameter>();
             if(firstObservedIndex != null) {
                 covPrecParamRecent = new ArrayList<Parameter>();
             }
@@ -379,14 +379,12 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(PHI_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true), // Optional
-            new OrRule(
-                new ElementRule(INTERVALS, new XMLSyntaxRule[]{
-                    new ElementRule(IntervalList.class, 1, Integer.MAX_VALUE)
-                }),
-                new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
+            /*new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                     new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
-                })
-            ),
+            }),*/
+            new ElementRule(INTERVALS, new XMLSyntaxRule[]{
+                    new ElementRule(IntervalList.class, 1, Integer.MAX_VALUE)
+            }),
             new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),

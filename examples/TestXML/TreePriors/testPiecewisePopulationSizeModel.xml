@@ -158,20 +158,38 @@
 		</constantSize>
 	</coalescentSimulator>
 
-	<!-- A prior assumption that the population size has remained constant       -->
-	<!-- throughout the time spanned by the genealogy.                           -->
-	<constantPopulationSize id="constant" units="years">
+	<piecewisePopulationSize id="piecewise" units="years">
 		<logPopulationSize>
-			<parameter id="constant.logPopSize" value="0.0"/>
+			<parameter id="piecewise.logPopSize" value="1.0" lower="0.0"/>
 		</logPopulationSize>
-	</constantPopulationSize>
+		<epochs>
+			<exponentialPopulationSize id="exponential1" units="years">
+				<growthRate>
+					<parameter id="piecewise.growthRate1" value="0.0"/>
+				</growthRate>
+			</exponentialPopulationSize>
+			<exponentialPopulationSize id="exponential2" units="years">
+				<growthRate>
+					<parameter id="piecewise.growthRate2" value="0.0"/>
+				</growthRate>
+			</exponentialPopulationSize>
+		</epochs>
+		<epochDurations>
+			<parameter id="piecewise.durations" value="20.0"/>
+		</epochDurations>
+	</piecewisePopulationSize>
 
-	<!--                                                                         -->
-	<statistic id="constant.popSize" name="N0">
-		<constantPopulationSize idref="constant"/>
-	</statistic>
+    <!--                                                                         -->
+    <statistic id="piecewise.popSize" name="N0">
+        <piecewisePopulationSize idref="piecewise"/>
+    </statistic>
 
-	<!-- Generate a tree model                                                   -->
+    <!--                                                                         -->
+    <statistic id="piecewise.transitionTimes" name="transitionTimes">
+        <piecewisePopulationSize idref="piecewise"/>
+    </statistic>
+
+    <!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
 		<coalescentTree idref="startingTree"/>
 		<rootHeight>
@@ -194,11 +212,12 @@
 	<tmrcaStatistic id="age(root)" absolute="true">
 		<treeModel idref="treeModel"/>
 	</tmrcaStatistic>
+	
 
 	<!-- Generate a coalescent likelihood                                        -->
 	<coalescentLikelihood id="coalescent">
 		<model>
-			<constantPopulationSize idref="constant"/>
+			<piecewisePopulationSize idref="piecewise"/>
 		</model>
 		<populationTree>
 			<treeModel idref="treeModel"/>
@@ -282,14 +301,20 @@
 		<subtreeJump weight="3">
 			<treeModel idref="treeModel"/>
 		</subtreeJump>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="piecewise.logPopSize"/>
+		</scaleOperator>
 		<randomWalkOperator windowSize="1.0" weight="3">
-			<parameter idref="constant.logPopSize"/>
+			<parameter idref="piecewise.growthRate1"/>
+		</randomWalkOperator>
+		<randomWalkOperator windowSize="1.0" weight="3">
+			<parameter idref="piecewise.growthRate2"/>
 		</randomWalkOperator>
 	</operators>
 	
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testConstantPopulationSizeModel.ops">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testPiecewisePopulationSizeModel.ops">
 		<joint id="joint">
 			<prior id="prior">
 				<logNormalPrior mu="1.0" sigma="1.25" offset="0.0">
@@ -305,8 +330,14 @@
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
 				<normalPrior mean="0.0" stdev="1.0">
-					<parameter idref="constant.logPopSize"/>
+					<parameter idref="piecewise.logPopSize"/>
 				</normalPrior>
+				<laplacePrior mean="0.0" scale="1.0">
+					<parameter idref="piecewise.growthRate1"/>
+				</laplacePrior>
+				<laplacePrior mean="0.0" scale="1.0">
+					<parameter idref="piecewise.growthRate2"/>
+				</laplacePrior>
 				<coalescentLikelihood idref="coalescent"/>
 
 				<strictClockBranchRates idref="branchRates"/>
@@ -334,22 +365,31 @@
 			<column label="clock.rate" sf="6" width="12">
 				<parameter idref="clock.rate"/>
 			</column>
-			<column label="popSize" sf="6" width="12">
-				<parameter idref="constant.popSize"/>
+			<column label="logPopSize" sf="6" width="12">
+				<parameter idref="piecewise.popSize"/>
+			</column>
+			<column label="growthRate1" sf="6" width="12">
+				<parameter idref="piecewise.growthRate1"/>
+			</column>
+			<column label="growthRate2" sf="6" width="12">
+				<parameter idref="piecewise.growthRate2"/>
 			</column>
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="testConstantPopulationSizeModel.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testPiecewisePopulationSizeModel.log" overwrite="false">
 			<joint idref="joint"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
 			<parameter idref="treeModel.rootHeight"/>
 			<tmrcaStatistic idref="age(root)"/>
 			<treeLengthStatistic idref="treeLength"/>
-			<parameter idref="constant.logPopSize"/>
-			<statistic idref="constant.popSize"/>
-			<parameter idref="kappa"/>
+			<parameter idref="piecewise.logPopSize"/>
+            <parameter idref="piecewise.popSize"/>
+            <parameter idref="piecewise.growthRate1"/>
+			<parameter idref="piecewise.growthRate2"/>
+            <parameter idref="piecewise.transitionTimes"/>
+            <parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
 			<parameter idref="clock.rate"/>
 			<rateStatistic idref="meanRate"/>
@@ -360,7 +400,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testConstantPopulationSizeModel.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testPiecewisePopulationSizeModel.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<strictClockBranchRates idref="branchRates"/>

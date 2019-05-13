@@ -148,28 +148,19 @@
 		<alignment idref="alignment"/>
 	</patterns>
 
+	<!-- A prior assumption that the population size has remained constant       -->
+	<!-- throughout the time spanned by the genealogy.                           -->
+	<constantSize id="constant" units="years">
+		<populationSize>
+			<parameter id="constant.popSize" value="1.0"/>
+		</populationSize>
+	</constantSize>
+
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<coalescentSimulator id="startingTree">
 		<taxa idref="taxa"/>
-		<constantSize units="years">
-			<populationSize>
-				<parameter value="1.0"/>
-			</populationSize>
-		</constantSize>
+		<constantSize idref="constant"/>
 	</coalescentSimulator>
-
-	<!-- A prior assumption that the population size has remained constant       -->
-	<!-- throughout the time spanned by the genealogy.                           -->
-	<constantPopulationSize id="constant" units="years">
-		<logPopulationSize>
-			<parameter id="constant.logPopSize" value="0.0"/>
-		</logPopulationSize>
-	</constantPopulationSize>
-
-	<!--                                                                         -->
-	<statistic id="constant.popSize" name="N0">
-		<constantPopulationSize idref="constant"/>
-	</statistic>
 
 	<!-- Generate a tree model                                                   -->
 	<treeModel id="treeModel">
@@ -198,7 +189,7 @@
 	<!-- Generate a coalescent likelihood                                        -->
 	<coalescentLikelihood id="coalescent">
 		<model>
-			<constantPopulationSize idref="constant"/>
+			<constantSize idref="constant"/>
 		</model>
 		<populationTree>
 			<treeModel idref="treeModel"/>
@@ -282,14 +273,14 @@
 		<subtreeJump weight="3">
 			<treeModel idref="treeModel"/>
 		</subtreeJump>
-		<randomWalkOperator windowSize="1.0" weight="3">
-			<parameter idref="constant.logPopSize"/>
-		</randomWalkOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="constant.popSize"/>
+		</scaleOperator>
 	</operators>
 	
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testConstantPopulationSizeModel.ops">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testConstantSize.ops">
 		<joint id="joint">
 			<prior id="prior">
 				<logNormalPrior mu="1.0" sigma="1.25" offset="0.0">
@@ -304,9 +295,9 @@
 					</ctmcScale>
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
-				<normalPrior mean="0.0" stdev="1.0">
-					<parameter idref="constant.logPopSize"/>
-				</normalPrior>
+				<logNormalPrior mu="1.0" sigma="1.0" offset="0.0">
+					<parameter idref="constant.popSize"/>
+				</logNormalPrior>
 				<coalescentLikelihood idref="coalescent"/>
 
 				<strictClockBranchRates idref="branchRates"/>
@@ -340,15 +331,14 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="testConstantPopulationSizeModel.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testConstantSize.log" overwrite="false">
 			<joint idref="joint"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
 			<parameter idref="treeModel.rootHeight"/>
 			<tmrcaStatistic idref="age(root)"/>
 			<treeLengthStatistic idref="treeLength"/>
-			<parameter idref="constant.logPopSize"/>
-			<statistic idref="constant.popSize"/>
+			<parameter idref="constant.popSize"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
 			<parameter idref="clock.rate"/>
@@ -360,7 +350,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testConstantPopulationSizeModel.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testConstantSize.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<strictClockBranchRates idref="branchRates"/>

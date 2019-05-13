@@ -147,7 +147,7 @@
 	<patterns id="patterns" from="1" strip="false">
 		<alignment idref="alignment"/>
 	</patterns>
-
+	
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<coalescentSimulator id="startingTree">
 		<taxa idref="taxa"/>
@@ -158,17 +158,20 @@
 		</constantSize>
 	</coalescentSimulator>
 
-	<!-- A prior assumption that the population size has remained constant       -->
+	<!-- A prior assumption that the population size has grown exponentially     -->
 	<!-- throughout the time spanned by the genealogy.                           -->
-	<constantPopulationSize id="constant" units="years">
+	<exponentialPopulationSize id="exponential" units="years">
 		<logPopulationSize>
-			<parameter id="constant.logPopSize" value="0.0"/>
+			<parameter id="exponential.logPopSize" value="0.0"/>
 		</logPopulationSize>
-	</constantPopulationSize>
+		<growthRate>
+			<parameter id="exponential.growthRate" value="0.0"/>
+		</growthRate>
+	</exponentialPopulationSize>
 
 	<!--                                                                         -->
-	<statistic id="constant.popSize" name="N0">
-		<constantPopulationSize idref="constant"/>
+	<statistic id="exponential.popSize" name="N0">
+		<exponentialPopulationSize idref="exponential"/>
 	</statistic>
 
 	<!-- Generate a tree model                                                   -->
@@ -194,11 +197,11 @@
 	<tmrcaStatistic id="age(root)" absolute="true">
 		<treeModel idref="treeModel"/>
 	</tmrcaStatistic>
-
+	
 	<!-- Generate a coalescent likelihood                                        -->
 	<coalescentLikelihood id="coalescent">
 		<model>
-			<constantPopulationSize idref="constant"/>
+			<exponentialPopulationSize idref="exponential"/>
 		</model>
 		<populationTree>
 			<treeModel idref="treeModel"/>
@@ -283,13 +286,16 @@
 			<treeModel idref="treeModel"/>
 		</subtreeJump>
 		<randomWalkOperator windowSize="1.0" weight="3">
-			<parameter idref="constant.logPopSize"/>
+			<parameter idref="exponential.logPopSize"/>
+		</randomWalkOperator>
+		<randomWalkOperator windowSize="1.0" weight="3">
+			<parameter idref="exponential.growthRate"/>
 		</randomWalkOperator>
 	</operators>
 	
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testConstantPopulationSizeModel.ops">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testExponentialPopulationSizeModel.ops">
 		<joint id="joint">
 			<prior id="prior">
 				<logNormalPrior mu="1.0" sigma="1.25" offset="0.0">
@@ -305,10 +311,13 @@
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
 				<normalPrior mean="0.0" stdev="1.0">
-					<parameter idref="constant.logPopSize"/>
+					<parameter idref="exponential.logPopSize"/>
 				</normalPrior>
+				<laplacePrior mean="0.0" scale="1.0">
+					<parameter idref="exponential.growthRate"/>
+				</laplacePrior>
 				<coalescentLikelihood idref="coalescent"/>
-
+				
 				<strictClockBranchRates idref="branchRates"/>
 			</prior>
 			<likelihood id="likelihood">
@@ -334,21 +343,25 @@
 			<column label="clock.rate" sf="6" width="12">
 				<parameter idref="clock.rate"/>
 			</column>
-			<column label="popSize" sf="6" width="12">
-				<parameter idref="constant.popSize"/>
+			<column label="logPopSize" sf="6" width="12">
+				<parameter idref="exponential.popSize"/>
+			</column>
+			<column label="growthRate" sf="6" width="12">
+				<parameter idref="exponential.growthRate"/>
 			</column>
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="testConstantPopulationSizeModel.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testExponentialPopulationSizeModel.log" overwrite="false">
 			<joint idref="joint"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
 			<parameter idref="treeModel.rootHeight"/>
 			<tmrcaStatistic idref="age(root)"/>
 			<treeLengthStatistic idref="treeLength"/>
-			<parameter idref="constant.logPopSize"/>
-			<statistic idref="constant.popSize"/>
+			<parameter idref="exponential.logPopSize"/>
+			<parameter idref="exponential.popSize"/>
+			<parameter idref="exponential.growthRate"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
 			<parameter idref="clock.rate"/>
@@ -360,7 +373,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testConstantPopulationSizeModel.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testExponentialPopulationSizeModel.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<strictClockBranchRates idref="branchRates"/>

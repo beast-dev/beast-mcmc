@@ -41,7 +41,7 @@ public class PiecewisePopulationSizeModelParser extends AbstractXMLObjectParser 
 
     public static final String PIECEWISE_POPULATION_SIZE = "piecewisePopulationSize";
     public static final String EPOCHS = "epochs";
-    public static final String POPULATION_SIZE = "populationSize";
+    public static final String LOG_POPULATION_SIZE = "logPopulationSize";
     public static final String EPOCH_DURATIONS = "epochDurations";
 
     public String getParserName() {
@@ -53,7 +53,7 @@ public class PiecewisePopulationSizeModelParser extends AbstractXMLObjectParser 
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         Parameter epochDurations = (Parameter)xo.getElementFirstChild(EPOCH_DURATIONS);
-        Parameter populationSize = (Parameter)xo.getElementFirstChild(POPULATION_SIZE);
+        Parameter populationSize = (Parameter)xo.getElementFirstChild(LOG_POPULATION_SIZE);
 
         XMLObject cxo = xo.getChild(EPOCHS);
         List<PopulationSizeModel> epochs = cxo.getAllChildren(PopulationSizeModel.class);
@@ -86,9 +86,7 @@ public class PiecewisePopulationSizeModelParser extends AbstractXMLObjectParser 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
             new ElementRule(EPOCHS,
                     new XMLSyntaxRule[]{new ElementRule(PopulationSizeModel.class, 1, Integer.MAX_VALUE)}),
-            new ElementRule(POPULATION_SIZE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(EPOCH_DURATIONS,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+            new ElementRule(LOG_POPULATION_SIZE, Parameter.class),
+            new ElementRule(EPOCH_DURATIONS, Parameter.class)
     };
 }

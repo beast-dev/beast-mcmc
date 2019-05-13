@@ -26,10 +26,7 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.util.Units;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 /**
  * This interface provides a model that returns a PopulationSizeFunction.
@@ -49,6 +46,8 @@ public abstract class PopulationSizeModel extends AbstractModel implements Units
             this.logN0Parameter = new Parameter.Default(1);
         }
         addVariable(this.logN0Parameter);
+
+        addStatistic(new N0Statistic());
 
         setUnits(units);
     }
@@ -77,6 +76,22 @@ public abstract class PopulationSizeModel extends AbstractModel implements Units
     }
 
     private final Parameter logN0Parameter;
+
+    public class N0Statistic extends Statistic.Abstract {
+
+        public N0Statistic() {
+            super("N0");
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(int i) {
+            return getN0();
+        }
+
+    }
 
     // **************************************************************
     // Model IMPLEMENTATION

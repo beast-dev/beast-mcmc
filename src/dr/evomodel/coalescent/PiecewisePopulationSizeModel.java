@@ -25,9 +25,9 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.wrightfisher.Population;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
 
 import java.util.ArrayList;
@@ -95,6 +95,8 @@ public class PiecewisePopulationSizeModel extends PopulationSizeModel {
 
         this.epochDurations = epochDurations;
         addVariable(this.epochDurations);
+
+        addStatistic(new TransitionTimesStatistic());
     }
 
     @Override
@@ -117,7 +119,6 @@ public class PiecewisePopulationSizeModel extends PopulationSizeModel {
             double N = epochs.get(0).getPopulationSizeFunction().getLogDemographic(t);
             for (int i = 1; i < epochs.size(); i++) {
                 epochs.get(i).setLogN0(N);
-                t += epochDurations.getParameterValue(i);
                 N = epochs.get(i).getPopulationSizeFunction().getLogDemographic(t);
             }
             updateEpochs = false;
@@ -157,14 +158,14 @@ public class PiecewisePopulationSizeModel extends PopulationSizeModel {
                     int epochIndex = 0;
 
                     // crawl until we find the epoch that contains the start time
-                    while (t0 > epochDurations.getParameterValue(epochIndex)) {
+                    while (epochIndex < epochDurations.getDimension() && t0 > epochDurations.getParameterValue(epochIndex)) {
                         t0 -= epochDurations.getParameterValue(epochIndex);
                         epochIndex += 1;
                     }
 
                     // now crawl until we find the epoch that contains the finish time, adding
                     // all the piece-wise integrals as we go
-                    while (t1 > epochDurations.getParameterValue(epochIndex)) {
+                    while (epochIndex < epochDurations.getDimension() && t1 > epochDurations.getParameterValue(epochIndex)) {
                         integral += epochs.get(epochIndex).getPopulationSizeFunction()
                                 .getIntegral(t0, epochDurations.getParameterValue(epochIndex));
                         t0 = 0;
@@ -190,6 +191,26 @@ public class PiecewisePopulationSizeModel extends PopulationSizeModel {
             };
         }
         return populationSizeFunction;
+    }
+
+    public class TransitionTimesStatistic extends Statistic.Abstract {
+
+        public TransitionTimesStatistic() {
+            super("transitionTimes");
+        }
+
+        public int getDimension() {
+            return epochDurations.getDimension();
+        }
+
+        public double getStatisticValue(int i) {
+            double time = 0;
+            for (int dim = 0; dim <= i; dim ++) {
+                time += epochDurations.getStatisticValue(dim);
+            }
+            return time;
+        }
+
     }
 
     //

@@ -228,7 +228,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     private StepSize findReasonableStepSize(double[] initialPosition) {
 
-        double stepSize = 1;
+        double stepSize = 0.01;
 //        final double[] mass = massProvider.getMass();
         WrappedVector momentum = preconditioning.drawInitialMomentum();
         int count = 1;
@@ -256,7 +256,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             //"one frog jump!"
             try {
                 doLeap(position, momentum, stepSize);
-            } catch (NumericInstabilityException e) {
+            } catch (NumericInstabilityException e) { //todo: fix the error catch
                 handleInstability();
             }
 
@@ -274,7 +274,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         leapFrogEngine.setParameter(initialPosition);
 
-        return new StepSize(stepSize);
+        return new StepSize(0.001);//todo: a temporary fix
     }
 
     private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {

@@ -29,6 +29,7 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
 import dr.xml.XMLObject;
+import org.apache.commons.math.util.FastMath;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -643,11 +644,13 @@ public interface Transform {
     class FisherZTransform extends UnivariableTransform {
 
         public double transform(double value) {
-            return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
+//            return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
+            return FastMath.atanh(value);
         }
 
         public double inverse(double value) {
-            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
+//            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
+            return FastMath.tanh(value);  // optional: Math.tanh(value);
         }
 
         public double gradientInverse(double value) {

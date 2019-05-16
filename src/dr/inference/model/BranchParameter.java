@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates.BranchRateTransform;
+import dr.evomodel.branchratemodel.BranchRateModel;
 
 /**
  * @author Marc Suchard
@@ -37,13 +38,13 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates.BranchRateTransform;
 public class BranchParameter extends Parameter.Abstract implements VariableListener, ModelListener {
 
     final private CompoundParameter parameter;
-    final private ArbitraryBranchRates branchRateModel;
+    final private BranchRateModel branchRateModel;
     final private Parameter rootParameter;
     final private Tree tree;
 
     public BranchParameter(String name,
                            Tree tree,
-                           ArbitraryBranchRates branchRateModel,
+                           BranchRateModel branchRateModel,
                            Parameter rootParameter) {
         super(name);
 
@@ -92,11 +93,10 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     @Override
     public double getParameterValue(int dim) {
 
-        if (dim == tree.getNodeCount() - 1) {
+        if (dim == tree.getRoot().getNumber()) {
             return rootParameter.getParameterValue(0);
         } else {
-            BranchRateTransform transform = getTransform();
-            return transform.transform(parameter.getParameterValue(dim), tree, tree.getNode(((ArbitraryBranchRates) branchRateModel).getNodeNumberFromParameterIndex(dim)));
+            return branchRateModel.getBranchRate(tree, tree.getNode(dim));
         }
 
     }
@@ -175,8 +175,9 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     }
 
     public double getChainGradient(Tree tree, NodeRef node) {
-        final double raw = parameter.getParameterValue(branchRateModel.getParameterIndexFromNode(node));
-        return branchRateModel.getTransform().differential(raw, tree, node);
+//        final double raw = parameter.getParameterValue(branchRateModel.getParameterIndexFromNode(node));
+//        return branchRateModel.getTransform().differential(raw, tree, node);
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override
@@ -190,11 +191,11 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     }
 
     private class BranchSpecificProxyParameter extends Parameter.Proxy {
-        private ArbitraryBranchRates branchRateModel;
+        private BranchRateModel branchRateModel;
         private final int nodeNum;
         private Tree tree;
 
-        private BranchSpecificProxyParameter(ArbitraryBranchRates branchRateModel,
+        private BranchSpecificProxyParameter(BranchRateModel branchRateModel,
                                              Tree tree,
                                              int nodeNum) {
             super("BranchSpecificProxyParameter." + Integer.toString(nodeNum), 1);
@@ -205,17 +206,13 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
 
         @Override
         public double getParameterValue(int dim) {
-            NodeRef node = tree.getNode(dim);
-            if (tree.isRoot(node)) {
-                return rootParameter.getParameterValue(0);
-            } else {
-                return branchRateModel.getBranchRate(tree, node);
-            }
+            return branchRateModel.getBranchRate(tree, tree.getNode(nodeNum));
         }
 
         @Override
         public void setParameterValue(int dim, double value) {
-            branchRateModel.setBranchRate(tree, tree.getNode(dim), value);
+//            branchRateModel.setBranchRate(tree, tree.getNode(nodeNum), value);
+            throw new RuntimeException("Not yet implemented!");
         }
 
         @Override
@@ -230,14 +227,15 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
 
         @Override
         public void addBounds(Bounds<Double> bounds) {
-            if (getBounds() == null) {
-                super.addBounds(bounds);
-            }
+//            if (getBounds() == null) {
+//                super.addBounds(bounds);
+//            }
         }
 
         @Override
         public Bounds<Double> getBounds() {
-            return branchRateModel.getRateParameter().getBounds();
+//            return branchRateModel.getRateParameter().getBounds();
+            return null;
         }
     }
 }

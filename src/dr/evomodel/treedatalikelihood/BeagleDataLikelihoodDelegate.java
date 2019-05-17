@@ -66,9 +66,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.2
+        // SSE for odd state counts fixed in BEAGLE 3.1.3
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 2;
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
     }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to

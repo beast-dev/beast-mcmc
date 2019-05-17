@@ -57,6 +57,7 @@ public class WorkingPriorParsers {
     public static final String PARAMETER_COLUMN = "parameterColumn";
     public static final String DIMENSION = "dimension";
     public static final String UPPERLIMIT = "upperLimit";
+    public static final String PARAMETER_NAMES = "parameterNames";
 
     /**
      * A special parser that reads a convenient short form of reference priors on parameters.
@@ -466,8 +467,8 @@ public class WorkingPriorParsers {
 
                     upperlimit = dimension;
 
-                    if (xo.hasAttribute("parameterNames")) {
-                        String temp = (String)xo.getAttribute("parameterNames");
+                    if (xo.hasAttribute(PARAMETER_NAMES)) {
+                        String temp = (String)xo.getAttribute(PARAMETER_NAMES);
                         StringTokenizer token = new StringTokenizer(temp);
                         for (int i = 0; i < dimension; i++) {
                             newParameterName[i] = token.nextToken();

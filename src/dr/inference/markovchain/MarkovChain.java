@@ -263,7 +263,6 @@ public final class MarkovChain implements Serializable {
                 }
 
                 // The new model is evaluated
-                //likelihood.makeDirty(); // TODO: remove after issue #985 https://github.com/beast-dev/beast-mcmc/issues/985
                 score = evaluate(likelihood);
 
                 if (PROFILE) {
@@ -430,7 +429,7 @@ public final class MarkovChain implements Serializable {
                 if (schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
                         currentState >= fullEvaluationCount) {
                     // full evaluation is only switched off when each operator has done a
-                    // minimum number of operations (currently 1) and fullEvalationCount
+                    // minimum number of operations (currently 1) and fullEvaluationCount
                     // operations in total.
 
                     usingFullEvaluation = false;

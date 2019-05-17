@@ -1,5 +1,5 @@
 /*
- * StructuredCoalescentLikelihood.java
+ * OldStructuredCoalescentLikelihood.java
  *
  * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -35,14 +35,15 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Guy Baele
@@ -52,16 +53,15 @@ import java.util.*;
  * "New routes to phylogeography: a Bayesian structured coalescent approximation".
  * PLOS Genetics 11, e1005421; doi: 10.1371/journal.pgen.1005421
  */
-public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood implements Citable {
+public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
     private static final boolean DEBUG = false;
     private static final boolean MATRIX_DEBUG = false;
     private static final boolean UPDATE_DEBUG = false;
 
-    //private static final boolean USE_BEAGLE = false;
     private static final boolean ASSOC_MULTIPLICATION = true;
 
-    public StructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
+    public OldStructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
                                           GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
                                           TaxonList includeSubtree, List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
@@ -415,6 +415,8 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
             System.out.println("active lineage list length = " + activeLineageList.size());
         }
 
+        //TODO use clever bookkeeping here and avoid these frequent calls to getStartLineageProb and getEndLineageProb
+        //TODO implement simple method that return the full arrays, i.e. getStartLineageProbs() and getEndLineageProbs()
         for (int i = 0; i < demes; i++) {
             double startProbs = 0.0;
             double endProbs = 0.0;
@@ -677,6 +679,8 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
         } else if (model == generalSubstitutionModel) {
             likelihoodKnown = false;
             matricesKnown = false;
+            //TODO is this necessary? turns out it is to avoid store/restore issues but why??
+            this.rateChanged = true;
         } else {
             throw new RuntimeException("Unknown handleModelChangedEvent source, exiting.");
         }
@@ -727,7 +731,6 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
     /**
      * Private class that allows for objects that hold the computed probability distribution of lineages among demes
      */
-    //TODO need to implement caching mechanism for this class
     private class ProbDist {
 
         //lineage probability distribution at start of interval
@@ -801,16 +804,15 @@ public class StructuredCoalescentLikelihood extends AbstractCoalescentLikelihood
                     this.setEndLineageProb(k, this.getStartLineageProb(k));
                 }
             } else {
-                //TODO this should be possible in parallel for each lineage within the same coalescent interval
+                //TODO this is inherently parallel and should be implemented as such
                 for (int k = 0; k < demes; k++) {
                     double value = 0.0;
                     for (int l = 0; l < demes; l++) {
-                        value += this.startLineageProbs[l] * migrationMatrix[l*demes+k];
+                        value += this.startLineageProbs[l] * migrationMatrix[l * demes + k];
                     }
                     this.setEndLineageProb(k, value);
                 }
             }
-
         }
 
         public void incrementIntervalLength(double increment, double[] migrationMatrix) {

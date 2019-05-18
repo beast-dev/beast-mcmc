@@ -166,7 +166,11 @@ public class ConvertAlignment extends WrappedAlignment implements dr.util.XHTMLa
             int state3 = alignment.getState(taxonIndex, siteIndex3 + 2);
 
             if (newType == DataType.CODONS) {
-                state = ((Codons)dataType).getState(state1, state2, state3);
+                if (dataType instanceof HiddenCodons) {
+                    state = ((HiddenCodons)dataType).getState(state1, state2, state3);
+                } else {
+                    state = ((Codons) dataType).getState(state1, state2, state3);
+                }
             } else { // newType == DataType.AMINO_ACIDS
                 state = codonTable.getAminoAcidState(((Codons)dataType).getCanonicalState(((Codons)dataType).getState(state1, state2, state3)));
             }

@@ -185,9 +185,6 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         likelihoodKnown = savedLikelihoodKnown;
         logLikelihood = savedLogLikelihood;
-        
-        incrementsKnown = false;
-        likelihoodKnown = false;
     }
 
     @Override

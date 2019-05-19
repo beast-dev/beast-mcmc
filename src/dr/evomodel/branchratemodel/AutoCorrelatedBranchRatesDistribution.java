@@ -50,7 +50,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private final ArbitraryBranchRates branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
-    private final boolean log;
+    private final boolean takeLogBeforeIncrement;
 
     private final Tree tree;
     private final Parameter rateParameter;
@@ -72,12 +72,12 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
                                                  ArbitraryBranchRates branchRateModel,
                                                  ParametricMultivariateDistributionModel distribution,
                                                  BranchVarianceScaling scaling,
-                                                 boolean log) {
+                                                 boolean takeLogBeforeIncrement) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.distribution = distribution;
         this.scaling = scaling;
-        this.log = log;
+        this.takeLogBeforeIncrement = takeLogBeforeIncrement;
 
         this.tree = branchRateModel.getTree();
         this.rateParameter = branchRateModel.getRateParameter();
@@ -157,11 +157,14 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         incrementsKnown = false;
         likelihoodKnown = false;
+        fireModelChanged();
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        incrementsKnown = false;
         likelihoodKnown = false;
+        fireModelChanged();
     }
 
     @Override
@@ -182,6 +185,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         likelihoodKnown = savedLikelihoodKnown;
         logLikelihood = savedLogLikelihood;
+        
+        incrementsKnown = false;
+        likelihoodKnown = false;
     }
 
     @Override
@@ -203,6 +209,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
             logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
         }
         return logLikelihood;
     }
@@ -245,22 +252,22 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         return distribution.logPdf(increments);
     }
 
-    private void recursePreOrder(NodeRef node, double untransformedParentRate) {
+    private void recursePreOrder(NodeRef node, double parentRateAsIncrement) {
 
         if (!tree.isRoot(node)) {
-            final double untransformedRate = transform(branchRateModel.getUntransformedBranchRate(tree, node));
+            final double rateAsIncrement = transform(branchRateModel.getUntransformedBranchRate(tree, node));
             final double branchLength = tree.getBranchLength(node);
             final double rateIncrement = scaling.rescaleIncrement(
-                    untransformedRate - untransformedParentRate, branchLength);
+                    rateAsIncrement - parentRateAsIncrement, branchLength);
 
             increments[branchRateModel.getParameterIndexFromNode(node)] = rateIncrement;
 
-            untransformedParentRate = untransformedRate;
+            parentRateAsIncrement = rateAsIncrement;
         }
 
         if (!tree.isExternal(node)) {
-            recursePreOrder(tree.getChild(node, 0), untransformedParentRate);
-            recursePreOrder(tree.getChild(node, 1), untransformedParentRate);
+            recursePreOrder(tree.getChild(node, 0), parentRateAsIncrement);
+            recursePreOrder(tree.getChild(node, 1), parentRateAsIncrement);
         }
     }
 
@@ -290,11 +297,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     }
 
     private double transform(double x) {
-        return log ? Math.log(x) : x;
+        return takeLogBeforeIncrement ? Math.log(x) : x;
     }
 
     double inverseTransform(double x) {
-        return log ? Math.exp(x) : x;
+        return takeLogBeforeIncrement ? Math.exp(x) : x;
     }
 
     @Override

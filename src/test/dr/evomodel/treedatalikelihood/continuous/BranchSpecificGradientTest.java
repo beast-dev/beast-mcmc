@@ -105,7 +105,7 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
                 = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
 
         // Rates
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, true, null, null);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, true, false, null, null);
         Parameter branchRates = new Parameter.Default(new double[]{10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
         ArbitraryBranchRates rateModel = new ArbitraryBranchRates(treeModel, branchRates, transform, false);
 

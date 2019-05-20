@@ -64,6 +64,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double logLikelihood;
     private double savedLogLikelihood;
 
+    private double logJacobian;
+    private double savedLogJacobian;
+
     private final int dim;
     private double[] increments;
     private double[] savedIncrements;
@@ -174,6 +177,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         savedLikelihoodKnown = likelihoodKnown;
         savedLogLikelihood = logLikelihood;
+        savedLogJacobian = logJacobian;
     }
 
     @Override
@@ -185,12 +189,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         likelihoodKnown = savedLikelihoodKnown;
         logLikelihood = savedLogLikelihood;
+        logJacobian = savedLogJacobian;
     }
 
     @Override
-    protected void acceptState() {
-
-    }
+    protected void acceptState() { }
 
     public double getIncrement(int index) {
         checkIncrements();
@@ -214,6 +217,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        incrementsKnown = false;
     }
 
     @Override
@@ -239,20 +243,25 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private void checkIncrements() {
         if (!incrementsKnown) {
-            recursePreOrder(tree.getRoot(), 0.0);
+            logJacobian =  recursePreOrder(tree.getRoot(), 0.0);
             incrementsKnown = true;
         }
     }
 
     private double calculateLogLikelihood() {
         checkIncrements();
-        return distribution.logPdf(increments);
+        return logJacobian + distribution.logPdf(increments);
     }
 
-    private void recursePreOrder(NodeRef node, double parentRateAsIncrement) {
+    private double recursePreOrder(NodeRef node, double parentRateAsIncrement) {
+
+        double logJacobian = 0.0;
 
         if (!tree.isRoot(node)) {
-            final double rateAsIncrement = transform(branchRateModel.getUntransformedBranchRate(tree, node));
+            final double rate = branchRateModel.getUntransformedBranchRate(tree, node);
+            final double rateAsIncrement = transform(rate);
+            logJacobian += getTransformLogJacobian(rate);
+
             final double branchLength = tree.getBranchLength(node);
             final double rateIncrement = scaling.rescaleIncrement(
                     rateAsIncrement - parentRateAsIncrement, branchLength);
@@ -263,14 +272,18 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         }
 
         if (!tree.isExternal(node)) {
-            recursePreOrder(tree.getChild(node, 0), parentRateAsIncrement);
-            recursePreOrder(tree.getChild(node, 1), parentRateAsIncrement);
+            logJacobian += recursePreOrder(tree.getChild(node, 0), parentRateAsIncrement);
+            logJacobian += recursePreOrder(tree.getChild(node, 1), parentRateAsIncrement);
         }
+
+        return logJacobian;
     }
 
     private void recurseGradientPreOrder(NodeRef node,
                                          double[] gradientWrtBranch,
                                          double[] gradientWrtIncrement) {
+
+        // TODO Handle Jacobian
 
         int index = branchRateModel.getParameterIndexFromNode(node);
 
@@ -295,6 +308,10 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private double transform(double x) {
         return takeLogBeforeIncrement ? Math.log(x) : x;
+    }
+
+    private double getTransformLogJacobian(double x) {
+        return takeLogBeforeIncrement ? -Math.log(x) : 0.0;
     }
 
     double inverseTransform(double x) {

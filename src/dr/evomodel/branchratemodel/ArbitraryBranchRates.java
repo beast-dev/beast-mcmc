@@ -304,12 +304,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
             @Override
             public double differential(double raw, Tree tree, NodeRef node) {
-                throw new RuntimeException("Not yet implemented");
+                return location.getEffect(tree, node);
             }
 
             @Override
             public double secondDifferential(double raw, Tree tree, NodeRef node) {
-                throw new RuntimeException("Not yet implemented");
+                return 0.0;
             }
 
             @Override

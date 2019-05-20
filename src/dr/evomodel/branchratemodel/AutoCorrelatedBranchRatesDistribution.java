@@ -50,7 +50,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private final ArbitraryBranchRates branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
-    private final boolean takeLogBeforeIncrement;
+    private final BranchRateUnits units;
 
     private final Tree tree;
     private final Parameter rateParameter;
@@ -80,7 +80,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         this.branchRateModel = branchRateModel;
         this.distribution = distribution;
         this.scaling = scaling;
-        this.takeLogBeforeIncrement = takeLogBeforeIncrement;
+        this.units = takeLogBeforeIncrement ? BranchRateUnits.STRICTLY_POSITIVE : BranchRateUnits.REAL_LINE;
 
         this.tree = branchRateModel.getTree();
         this.rateParameter = branchRateModel.getRateParameter();
@@ -259,10 +259,12 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         if (!tree.isRoot(node)) {
             final double rate = branchRateModel.getUntransformedBranchRate(tree, node);
-            final double rateAsIncrement = transform(rate);
-            logJacobian += getTransformLogJacobian(rate);
-
+            final double rateAsIncrement = units.transform(rate);
             final double branchLength = tree.getBranchLength(node);
+
+            logJacobian += units.getTransformLogJacobian(rate) + scaling.getTransformLogJacobian(branchLength);
+
+
             final double rateIncrement = scaling.rescaleIncrement(
                     rateAsIncrement - parentRateAsIncrement, branchLength);
 
@@ -306,16 +308,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         }
     }
 
-    private double transform(double x) {
-        return takeLogBeforeIncrement ? Math.log(x) : x;
-    }
-
-    private double getTransformLogJacobian(double x) {
-        return takeLogBeforeIncrement ? -Math.log(x) : 0.0;
-    }
-
     double inverseTransform(double x) {
-        return takeLogBeforeIncrement ? Math.exp(x) : x;
+        return units.inverseTransform(x);
     }
 
     @Override
@@ -325,6 +319,55 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         ).toString();
     }
 
+    public enum BranchRateUnits {
+
+        REAL_LINE("realLine") {
+            @Override
+            double transform(double x) {
+                return x;
+            }
+
+            @Override
+            double getTransformLogJacobian(double x) {
+                return 0.0;
+            }
+
+            @Override
+            double inverseTransform(double x) {
+                return x;
+            }
+        },
+
+        STRICTLY_POSITIVE("strictlyPositive") {
+            @Override
+            double transform(double x) {
+                return Math.log(x);
+            }
+
+            @Override
+            double getTransformLogJacobian(double x) {
+                return -Math.log(x);
+            }
+
+            @Override
+            double inverseTransform(double x) {
+                return Math.exp(x);
+            }
+        };
+
+        BranchRateUnits(String name) { this.name = name; }
+
+        public String getName() { return name; }
+
+        private final String name;
+
+        abstract double transform(double x);
+
+        abstract double getTransformLogJacobian(double x);
+
+        abstract double inverseTransform(double x);
+    }
+
     public enum BranchVarianceScaling {
 
         NONE("none") {
@@ -332,12 +375,20 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double rescaleIncrement(double increment, double branchLength) {
                 return increment;
             }
+
+            @Override
+            double getTransformLogJacobian(double branchLength) { return 0.0; }
         },
 
         BY_TIME("byTime") {
             @Override
             double rescaleIncrement(double increment, double branchLength) {
                 return increment / Math.sqrt(branchLength);
+            }
+
+            @Override
+            double getTransformLogJacobian(double branchLength) {
+                return -0.5 * Math.log(branchLength);
             }
         };
 
@@ -348,6 +399,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         private final String name;
 
         abstract double rescaleIncrement(double increment, double branchLength);
+
+        abstract double getTransformLogJacobian(double branchLength);
 
         public String getName() {
             return name;

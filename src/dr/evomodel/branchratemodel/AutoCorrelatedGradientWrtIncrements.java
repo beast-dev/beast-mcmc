@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
 /**
@@ -41,6 +42,10 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
     private final AutoCorrelatedBranchRatesDistribution distribution;
     private final ArbitraryBranchRates branchRates;
     private final Tree tree;
+
+    private final AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling;
+    private final AutoCorrelatedBranchRatesDistribution.BranchRateUnits units;
+
     private Parameter parameter;
     private double[] cachedIncrements;
 
@@ -48,6 +53,8 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         this.distribution = distribution;
         this.branchRates = distribution.getBranchRateModel();
         this.tree = distribution.getTree();
+        this.scaling = distribution.getScaling();
+        this.units = distribution.getUnits();
     }
 
     @Override
@@ -75,9 +82,18 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     @Override
     public String getReport() {
-        return new CheckGradientNumerically(
-                this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, null
-        ).toString();
+        String report = null;
+        try {
+            report = new CheckGradientNumerically(
+                    this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, null
+            ).getReport();
+        } catch (GradientMismatchException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        report += new dr.math.matrixAlgebra.Vector(cachedIncrements);
+
+        return report;
     }
 
     private Parameter createParameter() {
@@ -110,7 +126,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             public void fireParameterChangedEvent(int index, Parameter.ChangeType type) {
 
                 double[] rates = new double[getDimension()];
-                recurse(tree.getRoot(), rates, cachedIncrements, 1.0);
+                recurse(tree.getRoot(), rates, cachedIncrements, 0.0);
 
                 Parameter rateParameter = distribution.getParameter();
                 for (int i = 0; i < rates.length; ++i) {
@@ -122,20 +138,20 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         };
     }
 
-    private void recurse(NodeRef node, double[] rates, double[] increments, double parentRate) {
-
-        double rate = parentRate;
+    private void recurse(NodeRef node, double[] rates, double[] increments, double parentIncrement) {
+        // TODO I believe this code only works when BranchRateUnits == STRICTLY_POSITIVE
+        double increment = parentIncrement;
 
         if (!tree.isRoot(node)) {
             int index = branchRates.getParameterIndexFromNode(node);
-            rate *= parentRate * distribution.inverseTransform(cachedIncrements[index]);
+            increment += scaling.inverseRescaleIncrement(increments[index], tree.getBranchLength(node));
 
-            rates[index] = rate;
+            rates[index] = units.inverseTransform(increment);
         }
 
         if (!tree.isExternal(node)) {
-            recurse(tree.getChild(node, 0), rates, increments, rate);
-            recurse(tree.getChild(node, 1), rates, increments, rate);
+            recurse(tree.getChild(node, 0), rates, increments, increment);
+            recurse(tree.getChild(node, 1), rates, increments, increment);
         }
     }
 }

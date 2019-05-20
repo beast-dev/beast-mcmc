@@ -124,6 +124,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         double[] gradientWrtBranch = new double[dim];
         recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrements);
+       // addJacobianTerm(gradientWrtBranch);
         return gradientWrtBranch;
     }
 
@@ -143,6 +144,10 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     Tree getTree() { return tree; }
 
+    BranchRateUnits getUnits() { return units; }
+
+    BranchVarianceScaling getScaling() { return scaling; }
+
     ArbitraryBranchRates getBranchRateModel() { return branchRateModel; }
 
     private void rescaleGradientWrtIncrements(double[] gradientWrtIncrements) {
@@ -152,6 +157,17 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
                 int index = branchRateModel.getParameterIndexFromNode(node);
                 gradientWrtIncrements[index] = scaling.rescaleIncrement(
                         gradientWrtIncrements[index], tree.getBranchLength(node));
+            }
+        }
+    }
+
+    private void addJacobianTerm(double[] gradientWrtBranch) {
+        for (int i = 0; i < dim; i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                int index = branchRateModel.getParameterIndexFromNode(node);
+                gradientWrtBranch[index] = units.transformGradient(gradientWrtBranch[index],
+                        branchRateModel.getUntransformedBranchRate(tree, node));
             }
         }
     }
@@ -250,7 +266,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private double calculateLogLikelihood() {
         checkIncrements();
-        return logJacobian + distribution.logPdf(increments);
+        return logJacobian +
+                distribution.logPdf(increments);
     }
 
     private double recursePreOrder(NodeRef node, double parentRateAsIncrement) {
@@ -263,7 +280,6 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             final double branchLength = tree.getBranchLength(node);
 
             logJacobian += units.getTransformLogJacobian(rate) + scaling.getTransformLogJacobian(branchLength);
-
 
             final double rateIncrement = scaling.rescaleIncrement(
                     rateAsIncrement - parentRateAsIncrement, branchLength);
@@ -308,15 +324,25 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         }
     }
 
-    double inverseTransform(double x) {
-        return units.inverseTransform(x);
-    }
+//    double inverseTransform(double x, NodeRef node) {
+//        double branchLength = tree.getBranchLength(node);
+//        return units.inverseTransform(scaling.inverseRescaleIncrement(x,branchLength));
+//    }
 
     @Override
     public String getReport() {
-        return new CheckGradientNumerically(this,
-                0.0, Double.POSITIVE_INFINITY, null
-        ).toString();
+
+        String report = null;
+
+        try {
+            report = new CheckGradientNumerically(this,
+                    0.0, Double.POSITIVE_INFINITY, null
+            ).getReport();
+        } catch (GradientMismatchException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return report;
     }
 
     public enum BranchRateUnits {
@@ -336,6 +362,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double inverseTransform(double x) {
                 return x;
             }
+
+            @Override
+            double transformGradient(double gradient, double value) { return gradient; }
         },
 
         STRICTLY_POSITIVE("strictlyPositive") {
@@ -353,6 +382,12 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double inverseTransform(double x) {
                 return Math.exp(x);
             }
+
+            @Override
+            double transformGradient(double gradient, double value) {
+
+                return gradient - 1.0 / value;
+            }
         };
 
         BranchRateUnits(String name) { this.name = name; }
@@ -363,9 +398,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         abstract double transform(double x);
 
-        abstract double getTransformLogJacobian(double x);
+        abstract double  getTransformLogJacobian(double x);
 
         abstract double inverseTransform(double x);
+
+        abstract double transformGradient(double gradient, double value);
     }
 
     public enum BranchVarianceScaling {
@@ -378,12 +415,20 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
             @Override
             double getTransformLogJacobian(double branchLength) { return 0.0; }
+
+            @Override
+            double inverseRescaleIncrement(double increment, double branchLength) { return increment; }
         },
 
         BY_TIME("byTime") {
             @Override
             double rescaleIncrement(double increment, double branchLength) {
                 return increment / Math.sqrt(branchLength);
+            }
+
+            @Override
+            double inverseRescaleIncrement(double increment, double branchLength) {
+                return increment * Math.sqrt(branchLength);
             }
 
             @Override
@@ -399,6 +444,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         private final String name;
 
         abstract double rescaleIncrement(double increment, double branchLength);
+
+        abstract double inverseRescaleIncrement(double increment, double branchLength);
 
         abstract double getTransformLogJacobian(double branchLength);
 

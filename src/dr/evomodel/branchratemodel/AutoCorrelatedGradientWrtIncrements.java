@@ -89,7 +89,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
         // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)
 
-        int numberDescendents = 0;
+        int numberDescendents = 1;
 
         if (!tree.isExternal(node)) {
             numberDescendents += recursePostOrderToCorrectGradient(tree.getChild(node, 0), gradientWrtIncrements);

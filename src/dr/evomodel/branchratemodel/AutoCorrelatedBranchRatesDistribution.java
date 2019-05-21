@@ -301,8 +301,6 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
                                          double[] gradientWrtBranch,
                                          double[] gradientWrtIncrement) {
 
-        // TODO Handle Jacobian
-
         int index = branchRateModel.getParameterIndexFromNode(node);
 
         if (!tree.isRoot(node)) {
@@ -332,7 +330,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     @Override
     public String getReport() {
 
-        String report = null;
+        String report;
 
         try {
             report = new CheckGradientNumerically(this,
@@ -365,6 +363,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
             @Override
             double transformGradient(double gradient, double value) { return gradient; }
+
+            @Override
+            boolean needsIncrementCorrection() { return false; }
         },
 
         STRICTLY_POSITIVE("strictlyPositive") {
@@ -386,7 +387,14 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             @Override
             double transformGradient(double gradient, double value) {
                 return (gradient - 1.0) / value;
+                // value == r (rate),   \phi = log r
+                // gradient_{\phi} == d/d \phi log p(\phi)
+                // gradient_{rate} == gradient_{\phi} d \phi / d r + d/d r log Jacobian
+                // d \phi / d r == 1/r, d/d r log Jacobian == -1 / r
             }
+
+            @Override
+            boolean needsIncrementCorrection() { return true; }
         };
 
         BranchRateUnits(String name) { this.name = name; }
@@ -402,6 +410,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         abstract double inverseTransform(double x);
 
         abstract double transformGradient(double gradient, double value);
+
+        abstract boolean needsIncrementCorrection();
     }
 
     public enum BranchVarianceScaling {
@@ -444,7 +454,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         abstract double rescaleIncrement(double increment, double branchLength);
 
-        abstract double inverseRescaleIncrement(double increment, double branchLength);
+        abstract double  inverseRescaleIncrement(double increment, double branchLength);
 
         abstract double getTransformLogJacobian(double branchLength);
 

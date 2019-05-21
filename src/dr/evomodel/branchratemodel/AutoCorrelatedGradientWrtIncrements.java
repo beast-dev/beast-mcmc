@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
 /**
@@ -77,12 +76,37 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     @Override
     public double[] getGradientLogDensity() {
-        return distribution.getGradientWrtIncrements();
+
+        double[] gradientWrtIncrements = distribution.getGradientWrtIncrements();
+        if (units.needsIncrementCorrection()) {
+            recursePostOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements);
+        }
+
+        return gradientWrtIncrements;
+    }
+
+    private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
+
+        // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)
+
+        int numberDescendents = 0;
+
+        if (!tree.isExternal(node)) {
+            numberDescendents += recursePostOrderToCorrectGradient(tree.getChild(node, 0), gradientWrtIncrements);
+            numberDescendents += recursePostOrderToCorrectGradient(tree.getChild(node, 1), gradientWrtIncrements);
+        }
+
+        if (!tree.isRoot(node)) {
+            int index = branchRates.getParameterIndexFromNode(node);
+            gradientWrtIncrements[index] -= 1.0 * numberDescendents;  // d / d c_i log-Jacobian
+        }
+
+        return numberDescendents;
     }
 
     @Override
     public String getReport() {
-        String report = null;
+        String report;
         try {
             report = new CheckGradientNumerically(
                     this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, null
@@ -137,7 +161,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
     }
 
     private void recurse(NodeRef node, double[] rates, double[] increments, double parentIncrement) {
-        // TODO I believe this code only works when BranchRateUnits == STRICTLY_POSITIVE
+
         double increment = parentIncrement;
 
         if (!tree.isRoot(node)) {

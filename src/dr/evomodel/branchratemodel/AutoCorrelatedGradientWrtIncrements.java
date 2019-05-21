@@ -82,20 +82,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             recursePostOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements);
         }
 
-        rescaleGradient(gradientWrtIncrements); // TODO make optional depending on scaling
-
         return gradientWrtIncrements;
-    }
-
-    private void rescaleGradient(double[] gradientWrtIncrements) {
-        for (int i = 0; i < tree.getNodeCount(); ++i) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-                int index = branchRates.getParameterIndexFromNode(node);
-                gradientWrtIncrements[index] = scaling.inverseRescaleIncrement(
-                        gradientWrtIncrements[index], tree.getBranchLength(node));
-            }
-        }
     }
 
     private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
@@ -111,7 +98,8 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
         if (!tree.isRoot(node)) {
             int index = branchRates.getParameterIndexFromNode(node);
-            gradientWrtIncrements[index] -= 1.0 * numberDescendents;  // d / d c_i log-Jacobian
+            gradientWrtIncrements[index] -= scaling.inverseRescaleIncrement(
+                    1.0 * numberDescendents, tree.getBranchLength(node));  // d / d c_i log-Jacobian
         }
 
         return numberDescendents;

@@ -121,6 +121,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     public double[] getGradientLogDensity() {
 
         double[] gradientWrtIncrements = getGradientWrtIncrements();
+        rescaleGradientWrtIncrements(gradientWrtIncrements);
 
         double[] gradientWrtBranch = new double[dim];
         recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrements);
@@ -137,7 +138,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         GradientProvider incrementGradientProvider = (GradientProvider) distribution;
         checkIncrements();
         double[] gradientWrtIncrements = incrementGradientProvider.getGradientLogDensity(increments);
-        rescaleGradientWrtIncrements(gradientWrtIncrements);
+//        rescaleGradientWrtIncrements(gradientWrtIncrements);
 
         return gradientWrtIncrements;
     }

@@ -98,7 +98,8 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
         if (!tree.isRoot(node)) {
             int index = branchRates.getParameterIndexFromNode(node);
-            gradientWrtIncrements[index] -= 1.0 * numberDescendents;  // d / d c_i log-Jacobian
+            final double gradientLogJacobian = scaling.inverseRescaleIncrement(-1.0 * numberDescendents, tree.getBranchLength(node));
+            gradientWrtIncrements[index] += gradientLogJacobian;  // d / d c_i log-Jacobian
         }
 
         return numberDescendents;

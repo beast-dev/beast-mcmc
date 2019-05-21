@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 /**
@@ -48,7 +47,6 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     private Parameter parameter;
     private double[] cachedIncrements;
-    private double[] cachedLengths;
 
     public AutoCorrelatedGradientWrtIncrements(AutoCorrelatedBranchRatesDistribution distribution) {
         this.distribution = distribution;
@@ -150,7 +148,6 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             public void setParameterValueQuietly(int dim, double value) {
                 if (cachedIncrements == null) {
                     cachedIncrements = new double[getDimension()];
-                    cachedLengths = new double[getDimension()];
                 }
 
                 cachedIncrements[dim] = value;

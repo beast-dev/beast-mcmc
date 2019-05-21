@@ -91,8 +91,6 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             throw new RuntimeException(e.getMessage());
         }
 
-        report += new dr.math.matrixAlgebra.Vector(cachedIncrements);
-
         return report;
     }
 

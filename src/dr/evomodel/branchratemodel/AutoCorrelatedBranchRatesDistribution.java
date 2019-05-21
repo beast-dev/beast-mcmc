@@ -124,7 +124,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         double[] gradientWrtBranch = new double[dim];
         recurseGradientPreOrder(tree.getRoot(), gradientWrtBranch, gradientWrtIncrements);
-       // addJacobianTerm(gradientWrtBranch);
+        addJacobianTerm(gradientWrtBranch);
         return gradientWrtBranch;
     }
 
@@ -385,8 +385,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
             @Override
             double transformGradient(double gradient, double value) {
-
-                return gradient - 1.0 / value;
+                return (gradient - 1.0) / value;
             }
         };
 

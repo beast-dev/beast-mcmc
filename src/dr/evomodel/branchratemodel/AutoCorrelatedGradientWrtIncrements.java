@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 /**
@@ -47,6 +48,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     private Parameter parameter;
     private double[] cachedIncrements;
+    private double[] cachedLengths;
 
     public AutoCorrelatedGradientWrtIncrements(AutoCorrelatedBranchRatesDistribution distribution) {
         this.distribution = distribution;
@@ -82,7 +84,20 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             recursePostOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements);
         }
 
+        rescaleGradient(gradientWrtIncrements); // TODO make optional depending on scaling
+
         return gradientWrtIncrements;
+    }
+
+    private void rescaleGradient(double[] gradientWrtIncrements) {
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                int index = branchRates.getParameterIndexFromNode(node);
+                gradientWrtIncrements[index] = scaling.inverseRescaleIncrement(
+                        gradientWrtIncrements[index], tree.getBranchLength(node));
+            }
+        }
     }
 
     private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
@@ -135,6 +150,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             public void setParameterValueQuietly(int dim, double value) {
                 if (cachedIncrements == null) {
                     cachedIncrements = new double[getDimension()];
+                    cachedLengths = new double[getDimension()];
                 }
 
                 cachedIncrements[dim] = value;

@@ -138,7 +138,6 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         GradientProvider incrementGradientProvider = (GradientProvider) distribution;
         checkIncrements();
         double[] gradientWrtIncrements = incrementGradientProvider.getGradientLogDensity(increments);
-//        rescaleGradientWrtIncrements(gradientWrtIncrements);
 
         return gradientWrtIncrements;
     }

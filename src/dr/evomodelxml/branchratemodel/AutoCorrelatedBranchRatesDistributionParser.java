@@ -50,7 +50,6 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
                            xo.getChild(ParametricMultivariateDistributionModel.class);
 
         AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling = parseScaling(xo);
-                parseScaling(xo);
 
         boolean log = xo.getAttribute(LOG, false);
 

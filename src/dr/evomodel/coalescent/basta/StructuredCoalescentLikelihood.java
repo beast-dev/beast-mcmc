@@ -36,6 +36,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -101,6 +102,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
         //TODO replace by HashMap might increase performance
         this.activeLineageList = new ArrayList<ProbDist>();
+        this.tempLineageList = new ArrayList<ProbDist>();
 
         this.nodeProbDist = new ProbDist[treeModel.getNodeCount()];
         for (int i = 0; i < this.nodeProbDist.length; i++) {
@@ -247,9 +249,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                             if (DEBUG) {
                                 System.out.println(nodeProbDist[refNode.getNumber()]);
                             }
-                            //activeLineageList.add(newProbDist);
-                            activeLineageList.add(nodeProbDist[refNode.getNumber()]);
-                            //nodeProbDist[refNode.getNumber()] = newProbDist;
+                            //temporary list required to keep accurate track of expected lineage counts
+                            tempLineageList.add(nodeProbDist[refNode.getNumber()]);
+                            //activeLineageList.add(nodeProbDist[refNode.getNumber()]);
                         } else {
                             if (treeModel.getChildCount(refNode) > 2) {
                                 throw new RuntimeException("Structured coalescent currently only allows strictly bifurcating trees.");
@@ -259,8 +261,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                             //ProbDist newProbDist = new ProbDist(demes, intervalLength, refNode, leftChild, rightChild);
                             //newProbDist.setIntervalType(IntervalType.COALESCENT);
                             nodeProbDist[refNode.getNumber()].update(intervalLength, refNode, IntervalType.COALESCENT, leftChild, rightChild);
-                            //activeLineageList.add(newProbDist);
-                            activeLineageList.add(nodeProbDist[refNode.getNumber()]);
+                            //temporary list required to keep accurate track of expected lineage counts
+                            tempLineageList.add(nodeProbDist[refNode.getNumber()]);
+                            //activeLineageList.add(nodeProbDist[refNode.getNumber()]);
                         }
                         j++;
                         if (j >= indices.length) {
@@ -286,9 +289,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                             if (DEBUG) {
                                 System.out.println(nodeProbDist[refNode.getNumber()]);
                             }
-                            //activeLineageList.add(newProbDist);
-                            activeLineageList.add(nodeProbDist[refNode.getNumber()]);
-                            //nodeProbDist[refNode.getNumber()] = newProbDist;
+                            //temporary list required to keep accurate track of expected lineage counts
+                            tempLineageList.add(nodeProbDist[refNode.getNumber()]);
+                            //activeLineageList.add(nodeProbDist[refNode.getNumber()]);
                         } else {
                             throw new RuntimeException("First interval cannot be a coalescent event.");
                         }
@@ -320,9 +323,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         //newProbDist.copyLineageDensities();
                         nodeProbDist[refNode.getNumber()].startLineageProbs[patternList.getPattern(0)[patternList.getTaxonIndex(treeModel.getNodeTaxon(refNode).getId())]] = 1.0;
                         nodeProbDist[refNode.getNumber()].copyLineageDensities();
-                        //activeLineageList.add(newProbDist);
-                        activeLineageList.add(nodeProbDist[refNode.getNumber()]);
-                        //nodeProbDist[refNode.getNumber()] = newProbDist;
+                        //temporary list required to keep accurate track of expected lineage counts
+                        tempLineageList.add(nodeProbDist[refNode.getNumber()]);
+                        //activeLineageList.add(nodeProbDist[refNode.getNumber()]);
                     } else {
                         if (treeModel.getChildCount(refNode) > 2) {
                             throw new RuntimeException("Structured coalescent currently only allows strictly bifurcating trees.");
@@ -331,10 +334,10 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         NodeRef rightChild = treeModel.getChild(refNode, 1);
                         ProbDist leftProbDist = nodeProbDist[leftChild.getNumber()];
                         ProbDist rightProbDist = nodeProbDist[rightChild.getNumber()];
-                        activeLineageList.remove(leftProbDist);
-                        activeLineageList.remove(rightProbDist);
-                        //tempLineageList.remove(leftProbDist);
-                        //tempLineageList.remove(rightProbDist);
+                        //activeLineageList.remove(leftProbDist);
+                        //activeLineageList.remove(rightProbDist);
+                        tempLineageList.remove(leftProbDist);
+                        tempLineageList.remove(rightProbDist);
                         if (DEBUG) {
                             System.out.println("currently active lineages: " + activeLineageList.size());
                         }
@@ -344,9 +347,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                         //lnL += newProbDist.computeCoalescedLineage(leftProbDist, rightProbDist);
                         lnL += nodeProbDist[refNode.getNumber()].computeCoalescedLineage(leftProbDist, rightProbDist);
                         if (!treeModel.isRoot(refNode)) {
-                            //activeLineageList.add(newProbDist);
-                            activeLineageList.add(nodeProbDist[refNode.getNumber()]);
-                            //nodeProbDist[refNode.getNumber()] = newProbDist;
+                            //temporary list required to keep accurate track of expected lineage counts
+                            tempLineageList.add(nodeProbDist[refNode.getNumber()]);
+                            //activeLineageList.add(nodeProbDist[refNode.getNumber()]);
                         } else {
                             if (DEBUG) {
                                 System.out.println("ROOT");
@@ -366,7 +369,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             //compute expected lineage counts here
             if (!(finish == 0.0)) {
                 if (DEBUG) {
-                    System.out.println("Computing expected lineage counts");
+                    System.out.println("Computing expected lineage counts: " + intervalLength);
                 }
                 computeExpectedLineageCounts();
             }
@@ -380,10 +383,10 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             }
 
             //update the list of active lineages for next iteration
-            //activeLineageList.clear();
-            //for (ProbDist pd : tempLineageList) {
-            //    activeLineageList.add(pd);
-            //}
+            activeLineageList.clear();
+            for (ProbDist pd : tempLineageList) {
+                activeLineageList.add(pd);
+            }
             if (DEBUG) {
                 System.out.println("currently active lineages: " + activeLineageList.size() + "\n");
             }
@@ -454,6 +457,10 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             System.out.println("total (log) likelihood = " + (intervalOne + intervalTwo));
         }
 
+        for (ProbDist pd : this.nodeProbDist) {
+            pd.needsUpdate = false;
+        }
+
         return intervalOne + intervalTwo;
     }
 
@@ -465,8 +472,8 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             this.startExpected[i] = 0.0;
             this.endExpected[i] = 0.0;
             for (ProbDist pd : this.activeLineageList) {
-                this.startExpected[i] += pd.getStartLineageProb(i);
-                this.endExpected[i] += pd.getEndLineageProb(i);
+                this.startExpected[i] += pd.startLineageProbs[i];
+                this.endExpected[i] += pd.endLineageProbs[i];
             }
         }*/
 
@@ -516,6 +523,15 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             generalSubstitutionModel.getTransitionProbabilities(branchRate * increment, migrationMatrices[this.currentCoalescentInterval]);
 
             if (MATRIX_DEBUG) {
+                System.out.println("-----------");
+                double[] matrix = new double[demes*demes];
+                generalSubstitutionModel.getInfinitesimalMatrix(matrix);
+                for (int i = 0; i < demes; i++) {
+                    for (int j = 0; j < demes; j++) {
+                        System.out.print(matrix[i*demes+j] + " ");
+                    }
+                    System.out.println();
+                }
                 System.out.println("-----------");
                 System.out.println("Matrix exponentiation (t=" + increment + ") is: ");
                 for (int i = 0; i < demes * demes; i++) {
@@ -700,44 +716,33 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             System.out.println("handleModelChangedEvent: " + model.getModelName() + ", " + object + " (class " + object.getClass() + ")");
         }
         if (model == treeModel) {
-            // If a node event occurs the node and its two child nodes
-            // are flagged for updating (this will result in everything
-            // above being updated as well. Node events occur when a node
-            // is added to a branch, removed from a branch or its height or
-            // rate changes.
-            /*if (((TreeChangedEvent) object).isNodeChanged()) {
-
-
-                double changeHeight = treeModel.getNodeHeight(((TreeChangedEvent) object).getNode());
-                //TODO use what's in times variable to decide which ProbDist to update?
-
-                //TODO give updateTransitionProbabilities more responsibility?
-
-                //TODO NOT SUFFICIENT: sketch out an example
-                for (ProbDist pd : this.nodeProbDist) {
-                    if (treeModel.getNodeHeight(pd.node) > changeHeight) {
-                        pd.needsUpdate = true;
+            /*if (object instanceof TreeChangedEvent) {
+                // If a node event occurs the node and its two child nodes
+                // are flagged for updating (this will result in everything
+                // above being updated as well. Node events occur when a node
+                // is added to a branch, removed from a branch or its height or
+                // rate changes.
+                if (((TreeChangedEvent) object).isNodeChanged()) {
+                    double changeHeight = treeModel.getNodeHeight(((TreeChangedEvent) object).getNode());
+                    //TODO use what's in times variable to decide which ProbDist to update?
+                    //TODO give updateTransitionProbabilities more responsibility?
+                    //TODO NOT SUFFICIENT: sketch out an example
+                    for (ProbDist pd : this.nodeProbDist) {
+                        if (treeModel.getNodeHeight(pd.node) > changeHeight) {
+                            pd.needsUpdate = true;
+                        }
                     }
+                } else if (((TreeChangedEvent) object).isTreeChanged()) {
+                    // Full tree events result in a complete updating of the tree likelihood
+                    // This event type is now used for EmpiricalTreeDistributions.
+                    System.err.println("Full tree update event - these events currently aren't used\n" +
+                            "so either this is in error or a new feature is using them so remove this message.");
+                    updateAllDensities();
+                } else {
+                    // Other event types are ignored (probably trait changes).
+                    //System.err.println("Another tree event has occurred (possibly a trait change).");
                 }
-                updateNodeAndChildren(((TreeChangedEvent) object).getNode());
-                updateRestrictedNodePartials = true;
-
-            } else if (((TreeChangedEvent) object).isTreeChanged()) {
-                // Full tree events result in a complete updating of the tree likelihood
-                // This event type is now used for EmpiricalTreeDistributions.
-                System.err.println("Full tree update event - these events currently aren't used\n" +
-                    "so either this is in error or a new feature is using them so remove this message.");
-                //TODO use a method for this?
-                for (ProbDist pd : this.nodeProbDist) {
-                    pd.needsUpdate = true;
-                }
-            } else {
-                // Other event types are ignored (probably trait changes).
-                //System.err.println("Another tree event has occurred (possibly a trait change).");
             }*/
-
-
-
             //for all the nodes that are older than the event, set needsUpdate to true
             //then trigger a recalculation that makes use of an adjusted traverseTree method (that checks whether
             //or not the ProbDist needs to be updated
@@ -746,15 +751,25 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             matricesKnown = false;
             treeModelUpdateFired = true;
         } else if (model == branchRateModel) {
-            likelihoodKnown = false;
             matricesKnown = false;
             //the following to accommodate events stemming from the upDownOperator
             this.rateChanged = true;
-        } else if (model == generalSubstitutionModel) {
+            /*likelihoodKnown = false;
+            for (ProbDist pd : this.nodeProbDist) {
+                pd.needsUpdate = true;
+            }*/
+            //updateAllDensities();
             likelihoodKnown = false;
+        } else if (model == generalSubstitutionModel) {
             matricesKnown = false;
             //TODO is this necessary? turns out it is to avoid store/restore issues but why??
             this.rateChanged = true;
+            /*likelihoodKnown = false;
+            for (ProbDist pd : this.nodeProbDist) {
+                pd.needsUpdate = true;
+            }*/
+            //updateAllDensities();
+            likelihoodKnown = false;
         } else {
             throw new RuntimeException("Unknown handleModelChangedEvent source, exiting.");
         }
@@ -807,6 +822,13 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         matricesKnown = false;
     }
 
+    protected void updateAllDensities() {
+        for (ProbDist pd : this.nodeProbDist) {
+            pd.needsUpdate = true;
+        }
+        likelihoodKnown = false;
+    }
+
     /**
      * Private class that allows for objects that hold the computed probability distribution of lineages among demes
      */
@@ -828,7 +850,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         private boolean incremented = false;
 
         //internal boolean that indicates if this density needs to be recomputed
-        //private boolean needsUpdate = true;
+        private boolean needsUpdate = true;
 
         //coalescent or sample
         private IntervalType intervalType;
@@ -938,6 +960,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
         }
 
+        //TODO this should really become 1 call to computeEndLineageDensities
         public void incrementIntervalLength(double increment, double[] migrationMatrix) {
             this.intervalLength += increment;
             if (incremented) {
@@ -951,6 +974,9 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
                     throw new RuntimeException("Only incremental matrix exponentiation allowed for performance reasons.");
                 }
             } else {
+                if (DEBUG) {
+                    System.out.println("this.intervalLength computeEndLineageDensities: " + this.intervalLength + " ; increment = " + increment);
+                }
                 computeEndLineageDensities(this.intervalLength, migrationMatrix);
             }
             this.incremented = true;
@@ -1112,7 +1138,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     private ArrayList<ProbDist> activeLineageList;
 
     //temporary list of lineagess
-    //private ArrayList<ProbDist> tempLineageList;
+    private ArrayList<ProbDist> tempLineageList;
 
     //the migration model
     private GeneralSubstitutionModel generalSubstitutionModel;

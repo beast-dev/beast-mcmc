@@ -32,13 +32,11 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.Transform;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
@@ -917,11 +915,18 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     // Need to update to include beta and log-transformed precision parameter
 
     public Parameter getParameter() {
-        return popSizeParameter;
+        Parameter[] allParams = new Parameter[2];
+        allParams[0] = popSizeParameter;
+        allParams[1] = new TransformedParameter(precisionParameter, new Transform.LogTransform());
+        CompoundParameter compParam = new CompoundParameter("All Skygrid Parameters", allParams);
+        System.err.println("compParam.getParameterValue(175): " + compParam.getParameterValue(175));
+        return compParam;
+        // return popSizeParameter;
     }
 
     public int getDimension() {
-        return popSizeParameter.getDimension();
+        System.err.println("getDimension(): " + getParameter().getDimension());
+        return getParameter().getDimension();
     }
 
     public Likelihood getLikelihood() {
@@ -929,11 +934,24 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     }
 
     public double[] getGradientLogDensity() {
-        double [] gradLogDens = new double [popSizeParameter.getSize()];
+        int betaSize = 0;
+        if(beta != null){
+            betaSize = beta.size();
+        }
+        double [] gradLogDens = new double [popSizeParameter.getSize()+1+betaSize];
         double[] currentGamma = popSizeParameter.getParameterValues();
+        double currentPrec = precisionParameter.getParameterValue(0);
+        // a
+        double gammaShape = 0.001;
+        // b = 1/scale
+        double gammaRate = 0.001;
+        // prior sd for beta
+        double betaSigma = 10;
+
         int popSizeDim = popSizeParameter.getSize();
 
-        // handle covariate case later
+        // gradLogDens[0], ... , gradLogDens[popSizeDim-1] correspond to logPopSize
+
         gradLogDens[0] = precisionParameter.getParameterValue(0)*(currentGamma[0]-currentGamma[1])
                 + numCoalEvents[0] - sufficientStatistics[0]*Math.exp(-currentGamma[0]);
 
@@ -969,6 +987,33 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                             + precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i + 1) * bk.getParameterValue(0);
                 }
             }
+        }
+
+        // gradLogDens[popSizeDim] corresponds to log-precision
+        gradLogDens[popSizeDim] = -numGridPoints/2 - (gammaShape-1) + gammaRate*currentPrec;
+        for(int i = 0; i < numGridPoints; i++) {
+            gradLogDens[popSizeDim] = gradLogDens[popSizeDim]
+                    + 1 / 2 * currentPrec * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
+        }
+
+        if(beta != null){
+            for (int k = 0; k < beta.size(); k++) {
+
+                Parameter bk = beta.get(k);
+                MatrixParameter covk = covariates.get(k);
+
+                gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - currentPrec * (currentGamma[0]-currentGamma[1]) * covk.getParameterValue(0, 0) * bk.getParameterValue(0)
+                    -   currentPrec * (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
+
+                for(int i = 1; i < numGridPoints; i++){
+                    gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - currentPrec*(-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])* covk.getParameterValue(0, i) * bk.getParameterValue(0);
+                }
+            }
+        }
+
+        // gradLogDens[popSizeDim+1], ... correspond to betas
+        if(beta != null){
+            // fill in
         }
 
         return gradLogDens;

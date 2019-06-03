@@ -933,6 +933,18 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return this;
     }
 
+    public double[] getGradientWrtLogPopulationSize() {
+        return getGradientLogDensity(); // TODO Just wrt log-population sizes
+    }
+
+    public double[] getGradientWrtPrecision() {
+        return null; // TODO
+    }
+
+    public double[] getGradientWrtRegressionCoefficients() {
+        return null; // TODO
+    }
+
     public double[] getGradientLogDensity() {
         int betaSize = 0;
         if(beta != null){

@@ -915,17 +915,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     // Need to update to include beta and log-transformed precision parameter
 
     public Parameter getParameter() {
-        Parameter[] allParams = new Parameter[2];
-        allParams[0] = popSizeParameter;
-        allParams[1] = new TransformedParameter(precisionParameter, new Transform.LogTransform());
-        CompoundParameter compParam = new CompoundParameter("All Skygrid Parameters", allParams);
-        System.err.println("compParam.getParameterValue(175): " + compParam.getParameterValue(175));
-        return compParam;
-        // return popSizeParameter;
+        return popSizeParameter;
     }
 
     public int getDimension() {
-        System.err.println("getDimension(): " + getParameter().getDimension());
         return getParameter().getDimension();
     }
 
@@ -934,7 +927,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     }
 
     public double[] getGradientWrtLogPopulationSize() {
-        return getGradientLogDensity(); // TODO Just wrt log-population sizes
+        return getGradientLogDensity();
     }
 
     public double[] getGradientWrtLogPrecision() {
@@ -999,8 +992,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         double currentPrec = precisionParameter.getParameterValue(0);
 
         int popSizeDim = popSizeParameter.getSize();
-
-        // gradLogDens[0], ... , gradLogDens[popSizeDim-1] correspond to logPopSize
 
         gradLogDens[0] = currentPrec*(currentGamma[0]-currentGamma[1])
                 + numCoalEvents[0] - sufficientStatistics[0]*Math.exp(-currentGamma[0]);

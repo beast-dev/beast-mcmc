@@ -43,7 +43,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         this.transform = transform;
         this.inverse = inverse;
         this.parameter.addVariableListener(this);
-        addBounds(parameter.getBounds());
+        Bounds bounds = parameter.getBounds();
+        if (bounds != null) {
+            addBounds(bounds);
+        }
     }
 
     public int getDimension() {

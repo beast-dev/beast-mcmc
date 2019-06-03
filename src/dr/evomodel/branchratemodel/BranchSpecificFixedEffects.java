@@ -1,5 +1,6 @@
 package dr.evomodel.branchratemodel;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.*;
@@ -173,6 +174,7 @@ public interface BranchSpecificFixedEffects {
         private final Parameter coefficients;
         private final List<CountableBranchCategoryProvider> categoryProviders;
         private final List<ContinuousBranchValueProvider> valueProviders;
+        private final List<BranchRates> branchRateProviders;
         private final boolean hasIntercept;
 
         private final int dim;
@@ -180,6 +182,7 @@ public interface BranchSpecificFixedEffects {
         public Default(String name,
                        List<CountableBranchCategoryProvider> categoryProviders,
                        List<ContinuousBranchValueProvider> valueProviders,
+                       List<BranchRates> branchRateProviders,
                        Parameter coefficients,
                        boolean hasIntercept) {
             super(name);
@@ -187,9 +190,13 @@ public interface BranchSpecificFixedEffects {
             this.coefficients = coefficients;
             this.categoryProviders = categoryProviders;
             this.valueProviders = valueProviders;
+            this.branchRateProviders = branchRateProviders;
             this.hasIntercept = hasIntercept;
 
-            this.dim = categoryProviders.size() + valueProviders.size() + (hasIntercept ? 1 : 0);
+            this.dim = categoryProviders.size() +
+                    valueProviders.size() +
+                    branchRateProviders.size() +
+                    (hasIntercept ? 1 : 0); // TODO: Do not assume coefficient of 1 for rates models
 
             if (coefficients.getDimension() != dim) {
                 throw new IllegalArgumentException("Invalid parameter dimensions");
@@ -197,6 +204,7 @@ public interface BranchSpecificFixedEffects {
 
             addModels(categoryProviders);
             addModels(valueProviders);
+            addModels(branchRateProviders);
             addVariable(coefficients);
         }
 
@@ -206,7 +214,7 @@ public interface BranchSpecificFixedEffects {
             double[] design = getDesignVector(tree, node);
 
             double sum = 0.0;
-            for (int i = 0; i < design.length; ++i) {
+            for (int i = 0; i < dim; ++i) {
                 sum += design[i] * coefficients.getParameterValue(i);
             }
 
@@ -237,7 +245,16 @@ public interface BranchSpecificFixedEffects {
                 ++offset;
             }
 
+            for (BranchRates branchRates : branchRateProviders) {
+                design[offset] = transformFromBranchRateModel(branchRates.getBranchRate(tree, node));
+                ++offset;
+            }
+
             return design;
+        }
+
+        private double transformFromBranchRateModel(double x) {
+            return Math.log(x);
         }
 
         private void addIntercept(double[] design) {

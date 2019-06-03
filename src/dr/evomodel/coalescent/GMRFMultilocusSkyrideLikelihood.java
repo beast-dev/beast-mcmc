@@ -930,7 +930,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return getGradientLogDensity();
     }
 
-    public double[] getGradientWrtLogPrecision() {
+    public double[] getGradientWrtPrecision() { // Keep on natural-scale, use transformGradient later if wanted
         double [] gradLogDens = new double [precisionParameter.getSize()];
         double[] currentGamma = popSizeParameter.getParameterValues();
         double currentPrec = precisionParameter.getParameterValue(0);

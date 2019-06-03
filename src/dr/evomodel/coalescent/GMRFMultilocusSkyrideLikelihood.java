@@ -937,10 +937,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         int popSizeDim = popSizeParameter.getSize();
 
-        gradLogDens[0] = -numGridPoints/2;
+        gradLogDens[0] = -numGridPoints/(2*currentPrec);
         for(int i = 0; i < numGridPoints; i++) {
             gradLogDens[0] = gradLogDens[0]
-                    + 1 / 2 * currentPrec * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
+                    + 1 / 2 * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
         }
 
         if(beta != null){
@@ -949,11 +949,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 Parameter bk = beta.get(k);
                 MatrixParameter covk = covariates.get(k);
 
-                gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - currentPrec * (currentGamma[0]-currentGamma[1]) * covk.getParameterValue(0, 0) * bk.getParameterValue(0)
-                        -   currentPrec * (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
+                gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - (currentGamma[0]-currentGamma[1]) * covk.getParameterValue(0, 0) * bk.getParameterValue(0)
+                        -  (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
 
                 for(int i = 1; i < numGridPoints; i++){
-                    gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - currentPrec*(-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])* covk.getParameterValue(0, i) * bk.getParameterValue(0);
+                    gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - (-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])* covk.getParameterValue(0, i) * bk.getParameterValue(0);
                 }
             }
         }

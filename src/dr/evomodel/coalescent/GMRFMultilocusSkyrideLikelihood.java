@@ -915,17 +915,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     // Need to update to include beta and log-transformed precision parameter
 
     public Parameter getParameter() {
-        Parameter[] allParams = new Parameter[2];
-        allParams[0] = popSizeParameter;
-        allParams[1] = new TransformedParameter(precisionParameter, new Transform.LogTransform());
-        CompoundParameter compParam = new CompoundParameter("All Skygrid Parameters", allParams);
-        System.err.println("compParam.getParameterValue(175): " + compParam.getParameterValue(175));
-        return compParam;
-        // return popSizeParameter;
+        return popSizeParameter;
     }
 
     public int getDimension() {
-        System.err.println("getDimension(): " + getParameter().getDimension());
         return getParameter().getDimension();
     }
 
@@ -934,77 +927,19 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     }
 
     public double[] getGradientWrtLogPopulationSize() {
-        return getGradientLogDensity(); // TODO Just wrt log-population sizes
+        return getGradientLogDensity();
     }
 
-    public double[] getGradientWrtPrecision() {
-        return null; // TODO
-    }
-
-    public double[] getGradientWrtRegressionCoefficients() {
-        return null; // TODO
-    }
-
-    public double[] getGradientLogDensity() {
-        int betaSize = 0;
-        if(beta != null){
-            betaSize = beta.size();
-        }
-        double [] gradLogDens = new double [popSizeParameter.getSize()+1+betaSize];
+    public double[] getGradientWrtLogPrecision() {
+        double [] gradLogDens = new double [precisionParameter.getSize()];
         double[] currentGamma = popSizeParameter.getParameterValues();
         double currentPrec = precisionParameter.getParameterValue(0);
-        // a
-        double gammaShape = 0.001;
-        // b = 1/scale
-        double gammaRate = 0.001;
-        // prior sd for beta
-        double betaSigma = 10;
 
         int popSizeDim = popSizeParameter.getSize();
 
-        // gradLogDens[0], ... , gradLogDens[popSizeDim-1] correspond to logPopSize
-
-        gradLogDens[0] = precisionParameter.getParameterValue(0)*(currentGamma[0]-currentGamma[1])
-                + numCoalEvents[0] - sufficientStatistics[0]*Math.exp(-currentGamma[0]);
-
-        gradLogDens[popSizeDim-1] = precisionParameter.getParameterValue(0)*(currentGamma[popSizeDim-1]-currentGamma[popSizeDim-2])
-                + numCoalEvents[popSizeDim-1] - sufficientStatistics[popSizeDim-1]*Math.exp(-currentGamma[popSizeDim-1]);
-
-        if(beta != null) {
-            for (int k = 0; k < beta.size(); k++) {
-
-                Parameter b = beta.get(k);
-                MatrixParameter covariate = covariates.get(k);
-
-                gradLogDens[0] = gradLogDens[0] - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 0) * b.getParameterValue(0)
-                        + precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
-
-                gradLogDens[popSizeDim - 1] = gradLogDens[popSizeDim - 1] - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, popSizeDim - 1) * b.getParameterValue(0)
-                        + precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, popSizeDim - 2) * b.getParameterValue(0);
-            }
-        }
-
-        for(int i = 1; i<(popSizeDim-1); i++){
-            gradLogDens[i] = precisionParameter.getParameterValue(0)*(-currentGamma[i-1] + 2*currentGamma[i] - currentGamma[i+1])
-                    + numCoalEvents[i] - sufficientStatistics[i]*Math.exp(-currentGamma[i]);
-
-            if(beta != null) {
-                for (int k = 0; k < beta.size(); k++) {
-
-                    Parameter bk = beta.get(k);
-                    MatrixParameter covk = covariates.get(k);
-
-                    gradLogDens[i] = gradLogDens[i] + precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i - 1) * bk.getParameterValue(0)
-                            - 2 * precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i) * bk.getParameterValue(0)
-                            + precisionParameter.getParameterValue(0) * covk.getParameterValue(0, i + 1) * bk.getParameterValue(0);
-                }
-            }
-        }
-
-        // gradLogDens[popSizeDim] corresponds to log-precision
-        gradLogDens[popSizeDim] = -numGridPoints/2 - (gammaShape-1) + gammaRate*currentPrec;
+        gradLogDens[0] = -numGridPoints/2;
         for(int i = 0; i < numGridPoints; i++) {
-            gradLogDens[popSizeDim] = gradLogDens[popSizeDim]
+            gradLogDens[0] = gradLogDens[0]
                     + 1 / 2 * currentPrec * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
         }
 
@@ -1015,7 +950,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 MatrixParameter covk = covariates.get(k);
 
                 gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - currentPrec * (currentGamma[0]-currentGamma[1]) * covk.getParameterValue(0, 0) * bk.getParameterValue(0)
-                    -   currentPrec * (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
+                        -   currentPrec * (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
 
                 for(int i = 1; i < numGridPoints; i++){
                     gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - currentPrec*(-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])* covk.getParameterValue(0, i) * bk.getParameterValue(0);
@@ -1023,9 +958,76 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             }
         }
 
-        // gradLogDens[popSizeDim+1], ... correspond to betas
+        return gradLogDens;
+    }
+
+    public double[] getGradientWrtRegressionCoefficients() {
+        double [] gradLogDens = new double [beta.size()];
+        double[] currentGamma = popSizeParameter.getParameterValues();
+        double currentPrec = precisionParameter.getParameterValue(0);
+
         if(beta != null){
-            // fill in
+            for (int k = 0; k < beta.size(); k++) {
+
+                MatrixParameter covk = covariates.get(k);
+
+                gradLogDens[k] = - numGridPoints/2 - currentPrec*(currentGamma[0]-currentGamma[1])*covk.getParameterValue(0,0)
+                        - currentPrec*(currentGamma[numGridPoints]-currentGamma[numGridPoints-1])*covk.getParameterValue(0,numGridPoints)
+                        + (1/2)*currentPrec*(currentGamma[1]-currentGamma[0])*(currentGamma[1]-currentGamma[0]);
+
+                for(int i = 1; i < numGridPoints; i++){
+                    gradLogDens[k] = gradLogDens[k] + (1/2)*currentPrec*(currentGamma[i+1]-currentGamma[i])*(currentGamma[i+1]-currentGamma[i])
+                            - currentPrec*(-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])*covk.getParameterValue(i);
+                }
+            }
+        }
+
+        return gradLogDens;
+    }
+
+    public double[] getGradientLogDensity() {
+
+        double [] gradLogDens = new double [popSizeParameter.getSize()];
+        double[] currentGamma = popSizeParameter.getParameterValues();
+        double currentPrec = precisionParameter.getParameterValue(0);
+
+        int popSizeDim = popSizeParameter.getSize();
+
+        gradLogDens[0] = currentPrec*(currentGamma[0]-currentGamma[1])
+                + numCoalEvents[0] - sufficientStatistics[0]*Math.exp(-currentGamma[0]);
+
+        gradLogDens[popSizeDim-1] = currentPrec*(currentGamma[popSizeDim-1]-currentGamma[popSizeDim-2])
+                + numCoalEvents[popSizeDim-1] - sufficientStatistics[popSizeDim-1]*Math.exp(-currentGamma[popSizeDim-1]);
+
+        if(beta != null) {
+            for (int k = 0; k < beta.size(); k++) {
+
+                Parameter b = beta.get(k);
+                MatrixParameter covariate = covariates.get(k);
+
+                gradLogDens[0] = gradLogDens[0] - currentPrec*covariate.getParameterValue(0, 0) * b.getParameterValue(0)
+                        + precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
+
+                gradLogDens[popSizeDim - 1] = gradLogDens[popSizeDim - 1] - currentPrec * covariate.getParameterValue(0, popSizeDim - 1) * b.getParameterValue(0)
+                        + currentPrec*covariate.getParameterValue(0, popSizeDim - 2) * b.getParameterValue(0);
+            }
+        }
+
+        for(int i = 1; i<(popSizeDim-1); i++){
+            gradLogDens[i] = currentPrec*(-currentGamma[i-1] + 2*currentGamma[i] - currentGamma[i+1])
+                    + numCoalEvents[i] - sufficientStatistics[i]*Math.exp(-currentGamma[i]);
+
+            if(beta != null) {
+                for (int k = 0; k < beta.size(); k++) {
+
+                    Parameter bk = beta.get(k);
+                    MatrixParameter covk = covariates.get(k);
+
+                    gradLogDens[i] = gradLogDens[i] + currentPrec*covk.getParameterValue(0, i - 1) * bk.getParameterValue(0)
+                            - 2*currentPrec*covk.getParameterValue(0, i) * bk.getParameterValue(0)
+                            + currentPrec*covk.getParameterValue(0, i + 1) * bk.getParameterValue(0);
+                }
+            }
         }
 
         return gradLogDens;

@@ -64,8 +64,7 @@ public class TreeAnnotator {
     private final static boolean USE_R = false;
 
     private static boolean forceIntegerToDiscrete = false;
-
-    private static boolean computeESS = false;
+    private boolean computeESS = false;
 
     private double maxState = 1;
 
@@ -118,6 +117,7 @@ public class TreeAnnotator {
      * @param heightsOption
      * @param posteriorLimit
      * @param hpd2D
+     * @param computeESS
      * @param targetOption
      * @param targetTreeFileName
      * @param inputFileName
@@ -129,6 +129,7 @@ public class TreeAnnotator {
                          HeightsSummary heightsOption,
                          double posteriorLimit,
                          double[] hpd2D,
+                         boolean computeESS,
                          Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
@@ -137,6 +138,7 @@ public class TreeAnnotator {
 
         this.posteriorLimit = posteriorLimit;
         this.hpd2D = hpd2D;
+        this.computeESS = computeESS;
 
         attributeNames.add("height");
         attributeNames.add("length");
@@ -1242,7 +1244,6 @@ public class TreeAnnotator {
     double posteriorLimit = 0.0;
 //PL:    double hpd2D = 0.80;
     double[] hpd2D = {0.80};
-
     private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();
 
     Set<String> attributeNames = new HashSet<String>();
@@ -1337,6 +1338,8 @@ public class TreeAnnotator {
         String inputFileName = null;
         String outputFileName = null;
 
+        boolean computeESS = false;
+
         if (args.length == 0) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -1408,6 +1411,7 @@ public class TreeAnnotator {
                         heightsOption,
                         posteriorLimit,
                         hpd2D,
+                        computeESS,
                         targetOption,
                         targetTreeFileName,
                         inputFileName,
@@ -1532,7 +1536,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
     }

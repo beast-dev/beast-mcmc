@@ -150,6 +150,8 @@ public interface BranchSpecificFixedEffects {
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
             if (variable == effects.getFixedEffectsParameter()) {
                 fireModelChanged();
+            } else {
+                throw new RuntimeException("Unknown variable: " + variable.getVariableName());
             }
         }
 
@@ -270,7 +272,9 @@ public interface BranchSpecificFixedEffects {
         }
 
         @Override
-        protected void handleModelChangedEvent(Model model, Object object, int index) { }
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+            fireModelChanged();
+        }
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

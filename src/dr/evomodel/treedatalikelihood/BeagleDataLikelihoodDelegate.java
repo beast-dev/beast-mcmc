@@ -408,17 +408,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // end auto resource selection
 
 
-            if (resourceList == null) {
-                List var0 = BeagleFactory.getResourceDetails();
-                resourceList = new int[var0.size()];
-                final int dim = var0.size();
-
-                for (int i = 0; i < dim; i++) {
-                    ResourceDetails resource = (ResourceDetails) var0.get(i);
-                     resourceList[dim - i - 1] = resource.getNumber();  //TODO: confirm reverse order
-                }
-            }
-
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
                     numPartials,

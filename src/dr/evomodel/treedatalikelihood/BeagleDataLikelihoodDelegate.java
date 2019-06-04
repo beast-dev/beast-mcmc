@@ -26,15 +26,15 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.*;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.treelikelihood.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -381,7 +381,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
                 logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
 
-                List<BenchmarkedResourceDetails> benchmarkedResourceDetails = 
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails =
                                                     BeagleFactory.getBenchmarkedResourceDetails(
                                                                                 tipCount,
                                                                                 compactPartialsCount,
@@ -406,6 +406,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
             }
             // end auto resource selection
+
+
+            if (resourceList == null) {
+                List var0 = BeagleFactory.getResourceDetails();
+                resourceList = new int[var0.size()];
+                final int dim = var0.size();
+
+                for (int i = 0; i < dim; i++) {
+                    ResourceDetails resource = (ResourceDetails) var0.get(i);
+                     resourceList[dim - i - 1] = resource.getNumber();  //TODO: confirm reverse order
+                }
+            }
 
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,

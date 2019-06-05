@@ -333,7 +333,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Pjp = matrixPjp;
 
 
-            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true);
+            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true); //TODO: find a way to get effective dimension at tips from IntegratedFactorAnalysisLikelihood
             InversionResult cj = increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, true);
 
             if (TIMING) {

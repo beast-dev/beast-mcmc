@@ -30,8 +30,8 @@
         $Id$
     </description>
 
-    <property name="JDK_SOURCE_VERSION" value="1.6"/>
-    <property name="JDK_TARGET_VERSION" value="1.6"/>
+    <property name="JDK_SOURCE_VERSION" value="1.8"/>
+    <property name="JDK_TARGET_VERSION" value="1.8"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -618,7 +618,7 @@
 
         <copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->                                             
+        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
         <copy todir="${Mac_package_dir}/lib">
             <fileset dir="${Mac_dir}/lib"/>
         </copy>

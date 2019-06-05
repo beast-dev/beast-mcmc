@@ -461,6 +461,15 @@ public class GammaDistribution implements Distribution {
 
     }
 
+    public static double gradLogPdf(double x, double shape, double scale) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    public static double hessianLogPdf(double x, double shape, double scale) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+
     // Private
 
     private static double pointChi2(double prob, double v) {

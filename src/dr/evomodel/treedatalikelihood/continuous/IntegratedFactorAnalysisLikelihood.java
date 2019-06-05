@@ -74,10 +74,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.numTaxa = traitParameter.getParameterCount();
         this.dimTrait = traitParameter.getParameter(0).getDimension();
         this.numFactors = loadings.getColumnDimension();
-        
-        assert(dimTrait == loadings.getRowDimension());
 
-        this.dimPartial =  numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
+        assert (dimTrait == loadings.getRowDimension());
+
+        this.dimPartial = numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
 
         addVariable(traitParameter);
         addVariable(loadings);
@@ -146,7 +146,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return missingFactorIndices;
     }
 
-    public List<Integer> getMissingDataIndices() { return missingDataIndices; }
+    public List<Integer> getMissingDataIndices() {
+        return missingDataIndices;
+    }
 
     @Override
     public CompoundParameter getParameter() {
@@ -226,15 +228,25 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     // Access for FactorAnalysisOperatorAdaptor
 
-    public int getNumberOfFactors() { return numFactors; }
+    public int getNumberOfFactors() {
+        return numFactors;
+    }
 
-    public int getNumberOfTaxa() {  return numTaxa; }
+    public int getNumberOfTaxa() {
+        return numTaxa;
+    }
 
-    public int getNumberOfTraits() { return dimTrait; }
+    public int getNumberOfTraits() {
+        return dimTrait;
+    }
 
-    public MatrixParameterInterface getLoadings() { return loadingsTransposed; }
+    public MatrixParameterInterface getLoadings() {
+        return loadingsTransposed;
+    }
 
-    public Parameter getPrecision() { return traitPrecision; }
+    public Parameter getPrecision() {
+        return traitPrecision;
+    }
 
     // Private class functions
 
@@ -303,7 +315,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
-                                           final int numFactors) {
+                                          final int numFactors) {
 
         final double[] observed = observedIndicators[taxon];
 
@@ -487,7 +499,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             final double traitInnerProduct = computeTraitInnerProduct(taxon);
             final double innerProductChange = traitInnerProduct - factorInnerProduct;
 
-            int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension();
+            int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension(); //TODO: use this effective dimension in safeMultivariateIntegrator
 
             if (DEBUG) {
                 System.err.println("fIP: " + factorInnerProduct);
@@ -667,11 +679,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
 
-    private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(LOADINGS, new XMLSyntaxRule[] {
+    private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameterInterface.class),
             }),
-            new ElementRule(PRECISION, new XMLSyntaxRule[] {
+            new ElementRule(PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
             }),
             // Tree trait parser

@@ -45,7 +45,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     final int dimTrait;
     final PrecisionType precisionType;
 
-    private final boolean[] missingVector;
+    private final boolean[] missingIndicator;
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
@@ -62,14 +62,9 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
         this.precisionType = precisionType;
 
-        boolean[] missingVector = null;
-        if (useMissingIndices == true){
-            missingVector = new boolean[parameter.getDimension()];
-            for (int index : missingIndices){
-                missingVector[index] = true;
-            }
-        }
-        this.missingVector = missingVector;
+
+        this.missingIndicator = ContinuousTraitPartialsProvider.Abstract.indicesToIndicator(
+                missingIndices, parameter.getDimension());
     }
 
     public boolean bufferTips() { return true; }
@@ -88,7 +83,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public List<Integer> getMissingIndices() { return missingIndices; }
 
-    public boolean[] getMissingVector() {return missingVector; }
+    public boolean[] getMissingIndicator() {return missingIndicator; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
@@ -190,7 +185,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
                 partial[offset + j] = p.getParameterValue(pIndex);
 
-                final boolean missing = missingVector != null && missingVector[missingIndex];
+                final boolean missing = missingIndicator != null && missingIndicator[missingIndex];
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);

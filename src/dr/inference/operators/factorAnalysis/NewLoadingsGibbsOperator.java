@@ -32,6 +32,7 @@ import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.*;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ import java.util.concurrent.Executors;
  * @author Max R. Tolkoff
  * @author Marc A. Suchard
  */
-public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
     private NormalDistribution workingPrior;
     private final ArrayList<double[][]> precisionArray;
@@ -240,9 +241,66 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 //    }
 
     @Override
-    public String getOperatorName() { return "newLoadingsGibbsOperator"; }
+    public String getOperatorName() {
+        return "newLoadingsGibbsOperator";
+    }
 
     private static boolean DEBUG = false;
+
+    @Override
+    public String getReport() {
+        int repeats = 100000;
+        int nFac = adaptor.getNumberOfFactors();
+        int nTaxa = adaptor.getNumberOfTaxa();
+        int dim = nFac * nTaxa;
+
+        double[] sums = new double[dim];
+        double[][] sumSquares = new double[dim][dim];
+
+
+        for (int i = 0; i < repeats; i++) {
+            adaptor.fireLoadingsChanged();
+            adaptor.drawFactors();
+            for (int j = 0; j < nTaxa; j++) {
+                for (int k = 0; k < nFac; k++) {
+                    double x = adaptor.getFactorValue(k, j);
+                    sums[k * nTaxa + j] += x;
+
+                    for (int l = 0; l < nTaxa; l++) {
+                        for (int m = 0; m < nFac; m++) {
+                            double y = adaptor.getFactorValue(m, l);
+                            sumSquares[k * nTaxa + j][m * nTaxa + l] += x * y;
+                        }
+                    }
+                }
+            }
+        }
+
+        double[] mean = new double[dim];
+        double[][] cov = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            mean[i] = sums[i] / repeats;
+            for (int j = 0; j < dim; j++) {
+                sumSquares[i][j] /= repeats;
+            }
+        }
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                cov[i][j] = sumSquares[i][j] - mean[i] * mean[j];
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(getOperatorName() + "Report:\n");
+        sb.append("Factor mean:\n");
+        sb.append(new Vector(mean));
+        sb.append("\n\n");
+        sb.append("Factor covariance:\n");
+        sb.append(new Matrix(cov));
+
+
+        return sb.toString();
+    }
 
     @Override
     public double doOperation() {

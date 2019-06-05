@@ -43,8 +43,8 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private static final String NAME = "gmrfSkyrideGradient";
     private static final String WRT_PARAMETER = "wrtParameter";
 
-    private final String COALESCENT_INTERVAL = "coalescentInterval";
-    private final String NODE_HEIGHT = "nodeHeight";
+    private static final String COALESCENT_INTERVAL = "coalescentInterval";
+    private static final String NODE_HEIGHT = "nodeHeight";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

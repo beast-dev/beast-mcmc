@@ -31,7 +31,6 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
@@ -50,7 +49,7 @@ import java.util.List;
  */
 
 public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
-        implements GradientWrtParameterProvider, MultiLociTreeSet, CoalescentIntervalProvider, Citable {
+        implements MultiLociTreeSet, CoalescentIntervalProvider, Citable {
 
     public static final boolean DEBUG = false;
 
@@ -982,7 +981,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return gradLogDens;
     }
 
-    public double[] getGradientLogDensity() {
+    private double[] getGradientLogDensity() {
 
         double [] gradLogDens = new double [popSizeParameter.getSize()];
         double[] currentGamma = popSizeParameter.getParameterValues();

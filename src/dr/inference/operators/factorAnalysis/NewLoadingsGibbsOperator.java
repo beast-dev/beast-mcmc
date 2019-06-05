@@ -150,7 +150,9 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
-                    sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
+                    if (adaptor.isNotMissing(row, k)) {
+                        sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
+                    }
                 answer[i][j] = sum * this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
                     answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();

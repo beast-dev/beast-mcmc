@@ -194,11 +194,9 @@ public interface FactorAnalysisOperatorAdaptor {
         }
 
         @Override
-        public boolean isNotMissing(int trait, int taxon) { //TODO: make more efficient by using indicator array
-            List<Integer> missing = factorLikelihood.getMissingDataIndices();
+        public boolean isNotMissing(int trait, int taxon) {
             int index = taxon * getNumberOfTraits() + trait;
-
-            return !missing.contains(index);
+            return !factorLikelihood.getMissingIndicator()[index];
         }
 
         private static final boolean DEBUG = false;

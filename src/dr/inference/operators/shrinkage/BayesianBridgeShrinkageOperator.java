@@ -82,9 +82,9 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         //
         //   To update the global scale parameter τ, we work directly with the exponential-power density, marginalizing out the latent variables {ωj,uj}. This is a crucial source of efficiency in the bridge MCMC, and leads to the favorable mixing evident in Figure 1. From (1), observe that the posterior for ν ≡ τ−α, given β, is conditionally independent of y, and takes the form
         //
-        //    p(ν | β) ∝ νp/α exp(−ν 􏰑|βj|α) p(ν).
+        //    p(ν | β) propto νp/α exp(−ν |βj|α) p(ν).
         //    j=1
-        //    Therefore if ν has a Gamma(c, d) prior, its conditional posterior will also be a gamma distribution, with hyperparameters c⋆ = c+p/α and d⋆ = d+􏰏pj=1 |βj|α. To sample τ, simply draw ν from this gamma distribution, and use the transformation τ = ν−1/α.
+        //    Therefore if ν has a Gamma(c, d) prior, its conditional posterior will also be a gamma distribution, with hyperparameters c⋆ = c+p/α and d⋆ = d+pj=1 |βj|α. To sample τ, simply draw ν from this gamma distribution, and use the transformation τ = ν−1/α.
     }
 
     private double absSumBeta() {

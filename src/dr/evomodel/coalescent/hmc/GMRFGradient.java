@@ -9,14 +9,17 @@ import dr.inference.model.Parameter;
  * @author Marc A. Suchard
  * @author Mandev Gill
  */
-public abstract class GMRFGradient implements GradientWrtParameterProvider {
+public class GMRFGradient implements GradientWrtParameterProvider {
 
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
+    private final WrtParameter wrtParameter;
     private final Parameter parameter;
 
-    public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood, Parameter parameter) {
+    public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood,
+                        WrtParameter wrtParameter) {
         this.skygridLikelihood = skygridLikelihood;
-        this.parameter = parameter;
+        this.wrtParameter = wrtParameter;
+        parameter = wrtParameter.getParameter(skygridLikelihood);
     }
 
     @Override
@@ -35,41 +38,63 @@ public abstract class GMRFGradient implements GradientWrtParameterProvider {
     }
 
     @Override
-    abstract public double[] getGradientLogDensity();
-
-    public class WrtLogPopulationSizes extends GMRFGradient {
-
-        public WrtLogPopulationSizes(GMRFMultilocusSkyrideLikelihood skygridLikelihood) {
-            super(skygridLikelihood, skygridLikelihood.getPopSizeParameter());
-        }
-
-        @Override
-        public double[] getGradientLogDensity() {
-            return skygridLikelihood.getGradientWrtLogPopulationSize();
-        }
+    public double[] getGradientLogDensity() {
+        return wrtParameter.getGradientLogDensity(skygridLikelihood);
     }
 
-    public class WrtPrecision extends GMRFGradient {
+    public enum WrtParameter {
 
-        public WrtPrecision(GMRFMultilocusSkyrideLikelihood skygridLikelihood) {
-            super(skygridLikelihood, skygridLikelihood.getPrecisionParameter());
+        LOG_POPULATION_SIZES("logPopulationSizes") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getPopSizeParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getGradientWrtLogPopulationSize();
+            }
+        },
+        PRECISION("precision") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getPrecisionParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getGradientWrtPrecision();
+            }
+        },
+        REGRESSION_COEFFICIENTS("regressionCoefficients") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getBetaParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getGradientWrtRegressionCoefficients();
+            }
+        };
+
+        WrtParameter(String name) {
+            this.name = name;
         }
 
-        @Override
-        public double[] getGradientLogDensity() {
-            return skygridLikelihood.getGradientWrtPrecision();
-        }
-    }
+        abstract Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood);
 
-    public class WrtRegressionCoefficients extends GMRFGradient {
+        abstract double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
 
-        public WrtRegressionCoefficients(GMRFMultilocusSkyrideLikelihood skygridLikelihood) {
-            super(skygridLikelihood, skygridLikelihood.getBetaParameter());
-        }
+        private final String name;
 
-        @Override
-        public double[] getGradientLogDensity() {
-            return skygridLikelihood.getGradientWrtRegressionCoefficients();
+        public static WrtParameter parse(String match) {
+            for (WrtParameter type : WrtParameter.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
         }
     }
 }

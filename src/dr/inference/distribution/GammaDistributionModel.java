@@ -25,7 +25,6 @@
 
 package dr.inference.distribution;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;

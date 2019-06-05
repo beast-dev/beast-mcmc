@@ -72,6 +72,7 @@
         <javac source="${JDK_SOURCE_VERSION}" target="${JDK_TARGET_VERSION}" srcdir="${src}" destdir="${build}"
                classpathref="classpath"
                fork="true"
+               includeantruntime="false"
                memoryinitialsize="256m"
                memorymaximumsize="1024m">
             <include name="dr/app/beast/**"/>

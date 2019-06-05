@@ -199,7 +199,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     @Override
     public double[] getGradientLogDensity(Object obj) {
-        double[] x = GradientProvider.convert(obj);
+        double[] x = GradientProvider.toDoubleArray(obj);
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {
@@ -232,7 +232,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     @Override
     public double[] getDiagonalHessianLogDensity(Object obj) {
-        double[] x = GradientProvider.convert(obj);
+        double[] x = GradientProvider.toDoubleArray(obj);
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {

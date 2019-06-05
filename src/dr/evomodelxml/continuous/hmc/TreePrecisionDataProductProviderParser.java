@@ -50,6 +50,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
     private static final String TIME_GUESS = "roughTravelTimeGuess";
+    private static final String OPTIMAL_TRAVEL_TIME_SCALAR = "optimalTravelTimeMultiplyScalar";
     private static final String EIGENVALUE_REPLICATES = "eigenvalueReplicates";
     private static final String MODE = "mode";
     private static final String THREAD_COUNT = "threadCount";
@@ -83,10 +84,8 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
                                                                ContinuousDataLikelihoodDelegate continuousData,
                                                                String traitName) throws XMLParseException {
 
-        double roughTimeGuess = xo.getAttribute(TIME_GUESS, 1.0);
-        if (roughTimeGuess <= 0) {
-            throw new RuntimeException("must provide a positive travel time");
-        }
+        double roughTimeGuess = xo.getAttribute(TIME_GUESS, 0.0);
+        double optimalTravelTimeScalar = xo.getAttribute(OPTIMAL_TRAVEL_TIME_SCALAR, 0.01);
 
         int eigenvalueReplicates = xo.getAttribute(EIGENVALUE_REPLICATES, 1);
 
@@ -99,7 +98,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
             return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
-                    threadCount, roughTimeGuess, eigenvalueReplicates);
+                    threadCount, roughTimeGuess, optimalTravelTimeScalar, eigenvalueReplicates);
         }
     }
 

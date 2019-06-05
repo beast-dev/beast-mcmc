@@ -388,7 +388,7 @@ public class LogNormalDistributionModel extends AbstractModel implements
 
     private double[] getDerivativeLogDensity(Object obj, DerivativeType derivativeType) {
 
-        double[] x = GradientProvider.convert(obj);
+        double[] x = GradientProvider.toDoubleArray(obj);
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {

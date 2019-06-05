@@ -65,6 +65,8 @@ public interface BranchSpecificFixedEffects {
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
             if (variable == location) {
                 fireModelChanged();
+            } else {
+                throw new RuntimeException("Unknown variable: " + variable.getVariableName());
             }
         }
 
@@ -198,7 +200,7 @@ public interface BranchSpecificFixedEffects {
             this.dim = categoryProviders.size() +
                     valueProviders.size() +
                     branchRateProviders.size() +
-                    (hasIntercept ? 1 : 0); // TODO: Do not assume coefficient of 1 for rates models
+                    (hasIntercept ? 1 : 0);  
 
             if (coefficients.getDimension() != dim) {
                 throw new IllegalArgumentException("Invalid parameter dimensions");
@@ -280,6 +282,8 @@ public interface BranchSpecificFixedEffects {
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
             if (variable == getFixedEffectsParameter()) {
                 fireModelChanged();
+            } else {
+                throw new RuntimeException("Unknown variable: " + variable.getVariableName());
             }
         }
 

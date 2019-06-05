@@ -461,6 +461,28 @@ public class GammaDistribution implements Distribution {
 
     }
 
+    public static double gradLogPdf(double x, double shape, double scale) {
+        // TODO Check
+
+        if (x < 0) {
+            return 0;
+        }
+
+        if (shape == -0.5) { // Gelman 2008, hierarchical variance, -1 degrees of freedom
+            return 0.5 / x;
+        } else if (shape == 0.0) { // Uninformative
+            return -1.0 / x;
+        } else if (shape == 1.0) {
+            return -1.0 / scale;
+        } else {
+            return (shape - 1.0) / x - 1.0 / scale;
+        }
+    }
+
+    public static double hessianLogPdf(double x, double shape, double scale) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     // Private
 
     private static double pointChi2(double prob, double v) {

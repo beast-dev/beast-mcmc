@@ -43,6 +43,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String RATES = "rates";
     public static final String RECIPROCAL = "reciprocal";
     public static final String EXP = "exp";
+    private static final String MULTIPLER = "multiplier";
     private static final String CENTER_AT_ONE = "centerAtOne";
 
     public static final String LOCATION = "location";
@@ -94,6 +95,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean exp = xo.getAttribute(EXP, false);
 
+        boolean multipler = xo.getAttribute(MULTIPLER, false);
+
         BranchSpecificFixedEffects locationParameter = null;
         if (xo.hasChildNamed(LOCATION)) {
             Object locationObject = xo.getElementFirstChild(LOCATION);
@@ -109,7 +112,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             scaleParameter = (Parameter) xo.getElementFirstChild(SCALE);
         }
 
-        return make(reciprocal, exp, locationParameter, scaleParameter);
+        return make(reciprocal, exp, multipler, locationParameter, scaleParameter);
     }
 
     public Class getReturnType() {

@@ -3,12 +3,12 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
 
-public class JointBayesianBridge extends BayesianBridgeLikelihood {
+public class OldJointBayesianBridge extends OldBayesianBridgeLikelihood {
 
-    public JointBayesianBridge(Parameter coefficients,
-                               Parameter globalScale,
-                               Parameter localScale,
-                               Parameter exponent) {
+    public OldJointBayesianBridge(Parameter coefficients,
+                                  Parameter globalScale,
+                                  Parameter localScale,
+                                  Parameter exponent) {
         super(coefficients, globalScale, exponent);
         this.localScale = localScale;
 

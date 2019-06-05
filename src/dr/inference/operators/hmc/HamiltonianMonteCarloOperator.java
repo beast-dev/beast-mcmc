@@ -25,19 +25,19 @@
 
 package dr.inference.operators.hmc;
 
-import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PathGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.GeneralOperator;
+import dr.inference.operators.PathDependent;
+import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.inference.operators.PathDependent;
-import dr.math.MathUtils;
 import dr.util.Transform;
 
 /**
@@ -50,9 +50,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
-    final LeapFrogEngine leapFrogEngine;
-    private final Parameter parameter;
-    final MassPreconditioner preconditioning;
+    protected LeapFrogEngine leapFrogEngine;
+    protected final Parameter parameter;
+    protected final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
     protected final double[] mask;
     protected final Transform transform;
@@ -65,7 +65,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this(mode, weight, gradientProvider,
                 parameter, transform, mask,
                 new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0, gradientCheckTolerance,
+                        0, 0, 0,
+                        0, gradientCheckTolerance,
                         10, 0.1),
                 MassPreconditioner.Type.NONE
         );
@@ -78,17 +79,22 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                                          MassPreconditioner.Type preconditioningType) {
 
         super(mode, 0.8); // Stan default
+
         setWeight(weight);
 
         this.gradientProvider = gradientProvider;
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
-        this.preconditioning = preconditioningType.factory(gradientProvider, transform);
+        this.preconditioning = preconditioningType.factory(gradientProvider, transform, runtimeOptions);
         this.parameter = parameter;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
 
-        this.leapFrogEngine = (transform != null ?
+        this.leapFrogEngine = constructLeapFrogEngine(transform);
+    }
+
+    protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
+        return (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,
                         getDefaultInstabilityHandler(), preconditioning, mask) :
                 new LeapFrogEngine.Default(parameter,
@@ -137,6 +143,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
 
         if (shouldUpdatePreconditioning()) {
+            preconditioning.storeSecant(
+                    new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
+                    new WrappedVector.Raw(leapFrogEngine.getLastPosition())
+            );
             preconditioning.updateMass();
         }
 
@@ -174,8 +184,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 if (!Double.isNaN(logLikelihood) && !Double.isInfinite(logLikelihood)) {
                     acceptableSize = true;
                 }
-            } catch (AssertionError error) {
-                // Do nothing
             } catch (Exception exception) {
                 // Do nothing
             }
@@ -307,19 +315,22 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final double randomStepCountFraction;
         final int preconditioningUpdateFrequency;
         final int preconditioningDelay;
+        final int preconditioningMemory;
         final int gradientCheckCount;
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
 
-        public Options(double initialStepSize, int nSteps, double randomStepCountFraction, int preconditioningUpdateFrequency,
-                       int preconditioningDelay, int gradientCheckCount, double gradientCheckTolerance,
+        public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
+                       int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
+                       int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
             this.preconditioningDelay = preconditioningDelay;
+            this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
@@ -372,8 +383,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             leapFrogEngine.updatePosition(position, momentum, stepSize);
 
             if (i < (nStepsThisLeap - 1)) {
-                leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                        mask(gradientProvider.getGradientLogDensity(), mask), stepSize);
+
+                try {
+                    leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                            mask(gradientProvider.getGradientLogDensity(), mask), stepSize);
+                } catch (ArithmeticException e) {
+                    throw new NumericInstabilityException();
+                }
             }
         }
 
@@ -433,16 +449,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         abstract void checkValue(double x) throws NumericInstabilityException;
     }
 
-    @Override
-    public void accept(double deviation) {
-
-        super.accept(deviation);
-        preconditioning.storeSecant(
-                new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
-                new WrappedVector.Raw(leapFrogEngine.getLastPosition())
-        );
-    }
-
     protected InstabilityHandler getDefaultInstabilityHandler() {
         if (DEBUG) {
             return InstabilityHandler.DEBUG;
@@ -468,7 +474,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                             final double functionalStepSize) throws NumericInstabilityException;
 
         void updatePosition(final double[] position,
-                            final ReadableVector momentum,
+                            final WrappedVector momentum,
                             final double functionalStepSize);
 
         void setParameter(double[] position);
@@ -532,7 +538,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
-            public void updatePosition(double[] position, ReadableVector momentum,
+            public void updatePosition(double[] position, WrappedVector momentum,
                                        double functionalStepSize) {
 
                 final int dim = momentum.getDim();

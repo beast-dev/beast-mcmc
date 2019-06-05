@@ -106,7 +106,7 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     }
 
     public Bounds<Double> getBounds() {
-        throwError("getBounds()");
+//        throwError("getBounds()");
         return null;
     }
 

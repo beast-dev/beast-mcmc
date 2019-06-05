@@ -62,6 +62,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 stepSize, nSteps, 0.0,1E-3);
     }
 
+    public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                           Parameter parameter, Transform transform, Parameter mask,
+                           HamiltonianMonteCarloOperator.Options runtimeOptions) {
+        this(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions.initialStepSize, runtimeOptions.nSteps);
+    }
+
     @Override
     protected InstabilityHandler getDefaultInstabilityHandler() {
         return InstabilityHandler.IGNORE;

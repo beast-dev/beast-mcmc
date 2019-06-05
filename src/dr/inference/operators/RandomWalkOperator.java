@@ -159,15 +159,21 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
         double newValue = value;
 
-        if (value < lower) {
+        if (upper == lower) {
+            newValue = upper;
+        } else if (value < lower) {
             if (Double.isInfinite(upper)) {
                 // we are only going to reflect once as the upper bound is at infinity...
                 newValue = lower + (lower - value);
             } else {
-                double remainder = lower - value;
+//                double remainder = lower - value;
+//
+//                double widths = Math.floor(remainder / (upper - lower));
+//                remainder -= (upper - lower) * widths;
 
-                double widths = Math.floor(remainder / (upper - lower));
-                remainder -= (upper - lower) * widths;
+                final double ratio = (lower - value) / (upper - lower);
+                final double widths = Math.floor(ratio);
+                final double remainder = (ratio - widths) * (upper - lower);
 
                 // even reflections
                 if (widths % 2 == 0) {
@@ -183,10 +189,14 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
                 newValue = upper - (newValue - upper);
             } else {
 
-                double remainder = value - upper;
+//                double remainder = value - upper;
+//
+//                double widths = Math.floor(remainder / (upper - lower));
+//                remainder -= (upper - lower) * widths;
 
-                double widths = Math.floor(remainder / (upper - lower));
-                remainder -= (upper - lower) * widths;
+                final double ratio = (value - upper) / (upper - lower);
+                final double widths = Math.floor(ratio);
+                final double remainder = (ratio - widths) * (upper - lower);
 
                 // even reflections
                 if (widths % 2 == 0) {

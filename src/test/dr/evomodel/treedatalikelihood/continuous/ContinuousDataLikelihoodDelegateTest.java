@@ -253,7 +253,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         driftModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 100, 200, 300, 400, 500, 600, 700, 800, 900}),
                 transform, false));
@@ -386,7 +386,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Diffusion
 
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -527,7 +527,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -602,7 +602,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -714,7 +714,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -883,7 +883,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         driftModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 10, 20, 30, 40, 40, 30, 20, 10, 0}),
                 transform, false));
@@ -998,7 +998,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         System.out.println("\nTest Likelihood using diagonal Relaxed OU and factor:");
 
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -1121,7 +1121,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -1186,7 +1186,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));

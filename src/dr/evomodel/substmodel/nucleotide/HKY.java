@@ -328,13 +328,12 @@ public class HKY extends BaseSubstitutionModel implements Citable,
         rateMap[1] = rateMap[4] = 1;
 
         for (int i = 0; i < rateCount; ++i) {
-            differentialRates[i] = wrt.getRate(rateMap[i], normalizingConstant,
-                    this);
+            differentialRates[i] = wrt.getRate(rateMap[i]) / normalizingConstant;
         }
     }
 
     @Override
-    public double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies) {
+    public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] frequencies) {
         return getNormalizationValue(differentialMassMatrix, frequencies);
     }
 
@@ -357,13 +356,17 @@ public class HKY extends BaseSubstitutionModel implements Citable,
     enum WrtHKYModelParameter implements WrtParameter {
         KAPPA {
             @Override
-            public double getRate(int switchCase, double normalizingConstant,
-                                  DifferentiableSubstitutionModel substitutionModel) {
+            public double getRate(int switchCase) {
                 switch (switchCase) {
                     case 0: return 0.0;
-                    case 1: return 1.0 / normalizingConstant; // synonymous transition
+                    case 1: return 1.0; // synonymous transition
                 }
                 throw new IllegalArgumentException("Invalid switch case");
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 1.0;
             }
         }
     }

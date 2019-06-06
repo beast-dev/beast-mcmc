@@ -88,7 +88,7 @@ public class GMRFGradient implements GradientWrtParameterProvider {
 
         private final String name;
 
-        public static WrtParameter parse(String match) {
+        public static WrtParameter factory(String match) {
             for (WrtParameter type : WrtParameter.values()) {
                 if (match.equalsIgnoreCase(type.name)) {
                     return type;

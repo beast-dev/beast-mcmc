@@ -54,7 +54,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
 
-        GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.parse(wrtParameterCase);
+        GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
         if (type != null) {
             return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
         }

@@ -166,10 +166,6 @@ public class RepeatedMeasuresTraitDataModel extends
         return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
     }
 
-    @Override
-    public boolean[] getMissingVector() {
-        return super.getMissingIndicator();
-    }
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";

@@ -108,7 +108,7 @@ public class ContinuousExtensionDelegate {
 
             CompoundParameter dataParameter = dataModel.getParameter();
             DenseMatrix64F extensionVar = dataModel.getExtensionVariance();
-            boolean[] missingVec = dataModel.getMissingVector();
+            boolean[] missingVec = dataModel.getMissingIndicator();
             boolean choleskyKnown = false;
             double[][] cholesky = null;
 

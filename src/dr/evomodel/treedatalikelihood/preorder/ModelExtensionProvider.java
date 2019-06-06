@@ -16,8 +16,6 @@ public interface ModelExtensionProvider {
 
         DenseMatrix64F getExtensionVariance();
 
-        boolean[] getMissingVector(); //TODO: make getMissingVector() part of ContinuousTraitPartialsProvider (not this class)
-
     }
 }
 

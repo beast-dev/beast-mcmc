@@ -40,11 +40,11 @@ import dr.xml.Reportable;
  */
 public class GMRFSkyrideGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
-    protected GMRFSkyrideLikelihood skyrideLikelihood;
-    private WrtParameter wrtParameter;
-    private Parameter parameter;
-    final private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
-    final NodeHeightTransform nodeHeightTransform;
+    private final GMRFSkyrideLikelihood skyrideLikelihood;
+    private final WrtParameter wrtParameter;
+    private final Parameter parameter;
+    private final OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
+    private final NodeHeightTransform nodeHeightTransform;
 
     public GMRFSkyrideGradient(GMRFSkyrideLikelihood gmrfSkyrideLikelihood,
                                WrtParameter wrtParameter,
@@ -175,8 +175,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
             double[] getGradientLogDensity(GMRFSkyrideLikelihood skyrideLikelihood,
                                            OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
                 double[] unSortedNodeHeightGradient = getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
-                double[] sortedNodeHeightGradient = intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
-                return sortedNodeHeightGradient;
+                return intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
             }
 
             @Override
@@ -206,10 +205,6 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
                 }
             }
             return unSortedNodeHeightGradient;
-        };
-
-
-
+        }
     }
-
 }

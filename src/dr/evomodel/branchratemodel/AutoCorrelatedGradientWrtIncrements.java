@@ -107,16 +107,8 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     @Override
     public String getReport() {
-        String report;
-        try {
-            report = new CheckGradientNumerically(
-                    this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, null
-            ).getReport();
-        } catch (GradientMismatchException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
-        return report;
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, null);
     }
 
     private Parameter createParameter() {

@@ -327,18 +327,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     @Override
     public String getReport() {
-
-        String report;
-
-        try {
-            report = new CheckGradientNumerically(this,
-                    0.0, Double.POSITIVE_INFINITY, null
-            ).getReport();
-        } catch (GradientMismatchException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
-        return report;
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                0.0, Double.POSITIVE_INFINITY, null);
     }
 
     public enum BranchRateUnits {

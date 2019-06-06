@@ -26,8 +26,10 @@
 package dr.evomodelxml.coalescent;
 
 
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -41,8 +43,8 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private static final String NAME = "gmrfSkyrideGradient";
     private static final String WRT_PARAMETER = "wrtParameter";
 
-    private final String COALESCENT_INTERVAL = "coalescentInterval";
-    private final String NODE_HEIGHT = "nodeHeight";
+    private static final String COALESCENT_INTERVAL = "coalescentInterval";
+    private static final String NODE_HEIGHT = "nodeHeight";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -51,6 +53,14 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
         GMRFSkyrideLikelihood skyrideLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
+
+        GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
+        if (type != null) {
+            return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
+        }
+
+        // Old behaviour
+
         GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
 
         NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);

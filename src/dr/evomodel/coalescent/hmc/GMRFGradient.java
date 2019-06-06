@@ -4,19 +4,23 @@ import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
  * @author Mandev Gill
  */
-public abstract class GMRFGradient implements GradientWrtParameterProvider {
+public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
 
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
+    private final WrtParameter wrtParameter;
     private final Parameter parameter;
 
-    public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood, Parameter parameter) {
+    public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood,
+                        WrtParameter wrtParameter) {
         this.skygridLikelihood = skygridLikelihood;
-        this.parameter = parameter;
+        this.wrtParameter = wrtParameter;
+        parameter = wrtParameter.getParameter(skygridLikelihood);
     }
 
     @Override
@@ -35,41 +39,81 @@ public abstract class GMRFGradient implements GradientWrtParameterProvider {
     }
 
     @Override
-    abstract public double[] getGradientLogDensity();
-
-    public class WrtLogPopulationSizes extends GMRFGradient {
-
-        public WrtLogPopulationSizes(GMRFMultilocusSkyrideLikelihood skygridLikelihood) {
-            super(skygridLikelihood, skygridLikelihood.getPopSizeParameter());
-        }
-
-        @Override
-        public double[] getGradientLogDensity() {
-            return skygridLikelihood.getGradientWrtLogPopulationSize();
-        }
+    public double[] getGradientLogDensity() {
+        return wrtParameter.getGradientLogDensity(skygridLikelihood);
     }
 
-    public class WrtPrecision extends GMRFGradient {
-
-        public WrtPrecision(GMRFMultilocusSkyrideLikelihood skygridLikelihood) {
-            super(skygridLikelihood, skygridLikelihood.getPrecisionParameter());
-        }
-
-        @Override
-        public double[] getGradientLogDensity() {
-            return skygridLikelihood.getGradientWrtPrecision();
-        }
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
+                null);
     }
 
-    public class WrtRegressionCoefficients extends GMRFGradient {
+    public enum WrtParameter {
 
-        public WrtRegressionCoefficients(GMRFMultilocusSkyrideLikelihood skygridLikelihood) {
-            super(skygridLikelihood, skygridLikelihood.getBetaParameter());
+        LOG_POPULATION_SIZES("logPopulationSizes") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getPopSizeParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getGradientWrtLogPopulationSize();
+            }
+
+            @Override
+            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+        },
+        PRECISION("precision") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getPrecisionParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getGradientWrtPrecision();
+            }
+
+            @Override
+            double getParameterLowerBound() { return 0.0; }
+        },
+        REGRESSION_COEFFICIENTS("regressionCoefficients") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getBetaParameter();
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getGradientWrtRegressionCoefficients();
+            }
+
+            @Override
+            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+        };
+
+        WrtParameter(String name) {
+            this.name = name;
         }
 
-        @Override
-        public double[] getGradientLogDensity() {
-            return skygridLikelihood.getGradientWrtRegressionCoefficients();
+        abstract Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood);
+
+        abstract double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
+
+        abstract double getParameterLowerBound();
+
+        private final String name;
+
+        public static WrtParameter factory(String match) {
+            for (WrtParameter type : WrtParameter.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
         }
     }
 }

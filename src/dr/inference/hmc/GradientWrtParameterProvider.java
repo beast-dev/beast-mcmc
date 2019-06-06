@@ -184,4 +184,20 @@ public interface GradientWrtParameterProvider {
             return sb.toString();
         }
     }
+
+    static String getReportAndCheckForError(GradientWrtParameterProvider provider,
+                                            double lowerBound, double upperBound,
+                                            Double nullableTolerance) {
+        String report;
+        try {
+            report = new CheckGradientNumerically(provider,
+                    lowerBound, upperBound,
+                    nullableTolerance
+            ).getReport();
+        } catch (GradientMismatchException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return report;
+    }
 }

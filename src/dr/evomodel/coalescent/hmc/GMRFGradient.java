@@ -4,12 +4,13 @@ import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
  * @author Mandev Gill
  */
-public class GMRFGradient implements GradientWrtParameterProvider {
+public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
 
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
     private final WrtParameter wrtParameter;
@@ -42,6 +43,13 @@ public class GMRFGradient implements GradientWrtParameterProvider {
         return wrtParameter.getGradientLogDensity(skygridLikelihood);
     }
 
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
+                null);
+    }
+
     public enum WrtParameter {
 
         LOG_POPULATION_SIZES("logPopulationSizes") {
@@ -54,6 +62,9 @@ public class GMRFGradient implements GradientWrtParameterProvider {
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
                 return likelihood.getGradientWrtLogPopulationSize();
             }
+
+            @Override
+            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
         },
         PRECISION("precision") {
             @Override
@@ -65,6 +76,9 @@ public class GMRFGradient implements GradientWrtParameterProvider {
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
                 return likelihood.getGradientWrtPrecision();
             }
+
+            @Override
+            double getParameterLowerBound() { return 0.0; }
         },
         REGRESSION_COEFFICIENTS("regressionCoefficients") {
             @Override
@@ -76,6 +90,9 @@ public class GMRFGradient implements GradientWrtParameterProvider {
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
                 return likelihood.getGradientWrtRegressionCoefficients();
             }
+
+            @Override
+            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
         };
 
         WrtParameter(String name) {
@@ -85,6 +102,8 @@ public class GMRFGradient implements GradientWrtParameterProvider {
         abstract Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood);
 
         abstract double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
+
+        abstract double getParameterLowerBound();
 
         private final String name;
 

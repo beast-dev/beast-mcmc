@@ -443,6 +443,11 @@
 		</populationTree>
 	</gmrfSkyGridLikelihood>
 
+	<compoundParameter id="skygrid.parameters">
+		<parameter idref="skygrid.precision"/>
+		<parameter idref="skygrid.logPopSize"/>
+	</compoundParameter>
+
 	<gmrfSkyrideGradient id="gmrfGradientPop" wrtParameter="logPopulationSizes">
 		<gmrfSkyGridLikelihood idref="skygrid"/>
 	</gmrfSkyrideGradient>
@@ -457,6 +462,22 @@
 
 	<report>
 		<gmrfSkyrideGradient idref="gmrfGradientPrec"/>
+	</report>
+
+	<gammaPrior id="skygrid.precision.prior" shape="0.001" scale="1000.0" offset="0.0">
+		<parameter idref="skygrid.precision"/>
+	</gammaPrior>
+
+	<jointGradient id="joint.skygrid.precision">
+		<gmrfSkyrideGradient idref="gmrfGradientPrec"/>
+		<gradient>
+			<gammaPrior idref="skygrid.precision.prior"/>
+			<parameter idref="skygrid.precision"/>
+		</gradient>
+	</jointGradient>
+
+	<report>
+		<jointGradient idref="joint.skygrid.precision"/>
 	</report>
 
 	<!-- The strict clock (Uniform rates across branches)                        -->
@@ -553,12 +574,28 @@
 		<uniformOperator weight="30">
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
+
+<!--
+ 		<hamiltonianMonteCarloOperator weight="2" nSteps="10" stepSize="1"
+ 			mode="vanilla" autoOptimize="true">
+ 			<gradient>
+				<distributionLikelihood idref="normal.distribution"/>
+				<parameter idref="normal.draw"/>
+			</gradient>
+			<parameter idref="normal.draw"/>
+ 		</hamiltonianMonteCarloOperator>
+
+ -->
+
 		<gmrfGridBlockUpdateOperator scaleFactor="1.0" weight="2">
 			<gmrfSkyrideLikelihood idref="skygrid"/>
 		</gmrfGridBlockUpdateOperator>
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="skygrid.precision"/>
 		</scaleOperator>
+
+
+
 	</operators>
 
 
@@ -581,9 +618,7 @@
 					</ctmcScale>
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
-				<gammaPrior shape="0.001" scale="1000.0" offset="0.0">
-					<parameter idref="skygrid.precision"/>
-				</gammaPrior>
+				<gammaPrior idref="skygrid.precision.prior"/>
 
 				<gmrfSkyGridLikelihood idref="skygrid"/>
 

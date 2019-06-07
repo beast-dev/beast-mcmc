@@ -199,4 +199,6 @@ public interface GradientWrtParameterProvider {
 
         return report;
     }
+
+    Double tolerance = 1E-4;
 }

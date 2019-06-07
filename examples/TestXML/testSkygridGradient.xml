@@ -585,26 +585,23 @@
 			<parameter idref="treeModel.internalNodeHeights"/>
 		</uniformOperator>
 
-<!--
- 		<hamiltonianMonteCarloOperator weight="2" nSteps="10" stepSize="1"
- 			mode="vanilla" autoOptimize="true">
- 			<gradient>
-				<distributionLikelihood idref="normal.distribution"/>
-				<parameter idref="normal.draw"/>
-			</gradient>
-			<parameter idref="normal.draw"/>
+ 		<hamiltonianMonteCarloOperator weight="3" nSteps="50" stepSize="1E-1"
+ 			mode="nuts" autoOptimize="true">
+ 			<compoundGradient idref="full.skygrid.gradient"/>
+			<compoundParameter idref="skygrid.parameters"/>
+			<signedTransform start="1" end="1">
+				<compoundParameter idref="skygrid.parameters"/>
+			</signedTransform>
  		</hamiltonianMonteCarloOperator>
 
- -->
-
+<!--
 		<gmrfGridBlockUpdateOperator scaleFactor="1.0" weight="2">
 			<gmrfSkyrideLikelihood idref="skygrid"/>
 		</gmrfGridBlockUpdateOperator>
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="skygrid.precision"/>
 		</scaleOperator>
-
-
+ -->
 
 	</operators>
 
@@ -628,8 +625,8 @@
 					</ctmcScale>
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
-				<gammaPrior idref="skygrid.precision.prior"/>
 
+				<gammaPrior idref="skygrid.precision.prior"/>
 				<gmrfSkyGridLikelihood idref="skygrid"/>
 
 				<strictClockBranchRates idref="branchRates"/>
@@ -656,6 +653,9 @@
 			</column>
 			<column label="clock.rate" sf="6" width="12">
 				<parameter idref="clock.rate"/>
+			</column>
+			<column label="skygrid" sf="6" width="12">
+				<compoundParameter idref="skygrid.parameters"/>
 			</column>
 		</log>
 

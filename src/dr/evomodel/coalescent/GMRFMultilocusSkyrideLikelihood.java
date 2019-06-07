@@ -952,6 +952,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             }
         }
 
+        negate(gradLogDens); // TODO Fix equations above
+
         return gradLogDens;
     }
 
@@ -1024,7 +1026,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             }
         }
 
+        negate(gradLogDens); // TODO Fix equations above so that this is not necessary
+
         return gradLogDens;
+    }
+
+    private void negate(double[] x) {
+        for (int i = 0; i < x.length; ++i) {
+            x[i] = -x[i];
+        }
     }
 
 

@@ -29,6 +29,7 @@ import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class CompoundGradient implements GradientWrtParameterProvider {
+public class CompoundGradient implements GradientWrtParameterProvider, Reportable {
 
     protected final int dimension;
     protected final List<GradientWrtParameterProvider> derivativeList;
@@ -112,5 +113,13 @@ public class CompoundGradient implements GradientWrtParameterProvider {
         }
 
         return result;
+    }
+
+    @Override
+    public String getReport() {
+        return  "compoundGradient." + parameter.getParameterName() + "\n" +
+                GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.tolerance);
     }
 }

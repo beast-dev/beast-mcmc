@@ -480,6 +480,16 @@
 		<jointGradient idref="joint.skygrid.precision"/>
 	</report>
 
+	<compoundGradient id="full.skygrid.gradient">
+		<jointGradient idref="joint.skygrid.precision"/>
+		<gmrfSkyrideGradient idref="gmrfGradientPop"/>
+		<!-- <compoundParameter idref="skygrid.parameters"/> -->
+	</compoundGradient>
+
+	<report>
+		<compoundGradient idref="full.skygrid.gradient"/>
+	</report>
+
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>

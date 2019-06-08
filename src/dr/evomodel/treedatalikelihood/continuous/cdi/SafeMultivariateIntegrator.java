@@ -347,9 +347,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Pk = matrixPk;
             computePartialPrecision(ido, jdo, imo, jmo, Pip, Pjp, Pk);
 
-            DenseMatrix64F Vk = wrap(partials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait); //TODO: add buffer?
-            InversionResult ck = safeInvert2(Pk, Vk, true);
-            unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
+            InversionResult ck = safeDeterminant(Pk, false);
+
+//            DenseMatrix64F Vk = wrap(partials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait); //TODO: add buffer?
+//            InversionResult ck = safeInvert2(Pk, Vk, true);
+//            unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
 
             if (TIMING) {
                 endTime("peel3");

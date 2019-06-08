@@ -483,7 +483,6 @@
 	<compoundGradient id="full.skygrid.gradient">
 		<jointGradient idref="joint.skygrid.precision"/>
 		<gmrfSkyrideGradient idref="gmrfGradientPop"/>
-		<!-- <compoundParameter idref="skygrid.parameters"/> -->
 	</compoundGradient>
 
 	<report>

@@ -42,11 +42,11 @@ import java.util.List;
 public class CompoundGradient implements GradientWrtParameterProvider, Reportable {
 
     protected final int dimension;
-    protected final List<GradientWrtParameterProvider> derivativeList;
+    final List<GradientWrtParameterProvider> derivativeList;
     private final Likelihood likelihood;
     private final Parameter parameter;
 
-    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
 
         this.derivativeList = derivativeList;
 
@@ -55,7 +55,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, Reportabl
             parameter = derivativeList.get(0).getParameter();
             dimension = parameter.getDimension();
         } else {
-            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+            List<Likelihood> likelihoodList = new ArrayList<>();
             CompoundParameter compoundParameter = new CompoundParameter("hmc");
 
             int dim = 0;

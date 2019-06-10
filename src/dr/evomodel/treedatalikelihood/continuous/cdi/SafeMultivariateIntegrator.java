@@ -2,7 +2,6 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -333,7 +332,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Pjp = matrixPjp;
 
 
-            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true); //TODO: find a way to get effective dimension at tips from IntegratedFactorAnalysisLikelihood
+            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true);
             InversionResult cj = increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, true);
 
             if (TIMING) {
@@ -346,12 +345,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // A. Partial precision and variance (for later use) using one matrix inversion
             final DenseMatrix64F Pk = matrixPk;
             computePartialPrecision(ido, jdo, imo, jmo, Pip, Pjp, Pk);
-
-            InversionResult ck = safeDeterminant(Pk, false);
-
-//            DenseMatrix64F Vk = wrap(partials, kbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait); //TODO: add buffer?
-//            InversionResult ck = safeInvert2(Pk, Vk, true);
-//            unwrap(Vk, partials, kbo + dimTrait + dimTrait * dimTrait);
 
             if (TIMING) {
                 endTime("peel3");
@@ -400,35 +393,35 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 }
             } // End if remainder
 
-//            int dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
+            int dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
 
-            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
-                    - ck.getEffectiveDimension();
+//            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
+//                    - ck.getEffectiveDimension();
 //
-            setEffectiveDimension(kBuffer, ck.getEffectiveDimension());
+//            setEffectiveDimension(kBuffer, ck.getEffectiveDimension());
 
             remainder += -dimensionChange * LOG_SQRT_2_PI;
 
             double deti = 0;
             double detj = 0;
-            double detk = 0;
+//            double detk = 0;
             if (!(ci.getReturnCode() == NOT_OBSERVED)) {
                 deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
             }
             if (!(cj.getReturnCode() == NOT_OBSERVED)) {
                 detj = cj.getLogDeterminant();
             }
-            if (!(ck.getReturnCode() == NOT_OBSERVED)) {
-                detk = ck.getLogDeterminant();
-            }
-            remainder += -0.5 * (deti + detj + detk); // + detk);
+//            if (!(ck.getReturnCode() == NOT_OBSERVED)) {
+//                detk = ck.getLogDeterminant();
+//            }
+            remainder += -0.5 * (deti + detj); // + detk);
 
             // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
 
             if (DEBUG) {
                 System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
                 System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
-                System.err.println("\t\t\tdetk = " + ck.getLogDeterminant());
+//                System.err.println("\t\t\tdetk = " + ck.getLogDeterminant());
                 System.err.println("\t\tremainder: " + remainder);
             }
 
@@ -491,7 +484,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 //                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
+            assert !allZeroOrInfinite(Vip) :  "Zero-length branch on data is not allowed.";
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
@@ -649,11 +642,11 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             double dettot = (ctot.getReturnCode() == NOT_OBSERVED) ? 0 : ctot.getLogDeterminant();
 
             final double logLike =
-                    -ctot.getEffectiveDimension() * LOG_SQRT_2_PI
+//                    - ctot.getEffectiveDimension() * LOG_SQRT_2_PI
 //                    - 0.5 * Math.log(CommonOps.det(VTotal))
 //                    + 0.5 * Math.log(CommonOps.det(PTotal))
-                            - 0.5 * dettot
-                            - 0.5 * SS;
+                    - 0.5 * dettot
+                    - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
             logLikelihoods[trait] = logLike + remainder;

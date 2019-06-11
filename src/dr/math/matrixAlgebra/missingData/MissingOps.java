@@ -465,7 +465,7 @@ public class MissingOps {
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda > 0.0) {
+                    if (lambda > TOLERANCE) {
                         logDet += Math.log(lambda);
                         ++dim;
                     }

@@ -74,7 +74,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void setPostOrderPartial(int bufferIndex, final double[] partial) {
+    public void setPostOrderPartial(int bufferIndex, final double[] partial) { //TODO: don't just count zero diagonals
         super.setPostOrderPartial(bufferIndex, partial);
         int effDim = 0;
         for (int i = 0; i < dimTrait; i++) {

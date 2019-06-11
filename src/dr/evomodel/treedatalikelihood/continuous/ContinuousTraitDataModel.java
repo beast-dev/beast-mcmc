@@ -177,7 +177,12 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         final Parameter p = parameter.getParameter(taxonIndex);
 
         int offset = 0;
+        int effDimOffest = precisionType.getEffectiveDimensionOffset(dimTrait);
+
         for (int i = 0; i < numTraits; ++i) {
+
+            double effDim = 0;
+
             for (int j = 0; j < dimTrait; ++j) {
 
                 final int pIndex = i * dimTrait + j;
@@ -186,10 +191,13 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 partial[offset + j] = p.getParameterValue(pIndex);
 
                 final boolean missing = missingIndicator != null && missingIndicator[missingIndex];
+                if (missing) ++effDim;
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);
             }
+
+            partial[offset + effDimOffest] = effDim;
 
             offset += offsetInc;
         }

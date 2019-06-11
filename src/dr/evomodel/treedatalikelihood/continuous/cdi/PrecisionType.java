@@ -156,7 +156,7 @@ public enum PrecisionType {
 
         @Override
         public int getMatrixLength(int dimTrait) {
-            return 2 * super.getMatrixLength(dimTrait) + 1;
+            return 2 * super.getMatrixLength(dimTrait) + 2; //TODO: what was the '+1' for?
         }
 
         @Override
@@ -165,7 +165,7 @@ public enum PrecisionType {
         }
 
         @Override
-        public int getEffectiveDimensionOffset(int dimTrait) { return -1; } // TODO Put somewhere in buffer
+        public int getEffectiveDimensionOffset(int dimTrait) { return dimTrait + dimTrait * dimTrait * 2 + 1; } // TODO Put somewhere in buffer
 
         @Override
         public int getVarianceOffset(int dimTrait) {

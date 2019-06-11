@@ -78,6 +78,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         assert (dimTrait == loadings.getRowDimension());
 
         this.dimPartial = numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
+        this.effDimOffset = PrecisionType.FULL.getEffectiveDimensionOffset(numFactors);
 
         addVariable(traitParameter);
         addVariable(loadings);
@@ -529,6 +530,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         // store in precision, variance and normalization constant
         unwrap(precision, partials, partialsOffset + numFactors);
+        partials[partialsOffset + effDimOffset] = ci.getEffectiveDimension();
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);
@@ -623,6 +625,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final int numTaxa;
     private final int dimTrait;
     private final int dimPartial;
+    private final int effDimOffset;
     private final int numFactors;
     private final CompoundParameter traitParameter;
     private final MatrixParameterInterface loadingsTransposed;

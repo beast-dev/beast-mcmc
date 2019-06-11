@@ -191,7 +191,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 partial[offset + j] = p.getParameterValue(pIndex);
 
                 final boolean missing = missingIndicator != null && missingIndicator[missingIndex];
-                if (missing) ++effDim;
+                if (!missing) ++effDim;
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);

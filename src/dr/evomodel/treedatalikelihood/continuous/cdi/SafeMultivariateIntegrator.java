@@ -80,7 +80,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         for (int i = 0; i < dimTrait; i++) {
             if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
         }
-        partialsDimData[bufferIndex] = effDim;
+        partialsDimData[bufferIndex] = effDim; // TODO This info should be held / passed in partial[]
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -55,7 +55,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         super(name);
         this.parameter = parameter;
         this.originalMissingIndices = missingIndices;
-        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<Integer>());
+        this.missingIndices = (useMissingIndices ? missingIndices : new ArrayList<Integer>());
         addVariable(parameter);
 
         this.dimTrait = dimTrait;
@@ -67,25 +67,41 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 missingIndices, parameter.getDimension());
     }
 
-    public boolean bufferTips() { return true; }
+    public boolean bufferTips() {
+        return true;
+    }
 
-    public int getTraitCount() {  return numTraits; }
+    public int getTraitCount() {
+        return numTraits;
+    }
 
-    public int getTraitDimension() { return dimTrait; }
+    public int getTraitDimension() {
+        return dimTrait;
+    }
 
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
 
-    public String getName() { return super.getModelName(); }
+    public String getName() {
+        return super.getModelName();
+    }
 
-    public CompoundParameter getParameter() { return parameter; }
+    public CompoundParameter getParameter() {
+        return parameter;
+    }
 
-    public List<Integer> getMissingIndices() { return missingIndices; }
+    public List<Integer> getMissingIndices() {
+        return missingIndices;
+    }
 
-    public boolean[] getMissingIndicator() {return missingIndicator; }
+    public boolean[] getMissingIndicator() {
+        return missingIndicator;
+    }
 
-    List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
+    List<Integer> getOriginalMissingIndices() {
+        return originalMissingIndices;
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -97,9 +113,9 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         if (variable == parameter) {
             if (type == Parameter.ChangeType.VALUE_CHANGED) {
                 fireModelChanged(this, getTaxonIndex(index));
-            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED){
+            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
 //                if (!allDataChange) {
-                    fireModelChanged(this);
+                fireModelChanged(this);
 //                    allDataChange = true;
 //                }
             } else {
@@ -120,10 +136,12 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     @Override
-    protected void restoreState() { }
+    protected void restoreState() {
+    }
 
     @Override
-    protected void acceptState() { }
+    protected void acceptState() {
+    }
 
     private double[] getScalarTipPartial(int taxonIndex) {
         double[] partial = new double[numTraits * (dimTrait + 1)];
@@ -167,10 +185,10 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     @Override
-    public int getTipEffectiveDim(int taxonIndex){
+    public int getTipEffectiveDim(int taxonIndex) {
         int offset = dimTrait * taxonIndex;
         int effDim = 0;
-        for (int i = offset; i < offset + dimTrait; i++){
+        for (int i = offset; i < offset + dimTrait; i++) {
             if (!missingIndicator[i]) ++effDim;
         }
         return effDim;

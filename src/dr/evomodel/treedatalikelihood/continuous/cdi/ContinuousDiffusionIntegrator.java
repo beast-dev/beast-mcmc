@@ -131,10 +131,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     class Basic implements ContinuousDiffusionIntegrator {
 
-//        private int instance = -1;
+        //        private int instance = -1;
         private InstanceDetails details = new InstanceDetails();
 
-//        private final PrecisionType precisionType;
+        //        private final PrecisionType precisionType;
         final int numTraits;
         final int dimTrait; // Trait being propagated
         final int dimProcess; // Actual process
@@ -146,13 +146,19 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         final int dimPartial;
 
         @Override
-        public int getBufferCount() { return bufferCount; }
+        public int getBufferCount() {
+            return bufferCount;
+        }
 
         @Override
-        public int getDimTrait() { return dimTrait; }
+        public int getDimTrait() {
+            return dimTrait;
+        }
 
         @Override
-        public int getDimProcess() { return dimProcess; }
+        public int getDimProcess() {
+            return dimProcess;
+        }
 
         @Override
         public String getReport() {
@@ -167,11 +173,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 final int bufferCount,
                 final int diffusionCount
         ) {
-            assert(numTraits > 0);
-            assert(dimTrait > 0);
-            assert(dimProcess > 0);
-            assert(bufferCount > 0);
-            assert(diffusionCount > 0);
+            assert (numTraits > 0);
+            assert (dimTrait > 0);
+            assert (dimProcess > 0);
+            assert (bufferCount > 0);
+            assert (diffusionCount > 0);
 
 //            assert (precisionType == PrecisionType.SCALAR);
 
@@ -217,21 +223,21 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             if (partial.length != dimPartial) {
                 System.err.println("here");
             }
-            assert(partial.length == dimPartial);
-            assert(partials != null);
+            assert (partial.length == dimPartial);
+            assert (partials != null);
 
             System.arraycopy(partial, 0, partials, dimPartial * bufferIndex, dimPartial);
         }
 
         @Override
-        public void setPostOrderEffectiveDim(int bufferIndex, int effDim){
+        public void setPostOrderEffectiveDim(int bufferIndex, int effDim) {
             // Do Nothing //TODO: use this when implementing robust determinant calculations
         }
 
         @Override
         public void getPostOrderPartial(int bufferIndex, final double[] partial) {
-            assert(partials != null);
-            assert(partial.length >= dimPartial);
+            assert (partials != null);
+            assert (partial.length >= dimPartial);
 
             System.arraycopy(partials, getArrayStart(bufferIndex),
                     partial, 0,
@@ -380,8 +386,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void setWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts) {
-            assert(degreesOfFreedom.length == numTraits);
-            assert(outerProducts.length == dimTrait * dimTrait * numTraits);
+            assert (degreesOfFreedom.length == numTraits);
+            assert (outerProducts.length == dimTrait * dimTrait * numTraits);
 
             System.arraycopy(degreesOfFreedom, 0, this.degreesOfFreedom, 0, numTraits);
             System.arraycopy(outerProducts, 0, this.outerProducts, 0, dimTrait * dimTrait * numTraits);
@@ -389,8 +395,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void getWishartStatistics(final int[] degreesOfFreedom, final double[] outerProducts) {
-            assert(degreesOfFreedom.length == numTraits);
-            assert(outerProducts.length == dimTrait * dimTrait * numTraits);
+            assert (degreesOfFreedom.length == numTraits);
+            assert (outerProducts.length == dimTrait * dimTrait * numTraits);
 
             System.arraycopy(this.degreesOfFreedom, 0, degreesOfFreedom, 0, numTraits);
             System.arraycopy(this.outerProducts, 0, outerProducts, 0, dimTrait * dimTrait * numTraits);
@@ -398,9 +404,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
-            assert(matrix.length == dimProcess * dimProcess);
-            assert(diffusions != null);
-            assert(determinants != null);
+            assert (matrix.length == dimProcess * dimProcess);
+            assert (diffusions != null);
+            assert (determinants != null);
 
             System.arraycopy(matrix, 0, diffusions, dimProcess * dimProcess * precisionIndex, dimProcess * dimProcess);
             determinants[precisionIndex] = logDeterminant;
@@ -414,8 +420,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         @Override
         public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
                                                boolean incrementOuterProducts, boolean isIntegratedProcess) {
-            assert(logLikelihoods.length == numTraits);
-            assert(!isIntegratedProcess);
+            assert (logLikelihoods.length == numTraits);
+            assert (!isIntegratedProcess);
 
             if (DEBUG) {
                 System.err.println("Root calculation for " + rootBufferIndex);
@@ -523,7 +529,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 }
 
                 updatePartial(
-                        operations[offset    ],
+                        operations[offset],
                         operations[offset + 1],
                         operations[offset + 2],
                         operations[offset + 3],
@@ -573,16 +579,16 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                                              final double[] edgeLengths, final double[] optimalRates,
                                                              final double[] strengthOfSelectionMatrix,
                                                              final double[] rotation,
-                                                             int updateCount){
+                                                             int updateCount) {
             updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
         }
 
         @Override
         public void updateIntegratedOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
-                                                             final double[] edgeLengths, final double[] optimalRates,
-                                                             final double[] strengthOfSelectionMatrix,
-                                                             final double[] rotation,
-                                                             int updateCount){
+                                                                       final double[] edgeLengths, final double[] optimalRates,
+                                                                       final double[] strengthOfSelectionMatrix,
+                                                                       final double[] rotation,
+                                                                       int updateCount) {
             updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
         }
 
@@ -705,7 +711,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 // C. Inflate variance along node branch
 
-                final double pi  = Double.isInfinite(pip) ?
+                final double pi = Double.isInfinite(pip) ?
                         1.0 / vi : pip / (1.0 + pip * vi);
 
 //                final DenseMatrix64F Vi = Vip;
@@ -828,7 +834,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     }
                     System.err.println(" prec j: " + pj);
 
-                    if (pj == 0.0) { System.exit(-1); }
+                    if (pj == 0.0) {
+                        System.exit(-1);
+                    }
                     System.err.print("\t\tmean k:");
                     for (int e = 0; e < dimTrait; ++e) {
                         System.err.print(" " + partials[kbo + e]);

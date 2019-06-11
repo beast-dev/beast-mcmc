@@ -143,7 +143,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return partial;
     }
 
-    public int getTipEffectiveDim(int taxon){
+    public int getTipEffectiveDim(int taxon) {
         checkStatistics();
         return effectiveDimensions[taxon];
     }

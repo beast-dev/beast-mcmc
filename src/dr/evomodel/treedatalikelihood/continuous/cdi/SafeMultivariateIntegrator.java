@@ -85,7 +85,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void setPostOrderEffectiveDim(int bufferIndex, int effDim){
+    public void setPostOrderEffectiveDim(int bufferIndex, int effDim) {
         partialsDimData[bufferIndex] = effDim;
     }
 
@@ -490,7 +490,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 //                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) :  "Zero-length branch on data is not allowed.";
+            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
@@ -651,8 +651,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                    - ctot.getEffectiveDimension() * LOG_SQRT_2_PI
 //                    - 0.5 * Math.log(CommonOps.det(VTotal))
 //                    + 0.5 * Math.log(CommonOps.det(PTotal))
-                    - 0.5 * dettot
-                    - 0.5 * SS;
+                    -0.5 * dettot
+                            - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
             logLikelihoods[trait] = logLike + remainder;

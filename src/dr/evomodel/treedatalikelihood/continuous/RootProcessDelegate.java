@@ -122,6 +122,10 @@ public interface RootProcessDelegate extends Model {
                     precisionType.fillPrecisionInPartials(partial, offset, i, precision, dimTrait);
                 }
 
+                if (precision != 0.0){
+                    precisionType.fillEffDimInPartials(partial, offset, dimTrait, dimTrait);
+                }
+
                 offset += length;
             }
 

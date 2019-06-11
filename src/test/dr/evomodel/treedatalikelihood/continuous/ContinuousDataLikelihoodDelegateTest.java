@@ -1482,11 +1482,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
             for (int i = 0; i < vector.length; i++) {
 //                System.out.println("cMean Mat: " + vector[i]);
 //                System.out.println("cMean preorder: " + partials[offset + i]);
+                String x = format.format(partials[offset + i]);
+                String y = format.format(vector[i]);
                 assertEquals("cMean " + tip + "; " + i,
                         format.format(partials[offset + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
         }
     }
 
@@ -1504,7 +1506,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                         format.format(partials[offset + dimTrait + dimTrait * dimTrait + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
         }
     }
 }

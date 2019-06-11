@@ -268,7 +268,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
             return PARSER_NAME;
         }
 
-        private final XMLSyntaxRule[] syntax = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] syntax = new XMLSyntaxRule[] {
                 new ElementRule(TreeDataLikelihood.class),
                 AttributeRule.newStringRule(TRAIT_NAME, true),
         };
@@ -311,7 +311,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         int index = 0;
         for (int i = 0; i < dimTrait; ++i) {
             for (int j = 0; j < dimTrait; ++j) {
-                columns[index] = new OuterProductColumn("OP" + (i + 1) + "" + (j + 1), index);
+                columns[index] =  new OuterProductColumn("OP" + (i + 1) + "" + (j + 1), index);
                 ++index;
             }
         }

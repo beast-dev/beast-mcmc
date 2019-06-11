@@ -76,11 +76,13 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     @Override
     public void setPostOrderPartial(int bufferIndex, final double[] partial) { //TODO: don't just count zero diagonals
         super.setPostOrderPartial(bufferIndex, partial);
-        int effDim = 0;
-        for (int i = 0; i < dimTrait; i++) {
-            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
-        }
-        partialsDimData[bufferIndex] = effDim; // TODO This info should be held / passed in partial[]
+//        int effDim = 0;
+//        for (int i = 0; i < dimTrait; i++) {
+//            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
+//        }
+
+
+        partialsDimData[bufferIndex] = (int) Math.round(partial[PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait)]);
     }
 
     ///////////////////////////////////////////////////////////////////////////

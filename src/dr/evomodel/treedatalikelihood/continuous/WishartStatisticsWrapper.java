@@ -135,7 +135,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
                 sampleOffset += dimTrait;
                 bufferOffset += dimPartial;
             }
-            outerProductDelegate.setTipDataDirectly(tip, buffer, dimTrait); //TODO: make sure adding the trait dimension doesn't break anything
+            outerProductDelegate.setTipDataDirectly(tip, buffer, dimTrait);
         }
 
         if (DEBUG) {

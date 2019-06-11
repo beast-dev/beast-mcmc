@@ -143,11 +143,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return partial;
     }
 
-    public int getTipEffectiveDim(int taxon){
-        checkStatistics();
-        return effectiveDimensions[taxon];
-    }
-
     @Override
     public List<Integer> getMissingIndices() {
         return missingFactorIndices;
@@ -216,7 +211,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         System.arraycopy(partials, 0, storedPartials, 0, partials.length);
         System.arraycopy(normalizationConstants, 0, storedNormalizationConstants, 0, normalizationConstants.length);
-        System.arraycopy(effectiveDimensions, 0, storedEffectiveDimensions, 0, effectiveDimensions.length);
     }
 
     @Override
@@ -232,11 +226,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         double[] tmp2 = normalizationConstants;
         normalizationConstants = storedNormalizationConstants;
         storedNormalizationConstants = tmp2;
-
-        int[] tmp3 = effectiveDimensions;
-        effectiveDimensions = storedEffectiveDimensions;
-        storedEffectiveDimensions = tmp3;
-
     }
 
     @Override
@@ -288,11 +277,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (normalizationConstants == null) {
             normalizationConstants = new double[numTaxa];
             storedNormalizationConstants = new double[numTaxa];
-        }
-
-        if (effectiveDimensions == null) {
-            effectiveDimensions = new int[numTaxa];
-            storedEffectiveDimensions = new int[numTaxa];
         }
 
         computePartialsAndRemainders();
@@ -552,8 +536,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
 
         normalizationConstants[taxon] = constant;
-
-        effectiveDimensions[taxon] = ci.getEffectiveDimension();
     }
 
     private void computePartialsAndRemainders() {
@@ -637,9 +619,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private double[] normalizationConstants;
     private double[] storedNormalizationConstants;
-
-    private int[] effectiveDimensions;
-    private int[] storedEffectiveDimensions;
 
     private final int numTaxa;
     private final int dimTrait;

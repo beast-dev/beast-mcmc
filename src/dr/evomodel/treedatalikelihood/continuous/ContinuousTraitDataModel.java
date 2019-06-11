@@ -166,16 +166,6 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         }
     }
 
-    @Override
-    public int getTipEffectiveDim(int taxonIndex){
-        int offset = dimTrait * taxonIndex;
-        int effDim = 0;
-        for (int i = offset; i < offset + dimTrait; i++){
-            if (!missingIndicator[i]) ++effDim;
-        }
-        return effDim;
-    }
-
     private double[] getTipPartial(int taxonIndex, final PrecisionType precisionType) {
 
         if (OLD) {

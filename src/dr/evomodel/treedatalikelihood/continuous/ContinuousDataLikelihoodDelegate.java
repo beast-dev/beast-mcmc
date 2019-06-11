@@ -688,12 +688,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         final double[] tipPartial = dataModel.getTipPartial(tipIndex, forceCompletelyObserved);
-        setTipDataDirectly(tipIndex, tipPartial);
+        int tipEffectiveDim = dataModel.getTipEffectiveDim(tipIndex);
+        setTipDataDirectly(tipIndex, tipPartial, tipEffectiveDim);
     }
 
-    void setTipDataDirectly(int tipIndex, double[] tipPartial) {
+    void setTipDataDirectly(int tipIndex, double[] tipPartial, int tipEffectiveDim) {
         cdi.setPostOrderPartial(partialBufferHelper.getOffsetIndex(tipIndex),
                 tipPartial);
+        cdi.setPostOrderEffectiveDim(partialBufferHelper.getOffsetIndex(tipIndex),
+                tipEffectiveDim);
     }
 
     private boolean checkDataAlignment(NodeRef node, Tree tree) {

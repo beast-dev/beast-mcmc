@@ -47,6 +47,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setPostOrderPartial(int bufferIndex, final double[] partial);
 
+    void setPostOrderEffectiveDim(int bufferIndex, int effDim);
+
     void getPostOrderPartial(int bufferIndex, final double[] partial);
 
     double getInverseBranchLength(int bufferIndex); // TODO Get rid of inverse
@@ -219,6 +221,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert(partials != null);
 
             System.arraycopy(partial, 0, partials, dimPartial * bufferIndex, dimPartial);
+        }
+
+        @Override
+        public void setPostOrderEffectiveDim(int bufferIndex, int effDim){
+            // Do Nothing //TODO: use this when implementing robust determinant calculations
         }
 
         @Override

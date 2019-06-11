@@ -144,6 +144,11 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
         return partial;
     }
 
+    @Override
+    public int getTipEffectiveDim(int taxonIndex){
+        return dimTrait;
+    }
+
     private int getCurrentTipIndex(int trait) {
         return (int) tipIndicator.getParameterValue(trait);
     }

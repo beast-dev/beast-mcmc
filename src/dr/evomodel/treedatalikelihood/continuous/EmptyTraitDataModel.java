@@ -87,6 +87,11 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
         return new double[dimTrait + precisionType.getMatrixLength(dimTrait)];
     }
+
+    @Override
+    public int getTipEffectiveDim(int taxonIndex){
+        return 0;
+    }
 //
 //    private static final String EMPTY_TRAIT_MODEL = "emptyTraitModel";
 //

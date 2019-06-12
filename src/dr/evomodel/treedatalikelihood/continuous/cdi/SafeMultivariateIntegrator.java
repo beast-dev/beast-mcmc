@@ -22,6 +22,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
         allocateStorage();
 
+        effectiveDimensionOffset = PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait);
+
         System.err.println("Trying SafeMultivariateIntegrator");
     }
 
@@ -67,6 +69,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
     private int getEffectiveDimension(int iBuffer) {
         return partialsDimData[iBuffer];
+//        TODO return partials[iBuffer * dimPartials + effectiveDimensionOffset];  // function return double
     }
 
     private void setEffectiveDimension(int iBuffer, int effDim) {
@@ -81,7 +84,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
 //        }
 
-        int effDim = (int) Math.round(partial[PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait)]);
+        int effDim = (int) Math.round(partial[effectiveDimensionOffset]);
         partialsDimData[bufferIndex] = effDim; // TODO Is partialsDimData[] still needed?  All information is already in partials[].
     }
 
@@ -401,7 +404,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                    - ck.getEffectiveDimension();
 //
 //            setEffectiveDimension(kBuffer, ck.getEffectiveDimension());
-
+            // TODO Does this still work for internal nodes with effective dimension < full-rank?
+            
             remainder += -dimensionChange * LOG_SQRT_2_PI;
 
             double deti = 0;
@@ -757,6 +761,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 vectorPMk, 0,
                 dimTrait);
     }
+
+    private final int effectiveDimensionOffset;
 
     private DenseMatrix64F matrixQjPjp;
     private double[] vectorDelta;

@@ -65,25 +65,25 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 precision, 0, dimTrait * dimTrait);
     }
 
-    private int getEffectiveDimension(int iBuffer) {
-        return partialsDimData[iBuffer];
-    }
-
-    private void setEffectiveDimension(int iBuffer, int effDim) {
-        partialsDimData[iBuffer] = effDim;
-    }
-
-    @Override
-    public void setPostOrderPartial(int bufferIndex, final double[] partial) { //TODO: don't just count zero diagonals
-        super.setPostOrderPartial(bufferIndex, partial);
-//        int effDim = 0;
-//        for (int i = 0; i < dimTrait; i++) {
-//            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
-//        }
-
-        int effDim = (int) Math.round(partial[PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait)]);
-        partialsDimData[bufferIndex] = effDim; // TODO Is partialsDimData[] still needed?  All information is already in partials[].
-    }
+//    private int getEffectiveDimension(int iBuffer) {
+//        return partialsDimData[iBuffer];
+//    }
+//
+//    private void setEffectiveDimension(int iBuffer, int effDim) {
+//        partialsDimData[iBuffer] = effDim;
+//    }
+//
+//    @Override
+//    public void setPostOrderPartial(int bufferIndex, final double[] partial) {
+//        super.setPostOrderPartial(bufferIndex, partial);
+////        int effDim = 0;
+////        for (int i = 0; i < dimTrait; i++) {
+////            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
+////        }
+//
+//        int effDim = (int) Math.round(partial[PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait)]);
+//        partialsDimData[bufferIndex] = effDim;
+//    }
 
     ///////////////////////////////////////////////////////////////////////////
     /// Setting variances, displacement and actualization vectors
@@ -305,6 +305,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         final int ido = dimTrait * iMatrix;
         final int jdo = dimTrait * jMatrix;
 
+        // Determine effective dimension offset
+        int effDimOffest = PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait);
+
         // Read variance increments along descendant branches of k
         final DenseMatrix64F Vdi = wrap(variances, imo, dimTrait, dimTrait);
         final DenseMatrix64F Vdj = wrap(variances, jmo, dimTrait, dimTrait);
@@ -395,7 +398,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 }
             } // End if remainder
 
-            int dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
+
+            int dimensionChange = (int) Math.round(partials[ibo + effDimOffest] + partials[jbo + effDimOffest]);
+//            int dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
 
 //            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
 //                    - ck.getEffectiveDimension();
@@ -486,10 +491,12 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 //                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) :  "Zero-length branch on data is not allowed.";
+            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
+
+            int iEffDimOffset = PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait) + ibo;
 
             final DenseMatrix64F tmp1 = matrix0;
 //                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd); // TODO Fix
@@ -498,9 +505,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             safeInvert2(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
-            if (getDeterminant && getEffectiveDimension(iBuffer) == 0) ci = safeDeterminant(tmp1, false);
+            if (getDeterminant && partials[iEffDimOffset] == 0) ci = safeDeterminant(tmp1, false);
             CommonOps.mult(Pi, tmp1, Pip);
-            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) ci = safeDeterminant(Pip, false);
+            if (getDeterminant && partials[iEffDimOffset] > 0) ci = safeDeterminant(Pip, false);
         }
 
         if (TIMING) {
@@ -647,8 +654,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                    - ctot.getEffectiveDimension() * LOG_SQRT_2_PI
 //                    - 0.5 * Math.log(CommonOps.det(VTotal))
 //                    + 0.5 * Math.log(CommonOps.det(PTotal))
-                    - 0.5 * dettot
-                    - 0.5 * SS;
+                    -0.5 * dettot
+                            - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
             logLikelihoods[trait] = logLike + remainder;

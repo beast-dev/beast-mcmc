@@ -82,7 +82,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //        }
 
         int effDim = (int) Math.round(partial[PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait)]);
-        partialsDimData[bufferIndex] = effDim;
+        partialsDimData[bufferIndex] = effDim; // TODO Is partialsDimData[] still needed?  All information is already in partials[].
     }
 
     ///////////////////////////////////////////////////////////////////////////

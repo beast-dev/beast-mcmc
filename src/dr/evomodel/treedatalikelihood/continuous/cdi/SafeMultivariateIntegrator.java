@@ -36,7 +36,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         vectorPMk = new double[dimTrait];
         matrixQjPjp = new DenseMatrix64F(dimTrait, dimTrait);
 
-        partialsDimData = new int[bufferCount];
+//        partialsDimData = new int[bufferCount];
     }
 
     private static final boolean TIMING = false;
@@ -67,26 +67,27 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 precision, 0, dimTrait * dimTrait);
     }
 
-    private int getEffectiveDimension(int iBuffer) {
-        return partialsDimData[iBuffer];
-//        TODO return partials[iBuffer * dimPartials + effectiveDimensionOffset];  // function return double
+    private double getEffectiveDimension(int iBuffer) {
+//        return partialsDimData[iBuffer];
+        return partials[iBuffer * dimPartial + effectiveDimensionOffset];
     }
 
-    private void setEffectiveDimension(int iBuffer, int effDim) {
-        partialsDimData[iBuffer] = effDim;
+    private void setEffectiveDimension(int iBuffer, double effDim) {
+//        partialsDimData[iBuffer] = effDim;
+        partials[iBuffer * dimPartial + effectiveDimensionOffset] = effDim;
     }
 
-    @Override
-    public void setPostOrderPartial(int bufferIndex, final double[] partial) { //TODO: don't just count zero diagonals
-        super.setPostOrderPartial(bufferIndex, partial);
-//        int effDim = 0;
-//        for (int i = 0; i < dimTrait; i++) {
-//            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
-//        }
-
-        int effDim = (int) Math.round(partial[effectiveDimensionOffset]);
-        partialsDimData[bufferIndex] = effDim; // TODO Is partialsDimData[] still needed?  All information is already in partials[].
-    }
+//    @Override
+//    public void setPostOrderPartial(int bufferIndex, final double[] partial) { //TODO: don't just count zero diagonals
+//        super.setPostOrderPartial(bufferIndex, partial);
+////        int effDim = 0;
+////        for (int i = 0; i < dimTrait; i++) {
+////            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
+////        }
+//
+//        int effDim = (int) Math.round(partial[effectiveDimensionOffset]);
+//        partialsDimData[bufferIndex] = effDim;
+//    }
 
     ///////////////////////////////////////////////////////////////////////////
     /// Setting variances, displacement and actualization vectors
@@ -398,14 +399,13 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 }
             } // End if remainder
 
-            int dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
+            double dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
 
 //            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
 //                    - ck.getEffectiveDimension();
 //
 //            setEffectiveDimension(kBuffer, ck.getEffectiveDimension());
-            // TODO Does this still work for internal nodes with effective dimension < full-rank?
-            
+
             remainder += -dimensionChange * LOG_SQRT_2_PI;
 
             double deti = 0;
@@ -490,7 +490,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 //                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) :  "Zero-length branch on data is not allowed.";
+            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
@@ -651,8 +651,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //                    - ctot.getEffectiveDimension() * LOG_SQRT_2_PI
 //                    - 0.5 * Math.log(CommonOps.det(VTotal))
 //                    + 0.5 * Math.log(CommonOps.det(PTotal))
-                    - 0.5 * dettot
-                    - 0.5 * SS;
+                    -0.5 * dettot
+                            - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
             logLikelihoods[trait] = logLike + remainder;
@@ -767,5 +767,5 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     private DenseMatrix64F matrixQjPjp;
     private double[] vectorDelta;
     double[] vectorPMk;
-    private int[] partialsDimData;
+//    private int[] partialsDimData;
 }

@@ -15,6 +15,6 @@ language: java
 addons:
  apt:
    packages:
-   - ant-junit
+   - ant
 
 script: ant dist

@@ -36,6 +36,8 @@ import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
 import dr.geo.contouring.ContourPath;
 import dr.geo.contouring.ContourWithSynder;
+import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceType;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
@@ -62,6 +64,9 @@ public class TreeAnnotator {
     private final static boolean USE_R = false;
 
     private static boolean forceIntegerToDiscrete = false;
+    private boolean computeESS = false;
+
+    private double maxState = 1;
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
@@ -112,6 +117,7 @@ public class TreeAnnotator {
      * @param heightsOption
      * @param posteriorLimit
      * @param hpd2D
+     * @param computeESS
      * @param targetOption
      * @param targetTreeFileName
      * @param inputFileName
@@ -123,6 +129,7 @@ public class TreeAnnotator {
                          HeightsSummary heightsOption,
                          double posteriorLimit,
                          double[] hpd2D,
+                         boolean computeESS,
                          Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
@@ -131,6 +138,7 @@ public class TreeAnnotator {
 
         this.posteriorLimit = posteriorLimit;
         this.hpd2D = hpd2D;
+        this.computeESS = computeESS;
 
         attributeNames.add("height");
         attributeNames.add("length");
@@ -166,6 +174,7 @@ public class TreeAnnotator {
 
                         if (name != null && name.length() > 0 && name.startsWith("STATE_")) {
                             state = Long.parseLong(name.split("_")[1]);
+                            maxState = state;
                         }
                     }
 
@@ -811,6 +820,9 @@ public class TreeAnnotator {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                                    if (computeESS == true) {
+                                        annotateESSAttribute(tree, node, attributeName + "_ESS", values);
+                                    }
                                 }
 
                                 if (isDoubleArray) {
@@ -875,7 +887,6 @@ public class TreeAnnotator {
         private void annotateMedianAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
             double median = DiscreteStatistics.median(values);
             tree.setNodeAttribute(node, label, median);
-
         }
 
         private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<Object, Integer> values) {
@@ -948,6 +959,22 @@ public class TreeAnnotator {
             double lower = values[indices[hpdIndex]];
             double upper = values[indices[hpdIndex + diff - 1]];
             tree.setNodeAttribute(node, label, new Object[]{lower, upper});
+        }
+
+        private void annotateESSAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            // array --> list (to construct traceCorrelation obj)
+            List<Double> values2 = new ArrayList<Double>(0);
+            for (int i = 0; i < values.length; i++) {
+                values2.add(values[i]);
+            }
+
+            TraceType traceType = TraceType.REAL;
+            // maxState / totalTrees = stepSize for ESS
+            int logStep = (int) (maxState / totalTrees);
+            TraceCorrelation traceCorrelation = new TraceCorrelation(values2, traceType, logStep);
+
+            double ESS = traceCorrelation.getESS();
+            tree.setNodeAttribute(node, label, ESS);
         }
 
         // todo Move rEngine to outer class; create once.
@@ -1217,7 +1244,6 @@ public class TreeAnnotator {
     double posteriorLimit = 0.0;
 //PL:    double hpd2D = 0.80;
     double[] hpd2D = {0.80};
-
     private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();
 
     Set<String> attributeNames = new HashSet<String>();
@@ -1312,6 +1338,8 @@ public class TreeAnnotator {
         String inputFileName = null;
         String outputFileName = null;
 
+        boolean computeESS = false;
+
         if (args.length == 0) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -1383,6 +1411,7 @@ public class TreeAnnotator {
                         heightsOption,
                         posteriorLimit,
                         hpd2D,
+                        computeESS,
                         targetOption,
                         targetTreeFileName,
                         inputFileName,
@@ -1415,7 +1444,8 @@ public class TreeAnnotator {
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
                         new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma seperated) HPD proportion(s)")
+                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
+                        new Arguments.Option("ess", "compute ess for branch parameters")
                 });
 
         try {
@@ -1459,6 +1489,16 @@ public class TreeAnnotator {
             burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
+        if (arguments.hasOption("ess")) {
+            if(burninStates != -1) {
+                System.out.println(" Calculating ESS for branch parameters.");
+                computeESS = true;
+            }
+            else {
+                throw new RuntimeException("Specify burnin as states to use 'ess' option.");
+            }
+        }
+
         double posteriorLimit = 0.0;
         if (arguments.hasOption("limit")) {
             posteriorLimit = arguments.getRealOption("limit");
@@ -1496,7 +1536,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
     }

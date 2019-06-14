@@ -44,11 +44,11 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     private final SubstitutionModel substitutionModel;
 
     private final int eigenCount = 1;
+    private final int nodeCount;
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
-    private final int nodeCount;
     private final PreOrderSettings settings;
 
     /**
@@ -88,6 +88,27 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
 
         this.settings = settings;
+
+    }// END: Constructor
+
+    /**
+     * A simple constructor
+     * @param substitutionModel
+     * @param matrixCount
+     */
+    public HomogenousSubstitutionModelDelegate(SubstitutionModel substitutionModel, int matrixCount) {
+
+        this.substitutionModel = substitutionModel;
+
+        // two eigen buffers for each decomposition for store and restore.
+        eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, 1);
+
+        // two matrices for each node less the root
+        matrixBufferHelper = new BufferIndexHelper(matrixCount, 0, 1);
+
+        nodeCount = 0;
+        settings = PreOrderSettings.getDefault();
+
 
     }// END: Constructor
 

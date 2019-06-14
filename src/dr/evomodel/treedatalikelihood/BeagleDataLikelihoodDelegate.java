@@ -26,15 +26,15 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.*;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.treelikelihood.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -66,9 +66,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.2
+        // SSE for odd state counts fixed in BEAGLE 3.1.3
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 2;
+        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
     }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
@@ -381,7 +381,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
                 logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
 
-                List<BenchmarkedResourceDetails> benchmarkedResourceDetails = 
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails =
                                                     BeagleFactory.getBenchmarkedResourceDetails(
                                                                                 tipCount,
                                                                                 compactPartialsCount,
@@ -406,6 +406,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
             }
             // end auto resource selection
+
 
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,

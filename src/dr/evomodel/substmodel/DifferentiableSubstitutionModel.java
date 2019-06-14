@@ -42,6 +42,5 @@ public interface DifferentiableSubstitutionModel extends SubstitutionModel {
 
     void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant);
 
-    double getWeightedNormalizationGradient(double[][] differentialMassMatrix, double[] frequencies);
-
+    double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies);
 }

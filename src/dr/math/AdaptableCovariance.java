@@ -3,7 +3,6 @@ package dr.math;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
@@ -86,7 +85,7 @@ public class AdaptableCovariance {
         return result;
     }
 
-    public static class WithSubsampling extends AdaptableCovariance {
+    public class WithSubsampling extends AdaptableCovariance {
 
 //        final int maxUpdates;
         final int minCounts;

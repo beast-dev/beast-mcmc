@@ -1,7 +1,7 @@
 package dr.inference.operators.shrinkage;
 
 import dr.inference.distribution.ExponentialTiltedStableDistribution;
-import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -15,7 +15,7 @@ import static dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperato
 
 public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    private final Parameter coefficient;
+    private final BayesianBridgeStatisticsProvider provider;
     private final Parameter globalScale;
     private final Parameter localScale;
     private final Parameter regressionExponent;
@@ -24,16 +24,16 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
     private final GammaDistribution globalScalePrior;
 
 
-    public BayesianBridgeShrinkageOperator(BayesianBridgeLikelihood bayesianBridge,
+    public BayesianBridgeShrinkageOperator(BayesianBridgeStatisticsProvider bayesianBridge,
                                            GammaDistribution globalScalePrior,
                                            double weight) {
         setWeight(weight);
 
-        this.coefficient = bayesianBridge.getParameter();
+        this.provider = bayesianBridge;
         this.globalScale = bayesianBridge.getGlobalScale();
         this.localScale = bayesianBridge.getLocalScale();
         this.regressionExponent = bayesianBridge.getExponent();
-        this.dim = coefficient.getDimension();
+        this.dim = bayesianBridge.getDimension();
 
         this.globalScalePrior = globalScalePrior;
     }
@@ -92,7 +92,7 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         double exponent = regressionExponent.getParameterValue(0);
         double sum = 0.0;
         for (int i = 0; i < dim; ++i) {
-            sum += Math.pow(Math.abs(coefficient.getParameterValue(i)), exponent);
+            sum += Math.pow(Math.abs(provider.getCoefficient(i)), exponent);
         }
 
         return sum;
@@ -105,7 +105,7 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
 
         for (int i = 0; i < dim; ++i) {
             double draw = ExponentialTiltedStableDistribution.nextTiltedStable(
-                    exponent / 2, Math.pow(coefficient.getParameterValue(i) / global, 2)
+                    exponent / 2, Math.pow(provider.getCoefficient(i) / global, 2)
             );
 
             localScale.setParameterValueQuietly(i, Math.sqrt(1 / (2 * draw)));

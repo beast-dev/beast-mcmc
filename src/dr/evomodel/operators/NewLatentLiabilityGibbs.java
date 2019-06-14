@@ -158,15 +158,20 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         int index = node.getNumber();
         if (mask == null) {
+            Parameter tip = tipTraitParameter.getParameter(index);
             for (int i = 0; i < dim; i++) {
-                tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[i]);
+                tip.setParameterValueQuietly(i, traitValue[i]);
             }
+            tip.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
         } else {
             int j = 0;
+            Parameter tip = tipTraitParameter.getParameter(index);
+
             for (int i : maskDelegate.getLatentIndices(node)) {
-                tipTraitParameter.getParameter(index).setParameterValue(i, traitValue[j]);
+                tip.setParameterValueQuietly(i, traitValue[j]);
                 j++;
             }
+            tip.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
         }
     }
 

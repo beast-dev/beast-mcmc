@@ -9,11 +9,8 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
-import dr.xml.AttributeParser;
-import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
-import java.io.StringReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +26,6 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 public class BranchSpecificGradientTest extends TraceCorrelationAssert {
 
     private int dimTrait;
-    private int nTips;
 
     private MultivariateDiffusionModel diffusionModel;
     private ContinuousTraitPartialsProvider dataModel;
@@ -53,7 +49,6 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
         treeModel = createPrimateTreeModel();
 
         // Data
-        nTips = 6;
         Parameter[] dataTraits = new Parameter[6];
         dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
         dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
@@ -84,22 +79,25 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-        String s = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"-3.0 -1.0 1.0\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parser = new XMLParser(true, true, true, null);
-        parser.addXMLObjectParser(new AttributeParser());
-        parser.addXMLObjectParser(new ParameterParser());
-        parser.parse(new StringReader(s), true);
-        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
+//        String s = "<beast>\n" +
+//                "    <conjugateRootPrior>\n" +
+//                "        <meanParameter>\n" +
+//                "            <parameter id=\"meanRoot\"  value=\"-3.0 -1.0 1.0\"/>\n" +
+//                "        </meanParameter>\n" +
+//                "        <priorSampleSize>\n" +
+//                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
+//                "        </priorSampleSize>\n" +
+//                "    </conjugateRootPrior>\n" +
+//                "</beast>";
+//        XMLParser parser = new XMLParser(true, true, true, null);
+//        parser.addXMLObjectParser(new AttributeParser());
+//        parser.addXMLObjectParser(new ParameterParser());
+//        parser.parse(new StringReader(s), true);
+//        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
 //        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5}, 10.0, true);
+        Parameter rootMean = new Parameter.Default(new double[]{-1.0, -3.0, 2.5});
+        Parameter rootSampleSize = new Parameter.Default(10.0);
+        rootPrior = new ConjugateRootTraitPrior(rootMean, rootSampleSize);
 
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
@@ -120,7 +118,7 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
                 = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
 
         // Rates
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, true, null, null);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, true, false, null, null);
         Parameter branchRates = new Parameter.Default(new double[]{10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
         ArbitraryBranchRates rateModel = new ArbitraryBranchRates(treeModel, branchRates, transform, false);
 
@@ -146,11 +144,18 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
                 = new BranchSpecificGradient("trait", dataLikelihood, likelihoodDelegate,
                 traitGradient, branchRates);
         double[] gradient2 = branchGradient2.getGradientLogDensity();
+        double[] numericalGradient = branchGradient1.getNumericalGradient();
 
-        System.err.println("\tGradient with rate method = " + new dr.math.matrixAlgebra.Vector(gradient1));
+        System.err.println("\tGradient with rate method    = " + new dr.math.matrixAlgebra.Vector(gradient1));
         System.err.println("\tGradient with general method = " + new dr.math.matrixAlgebra.Vector(gradient2));
+        System.err.println("\tNumerical gradient           = " + new dr.math.matrixAlgebra.Vector(numericalGradient));
 
         assertEquals("length", gradient1.length, gradient2.length);
+        for (int i = 0; i < gradient1.length; i++) {
+            assertEquals("numeric " + i,
+                    gradient1[i],
+                    numericalGradient[i], 1E-4);
+        }
         for (int i = 0; i < gradient1.length; i++) {
             assertEquals("gradient " + i,
                     format.format(gradient1[i]),

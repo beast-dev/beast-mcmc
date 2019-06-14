@@ -25,7 +25,7 @@ import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
  */
 public class MissingOps {
 
-    private static final double TOLERANCE = 1e-10;
+    private static final double TOLERANCE = 1e-10; // TODO Maybe based on SingularOps.singularThreshold(svd)?
 
     public static DenseMatrix64F wrap(final double[] source, final int offset,
                                       final int numRows, final int numCols) {
@@ -50,30 +50,6 @@ public class MissingOps {
         return wrapDiagonal(source, offset, dim, buffer);
     }
 
-    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
-                                              final int dim,
-                                              final double[] buffer) {
-        for (int i = 0; i < dim; ++i) {
-            buffer[i * dim + i] = source[i];
-        }
-        return DenseMatrix64F.wrap(dim, dim, buffer);
-    }
-
-    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
-                                                     final int dim) {
-        double[] buffer = new double[dim * dim];
-        return wrapDiagonalInverse(source, offset, dim, buffer);
-    }
-
-    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
-                                                     final int dim,
-                                                     final double[] buffer) {
-        for (int i = 0; i < dim; ++i) {
-            buffer[i * dim + i] = 1 / source[i];
-        }
-        return DenseMatrix64F.wrap(dim, dim, buffer);
-    }
-
     public static DenseMatrix64F wrapSpherical(final double[] source, final int offset,
                                                final int dim) {
         double[] buffer = new double[dim * dim];
@@ -96,6 +72,30 @@ public class MissingOps {
                     buffer, i * dim, dim - 1);
             buffer[(i + 1) * dim - 1] = projection(source, offset + i * (dim - 1), dim - 1);
         }
+    }
+
+    public static DenseMatrix64F wrapDiagonal(final double[] source, final int offset,
+                                              final int dim,
+                                              final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
+                                                     final int dim) {
+        double[] buffer = new double[dim * dim];
+        return wrapDiagonalInverse(source, offset, dim, buffer);
+    }
+
+    public static DenseMatrix64F wrapDiagonalInverse(final double[] source, final int offset,
+                                                     final int dim,
+                                                     final double[] buffer) {
+        for (int i = 0; i < dim; ++i) {
+            buffer[i * dim + i] = 1 / source[i];
+        }
+        return DenseMatrix64F.wrap(dim, dim, buffer);
     }
 
     public static DenseMatrix64F copy(ReadableMatrix source) {
@@ -127,6 +127,18 @@ public class MissingOps {
             for (int j = 0; j < colLength; ++j) {
                 out[index] = source.unsafe_get(rowIndex, colIndices[j]);
                 ++index;
+            }
+        }
+    }
+
+    public static void copyRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
+                                          final int[] rowIndices, final int[] colIndices, final boolean clear) {
+        if (clear) {
+            Arrays.fill(destination.getData(), 0.0);
+        }
+        for (int row : rowIndices) {
+            for (int col : colIndices) {
+                destination.unsafe_set(row, col, source.unsafe_get(row, col));
             }
         }
     }
@@ -443,7 +455,7 @@ public class MissingOps {
         } else {
 
             LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.pseudoInverse(true);
-            ((SolvePseudoInverseSvd) solver).setThreshold(1e-8);
+            ((SolvePseudoInverseSvd) solver).setThreshold(1e-8); // TODO No magic numbers, define as static final somewhere obvsious
             solver.setA(A);
             solver.solve(B, X);
 
@@ -477,44 +489,6 @@ public class MissingOps {
 
         return result;
     }
-
-//    public static void safeSolveSymmPosDef(DenseMatrix64F A,
-//                                           WrappedVector b,
-//                                           WrappedVector x) {
-//        final int dim = b.getDim();
-//
-//        assert (A.getNumRows() == dim && A.getNumCols() == dim);
-//
-//        final DenseMatrix64F B = wrap(b.getBuffer(), b.getOffset(), dim, 1);
-//        final DenseMatrix64F X = new DenseMatrix64F(dim, 1);
-//
-//        safeSolveSymmPosDef(A, B, X);
-//
-//
-//        for (int row = 0; row < dim; ++row) {
-//            x.set(row, X.unsafe_get(row, 0));
-//        }
-//    }
-//
-//    public static void safeSolveSymmPosDef(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X) {
-//
-//        final int finiteCount = countFiniteNonZeroDiagonals(A);
-//
-//        InversionResult result;
-//        if (finiteCount == 0) {
-//            Arrays.fill(X.getData(), 0);
-//        } else {
-//            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(A.getNumCols());
-//            DenseMatrix64F Abis = new DenseMatrix64F(A);
-//            if(solver.setA(Abis)) {
-//                solver.solve(B, X);
-//            } else {
-//                LinearSolver<DenseMatrix64F> solverSVD = LinearSolverFactory.pseudoInverse(true);
-//                solverSVD.setA(A);
-//                solverSVD.solve(B, X);
-//            }
-//        }
-//    }
 
 //    public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
 //
@@ -666,6 +640,20 @@ public class MissingOps {
         }
     }
 
+    public static void safeAdd(DenseMatrix64F source0, DenseMatrix64F source1, DenseMatrix64F destination) {
+        CommonOps.add(source0, source1, destination);
+
+        for (int i = 0; i < destination.numCols; ++i) {
+            if (Double.isInfinite(destination.unsafe_get(i, i))) {
+                for (int j = 0; j < destination.numRows; ++j) {
+                    if (i != j) {
+                        destination.unsafe_set(i, j, 0.0);
+                        destination.unsafe_set(j, i, 0.0);
+                    }
+                }
+            }
+        }
+    }
 
     public static void matrixVectorMultiple(final DenseMatrix64F A,
                                             final WrappedVector x,
@@ -1018,3 +1006,42 @@ public class MissingOps {
         }
     }
 }
+
+//    public static void safeSolveSymmPosDef(DenseMatrix64F A,
+//                                           WrappedVector b,
+//                                           WrappedVector x) {
+//        final int dim = b.getDim();
+//
+//        assert (A.getNumRows() == dim && A.getNumCols() == dim);
+//
+//        final DenseMatrix64F B = wrap(b.getBuffer(), b.getOffset(), dim, 1);
+//        final DenseMatrix64F X = new DenseMatrix64F(dim, 1);
+//
+//        safeSolveSymmPosDef(A, B, X);
+//
+//
+//        for (int row = 0; row < dim; ++row) {
+//            x.set(row, X.unsafe_get(row, 0));
+//        }
+//    }
+//
+//    public static void safeSolveSymmPosDef(DenseMatrix64F A, DenseMatrix64F B, DenseMatrix64F X) {
+//
+//        final int finiteCount = countFiniteNonZeroDiagonals(A);
+//
+//        InversionResult result;
+//        if (finiteCount == 0) {
+//            Arrays.fill(X.getData(), 0);
+//        } else {
+//            LinearSolver<DenseMatrix64F> solver = LinearSolverFactory.symmPosDef(A.getNumCols());
+//            DenseMatrix64F Abis = new DenseMatrix64F(A);
+//            if(solver.setA(Abis)) {
+//                solver.solve(B, X);
+//            } else {
+//                LinearSolver<DenseMatrix64F> solverSVD = LinearSolverFactory.pseudoInverse(true);
+//                solverSVD.setA(A);
+//                solverSVD.solve(B, X);
+//            }
+//        }
+//    }
+

@@ -99,6 +99,7 @@ public class BranchSpecificGradientTest extends TraceCorrelationAssert {
         Parameter rootSampleSize = new Parameter.Default(10.0);
         rootPrior = new ConjugateRootTraitPrior(rootMean, rootSampleSize);
 
+
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,

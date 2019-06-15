@@ -4,12 +4,16 @@
 
 <beast>
 
+    <!-- ********************************************************************************-->
+    <!-- Eigen Values -->
+    <!-- ********************************************************************************-->
+
     <parameter id="attenuation.values" value="0.1 0.2 0.3 0.4" />
 
     <operators id="operators.randomWalk.attVals">
         <randomWalkOperator windowSize="1.0" weight="1">
             <parameter idref="attenuation.values"/>
-            <transform type="positiveOrdered"/>
+            <positiveOrderedTransform dim="4"/>
         </randomWalkOperator>
     </operators>
 
@@ -28,7 +32,7 @@
         <data>
             <parameter idref="attenuation.values"/>
         </data>
-        <transform type="positiveOrdered"/>
+        <positiveOrderedTransform dim="4"/>
     </multivariateNormalPrior>
 
 	<mcmc id="mcmc.randomWalk.attVals" chainLength="100000000" autoOptimize="true">
@@ -113,10 +117,14 @@ for (i in 1:(dim-1)) {
 }
 -->
 
-    <matrixParameter id="attenuation.vectors">
+    <!-- ********************************************************************************-->
+    <!-- Eigen Vectors -->
+    <!-- ********************************************************************************-->
+
+    <matrixParameter id="attenuation.vectors" isEigenVectors="true">
         <parameter id="attVec.col1" value="0.5 0.5 0.5"/>
         <parameter id="attVec.col2" value="0.8 0.4 0.4"/>
-        <parameter id="attVec.col3" value="0.4 0.8 0.1"/>
+        <parameter id="attVec.col3" value="0.4 0.8 0.2"/>
         <parameter id="attVec.col4" value="0.5 0.5 0.5"/>
     </matrixParameter>
 
@@ -128,21 +136,27 @@ for (i in 1:(dim-1)) {
 
     <operators id="operators.randomWalk.attVecs">
         <randomWalkOperator windowSize="1.0" weight="1">
-            <parameter idref="attVec.col1"/>
+            <matrixParameter idref="attenuation.vectors"/>
+            <!-- <matrixParameter transpose="true"> -->
+            <!--     <parameter idref="attVec.col1"/> -->
+            <!--     <parameter idref="attVec.col2"/> -->
+            <!--     <parameter idref="attVec.col3"/> -->
+            <!--     <parameter idref="attVec.col4"/> -->
+            <!-- </matrixParameter> -->
             <sphericalTransform dim="3"/>
         </randomWalkOperator>
-        <randomWalkOperator windowSize="1.0" weight="1">
-            <parameter idref="attVec.col2"/>
-            <sphericalTransform dim="3"/>
-        </randomWalkOperator>
-        <randomWalkOperator windowSize="1.0" weight="1">
-            <parameter idref="attVec.col3"/>
-            <sphericalTransform dim="3"/>
-        </randomWalkOperator>
-        <randomWalkOperator windowSize="1.0" weight="1">
-            <parameter idref="attVec.col4"/>
-            <sphericalTransform dim="3"/>
-        </randomWalkOperator>
+        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
+        <!--     <parameter idref="attVec.col2"/> -->
+        <!--     <sphericalTransform dim="3"/> -->
+        <!-- </randomWalkOperator> -->
+        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
+        <!--     <parameter idref="attVec.col3"/> -->
+        <!--     <sphericalTransform dim="3"/> -->
+        <!-- </randomWalkOperator> -->
+        <!-- <randomWalkOperator windowSize="1.0" weight="1"> -->
+        <!--     <parameter idref="attVec.col4"/> -->
+        <!--     <sphericalTransform dim="3"/> -->
+        <!-- </randomWalkOperator> -->
     </operators>
 
 	<mcmc id="mcmc.randomWalk.attVecs" chainLength="100000000" autoOptimize="true">
@@ -212,6 +226,19 @@ for (i in 1:(length-1)) {
   }
 }
 -->
+
+    <!-- ********************************************************************************-->
+    <!-- Both -->
+    <!-- ********************************************************************************-->
+
+    <compoundEigenMatrix id="attenuation.matrix">
+        <eigenValues>
+            <parameter idref="attenuation.values"/>
+        </eigenValues>
+        <eigenVectors>
+            <matrixParameter idref="attenuation.vectors"/>
+        </eigenVectors>
+    </compoundEigenMatrix>
 
 </beast>
 

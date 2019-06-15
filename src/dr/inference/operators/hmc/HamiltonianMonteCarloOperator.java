@@ -592,6 +592,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 unTransformedPosition = transform.inverse(position, 0, position.length);
                 super.setParameter(unTransformedPosition);
             }
+
         }
     }
 }

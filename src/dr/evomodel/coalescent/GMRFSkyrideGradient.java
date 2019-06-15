@@ -166,7 +166,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
             @Override
             void update(NodeHeightTransform nodeHeightTransform, double[] values) {
-                nodeHeightTransform.inverse(values);
+                nodeHeightTransform.inverse(values, 0, values.length);
             }
         },
 
@@ -180,7 +180,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
             @Override
             void update(NodeHeightTransform nodeHeightTransform, double[] values) {
-                nodeHeightTransform.transform(values);
+                nodeHeightTransform.transform(values, 0, values.length);
             }
         };
 

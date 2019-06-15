@@ -120,7 +120,7 @@ public interface GammaGibbsProvider {
             this.traitParameter = dataModel.getParameter();
             this.precisionParameter = dataModel.getSamplingPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
-            this.missingVector = dataModel.getMissingVector();
+            this.missingVector = dataModel.getMissingIndicator();
         }
 
         @Override

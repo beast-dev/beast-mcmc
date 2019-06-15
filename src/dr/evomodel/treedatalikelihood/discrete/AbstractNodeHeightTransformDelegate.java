@@ -74,9 +74,9 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
 
     }
 
-    abstract double[] transform(double[] values, int from, int to);
+    abstract double[] transform(double[] values);
 
-    abstract double[] inverse(double[] values, int from, int to);
+    abstract double[] inverse(double[] values);
 
     abstract String getReport();
 

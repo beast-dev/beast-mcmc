@@ -12,28 +12,27 @@ public class Check {
     private final Report report;
 
 
-
     public Check(Report report, String[] regexes, String[] values) {
 
         this.report = report;
         String stringReport = getReportAsString();
 
-        for (int i= 0; i < regexes.length; i ++){
+        for (int i = 0; i < regexes.length; i++) {
             String stringValue = parseDoubleRegex(stringReport, regexes[i]);
-            if (!stringValue.equals(values[i])){
+            if (!stringValue.equals(values[i])) {
                 failCheck(regexes[i], stringValue, values[i]);
             }
         }
 
     }
 
-    private void failCheck(String name, String reportValue, String trueValue){
+    private void failCheck(String name, String reportValue, String trueValue) {
         System.out.println("Report returned " + reportValue + " for " + name + "."
                 + " The true value is " + trueValue + ".");
         System.exit(-1);
     }
 
-    private String getReportAsString(){
+    private String getReportAsString() {
 
         StringWriter sWriter = new StringWriter();
         PrintWriter pWriter = new PrintWriter(sWriter);
@@ -45,10 +44,10 @@ public class Check {
 
     }
 
-    private String parseDoubleRegex(String report, String matchBase){
+    private String parseDoubleRegex(String report, String matchBase) {
         String match = "\n" + matchBase + ":";
         int lastInd = report.lastIndexOf(match);
-        if (lastInd == -1){
+        if (lastInd == -1) {
             throw new RuntimeException("Did not find \"" + matchBase + "\" in the report.");
         }
         Matcher matcher = doublePattern.matcher(report);
@@ -62,7 +61,6 @@ public class Check {
 
         return doubleString;
     }
-
 
 
     private static final String CHECK = "check";
@@ -80,7 +78,7 @@ public class Check {
             int nMatch = matches.size();
             String[] regexes = new String[nMatch];
             String[] values = new String[nMatch];
-            for (int i = 0; i < nMatch; i++){
+            for (int i = 0; i < nMatch; i++) {
                 XMLObject match = matches.get(i);
                 regexes[i] = (String) match.getAttribute(REGEX);
                 values[i] = match.getStringChild(0);
@@ -93,7 +91,6 @@ public class Check {
         public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
-
 
 
         @Override
@@ -117,6 +114,6 @@ public class Check {
             new ElementRule(MATCH, new XMLSyntaxRule[]{
                     AttributeRule.newStringRule(REGEX)
             }, 1, Integer.MAX_VALUE)};
-    };
+};
 
 

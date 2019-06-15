@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public class Check {
 
-    private static final Pattern doublePattern = Pattern.compile("[-]*\\d*\\.\\d+|\\d+\\.\\d*$");
+    private static final Pattern doublePattern = Pattern.compile("[-+]?\\d+(\\.\\d+)?");
     private final Report report;
 
 
@@ -45,21 +45,32 @@ public class Check {
     }
 
     private String parseDoubleRegex(String report, String matchBase) {
-        String match = "\n" + matchBase + ":";
-        int lastInd = report.lastIndexOf(match);
-        if (lastInd == -1) {
+
+        Pattern keyPattern = stringMatchPattern(matchBase);
+        Matcher keyMatcher = keyPattern.matcher(report);
+        keyMatcher.find();
+
+        if (keyMatcher.end() == -1) {
             throw new RuntimeException("Did not find \"" + matchBase + "\" in the report.");
         }
+
         Matcher matcher = doublePattern.matcher(report);
-        matcher.find(lastInd);
+        matcher.find(keyMatcher.end());
+
         int sInd = matcher.start();
         int lInd = matcher.end();
         int stringLength = lInd - sInd;
+
         char[] doubleChars = new char[stringLength];
         report.getChars(sInd, lInd, doubleChars, 0);
         String doubleString = new String(doubleChars);
 
         return doubleString;
+    }
+
+    private Pattern stringMatchPattern(String baseMatch) {
+        String regex = "\\s+" + baseMatch + "[\\s+|:]";
+        return Pattern.compile(regex);
     }
 
 

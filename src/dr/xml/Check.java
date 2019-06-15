@@ -10,6 +10,7 @@ public class Check {
 
     private static final Pattern doublePattern = Pattern.compile("[-+]?\\d+(\\.\\d+)?");
     private final Report report;
+    private static final double tolerance = 1e-6;
 
 
     public Check(Report report, String[] regexes, String[] values) {
@@ -19,7 +20,9 @@ public class Check {
 
         for (int i = 0; i < regexes.length; i++) {
             String stringValue = parseDoubleRegex(stringReport, regexes[i]);
-            if (!stringValue.equals(values[i])) {
+//            boolean passes = stringValue.equals(values[i]);
+            boolean passes = checkEqualsDouble(stringValue, values[i]);
+            if (!passes) {
                 failCheck(regexes[i], stringValue, values[i]);
             }
         }
@@ -30,6 +33,13 @@ public class Check {
         System.out.println("Report returned " + reportValue + " for " + name + "."
                 + " The true value is " + trueValue + ".");
         System.exit(-1);
+    }
+
+    private boolean checkEqualsDouble(String s1, String s2) {
+        double d1 = Double.parseDouble(s1);
+        double d2 = Double.parseDouble(s2);
+        return Math.abs(d1 - d2) > tolerance ? false : true;
+
     }
 
     private String getReportAsString() {

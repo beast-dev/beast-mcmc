@@ -224,7 +224,7 @@
         <report>
             <traitDataLikelihood idref="traitLikelihood"/>
         </report>
-        <match regex="logDatumLikelihood"> -49.4594807905465 </match>
+        <match regex="logDatumLikelihood"> -49.4594808 </match>
         <match regex="Joint precision"> 0.04674596814325365 </match>
         <match regex="dimTrait"> -2.3</match>
 

@@ -3,13 +3,20 @@ package dr.xml;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Check {
+
+    private static final Pattern doublePattern = Pattern.compile("[-]*\\d*\\.\\d+|\\d+\\.\\d*$");
 
 
 
     public Check(Report report, String[] regexes, String[] values) {
         String stringReport = getReportAsString(report);
+        for (String expression: regexes){
+            String stringValue = parseDoubleRegex(stringReport, expression);
+        }
         //TODO: parse regexes & values
         //TODO: make comparisons
     }
@@ -24,6 +31,24 @@ public class Check {
 
         return sWriter.toString();
 
+    }
+
+    private String parseDoubleRegex(String report, String matchBase){
+        String match = "\n" + matchBase + ":";
+        int lastInd = report.lastIndexOf(match);
+        if (lastInd == -1){
+            throw new RuntimeException("Did not find \"" + matchBase + "\" in the report.");
+        }
+        Matcher matcher = doublePattern.matcher(report);
+        matcher.find(lastInd);
+        int sInd = matcher.start();
+        int lInd = matcher.end();
+        int stringLength = lInd - sInd;
+        char[] doubleChars = new char[stringLength];
+        report.getChars(sInd, lInd, doubleChars, 0);
+        String doubleString = new String(doubleChars);
+
+        return doubleString;
     }
 
 

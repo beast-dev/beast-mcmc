@@ -9,19 +9,31 @@ import java.util.regex.Pattern;
 public class Check {
 
     private static final Pattern doublePattern = Pattern.compile("[-]*\\d*\\.\\d+|\\d+\\.\\d*$");
+    private final Report report;
 
 
 
     public Check(Report report, String[] regexes, String[] values) {
-        String stringReport = getReportAsString(report);
-        for (String expression: regexes){
-            String stringValue = parseDoubleRegex(stringReport, expression);
+
+        this.report = report;
+        String stringReport = getReportAsString();
+
+        for (int i= 0; i < regexes.length; i ++){
+            String stringValue = parseDoubleRegex(stringReport, regexes[i]);
+            if (!stringValue.equals(values[i])){
+                failCheck(regexes[i], stringValue, values[i]);
+            }
         }
-        //TODO: parse regexes & values
-        //TODO: make comparisons
+
     }
 
-    private String getReportAsString(Report report){
+    private void failCheck(String name, String reportValue, String trueValue){
+        System.out.println("Report returned " + reportValue + " for " + name + "."
+                + " The true value is " + trueValue + ".");
+        System.exit(-1);
+    }
+
+    private String getReportAsString(){
 
         StringWriter sWriter = new StringWriter();
         PrintWriter pWriter = new PrintWriter(sWriter);

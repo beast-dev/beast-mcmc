@@ -58,10 +58,6 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
             throw new RuntimeException("Dimension mismatch!");
         }
         this.substitutionModelList = constructSubstitutionModels(substitutionParameterList, branchRateModelList);
-        addModel(substitutionModel);
-        for (int i = 0; i < branchRateModelList.size(); i++) {
-            addModel(branchRateModelList.get(i));
-        }
     }
 
     private List<SubstitutionModel> constructSubstitutionModels(List<Parameter> substitutionParameterList,
@@ -74,7 +70,6 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
                 newSubstitutionParameterList.add(new ProxySubstitutionParameter(branchRateModelList.get(j), tree, rootParameter, i));
             }
             substitutionModelList.add(substitutionModel.factory(substitutionParameterList, newSubstitutionParameterList));
-            addModel(substitutionModel);
         }
         return substitutionModelList;
     }

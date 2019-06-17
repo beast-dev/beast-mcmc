@@ -1361,7 +1361,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     @Override
     public long getTotalCalculationCount() {
         // Can only return one count at the moment so return the number of partials updated
-        return totalEvaluationCount;
+        return totalPartialsUpdateCount;
     }
 
     // **************************************************************

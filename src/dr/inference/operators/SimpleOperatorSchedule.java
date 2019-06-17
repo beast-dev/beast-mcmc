@@ -229,7 +229,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 
 		public double getDoubleValue() {
-			return op.getMeanEvaluationTime();
+			return op.getTotalEvaluationTime();
 		}
 	}
 
@@ -242,7 +242,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 
 		public double getDoubleValue() {
-			return op.getMeanCalculationCount();
+			return op.getTotalCalculationCount();
 		}
 	}
 }

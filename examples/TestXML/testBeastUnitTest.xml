@@ -1,0 +1,95 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testML.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the ML engine -->
+
+<beast>
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">10 NA 1</attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="X">NA NA 2</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">NA 0 NA</attr>
+        </taxon>
+        <taxon id="D">
+            <attr name="X">-20 3 4</attr>
+        </taxon>
+        <taxon id="E">
+            <attr name="X">100 0 NA</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree">
+        ((A:2,(B:1,C:1):1):2,(D:3, E:3):1);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="precisionMatrix">
+                <parameter id="prec.col1" value="1.0 0.1 -0.5"/>
+                <parameter id="prec.col2" value="0.1 2.0 -0.6"/>
+                <parameter id="prec.col3" value="-0.6 -0.5 3.0"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <repeatedMeasuresModel id="repeatedMeasures" traitName="X">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <!--<samplingPrecision>-->
+        <!--<parameter id="gamma" value="2 3"/>-->
+        <!--</samplingPrecision>-->
+        <samplingPrecision>
+            <matrixParameter id="samplingPrecision">
+                <parameter value="3.0 0.3 -0.2"/>
+                <parameter value="0.3 2.0 0.1"/>
+                <parameter value="-0.2 0.1 1.0"/>
+            </matrixParameter>
+        </samplingPrecision>
+        <multivariateDiffusionModel idref="diffusionModel"/>
+    </repeatedMeasuresModel>
+
+    <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <repeatedMeasuresModel idref="repeatedMeasures"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter id="mean" value="0.0 0.0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <assertEqual>
+    	<actual regex="logDatumLikelihood:\s+(.*)\n">
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </actual>
+        <expected>
+        	-49.4594808
+        </expected>
+    </assertEqual>
+
+</beast>

@@ -14,15 +14,56 @@ public class BeastUnitTest {
 
     private static final double tolerance = 1e-6;
 
+    private final String message;
+    private final String actual;
+    private final String expected;
+
+    private final AssertType assertType;
 
     public BeastUnitTest(String message, String actual, String expected) {
+        this.message = message;
+        this.actual = actual;
+        this.expected = expected;
 
+        assertType = AssertType.STRING;
     }
 
-    private void failCheck(String name, String reportValue, String trueValue) {
-        System.out.println("Report returned " + reportValue + " for " + name + "."
-                + " The true value is " + trueValue + ".");
+    public void execute() {
+        if (!assertType.equivalent(actual, expected)) {
+            failCheck();
+        }
+    }
+
+    private void failCheck() {
+        String string = "assert " + ((message != null) ? message : "")
+                + actual + " != " + expected;
+        System.err.println(string);
         System.exit(-1);
+    }
+
+    enum AssertType {
+        STRING {
+            @Override
+            boolean equivalent(String a, String b) {
+                return a.compareTo(b) == 0;
+            }
+        },
+        DOUBLE {
+            @Override
+            boolean equivalent(String a, String b) {
+                double aDouble = Double.valueOf(a);
+                double bDouble = Double.valueOf(b);
+                return Math.abs(aDouble - bDouble) < tolerance;
+            }
+        },
+        DOUBLE_ARRAY {
+            @Override
+            boolean equivalent(String a, String b) {
+                return false;
+            }
+        };
+
+        abstract boolean equivalent(String a, String b);
     }
 
     private static final String CHECK = "assertEqual";
@@ -44,7 +85,10 @@ public class BeastUnitTest {
             String expected = parseValue(xo.getChild(EXPECTED));
             String actual = parseValue(xo.getChild(ACTUAL));
 
-            return new BeastUnitTest(message, actual, expected);
+            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected);
+            unitTest.execute();
+            
+            return unitTest;
         }
 
         private String parseValue(XMLObject xo) throws XMLParseException {
@@ -61,7 +105,9 @@ public class BeastUnitTest {
             if (xo.hasAttribute(REGEX)) {
                 Pattern pattern = Pattern.compile(xo.getStringAttribute(REGEX));
                 Matcher matcher = pattern.matcher(rawString);
-                rawString = matcher.group();
+                if (matcher.find()) {
+                    rawString = matcher.group(1);
+                }
             }
 
             return rawString;

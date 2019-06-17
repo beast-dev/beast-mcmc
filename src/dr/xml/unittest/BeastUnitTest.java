@@ -22,16 +22,18 @@ public class BeastUnitTest {
     private final AssertType assertType;
 
     public BeastUnitTest(String message, String actual, String expected) {
-        this(message, actual, expected, TOLERANCE);
+        this(message, actual, expected,
+                AssertType.STRING, TOLERANCE);
     }
 
-    public BeastUnitTest(String message, String actual, String expected, double tolerance) {
+    public BeastUnitTest(String message, String actual, String expected,
+                         AssertType assertType,
+                         double tolerance) {
         this.message = message;
         this.actual = actual;
         this.expected = expected;
+        this.assertType = assertType;
         this.tolerance = tolerance;
-
-        assertType = AssertType.STRING;
     }
 
     public void execute() {
@@ -41,8 +43,8 @@ public class BeastUnitTest {
     }
 
     private void failCheck() {
-        String string = "assert " + ((message != null) ? message : "")
-                + actual + " != " + expected;
+        String string = "assert" + ((message != null) ? (" " + message) : "")
+                + ": '" + actual + "' != '" + expected + "'";
         System.err.println(string);
         System.exit(-1);
     }
@@ -55,14 +57,6 @@ public class BeastUnitTest {
             }
         },
         DOUBLE {
-            @Override
-            boolean equivalent(String a, String b, double tolerance) {
-                double lhs = Double.valueOf(a);
-                double rhs = Double.valueOf(b);
-                return close(lhs, rhs, tolerance);
-            }
-        },
-        DOUBLE_ARRAY {
             @Override
             boolean equivalent(String a, String b, double tolerance) {
 
@@ -82,7 +76,7 @@ public class BeastUnitTest {
                 return true;
             }
 
-            double[] parseArray(String string) {
+            private double[] parseArray(String string) {
                 string = string.replaceAll(",", " ");
                 String[] strings = string.split("\\s+");
                 double[] reals = new double[string.length()];
@@ -92,13 +86,13 @@ public class BeastUnitTest {
 
                 return reals;
             }
+
+            private boolean close(double lhs, double rhs, double tolerance) {
+                return Math.abs(lhs - rhs) < tolerance;
+            }
         };
 
         abstract boolean equivalent(String a, String b, double tolerance);
-
-        private static boolean close(double lhs, double rhs, double tolerance) {
-            return Math.abs(lhs - rhs) < tolerance;
-        }
     }
 
     private static final String CHECK = "assertEqual";
@@ -106,6 +100,7 @@ public class BeastUnitTest {
     private static final String EXPECTED = "expected";
     private static final String ACTUAL = "actual";
     private static final String REGEX = "regex";
+    private static final String TOLERANCE_STRING = "tolerance";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -120,7 +115,14 @@ public class BeastUnitTest {
             String expected = parseValue(xo.getChild(EXPECTED));
             String actual = parseValue(xo.getChild(ACTUAL));
 
-            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected);
+            BeastUnitTest unitTest;
+            if (xo.hasAttribute(TOLERANCE_STRING)) {
+                double tolerance = xo.getAttribute(TOLERANCE_STRING, TOLERANCE);
+                unitTest = new BeastUnitTest(message, actual, expected,
+                        AssertType.DOUBLE, tolerance);
+            } else {
+                unitTest = new BeastUnitTest(message, actual, expected);
+            }
             unitTest.execute();
             
             return unitTest;
@@ -189,6 +191,7 @@ public class BeastUnitTest {
                     new ElementRule(String.class),
 
             }, true),
+            AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
     };
 }
 

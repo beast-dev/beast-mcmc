@@ -293,7 +293,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
         final double heightBelow = height - delta;
 
-        if (!slideOnly && heightBelow > tree.getNodeHeight(node)) {
+        if (heightBelow > tree.getNodeHeight(node)) {
             // the destination height below the parent is compatible with the node
             // see if there are any destinations on the sibling's branch
             final List<NodeRef> edges = new ArrayList<NodeRef>();
@@ -317,22 +317,25 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
             if (parent1 != null) {
                 final double height1 = tree.getNodeHeight(parent1);
-                if (!slideOnly && height1 < heightAbove) {
-                    // haven't reached the height above the original height so go down
-                    // the sibling subtree
-                    NodeRef sibling1 = getOtherChild(tree, parent1, node1);
+                if (height1 < heightAbove) {
+                    if (!slideOnly) { // if we are not just sliding up or down...
+                        
+                        // We haven't reached the height above the original height so go down
+                        // the sibling subtree to look for other possible destinations
+                        NodeRef sibling1 = getOtherChild(tree, parent1, node1);
 
-                    double heightBelow1 = height1 - (heightAbove - height1);
+                        double heightBelow1 = height1 - (heightAbove - height1);
 
-                    if (heightBelow1 > tree.getNodeHeight(node)) {
+                        if (heightBelow1 > tree.getNodeHeight(node)) {
 
-                        final List<NodeRef> edges = new ArrayList<NodeRef>();
+                            final List<NodeRef> edges = new ArrayList<NodeRef>();
 
-                        getIntersectingEdges(tree, sibling1, heightBelow1, edges);
+                            getIntersectingEdges(tree, sibling1, heightBelow1, edges);
 
-                        // add the intersecting edges and the height
-                        for (NodeRef n : edges) {
-                            destinations.put(n, heightBelow1);
+                            // add the intersecting edges and the height
+                            for (NodeRef n : edges) {
+                                destinations.put(n, heightBelow1);
+                            }
                         }
                     }
                 } else {

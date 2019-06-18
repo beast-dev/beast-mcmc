@@ -49,6 +49,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
 
+    public static final Boolean USE_OLD_CODE = false;
+
     public String getParserName() {
         return STRUCTURED_COALESCENT;
     }
@@ -92,7 +94,11 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         if (treeModel != null) {
             try {
-                return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                if (USE_OLD_CODE) {
+                    return new OldStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                } else {
+                    return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                }
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");
             }
@@ -111,7 +117,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     }
 
     public Class getReturnType() {
-        return StructuredCoalescentLikelihood.class;
+        return OldStructuredCoalescentLikelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

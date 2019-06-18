@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -402,6 +402,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     public void addTraits(TreeTrait[] traits) {
         treeTraits.addTraits(traits);
+    }
+
+    // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        return likelihoodDelegate.getTotalCalculationCount();
     }
 
     // **************************************************************

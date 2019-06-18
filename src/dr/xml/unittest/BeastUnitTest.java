@@ -2,6 +2,7 @@ package dr.xml.unittest;
 
 import dr.xml.*;
 
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,7 +11,7 @@ import java.util.regex.Pattern;
  * @author Marc A. Suchard
  */
 
-public class BeastUnitTest {
+public class BeastUnitTest implements Reportable {
 
     private static final double TOLERANCE = 1e-6;
 
@@ -18,6 +19,8 @@ public class BeastUnitTest {
     private final String actual;
     private final String expected;
     private final double tolerance;
+
+    private Boolean pass;
 
     private final AssertType assertType;
 
@@ -40,13 +43,30 @@ public class BeastUnitTest {
         if (!assertType.equivalent(actual, expected, tolerance)) {
             failCheck();
         }
+
+        pass = true;
     }
 
     private void failCheck() {
-        String string = "assert" + ((message != null) ? (" " + message) : "")
+        String string = formatName()
                 + ": '" + actual + "' != '" + expected + "'";
         System.err.println(string);
         System.exit(-1);
+    }
+
+    private String formatName() {
+        return "assert" + ((message != null) ? (" " + message) : "");
+    }
+
+    private String getPass() {
+        return pass != null ?
+                (pass ? "passed" : "fail") :
+                "not executed";
+    }
+
+    @Override
+    public String getReport() {
+        return formatName() + ": " + getPass();
     }
 
     enum AssertType {
@@ -79,7 +99,7 @@ public class BeastUnitTest {
             private double[] parseArray(String string) {
                 string = string.replaceAll(",", " ");
                 String[] strings = string.split("\\s+");
-                double[] reals = new double[string.length()];
+                double[] reals = new double[strings.length];
                 for (int i = 0; i < strings.length; ++i) {
                     reals[i] = Double.valueOf(strings[i]);
                 }
@@ -101,6 +121,7 @@ public class BeastUnitTest {
     private static final String ACTUAL = "actual";
     private static final String REGEX = "regex";
     private static final String TOLERANCE_STRING = "tolerance";
+    private static final String VERBOSE = "verbose";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -124,6 +145,10 @@ public class BeastUnitTest {
                 unitTest = new BeastUnitTest(message, actual, expected);
             }
             unitTest.execute();
+
+            if (xo.getAttribute(VERBOSE, false)) {
+                Logger.getLogger("dr.xml.unittest").info(unitTest.getReport());
+            }
             
             return unitTest;
         }
@@ -192,6 +217,7 @@ public class BeastUnitTest {
 
             }, true),
             AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
+            AttributeRule.newBooleanRule(VERBOSE, true),
     };
 }
 

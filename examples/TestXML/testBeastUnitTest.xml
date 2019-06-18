@@ -83,12 +83,15 @@
         </conjugateRootPrior>
     </traitDataLikelihood>
 
-    <assertEqual>
+    <assertEqual tolerance="1e-3" verbose="true">
+    	<message>
+    		Check log likelihood of observed data
+    	</message>
     	<actual regex="logDatumLikelihood:\s+(.*)\n">
             <traitDataLikelihood idref="traitLikelihood"/>
         </actual>
         <expected>
-        	-49.4594808
+        	-3296.670
         </expected>
     </assertEqual>
 

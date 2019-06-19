@@ -95,4 +95,20 @@
         </expected>
     </assertEqual>
 
+    <report id="test.report">
+	    <traitDataLikelihood idref="traitLikelihood"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" verbose="true">
+    	<message>
+    		Check log likelihood of observed data
+    	</message>
+    	<actual regex="logDatumLikelihood:\s+(.*)\n">
+            <report idref="test.report"/>
+        </actual>
+        <expected>
+        	-3296.670
+        </expected>
+    </assertEqual>
+
 </beast>

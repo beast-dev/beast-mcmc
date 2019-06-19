@@ -13,34 +13,24 @@ import java.util.regex.Pattern;
 
 public class BeastUnitTest implements Reportable {
 
-    private static final double TOLERANCE = 1e-6;
-
     private final String message;
     private final String actual;
     private final String expected;
-    private final double tolerance;
 
     private Boolean pass;
 
     private final AssertType assertType;
 
-    public BeastUnitTest(String message, String actual, String expected) {
-        this(message, actual, expected,
-                AssertType.STRING, TOLERANCE);
-    }
-
     public BeastUnitTest(String message, String actual, String expected,
-                         AssertType assertType,
-                         double tolerance) {
+                         AssertType assertType) {
         this.message = message;
         this.actual = actual;
         this.expected = expected;
         this.assertType = assertType;
-        this.tolerance = tolerance;
     }
 
     public void execute() {
-        if (!assertType.equivalent(actual, expected, tolerance)) {
+        if (!assertType.equivalent(actual, expected)) {
             failCheck();
         }
 
@@ -69,16 +59,28 @@ public class BeastUnitTest implements Reportable {
         return formatName() + ": " + getPass();
     }
 
-    enum AssertType {
-        STRING {
+    interface AssertType {
+
+        boolean equivalent(String a, String b);
+
+        class StringAssert implements AssertType {
+
             @Override
-            boolean equivalent(String a, String b, double tolerance) {
+            public boolean equivalent(String a, String b) {
                 return a.compareTo(b) == 0;
             }
-        },
-        DOUBLE {
+        }
+
+        class DoubleAssert implements AssertType {
+
+            private final double tolerance;
+
+            DoubleAssert(double tolerance) {
+                this.tolerance = tolerance;
+            }
+
             @Override
-            boolean equivalent(String a, String b, double tolerance) {
+            public boolean equivalent(String a, String b) {
 
                 double[] lhs = parseArray(a);
                 double[] rhs = parseArray(b);
@@ -110,9 +112,7 @@ public class BeastUnitTest implements Reportable {
             private boolean close(double lhs, double rhs, double tolerance) {
                 return Math.abs(lhs - rhs) < tolerance;
             }
-        };
-
-        abstract boolean equivalent(String a, String b, double tolerance);
+        }
     }
 
     private static final String CHECK = "assertEqual";
@@ -136,14 +136,11 @@ public class BeastUnitTest implements Reportable {
             String expected = parseValue(xo.getChild(EXPECTED));
             String actual = parseValue(xo.getChild(ACTUAL));
 
-            BeastUnitTest unitTest;
-            if (xo.hasAttribute(TOLERANCE_STRING)) {
-                double tolerance = xo.getAttribute(TOLERANCE_STRING, TOLERANCE);
-                unitTest = new BeastUnitTest(message, actual, expected,
-                        AssertType.DOUBLE, tolerance);
-            } else {
-                unitTest = new BeastUnitTest(message, actual, expected);
-            }
+            AssertType assertType = xo.hasAttribute(TOLERANCE_STRING) ?
+                    new AssertType.DoubleAssert(xo.getDoubleAttribute(TOLERANCE_STRING)) :
+                    new AssertType.StringAssert();
+
+            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType);
             unitTest.execute();
 
             if (xo.getAttribute(VERBOSE, false)) {
@@ -220,5 +217,3 @@ public class BeastUnitTest implements Reportable {
             AttributeRule.newBooleanRule(VERBOSE, true),
     };
 }
-
-

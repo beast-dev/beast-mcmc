@@ -8,4 +8,6 @@ addons:
    packages:
    - ant
 
-script: ant dist
+script:
+  - ant dist
+  - cd ci; ./test.sh

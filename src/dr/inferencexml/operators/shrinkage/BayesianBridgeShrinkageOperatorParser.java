@@ -42,7 +42,7 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
                 (AutoCorrelatedBranchRatesDistribution) xo.getChild(AutoCorrelatedBranchRatesDistribution.class);
 
         if (!(rates.getPrior() instanceof BayesianBridgeDistributionModel)) {
-            throw new XMLParseException("Gibbs sample only implemented for a Bayesian Bridge prior");
+            throw new XMLParseException("Gibbs sampler only implemented for a Bayesian Bridge prior");
         }
 
         final BayesianBridgeDistributionModel prior = (BayesianBridgeDistributionModel) rates.getPrior();

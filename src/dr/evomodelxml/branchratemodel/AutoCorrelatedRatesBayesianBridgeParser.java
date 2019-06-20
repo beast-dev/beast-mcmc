@@ -32,6 +32,7 @@ import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+@Deprecated
 public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectParser {
 
     private static final String BAYESIAN_BRIDGE = "autoCorrelatedRatesBayesianBridge";

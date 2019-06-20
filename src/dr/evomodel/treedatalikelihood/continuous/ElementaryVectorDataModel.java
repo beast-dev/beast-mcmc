@@ -96,6 +96,11 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     public List<Integer> getMissingIndices() { return noMissingIndices; }
 
     @Override
+    public boolean[] getMissingIndicator() {
+        return null;
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // No sub-models
     }

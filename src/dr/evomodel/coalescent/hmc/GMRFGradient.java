@@ -45,9 +45,10 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+        String header = skygridLikelihood + "." + wrtParameter.name + "\n";
+        return header + GradientWrtParameterProvider.getReportAndCheckForError(this,
                 wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
-                null);
+                tolerance);
     }
 
     public enum WrtParameter {
@@ -116,4 +117,6 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
             return null;
         }
     }
+
+    private final static Double tolerance = 1E-4;
 }

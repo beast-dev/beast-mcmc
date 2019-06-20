@@ -150,7 +150,12 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
             parameter.setParameterValue(dim, newValue);
 
-            return 0.0;
+            if (parameter.check()) {
+                return 0.0;
+            } else {
+                return Double.NEGATIVE_INFINITY;
+            }
+
         }
 
 }

@@ -59,14 +59,14 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
     }
 
     @Override
-    double[] transform(double[] values, int from, int to) {
+    double[] transform(double[] values) {
         setNodeHeights(values);
         skyrideLikelihood.setupCoalescentIntervals();
         return coalescentIntervals.getParameterValues();
     }
 
     @Override
-    double[] inverse(double[] values, int from, int to) {
+    double[] inverse(double[] values) {
         if (values.length != coalescentIntervals.getDimension()) {
             throw new RuntimeException("Dimension mismatch!");
         }
@@ -172,7 +172,7 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
 
             private void updateAllNodeHeights() {
                 updateCoalescentIntervals();
-                inverse(proxy, 0, proxy.length);
+                inverse(proxy);
             }
         };
     }

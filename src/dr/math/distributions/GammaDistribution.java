@@ -28,6 +28,7 @@ package dr.math.distributions;
 import cern.jet.random.Gamma;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
+import dr.inference.model.GradientProvider;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -47,7 +48,7 @@ import java.util.List;
  * @author Gerton Lunter
  * @version $Id: GammaDistribution.java,v 1.9 2006/03/30 11:12:47 rambaut Exp $
  */
-public class GammaDistribution implements Distribution {
+public class GammaDistribution implements Distribution, GradientProvider {
     //
     // Public stuff
     //
@@ -861,5 +862,19 @@ public class GammaDistribution implements Distribution {
     private static RandomEngine randomEngine;
     private static Gamma coltGamma;
 
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], shape, scale);
+        }
+        return result;
+    }
 }
 

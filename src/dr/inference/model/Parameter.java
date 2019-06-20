@@ -124,6 +124,11 @@ public interface Parameter extends Statistic, Variable<Double> {
     boolean isWithinBounds();
 
     /**
+     * @return true if the parameter is acceptable
+     */
+    boolean check();
+
+    /**
      * Can be called before store is called. If it results in new
      * dimensions, then the value of the first dimension is copied into the new dimensions.
      *
@@ -164,6 +169,13 @@ public interface Parameter extends Statistic, Variable<Double> {
     void fireParameterChangedEvent(int index, Parameter.ChangeType type);
 
     boolean isUsed();
+
+    /**
+     * For Check-pointing: getting and setting untransformed parameter values when relevant
+     */
+    double getParameterUntransformedValue(int dim);
+
+    void setParameterUntransformedValue(int dim, double a);
 
     boolean isImmutable();
 
@@ -322,6 +334,18 @@ public interface Parameter extends Statistic, Variable<Double> {
                 }
             }
             return true;
+        }
+
+        public boolean check() {
+            return true;
+        }
+
+        public void setParameterUntransformedValue(int dim, double a) {
+            setParameterValue(dim, a);
+        }
+
+        public double getParameterUntransformedValue(int dim) {
+            return getParameterValue(dim);
         }
 
         // --------------------------------------------------------------------

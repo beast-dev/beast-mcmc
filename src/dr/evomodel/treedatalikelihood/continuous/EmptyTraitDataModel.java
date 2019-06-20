@@ -79,6 +79,11 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     public List<Integer> getMissingIndices() { return null; }
 
     @Override
+    public boolean[] getMissingIndicator() {
+        return null;
+    }
+
+    @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
         return new double[dimTrait + precisionType.getMatrixLength(dimTrait)];
     }

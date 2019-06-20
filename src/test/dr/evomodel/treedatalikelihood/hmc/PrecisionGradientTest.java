@@ -42,12 +42,12 @@ import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
-import dr.inference.model.CachedMatrixInverse;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.CompoundSymmetricMatrix;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
+import dr.xml.AttributeParser;
+import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
+import java.io.StringReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +68,8 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     private ContinuousTraitPartialsProvider dataModel;
     private ConjugateRootTraitPrior rootPrior;
 
+    private Boolean fixedRoot = true;
+
     private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 
     public PrecisionGradientTest(String name) {
@@ -77,7 +79,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        format.setMaximumFractionDigits(2);
+        format.setMaximumFractionDigits(1);
 
         dim = 6;
 
@@ -118,6 +120,22 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
+        final String rootVal = fixedRoot ? "Infinity" : "10";
+        String s = "<beast>\n" +
+                "    <conjugateRootPrior>\n" +
+                "        <meanParameter>\n" +
+                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5 -2.5 1.3 4.0\"/>\n" +
+                "        </meanParameter>\n" +
+                "        <priorSampleSize>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"" + rootVal + "\"/>\n" +
+                "        </priorSampleSize>\n" +
+                "    </conjugateRootPrior>\n" +
+                "</beast>";
+        XMLParser parser = new XMLParser(true, true, true, null);
+        parser.addXMLObjectParser(new AttributeParser());
+        parser.addXMLObjectParser(new ParameterParser());
+        parser.parse(new StringReader(s), true);
+        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dim);
 //        rootPrior = new ConjugateRootTraitPrior(new double[]{-1.0, -3.0, 2.5, -2.5, 1.3, 4.0}, 10.0, true);
 
         // Data Model

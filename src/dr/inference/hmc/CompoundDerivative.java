@@ -25,12 +25,6 @@
 
 package dr.inference.hmc;
 
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**

@@ -222,6 +222,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         double tij;
         double ep;
         double eq;
+        double var;
         DenseMatrix64F varTemp = new DenseMatrix64F(dim, dim);
         double[][] jointVariance = new double[dim * ntaxa][dim * ntaxa];
         for (int i = 0; i < ntaxa; ++i) {
@@ -233,7 +234,12 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                     for (int q = 0; q < dim; ++q) {
                         ep = eigVals[p];
                         eq = eigVals[q];
-                        varTemp.set(p, q, Math.exp(-ep * ti) * Math.exp(-eq * tj) * ((Math.exp((ep + eq) * tij) - 1) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q]);
+                        if (ep + eq == 0.0) {
+                            var = (tij + 1 / priorSampleSize) * traitVariance[p][q];
+                        } else {
+                            var = Math.exp(-ep * ti) * Math.exp(-eq * tj) * ((Math.exp((ep + eq) * tij) - 1) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q];
+                        }
+                        varTemp.set(p, q, var);
                     }
                 }
                 for (int p = 0; p < dim; ++p) {

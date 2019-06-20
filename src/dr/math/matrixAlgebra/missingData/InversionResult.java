@@ -36,10 +36,15 @@ public class InversionResult {
         PARTIALLY_OBSERVED
     }
 
-    public InversionResult(Code code, int dim, double determinant) {
+    InversionResult(Code code, int dim, double logDeterminant, boolean isLog) {
         this.code = code;
         this.dim = dim;
-        this.determinant = determinant;
+        this.logDeterminant = logDeterminant;
+        this.isLog = isLog;
+    }
+
+    public InversionResult(Code code, int dim, double logDeterminant) {
+        this(code, dim, logDeterminant, true);
     }
 
     final public Code getReturnCode() {
@@ -51,15 +56,20 @@ public class InversionResult {
     }
 
     final public double getDeterminant() {
-        return determinant;
+        return isLog ? Math.exp(logDeterminant) : logDeterminant;
+    }
+
+    final public double getLogDeterminant() {
+        return isLog ? logDeterminant : Math.log(logDeterminant);
     }
 
     public String toString() {
-        return code + ":" + dim + ":" + determinant;
+        return code + ":" + dim + ":" + logDeterminant;
     }
 
     final private Code code;
     final private int dim;
-    final private double determinant;
+    final private double logDeterminant;
+    final private boolean isLog;
 }
 

@@ -198,14 +198,14 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     @Override
-    double[] transform(double[] values, int from, int to) {
+    double[] transform(double[] values) {
         setNodeHeights(values);
         updateRatios();
         return getRatios();
     }
 
     @Override
-    double[] inverse(double[] values, int from, int to) {
+    double[] inverse(double[] values) {
         setRatios(values);
         updateNodeHeights();
         return getNodeHeights();

@@ -28,6 +28,7 @@ package dr.inference.hmc;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,8 @@ import java.util.List;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
-public class SumDerivative implements GradientWrtParameterProvider, HessianWrtParameterProvider {
+public class SumDerivative implements GradientWrtParameterProvider, HessianWrtParameterProvider,
+        Reportable {
 
     private final int dimension;
     private final Likelihood likelihood;
@@ -107,7 +109,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             // stop timer
             String name = derivativeList.get(0).getLikelihood().getId();
             System.err.println(name);
-            System.err.println(hessian);
+            System.err.println(hessian.toString());
         }
 
         for (int i = 1; i < size; i++) {
@@ -118,7 +120,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             if (DEBUG) {
                 String name = derivativeList.get(i).getLikelihood().getId();
                 System.err.println(name);
-                System.err.println(temp);
+                System.err.println(temp.toString());
             }
 
             for (int j = 0; j < temp[0].length; j++) {
@@ -161,6 +163,14 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
 
     private static final boolean DEBUG = false;
     private static final boolean DEBUG_KILL = false;
+
+    @Override
+    public String getReport() {
+        return  "jointGradient." + parameter.getParameterName() + "\n" +
+                GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.tolerance);
+    }
 
     private enum DerivativeType {
         GRADIENT("gradient") {

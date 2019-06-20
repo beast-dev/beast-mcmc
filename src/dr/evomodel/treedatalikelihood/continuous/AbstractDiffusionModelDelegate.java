@@ -55,6 +55,8 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
+    protected final int dim;
+
     AbstractDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
                                    int partitionNumber) {
 
@@ -63,6 +65,8 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         this.tree = tree;
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
+
+        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(1, 0, partitionNumber);
@@ -164,6 +168,11 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
+    public boolean isIntegratedProcess() {
+        return false;
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionModel) {
             fireModelChanged(model);
@@ -196,6 +205,6 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
 
     @Override
     public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
-        CommonOps.scale(scalar, gradient);
+        if (Double.isFinite(scalar)) CommonOps.scale(scalar, gradient);
     }
 }

@@ -7,6 +7,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -45,39 +46,31 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
         // Integrate out against prior
         final DenseMatrix64F rootPrec = wrap(partialNodeBuffer, offsetPartial + dimTrait, dimTrait, dimTrait);
         final DenseMatrix64F priorPrec = new DenseMatrix64F(dimTrait, dimTrait);
-        CommonOps.mult(Pd, wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait), priorPrec);
+        MissingOps.safeMult(Pd, wrap(partialPriorBuffer, offsetPartial + dimTrait, dimTrait, dimTrait), priorPrec);
 
         final DenseMatrix64F totalPrec = new DenseMatrix64F(dimTrait, dimTrait);
         CommonOps.add(rootPrec, priorPrec, totalPrec);
 
         final DenseMatrix64F totalVar = new DenseMatrix64F(dimTrait, dimTrait);
-        safeInvert(totalPrec, totalVar, false);
+        safeInvert2(totalPrec, totalVar, false);
 
-        final double[] tmp = new double[dimTrait];
         final double[] mean = new double[dimTrait];
 
-        for (int g = 0; g < dimTrait; ++g) {
-            double sum = 0.0;
-            for (int h = 0; h < dimTrait; ++h) {
-                sum += rootPrec.unsafe_get(g, h) * partialNodeBuffer[offsetPartial + h];
-                sum += priorPrec.unsafe_get(g, h) * partialPriorBuffer[offsetPartial + h];
-            }
-            tmp[g] = sum;
-        }
-        for (int g = 0; g < dimTrait; ++g) {
-            double sum = 0.0;
-            for (int h = 0; h < dimTrait; ++h) {
-                sum += totalVar.unsafe_get(g, h) * tmp[h];
-            }
-            mean[g] = sum;
-        }
+        safeWeightedAverage(new WrappedVector.Raw(partialNodeBuffer, offsetPartial, dimTrait),
+                rootPrec,
+                new WrappedVector.Raw(partialPriorBuffer, offsetPartial, dimTrait),
+                priorPrec,
+                new WrappedVector.Raw(mean, 0, dimTrait),
+                totalVar,
+                dimTrait
+                );
 
-        final double[][] cholesky = getCholeskyOfVariance(totalVar.getData(), dimTrait);
+        final DenseMatrix64F cholesky = getCholeskyOfVariance(totalVar, dimTrait);
 
         MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                mean, 0, // input mean
-                cholesky, 1.0, // input variance
-                sample, offsetSample, // output sample
+                new WrappedVector.Raw(mean, 0, dimTrait), // input mean
+                new WrappedMatrix.Raw(cholesky.getData(), 0, dimTrait, dimTrait), 1.0, // input variance
+                new WrappedVector.Raw(sample, offsetSample, dimTrait), // output sample
                 tmpEpsilon);
 
         if (DEBUG) {
@@ -222,7 +215,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                     final DenseMatrix64F cV2 = new DenseMatrix64F(missing.length, missing.length);
                     CommonOps.add(cP0, cP1, cP2); //TODO: Shouldn't P0 = 0 always in this situation ?
 
-                    safeInvert(cP2, cV2, false);
+                    safeInvert2(cP2, cV2, false);
 
                     // TODO Drift?
 //                    assert (!likelihoodDelegate.getDiffusionProcessDelegate().hasDrift());
@@ -336,7 +329,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
             final DenseMatrix64F V2 = new DenseMatrix64F(dimTrait, dimTrait);
 
             CommonOps.add(P0, P1, P2);
-            safeInvert(P2, V2, false);
+            safeInvert2(P2, V2, false);
             weightedAverage(M0, P0, M1, P1, M2, V2, dimTrait);
 
             final WrappedMatrix C2;

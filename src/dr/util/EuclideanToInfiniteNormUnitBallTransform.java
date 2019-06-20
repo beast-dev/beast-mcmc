@@ -42,17 +42,13 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
      * Uses a transformation similar to the one in Lewandowski, Kurowicka, and Joe (2009).
      */
 
-    private int dim;
-
     public EuclideanToInfiniteNormUnitBallTransform(int dim) {
-        this.dim = dim;
+        super(dim);
     }
 
     // values = vector of euclidean unit ball
     @Override
-    public double[] transform(double[] values, int from, int to) {
-        assert from == 0 && to == values.length && dim == values.length
-                : "The transform function can only be applied to the whole array of values.";
+    public double[] transform(double[] values) {
         assert isInEuclideanUnitBall(values) : "Initial vector is not in the Euclidean unit ball.";
 
         double[] transformedValues = new double[values.length];
@@ -70,9 +66,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
     // values = vector of invinite unit ball
     @Override
-    public double[] inverse(double[] values, int from, int to) {
-        assert from == 0 && to == values.length && dim == values.length
-                : "The transform function can only be applied to the whole array of values.";
+    public double[] inverse(double[] values) {
         assert isInInfiniteUnitBall(values) : "Initial vector is not in the Euclidean unit ball.";
 
         double[] transformedValues = new double[values.length];
@@ -116,7 +110,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     }
 
     public static double projection(final double[] x, final int offset, final int length) {
-        return Math.sqrt(1 - squaredNorm(x, offset, length));
+        return Math.sqrt(1.0 - squaredNorm(x, offset, length));
     }
 
     @Override
@@ -139,10 +133,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     }
 
     @Override
-    public double getLogJacobian(double[] values, int from, int to) {
-        assert from == 0 && to == values.length
-                : "The logJacobian function can only be applied to the whole array of values.";
-
+    protected double getLogJacobian(double[] values) {
         double[] transformedValues = transform(values);
 
         double logJacobian = 0;
@@ -152,11 +143,11 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
         return -0.5 * logJacobian;
     }
 
-    public double[] getGradientLogJacobianInverse(double[] values) {
+    @Override
+    protected double[] getGradientLogJacobianInverse(double[] values) {
         double[] gradientLogJacobian = new double[values.length];
-        int k = 0;
-        for (int i = 0; i < dim - 2; i++) { // Sizes of conditioning sets
-            gradientLogJacobian[k] = -(dim - i - 2) * values[k] / (1.0 - Math.pow(values[k], 2));
+        for (int i = 0; i < dim - 1; i++) { // Sizes of conditioning sets
+            gradientLogJacobian[i] = -(dim - i - 1) * values[i] / (1.0 - Math.pow(values[i], 2));
         }
         return gradientLogJacobian;
     }
@@ -211,13 +202,17 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
             // Fisher Z  (Infinte norm unit ball to unconstrained)
             List<Transform> transforms = new ArrayList<Transform>();
-            for (int i = 0; i < dim; i++) {
+            for (int i = 0; i < dim * (dim + 1); i++) {
                 transforms.add(Transform.FISHER_Z);
             }
             Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
 
             // Spherical (Euclidean to Infinite norm unit ball)
-            Transform.MultivariateTransform sphericalTransform = new EuclideanToInfiniteNormUnitBallTransform(dim);
+            List<MultivariateTransform> transformsMul = new ArrayList<MultivariateTransform>();
+            for (int i = 0; i < dim + 1; i++) {
+                transformsMul.add(new EuclideanToInfiniteNormUnitBallTransform(dim));
+            }
+            Transform.MultivariateTransform sphericalTransform = new Transform.MultivariateArray(transformsMul);
 
             // Compose
             return new Transform.ComposeMultivariable(fisherZTransforms, sphericalTransform);
@@ -229,7 +224,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
         //************************************************************************
 
         public String getParserDescription() {
-            return "A compound matrix parametrized by its eigen values and vectors.";
+            return "A spherical transform using Fisher Z and LKJ.";
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

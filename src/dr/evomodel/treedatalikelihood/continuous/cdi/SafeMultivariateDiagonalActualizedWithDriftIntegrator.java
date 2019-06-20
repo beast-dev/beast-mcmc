@@ -17,9 +17,9 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     private static boolean DEBUG = false;
 
     public SafeMultivariateDiagonalActualizedWithDriftIntegrator(PrecisionType precisionType,
-                                                                 int numTraits, int dimTrait, int bufferCount,
-                                                                 int diffusionCount) {
-        super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
+                                                                 int numTraits, int dimTrait, int dimProcess,
+                                                                 int bufferCount, int diffusionCount) {
+        super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         allocateStorage();
 
@@ -70,7 +70,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     private void allocateStorage() {
 
         diagonalActualizations = new double[dimTrait * bufferCount];
-        stationaryVariances = new double[dimTrait * dimTrait * diffusionCount];
+        stationaryVariances = new double[dimProcess * dimProcess * diffusionCount];
 
         vectorDiagQdi = new double[dimTrait];
         vectorDiagQdj = new double[dimTrait];
@@ -86,7 +86,9 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
         assert (stationaryVariances != null);
 
-        final int matrixSize = dimTrait * dimTrait;
+        assert dimProcess == diagonalAlpha.length;
+
+        final int matrixSize = dimProcess * dimProcess;
         final int offset = matrixSize * precisionIndex;
 
         double[] scales = new double[matrixSize];
@@ -97,17 +99,6 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
     void setStationaryVariance(int offset, double[] scales, int matrixSize, double[] rotation) {
         scaleInv(inverseDiffusions, offset, scales, stationaryVariances, offset, matrixSize);
-    }
-
-    private static void scale(final double[] source,
-                              final int sourceOffset,
-                              final double[] scales,
-                              final double[] destination,
-                              final int destinationOffset,
-                              final int length) {
-        for (int i = 0; i < length; ++i) {
-            destination[destinationOffset + i] = scales[i] * source[sourceOffset + i];
-        }
     }
 
     static void scaleInv(final double[] source,
@@ -148,8 +139,9 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
             System.err.println("Matrices (safe with actualized drift):");
         }
 
-        final int matrixSize = dimTrait * dimTrait;
-        final int unscaledOffset = matrixSize * precisionIndex;
+        final int matrixTraitSize = dimTrait * dimTrait;
+        final int matrixProcessSize = dimProcess * dimProcess;
+        final int unscaledOffset = matrixProcessSize * precisionIndex;
 
 
         if (TIMING) {
@@ -163,7 +155,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
             final int scaledOffsetDiagonal = dimTrait * probabilityIndices[up];
             final int scaledOffset = dimTrait * scaledOffsetDiagonal;
 
-            computeActualization(diagonalStrengthOfSelectionMatrix, rotation, edgeLength,
+            computeOUActualization(diagonalStrengthOfSelectionMatrix, rotation, edgeLength,
                     scaledOffsetDiagonal, scaledOffset);
         }
 
@@ -178,12 +170,14 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
         for (int up = 0; up < updateCount; ++up) {
 
-            final int scaledOffset = matrixSize * probabilityIndices[up];
+            final double edgeLength = edgeLengths[up];
+
+            final int scaledOffset = matrixTraitSize * probabilityIndices[up];
             final int scaledOffsetDiagonal = dimTrait * probabilityIndices[up];
 
-            computeVarianceBranch(unscaledOffset, scaledOffset, scaledOffsetDiagonal);
+            computeOUVarianceBranch(unscaledOffset, scaledOffset, scaledOffsetDiagonal, edgeLength);
 
-            invertVector(variances, precisions, scaledOffset, dimTrait);
+            invertVectorSymmPosDef(variances, precisions, scaledOffset, dimProcess);
         }
 
         if (TIMING) {
@@ -192,97 +186,98 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
         assert (optimalRates != null);
         assert (displacements != null);
-        assert (optimalRates.length >= updateCount * dimTrait);
+        assert (optimalRates.length >= updateCount * dimProcess);
 
         if (TIMING) {
             startTime("drift1");
         }
 
-//        int offset = 0;
-//        for (int up = 0; up < updateCount; ++up) {
-//
-//            final int pio = dimTrait * probabilityIndices[up];
-//
-//            double[] scales = new double[dimTrait];
-//            scalingActualizationDisplacement(diagonalActualizations, pio, dimTrait, scales);
-//
-//            scale(optimalRates, offset, scales, displacements, pio, dimTrait);
-//            offset += dimTrait;
-//        }
-
         int offset = 0;
         for (int up = 0; up < updateCount; ++up) {
 
             final int pio = dimTrait * probabilityIndices[up];
-            final int scaledOffset = matrixSize * probabilityIndices[up];
+            final int scaledOffset = matrixTraitSize * probabilityIndices[up];
 
-            computeActualizedDisplacement(optimalRates, offset, scaledOffset, pio);
-            offset += dimTrait;
+            computeOUActualizedDisplacement(optimalRates, offset, scaledOffset, pio);
+            offset += dimProcess;
         }
 
         if (TIMING) {
             endTime("drift1");
         }
-
-        // NOTE TO PB: very complex function, why multiple for (up = 0; up < updateCount; ++up) ?
-        // PB: I don't know if that's better, but I needed the loop to re-order the optimal rates according to the branches.
-        // Also now re-factored to avoid code duplication in SafeMultivariateActualized*
     }
 
-    void computeActualization(final double[] diagonalStrengthOfSelectionMatrix,
-                              final double[] rotation,
-                              final double edgeLength,
-                              final int scaledOffsetDiagonal,
-                              final int scaledOffset) {
-        computeDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
+    void computeOUActualization(final double[] diagonalStrengthOfSelectionMatrix,
+                                final double[] rotation,
+                                final double edgeLength,
+                                final int scaledOffsetDiagonal,
+                                final int scaledOffset) {
+        computeOUDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
                 diagonalActualizations, scaledOffsetDiagonal);
     }
 
-    static void computeDiagonalActualization(final double[] source,
-                                             final double edgeLength,
-                                             final int dim,
-                                             final double[] destination,
-                                             final int destinationOffset) {
+    static void computeOUDiagonalActualization(final double[] source,
+                                               final double edgeLength,
+                                               final int dim,
+                                               final double[] destination,
+                                               final int destinationOffset) {
         for (int i = 0; i < dim; ++i) {
             destination[destinationOffset + i] = Math.exp(-source[i] * edgeLength);
         }
     }
 
-    void computeVarianceBranch(final int sourceOffset,
-                               final int destinationOffset,
-                               final int destinationOffsetDiagonal) {
-        double[] scales = new double[dimTrait * dimTrait];
-        scalingActualizationMatrix(diagonalActualizations, destinationOffsetDiagonal, dimTrait, scales);
-        scale(stationaryVariances, sourceOffset, scales, variances, destinationOffset, dimTrait * dimTrait);
+    void computeOUVarianceBranch(final int unscaledOffset,
+                               final int scaledOffset,
+                               final int scaledOffsetDiagonal,
+                               final double edgeLength) {
+        scalingActualizationMatrix(diagonalActualizations, scaledOffsetDiagonal,
+                stationaryVariances, unscaledOffset,
+                variances, scaledOffset,
+                dimTrait,
+                edgeLength,
+                inverseDiffusions,
+                unscaledOffset);
     }
 
-    private static void scalingActualizationMatrix(final double[] source,
-                                                   final int offset,
+    private static void scalingActualizationMatrix(final double[] diagonalActualizations,
+                                                   final int offsetActualization,
+                                                   final double[] stationaryVariances,
+                                                   final int offsetStationaryVariances,
+                                                   final double[] destination,
+                                                   final int destinationOffset,
                                                    final int dim,
-                                                   final double[] destination) {
+                                                   final double edgeLength,
+                                                   final double[] variance,
+                                                   final int varianceOffset) {
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
-                destination[i * dim + j] = 1 - source[offset + i] * source[offset + j];
+                double var = stationaryVariances[offsetStationaryVariances + i * dim + j];
+                if (Double.isInfinite(var) || (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]) == 0.0) {
+                    destination[destinationOffset + i * dim + j] = edgeLength * variance[varianceOffset + i * dim + j];
+                } else {
+                    destination[destinationOffset + i * dim + j] = var * (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]);
+                }
             }
         }
     }
 
-    private static void invertVector(final double[] source,
-                                     final double[] destination,
-                                     final int offset,
-                                     final int dim) {
+    private static void invertVectorSymmPosDef(final double[] source,
+                                               final double[] destination,
+                                               final int offset,
+                                               final int dim) {
         DenseMatrix64F sourceMatrix = wrap(source, offset, dim, dim);
         DenseMatrix64F destinationMatrix = new DenseMatrix64F(dim, dim);
 
-        CommonOps.invert(sourceMatrix, destinationMatrix);
+//        CommonOps.invert(sourceMatrix, destinationMatrix);
+        symmPosDefInvert(sourceMatrix, destinationMatrix);
 
         unwrap(destinationMatrix, destination, offset);
     }
 
-    void computeActualizedDisplacement(final double[] optimalRates,
-                                       final int offset,
-                                       final int actualizationOffset,
-                                       final int pio) {
+    void computeOUActualizedDisplacement(final double[] optimalRates,
+                                         final int offset,
+                                         final int actualizationOffset,
+                                         final int pio) {
 
         for (int j = 0; j < dimTrait; ++j) {
             displacements[pio + j] = optimalRates[offset + j] * (1 - diagonalActualizations[pio + j]);

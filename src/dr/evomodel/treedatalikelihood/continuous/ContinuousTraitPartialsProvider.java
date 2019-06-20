@@ -52,7 +52,30 @@ public interface ContinuousTraitPartialsProvider {
 
     List<Integer> getMissingIndices();
 
+    boolean[] getMissingIndicator();
+
     CompoundParameter getParameter();
 
     String getModelName();
+
+    abstract class Abstract implements ContinuousTraitPartialsProvider {
+
+        public static boolean[] indicesToIndicator(List<Integer> indices, int n) {
+
+            if (indices == null) {
+                return null;
+            }
+
+            boolean[] indicator = new boolean[n];
+
+            for (int i : indices) {
+                indicator[i] = true;
+            }
+
+            return indicator;
+
+        }
+
+    }
+
 }

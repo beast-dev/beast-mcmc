@@ -109,6 +109,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         return parameter.getParameterValues();
     }
 
+    public void setParameterUntransformedValue(int dim, double a) {
+        parameter.setParameterValue(dim, a);
+    }
+
     public Parameter getUntransformedParameter() {
         return parameter;
     }
@@ -170,6 +174,10 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //
         parameter.addBounds(transformedBounds);
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+    }
+
+    public boolean check() {
+        return parameter.check();
     }
 
     public Bounds<Double> getBounds() {

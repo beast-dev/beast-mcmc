@@ -46,6 +46,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
                                Parameter ratios,
                                TreeModel tree,
                                BranchRateModel branchrateModel) {
+        super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
     }
@@ -53,6 +54,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
                                GMRFSkyrideLikelihood skyrideLikelihood) {
+        super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
     }
@@ -67,8 +69,8 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     }
 
     @Override
-    public double[] transform(double[] values, int from, int to) {
-        return nodeHeightTransformDelegate.transform(values, from, to);
+    protected double[] transform(double[] values) {
+        return nodeHeightTransformDelegate.transform(values);
     }
 
     @Override
@@ -77,8 +79,8 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     }
 
     @Override
-    public double[] inverse(double[] values, int from, int to) {
-        return nodeHeightTransformDelegate.inverse(values, from, to);
+    protected double[] inverse(double[] values) {
+        return nodeHeightTransformDelegate.inverse(values);
     }
 
     @Override
@@ -102,7 +104,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     }
 
     @Override
-    public double getLogJacobian(double[] values, int from, int to) {
+    protected double getLogJacobian(double[] values) {
         throw new RuntimeException("Not yet implemented!");
     }
 

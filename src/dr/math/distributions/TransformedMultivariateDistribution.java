@@ -46,7 +46,7 @@ public class TransformedMultivariateDistribution implements MultivariateDistribu
 
     @Override
     public double logPdf(double[] x) {
-        return distribution.logPdf(transform.transform(x)) + transform.getLogJacobian(x);
+        return distribution.logPdf(transform.transform(x, 0, x.length)) + transform.getLogJacobian(x, 0, x.length);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class TransformedMultivariateDistribution implements MultivariateDistribu
     }
 
     private double[] gradLogPdf(double[] x) {
-        double[] transformedValue = transform.transform(x);
+        double[] transformedValue = transform.transform(x, 0, x.length);
         double[] gradient = ((GradientProvider) distribution).getGradientLogDensity(transformedValue);
         return updateGradientLogDensity(gradient, transformedValue);
     }

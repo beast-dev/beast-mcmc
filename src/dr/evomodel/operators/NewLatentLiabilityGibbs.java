@@ -35,6 +35,7 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.continuous.DummyLatentTruncationProvider;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -44,6 +45,7 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -60,6 +62,7 @@ import java.util.List;
 
 import static org.ejml.alg.dense.mult.MatrixVectorMult.mult;
 import static org.ejml.alg.dense.mult.MatrixVectorMult.multAdd;
+
 
 public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
@@ -262,7 +265,11 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
         double[] newValue = getNodeTrait(node);
 
-        return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
+        if (latentLiability instanceof DummyLatentTruncationProvider) {
+            return Double.POSITIVE_INFINITY;
+        } else {
+            return fullDistribution.logPdf(oldValue) - fullDistribution.logPdf(newValue);
+        }
     }
 
 //    private void addMaskOnContiuousTraits(int nodeNumber) {
@@ -474,6 +481,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
 
             TreeDataLikelihood traitModel = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
             LatentTruncation LLModel = (LatentTruncation) xo.getChild(LatentTruncation.class);
+
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
             int numAttempts = xo.getAttribute(MAX_ATTEMPTS, 100000);
 

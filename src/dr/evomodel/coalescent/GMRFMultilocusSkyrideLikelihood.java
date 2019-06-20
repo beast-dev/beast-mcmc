@@ -931,10 +931,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         int popSizeDim = popSizeParameter.getSize();
 
-        gradLogDens[0] = -numGridPoints/(2*currentPrec);
+        gradLogDens[0] = numGridPoints/(2*currentPrec);
         for(int i = 0; i < numGridPoints; i++) {
             gradLogDens[0] = gradLogDens[0]
-                    + 1 / 2 * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
+                    - 1 / 2 * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
         }
 
         if(beta != null){
@@ -943,11 +943,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 Parameter bk = beta.get(k);
                 MatrixParameter covk = covariates.get(k);
 
-                gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - (currentGamma[0]-currentGamma[1]) * covk.getParameterValue(0, 0) * bk.getParameterValue(0)
-                        -  (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
+                gradLogDens[popSizeDim] = gradLogDens[popSizeDim] + (currentGamma[0]-currentGamma[1]) * covk.getParameterValue(0, 0) * bk.getParameterValue(0)
+                        +  (currentGamma[numGridPoints]-currentGamma[numGridPoints-1]) * covk.getParameterValue(0, numGridPoints) * bk.getParameterValue(0);
 
                 for(int i = 1; i < numGridPoints; i++){
-                    gradLogDens[popSizeDim] = gradLogDens[popSizeDim] - (-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])* covk.getParameterValue(0, i) * bk.getParameterValue(0);
+                    gradLogDens[popSizeDim] = gradLogDens[popSizeDim] + (-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])* covk.getParameterValue(0, i) * bk.getParameterValue(0);
                 }
             }
         }
@@ -965,13 +965,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                 MatrixParameter covk = covariates.get(k);
 
-                gradLogDens[k] = - numGridPoints/2 - currentPrec*(currentGamma[0]-currentGamma[1])*covk.getParameterValue(0,0)
-                        - currentPrec*(currentGamma[numGridPoints]-currentGamma[numGridPoints-1])*covk.getParameterValue(0,numGridPoints)
-                        + (1/2)*currentPrec*(currentGamma[1]-currentGamma[0])*(currentGamma[1]-currentGamma[0]);
+                gradLogDens[k] = numGridPoints/2 + currentPrec*(currentGamma[0]-currentGamma[1])*covk.getParameterValue(0,0)
+                        + currentPrec*(currentGamma[numGridPoints]-currentGamma[numGridPoints-1])*covk.getParameterValue(0,numGridPoints)
+                        - (1/2)*currentPrec*(currentGamma[1]-currentGamma[0])*(currentGamma[1]-currentGamma[0]);
 
                 for(int i = 1; i < numGridPoints; i++){
-                    gradLogDens[k] = gradLogDens[k] + (1/2)*currentPrec*(currentGamma[i+1]-currentGamma[i])*(currentGamma[i+1]-currentGamma[i])
-                            - currentPrec*(-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])*covk.getParameterValue(i);
+                    gradLogDens[k] = gradLogDens[k] - (1/2)*currentPrec*(currentGamma[i+1]-currentGamma[i])*(currentGamma[i+1]-currentGamma[i])
+                            + currentPrec*(-currentGamma[i-1]+2*currentGamma[i]-currentGamma[i+1])*covk.getParameterValue(i);
                 }
             }
         }
@@ -987,11 +987,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         int popSizeDim = popSizeParameter.getSize();
 
-        gradLogDens[0] = currentPrec*(currentGamma[0]-currentGamma[1])
-                + numCoalEvents[0] - sufficientStatistics[0]*Math.exp(-currentGamma[0]);
+        gradLogDens[0] = -currentPrec*(currentGamma[0]-currentGamma[1])
+                - numCoalEvents[0] + sufficientStatistics[0]*Math.exp(-currentGamma[0]);
 
-        gradLogDens[popSizeDim-1] = currentPrec*(currentGamma[popSizeDim-1]-currentGamma[popSizeDim-2])
-                + numCoalEvents[popSizeDim-1] - sufficientStatistics[popSizeDim-1]*Math.exp(-currentGamma[popSizeDim-1]);
+        gradLogDens[popSizeDim-1] = -currentPrec*(currentGamma[popSizeDim-1]-currentGamma[popSizeDim-2])
+                - numCoalEvents[popSizeDim-1] + sufficientStatistics[popSizeDim-1]*Math.exp(-currentGamma[popSizeDim-1]);
 
         if(beta != null) {
             for (int k = 0; k < beta.size(); k++) {
@@ -999,17 +999,17 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 Parameter b = beta.get(k);
                 MatrixParameter covariate = covariates.get(k);
 
-                gradLogDens[0] = gradLogDens[0] - currentPrec*covariate.getParameterValue(0, 0) * b.getParameterValue(0)
-                        + precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
+                gradLogDens[0] = gradLogDens[0] + currentPrec*covariate.getParameterValue(0, 0) * b.getParameterValue(0)
+                        - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
 
-                gradLogDens[popSizeDim - 1] = gradLogDens[popSizeDim - 1] - currentPrec * covariate.getParameterValue(0, popSizeDim - 1) * b.getParameterValue(0)
-                        + currentPrec*covariate.getParameterValue(0, popSizeDim - 2) * b.getParameterValue(0);
+                gradLogDens[popSizeDim - 1] = gradLogDens[popSizeDim - 1] + currentPrec * covariate.getParameterValue(0, popSizeDim - 1) * b.getParameterValue(0)
+                        - currentPrec*covariate.getParameterValue(0, popSizeDim - 2) * b.getParameterValue(0);
             }
         }
 
         for(int i = 1; i<(popSizeDim-1); i++){
-            gradLogDens[i] = currentPrec*(-currentGamma[i-1] + 2*currentGamma[i] - currentGamma[i+1])
-                    + numCoalEvents[i] - sufficientStatistics[i]*Math.exp(-currentGamma[i]);
+            gradLogDens[i] = -currentPrec*(-currentGamma[i-1] + 2*currentGamma[i] - currentGamma[i+1])
+                    - numCoalEvents[i] + sufficientStatistics[i]*Math.exp(-currentGamma[i]);
 
             if(beta != null) {
                 for (int k = 0; k < beta.size(); k++) {
@@ -1017,16 +1017,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                     Parameter bk = beta.get(k);
                     MatrixParameter covk = covariates.get(k);
 
-                    gradLogDens[i] = gradLogDens[i] + currentPrec*covk.getParameterValue(0, i - 1) * bk.getParameterValue(0)
-                            - 2*currentPrec*covk.getParameterValue(0, i) * bk.getParameterValue(0)
-                            + currentPrec*covk.getParameterValue(0, i + 1) * bk.getParameterValue(0);
+                    gradLogDens[i] = gradLogDens[i] - currentPrec*covk.getParameterValue(0, i - 1) * bk.getParameterValue(0)
+                            + 2*currentPrec*covk.getParameterValue(0, i) * bk.getParameterValue(0)
+                            - currentPrec*covk.getParameterValue(0, i + 1) * bk.getParameterValue(0);
                 }
             }
         }
 
         return gradLogDens;
     }
-
 
     /*public int getCoalescentIntervalLineageCount(int i) {
         return 0;

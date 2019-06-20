@@ -35,6 +35,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
 public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectParser {
 
     private static final String BAYESIAN_BRIDGE_DISTRIBUTION = "bayesianBridgeDistribution";
+    private static final String DIMENSION = "dim";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE_DISTRIBUTION;
@@ -46,18 +47,27 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
         Parameter globalScale = (Parameter) globalXo.getChild(Parameter.class);
 
         Parameter localScale = null;
+        int dim;
         if (xo.hasChildNamed(LOCAL_SCALE)) {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
+
+            dim = localScale.getDimension();
+
+            if (xo.hasAttribute(DIMENSION) && (xo.getIntegerAttribute(DIMENSION) != dim)) {
+                throw new XMLParseException("Invalid dimensions");
+            }
+        } else {
+            dim = xo.getAttribute(DIMENSION, 1);
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
         if (localScale != null) {
-            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent);
+            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, dim);
         } else {
-            return new MarginalBayesianBridgeDistributionModel(globalScale, exponent);
+            return new MarginalBayesianBridgeDistributionModel(globalScale, exponent, dim);
         }
     }
 
@@ -76,6 +86,7 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+            AttributeRule.newIntegerRule(DIMENSION, true),
     };
 
     public String getParserDescription() {

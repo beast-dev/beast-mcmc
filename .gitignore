@@ -6,3 +6,4 @@ build/
 dist/
 out/
 .idea
+.DS_Store

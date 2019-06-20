@@ -66,8 +66,8 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
         BayesianBridgeDistributionModel distributionModel = (localScale != null) ?
-                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent) :
-                new MarginalBayesianBridgeDistributionModel(globalScale, exponent);
+                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, 1) :
+                new MarginalBayesianBridgeDistributionModel(globalScale, exponent, 1);
 
         return new AutoCorrelatedRatesWithBayesianBridge(ratesDistribution,
                 distributionModel);

@@ -1,5 +1,6 @@
 package dr.inferencexml.operators.shrinkage;
 
+import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
@@ -36,7 +37,10 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
-            new ElementRule(BayesianBridgeStatisticsProvider.class),
+            new OrRule(
+                    new ElementRule(BayesianBridgeStatisticsProvider.class),
+                    new ElementRule(AutoCorrelatedBranchRatesDistribution.class)
+            ),
             new ElementRule(DistributionLikelihood.class),
     };
 

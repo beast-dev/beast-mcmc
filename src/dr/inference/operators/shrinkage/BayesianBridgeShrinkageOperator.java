@@ -120,7 +120,6 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
         //        ])
         //        lshrink = np.sqrt(lshrink_sq)
 
-        //        # TODO: Pick the lower and upper bound more carefully.
         //        if np.any(lshrink == 0):
         //            warn_message_only(
         //                "Local shrinkage parameter under-flowed. Replacing with a small number.")

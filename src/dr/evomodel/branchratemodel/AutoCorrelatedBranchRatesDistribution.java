@@ -102,6 +102,10 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         }
     }
 
+    public ParametricMultivariateDistributionModel getPrior() {
+        return distribution;
+    }
+
     @Override
     public Likelihood getLikelihood() {
         return this;

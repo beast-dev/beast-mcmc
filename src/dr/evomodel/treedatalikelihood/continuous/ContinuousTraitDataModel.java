@@ -181,7 +181,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
         for (int i = 0; i < numTraits; ++i) {
 
-            double effDim = 0;
+            int effDim = 0;
 
             for (int j = 0; j < dimTrait; ++j) {
 
@@ -197,7 +197,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);
             }
 
-            partial[offset + effDimOffest] = effDim;
+            precisionType.fillEffDimInPartials(partial, offset, effDim, dimTrait);
 
             offset += offsetInc;
         }

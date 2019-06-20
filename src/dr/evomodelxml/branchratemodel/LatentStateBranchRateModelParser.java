@@ -38,6 +38,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String LATENT_TRANSITION_RATE = "latentTransitionRate";
     public static final String LATENT_TRANSITION_FREQUENCY = "latentTransitionFrequency";
     public static final String LATENT_STATE_PROPORTIONS = "latentStateProportions";
+    public static final String LATENT_BRANCH_RATE = "latentBranchRate";
 
 
     public String getParserName() {
@@ -56,13 +57,19 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(LATENT_STATE_PROPORTIONS)) {
             latentStateProportionParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_PROPORTIONS);
         }
+        Parameter latentBranchRateParameter = null;
+        if(xo.hasChildNamed(LATENT_BRANCH_RATE)){
+            latentBranchRateParameter = (Parameter) xo.getElementFirstChild(LATENT_BRANCH_RATE);
+        }
 
         Logger.getLogger("dr.evomodel").info("\nCreating a latent state branch rate model");
 
         return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,
                 latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-                latentStateProportionParameter, branchCategoryProvider);
+                latentStateProportionParameter, latentBranchRateParameter ,branchCategoryProvider);
+
+
 //        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
 //                tree, nonLatentRateModel,
 //                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
@@ -92,7 +99,8 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
             new ElementRule(CountableBranchCategoryProvider.class, true),
             new ElementRule(LATENT_TRANSITION_RATE, Parameter.class, "A parameter which gives the instantaneous rate of switching to and from the latent state", false),
             new ElementRule(LATENT_TRANSITION_FREQUENCY, Parameter.class, "A parameter which gives the rate bias of switching to and from the latent state", false),
-            new ElementRule(LATENT_STATE_PROPORTIONS, Parameter.class, "The proportion of each branch which is spend in a latent state", true)
+            new ElementRule(LATENT_STATE_PROPORTIONS, Parameter.class, "The proportion of each branch which is spend in a latent state", true),
+            new ElementRule(LATENT_BRANCH_RATE,Parameter.class, "An optional rate that will override the branch rates from the branch rate model when proportion latent is greater than 0", true)
 
     };
 

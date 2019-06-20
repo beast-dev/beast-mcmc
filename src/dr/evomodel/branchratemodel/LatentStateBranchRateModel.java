@@ -68,6 +68,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     private final Parameter latentTransitionFrequencyParameter;
     private final TreeParameterModel latentStateProportions;
     private final Parameter latentStateProportionParameter;
+    private final Parameter latentBranchRateParameter;
     private final CountableBranchCategoryProvider branchCategoryProvider;
 
     private TwoStateOccupancyMarkovReward markovReward;
@@ -92,6 +93,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
                                               Parameter latentTransitionRateParameter,
                                               Parameter latentTransitionFrequencyParameter,
                                               Parameter latentStateProportionParameter,
+                                              Parameter latentBranchRateParameter,
                                               CountableBranchCategoryProvider branchCategoryProvider) {
         super(name);
 
@@ -107,6 +109,10 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         this.latentTransitionFrequencyParameter = latentTransitionFrequencyParameter;
         addVariable(latentTransitionFrequencyParameter);
 
+        this.latentBranchRateParameter = latentBranchRateParameter;
+        if(latentBranchRateParameter!=null) {
+            addVariable(latentBranchRateParameter);
+        }
         if (branchCategoryProvider ==  null) {
             this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
             addModel(latentStateProportions);
@@ -146,6 +152,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         latentTransitionFrequencyParameter = prop;
         latentStateProportions = null;
         this.latentStateProportionParameter = null;
+        this.latentBranchRateParameter = null;
         this.branchCategoryProvider = null;
     }
 
@@ -181,6 +188,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
 
         double latentProportion = getLatentProportion(tree, node);
+        if(this.latentBranchRateParameter!=null && latentProportion>0){
+            nonLatentRate = this.latentBranchRateParameter.getParameterValue(0);
+        }
 
         return calculateBranchRate(nonLatentRate, latentProportion);
     }
@@ -238,6 +248,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             }
             likelihoodKnown = false;
             fireModelChanged();
+        }else if(variable == latentBranchRateParameter){
+            // similar to nonLatentRateModel change
+            //TODO maybe remove this case once verified
         }
     }
 

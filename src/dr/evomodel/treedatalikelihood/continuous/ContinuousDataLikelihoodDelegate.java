@@ -864,6 +864,16 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        // not returning data at the moment
+        return 0;
+    }
+
+// **************************************************************
     // INSTANCE CITABLE
     // **************************************************************
 

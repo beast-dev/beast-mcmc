@@ -26,10 +26,7 @@
 package dr.inference.markovchain;
 
 import dr.evomodel.continuous.GibbsIndependentCoalescentOperator;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.PathLikelihood;
+import dr.inference.model.*;
 import dr.inference.operators.*;
 
 import java.io.Serializable;
@@ -65,6 +62,7 @@ public final class MarkovChain implements Serializable {
 
     private boolean useAdaptation = true;
     private final boolean useSmoothedAcceptanceProbability;
+
 
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
@@ -209,11 +207,6 @@ public final class MarkovChain implements Serializable {
 
             logr[0] = -Double.MAX_VALUE;
 
-            long elaspedTime = 0;
-            if (PROFILE) {
-                elaspedTime = System.currentTimeMillis();
-            }
-
             // The new model is proposed
             // assert Profiler.startProfile("Operate");
 
@@ -236,14 +229,6 @@ public final class MarkovChain implements Serializable {
                 operatorSucceeded = false;
             }
 
-            if (PROFILE) {
-                long duration = System.currentTimeMillis() - elaspedTime;
-                if (DEBUG) {
-                    System.out.println("Time: " + duration);
-                }
-                mcmcOperator.addEvaluationTime(duration);
-            }
-
             double score = Double.NaN;
             double deviation = Double.NaN;
 
@@ -258,8 +243,12 @@ public final class MarkovChain implements Serializable {
                 }
 
                 long elapsedTime = 0;
+                long caculationCount = 0;
                 if (PROFILE) {
                     elapsedTime = System.currentTimeMillis();
+                    if (likelihood instanceof Profileable) {
+                        caculationCount = ((Profileable) likelihood).getTotalCalculationCount();
+                    }
                 }
 
                 // The new model is evaluated
@@ -267,10 +256,12 @@ public final class MarkovChain implements Serializable {
 
                 if (PROFILE) {
                     long duration = System.currentTimeMillis() - elapsedTime;
+                    mcmcOperator.addEvaluationTime(duration);
+                    mcmcOperator.addCalculationCount(((Profileable) likelihood).getTotalCalculationCount() - caculationCount);
+
                     if (DEBUG) {
                         System.out.println("Time: " + duration);
                     }
-                    mcmcOperator.addEvaluationTime(duration);
                 }
 
                 String diagnosticOperator = "";

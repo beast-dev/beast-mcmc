@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood;
 
 import dr.inference.model.Model;
+import dr.inference.model.Profileable;
 import dr.xml.Reportable;
 
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Reportable {
+public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Profileable, Reportable {
 
     void makeDirty();
 

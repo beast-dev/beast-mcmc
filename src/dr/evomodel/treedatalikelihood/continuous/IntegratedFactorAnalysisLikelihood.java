@@ -78,7 +78,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         assert (dimTrait == loadings.getRowDimension());
 
         this.dimPartial = numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
-        this.effDimOffset = PrecisionType.FULL.getEffectiveDimensionOffset(numFactors);
 
         addVariable(traitParameter);
         addVariable(loadings);
@@ -90,7 +89,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.observedIndicators = setupObservedIndicators(missingDataIndices, numTaxa, dimTrait);
         this.observedDimensions = setupObservedDimensions(observedIndicators);
 
-        this.missingFactorIndices = new ArrayList<Integer>();
+        this.missingFactorIndices = new ArrayList<>();
         for (int i = 0; i < numTaxa * dimTrait; ++i) {
             missingFactorIndices.add(i);
         }
@@ -98,7 +97,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.nuggetPrecision = nuggetPrecision;
         this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool : new TaxonTaskPool(numTaxa, 1);
 
-        if (USE_CACHE && taxonTaskPool.getNumThreads() > 1) {
+        if (USE_CACHE && this.taxonTaskPool.getNumThreads() > 1) {
             throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
         }
 
@@ -366,8 +365,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private static final boolean USE_CACHE = false;
 
-    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap =
-            new HashMap<HashedMissingArray, DenseMatrix64F>();
+    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
 
     private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision,
                                                final int taxon) {
@@ -530,7 +528,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         // store in precision, variance and normalization constant
         unwrap(precision, partials, partialsOffset + numFactors);
-        partials[partialsOffset + effDimOffset] = ci.getEffectiveDimension();
+        PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, ci.getEffectiveDimension(), dimTrait);
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);
@@ -625,7 +623,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final int numTaxa;
     private final int dimTrait;
     private final int dimPartial;
-    private final int effDimOffset;
     private final int numFactors;
     private final CompoundParameter traitParameter;
     private final MatrixParameterInterface loadingsTransposed;
@@ -816,7 +813,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             double[] allData = getParameter().getParameterValues();
 
-            List<Integer> notMissing = new ArrayList<Integer>();
+            List<Integer> notMissing = new ArrayList<>();
             for (int taxon = 0; taxon < numTaxa; ++taxon) {
                 double[] observed = observedIndicators[taxon];
                 for (int trait = 0; trait < dimTrait; ++trait) {

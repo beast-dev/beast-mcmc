@@ -63,7 +63,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.precisionType = precisionType;
 
 
-        this.missingIndicator = ContinuousTraitPartialsProvider.Abstract.indicesToIndicator(
+        this.missingIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
                 missingIndices, parameter.getDimension());
     }
 

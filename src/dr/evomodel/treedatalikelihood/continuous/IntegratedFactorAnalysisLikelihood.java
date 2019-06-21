@@ -84,7 +84,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         addVariable(traitPrecision);
 
         this.missingDataIndices = missingIndices;
-        this.missingDataIndicator = ContinuousTraitPartialsProvider.Abstract.indicesToIndicator(
+        this.missingDataIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
                 missingIndices, traitParameter.getDimension());
         this.observedIndicators = setupObservedIndicators(missingDataIndices, numTaxa, dimTrait);
         this.observedDimensions = setupObservedDimensions(observedIndicators);

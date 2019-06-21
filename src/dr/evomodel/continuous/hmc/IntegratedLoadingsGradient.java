@@ -13,10 +13,9 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.MissingOps;
+import dr.util.StopWatch;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
@@ -34,7 +33,6 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.weightedAverage;
 public class IntegratedLoadingsGradient implements GradientWrtParameterProvider, Reportable {
 
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
-    private final TreeDataLikelihood treeDataLikelihood;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
     private final int dimTrait;
     private final int dimFactors;
@@ -49,7 +47,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                                        IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
                                        TaxonTaskPool taxonTaskPool) {
 
-        this.treeDataLikelihood = treeDataLikelihood;
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
 
         String traitName = factorAnalysisLikelihood.getModelName();
@@ -68,7 +65,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         this.data = factorAnalysisLikelihood.getParameter();
         this.missing = getMissing(factorAnalysisLikelihood.getMissingDataIndices(), data.getDimension());
 
-        List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+        List<Likelihood> likelihoodList = new ArrayList<>();
         likelihoodList.add(treeDataLikelihood);
         likelihoodList.add(factorAnalysisLikelihood);
         this.likelihood = new CompoundLikelihood(likelihoodList);
@@ -78,6 +75,14 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         if (this.taxonTaskPool.getNumTaxon() != tree.getExternalNodeCount()) {
             throw new IllegalArgumentException("Incorrectly specified TaxonTaskPool");
+        }
+
+        if (TIMING) {
+            int length = 2;
+            stopWatches = new StopWatch[length];
+            for (int i = 0; i < length; ++i) {
+                stopWatches[i] = new StopWatch();
+            }
         }
     }
 
@@ -177,12 +182,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         assert (allStatistics.size() == tree.getExternalNodeCount());
 
-        taxonTaskPool.fork(new TaxonTaskPool.TaxonCallable() {
-            @Override
-            public void execute(int taxon, int thread) {
-                computeGradientForOneTaxon(thread, taxon, loadings, gamma, allStatistics.get(taxon), gradients);
-            }
-        });
+        taxonTaskPool.fork(
+                (taxon, thread) -> computeGradientForOneTaxon(thread, taxon, loadings, gamma,
+                        allStatistics.get(taxon), gradients)
+        );
 
 
         return join(gradients);
@@ -195,6 +198,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                                             final ReadableVector gamma,
                                             final WrappedNormalSufficientStatistics statistic,
                                             final double[][] gradArray) {
+
+        if (TIMING) {
+            stopWatches[0].start();
+        }
 
         final WrappedVector y = getTipData(taxon);
         final WrappedNormalSufficientStatistics dataKernel = getTipKernel(taxon);
@@ -247,6 +254,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 System.err.println("P" + taxon + " : " + product);
             }
 
+            if (TIMING) {
+                stopWatches[0].stop();
+                stopWatches[1].start();
+            }
+
             for (int factor = 0; factor < dimFactors; ++factor) {
                 for (int trait = 0; trait < dimTrait; ++trait) {
                     if (!missing[taxon * dimTrait + trait]) {
@@ -256,6 +268,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
                     }
                 }
+            }
+
+            if (TIMING) {
+                stopWatches[1].stop();
             }
 //        }
     }
@@ -276,11 +292,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return result;
     }
 
-    @Override
-    public String getReport() {
-        return getReport(getGradientLogDensity());
-    }
-
     private WrappedVector getTipData(int taxonIndex) {
         return new WrappedVector.Parameter(data, taxonIndex * dimTrait, dimTrait);
     }
@@ -290,60 +301,29 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return new WrappedNormalSufficientStatistics(buffer, 0, dimFactors, null, PrecisionType.FULL);
     }
 
-    private MultivariateFunction numeric = new MultivariateFunction() {
+    @Override
+    public String getReport() {
+        String report = GradientWrtParameterProvider.getReportAndCheckForError(
+                this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                null);
 
-        @Override
-        public double evaluate(double[] argument) {
-
-            for (int i = 0; i < argument.length; ++i) {
-                factorAnalysisLikelihood.getLoadings().setParameterValue(i, argument[i]);
+        if (TIMING) {
+            StringBuilder sb = new StringBuilder("\nTiming in IntegratedLoadingsGradient\n");
+            for (StopWatch stopWatch : stopWatches) {
+                sb.append("\t").append(stopWatch.toString()).append("\n");
+                stopWatch.reset();
             }
 
-            treeDataLikelihood.makeDirty();
-            factorAnalysisLikelihood.makeDirty();
-
-            return treeDataLikelihood.getLogLikelihood() + factorAnalysisLikelihood.getLogLikelihood();
+            report += sb.toString();
         }
 
-        @Override
-        public int getNumArguments() {
-            return factorAnalysisLikelihood.getLoadings().getDimension();
-        }
-
-        @Override
-        public double getLowerBound(int n) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        @Override
-        public double getUpperBound(int n) {
-            return Double.POSITIVE_INFINITY;
-        }
-    };
-
-    private String getReport(double[] gradient) {
-
-        String result = new WrappedVector.Raw(gradient).toString();
-
-        if (NUMERICAL_CHECK) {
-
-            Parameter loadings = factorAnalysisLikelihood.getLoadings();
-            double[] savedValues = loadings.getParameterValues();
-            double[] testGradient = NumericalDerivative.gradient(numeric, loadings.getParameterValues());
-            for (int i = 0; i < savedValues.length; ++i) {
-                loadings.setParameterValue(i, savedValues[i]);
-            }
-
-            result += "\nNumerical estimate: \n" +
-                    new WrappedVector.Raw(testGradient) +
-                    " @ " + new WrappedVector.Raw(loadings.getParameterValues()) + "\n";
-        }
-
-        return result;
+        return report;
     }
 
+    private StopWatch[] stopWatches;
+    private static final boolean TIMING = true;
+
     private static final boolean DEBUG = false;
-    private static final boolean NUMERICAL_CHECK = true;
 
     private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
 

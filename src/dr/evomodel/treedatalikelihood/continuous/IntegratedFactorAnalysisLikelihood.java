@@ -53,6 +53,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 
 public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
@@ -363,6 +364,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     }
 
+    private static final boolean TIMING = false;
     private static final boolean USE_CACHE = false;
 
     private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
@@ -400,6 +402,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return ci;
     }
 
+    // TODO Cache these results and only update when traitParameter or traitPrecision get hit
     private double computeTraitInnerProduct(final int taxon) {
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
@@ -423,21 +426,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
         return sum;
     }
-
-//    @Deprecated
-//    private double getTraitDeterminant(final int taxon) {
-//
-//        final double[] observed = observedIndicators[taxon];
-//
-//        // Compute det( D_i \Gamma D_i^t)
-//        double det = 1.0;
-//        for (int k = 0; k < dimTrait; ++k) {
-//            if (observed[k] == 1.0) {
-//                det *= traitPrecision.getParameterValue(k);
-//            }
-//        }
-//        return det;
-//    }
 
     private double getTraitLogDeterminant(final int taxon) {
 
@@ -498,7 +486,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             final double factorLogDeterminant = ci.getLogDeterminant();
             double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
-//                final double logDetChange = Math.log(traitDeterminant) - Math.log(factorDeterminant);
             final double logDetChange = traitLogDeterminant - factorLogDeterminant;
 
             final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
@@ -512,13 +499,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 System.err.println("tIP: " + traitInnerProduct);
                 System.err.println("fDet: " + factorLogDeterminant);
                 System.err.println("tDet: " + traitLogDeterminant);
-                System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange +
-                        "\n\n");
-
-//                    if (Double.isInfinite(getTraitDeterminant(taxon))) {
-//                        System.err.println("\tOffending parameter: " +
-//                                new dr.math.matrixAlgebra.Vector(traitPrecision.getParameterValues()));
-//                    }
+                System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange + "\n\n");
             }
 
             constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
@@ -555,13 +536,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
         }
 
-
-        taxonTaskPool.fork(new TaxonTaskPool.TaxonCallable() {
-            @Override
-            public void execute(int taxon, int thread) {
-                computePartialAndRemainderForOneTaxon(taxon, precisions[thread], variances[thread]);
+        if (TIMING) { // Do not use threads or lambda when timing
+            for (int taxon = 0; taxon < numTaxa; ++taxon) {
+                computePartialAndRemainderForOneTaxon(taxon, precisions[0], variances[0]);
             }
-        });
+        } else {
+            taxonTaskPool.fork((taxon, thread) ->
+                    computePartialAndRemainderForOneTaxon(taxon, precisions[thread], variances[thread]));
+        }
     }
 
     private static final boolean STORE_VARIANCE = true;

@@ -98,7 +98,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.nuggetPrecision = nuggetPrecision;
         this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool : new TaxonTaskPool(numTaxa, 1);
 
-        if (USE_CACHE && this.taxonTaskPool.getNumThreads() > 1) {
+        if (USE_PRECISION_CACHE && this.taxonTaskPool.getNumThreads() > 1) {
             throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
         }
 
@@ -181,6 +181,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     public void makeDirty() {
         likelihoodKnown = false;
         statisticsKnown = false;
+        innerProductsKnown = false;
     }
 
     @Override
@@ -190,12 +191,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == loadingsTransposed || variable == traitPrecision) {
+        if (variable == loadingsTransposed) {
             statisticsKnown = false;
             likelihoodKnown = false;
             fireModelChanged(this);
-//            fireModelChanged(this, getTaxonIndex(index));
-        } else if (variable == traitParameter) {
+        } else if (variable == traitParameter || variable == traitPrecision) {
+            innerProductsKnown = false;
             statisticsKnown = false;
             likelihoodKnown = false;
             fireModelChanged(this);
@@ -211,7 +212,15 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         storedStatisticsKnown = statisticsKnown;
 
         System.arraycopy(partials, 0, storedPartials, 0, partials.length);
-        System.arraycopy(normalizationConstants, 0, storedNormalizationConstants, 0, normalizationConstants.length);
+        System.arraycopy(normalizationConstants, 0,
+                storedNormalizationConstants, 0, normalizationConstants.length);
+
+        if (USE_INNER_PRODUCT_CACHE) {
+            storedInnerProductsKnown = innerProductsKnown;
+
+            System.arraycopy(traitInnerProducts, 0,
+                    storedTraitInnerProducts, 0, traitInnerProducts.length);
+        }
     }
 
     @Override
@@ -227,6 +236,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         double[] tmp2 = normalizationConstants;
         normalizationConstants = storedNormalizationConstants;
         storedNormalizationConstants = tmp2;
+
+        if (USE_INNER_PRODUCT_CACHE) {
+            innerProductsKnown = storedInnerProductsKnown;
+
+            double[] tmp3 = traitInnerProducts;
+            traitInnerProducts = storedTraitInnerProducts;
+            storedTraitInnerProducts = tmp3;
+        }
     }
 
     @Override
@@ -280,6 +297,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             storedNormalizationConstants = new double[numTaxa];
         }
 
+        if (USE_INNER_PRODUCT_CACHE) {
+            if (traitInnerProducts == null) {
+                traitInnerProducts = new double[numTaxa];
+                storedTraitInnerProducts = new double[numTaxa];
+            }
+        }
+
+        if (USE_INNER_PRODUCT_CACHE) {
+            if (!innerProductsKnown) {
+                setupInnerProducts();
+                innerProductsKnown = true;
+            }
+        }
+
         computePartialsAndRemainders();
     }
 
@@ -330,14 +361,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         final HashedMissingArray observedArray;
         DenseMatrix64F hashedPrecision;
 
-        if (USE_CACHE) {
+        if (USE_PRECISION_CACHE) {
             observedArray = new HashedMissingArray(observed);
             hashedPrecision = precisionMatrixMap.get(observedArray);
         }
 
         // TODO Only need to compute for each unique set of observed[] << numTaxa
 
-        if (!USE_CACHE || hashedPrecision == null) {
+        if (!USE_PRECISION_CACHE || hashedPrecision == null) {
 
             // Compute L D_i \Gamma D_i^t L^t
             for (int row = 0; row < numFactors; ++row) {
@@ -354,7 +385,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 }
             }
 
-            if (USE_CACHE) {
+            if (USE_PRECISION_CACHE) {
                 precisionMatrixMap.put(observedArray, precision);
             }
 
@@ -365,7 +396,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private static final boolean TIMING = false;
-    private static final boolean USE_CACHE = false;
+    private static final boolean USE_INNER_PRODUCT_CACHE = true;
+    private static final boolean USE_PRECISION_CACHE = false;
 
     private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
 
@@ -383,7 +415,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         for (int row = 0; row < numFactors; ++row) {
             double sum = 0;
             for (int k = 0; k < dimTrait; ++k) {
-                sum += loadingsTransposed.getParameterValue(k, row) *
+                sum += loadingsTransposed.getParameterValue(k, row) *  // TODO Maybe a memory access issue here?
                         observed[k] * traitPrecision.getParameterValue(k) *
                         Y.getParameterValue(k);
             }
@@ -401,8 +433,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         return ci;
     }
-
-    // TODO Cache these results and only update when traitParameter or traitPrecision get hit
+    
     private double computeTraitInnerProduct(final int taxon) {
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
@@ -414,6 +445,20 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     observed[k] * traitPrecision.getParameterValue(k);
         }
         return sum;
+    }
+
+    private void cacheTraitInnerProducts(final int taxon) {
+        traitInnerProducts[taxon] = computeTraitInnerProduct(taxon);
+    }
+
+    private void setupInnerProducts() {
+        if (TIMING) {
+            for (int taxon = 0; taxon < numTaxa; ++taxon) {
+                cacheTraitInnerProducts(taxon);
+            }
+        } else {
+            taxonTaskPool.fork((taxon, thread) -> cacheTraitInnerProducts(taxon));
+        }
     }
 
     private double computeFactorInnerProduct(final WrappedVector mean, final DenseMatrix64F precision) {
@@ -489,7 +534,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             final double logDetChange = traitLogDeterminant - factorLogDeterminant;
 
             final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
-            final double traitInnerProduct = computeTraitInnerProduct(taxon);
+            final double traitInnerProduct = USE_INNER_PRODUCT_CACHE ?
+                                traitInnerProducts[taxon] : computeTraitInnerProduct(taxon);
             final double innerProductChange = traitInnerProduct - factorInnerProduct;
 
             int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension(); //TODO: use this effective dimension in safeMultivariateIntegrator
@@ -529,7 +575,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             variances[i] = new DenseMatrix64F(numFactors, numFactors);
         }
 
-        if (USE_CACHE) {
+        if (USE_PRECISION_CACHE) {
             precisionMatrixMap.clear();
             if (DEBUG) {
                 System.err.println("Hash CLEARED");
@@ -591,8 +637,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnow;
+
     private boolean statisticsKnown = false;
     private boolean storedStatisticsKnown;
+
+    private boolean innerProductsKnown = false;
+    private boolean storedInnerProductsKnown;
+
     private double logLikelihood;
     private double storedLogLikelihood;
 
@@ -601,6 +652,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private double[] normalizationConstants;
     private double[] storedNormalizationConstants;
+
+    private double[] traitInnerProducts;
+    private double[] storedTraitInnerProducts;
 
     private final int numTaxa;
     private final int dimTrait;

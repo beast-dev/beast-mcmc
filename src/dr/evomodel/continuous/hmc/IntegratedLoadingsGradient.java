@@ -187,12 +187,22 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         assert (allStatistics.size() == tree.getExternalNodeCount());
 
-        taxonTaskPool.fork(
-                (taxon, thread) -> computeGradientForOneTaxon(thread, taxon,
+        if (TIMING) {
+            for (int taxon = 0, end = tree.getExternalNodeCount(); taxon < end; ++taxon) {
+                computeGradientForOneTaxon(0, taxon,
                         loadings, transposedLoadings,
                         gamma, rawGamma,
-                        allStatistics.get(taxon), gradients)
-        );
+                        allStatistics.get(taxon), gradients);
+            }
+        } else {
+
+            taxonTaskPool.fork(
+                    (taxon, thread) -> computeGradientForOneTaxon(thread, taxon,
+                            loadings, transposedLoadings,
+                            gamma, rawGamma,
+                            allStatistics.get(taxon), gradients)
+            );
+        }
 
 
         return join(gradients);
@@ -224,9 +234,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             System.err.println("YP" + taxon + " : " + precisionKernel);
         }
 
-//        final List<WrappedNormalSufficientStatistics> statistics =
-//                fullConditionalDensity.getTrait(tree, tree.getExternalNode(taxon)); // TODO Suspect faster here
-
 //        for (WrappedNormalSufficientStatistics statistic : statistics) {  // TODO Maybe need to re-enable
 
             final ReadableVector meanFactor = statistic.getMean();
@@ -244,12 +251,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     meanKernel, precisionKernel);
 
             final ReadableVector mean = convolution.getMean();
-            final ReadableMatrix precision = convolution.getPrecision();
+//            final ReadableMatrix precision = convolution.getPrecision();
             final WrappedMatrix variance = convolution.getVariance();
 
             if (DEBUG) {
                 System.err.println("CM" + taxon + " : " + mean);
-                System.err.println("CP" + taxon + " : " + precision);
+//                System.err.println("CP" + taxon + " : " + precision);
                 System.err.println("CV" + taxon + " : " + variance);
             }
 
@@ -263,22 +270,29 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 //                System.err.println("P" + taxon + " : " + product);
             }
 
+            double[] moment = ReadableMatrix.Utils.toArray(secondMoment);
+
             if (TIMING) {
                 stopWatches[0].stop();
                 stopWatches[1].start();
             }
 
             for (int factor = 0; factor < dimFactors; ++factor) {
+
+                double factorMean = mean.get(factor);
+
                 for (int trait = 0; trait < dimTrait; ++trait) {
                     if (!missing[taxon * dimTrait + trait]) {
 
                         double product = 0.0;
                         for (int k = 0; k < dimFactors; ++k) {
-                            product += secondMoment.get(factor, k) * transposedLoadings[trait * dimFactors + k]; // loadings.get(k, trait);
+                            product += moment[factor * dimFactors + k] // secondMoment.get(factor, k)
+                                    * transposedLoadings[trait * dimFactors + k]; // loadings.get(k, trait);
                         }
 
                         gradArray[index][factor * dimTrait + trait] +=
-                                (mean.get(factor) * data[taxon * dimTrait + trait] //y.get(trait)
+                                (factorMean // mean.get(factor)
+                                        * data[taxon * dimTrait + trait] //y.get(trait)
                                         - product)
 //                                         - product.get(factor, trait))
                                         * rawGamma[trait]; // gamma.get(trait);
@@ -320,25 +334,35 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     @Override
     public String getReport() {
-        String report = GradientWrtParameterProvider.getReportAndCheckForError(
+
+        String report = "";
+
+        if (TIMING) {
+            report += timingInfo();
+        }
+
+        report += GradientWrtParameterProvider.getReportAndCheckForError(
                 this, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
                 null);
 
         if (TIMING) {
-            StringBuilder sb = new StringBuilder("\nTiming in IntegratedLoadingsGradient\n");
-            for (StopWatch stopWatch : stopWatches) {
-                sb.append("\t").append(stopWatch.toString()).append("\n");
-                stopWatch.reset();
-            }
-
-            report += sb.toString();
+            report += timingInfo();
         }
 
         return report;
     }
 
+    private String timingInfo() {
+        StringBuilder sb = new StringBuilder("\nTiming in IntegratedLoadingsGradient\n");
+        for (StopWatch stopWatch : stopWatches) {
+            sb.append("\t").append(stopWatch.toString()).append("\n");
+            stopWatch.reset();
+        }
+        return sb.toString();
+    }
+
     private StopWatch[] stopWatches;
-    private static final boolean TIMING = true;
+    private static final boolean TIMING = false;
 
     private static final boolean DEBUG = false;
 

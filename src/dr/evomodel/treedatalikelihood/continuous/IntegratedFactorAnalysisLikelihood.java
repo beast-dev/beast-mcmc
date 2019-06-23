@@ -35,10 +35,8 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.Vector;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
@@ -311,6 +309,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
         }
 
+        loadings = loadingsTransposed.getParameterValues();
+        gamma = traitPrecision.getParameterValues();
+
         computePartialsAndRemainders();
     }
 
@@ -372,16 +373,18 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             // Compute L D_i \Gamma D_i^t L^t
             for (int row = 0; row < numFactors; ++row) {
-                for (int col = 0; col < numFactors; ++col) {
+                for (int col = row; col < numFactors; ++col) {
                     double sum = 0;
                     for (int k = 0; k < dimTrait; ++k) {
                         double thisPrecision = (observed[k] == 1.0) ?
-                                traitPrecision.getParameterValue(k) : nuggetPrecision;
-                        sum += loadingsTransposed.getParameterValue(k, row) *
+                                gamma[k] // traitPrecision.getParameterValue(k)
+                                : nuggetPrecision;
+                        sum += loadings[row * dimTrait + k] * //loadingsTransposed.getParameterValue(k, row) *
                                 thisPrecision *
-                                loadingsTransposed.getParameterValue(k, col);
+                                loadings[col * dimTrait + k]; // loadingsTransposed.getParameterValue(k, col);
                     }
                     precision.unsafe_set(row, col, sum);
+                    precision.unsafe_set(col, row, sum); // Symmetric matrix
                 }
             }
 
@@ -405,21 +408,22 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                                                final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
-        final Parameter Y = traitParameter.getParameter(taxon);
+//        final Parameter Y = traitParameter.getParameter(taxon);
 
         // Solve for a value \mu_i s.t. P_i \mu_i = (L D_i Y_i)
 
         final double[] tmp = new double[numFactors];
         final double[] tmp2 = new double[numFactors];
 
-        for (int row = 0; row < numFactors; ++row) {
+        for (int factor = 0; factor < numFactors; ++factor) {
             double sum = 0;
             for (int k = 0; k < dimTrait; ++k) {
-                sum += loadingsTransposed.getParameterValue(k, row) *  // TODO Maybe a memory access issue here?
-                        observed[k] * traitPrecision.getParameterValue(k) *
-                        Y.getParameterValue(k);
+                sum += loadings[factor * dimTrait + k] * //loadingsTransposed.getParameterValue(k, factor) *  // TODO Maybe a memory access issue here?
+                        observed[k] * gamma[k] * // traitPrecision.getParameterValue(k) *
+                        data[taxon * dimTrait + k];
+//                        Y.getParameterValue(k);
             }
-            tmp[row] = sum;
+            tmp[factor] = sum;
         }
 
         DenseMatrix64F B = DenseMatrix64F.wrap(numFactors, 1, tmp);
@@ -452,6 +456,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private void setupInnerProducts() {
+
+        data = traitParameter.getParameterValues();
+
         if (TIMING) {
             for (int taxon = 0; taxon < numTaxa; ++taxon) {
                 cacheTraitInnerProducts(taxon);
@@ -655,6 +662,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private double[] traitInnerProducts;
     private double[] storedTraitInnerProducts;
+
+    private double[] data;
+    private double[] loadings;
+    private double[] gamma;
 
     private final int numTaxa;
     private final int dimTrait;

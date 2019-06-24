@@ -218,7 +218,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         dim = precisionParam.getRowDimension(); // assumed to be square
 
 
-
         multivariateLikelihood = null;
     }
 
@@ -295,7 +294,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             System.err.println(new Vector(debug.getScaleMatrix()));
             System.exit(-1);
         }
-        
+
         final int dim = S.length;
         for (int i = 0; i < dim; i++) {
             System.arraycopy(outerProducts, i * dim, S[i], 0, dim);
@@ -387,6 +386,13 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     public double doOperation() {
 
+        doOperationDontFireChange();
+        precisionParam.fireParameterChangedEvent();
+
+        return 0;
+    }
+
+    public void doOperationDontFireChange() {
         if (wishartIsModel) {
             setupWishartStatistics(priorModel); // TODO Deprecate
             priorStatistics = setupStatistics(priorModel);
@@ -394,7 +400,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         final double[][] scaleMatrix = getOperationScaleMatrixAndSetObservationCount();
         final double treeDf = numberObservations;
-        
+
         final double df = priorDf + treeDf * pathWeight;
 
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
@@ -408,9 +414,14 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             for (int j = 0; j < dim; j++)
                 column.setParameterValueQuietly(j, draw[j][i]);
         }
-        precisionParam.fireParameterChangedEvent();
+    }
 
-        return 0;
+    public MatrixParameterInterface getPrecisionParam() {
+        return precisionParam;
+    }
+
+    public ConjugateWishartStatisticsProvider getConjugateWishartProvider() {
+        return conjugateWishartProvider;
     }
 
     public String getPerformanceSuggestion() {
@@ -510,7 +521,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 if (xo.hasChildNamed(WORKING)) {
                     workingDistribution = (WishartStatistics) xo.getElementFirstChild(WORKING);
                 }
-                
+
                 return new PrecisionMatrixGibbsOperator(
                         ws, precMatrix, (WishartStatistics) prior.getDistribution(),
                         workingDistribution,

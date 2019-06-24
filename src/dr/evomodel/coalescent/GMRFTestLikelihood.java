@@ -78,8 +78,15 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 	protected void restoreState() {
 		super.restoreState();
-		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
-		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
+//		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
+//		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
+		double[] tmp = coalescentIntervals;
+        coalescentIntervals = storedCoalescentIntervals;
+        storedCoalescentIntervals = tmp;
+        tmp = sufficientStatistics;
+        sufficientStatistics = storedSufficientStatistics;
+        storedSufficientStatistics = tmp;
+
 		weightMatrix = storedWeightMatrix;
 
 	}

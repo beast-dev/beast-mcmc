@@ -14,13 +14,15 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
-    private static boolean DEBUG = false;
+    private static final boolean DEBUG = false;
 
     public SafeMultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
                                       int bufferCount, int diffusionCount) {
         super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         allocateStorage();
+
+        effectiveDimensionOffset = PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait);
 
         System.err.println("Trying SafeMultivariateIntegrator");
     }
@@ -33,8 +35,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         vectorDelta = new double[dimTrait];
         vectorPMk = new double[dimTrait];
         matrixQjPjp = new DenseMatrix64F(dimTrait, dimTrait);
-
-        partialsDimData = new int[bufferCount];
     }
 
     private static final boolean TIMING = false;
@@ -65,22 +65,13 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 precision, 0, dimTrait * dimTrait);
     }
 
-    private int getEffectiveDimension(int iBuffer) {
-        return partialsDimData[iBuffer];
+    private double getEffectiveDimension(int iBuffer) {
+        return partials[iBuffer * dimPartial + effectiveDimensionOffset];
     }
 
-    private void setEffectiveDimension(int iBuffer, int effDim) {
-        partialsDimData[iBuffer] = effDim;
-    }
-
-    @Override
-    public void setPostOrderPartial(int bufferIndex, final double[] partial) {
-        super.setPostOrderPartial(bufferIndex, partial);
-        int effDim = 0;
-        for (int i = 0; i < dimTrait; i++) {
-            if (partial[dimTrait + i * (dimTrait + 1)] != 0) ++effDim;
-        }
-        partialsDimData[bufferIndex] = effDim;
+    @SuppressWarnings("unused")
+    private void setEffectiveDimension(int iBuffer, double effDim) {
+        partials[iBuffer * dimPartial + effectiveDimensionOffset] = effDim;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -403,35 +394,22 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 }
             } // End if remainder
 
-            int dimensionChange = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
-
-//            int dimensionChange = ci.getEffectiveDimension() + cj.getEffectiveDimension()
-//                    - ck.getEffectiveDimension();
-//
-//            setEffectiveDimension(kBuffer, ck.getEffectiveDimension());
-
-            remainder += -dimensionChange * LOG_SQRT_2_PI;
+            double effectiveDimension = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
+            remainder += -effectiveDimension * LOG_SQRT_2_PI;
 
             double deti = 0;
             double detj = 0;
-//            double detk = 0;
             if (!(ci.getReturnCode() == NOT_OBSERVED)) {
                 deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
             }
             if (!(cj.getReturnCode() == NOT_OBSERVED)) {
                 detj = cj.getLogDeterminant();
             }
-//            if (!(ck.getReturnCode() == NOT_OBSERVED)) {
-//                detk = ck.getLogDeterminant();
-//            }
-            remainder += -0.5 * (deti + detj); // + detk);
-
-            // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
+            remainder += -0.5 * (deti + detj);
 
             if (DEBUG) {
                 System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
                 System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
-//                System.err.println("\t\t\tdetk = " + ck.getLogDeterminant());
                 System.err.println("\t\tremainder: " + remainder);
             }
 
@@ -459,7 +437,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                                   DenseMatrix64F Pip, DenseMatrix64F Pjp) {
         System.err.println("i status: " + ci);
         System.err.println("j status: " + cj);
-//        System.err.println("k status: " + ck);
         System.err.println("Pip: " + Pip);
         System.err.println("Pjp: " + Pjp);
     }
@@ -492,15 +469,13 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             final DenseMatrix64F Vip = matrix0;
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-//                CommonOps.add(Vi, vi, Vd, Vip);  // TODO Fix
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) :  "Zero-length branch on data is not allowed.";
+            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
 
             final DenseMatrix64F tmp1 = matrix0;
-//                CommonOps.add(Pi, 1.0 / vi, Pd, PiPlusPd); // TODO Fix
             CommonOps.add(Pi, Pdi, tmp1);
             final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
             safeInvert2(tmp1, tmp2, false);
@@ -556,43 +531,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             endTime("peel4");
             startTime("peel5");
         }
-//        return ck;
     }
-
-
-//    private final Map<String, Long> startTimes = new HashMap<String, Long>();
-//
-//    private void startTime(String key) {
-//        startTimes.put(key, System.nanoTime());
-//    }
-//
-//    private void endTime(String key) {
-//        long start = startTimes.get(key);
-//
-//        Long total = times.get(key);
-//        if (total == null) {
-//            total = new Long(0);
-//        }
-//
-//        long run = total + (System.nanoTime() - start);
-//        times.put(key, run);
-//
-////            System.err.println("run = " + run);
-////            System.exit(-1);
-//    }
-
-//        private void incrementTiming(long start, long end, String key) {
-//            Long total = times.get(key);
-//
-//            System.err.println(start + " " + end + " " + key);
-//            System.exit(-1);
-//            if (total == null) {
-//                total = new Long(0);
-//                times.put(key, total);
-//            }
-//            total += (end - start);
-////            times.put(key, total);
-//        }
 
     @Override
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
@@ -651,46 +590,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             double dettot = (ctot.getReturnCode() == NOT_OBSERVED) ? 0 : ctot.getLogDeterminant();
 
-            final double logLike =
-//                    - ctot.getEffectiveDimension() * LOG_SQRT_2_PI
-//                    - 0.5 * Math.log(CommonOps.det(VTotal))
-//                    + 0.5 * Math.log(CommonOps.det(PTotal))
-                    - 0.5 * dettot
-                    - 0.5 * SS;
+            final double logLike = -0.5 * dettot - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
             logLikelihoods[trait] = logLike + remainder;
-
-//            if (incrementOuterProducts) {
-//
-//                assert false : "Should not get here";
-//
-////                int opo = dimTrait * dimTrait * trait;
-////                int opd = precisionOffset;
-////
-////                double rootScalar = partials[rootOffset + dimTrait + 2 * dimTrait * dimTrait];
-////                final double priorScalar = partials[priorOffset + dimTrait];
-////
-////                if (!Double.isInfinite(priorScalar)) {
-////                    rootScalar = rootScalar * priorScalar / (rootScalar + priorScalar);
-////                }
-////
-////                for (int g = 0; g < dimTrait; ++g) {
-////                    final double gDifference = partials[rootOffset + g] - partials[priorOffset + g];
-////
-////                    for (int h = 0; h < dimTrait; ++h) {
-////                        final double hDifference = partials[rootOffset + h] - partials[priorOffset + h];
-////
-////                        outerProducts[opo] += gDifference * hDifference
-//////                                    * PTotal.unsafe_get(g, h) / diffusions[opd];
-////                                * rootScalar;
-////                        ++opo;
-////                        ++opd;
-////                    }
-////                }
-////
-////                degreesOfFreedom[trait] += 1; // increment degrees-of-freedom
-//            }
 
             if (DEBUG) {
                 System.err.print("mean:");
@@ -705,10 +608,6 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("det:" + dettot);
                 System.err.println("remainder:" + remainder);
                 System.err.println("likelihood" + (logLike + remainder));
-
-//                if (incrementOuterProducts) {
-//                    System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
-//                }
             }
 
             rootOffset += dimPartialForTrait;
@@ -766,8 +665,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 dimTrait);
     }
 
+    private final int effectiveDimensionOffset;
+
     private DenseMatrix64F matrixQjPjp;
     private double[] vectorDelta;
     double[] vectorPMk;
-    private int[] partialsDimData;
 }

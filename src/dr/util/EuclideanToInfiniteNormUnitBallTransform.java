@@ -48,7 +48,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
     // values = vector of euclidean unit ball
     @Override
-    protected double[] transform(double[] values) {
+    public double[] transform(double[] values) {
         assert isInEuclideanUnitBall(values) : "Initial vector is not in the Euclidean unit ball.";
 
         double[] transformedValues = new double[values.length];
@@ -66,7 +66,7 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
 
     // values = vector of invinite unit ball
     @Override
-    protected double[] inverse(double[] values) {
+    public double[] inverse(double[] values) {
         assert isInInfiniteUnitBall(values) : "Initial vector is not in the Euclidean unit ball.";
 
         double[] transformedValues = new double[values.length];
@@ -157,7 +157,6 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
     // ************************************************************************* //
 
     // Returns the *transpose* of the Jacobian matrix: jacobian[j][i] = d x_i / d y_j
-    @Override
     public double[][] computeJacobianMatrixInverse(double[] values) {
         double[][] jacobian = new double[dim][dim];
 

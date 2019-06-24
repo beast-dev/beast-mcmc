@@ -52,14 +52,19 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private int maxHeight = 10;
     }
 
-    // TODO Magic numbers; pass as options
     private final Options options = new Options();
 
-    public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+    private NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, Transform transform, Parameter mask,
                            double stepSize, int nSteps) {
         super(mode, weight, gradientProvider, parameter, transform, mask,
                 stepSize, nSteps, 0.0,1E-3);
+    }
+
+    public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                           Parameter parameter, Transform transform, Parameter mask,
+                           HamiltonianMonteCarloOperator.Options runtimeOptions) {
+        this(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions.initialStepSize, runtimeOptions.nSteps);
     }
 
     @Override
@@ -311,7 +316,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         assert (a.length == b.length);
         final int dim = a.length;
 
-        double result[] = new double[dim];
+        double[] result = new double[dim];
         for (int i = 0; i < dim; i++) {
             result[i] = a[i] - b[i];
         }

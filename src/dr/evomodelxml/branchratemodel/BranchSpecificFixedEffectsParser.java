@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -87,12 +88,21 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
             values.add(new ContinuousBranchValueProvider.MidPoint());
         }
 
+        List<BranchRates> branchRates = new ArrayList<BranchRates>();
+
+        for (int i = 0; i < xo.getChildCount(); ++i) {
+            Object obj = xo.getChild(i);
+            if (obj instanceof BranchRates) {
+                branchRates.add((BranchRates) obj);
+            }
+        }
+
         Transform transform = (Transform)
                 xo.getChild(Transform.class);
 
         BranchSpecificFixedEffects.Default fixedEffects = new BranchSpecificFixedEffects.Default(
                 xo.getId(),
-                categories, values,
+                categories, values, branchRates,
                 coefficients,
                 includeIntercept
         );
@@ -151,6 +161,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(INCLUDE_INTERCEPT, true),
             new ElementRule(TreeModel.class),
             new ElementRule(Parameter.class),
+            new ElementRule(BranchRates.class, 0, Integer.MAX_VALUE),
             new ElementRule(LocalClockModelParser.CLADE,
                     new XMLSyntaxRule[]{
                             AttributeRule.newIntegerRule(CATEGORY, false),

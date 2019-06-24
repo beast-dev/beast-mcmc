@@ -88,9 +88,6 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         this.rateParameter = rateParameter;
 
         addModel(rates);
-        if (transform instanceof Model) {
-            addModel((Model) transform);
-        }
     }
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {
@@ -111,11 +108,19 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision
 
-        return transform.transform(rates.getNodeValue(tree, node), tree, node);
+        return transform.transform(getUntransformedBranchRate(tree, node), tree, node);
+    }
+
+    double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+        return rates.getNodeValue(tree, node);
     }
 
     public int getParameterIndexFromNode(final NodeRef node) {
         return rates.getParameterIndexFromNodeNumber(node.getNumber());
+    }
+
+    public int getNodeNumberFromParameterIndex(final int index) {
+        return rates.getNodeNumberFromParameterIndex(index);
     }
 
     public Parameter getRateParameter() { return rateParameter; }
@@ -142,11 +147,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     protected void acceptState() { }
 
-    public static BranchRateTransform make(boolean reciprocal, boolean exp) {
-        return make(reciprocal, exp, null, null);
+    public static BranchRateTransform make(boolean reciprocal, boolean exp, boolean multiplier) {
+        return make(reciprocal, exp, multiplier, null, null);
     }
 
-    public static BranchRateTransform make(boolean reciprocal, boolean exp,
+    public static BranchRateTransform make(boolean reciprocal, boolean exp,  boolean multiplier,
                                            BranchSpecificFixedEffects location,
                                            Parameter scale) {
         final BranchRateTransform transform;
@@ -159,6 +164,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             transform = new BranchRateTransform.Exponentiate();
         } else if (reciprocal) {
             transform = new BranchRateTransform.Reciprocal();
+        } else if (multiplier) {
+            transform = new BranchRateTransform.MultiplyByLocation(
+                    ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES,
+                    location);
         } else {
             if (location != null || scale != null) {
                 transform = new BranchRateTransform.LocationScaleLogNormal(
@@ -169,6 +178,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
             }
         }
         return transform;
+    }
+
+    public Tree getTree() {
+        return rates.getTreeModel();
     }
 
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
@@ -275,7 +288,70 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 return Double.POSITIVE_INFINITY;
             }
         }
-        
+
+        class MultiplyByLocation extends AbstractModel implements BranchRateTransform {
+
+            private final BranchSpecificFixedEffects location;
+
+            MultiplyByLocation(String name, BranchSpecificFixedEffects location) {
+                super(name);
+                this.location = location;
+
+                if (location instanceof Model) {
+                    addModel((Model) location);
+                }
+            }
+
+            @Override
+            public double differential(double raw, Tree tree, NodeRef node) {
+                return location.getEffect(tree, node);
+            }
+
+            @Override
+            public double secondDifferential(double raw, Tree tree, NodeRef node) {
+                return 0.0;
+            }
+
+            @Override
+            public double transform(double raw, Tree tree, NodeRef node) {
+                return location.getEffect(tree, node) * raw;
+            }
+
+            @Override
+            public double center() {
+                return 1.0;
+            }
+
+            @Override
+            public double lower() {
+                return 0.0;
+            }
+
+            @Override
+            public double upper() {
+                return Double.POSITIVE_INFINITY;
+            }
+
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+                fireModelChanged();
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
+            protected void storeState() { }
+
+            @Override
+            protected void restoreState() { }
+
+            @Override
+            protected void acceptState() { }
+        }
+
         class LocationScaleLogNormal extends AbstractModel implements BranchRateTransform {
 
             private final BranchSpecificFixedEffects location;
@@ -304,7 +380,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
                 this.location = location;
                 this.scale = scale;
 
-                if (location != null && location instanceof Model) {
+                if (location instanceof Model) {
                     addModel((Model) location);
                 }
 

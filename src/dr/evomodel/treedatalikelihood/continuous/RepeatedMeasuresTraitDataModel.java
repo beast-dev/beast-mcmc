@@ -26,13 +26,20 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
+import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
@@ -45,7 +52,7 @@ import java.util.List;
  * @author Gabriel Hassler
  */
 public class RepeatedMeasuresTraitDataModel extends
-        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider {
+        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider, ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
@@ -104,7 +111,7 @@ public class RepeatedMeasuresTraitDataModel extends
 
 
         DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
-        MissingOps.safeInvert2(V, P, false);
+        MissingOps.safeInvert2(V, P, false); //TODO this isn't necessary when this is fully observed
 
         MissingOps.unwrap(P, partial, dimTrait);
         MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);
@@ -148,6 +155,18 @@ public class RepeatedMeasuresTraitDataModel extends
         }
     }
 
+    @Override
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate, TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait, this, tree);
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance() {
+        double[] buffer = samplingVariance.toArrayComponents();
+        return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
+    }
+
+
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
@@ -168,6 +187,18 @@ public class RepeatedMeasuresTraitDataModel extends
             XMLObject cxo = xo.getChild(PRECISION);
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
                     cxo.getChild(MatrixParameterInterface.class);
+
+            CholeskyDecomposition chol;
+            try {
+                chol = new CholeskyDecomposition(samplingPrecision.getParameterAsMatrix());
+            } catch (IllegalDimension illegalDimension) {
+                throw new XMLParseException(PRECISION + " must be a square matrix.");
+            }
+
+            if (!chol.isSPD()) {
+                throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
+            }
+
 
             String traitName = returnValue.traitName;
             //TODO diffusionModel was only used for the dimension.
@@ -229,4 +260,6 @@ public class RepeatedMeasuresTraitDataModel extends
             }, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
     };
+
+
 }

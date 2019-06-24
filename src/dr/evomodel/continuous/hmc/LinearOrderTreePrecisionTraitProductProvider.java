@@ -33,6 +33,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
                                                         String traitName,
                                                         int threadCount,
                                                         double roughTimeGuess,
+                                                        double optimalTravelTimeScalar,
                                                         int eigenvalueReplicates) {
         super(treeDataLikelihood, likelihoodDelegate);
 
@@ -46,6 +47,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         this.delta = new double[tree.getExternalNodeCount()][dimTrait];
 		
         this.roughTimeGuess = roughTimeGuess;
+        this.optimalTravelTimeScalar = optimalTravelTimeScalar;
         this.eigenvalueReplicates = eigenvalueReplicates;
 
         this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
@@ -134,8 +136,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     }
 
     private void computeProductForOneTaxon(final int taxon,
-                                          final WrappedNormalSufficientStatistics statistic,
-                                          final double[] result) {
+                                           final WrappedNormalSufficientStatistics statistic,
+                                           final double[] result) {
 
         final ReadableVector mean = statistic.getMean();
         final ReadableMatrix precision = statistic.getPrecision();
@@ -180,28 +182,24 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     @Override
     public double getTimeScale() {
 
-        return roughTimeGuess;
-        //return getRoughLowerBoundforTravelTime(); //todo: may need this lower bound one day
+        if (roughTimeGuess > 0.0) {
+            return roughTimeGuess;
+        } else {
+            return getMaxEigenvalueAsTravelTime();
+        }
     }
 
     @Override
     public double getTimeScaleEigen() {
-
-        double maxEigenValue;
-        double minEigenValue;
-
-        maxEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
-        minEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, true);
-
-        System.err.println("max eigen = " + maxEigenValue + "min eigen = " + minEigenValue + "condition number = " + maxEigenValue / minEigenValue);
-        return 0.0;
+        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false); //TODO: magic numbers
     }
 
     private double getMaxEigenvalueAsTravelTime() {
 
         // TODO Lots of bad magic numbers
-        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01, false)
-                *  maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
+        double treeCovEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01, false);
+        double traitCovEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
+        return optimalTravelTimeScalar * Math.sqrt(treeCovEigenValue * traitCovEigenValue);
     }
 
     private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err, boolean inverseflag) {
@@ -297,4 +295,5 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
     private final double[][] delta;
     private final double roughTimeGuess;
     private final int eigenvalueReplicates;
+    private final double optimalTravelTimeScalar;
 }

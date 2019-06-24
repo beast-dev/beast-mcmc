@@ -1,5 +1,5 @@
 /*
- * AppendedPotentialDerivativeParser.java
+ * CompoundGradientParser.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author Max Tolkoff
  */
-public class AppendedPotentialDerivativeParser extends AbstractXMLObjectParser {
+public class CompoundGradientParser extends AbstractXMLObjectParser {
 
     public final static String SUM_DERIVATIVE = "appendedPotentialDerivative";
     public static final String SUM_DERIVATIVE2 = "compoundGradient";

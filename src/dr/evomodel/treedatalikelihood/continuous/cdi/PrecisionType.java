@@ -37,6 +37,11 @@ public enum PrecisionType {
         }
 
         @Override
+        public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait) {
+            //Do nothing
+        }
+
+        @Override
         public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
             data[dOffset] = partial[pOffset];
         }
@@ -48,6 +53,11 @@ public enum PrecisionType {
 
         @Override
         public int getVarianceOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
+        public int getEffectiveDimensionOffset(int dimTrait) {
             return -1;
         }
 
@@ -72,6 +82,11 @@ public enum PrecisionType {
         }
 
         @Override
+        public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait) {
+            //Do nothing
+        }
+
+        @Override
         public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait) {
             for (int i = 0; i < dimTrait; ++i) {
                 data[dOffset + i] = Double.isInfinite(partial[pOffset + dimTrait]) ?
@@ -90,6 +105,11 @@ public enum PrecisionType {
         }
 
         @Override
+        public int getEffectiveDimensionOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
         public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
             double scalar = partial[offset + getPrecisionOffset(dimTrait)];
             return PrecisionType.scale(diffusionPrecision, scalar);
@@ -101,6 +121,11 @@ public enum PrecisionType {
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
             partial[offset + dimTrait + index] = precision;
+        }
+
+        @Override
+        public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait) {
+            //Do nothing
         }
 
         @Override
@@ -122,6 +147,11 @@ public enum PrecisionType {
         }
 
         @Override
+        public int getEffectiveDimensionOffset(int dimTrait) {
+            return -1;
+        }
+
+        @Override
         public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait) {
             throw new RuntimeException("Not yet implemented");
         }
@@ -133,8 +163,14 @@ public enum PrecisionType {
                                             int dimTrait) {
             final int offs = offset + dimTrait + index * dimTrait + index;
             partial[offs] = precision;
-            partial[offs+ dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
+            partial[offs + dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
             partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY;
+        }
+
+        @Override
+        public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait) {
+            int effDimOffset = this.getEffectiveDimensionOffset(dimTrait);
+            partial[offset + effDimOffset] = effDim;
         }
 
         @Override
@@ -147,13 +183,18 @@ public enum PrecisionType {
 
         @Override
         public int getMatrixLength(int dimTrait) {
-            return 2 * super.getMatrixLength(dimTrait) + 1;
+            return 2 * super.getMatrixLength(dimTrait) + 2; //TODO: what was the '+1' for?
         }
 
         @Override
         public int getPrecisionOffset(int dimTrait) {
             return dimTrait;
         }
+
+        @Override
+        public int getEffectiveDimensionOffset(int dimTrait) {
+            return dimTrait + dimTrait * dimTrait * 2 + 1;
+        } // TODO Put somewhere in buffer
 
         @Override
         public int getVarianceOffset(int dimTrait) {
@@ -206,6 +247,8 @@ public enum PrecisionType {
     abstract public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                                  int dimTrait);
 
+    abstract public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait);
+
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
     @SuppressWarnings("unused")
@@ -213,6 +256,9 @@ public enum PrecisionType {
 
     @SuppressWarnings("unused")
     abstract public int getVarianceOffset(int dimTrait);
+
+    @SuppressWarnings("unused")
+    abstract public int getEffectiveDimensionOffset(int dimTrait);
 
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 

@@ -2,9 +2,9 @@ package dr.inference.model;
 
 public interface CrossValidationProvider {
 
-    Parameter getTrueParameter();
+    double[] getTrueValues();
 
-    Parameter getInferredParameter();
+    double[] getInferredValues();
 
     int[] getRelevantDimensions();
 
@@ -17,8 +17,10 @@ public interface CrossValidationProvider {
         protected final CrossValidationProvider provider;
         private final double[] squaredErrors;
         private final int[] relevantDims;
-        private Parameter truthParameter;
-        private Parameter inferredParameter;
+        private double[] truthValues;
+        private double[] inferredValues;
+        //        private Parameter truthParameter;
+//        private Parameter inferredParameter;
         private final int dimStat;
 //        boolean statKnown = false;
 
@@ -38,8 +40,8 @@ public interface CrossValidationProvider {
 
 
             for (int i = 0; i < dimStat; i++) {
-                double truth = truthParameter.getParameterValue(relevantDims[i]);
-                double inferred = inferredParameter.getParameterValue(relevantDims[i]);
+                double truth = truthValues[relevantDims[i]];
+                double inferred = inferredValues[relevantDims[i]];
                 double error = truth - inferred;
                 squaredErrors[i] = error * error;
             }
@@ -62,8 +64,8 @@ public interface CrossValidationProvider {
 
             //TODO: add variable listeners as needed
             if (dim == 0) {
-                this.inferredParameter = provider.getInferredParameter();
-                this.truthParameter = provider.getTrueParameter();
+                this.truthValues = provider.getTrueValues();
+                this.inferredValues = provider.getInferredValues();
                 updateSquaredErrors();
             }
 

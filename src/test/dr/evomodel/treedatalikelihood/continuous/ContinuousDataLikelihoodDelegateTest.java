@@ -291,7 +291,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         driftModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 100, 200, 300, 400, 500, 600, 700, 800, 900}),
                 transform, false));
@@ -376,7 +376,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         // Diffusion
 
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -565,7 +565,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -615,7 +615,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -742,7 +742,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -846,7 +846,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> driftModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         driftModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 10, 20, 30, 40, 40, 30, 20, 10, 0}),
                 transform, false));
@@ -912,7 +912,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         System.out.println("\nTest Likelihood using diagonal Relaxed OU and factor:");
 
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -987,7 +987,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -1029,7 +1029,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
         // Diffusion
         List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
-        ArbitraryBranchRates.BranchRateTransform transform = make(false, false);
+        ArbitraryBranchRates.BranchRateTransform transform = make(false, false, false);
         optimalTraitsModels.add(new ArbitraryBranchRates(treeModel,
                 new Parameter.Default("rate.1", new double[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}),
                 transform, false));
@@ -1113,12 +1113,13 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
             double[] vector = parseVector(s.substring(indBeg, indEnd), ",");
             for (int i = 0; i < vector.length; i++) {
 //                System.out.println("cMean Mat: " + vector[i]);
+
                 System.out.println("cMean preorder: " + partials[offset + i]);
                 assertEquals("cMean " + tip + "; " + i,
                         format.format(partials[offset + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
         }
     }
 
@@ -1137,7 +1138,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
                         format.format(partials[offset + dimTrait + dimTrait * dimTrait + i]),
                         format.format(vector[i]));
             }
-            offset += dimTrait + 2 * dimTrait * dimTrait + 1;
+            offset += dimTrait + PrecisionType.FULL.getMatrixLength(dimTrait);
         }
     }
 

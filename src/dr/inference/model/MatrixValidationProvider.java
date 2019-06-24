@@ -37,13 +37,13 @@ public class MatrixValidationProvider implements CrossValidationProvider {
     }
 
     @Override
-    public Parameter getTrueParameter() {
-        return trueParameter;
+    public double[] getTrueValues() {
+        return trueParameter.getParameterValues();
     }
 
     @Override
-    public Parameter getInferredParameter() {
-        return inferredParameter;
+    public double[] getInferredValues() {
+        return inferredParameter.getParameterValues();
     }
 
     @Override

@@ -80,7 +80,8 @@ public class TransformedMultivariateParameter extends TransformedParameter {
 
     public void addBounds(Bounds<Double> bounds) {
 //        parameter.addBounds(new DefaultBounds(null, null));
-        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+//        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+        // TODO: Check bounds of the parameter ?
     }
 
     public Bounds<Double> getBounds() {

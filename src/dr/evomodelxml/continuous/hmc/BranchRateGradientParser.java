@@ -37,8 +37,16 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.evomodel.treedatalikelihood.discrete.LocalBranchRateGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.hmc.CompoundGradient;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.SumDerivative;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
@@ -50,7 +58,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "branchRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    public static final String USE_HESSIAN = "useHessian";
+    private static final String USE_HESSIAN = "useHessian";
 
     @Override
     public String getParserName() {
@@ -62,7 +70,48 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
-        final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        final Object child = xo.getChild(TreeDataLikelihood.class);
+
+        if (child != null) {
+            return parseTreeDataLikelihood((TreeDataLikelihood) child, traitName, useHessian);
+        } else {
+
+            CompoundLikelihood compoundLikelihood = (CompoundLikelihood) xo.getChild(CompoundLikelihood.class);
+            List<GradientWrtParameterProvider> providers = new ArrayList<>();
+
+            for (Likelihood likelihood : compoundLikelihood.getLikelihoods()) {
+                if (!(likelihood instanceof TreeDataLikelihood)) {
+                    throw new XMLParseException("Unknown likelihood type");
+                }
+
+                GradientWrtParameterProvider provider = parseTreeDataLikelihood((TreeDataLikelihood) likelihood,
+                        traitName, useHessian);
+
+                providers.add(provider);
+            }
+
+            checkBranchRateModels(providers);
+
+            return new SumDerivative(providers);
+        }
+    }
+
+    static void checkBranchRateModels(List<GradientWrtParameterProvider> providers) throws XMLParseException {
+        BranchRateModel rateModel = ((TreeDataLikelihood)providers.get(0).getLikelihood()).getBranchRateModel();
+        for (GradientWrtParameterProvider provider : providers) {
+            if (rateModel != ((TreeDataLikelihood)provider.getLikelihood()).getBranchRateModel()) {
+                throw new XMLParseException("All TreeDataLikelihoods must use the same BranchRateModel");
+            }
+        }
+    }
+
+    private GradientWrtParameterProvider parseTreeDataLikelihood(TreeDataLikelihood treeDataLikelihood,
+                                                                 String traitName,
+                                                                 boolean useHessian) throws XMLParseException {
+
+
+
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
         if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
@@ -96,6 +145,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
         }
     }
 
+
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
@@ -103,7 +153,10 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
-            new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(CompoundLikelihood.class)
+            ),
     };
 
     @Override

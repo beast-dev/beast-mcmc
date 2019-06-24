@@ -46,7 +46,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, Reportabl
     private final Likelihood likelihood;
     private final Parameter parameter;
 
-    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
 
         this.derivativeList = derivativeList;
 

@@ -105,7 +105,7 @@ public interface GradientWrtParameterProvider {
         private final boolean checkValues;
         private final double tolerance;
 
-        public CheckGradientNumerically(GradientWrtParameterProvider provider,
+        CheckGradientNumerically(GradientWrtParameterProvider provider,
                                         double lowerBound, double upperBound,
                                         Double nullableTolerance) {
             this.provider = provider;
@@ -194,11 +194,18 @@ public interface GradientWrtParameterProvider {
                     nullableTolerance
             ).getReport();
         } catch (GradientMismatchException e) {
-            throw new RuntimeException(e.getMessage());
+            String message = e.getMessage();
+            if (message == null) {
+                message = provider.getParameter().getParameterName();
+            }
+            if (message == null) {
+                message = "Gradient check failure";
+            }
+            throw new RuntimeException(message);
         }
 
         return report;
     }
 
-    Double tolerance = 1E-4;
+    Double TOLERANCE = 1E-2;
 }

@@ -37,7 +37,6 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.SumDerivative;
 import dr.inference.model.BranchParameter;

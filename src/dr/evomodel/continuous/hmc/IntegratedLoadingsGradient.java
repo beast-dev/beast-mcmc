@@ -79,7 +79,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         }
 
         if (TIMING) {
-            int length = 2;
+            int length = 5;
             stopWatches = new StopWatch[length];
             for (int i = 0; i < length; ++i) {
                 stopWatches[i] = new StopWatch();
@@ -153,6 +153,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     @Override
     public double[] getGradientLogDensity() {
 
+        if (TIMING) {
+            stopWatches[2].start();
+        }
+
         final double[][] gradients = new double[taxonTaskPool.getNumThreads()][getDimension()];
 
         final ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
@@ -181,9 +185,18 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         // (K x N)(N x P)(P x P) - (K x N)(N x K)(K x P)(P x P)
         // sum_{N} (K x 1)(1 x P)(P x P) - (K x K)(K x P)(P x P)
+
+        if (TIMING) {
+            stopWatches[2].stop();
+            stopWatches[3].start();
+        }
         
         final List<WrappedNormalSufficientStatistics> allStatistics =
                 fullConditionalDensity.getTrait(tree, null); // TODO Need to test if faster to load inside loop
+
+        if (TIMING) {
+            stopWatches[3].stop();
+        }
 
         assert (allStatistics.size() == tree.getExternalNodeCount());
 
@@ -278,7 +291,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             }
 
             for (int factor = 0; factor < dimFactors; ++factor) {
-
                 double factorMean = mean.get(factor);
 
                 for (int trait = 0; trait < dimTrait; ++trait) {

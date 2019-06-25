@@ -46,9 +46,9 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient impleme
                                      MatrixParameterInterface parameter) {
 
         super(gradientWrtPrecisionProvider, likelihood, parameter);
-        if (parametrization == AbstractPrecisionGradient.Parametrization.AS_VARIANCE) {
-            parametrization = AbstractPrecisionGradient.Parametrization.AS_VARIANCE_DIAGONAL;
-        }
+//        if (parametrization == AbstractPrecisionGradient.Parametrization.AS_VARIANCE) {
+//            parametrization = AbstractPrecisionGradient.Parametrization.AS_VARIANCE_DIAGONAL;
+//        }
     }
 
     @Override

@@ -264,8 +264,8 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
         DenseMatrix64F res = new DenseMatrix64F(dim, dim);
         CommonOps.add(Wi, -1, Gamma, tmp);
-        CommonOps.mult(qiInv, tmp, res);
-        CommonOps.mult(res, gradient, tmp);
+        CommonOps.multTransA(qiInv, tmp, res);
+        CommonOps.multTransB(res, gradient, tmp);
 
         // temp + temp^T
         for (int i = 0; i < gradient.getNumCols(); i++) {

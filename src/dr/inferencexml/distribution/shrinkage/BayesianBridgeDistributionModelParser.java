@@ -75,7 +75,7 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
             new ElementRule(EXPONENT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
-                    new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
     };
 
     public String getParserDescription() {

@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.CodonFromNucleotideFrequencyModel;
+import dr.evomodel.substmodel.CorrectedF3x4;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
@@ -46,6 +47,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
+
 public class FrequencyModelParser extends AbstractXMLObjectParser {
 
     public static final String FREQUENCIES = "frequencies";
@@ -57,10 +59,12 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
     private static final String FREQ_3x4 = "3x4";
     private static final String CODON_FROM_NUCLEOTIDE = "codonFromNucleotide";
     private static final String[] COMPOSITION_TYPES = new String[]{FREQ_3x4};
+    public static final String CORRECTEDF3X4 = "correctedF3x4";
 
     public String getParserName() {
         return FREQUENCY_MODEL;
     }
+
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -134,6 +138,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
         }
         sb.append("= {");
 
+
         if (xo.getAttribute(NORMALIZE, false)) {
             double sum = 0;
             for (int j = 0; j < freqsParam.getDimension(); j++)
@@ -166,6 +171,13 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
             codonFrequencies.setId(xo.getId());
 
             return new CodonFromNucleotideFrequencyModel((Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
+
+        } else if (dataType instanceof Codons && xo.getAttribute(CORRECTEDF3X4, false)) {
+            FrequencyModel nucleotideFrequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqsParam);
+            Parameter codonFrequencies = new Parameter.Default(dataType.getStateCount(), 1.0 / dataType.getStateCount());
+            codonFrequencies.setId(xo.getId());
+
+            return new CorrectedF3x4((Codons) dataType, nucleotideFrequencyModel, codonFrequencies);
 
         } else {
             return new FrequencyModel(dataType, freqsParam);

@@ -26,7 +26,6 @@
 package dr.inferencexml.distribution.shrinkage;
 
 import dr.inference.distribution.shrinkage.*;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

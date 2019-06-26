@@ -65,7 +65,7 @@ public class FrequencyModel extends AbstractModel {
 
         double sum = getSumOfFrequencies(frequencyParameter);
 
-        if (Math.abs(sum - 1.0) > 1e-8) {
+        if (Math.abs(sum - 1.0) > 1e-8 && Math.abs(sum - 3.0) > 1e-8) {
             throw new IllegalArgumentException("Frequencies do not sum to 1, they sum to " + sum);
         }
 

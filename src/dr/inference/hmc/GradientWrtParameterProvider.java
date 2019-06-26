@@ -173,7 +173,7 @@ public interface GradientWrtParameterProvider {
 
             if (checkValues) {
                 for (int i = 0; i < analytic.length; ++i) {
-                    if (Math.abs(analytic[i] - numeric[i]) > tolerance) {
+                    if (Math.abs((analytic[i] - numeric[i]) / analytic[i]) > tolerance) {
                         Logger.getLogger("dr.inference.hmc").info(sb.toString());
                         throw new GradientMismatchException();
                     }

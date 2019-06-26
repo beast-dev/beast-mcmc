@@ -1,5 +1,5 @@
 /*
- * ContinuousTraitPartialsProvider.java
+ * StopWatch.java
  *
  * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,50 +23,42 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treedatalikelihood.continuous;
+package dr.util;
 
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.model.CompoundParameter;
+public class StopWatch {
 
-import java.util.List;
+	private long start = 0, total = 0;
 
-/**
- * @author Marc A. Suchard
- */
+	public void start() {
+		start = System.currentTimeMillis();
+	}
 
-public interface ContinuousTraitPartialsProvider {
+	public void stop() {
+		total += System.currentTimeMillis() - start;
+		start = 0;
+	}
 
-    boolean bufferTips();
+	public void reset() {
+		total = 0;
+		start = 0;
+	}
 
-    int getTraitCount();
+	public boolean isRunning() {
+		return start > 0;
+	}
 
-    int getTraitDimension();
+	public String toString() {
+		boolean running = isRunning();
+		if (running) {
+			stop();
+		}
 
-    PrecisionType getPrecisionType();
+		String time = Timer.toString(total);
 
-    double[] getTipPartial(int taxonIndex, boolean fullyObserved);
+		if (running) {
+			start();
+		}
 
-    List<Integer> getMissingIndices();
-
-    boolean[] getMissingIndicator();
-
-    CompoundParameter getParameter();
-
-    String getModelName();
-
-    static boolean[] indicesToIndicator(List<Integer> indices, int n) {
-
-        if (indices == null) {
-            return null;
-        }
-
-        boolean[] indicator = new boolean[n];
-
-        for (int i : indices) {
-            indicator[i] = true;
-        }
-
-        return indicator;
-
-    }
+		return time;
+	}
 }

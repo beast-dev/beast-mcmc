@@ -35,6 +35,8 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
+import dr.math.MathUtils;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -44,6 +46,9 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static test.dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegateTest.getConditionalSimulations;
+import static test.dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegateTest.getLogDatumLikelihood;
 
 /**
  * @author Paul Bastide
@@ -92,10 +97,10 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
 
         List<Integer> missingIndices = new ArrayList<Integer>();
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(3);
-        missingIndices.add(4);
-        missingIndices.add(5);
-        missingIndices.add(7);
+//        missingIndices.add(3);
+//        missingIndices.add(4);
+//        missingIndices.add(5);
+//        missingIndices.add(7);
 
         //// Standard Model //// ***************************************************************************************
 
@@ -186,12 +191,7 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
+        double logDatumLikelihoodFactor = getLogDatumLikelihood(dataModelFactor);
 
         double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
         double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
@@ -201,6 +201,11 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
                 format.format(likelihoodFactorData + likelihoodFactorDiffusion));
 
         System.out.println("likelihoodBMFactor: " + format.format(logDatumLikelihoodFactor));
+
+        // Simulation
+        MathUtils.setSeed(17890826);
+        double[] traitsFactors = getConditionalSimulations(dataLikelihoodFactors, likelihoodDelegateFactors, diffusionModel, dataModelFactor, rootPrior, treeModel, rateTransformation);
+        System.err.println(new Vector(traitsFactors));
 
         //// Repeated Measures //// ************************************************************************************
         // CDL
@@ -212,12 +217,7 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
         TreeDataLikelihood dataLikelihoodRepMea
                 = new TreeDataLikelihood(likelihoodDelegateRepMea, treeModel, rateModel);
 
-        String s = dataLikelihoodRepMea.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihoodRepMea = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        double logDatumLikelihoodRepMea = getLogDatumLikelihood(dataLikelihoodRepMea);
 
         double likelihoodRepMeaDiffusion = dataLikelihoodRepMea.getLogLikelihood();
 
@@ -227,10 +227,19 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
 
         System.out.println("likelihoodBMRepMea: " + format.format(logDatumLikelihoodFactor));
 
+        // Simulation
+        MathUtils.setSeed(17890826);
+        double[] traitsRepMea = getConditionalSimulations(dataLikelihoodRepMea, likelihoodDelegateRepMea, diffusionModel, dataModelRepeatedMeasures, rootPrior, treeModel, rateTransformation);
+        System.err.println(new Vector(traitsRepMea));
+
         //// Equal ? //// **********************************************************************************************
         assertEquals("likelihoodBMRepFactor",
                 format.format(likelihoodFactorData + likelihoodFactorDiffusion),
                 format.format(likelihoodRepMeaDiffusion));
+
+        for (int i = 0; i < traitsFactors.length; i++) {
+            assertEquals(format.format(traitsRepMea[i]), format.format(traitsFactors[i]));
+        }
     }
 
     public void testLikelihoodOU() {
@@ -286,6 +295,11 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
 
         System.out.println("likelihoodOUFactor: " + format.format(logDatumLikelihoodFactor));
 
+        // Simulation
+        MathUtils.setSeed(17890826);
+        double[] traitsFactors = getConditionalSimulations(dataLikelihoodFactors, likelihoodDelegateFactors, diffusionModel, dataModelFactor, rootPrior, treeModel, rateTransformation);
+        System.err.println(new Vector(traitsFactors));
+
         //// Repeated Measures //// ************************************************************************************
         // CDL
         ContinuousDataLikelihoodDelegate likelihoodDelegateRepMea = new ContinuousDataLikelihoodDelegate(treeModel,
@@ -311,9 +325,18 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
 
         System.out.println("likelihoodOURepMea: " + format.format(logDatumLikelihoodFactor));
 
+        // Simulation
+        MathUtils.setSeed(17890826);
+        double[] traitsRepMea = getConditionalSimulations(dataLikelihoodRepMea, likelihoodDelegateRepMea, diffusionModel, dataModelRepeatedMeasures, rootPrior, treeModel, rateTransformation);
+        System.err.println(new Vector(traitsRepMea));
+
         //// Equal ? //// **********************************************************************************************
         assertEquals("likelihoodOURepFactor",
                 format.format(likelihoodFactorData + likelihoodFactorDiffusion),
                 format.format(likelihoodRepMeaDiffusion));
+
+        for (int i = 0; i < traitsFactors.length; i++) {
+            assertEquals(format.format(traitsRepMea[i]), format.format(traitsFactors[i]));
+        }
     }
 }

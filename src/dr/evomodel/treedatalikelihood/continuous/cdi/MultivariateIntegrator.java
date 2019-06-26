@@ -3,6 +3,7 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -642,7 +643,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             {
                 final DenseMatrix64F tmp = matrix0;
 
-                CommonOps.mult(Pd, Proot, tmp);
+                MissingOps.safeMult(Pd, Proot, tmp);
                 unwrap(tmp, preOrderPartials, rootOffset + dimTrait);
 
                 CommonOps.mult(Vd, Vroot, tmp);

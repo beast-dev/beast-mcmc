@@ -55,7 +55,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         super(name);
         this.parameter = parameter;
         this.originalMissingIndices = missingIndices;
-        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<Integer>());
+        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<>());
         addVariable(parameter);
 
         this.dimTrait = dimTrait;
@@ -63,7 +63,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.precisionType = precisionType;
 
 
-        this.missingIndicator = ContinuousTraitPartialsProvider.Abstract.indicesToIndicator(
+        this.missingIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
                 missingIndices, parameter.getDimension());
     }
 
@@ -177,11 +177,10 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         final Parameter p = parameter.getParameter(taxonIndex);
 
         int offset = 0;
-        int effDimOffest = precisionType.getEffectiveDimensionOffset(dimTrait);
 
         for (int i = 0; i < numTraits; ++i) {
 
-            double effDim = 0;
+            int effDim = 0;
 
             for (int j = 0; j < dimTrait; ++j) {
 
@@ -197,7 +196,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);
             }
 
-            partial[offset + effDimOffest] = effDim;
+            precisionType.fillEffDimInPartials(partial, offset, effDim, dimTrait);
 
             offset += offsetInc;
         }

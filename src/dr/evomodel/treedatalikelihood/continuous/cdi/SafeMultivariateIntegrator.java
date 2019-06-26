@@ -180,7 +180,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 //            final DenseMatrix64F Vj = wrap(partials, jbo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
             // B. Inflate variance along sibling branch using matrix inversion
-            final DenseMatrix64F Vjp = matrix0;
+//            final DenseMatrix64F Vjp = matrix0;
             final DenseMatrix64F Pjp = matrixPjp;
             increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, false);
 
@@ -198,11 +198,19 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final double[] delta = vectorDelta;
             computeDelta(jbo, jdo, delta);
 
-            final double[] tmp = vector0;
-            weightedAverage(preOrderPartials, kbo, Pk,
-                    delta, 0, QjPjp,
-                    preOrderPartials, ibo, Vip,
-                    dimTrait, tmp);
+//            final double[] tmp = vector0;
+//            weightedAverage(preOrderPartials, kbo, Pk,
+//                    delta, 0, QjPjp,
+//                    preOrderPartials, ibo, Vip,
+//                    dimTrait, tmp);
+            safeWeightedAverage(
+                    new WrappedVector.Raw(preOrderPartials, kbo, dimTrait),
+                    Pk,
+                    new WrappedVector.Raw(delta, 0, dimTrait),
+                    QjPjp,
+                    new WrappedVector.Raw(preOrderPartials, ibo, dimTrait),
+                    Vip,
+                    dimTrait);
 
             scaleAndDriftMean(ibo, imo, ido);
 
@@ -223,11 +231,13 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 System.err.println("pM: " + new WrappedVector.Raw(preOrderPartials, kbo, dimTrait));
                 System.err.println("pP: " + Pk);
                 System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
-                DenseMatrix64F Pj = wrap(partials, ibo + dimTrait, dimTrait, dimTrait);
+                DenseMatrix64F Pj = wrap(partials, jbo + dimTrait, dimTrait, dimTrait);
                 DenseMatrix64F Vj = new DenseMatrix64F(dimTrait, dimTrait);
                 CommonOps.invert(Pj, Vj);
                 System.err.println("sP: " + Vj);
                 System.err.println("sP: " + Pj);
+                DenseMatrix64F Vjp = new DenseMatrix64F(dimTrait, dimTrait);
+                CommonOps.invert(Pjp, Vjp);
                 System.err.println("sVp: " + Vjp);
                 System.err.println("sPp: " + Pjp);
                 System.err.println("Pip: " + Pip);

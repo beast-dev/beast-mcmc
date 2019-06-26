@@ -68,6 +68,8 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     private ContinuousTraitPartialsProvider dataModel;
     private ConjugateRootTraitPrior rootPrior;
 
+    private Boolean fixedRoot = true;
+
     private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 
     public PrecisionGradientTest(String name) {
@@ -118,13 +120,14 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
+        final String rootVal = fixedRoot ? "Infinity" : "10";
         String s = "<beast>\n" +
                 "    <conjugateRootPrior>\n" +
                 "        <meanParameter>\n" +
                 "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5 -2.5 1.3 4.0\"/>\n" +
                 "        </meanParameter>\n" +
                 "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
+                "            <parameter id=\"sampleSizeRoot\" value=\"" + rootVal + "\"/>\n" +
                 "        </priorSampleSize>\n" +
                 "    </conjugateRootPrior>\n" +
                 "</beast>";

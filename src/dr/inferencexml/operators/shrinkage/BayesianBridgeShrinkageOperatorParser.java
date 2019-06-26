@@ -1,7 +1,7 @@
 package dr.inferencexml.operators.shrinkage;
 
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
+import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
@@ -17,8 +17,8 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
 
         double weight = xo.getDoubleAttribute(WEIGHT);
 
-        BayesianBridgeLikelihood bayesianBridge =
-                (BayesianBridgeLikelihood) xo.getChild(BayesianBridgeLikelihood.class);
+        BayesianBridgeStatisticsProvider bayesianBridge =
+                (BayesianBridgeStatisticsProvider) xo.getChild(BayesianBridgeStatisticsProvider.class);
 
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         if (!(prior.getDistribution() instanceof GammaDistribution)) {
@@ -36,7 +36,7 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
-            new ElementRule(BayesianBridgeLikelihood.class),
+            new ElementRule(BayesianBridgeStatisticsProvider.class),
             new ElementRule(DistributionLikelihood.class),
     };
 

@@ -58,6 +58,9 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
             throw new RuntimeException("Dimension mismatch!");
         }
         this.substitutionModelList = constructSubstitutionModels(substitutionParameterList, branchRateModelList);
+        for (BranchRateModel branchRateModel : branchRateModelList) {
+            addModel(branchRateModel);
+        }
     }
 
     private List<SubstitutionModel> constructSubstitutionModels(List<Parameter> substitutionParameterList,
@@ -74,7 +77,7 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
         return substitutionModelList;
     }
 
-    private class ProxySubstitutionParameter extends Parameter.Proxy {
+    private class ProxySubstitutionParameter extends Parameter.Proxy implements ModelListener {
 
         private final BranchRateModel branchRateModel;
         private final int nodeNum;
@@ -90,6 +93,8 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
             this.nodeNum = nodeNum;
             this.tree = tree;
             this.rootParameter = rootParameter;
+            branchRateModel.addModelListener(this);
+            addVariable(rootParameter);
         }
 
         @Override
@@ -120,6 +125,16 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
 
         @Override
         public void addBounds(Bounds<Double> bounds) {
+        }
+
+        @Override
+        public void modelChangedEvent(Model model, Object object, int index) {
+            fireParameterChangedEvent();
+        }
+
+        @Override
+        public void modelRestored(Model model) {
+
         }
     }
 

@@ -83,14 +83,9 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     public double doOperation(Likelihood likelihood) {
 
         final double[] initialPosition = leapFrogEngine.getInitialPosition();
-        final double initialLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
 
         if (stepSizeInformation == null) {
             stepSizeInformation = findReasonableStepSize(initialPosition);
-
-            final double testLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
-            assert (testLogLikelihood == initialLogLikelihood);
-            assert (Arrays.equals(leapFrogEngine.getInitialPosition(), initialPosition));
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);
@@ -233,7 +228,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     private StepSize findReasonableStepSize(double[] initialPosition) {
 
-        double stepSize = 1;
+        double stepSize = 0.1;
 //        final double[] mass = massProvider.getMass();
         WrappedVector momentum = preconditioning.drawInitialMomentum();
         int count = 1;

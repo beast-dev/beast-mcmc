@@ -16,7 +16,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
     }
 
     @Override
-    public double[] transform(double[] values) {
+    protected double[] transform(double[] values) {
 
         double[] choleskyFactor = subsetCholeskyOrCPCs(values);
         double[] diagonals = subsetDiagonals(values);
@@ -53,7 +53,7 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
         double[] CPCs = subsetCholeskyOrCPCs(values);
         double[] gradientLogJacobianInverse = super.getGradientLogJacobianInverse(CPCs);
-        return pasteTogether(gradientLogJacobianInverse, new double[dimVector]);
+        return pasteTogether(gradientLogJacobianInverse, new double[dim]);
     }
 
     private double[] subsetCholeskyOrCPCs(double[] values) { //todo: to ensure Cholesky factor comes first in "values"
@@ -67,15 +67,15 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
     private double[] subsetDiagonals(double[] values) { //todo: to ensure Cholesky factor comes first in "values"
 
         assert values.length == totalDimension;
-        double[] diagonals = new double[dimVector];
-        System.arraycopy(values, dimCPC, diagonals, 0, dimVector);
+        double[] diagonals = new double[dim];
+        System.arraycopy(values, dimCPC, diagonals, 0, dim);
         return diagonals;
     }
 
     private double[][] appendIdentityMatrix(double[][] jacobian) {
 
         assert jacobian.length == dimCPC;
-        int length = dimCPC + dimVector;
+        int length = dimCPC + dim;
         double[][] appendedJacobian = new double[length][length];
 
         for (int i = 0; i < length; i++) {
@@ -95,9 +95,9 @@ public class LKJCholeskyTransformConstrainedWithDiag extends LKJCholeskyTransfor
 
     private double[] pasteTogether(double[] choleskyOrCPCs, double[] diagonals) {
 
-        double[] concatenatedArray = new double[dimCPC + dimVector];
+        double[] concatenatedArray = new double[dimCPC + dim];
         System.arraycopy(choleskyOrCPCs, 0, concatenatedArray, 0, dimCPC);
-        System.arraycopy(diagonals, 0, concatenatedArray, dimCPC, dimVector);
+        System.arraycopy(diagonals, 0, concatenatedArray, dimCPC, dim);
         return concatenatedArray;
     }
 

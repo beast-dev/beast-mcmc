@@ -136,6 +136,13 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return offDiagonalParameter;
     }
 
+    public CompoundParameter getUntransformedCompoundParameter(){
+        CompoundParameter param = new CompoundParameter(this.getParameterName());
+        param.addParameter(getDiagonalParameter());
+        param.addParameter(getUntransformedOffDiagonalParameter());
+        return param;
+    }
+
     abstract double[] updateGradientDiagonal(double[] gradient);
 
     abstract double[] updateGradientOffDiagonal(double[] gradient);

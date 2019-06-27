@@ -195,17 +195,15 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     // Gradient w.r.t. correlation
     double[] getGradientCorrelation(double[] gradient) {
 
-        gradient = compoundSymmetricMatrix.updateGradientOffDiagonal(gradient);
+        return compoundSymmetricMatrix.updateGradientOffDiagonal(gradient);
 
-        return gradient;
     }
 
     // Gradient w.r.t. diagonal
     double[] getGradientDiagonal(double[] gradient) {
 
-        gradient = compoundSymmetricMatrix.updateGradientDiagonal(gradient);
-
-        return gradient;
+        return compoundSymmetricMatrix.updateGradientDiagonal(gradient);
+        
     }
 
     public static double[] flatten(double[][] matrix) {

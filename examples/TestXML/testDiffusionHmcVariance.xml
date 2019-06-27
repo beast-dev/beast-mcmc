@@ -433,6 +433,28 @@ Count: 225
     <!-- ************************************************** -->
     <!-- Both -->
 
+    <precisionGradient id="precisionBothGradient" parameter="both">
+        <traitDataLikelihood idref="bmLikelihood"/>
+        <cachedMatrixInverse idref="precisionMatrix"/>
+    </precisionGradient>
+
+
+	<operators id="bmOperators.both.hmcVanilla">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient idref="precisionBothGradient"/>
+ 			 <compoundParameter>
+ 			    <parameter idref="variance.diagonal"/>
+ 				<parameter idref="variance.correlation"/>
+ 			</compoundParameter>
+ 			<multivariateCompoundTransform>
+ 			 	<transform type="log" dim = "4"/>
+ 			    <LKJTransform dimension = "4"/>
+ 			</multivariateCompoundTransform>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+	
+<!-- 
 	<operators id="bmOperators.both.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
  			drawVariance="1.0">
@@ -450,6 +472,7 @@ Count: 225
  			</multivariateCompoundTransform>
  		</hamiltonianMonteCarloOperator>
 	</operators>
+ -->
 	
 	<operators id="bmOperators.both.randomWalk">
 	    <randomWalkOperator windowSize="1.0" weight="1">
@@ -569,23 +592,24 @@ varianceMatrix33	4.1115	0.8194	4.0049	2.67	5.6055	901	3.2759	4.3265
 
 burnIn   <= 10000,   maxState  = 100000
 statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.both.hmcVanilla	-123.9156	2.074	-123.6102	-128.3568	-120.6424	546.324	-124.3436	-121.864	
-varianceMatrix00	1.0821	0.2106	1.0594	0.7221	1.5094	794.1947	0.8948	1.1475	
-varianceMatrix01	-0.1236	0.1872	-0.1154	-0.4779	0.2604	901	-0.2066	0.0243	
-varianceMatrix02	-0.3681	0.2566	-0.3507	-0.8643	0.1239	805.5447	-0.5137	-0.1969	
-varianceMatrix03	0.8407	0.3094	0.8146	0.3337	1.5108	901	0.5636	0.9459	
-varianceMatrix10	-0.1236	0.1872	-0.1154	-0.4779	0.2604	901	-0.2066	0.0243	
-varianceMatrix11	1.6073	0.3254	1.5535	1.0744	2.2485	830.1059	1.2524	1.6395	
-varianceMatrix12	0.3081	0.2913	0.302	-0.2991	0.8762	838.0164	0.0364	0.4106	
-varianceMatrix13	0.6046	0.348	0.5752	-0.0544	1.2752	838.1199	0.3473	0.7934	
-varianceMatrix20	-0.3681	0.2566	-0.3507	-0.8643	0.1239	805.5447	-0.5137	-0.1969	
-varianceMatrix21	0.3081	0.2913	0.302	-0.2991	0.8762	838.0164	0.0364	0.4106	
-varianceMatrix22	2.9193	0.6114	2.847	1.8423	4.1248	867.0138	2.5511	3.3071	
-varianceMatrix23	0.2347	0.4686	0.2342	-0.7392	1.1016	901	-0.1144	0.4723	
-varianceMatrix30	0.8407	0.3094	0.8146	0.3337	1.5108	901	0.5636	0.9459	
-varianceMatrix31	0.6046	0.348	0.5752	-0.0544	1.2752	838.1199	0.3473	0.7934	
-varianceMatrix32	0.2347	0.4686	0.2342	-0.7392	1.1016	901	-0.1144	0.4723	
-varianceMatrix33	4.1119	0.7646	4.0188	2.8502	5.7318	901	3.4972	4.445	
+likelihood.both.hmcVanilla	-124.0214	2.1076	-123.6423	-128.0608	-120.5246	756.7656	-124.4415	-121.8416	
+varianceMatrix00	1.0836	0.2079	1.0541	0.7171	1.4773	901	0.8915	1.1497	
+varianceMatrix01	-0.1169	0.1858	-0.1092	-0.4664	0.2606	901	-0.1869	0.0401	
+varianceMatrix02	-0.3583	0.2509	-0.3505	-0.8526	0.1098	901	-0.5151	-0.2074	
+varianceMatrix03	0.8481	0.2893	0.8285	0.3015	1.3921	901	0.7018	1.0761	
+varianceMatrix10	-0.1169	0.1858	-0.1092	-0.4664	0.2606	901	-0.1869	0.0401	
+varianceMatrix11	1.6155	0.3306	1.5649	1.0428	2.2976	835.9694	1.367	1.7714	
+varianceMatrix12	0.2822	0.2918	0.2802	-0.3252	0.8277	901	0.1028	0.476	
+varianceMatrix13	0.5973	0.3664	0.5813	-0.0678	1.3555	901	0.3132	0.7468	
+varianceMatrix20	-0.3583	0.2509	-0.3505	-0.8526	0.1098	901	-0.5151	-0.2074	
+varianceMatrix21	0.2822	0.2918	0.2802	-0.3252	0.8277	901	0.1028	0.476	
+varianceMatrix22	2.8782	0.5946	2.7739	1.9031	4.0527	901	2.3383	3.0664	
+varianceMatrix23	0.2282	0.4436	0.2216	-0.5379	1.1695	901	-0.015	0.5512	
+varianceMatrix30	0.8481	0.2893	0.8285	0.3015	1.3921	901	0.7018	1.0761	
+varianceMatrix31	0.5973	0.3664	0.5813	-0.0678	1.3555	901	0.3132	0.7468	
+varianceMatrix32	0.2282	0.4436	0.2216	-0.5379	1.1695	901	-0.015	0.5512	
+varianceMatrix33	4.1099	0.7835	4.0229	2.673	5.597	901	3.3122	4.3041	
+
 -->
 </beast>
 

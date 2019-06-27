@@ -1,6 +1,5 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.math.matrixAlgebra.missingData.MissingOps;
@@ -102,6 +101,24 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //    public boolean requireDataAugmentationForOuterProducts() {
 //        return true;
 //    }
+
+    public double[] getVariance(int precisionIndex) {
+
+        assert (inverseDiffusions != null);
+
+        return getMatrixProcess(precisionIndex, inverseDiffusions);
+    }
+
+    double[] getMatrixProcess(int precisionIndex, double[] matrixProcess) {
+
+        final int offset = dimTrait * dimTrait * precisionIndex;
+
+        double[] buffer = new double[dimTrait * dimTrait];
+
+        System.arraycopy(matrixProcess, offset, buffer, 0, dimTrait * dimTrait);
+
+        return buffer;
+    }
 
     @Override
     public void updatePreOrderPartial(
@@ -773,18 +790,28 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     /// Derivation Functions
     ///////////////////////////////////////////////////////////////////////////
 
-    public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//    public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//
+//        final DenseMatrix64F Pi = statistics.getAbove().getRawPrecision();
+//        final DenseMatrix64F Vdi = statistics.getBranch().getRawVariance();
+//
+//        DenseMatrix64F VdPi = matrix0;
+//        DenseMatrix64F temp = matrix1;
+//
+//        CommonOps.mult(Vdi, Pi, VdPi);
+//        CommonOps.mult(gradient, VdPi, temp);
+//        CommonOps.multTransA(VdPi, temp, gradient);
+//    }
 
-        final DenseMatrix64F Pi = statistics.getParent().getRawPrecision();
-        final DenseMatrix64F Vdi = statistics.getBranch().getRawVariance();
-
-        DenseMatrix64F VdPi = matrix0;
-        DenseMatrix64F temp = matrix1;
-
-        CommonOps.mult(Vdi, Pi, VdPi);
-        CommonOps.mult(gradient, VdPi, temp);
-        CommonOps.multTransA(VdPi, temp, gradient);
-    }
+//    public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//
+//        final DenseMatrix64F Pi = statistics.getAbove().getRawPrecision();
+//
+//        DenseMatrix64F temp = matrix1;
+//
+//        CommonOps.mult(gradient, Pi, temp);
+//        CommonOps.multTransA(-1.0, Pi, temp, gradient);
+//    }
 
     double[] inverseDiffusions;
 }

@@ -29,10 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.evomodel.treedatalikelihood.hmc.CorrelationPrecisionGradient;
-import dr.evomodel.treedatalikelihood.hmc.DiagonalPrecisionGradient;
-import dr.evomodel.treedatalikelihood.hmc.GradientWrtPrecisionProvider;
-import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
+import dr.evomodel.treedatalikelihood.hmc.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
@@ -49,9 +46,9 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
     private final static String PRECISION_GRADIENT = "precisionGradient";
     private final static String PARAMETER = "parameter";
-    private final static String PRECISION_CORRELATION = "precisioncorrelation";
-    private final static String PRECISION_DIAGONAL = "precisiondiagonal";
-    private final static String PRECISION_BOTH = "precisionBoth";
+    private final static String PRECISION_CORRELATION = "correlation";
+    private final static String PRECISION_DIAGONAL = "diagonal";
+    private final static String PRECISION_BOTH = "both";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -59,19 +56,47 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
         return PRECISION_GRADIENT;
     }
 
-    private int parseParameterMode(XMLObject xo) throws XMLParseException {
-        // Choose which parameter(s) to update:
-        // 0: full precision
-        // 1: only precision correlation
-        // 2: only precision diagonal
-        int mode = 0;
+    private ParameterMode parseParameterMode(XMLObject xo) throws XMLParseException {
+        // Choose which parameter(s) to update.
+        ParameterMode mode = ParameterMode.WRT_BOTH;
         String parameterString = xo.getAttribute(PARAMETER, PRECISION_BOTH).toLowerCase();
         if (parameterString.compareTo(PRECISION_CORRELATION) == 0) {
-            mode = 1;
+            mode = ParameterMode.WRT_CORRELATION;
         } else if (parameterString.compareTo(PRECISION_DIAGONAL) == 0) {
-            mode = 2;
+            mode = ParameterMode.WRT_DIAGONAL;
         }
         return mode;
+    }
+
+    enum ParameterMode {
+        WRT_BOTH {
+            @Override
+            public AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
+                                                     TreeDataLikelihood treeDataLikelihood,
+                                                     MatrixParameterInterface parameter) {
+                return new PrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
+            }
+        },
+        WRT_CORRELATION {
+            @Override
+            public AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
+                                                     TreeDataLikelihood treeDataLikelihood,
+                                                     MatrixParameterInterface parameter) {
+                return new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
+            }
+        },
+        WRT_DIAGONAL {
+            @Override
+            public AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
+                                                     TreeDataLikelihood treeDataLikelihood,
+                                                     MatrixParameterInterface parameter) {
+                return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
+            }
+        };
+
+        abstract AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
+                                                   TreeDataLikelihood treeDataLikelihood,
+                                                   MatrixParameterInterface parameter);
     }
 
     @Override
@@ -97,21 +122,15 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                     new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                             dim, tree, continuousData,
-                            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_PRECISION);
+                            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
             BranchSpecificGradient branchSpecificGradient =
                     new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
             gradientWrtPrecisionProvider = new GradientWrtPrecisionProvider.BranchSpecificGradientWrtPrecisionProvider(branchSpecificGradient);
         }
 
-        int parameterMode = parseParameterMode(xo);
-        if (parameterMode == 0) {
-            return new PrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
-        } else if (parameterMode == 1) {
-            return new CorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
-        } else {
-            return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
-        }
+        ParameterMode parameterMode = parseParameterMode(xo);
+        return parameterMode.factory(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
     }
 
     @Override

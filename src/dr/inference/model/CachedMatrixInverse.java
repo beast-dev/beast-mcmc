@@ -120,6 +120,11 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
         }
     }
 
+    public void forceComputeInverse() {
+        computeInverse();
+        inverseKnown = true;
+    }
+
     @Override
     public int getColumnDimension() { return dim; }
 

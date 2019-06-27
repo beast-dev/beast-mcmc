@@ -102,7 +102,10 @@ public class IntegratedOUDiffusionModelDelegate extends OUDiffusionModelDelegate
     }
 
     @Override
-    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
+    public void getGradientVarianceWrtVariance(NodeRef node,
+                                               ContinuousDiffusionIntegrator cdi,
+                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                               DenseMatrix64F gradient) {
         throw new RuntimeException("not yet implemented");
     }
 

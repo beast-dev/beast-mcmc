@@ -36,6 +36,8 @@ import dr.inference.operators.hmc.NoUTurnOperator;
 import dr.util.Transform;
 import dr.xml.*;
 
+import static dr.util.Transform.Util.parseTransform;
+
 /**
  * @author Max Tolkoff
  * @author Marc A. Suchard
@@ -108,8 +110,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        Transform transform = (Transform)
-                xo.getChild(Transform.class);
+        Transform transform = parseTransform(xo);
 
         if (derivative.getDimension() != parameter.getDimension()) {
             throw new XMLParseException("Gradient (" + derivative.getDimension() +

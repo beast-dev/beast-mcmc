@@ -59,7 +59,7 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
 
     @Override
     public Parameter getParameter() {
-        return compoundSymmetricMatrix;
+        return compoundSymmetricMatrix.getUntransformedCompoundParameter();
     }
 
     @Override
@@ -68,7 +68,10 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
     }
 
     private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
-        throw new RuntimeException("Not yet implemented");
+        double[] gradient = new double[gradientDiagonal.length + gradientCorrelation.length];
+        System.arraycopy(gradientDiagonal, 0, gradient, 0, gradientDiagonal.length);
+        System.arraycopy(gradientCorrelation, 0, gradient, gradientDiagonal.length, gradientCorrelation.length);
+        return gradient;
     }
 
 

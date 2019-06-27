@@ -227,6 +227,33 @@ public class GammaDistribution implements Distribution, GradientProvider {
     }
 
     /**
+     * the gradient of the natural log of the probability density function of the distribution
+     *
+     * @param x     argument
+     * @param shape shape parameter
+     * @param scale scale parameter
+     * @return grad log pdf value
+     */
+    public static double gradLogPdf2(double x, double shape, double scale) {
+        if (x < 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (shape == 1.0) {
+            return - 1.0 / scale;
+        }
+        if (x == 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (shape == 0.0) {  // uninformative
+            return -1.0 / x;
+        }
+        if (shape == -0.5) { // Gelman 2008, hierarchical variance, -1 degrees of freedom
+            return 0.5 / x;
+        }
+        return (shape - 1.0) / x - 1 / scale;
+    }
+
+    /**
      * cumulative density function of the Gamma distribution
      *
      * @param x     argument

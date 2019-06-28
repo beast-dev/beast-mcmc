@@ -471,4 +471,15 @@ public class MathUtils {
 
 		return true;
 	}
+
+	public static boolean isRelativelyClose(double[] x, double[] y, double relativeTolerance) {
+		if (x.length != y.length) return false;
+
+		for (int i = 0, dim = x.length; i < dim; ++i) {
+			double relativeDifference = 2 * (x[i] - y[1]) / (x[i] + y[i]);
+			if (Math.abs(relativeDifference) > relativeTolerance) return false;
+		}
+
+		return true;
+	}
 }

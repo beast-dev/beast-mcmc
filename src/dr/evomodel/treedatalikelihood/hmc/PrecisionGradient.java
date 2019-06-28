@@ -29,7 +29,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 
 /**
@@ -44,8 +43,6 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
 
         super(gradientWrtPrecisionProvider, likelihood, parameter);
     }
-
-    NumericalHessianFromGradient hessianFromGradient;
 
     @Override
     double[] getGradientParameter(double[] gradient) {
@@ -74,24 +71,22 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
         return gradient;
     }
 
-
     MultivariateFunction getNumeric() {
-        return null;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     String checkNumeric(double[] analytic) {
-        return "";
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-
-        return new double[0];
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[][] getHessianLogDensity() {
-        return new double[0][];
+        throw new RuntimeException("Not yet implemented");
     }
 }

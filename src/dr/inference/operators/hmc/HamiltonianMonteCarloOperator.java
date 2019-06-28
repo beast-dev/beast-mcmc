@@ -51,7 +51,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
-    private LeapFrogEngine leapFrogEngine;
+    LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
@@ -521,9 +521,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             double[] lastGradient;
             double[] lastPosition;
 
-            private Default(Parameter parameter, InstabilityHandler instabilityHandler,
-                              MassPreconditioner preconditioning,
-                              double[] mask) {
+            Default(Parameter parameter, InstabilityHandler instabilityHandler,
+                    MassPreconditioner preconditioning,
+                    double[] mask) {
                 this.parameter = parameter;
                 this.instabilityHandler = instabilityHandler;
                 this.preconditioning = preconditioning;

@@ -44,7 +44,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     final Likelihood likelihood;
     final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
-    Parametrization parametrization;
+    private Parametrization parametrization;
 
     private final MatrixParameterInterface precision;
     private final MatrixParameterInterface variance;
@@ -87,6 +87,11 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
                 return x; // Do nothing
             }
+
+            @Override
+            void updateParameters(MatrixParameterInterface variance) {
+                ((CachedMatrixInverse) variance).forceComputeInverse(); // ensure that variance is up to date
+            }
         },
         AS_VARIANCE {
             @Override
@@ -94,16 +99,23 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
                 return ruleI.chainGradient(x);
             }
-        },
-        AS_VARIANCE_DIAGONAL {
+
             @Override
-            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
-                MultivariateChainRule ruleI = new MultivariateChainRule.Inverse(vecP, vecV);
-                return ruleI.chainGradient(x);
+            void updateParameters(MatrixParameterInterface variance) {
+                // Do nothing
             }
+//        },
+//        AS_VARIANCE_DIAGONAL {
+//            @Override
+//            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+//                MultivariateChainRule ruleI = new MultivariateChainRule.Inverse(vecP, vecV);
+//                return ruleI.chainGradient(x);
+//            }
         };
 
         abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
+
+        abstract void updateParameters(MatrixParameterInterface variance);
     }
 
     @Override
@@ -123,17 +135,14 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     public double[] getGradientLogDensity() {
 
         // parameters
-        if (parametrization == Parametrization.AS_PRECISION) {
-            ((CachedMatrixInverse) variance).forceComputeInverse(); // ensure that variance is up to date
-        }
+        parametrization.updateParameters(variance);
+
         double[] vecV = flatten(variance.getParameterAsMatrix());
         double[] vecP = flatten(precision.getParameterAsMatrix());
         if (DEBUG) {
             System.err.println("vecV: " + new dr.math.matrixAlgebra.Vector(vecV));
             System.err.println("vecP: " + new dr.math.matrixAlgebra.Vector(vecP));
         }
-//        double[] diagQ = compoundSymmetricMatrix.getDiagonal();
-//        double[] vecC = flatten(compoundSymmetricMatrix.getCorrelationMatrix());
 
         // Gradient w.r.t. precision
         double[] gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV);

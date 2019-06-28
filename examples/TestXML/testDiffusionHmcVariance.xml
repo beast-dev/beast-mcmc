@@ -129,7 +129,7 @@
 
 	<operators id="bmOperators.correlation.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
- 			drawVariance="1.0">
+                                       drawVariance="1.0" gradientCheckCount="100" gradientCheckTolerance="0.5">
             <jointGradient>
                 <gradient>
                     <distributionLikelihood idref="prior.cholesky"/>
@@ -161,7 +161,6 @@
             </likelihood>
 		</posterior>
 		<operators idref="bmOperators.correlation.hmcVanilla"/>
-
 		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.correlation.hmcVanilla"/>
@@ -194,7 +193,6 @@
             </likelihood>
 		</posterior>
 		<operators idref="bmOperators.correlation.randomWalk"/>
-
 		<log logEvery="10000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.correlation.randomWalk"/>
@@ -243,35 +241,35 @@
 
 <!--
 burnIn   <= 100000,   maxState  = 1000000
-statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.correlation.randomWalk	-123.0991	1.6639	-122.8337	-126.1529	-120.4237	810.7895	-123.1965	-121.2318	
-prior.cholesky	-2.5429	0.0555	-2.533	-2.6395	-2.4607	901	-2.5401	-2.4791	
-variance.correlation1	-0.1011	0.1401	-0.106	-0.3399	0.182	901	-0.2105	-0.0203	
-variance.correlation2	-0.2112	0.123	-0.2134	-0.4303	0.0328	783.3922	-0.3044	-0.1412	
-variance.correlation3	0.3808	0.1074	0.387	0.186	0.5963	901	0.3153	0.4556	
-variance.correlation4	0.1359	0.1387	0.1382	-0.1267	0.3972	807.9029	0.0656	0.247	
-variance.correlation5	0.2892	0.1201	0.298	0.0702	0.5195	901	0.2142	0.3818	
-variance.correlation6	0.1228	0.1146	0.1198	-0.1028	0.3341	816.05	0.0425	0.1905	
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.correlation.randomWalk   -123.0101   1.6022  -122.667    -126.1227   -120.4826   901 -123.199    -121.378    
+prior.cholesky  -2.5404 0.052   -2.5319 -2.6403 -2.4599 901 -2.5427 -2.4812 
+variance.correlation1   -0.1095 0.1336  -0.1186 -0.3484 0.1612  901 -0.2058 -0.0291 
+variance.correlation2   -0.2067 0.126   -0.2093 -0.4551 0.0272  901 -0.3057 -0.1423 
+variance.correlation3   0.3769  0.1069  0.3865  0.1569  0.5665  901 0.312   0.4506  
+variance.correlation4   0.1259  0.1361  0.1312  -0.1439 0.3682  722.9558    0.0317  0.2157  
+variance.correlation5   0.2906  0.1168  0.2955  0.0529  0.5092  901 0.2544  0.4053  
+variance.correlation6   0.1218  0.1148  0.1247  -0.094  0.3486  901 0.0521  0.2031  
 
 burnIn   <= 10000,   maxState  = 100000
-statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.correlation.hmcVanilla	-122.9874	1.5852	-122.711	-126.0064	-120.4821	745.3103	-122.9804	-121.1892	
-prior.cholesky	-2.5374	0.0516	-2.5269	-2.6405	-2.4643	874.4093	-2.5457	-2.486	
-variance.correlation1	-0.1004	0.1402	-0.1102	-0.3821	0.1498	872.4375	-0.221	-0.0295	
-variance.correlation2	-0.2031	0.122	-0.2106	-0.4295	0.03	819.2067	-0.335	-0.1697	
-variance.correlation3	0.3816	0.1083	0.3854	0.1738	0.5726	755.9396	0.3223	0.469	
-variance.correlation4	0.1219	0.1302	0.1212	-0.1193	0.3753	901	0.0467	0.227	
-variance.correlation5	0.2898	0.116	0.2956	0.0658	0.5205	742.6527	0.2402	0.3852	
-variance.correlation6	0.126	0.1104	0.1227	-0.097	0.3342	750.6556	0.0473	0.1855	
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.correlation.hmcVanilla   -123.1047   1.6807  -122.776    -126.4541   -120.3999   816.6535    -123.1416   -121.3005   
+prior.cholesky  -2.5373 0.0545  -2.5248 -2.6484 -2.465  901 -2.5345 -2.4789 
+variance.correlation1   -0.0944 0.1377  -0.096  -0.3635 0.1666  901 -0.1768 -0.0044 
+variance.correlation2   -0.2023 0.1253  -0.2055 -0.4367 0.0368  896.716 -0.2735 -0.0984 
+variance.correlation3   0.3821  0.1096  0.3879  0.1844  0.5935  901 0.3417  0.4857  
+variance.correlation4   0.1208  0.1408  0.1264  -0.1661 0.3857  832.6905    0.0168  0.2051  
+variance.correlation5   0.2922  0.1184  0.2974  0.0639  0.5095  901 0.2238  0.3824  
+variance.correlation6   0.1269  0.1124  0.1294  -0.0696 0.3651  812.5957    0.0714  0.224
 
 Gradient is taken with respect to the transformed paramter values.
-Untransformed X: [ -0.11192127110752347, -0.2353251782083609, 0.4116879646141034, 0.16469573572584384, 0.33596916699583645, 0.13779614465287846]
-X: [ -0.11239213760773732, -0.23981942134584625, 0.4376419629156235, 0.17110506587060345, 0.3868716246823399, 0.16411919059467459]
-Gradient: [ -1.8632633243212204E-5, -8.131014926249485E-5, -9.775443092078342E-6, 3.5556681501421874E-5, 3.187020032627754E-5, -8.848152582518123E-5]
+Untransformed X: [ -0.1119208514441313, -0.23532520104750781, 0.4116883318819756, 0.1646961451565884, 0.33596828181760713, 0.13779583158900233]
+X: [ -0.11239171262082137, -0.23981944552392548, 0.4376424051337831, 0.17110550057850926, 0.38687057827217475, 0.16411877695814805]
+Gradient: [ 7.834179042951381E-5, -4.0110100708550915E-5, -6.76217835171726E-6, -3.5556663561273084E-5, -2.02413787704944E-5, -5.0116519979780295E-5]
 Gradient type: numerical
-Fx: 120.26202027955186
-Time: 0.33s
-Count: 1170
+Fx: 120.26202027956195
+Time: 0.315s
+Count: 1092
 -->
 
     <!-- ************************************************** -->
@@ -291,8 +289,14 @@ Count: 1170
 
 	<operators id="bmOperators.diagonal.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
- 			drawVariance="1.0">
- 			<gradient idref="precisionDiagonalGradient"/>
+                                       drawVariance="1.0" gradientCheckCount="100" gradientCheckTolerance="0.5">
+            <jointGradient>
+                <gradient>
+                    <logNormalPrior idref="prior.diagonal"/>
+                    <parameter idref="variance.diagonal"/>
+                </gradient>
+                <gradient idref="precisionDiagonalGradient"/>
+            </jointGradient>
             <parameter idref="variance.diagonal"/>
             <transform type="log"/>
  		</hamiltonianMonteCarloOperator>
@@ -317,7 +321,6 @@ Count: 1170
             </likelihood>
 		</posterior>
 		<operators idref="bmOperators.diagonal.randomWalk"/>
-
 		<log logEvery="10000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.diagonal.randomWalk"/>
@@ -351,7 +354,6 @@ Count: 1170
             </likelihood>
 		</posterior>
 		<operators idref="bmOperators.diagonal.hmcVanilla"/>
-
 		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
@@ -401,33 +403,32 @@ Count: 1170
     </report>
 
 <!--
-
 burnIn   <= 100000,   maxState  = 1000000
-statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.diagonal.randomWalk	-121.311	1.3315	-121.0168	-123.9863	-119.4166	800.9248	-121.3995	-120.0236	
-prior.diagonal	-8.144	0.7029	-8.1029	-9.5646	-6.8181	681.1049	-8.4809	-7.5612	
-variance.diagonal1	1.0528	0.1965	1.0304	0.7279	1.4574	901	0.8721	1.1105	
-variance.diagonal2	1.5725	0.3012	1.5281	1.056	2.1863	785.8739	1.247	1.6295	
-variance.diagonal3	2.7817	0.549	2.7039	1.8031	3.812	777.4643	2.3834	3.0671	
-variance.diagonal4	4.0258	0.7008	3.9589	2.7645	5.3397	901	3.3331	4.1979	
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.randomWalk  -121.3909   1.4243  -121.0392   -124.1367   -119.4138   653.7756    -121.2639   -119.8326   
+prior.diagonal  -8.1225 0.6969  -8.1445 -9.4379 -6.7459 901 -8.6029 -7.6657 
+variance.diagonal1  1.0555  0.2038  1.0369  0.6822  1.4565  714.1069    0.8798  1.1216  
+variance.diagonal2  1.5641  0.3142  1.5249  1.0595  2.1926  901 1.2518  1.63    
+variance.diagonal3  2.7955  0.5377  2.7037  1.8351  3.7749  880.6586    2.2338  2.8743  
+variance.diagonal4  3.9839  0.7231  3.9021  2.7244  5.3969  858.3069    3.419   4.33    
 
 burnIn   <= 10000,   maxState  = 100000
-statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.diagonal.hmcVanilla	-121.2539	1.3908	-120.8879	-123.8606	-119.4358	826.8172	-121.0731	-119.8353	
-prior.diagonal	-8.181	0.7163	-8.1298	-9.5855	-6.8917	897.5504	-8.5465	-7.67	
-variance.diagonal1	1.0456	0.1969	1.0239	0.7115	1.424	901	0.902	1.1441	
-variance.diagonal2	1.5807	0.3014	1.5367	1.0151	2.1145	901	1.2219	1.6121	
-variance.diagonal3	2.8025	0.5381	2.7162	1.8329	3.8836	868.5876	2.2601	2.8865	
-variance.diagonal4	4.0622	0.7267	3.9803	2.8378	5.5828	846.4055	3.2897	4.1824	
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.hmcVanilla  -121.3143   1.3855  -120.9584   -124.0233   -119.4229   654.0276    -121.078    -119.7584   
+prior.diagonal  -8.1397 0.7018  -8.1381 -9.4916 -6.7464 901 -8.5949 -7.7532 
+variance.diagonal1  1.0444  0.2001  1.0212  0.6633  1.4173  901 0.863   1.111   
+variance.diagonal2  1.5714  0.3084  1.5267  1.1 2.2323  901 1.2893  1.6733  
+variance.diagonal3  2.8103  0.5463  2.7337  1.9145  3.9659  901 2.3446  2.9903  
+variance.diagonal4  4.0005  0.7254  3.9398  2.6901  5.3927  889.9014    3.4235  4.2745  
 
 Gradient is taken with respect to the transformed paramter values.
-Untransformed X: [ 1.0200686407364175, 1.5483101355883326, 2.803097465258779, 4.0682830403041]
-X: [ 0.01986991987160859, 0.4371641010882532, 1.0307250433436568, 1.4032210530284894]
-Gradient: [ -4.599035141890998E-5, -4.345772879606264E-5, -8.15377680106307E-5, -1.9520483351497515E-5]
+Untransformed X: [ 1.020068591645332, 1.5483093910435606, 2.8030988411776523, 4.068280443171627]
+X: [ 0.019869871746330925, 0.4371636202124041, 1.03072553420013, 1.4032204146428915]
+Gradient: [ -1.926297395738426E-5, 2.578491421995093E-5, 2.811647535672739E-6, -5.779593362365016E-5]
 Gradient type: numerical
-Fx: 119.3777599095454
-Time: 0.059s
-Count: 225
+Fx: 119.37775756796418
+Time: 0.138s
+Count: 513
 -->
 
     <!-- ************************************************** -->
@@ -438,21 +439,44 @@ Count: 225
         <cachedMatrixInverse idref="precisionMatrix"/>
     </precisionGradient>
 
+    <compoundGradient id="priorGradient">
+        <gradient>
+            <logNormalPrior idref="prior.diagonal"/>
+            <parameter idref="variance.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="prior.cholesky"/>
+        </gradient>
+    </compoundGradient>
 
-	<operators id="bmOperators.both.hmcVanilla">
- 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
- 			drawVariance="1.0">
- 			<gradient idref="precisionBothGradient"/>
- 			 <compoundParameter>
- 			    <parameter idref="variance.diagonal"/>
- 				<parameter idref="variance.correlation"/>
- 			</compoundParameter>
- 			<multivariateCompoundTransform>
- 			 	<transform type="log" dim = "4"/>
- 			    <LKJTransform dimension = "4"/>
- 			</multivariateCompoundTransform>
- 		</hamiltonianMonteCarloOperator>
-	</operators>
+    <report>
+        <compoundGradient idref="priorGradient"/>
+    </report>
+
+    <report>
+        <precisionGradient idref="precisionBothGradient"/>
+    </report>
+
+    <jointGradient id="post.precisionBothGradient">
+        <precisionGradient idref="precisionBothGradient"/>
+        <compoundGradient idref="priorGradient"/>
+    </jointGradient>
+
+
+    <operators id="bmOperators.both.hmcVanilla">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="100" gradientCheckTolerance="0.5">
+            <gradient idref="post.precisionBothGradient"/>
+            <compoundParameter id="try.me">
+                <parameter idref="variance.diagonal"/>
+                <parameter idref="variance.correlation"/>
+            </compoundParameter>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="4"/>
+                <LKJTransform dimension="4"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+    </operators>
 	
 <!-- 
 	<operators id="bmOperators.both.hmcVanilla">
@@ -499,7 +523,6 @@ Count: 225
             </likelihood>
 		</posterior>
 		<operators idref="bmOperators.both.randomWalk"/>
-
 		<log logEvery="10000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.diagonal.randomWalk"/>
@@ -533,7 +556,6 @@ Count: 225
             </likelihood>
 		</posterior>
 		<operators idref="bmOperators.both.hmcVanilla"/>
-
 		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.both.hmcVanilla"/>
@@ -569,47 +591,45 @@ Count: 225
 
 
 <!--
-
 burnIn   <= 100000,   maxState  = 1000000
-statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.both.randomWalk	-123.979	2.0855	-123.6607	-127.8947	-120.4479	895.1775	-124.2137	-121.6013	
-varianceMatrix00	1.0718	0.2136	1.0398	0.7074	1.5009	901	0.8917	1.1646	
-varianceMatrix01	-0.1206	0.1822	-0.1183	-0.4513	0.2398	901	-0.2485	-0.0139	
-varianceMatrix02	-0.3625	0.2381	-0.3591	-0.8047	0.1112	809.8849	-0.499	-0.1873	
-varianceMatrix03	0.8262	0.303	0.8128	0.2365	1.4066	901	0.5513	0.9528	
-varianceMatrix10	-0.1206	0.1822	-0.1183	-0.4513	0.2398	901	-0.2485	-0.0139	
-varianceMatrix11	1.6094	0.3222	1.577	1.0286	2.2738	758.4507	1.3327	1.7182	
-varianceMatrix12	0.2948	0.2956	0.2857	-0.3053	0.839	741.4105	0.1175	0.4846	
-varianceMatrix13	0.5969	0.3619	0.5689	-0.0688	1.3227	901	0.3588	0.8149	
-varianceMatrix20	-0.3625	0.2381	-0.3591	-0.8047	0.1112	809.8849	-0.499	-0.1873	
-varianceMatrix21	0.2948	0.2956	0.2857	-0.3053	0.839	741.4105	0.1175	0.4846	
-varianceMatrix22	2.9367	0.575	2.8833	1.955	4.0608	714.0018	2.4677	3.1912	
-varianceMatrix23	0.2593	0.4626	0.2505	-0.6723	1.0898	798.296	-0.0293	0.5644	
-varianceMatrix30	0.8262	0.303	0.8128	0.2365	1.4066	901	0.5513	0.9528	
-varianceMatrix31	0.5969	0.3619	0.5689	-0.0688	1.3227	901	0.3588	0.8149	
-varianceMatrix32	0.2593	0.4626	0.2505	-0.6723	1.0898	798.296	-0.0293	0.5644	
-varianceMatrix33	4.1115	0.8194	4.0049	2.67	5.6055	901	3.2759	4.3265	
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.both.randomWalk  -124.0091   2.1426  -123.6752   -128.3673   -120.5664   901 -124.2116   -121.8208   
+varianceMatrix00    1.0893  0.2243  1.0527  0.7106  1.5371  786.5136    0.893   1.1443  
+varianceMatrix01    -0.1193 0.1853  -0.1147 -0.488  0.2433  874.2778    -0.1807 0.0505  
+varianceMatrix02    -0.3594 0.2602  -0.3442 -0.9102 0.0956  846.9805    -0.4693 -0.1352 
+varianceMatrix03    0.8461  0.3202  0.8096  0.2697  1.4861  742.7706    0.5549  0.9453  
+varianceMatrix10    -0.1193 0.1853  -0.1147 -0.488  0.2433  874.2778    -0.1807 0.0505  
+varianceMatrix11    1.6142  0.3195  1.5906  1.04    2.2489  901 1.3577  1.7494  
+varianceMatrix12    0.2831  0.2994  0.2703  -0.3046 0.8609  879.3548    0.0854  0.4488  
+varianceMatrix13    0.5916  0.3436  0.5589  -0.0555 1.2631  861.8195    0.3319  0.7473  
+varianceMatrix20    -0.3594 0.2602  -0.3442 -0.9102 0.0956  846.9805    -0.4693 -0.1352 
+varianceMatrix21    0.2831  0.2994  0.2703  -0.3046 0.8609  879.3548    0.0854  0.4488  
+varianceMatrix22    2.892   0.5627  2.816   1.8086  3.9096  754.5597    2.3505  3.0494  
+varianceMatrix23    0.2292  0.4486  0.2437  -0.5623 1.1192  901 -0.1162 0.4814  
+varianceMatrix30    0.8461  0.3202  0.8096  0.2697  1.4861  742.7706    0.5549  0.9453  
+varianceMatrix31    0.5916  0.3436  0.5589  -0.0555 1.2631  861.8195    0.3319  0.7473  
+varianceMatrix32    0.2292  0.4486  0.2437  -0.5623 1.1192  901 -0.1162 0.4814  
+varianceMatrix33    4.0742  0.8189  3.9443  2.8075  5.7082  802.6511    3.4037  4.4224  
 
 burnIn   <= 10000,   maxState  = 100000
-statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
-likelihood.both.hmcVanilla	-124.0214	2.1076	-123.6423	-128.0608	-120.5246	756.7656	-124.4415	-121.8416	
-varianceMatrix00	1.0836	0.2079	1.0541	0.7171	1.4773	901	0.8915	1.1497	
-varianceMatrix01	-0.1169	0.1858	-0.1092	-0.4664	0.2606	901	-0.1869	0.0401	
-varianceMatrix02	-0.3583	0.2509	-0.3505	-0.8526	0.1098	901	-0.5151	-0.2074	
-varianceMatrix03	0.8481	0.2893	0.8285	0.3015	1.3921	901	0.7018	1.0761	
-varianceMatrix10	-0.1169	0.1858	-0.1092	-0.4664	0.2606	901	-0.1869	0.0401	
-varianceMatrix11	1.6155	0.3306	1.5649	1.0428	2.2976	835.9694	1.367	1.7714	
-varianceMatrix12	0.2822	0.2918	0.2802	-0.3252	0.8277	901	0.1028	0.476	
-varianceMatrix13	0.5973	0.3664	0.5813	-0.0678	1.3555	901	0.3132	0.7468	
-varianceMatrix20	-0.3583	0.2509	-0.3505	-0.8526	0.1098	901	-0.5151	-0.2074	
-varianceMatrix21	0.2822	0.2918	0.2802	-0.3252	0.8277	901	0.1028	0.476	
-varianceMatrix22	2.8782	0.5946	2.7739	1.9031	4.0527	901	2.3383	3.0664	
-varianceMatrix23	0.2282	0.4436	0.2216	-0.5379	1.1695	901	-0.015	0.5512	
-varianceMatrix30	0.8481	0.2893	0.8285	0.3015	1.3921	901	0.7018	1.0761	
-varianceMatrix31	0.5973	0.3664	0.5813	-0.0678	1.3555	901	0.3132	0.7468	
-varianceMatrix32	0.2282	0.4436	0.2216	-0.5379	1.1695	901	-0.015	0.5512	
-varianceMatrix33	4.1099	0.7835	4.0229	2.673	5.597	901	3.3122	4.3041	
-
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.both.hmcVanilla  -123.9139   2.0445  -123.5878   -127.7627   -120.5049   901 -124.6996   -122.2293   
+varianceMatrix00    1.0858  0.2149  1.057   0.7309  1.5342  901 0.9001  1.1505  
+varianceMatrix01    -0.1229 0.1865  -0.1131 -0.5058 0.235   901 -0.195  0.0263  
+varianceMatrix02    -0.3677 0.2525  -0.3576 -0.9258 0.0644  901 -0.5135 -0.212  
+varianceMatrix03    0.8428  0.2972  0.8218  0.3016  1.4604  871.2016    0.5908  0.9509  
+varianceMatrix10    -0.1229 0.1865  -0.1131 -0.5058 0.235   901 -0.195  0.0263  
+varianceMatrix11    1.6191  0.339   1.5632  1.0668  2.2878  901 1.2937  1.6684  
+varianceMatrix12    0.2883  0.3081  0.2778  -0.2886 0.9052  901 0.0575  0.4373  
+varianceMatrix13    0.5966  0.3364  0.5765  -0.0991 1.226   800.6107    0.3743  0.7961  
+varianceMatrix20    -0.3677 0.2525  -0.3576 -0.9258 0.0644  901 -0.5135 -0.212  
+varianceMatrix21    0.2883  0.3081  0.2778  -0.2886 0.9052  901 0.0575  0.4373  
+varianceMatrix22    2.8928  0.6154  2.8454  1.7923  3.9713  901 2.459   3.1761  
+varianceMatrix23    0.2372  0.443   0.2305  -0.6183 1.1471  665.5044    -0.0435 0.5213  
+varianceMatrix30    0.8428  0.2972  0.8218  0.3016  1.4604  871.2016    0.5908  0.9509  
+varianceMatrix31    0.5966  0.3364  0.5765  -0.0991 1.226   800.6107    0.3743  0.7961  
+varianceMatrix32    0.2372  0.443   0.2305  -0.6183 1.1471  665.5044    -0.0435 0.5213  
+varianceMatrix33    4.1089  0.7982  3.998   2.7513  5.5617  835.3966    3.3198  4.2635  
 -->
 </beast>
 

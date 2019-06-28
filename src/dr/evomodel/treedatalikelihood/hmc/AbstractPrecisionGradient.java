@@ -1,3 +1,4 @@
+
 /*
  * AbstractPrecisionGradient.java
  *
@@ -196,7 +197,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     @Override
     public String getReport() {
-        return checkNumeric(getGradientLogDensity());
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TOLERANCE);
     }
 
     abstract double[] getGradientParameter(double[] gradient);

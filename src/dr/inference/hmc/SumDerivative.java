@@ -169,7 +169,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
         return  "jointGradient." + parameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                GradientWrtParameterProvider.tolerance);
+                GradientWrtParameterProvider.TOLERANCE);
     }
 
     private enum DerivativeType {

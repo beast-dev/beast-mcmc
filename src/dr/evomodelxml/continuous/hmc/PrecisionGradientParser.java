@@ -47,7 +47,9 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final static String PRECISION_GRADIENT = "precisionGradient";
     private final static String PARAMETER = "parameter";
     private final static String PRECISION_CORRELATION = "correlation";
+    private final static String PRECISION_CORRELATION_OLD = "precisionCorrelation";
     private final static String PRECISION_DIAGONAL = "diagonal";
+    private final static String PRECISION_DIAGONAL_OLD = "precisionDiagonal";
     private final static String PRECISION_BOTH = "both";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
@@ -60,9 +62,9 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
         // Choose which parameter(s) to update.
         ParameterMode mode = ParameterMode.WRT_BOTH;
         String parameterString = xo.getAttribute(PARAMETER, PRECISION_BOTH).toLowerCase();
-        if (parameterString.compareTo(PRECISION_CORRELATION) == 0) {
+        if (parameterString.compareTo(PRECISION_CORRELATION) == 0 || parameterString.compareToIgnoreCase(PRECISION_CORRELATION_OLD) == 0) {
             mode = ParameterMode.WRT_CORRELATION;
-        } else if (parameterString.compareTo(PRECISION_DIAGONAL) == 0) {
+        } else if (parameterString.compareTo(PRECISION_DIAGONAL) == 0 || parameterString.compareToIgnoreCase(PRECISION_DIAGONAL_OLD) == 0) {
             mode = ParameterMode.WRT_DIAGONAL;
         }
         return mode;

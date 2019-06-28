@@ -252,7 +252,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
             double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
 
-            if (!MathUtils.isRelativelyClose(analyticalGradientOriginal, numericGradientOriginal, runtimeOptions.gradientCheckTolerance)) {
+            if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, runtimeOptions.gradientCheckTolerance)) {
 
                 String sb = "Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientOriginal) + "\n" +
@@ -269,7 +269,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             double[] analyticalGradientTransformed = transform.updateGradientLogDensity(analyticalGradientOriginal,
                     parameter.getParameterValues(), 0, parameter.getParameterValues().length);
 
-            if (!MathUtils.isRelativelyClose(analyticalGradientTransformed, numericGradientTransformed, runtimeOptions.gradientCheckTolerance)) {
+            if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, runtimeOptions.gradientCheckTolerance)) {
                 String sb = "Transformed Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
                         "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n";

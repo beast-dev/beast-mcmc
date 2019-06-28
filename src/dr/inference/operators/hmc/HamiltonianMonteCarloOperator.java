@@ -42,6 +42,7 @@ import dr.util.Transform;
 
 /**
  * @author Max Tolkoff
+ * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
@@ -50,7 +51,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
-    protected LeapFrogEngine leapFrogEngine;
+    private LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
@@ -502,6 +503,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         void setParameter(double[] position);
 
+        @SuppressWarnings("unused")
         void checkPosition(double[] position) throws NumericInstabilityException;
 
         double[] getLastGradient();
@@ -511,7 +513,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
-            final protected InstabilityHandler instabilityHandler;
+            final InstabilityHandler instabilityHandler;
             final private MassPreconditioner preconditioning;
 
             final double[] mask;
@@ -519,7 +521,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             double[] lastGradient;
             double[] lastPosition;
 
-            protected Default(Parameter parameter, InstabilityHandler instabilityHandler,
+            private Default(Parameter parameter, InstabilityHandler instabilityHandler,
                               MassPreconditioner preconditioning,
                               double[] mask) {
                 this.parameter = parameter;

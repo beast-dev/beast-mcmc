@@ -137,6 +137,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         updateAllNodes();
     }
 
+    public final void makeLikelihoodUnknown() {
+        likelihoodKnown = false;
+    }
+
     public final boolean isLikelihoodKnown() {
         return likelihoodKnown;
     }

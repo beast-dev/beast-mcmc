@@ -76,7 +76,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
 
-    void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
+    void updatePostOrderPartials(final int[] operations, int operationCount, boolean computeRemainders, boolean incrementOuterProducts);
 
     @SuppressWarnings("unused")
     void updatePreOrderPartials(final int[] operations, int operationCount);
@@ -502,7 +502,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
+        public void updatePostOrderPartials(final int[] operations, int operationCount,
+                                            boolean computeRemainders, boolean incrementOuterProducts) {
 
             if (DEBUG) {
                 System.err.println("Post-order operations:");
@@ -521,6 +522,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         operations[offset + 2],
                         operations[offset + 3],
                         operations[offset + 4],
+                        computeRemainders,
                         incrementOuterProducts
                 );
 
@@ -751,6 +753,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 final int iMatrix,
                 final int jBuffer,
                 final int jMatrix,
+                final boolean computeRemainders,
                 final boolean incrementOuterProducts
         ) {
             // Determine buffer offsets
@@ -832,7 +835,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 // Computer remainder at node k
                 double remainder = 0.0;
-                if (pi != 0 && pj != 0) {
+                if (computeRemainders && pi != 0 && pj != 0) {
 
                     // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
 

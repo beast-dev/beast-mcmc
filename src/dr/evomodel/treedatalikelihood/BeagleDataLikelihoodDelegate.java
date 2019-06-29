@@ -1040,7 +1040,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
-        // Callback not necessary
+        this.callbackDataLikelihood = treeDataLikelihood;
+    }
+
+    @Override
+    public void computePostOrderStatistics() {
+        callbackDataLikelihood.getLogLikelihood();
     }
 
     @Override
@@ -1226,5 +1231,5 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      */
     private PreOrderSettings settings;
 
-
+    private TreeDataLikelihood callbackDataLikelihood;
 }

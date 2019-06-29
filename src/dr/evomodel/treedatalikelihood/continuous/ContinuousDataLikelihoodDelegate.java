@@ -635,6 +635,23 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
+    public void computePostOrderStatistics() {
+
+        boolean limitedStatistics = cdi instanceof ContinuousDiffusionIntegrator.Basic; // TODO Check instanceDetails
+
+        if (limitedStatistics) {
+            computeRemainders = false;
+        }
+
+        callbackLikelihood.getLogLikelihood();
+
+        if (limitedStatistics) {
+            callbackLikelihood.makeLikelihoodUnknown();
+            computeRemainders = true;
+        }
+    }
+
+    @Override
     public int vectorizeNodeOperations(final List<ProcessOnTreeDelegate.NodeOperation> nodeOperations,
                                        final int[] operations) {
 
@@ -774,7 +791,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 
-        cdi.updatePostOrderPartials(operations, operationCount, computeWishartStatistics);
+        cdi.updatePostOrderPartials(operations, operationCount, computeRemainders, computeWishartStatistics);
 
         double[] logLikelihoods = new double[numTraits];
 
@@ -932,6 +949,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     private WishartSufficientStatistics wishartStatistics = null;
 
     private boolean computeWishartStatistics = false;
+    private boolean computeRemainders = true;
 
     @Override
     public WishartSufficientStatistics getWishartStatistics() {

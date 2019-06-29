@@ -280,6 +280,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final int iMatrix,
             final int jBuffer,
             final int jMatrix,
+            final boolean computeRemainders,
             final boolean incrementOuterProducts
     ) {
 

@@ -156,11 +156,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
-
-    public final void makeLikelihoodUnknown() {
-        likelihoodKnown = false;
-    }
-
+    
     public final boolean isLikelihoodKnown() {
         return likelihoodKnown;
     }

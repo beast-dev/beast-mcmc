@@ -66,5 +66,7 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Re
 
     int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations);
 
-    void computePostOrderStatistics();
+    void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistics);
+
+    boolean providesPostOrderStatisticsOnly();
 }

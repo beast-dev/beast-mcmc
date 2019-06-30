@@ -79,7 +79,7 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         if (IGNORE_REMAINDER) {
 
             if (!validSimulation) {
-                treeDataLikelihood.getDataLikelihoodDelegate().computePostOrderStatistics();
+                treeDataLikelihood.calculatePostOrderStatistics();
                 simulateTraits(node);
                 validSimulation = true;
             }

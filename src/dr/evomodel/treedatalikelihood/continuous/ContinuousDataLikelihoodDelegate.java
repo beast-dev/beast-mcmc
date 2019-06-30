@@ -635,20 +635,13 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
     }
 
     @Override
-    public void computePostOrderStatistics() {
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        this.computeRemainders = !computePostOrderStatistic;
+    }
 
-        boolean limitedStatistics = cdi instanceof ContinuousDiffusionIntegrator.Basic; // TODO Check instanceDetails
-
-        if (limitedStatistics) {
-            computeRemainders = false;
-        }
-
-        callbackLikelihood.getLogLikelihood();
-
-        if (limitedStatistics) {
-            callbackLikelihood.makeLikelihoodUnknown();
-            computeRemainders = true;
-        }
+    @Override
+    public boolean providesPostOrderStatisticsOnly() {
+        return cdi instanceof ContinuousDiffusionIntegrator.Basic; // TODO Check instanceDetails
     }
 
     @Override

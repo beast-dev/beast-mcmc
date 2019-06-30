@@ -1040,13 +1040,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
-        this.callbackDataLikelihood = treeDataLikelihood;
+        // Do nothing
     }
 
     @Override
-    public void computePostOrderStatistics() {
-        callbackDataLikelihood.getLogLikelihood();
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        // Do nothing
     }
+
+    @Override
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations) {
@@ -1230,6 +1233,4 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * PreOrder related settings
      */
     private PreOrderSettings settings;
-
-    private TreeDataLikelihood callbackDataLikelihood;
 }

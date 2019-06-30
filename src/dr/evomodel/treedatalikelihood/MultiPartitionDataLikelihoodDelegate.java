@@ -1325,13 +1325,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
-        this.callbackDataLikelihood = treeDataLikelihood;
+        // Do nothing
     }
 
     @Override
-    public void computePostOrderStatistics() {
-        callbackDataLikelihood.getLogLikelihood();
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        // Do nothing
     }
+
+    @Override
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
@@ -1487,7 +1490,4 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
      */
     private boolean initialEvaluation = true;
-
-    private TreeDataLikelihood callbackDataLikelihood;
-
 }

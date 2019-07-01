@@ -74,9 +74,11 @@ public class BeastUnitTest implements Reportable {
         class DoubleAssert implements AssertType {
 
             private final double tolerance;
+            private final String stripChars;
 
-            DoubleAssert(double tolerance) {
+            DoubleAssert(double tolerance, String stripChars) {
                 this.tolerance = tolerance;
+                this.stripChars = stripChars;
             }
 
             @Override
@@ -100,6 +102,8 @@ public class BeastUnitTest implements Reportable {
 
             private double[] parseArray(String string) {
                 string = string.replaceAll(",", " ");
+                string = string.replaceAll("[" + stripChars + "]", " ");
+                string = string.trim();
                 String[] strings = string.split("\\s+");
                 double[] reals = new double[strings.length];
                 for (int i = 0; i < strings.length; ++i) {
@@ -122,6 +126,7 @@ public class BeastUnitTest implements Reportable {
     private static final String REGEX = "regex";
     private static final String TOLERANCE_STRING = "tolerance";
     private static final String VERBOSE = "verbose";
+    private static final String STRIP_CHARACTERS = "charactersToStrip";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -136,8 +141,10 @@ public class BeastUnitTest implements Reportable {
             String expected = parseValue(xo.getChild(EXPECTED));
             String actual = parseValue(xo.getChild(ACTUAL));
 
+            String stripChars = xo.getAttribute(STRIP_CHARACTERS, ",");
+
             AssertType assertType = xo.hasAttribute(TOLERANCE_STRING) ?
-                    new AssertType.DoubleAssert(xo.getDoubleAttribute(TOLERANCE_STRING)) :
+                    new AssertType.DoubleAssert(xo.getDoubleAttribute(TOLERANCE_STRING), stripChars) :
                     new AssertType.StringAssert();
 
             BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType);
@@ -146,7 +153,7 @@ public class BeastUnitTest implements Reportable {
             if (xo.getAttribute(VERBOSE, false)) {
                 Logger.getLogger("dr.xml.unittest").info(unitTest.getReport());
             }
-            
+
             return unitTest;
         }
 

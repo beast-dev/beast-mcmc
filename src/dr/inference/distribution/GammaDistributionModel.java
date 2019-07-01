@@ -189,6 +189,7 @@ public class GammaDistributionModel extends AbstractModel
     protected void acceptState() {
     } // no additional state needs accepting
 
+
     @Override
     public int getDimension() {
         return 1;

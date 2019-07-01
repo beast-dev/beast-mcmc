@@ -64,7 +64,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
 
         this.missingIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
-                missingIndices, parameter.getDimension());
+                this.missingIndices, parameter.getDimension());
     }
 
     public boolean bufferTips() { return true; }

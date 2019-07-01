@@ -1,3 +1,4 @@
+
 /*
  * AbstractPrecisionGradient.java
  *
@@ -26,11 +27,12 @@
 package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.*;
+import dr.inference.model.CachedMatrixInverse;
+import dr.inference.model.CompoundSymmetricMatrix;
+import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 /**
  * @author Paul Bastide
@@ -43,7 +45,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     final Likelihood likelihood;
     final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
-    Parametrization parametrization;
+    private Parametrization parametrization;
 
     private final MatrixParameterInterface precision;
     private final MatrixParameterInterface variance;
@@ -64,7 +66,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         } else if (parameter instanceof CompoundSymmetricMatrix) {
 
             this.compoundSymmetricMatrix = (CompoundSymmetricMatrix) parameter;
-            this.variance = new CachedMatrixInverse("", parameter);
+            this.variance = new CachedMatrixInverse("", precision);
             this.parametrization = Parametrization.AS_PRECISION;
 
         } else {
@@ -77,6 +79,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         this.gradientWrtPrecisionProvider = gradientWrtPrecisionProvider;
         this.likelihood = likelihood;
         this.dim = parameter.getColumnDimension();
+
     }
 
     enum Parametrization {
@@ -85,6 +88,11 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
                 return x; // Do nothing
             }
+
+            @Override
+            void updateParameters(MatrixParameterInterface variance) {
+                ((CachedMatrixInverse) variance).forceComputeInverse(); // ensure that variance is up to date
+            }
         },
         AS_VARIANCE {
             @Override
@@ -92,16 +100,23 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
                 return ruleI.chainGradient(x);
             }
-        },
-        AS_VARIANCE_DIAGONAL {
+
             @Override
-            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
-                MultivariateChainRule ruleI = new MultivariateChainRule.Inverse(vecP, vecV);
-                return ruleI.chainGradient(x);
+            void updateParameters(MatrixParameterInterface variance) {
+                // Do nothing
             }
+//        },
+//        AS_VARIANCE_DIAGONAL {
+//            @Override
+//            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+//                MultivariateChainRule ruleI = new MultivariateChainRule.Inverse(vecP, vecV);
+//                return ruleI.chainGradient(x);
+//            }
         };
 
         abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
+
+        abstract void updateParameters(MatrixParameterInterface variance);
     }
 
     @Override
@@ -121,13 +136,21 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     public double[] getGradientLogDensity() {
 
         // parameters
+        parametrization.updateParameters(variance);
+
         double[] vecV = flatten(variance.getParameterAsMatrix());
         double[] vecP = flatten(precision.getParameterAsMatrix());
-//        double[] diagQ = compoundSymmetricMatrix.getDiagonal();
-//        double[] vecC = flatten(compoundSymmetricMatrix.getCorrelationMatrix());
+        if (DEBUG) {
+            System.err.println("vecV: " + new dr.math.matrixAlgebra.Vector(vecV));
+            System.err.println("vecP: " + new dr.math.matrixAlgebra.Vector(vecP));
+        }
 
         // Gradient w.r.t. precision
         double[] gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV);
+
+        if (DEBUG) {
+            System.err.println("Gradient Precision: " + new dr.math.matrixAlgebra.Vector(gradient));
+        }
 
         // Handle inverse
         gradient = parametrization.chainRule(gradient, vecP, vecV);
@@ -141,6 +164,10 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
         if (CHECK_GRADIENT) {
             System.err.println(checkNumeric(gradient));
+        }
+
+        if (DEBUG) {
+            System.err.println("Gradient Parameter: " + new dr.math.matrixAlgebra.Vector(gradient));
         }
 
         return gradient;
@@ -170,7 +197,8 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     @Override
     public String getReport() {
-        return checkNumeric(getGradientLogDensity());
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TOLERANCE);
     }
 
     abstract double[] getGradientParameter(double[] gradient);
@@ -178,17 +206,15 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     // Gradient w.r.t. correlation
     double[] getGradientCorrelation(double[] gradient) {
 
-        gradient = compoundSymmetricMatrix.updateGradientOffDiagonal(gradient);
+        return compoundSymmetricMatrix.updateGradientOffDiagonal(gradient);
 
-        return gradient;
     }
 
     // Gradient w.r.t. diagonal
-    double[] getGradientDiagonal(double[] gradient){
+    double[] getGradientDiagonal(double[] gradient) {
 
-        gradient = compoundSymmetricMatrix.updateGradientDiagonal(gradient);
-
-        return gradient;
+        return compoundSymmetricMatrix.updateGradientDiagonal(gradient);
+        
     }
 
     public static double[] flatten(double[][] matrix) {
@@ -211,85 +237,5 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     private static final boolean CHECK_GRADIENT = false;
 
-    interface MultivariateChainRule {
-
-        double[] chainGradient(double[] lhs);
-
-        class Chain implements MultivariateChainRule {
-
-            private final MultivariateChainRule[] rules;
-
-            Chain(MultivariateChainRule[] rules) {
-                this.rules = rules;
-            }
-
-            @Override
-            public double[] chainGradient(double[] gradient) {
-
-                for (MultivariateChainRule rule : rules) {
-                    gradient = rule.chainGradient(gradient);
-                }
-                return gradient;
-            }
-        }
-
-        class Inverse implements MultivariateChainRule {
-
-            private final double[] vecP;
-            private final double[] vecV;
-            private final int dim;
-
-            Inverse(double[] vecP, double[] vecV) {
-                this.vecP = vecP;
-                this.vecV = vecV;
-                this.dim = (int) Math.sqrt(vecP.length);
-            }
-
-            @Override
-            public double[] chainGradient(double[] lhs) {
-
-                assert lhs.length == dim * dim;
-
-                double[] gradient = new double[dim * dim];
-
-                for (int i = 0; i < dim * dim; ++i) {
-
-                    if (vecV[i] == 0 || Double.isNaN(vecV[i])) {
-                        throw new RuntimeException("0 or NaN value in variance. check start value or use smaller step size for hmc");
-                    }
-                    gradient[i] = -lhs[i] * vecP[i] / vecV[i];
-                }
-
-                return gradient;
-            }
-        }
-
-        class InverseGeneral implements MultivariateChainRule {
-
-            private final DenseMatrix64F vecP;
-            private final DenseMatrix64F temp;
-            private final int dim;
-
-
-            InverseGeneral(double[] vecP) {
-                this.dim = (int) Math.sqrt(vecP.length);
-                this.vecP = DenseMatrix64F.wrap(dim, dim, vecP);
-                this.temp = new DenseMatrix64F(dim, dim);
-            }
-
-            @Override
-            public double[] chainGradient(double[] lhs) {
-
-                assert lhs.length == dim * dim;
-
-                DenseMatrix64F gradient = new DenseMatrix64F(dim, dim);
-
-                DenseMatrix64F LHS = DenseMatrix64F.wrap(dim, dim, lhs);
-                CommonOps.mult(vecP, LHS, temp);
-                CommonOps.mult(-1, temp, vecP, gradient);
-
-                return gradient.getData();
-            }
-        }
-    }
+    private static final boolean DEBUG = false;
 }

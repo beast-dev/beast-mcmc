@@ -86,8 +86,8 @@ public class BranchConditionalDistributionDelegate extends
         simulationProcess.cacheSimulatedTraits(node);
 
         int numberOfNodes = (node == null) ? likelihoodDelegate.getPartialBufferCount() : 1;
-        double[] childPartial = new double[dimPartial * numTraits * numberOfNodes];
-        double[] parentPartial = new double[dimPartial * numTraits * numberOfNodes];
+        double[] belowPartial = new double[dimPartial * numTraits * numberOfNodes];
+        double[] abovePartial = new double[dimPartial * numTraits * numberOfNodes];
         double[] branchPrecision = new double[dimTrait * dimTrait * numTraits * numberOfNodes];
         double[] branchDisplacement = new double[dimTrait * numberOfNodes];
         double[] branchActualization = new double[dimTrait * dimTrait * numTraits * numberOfNodes];
@@ -97,35 +97,36 @@ public class BranchConditionalDistributionDelegate extends
 
         List<BranchSufficientStatistics> statistics = new ArrayList<BranchSufficientStatistics>();
 
-        cdi.getPostOrderPartial(nodeNumber, childPartial);
+        cdi.getPostOrderPartial(nodeNumber, belowPartial);
         if (tree.isRoot(node)){
             cdi.getRootMatrices(likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
                     branchPrecision, branchDisplacement, branchActualization);
         } else {
+            //TODO: This does not seem to work when cdi is MultivariateIntegrator (problem with `precisionOffset`)
             cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
         }
-        cdi.getPreOrderPartial(nodeNumber, parentPartial);
+        cdi.getPreOrderPartial(nodeNumber, abovePartial);
 
 
-        
+
         if (node == null) {
             for (int n = 0; n < tree.getNodeCount(); ++n) {
 
                 NodeRef tNode = tree.getNode(n);
                 int nodeIndex = likelihoodDelegate.getActiveNodeIndex(tNode.getNumber());
                 int branchIndex = likelihoodDelegate.getActiveMatrixIndex(tNode.getNumber());
-                addOneNode(statistics, childPartial, parentPartial, branchPrecision, branchDisplacement, branchActualization,
+                addOneNode(statistics, belowPartial, abovePartial, branchPrecision, branchDisplacement, branchActualization,
                         nodeIndex, branchIndex);
             }
         } else {
-            addOneNode(statistics, childPartial, parentPartial, branchPrecision, branchDisplacement, branchActualization,0, 0);
+            addOneNode(statistics, belowPartial, abovePartial, branchPrecision, branchDisplacement, branchActualization,0, 0);
         }
 
         return statistics;
     }
 
     private void addOneNode(List<BranchSufficientStatistics> statistics,
-                            double[] childPartial, double[] parentPartial,
+                            double[] belowPartial, double[] abovePartial,
                             double[] branchPrecision, double[] branchDisplacement,
                             double[] branchActualization,
                             int nodeIndex, int branchIndex) {
@@ -134,11 +135,11 @@ public class BranchConditionalDistributionDelegate extends
 //        for (int i = 0; i < numTraits; ++i) {  // TODO Enable for > 1 numTraits
             statistics.add(
                     new BranchSufficientStatistics(
-                            new NormalSufficientStatistics(childPartial, nodeIndex, dimTrait,
+                            new NormalSufficientStatistics(belowPartial, nodeIndex, dimTrait,
                                     Pd, likelihoodDelegate.getPrecisionType()),
                             new MatrixSufficientStatistics(branchDisplacement, branchPrecision, branchActualization,
                                     branchIndex, dimTrait, Pd, likelihoodDelegate.getPrecisionType()),
-                            new NormalSufficientStatistics(parentPartial, nodeIndex, dimTrait,
+                            new NormalSufficientStatistics(abovePartial, nodeIndex, dimTrait,
                                     Pd, likelihoodDelegate.getPrecisionType())
                     ));
 //            offset +=  dimPartial;

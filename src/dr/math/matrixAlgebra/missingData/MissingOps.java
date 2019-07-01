@@ -25,7 +25,6 @@ import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
  */
 public class MissingOps {
 
-    private static final double TOLERANCE = 1e-10; // TODO Maybe based on SingularOps.singularThreshold(svd)?
 
     public static DenseMatrix64F wrap(final double[] source, final int offset,
                                       final int numRows, final int numCols) {
@@ -402,12 +401,13 @@ public class MissingOps {
                 throw new RuntimeException("SVD decomposition failed");
             }
             double[] values = svd.getSingularValues();
+            double tol = SingularOps.singularThreshold(svd);
 
             int dim = 0;
             double logDet = 0;
             for (int i = 0; i < values.length; i++) {
                 final double lambda = values[i];
-                if (lambda > TOLERANCE) {
+                if (lambda > tol) {
                     logDet += Math.log(lambda);
                     ++dim;
                 }
@@ -473,11 +473,11 @@ public class MissingOps {
                 }
                 double[] values = svd.getSingularValues();
 
-//                double eps = SingularOps.singularThreshold(svd);
+                double tol = SingularOps.singularThreshold(svd);
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda > TOLERANCE) {
+                    if (lambda > tol) {
                         logDet += Math.log(lambda);
                         ++dim;
                     }

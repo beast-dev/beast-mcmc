@@ -184,49 +184,82 @@
         <traitDataLikelihood idref="traitLikelihood"/>
     </report>
 
-    <mcmc id="mcmc" chainLength="1" autoOptimize="true">
-        <posterior id="posterior">
-            <prior id="prior">
-                <gammaPrior idref="samplingPrior"/>
-                <multivariateWishartPrior idref="precisionPrior"/>
-            </prior>
-            <likelihood>
-                <traitDataLikelihood idref="traitLikelihood"/>
-            </likelihood>
-        </posterior>
-        <operators idref="operators"/>
-        <log id="screenLog" logEvery="10000">
-            <column label="Posterior" dp="4" width="12">
-                <posterior idref="posterior"/>
-            </column>
-            <!--<column label="Sampling Precision" dp="4" width="12">-->
+    <!--<mcmc id="mcmc" chainLength="1" autoOptimize="true">-->
+        <!--<posterior id="posterior">-->
+            <!--<prior id="prior">-->
+                <!--<gammaPrior idref="samplingPrior"/>-->
+                <!--<multivariateWishartPrior idref="precisionPrior"/>-->
+            <!--</prior>-->
+            <!--<likelihood>-->
+                <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+            <!--</likelihood>-->
+        <!--</posterior>-->
+        <!--<operators idref="operators"/>-->
+        <!--<log id="screenLog" logEvery="10000">-->
+            <!--<column label="Posterior" dp="4" width="12">-->
+                <!--<posterior idref="posterior"/>-->
+            <!--</column>-->
+            <!--<column label="Likelihood" dp="4" width="12">-->
+                <!--<posterior idref="traitLikelihood"/>-->
+            <!--</column>-->
+            <!--&lt;!&ndash;<column label="Sampling Precision" dp="4" width="12">&ndash;&gt;-->
+            <!--&lt;!&ndash;<matrixParameter idref="samplingPrecision"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;</column>&ndash;&gt;-->
+            <!--&lt;!&ndash;<column label="Trait Precision" dp="4" width="12">&ndash;&gt;-->
+            <!--&lt;!&ndash;<matrixParameter idref="precisionMatrix"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;</column>&ndash;&gt;-->
+            <!--<variancePorportionStatistic idref="varianceLog"/>-->
+        <!--</log>-->
+        <!--<log id="fileLog" logEvery="100" fileName="precision_log.log">-->
+            <!--<posterior idref="posterior"/>-->
+            <!--<prior idref="prior"/>-->
+            <!--<likelihood idref="traitLikelihood"/>-->
             <!--<matrixParameter idref="samplingPrecision"/>-->
-            <!--</column>-->
-            <!--<column label="Trait Precision" dp="4" width="12">-->
             <!--<matrixParameter idref="precisionMatrix"/>-->
-            <!--</column>-->
-            <variancePorportionStatistic idref="varianceLog"/>
-        </log>
-        <log id="fileLog" logEvery="100" fileName="precision_log.log">
-            <posterior idref="posterior"/>
-            <prior idref="prior"/>
-            <likelihood idref="traitLikelihood"/>
-            <matrixParameter idref="samplingPrecision"/>
-            <matrixParameter idref="precisionMatrix"/>
-            <traitLogger idref="traitLog"/>
-            <variancePorportionStatistic idref="varianceLog"/>
-            <matrixInverse idref="diffVariance"/>
-            <repeatedMeasuresTraitLogger idref="rmLogger"/>
-        </log>
-    </mcmc>
+            <!--<traitLogger idref="traitLog"/>-->
+            <!--<variancePorportionStatistic idref="varianceLog"/>-->
+            <!--<matrixInverse idref="diffVariance"/>-->
+            <!--<repeatedMeasuresTraitLogger idref="rmLogger"/>-->
+        <!--</log>-->
+    <!--</mcmc>-->
 
-    <check>
-        <report>
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="{}">
+        <message>
+            Check trait variance
+        </message>
+        <actual regex="(?s)Trait variance:\s*(.*?)\n\n">
             <traitDataLikelihood idref="traitLikelihood"/>
-        </report>
-        <match regex="logDatumLikelihood"> -49.4594808 </match>
-        <match regex="Joint precision"> 0.04674596814325365 </match>
-        <match regex="dimTrait"> -2.3</match>
+        </actual>
+        <expected>
+            1.1108945624634572  -0.009744689144416303  0.18320015591502628
+            0.011693626973299523  0.5262132137984799  0.10719158058857918
+            0.2241278503215747  0.08575326447086337  0.3878386279477684
+        </expected>
+    </assertEqual>
 
-    </check>
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check data
+        </message>
+        <actual regex="datum\s*:(.*?)\n">
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </actual>
+        <expected>
+            10 1 2 0 -20 3 4 100 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" verbose="true">
+        <message>
+            Check log likelihood of observed data
+        </message>
+        <actual regex="logDatumLikelihood:\s+(.*)\n">
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </actual>
+        <expected>
+            -3296.670
+        </expected>
+    </assertEqual>
+
+
 </beast>

@@ -26,11 +26,7 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.CachedMatrixInverse;
-import dr.inference.model.CompoundSymmetricMatrix;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
@@ -39,10 +35,10 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  */
 
-public abstract class AbstractPrecisionGradient implements GradientWrtParameterProvider, Reportable {
+public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradient implements Reportable {
 
     private final GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
-    final Likelihood likelihood;
+    //    final Likelihood likelihood;
     final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
     private Parametrization parametrization;
@@ -52,7 +48,10 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     AbstractPrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                               Likelihood likelihood,
-                              MatrixParameterInterface parameter) {
+                              MatrixParameterInterface parameter,
+                              double upperBound, double lowerBound) {
+
+        super(likelihood, upperBound, lowerBound);
 
         this.precision = parameter;
 
@@ -77,7 +76,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 : "PrecisionGradient can only be applied to a CompoundSymmetricMatrix with off-diagonal as correlation.";
 
         this.gradientWrtPrecisionProvider = gradientWrtPrecisionProvider;
-        this.likelihood = likelihood;
+//        this.likelihood = likelihood;
         this.dim = parameter.getColumnDimension();
 
     }
@@ -119,9 +118,14 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         abstract void updateParameters(MatrixParameterInterface variance);
     }
 
+//    @Override
+//    public Likelihood getLikelihood() {
+//        return likelihood;
+//    }
+
     @Override
-    public Likelihood getLikelihood() {
-        return likelihood;
+    public Parameter getRawParameter() {
+        return precision;
     }
 
     int getDimensionCorrelation() {
@@ -134,6 +138,14 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     @Override
     public double[] getGradientLogDensity() {
+        double[] gradient = (gradientWrtPrecisionProvider.getBranchSpecificGradient() == null) ? null : gradientWrtPrecisionProvider.getBranchSpecificGradient().getGradientLogDensity(); // Get gradient wrt variance
+        return getGradientLogDensity(gradient);
+    }
+
+    public double[] getGradientLogDensity(double[] grad) {
+
+        double[] gradient = new double[dim * dim];
+        if (grad != null) System.arraycopy(grad, offset, gradient, 0, dim * dim);
 
         // parameters
         parametrization.updateParameters(variance);
@@ -146,7 +158,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         }
 
         // Gradient w.r.t. precision
-        double[] gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV);
+        gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV, gradient);
 
         if (DEBUG) {
             System.err.println("Gradient Precision: " + new dr.math.matrixAlgebra.Vector(gradient));
@@ -193,13 +205,13 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 "\n";
     }
 
-    abstract String checkNumeric(double[] analytic);
+//    abstract String checkNumeric(double[] analytic);
 
-    @Override
-    public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this,
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TOLERANCE);
-    }
+//    @Override
+//    public String getReport() {
+//        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+//                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TOLERANCE);
+//    }
 
     abstract double[] getGradientParameter(double[] gradient);
 
@@ -214,7 +226,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     double[] getGradientDiagonal(double[] gradient) {
 
         return compoundSymmetricMatrix.updateGradientDiagonal(gradient);
-        
+
     }
 
     public static double[] flatten(double[][] matrix) {

@@ -235,7 +235,7 @@ public class AttenuationGradientTest extends TraceCorrelationAssert {
         String sBS = gPPBranchSpecific.getReport();
         System.err.println(sBS);
         double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
-        double[] gradientNumeric = parseGradient(sBS, "numeric:");
+        double[] gradientNumeric = parseGradient(sBS, "numeric :");
 
         assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
 

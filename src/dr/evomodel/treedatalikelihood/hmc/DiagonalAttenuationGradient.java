@@ -26,14 +26,10 @@
 package dr.evomodel.treedatalikelihood.hmc;
 
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
 /**
@@ -41,9 +37,8 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  */
 
-public class DiagonalAttenuationGradient implements GradientWrtParameterProvider, Reportable {
+public class DiagonalAttenuationGradient extends AbstractDiffusionGradient implements Reportable {
 
-    private final Likelihood likelihood;
     private final int dim;
     private final BranchSpecificGradient branchSpecificGradient;
 
@@ -52,6 +47,7 @@ public class DiagonalAttenuationGradient implements GradientWrtParameterProvider
     public DiagonalAttenuationGradient(BranchSpecificGradient branchSpecificGradient,
                                        Likelihood likelihood,
                                        MatrixParameterInterface parameter) {
+        super(likelihood, 0, Double.POSITIVE_INFINITY);
 
         assert (parameter instanceof DiagonalMatrix)
                 : "DiagonalAttenuationGradient can only be applied to a DiagonalMatrix.";
@@ -59,14 +55,8 @@ public class DiagonalAttenuationGradient implements GradientWrtParameterProvider
         this.attenuation = (DiagonalMatrix) parameter;
 
         this.branchSpecificGradient = branchSpecificGradient;
-        this.likelihood = likelihood;
         this.dim = parameter.getColumnDimension();
 
-    }
-
-    @Override
-    public Likelihood getLikelihood() {
-        return likelihood;
     }
 
     @Override
@@ -80,75 +70,31 @@ public class DiagonalAttenuationGradient implements GradientWrtParameterProvider
     }
 
     @Override
+    public Parameter getRawParameter() {
+        return attenuation;
+    }
+
+    @Override
     public double[] getGradientLogDensity() {
         double[] gradient = branchSpecificGradient.getGradientLogDensity();
+        return getGradientLogDensity(gradient);
+    }
+
+    public double[] getGradientLogDensity(double[] gradient) {
         return extractDiagonalGradient(gradient);
     }
 
     private double[] extractDiagonalGradient(double[] gradient) {
         double[] result = new double[dim];
         for (int i = 0; i < dim; i++) {
-            result[i] = gradient[i];
+            result[i] = gradient[offset + i];
         }
         return result;
     }
 
-    String getReportString(double[] analytic, double[] numeric) {
-
-        return getClass().getCanonicalName() + "\n" +
-                "analytic: " + new Vector(analytic) +
-                "\n" +
-                "numeric: " + new Vector(numeric) +
-                "\n";
-    }
-
     @Override
     public String getReport() {
-        return checkNumeric(getGradientLogDensity());
-    }
-
-    MultivariateFunction getNumeric() {
-
-        return new MultivariateFunction() {
-
-            @Override
-            public double evaluate(double[] argument) {
-
-                for (int i = 0; i < argument.length; ++i) {
-                    attenuation.setParameterValue(i, argument[i]);
-                }
-
-                likelihood.makeDirty();
-                return likelihood.getLogLikelihood();
-            }
-
-            @Override
-            public int getNumArguments() {
-                return attenuation.getColumnDimension();
-            }
-
-            @Override
-            public double getLowerBound(int n) {
-                return 0.0;
-            }
-
-            @Override
-            public double getUpperBound(int n) {
-                return Double.POSITIVE_INFINITY;
-            }
-        };
-    }
-
-    String checkNumeric(double[] analytic) {
-
-        System.err.println("Numeric at: \n" + new Vector(attenuation.getParameterValues()));
-
-        double[] storedValues = attenuation.getDiagonalParameter().getParameterValues();
-        double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
-        for (int i = 0; i < storedValues.length; ++i) {
-            attenuation.setParameterValue(i, storedValues[i]);
-        }
-
-        return getReportString(analytic, testGradient);
+        return "attenuationGradient." + attenuation.getParameterName() + "\n" +
+                super.getReport();
     }
 }

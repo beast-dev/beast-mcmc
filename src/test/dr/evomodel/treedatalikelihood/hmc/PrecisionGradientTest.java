@@ -83,7 +83,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        delta = 1E-3;
+        delta = 1E-2;
 
         dim = 6;
 
@@ -345,7 +345,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         String sBS = gradientProviderBranchSpecific.getReport();
         System.err.println(sBS);
         double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
-        double[] gradientNumeric = parseGradient(sBS, "numeric (with Cholesky):");
+        double[] gradientNumeric = parseGradient(sBS, "numeric :");
 
         assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
 
@@ -362,7 +362,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         String sDiagBS = gradientDiagonalProviderBS.getReport();
         System.err.println(sDiagBS);
         double[] gradientDiagonalAnalyticalBS = parseGradient(sDiagBS, "analytic");
-        double[] gradientDiagonalNumeric = parseGradient(sDiagBS, "numeric:");
+        double[] gradientDiagonalNumeric = parseGradient(sDiagBS, "numeric :");
 
         assertEquals("Sizes", gradientDiagonalAnalyticalBS.length, gradientDiagonalNumeric.length);
 

@@ -37,7 +37,9 @@ import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 
 public interface GradientWrtPrecisionProvider {
 
-    double[] getGradientWrtPrecision(double[] vecV);
+//    double[] getGradientWrtPrecision(double[] vecV);
+
+    double[] getGradientWrtPrecision(double[] vecV, double[] gradient);
 
     ConjugateWishartStatisticsProvider getWishartStatistic();
 
@@ -64,7 +66,7 @@ public interface GradientWrtPrecisionProvider {
             this.dim = wishartStatistics.getPrecisionParameter().getRowDimension();
         }
 
-        public double[] getGradientWrtPrecision(double[] vecV) {
+        public double[] getGradientWrtPrecision(double[] vecV, double[] gradient) {
             // Statistics
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
             double[] vecS = wss.getScaleMatrix();
@@ -105,6 +107,10 @@ public interface GradientWrtPrecisionProvider {
 
         public double[] getGradientWrtPrecision(double[] vecV) {
             double[] gradient = branchSpecificGradient.getGradientLogDensity(); // Get gradient wrt variance
+            return getGradientWrtPrecision(vecV, gradient);
+        }
+
+        public double[] getGradientWrtPrecision(double[] vecV, double[] gradient) {
             MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecV);
             return ruleI.chainGradient(gradient);
         }

@@ -80,74 +80,35 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
     public double[] getGradientLogDensity() {
 
         double[] gradientWrtIncrements = rateGradientProvider.getGradientLogDensity();
+        double[] gradientWrtRates = new double[gradientWrtIncrements.length];
 
-//        if (units.needsIncrementCorrection()) {
-//            recursePreOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements, 1);
-            recursePostOrderToAccumulateGradient(tree.getRoot(), gradientWrtIncrements);
-//        }
+        recursePostOrderToAccumulateGradient(tree.getRoot(), gradientWrtRates, gradientWrtIncrements);
 
-        return gradientWrtIncrements;
+        return gradientWrtRates;
     }
 
-//    private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
-//
-//        // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)
-//
-//        int numberDescendents = 1;
-//
-//        if (!tree.isExternal(node)) {
-//            numberDescendents += recursePostOrderToCorrectGradient(tree.getChild(node, 0), gradientWrtIncrements);
-//            numberDescendents += recursePostOrderToCorrectGradient(tree.getChild(node, 1), gradientWrtIncrements);
-//        }
-//
-//        if (!tree.isRoot(node)) {
-//            int index = branchRates.getParameterIndexFromNode(node);
-//            gradientWrtIncrements[index] -= scaling.inverseRescaleIncrement(
-//                    1.0 * numberDescendents, tree.getBranchLength(node));  // d / d c_i log-Jacobian
-//        }
-//
-//        return numberDescendents;
-//    }
-
-    private double recursePostOrderToAccumulateGradient(NodeRef node, double[] gradientWrtIncrements) {
+    private double recursePostOrderToAccumulateGradient(NodeRef node,
+                                                        double[] gradientWrtRates, double[] gradientWrtIncrements) {
 
         // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)
 
         double gradientForNode = 0.0;
 
         if (!tree.isExternal(node)) {
-            gradientForNode += recursePostOrderToAccumulateGradient(tree.getChild(node, 0), gradientWrtIncrements);
-            gradientForNode += recursePostOrderToAccumulateGradient(tree.getChild(node, 1), gradientWrtIncrements);
+            gradientForNode += recursePostOrderToAccumulateGradient(tree.getChild(node, 0),
+                    gradientWrtRates, gradientWrtIncrements);
+            gradientForNode += recursePostOrderToAccumulateGradient(tree.getChild(node, 1),
+                    gradientWrtRates, gradientWrtIncrements);
         }
 
         if (!tree.isRoot(node)) {
             int index = branchRates.getParameterIndexFromNode(node);
-            gradientForNode += gradientWrtIncrements[index];
-            gradientWrtIncrements[index] = gradientForNode;
-
-//            gradientWrtIncrements[index] -= scaling.inverseRescaleIncrement(
-//                    1.0 * numberDescendents, tree.getBranchLength(node));  // d / d c_i log-Jacobian
+            gradientForNode += units.inverseTransformGradient(
+                    gradientWrtIncrements[index], branchRates.getBranchRate(tree, node));
+            gradientWrtRates[index] = scaling.inverseRescaleIncrement(gradientForNode, tree.getBranchLength(node));
         }
 
         return gradientForNode;
-    }
-
-    private void recursePreOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements, int numberAncestors) {
-
-        // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)
-
-        if (!tree.isRoot(node)) {
-            int index = branchRates.getParameterIndexFromNode(node);
-            gradientWrtIncrements[index] -= 1.0 * numberAncestors;
-
-//                    scaling.rescaleIncrement(
-//                    1.0 * numberAncestors, tree.getBranchLength(node));  // d / d c_i log-Jacobian
-        }
-
-        if (!tree.isExternal(node)) {
-            recursePreOrderToCorrectGradient(tree.getChild(node, 0), gradientWrtIncrements, numberAncestors + 1);
-            recursePreOrderToCorrectGradient(tree.getChild(node, 1), gradientWrtIncrements, numberAncestors + 1);
-        }
     }
 
     @Override

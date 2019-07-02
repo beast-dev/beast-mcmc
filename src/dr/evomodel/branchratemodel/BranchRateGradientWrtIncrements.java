@@ -82,7 +82,7 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
         double[] gradientWrtIncrements = rateGradientProvider.getGradientLogDensity();
 
 //        if (units.needsIncrementCorrection()) {
-            recursePreOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements, 1);
+//            recursePreOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements, 1);
             recursePostOrderToAccumulateGradient(tree.getRoot(), gradientWrtIncrements);
 //        }
 

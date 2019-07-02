@@ -35,6 +35,9 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
@@ -124,7 +127,9 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                     new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                             dim, tree, continuousData,
-                            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
+                            new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
+                                    Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE)
+                            ));
             BranchSpecificGradient branchSpecificGradient =
                     new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 

@@ -48,6 +48,7 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -225,7 +226,9 @@ public class AttenuationGradientTest extends TraceCorrelationAssert {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH);
+                        new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
+                                Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
+                        ));
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradient, attenuation);
 

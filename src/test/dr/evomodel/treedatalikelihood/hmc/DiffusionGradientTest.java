@@ -1,7 +1,7 @@
 /*
- * PrecisionGradientTest.java
+ * DiffusionGradientTest.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,9 +36,7 @@ import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.hmc.CorrelationPrecisionGradient;
-import dr.evomodel.treedatalikelihood.hmc.DiagonalPrecisionGradient;
-import dr.evomodel.treedatalikelihood.hmc.GradientWrtPrecisionProvider;
+import dr.evomodel.treedatalikelihood.hmc.*;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
@@ -53,12 +51,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Paul Bastide
- * @author Marc Suchard
- */
+import static dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient;
+import static dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter;
 
-public class PrecisionGradientTest extends TraceCorrelationAssert {
+public class DiffusionGradientTest extends TraceCorrelationAssert {
 
     private int dim;
     private CompoundSymmetricMatrix precisionMatrix;
@@ -77,7 +73,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
 
     private double delta;
 
-    public PrecisionGradientTest(String name) {
+    public DiffusionGradientTest(String name) {
         super(name);
     }
 
@@ -277,16 +273,16 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{-2.0})));
 
         DiagonalMatrix strengthOfSelectionMatrixParam
-                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.1, 1.0, 5.0, 10.0, 50.0}));
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.1, 0.5, 1.0, 5.0, 10.0, 50.0}));
 
         // Wrt Precision
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new OUDiffusionModelDelegate(treeModel, diffusionModel,
                 optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
         System.out.println("\nTest Diagonal OU gradient precision.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precisionMatrix, false);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precisionMatrix, strengthOfSelectionMatrixParam, false);
         System.out.println("\nTest Diagonal OU gradient precision with missing.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelMissing, precisionMatrix, false);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelMissing, precisionMatrix, strengthOfSelectionMatrixParam, false);
 
         // Wrt Variance
         DiffusionProcessDelegate diffusionProcessDelegateVariance
@@ -294,9 +290,9 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
                 optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
 
         System.out.println("\nTest Diagonal OU gradient variance.");
-        testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModel, precisionMatrixInv, false);
+        testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModel, precisionMatrixInv, strengthOfSelectionMatrixParam, false);
         System.out.println("\nTest Diagonal OU gradient variance with missing.");
-        testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv, false);
+        testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv, strengthOfSelectionMatrixParam, false);
 
     }
 
@@ -304,6 +300,15 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
                               DiffusionProcessDelegate diffusionProcessDelegate,
                               ContinuousTraitPartialsProvider dataModel,
                               MatrixParameterInterface precision,
+                              Boolean wishart) {
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, null, wishart);
+    }
+
+    private void testGradient(MultivariateDiffusionModel diffusionModel,
+                              DiffusionProcessDelegate diffusionProcessDelegate,
+                              ContinuousTraitPartialsProvider dataModel,
+                              MatrixParameterInterface precision,
+                              MatrixParameterInterface attenuation,
                               Boolean wishart) {
         // CDL
         ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
@@ -331,11 +336,11 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         // Branch Specific
         ContinuousDataLikelihoodDelegate cdld = (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
 
-        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
-                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+        ContinuousProcessParameterGradient traitGradient =
+                new ContinuousProcessParameterGradient(
                         dim, treeModel, cdld,
-                        new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
-                                Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE)
+                        new ArrayList<>(
+                                Arrays.asList(DerivationParameter.WRT_VARIANCE)
                         ));
 
         BranchSpecificGradient branchSpecificGradient =
@@ -346,35 +351,28 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         // Correlation Gradient Branch Specific
         CorrelationPrecisionGradient gradientProviderBranchSpecific = new CorrelationPrecisionGradient(gPPBranchSpecific, dataLikelihood, precision);
 
-        String sBS = gradientProviderBranchSpecific.getReport();
-        System.err.println(sBS);
-        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
-        double[] gradientNumeric = parseGradient(sBS, "numeric :");
-
-        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
-
-        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
-            assertEquals("gradient correlation k=" + k,
-                    gradientAnalyticalBS[k],
-                    gradientNumeric[k],
-                    delta);
-        }
+        double[] gradientAnalyticalBS = testOneGradient(gradientProviderBranchSpecific);
 
         // Diagonal Gradient Branch Specific
         DiagonalPrecisionGradient gradientDiagonalProviderBS = new DiagonalPrecisionGradient(gPPBranchSpecific, dataLikelihood, precision);
 
-        String sDiagBS = gradientDiagonalProviderBS.getReport();
-        System.err.println(sDiagBS);
-        double[] gradientDiagonalAnalyticalBS = parseGradient(sDiagBS, "analytic");
-        double[] gradientDiagonalNumeric = parseGradient(sDiagBS, "numeric :");
+        double[] gradientDiagonalAnalyticalBS = testOneGradient(gradientDiagonalProviderBS);
 
-        assertEquals("Sizes", gradientDiagonalAnalyticalBS.length, gradientDiagonalNumeric.length);
+        // Diagonal Attenuation Gradient Branch Specific
+        if (attenuation != null) {
+            ContinuousProcessParameterGradient traitGradientAtt =
+                    new ContinuousProcessParameterGradient(
+                            dim, treeModel, cdld,
+                            new ArrayList<>(
+                                    Arrays.asList(DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
+                            ));
 
-        for (int k = 0; k < gradientDiagonalAnalyticalBS.length; k++) {
-            assertEquals("gradient correlation k=" + k,
-                    gradientDiagonalAnalyticalBS[k],
-                    gradientDiagonalNumeric[k],
-                    delta);
+            BranchSpecificGradient branchSpecificGradientAtt =
+                    new BranchSpecificGradient("trait", dataLikelihood, cdld, traitGradientAtt, attenuation);
+
+            DiagonalAttenuationGradient gABranchSpecific = new DiagonalAttenuationGradient(branchSpecificGradientAtt, dataLikelihood, attenuation);
+            testOneGradient(gABranchSpecific);
+
         }
 
         if (wishart) {
@@ -391,7 +389,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
             String sW = gradientProviderWishart.getReport();
             System.err.println(sW);
             double[] gradientAnalyticalW = parseGradient(sW, "analytic");
-            assertEquals("Sizes", gradientAnalyticalW.length, gradientNumeric.length);
+            assertEquals("Sizes", gradientAnalyticalW.length, gradientAnalyticalBS.length);
 
             for (int k = 0; k < gradientAnalyticalW.length; k++) {
                 assertEquals("gradient correlation k=" + k,
@@ -407,7 +405,7 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
             System.err.println(sDiagW);
             double[] gradientDiagonalAnalyticalW = parseGradient(sDiagW, "analytic");
 
-            assertEquals("Sizes", gradientDiagonalAnalyticalW.length, gradientDiagonalNumeric.length);
+            assertEquals("Sizes", gradientDiagonalAnalyticalW.length, gradientDiagonalAnalyticalBS.length);
 
             for (int k = 0; k < gradientDiagonalAnalyticalW.length; k++) {
                 assertEquals("gradient diagonal k=" + k,
@@ -432,4 +430,23 @@ public class PrecisionGradientTest extends TraceCorrelationAssert {
         }
         return gradient;
     }
+
+    private double[] testOneGradient(AbstractDiffusionGradient gradientProviderBranchSpecific) {
+        String sBS = gradientProviderBranchSpecific.getReport();
+        System.err.println(sBS);
+        double[] gradientAnalyticalBS = parseGradient(sBS, "analytic");
+        double[] gradientNumeric = parseGradient(sBS, "numeric :");
+
+        assertEquals("Sizes", gradientAnalyticalBS.length, gradientNumeric.length);
+
+        for (int k = 0; k < gradientAnalyticalBS.length; k++) {
+            assertEquals("gradient k=" + k,
+                    gradientAnalyticalBS[k],
+                    gradientNumeric[k],
+                    delta);
+        }
+
+        return gradientAnalyticalBS;
+    }
 }
+

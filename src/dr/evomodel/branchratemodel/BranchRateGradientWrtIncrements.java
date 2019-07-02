@@ -104,7 +104,7 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
         if (!tree.isRoot(node)) {
             int index = branchRates.getParameterIndexFromNode(node);
             gradientForNode += units.inverseTransformGradient(
-                    gradientWrtIncrements[index], branchRates.getBranchRate(tree, node));
+                    gradientWrtIncrements[index], branchRates.getUntransformedBranchRate(tree, node));
             gradientWrtRates[index] = scaling.inverseRescaleIncrement(gradientForNode, tree.getBranchLength(node));
         }
 

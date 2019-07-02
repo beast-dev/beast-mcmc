@@ -154,6 +154,15 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
                 rateParameter.fireParameterChangedEvent();
             }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder(String.valueOf(getParameterValue(0)));
+                for (int i = 1; i < dim; ++i) {
+                    sb.append(", ").append(getParameterValue(i));
+                }
+                return sb.toString();
+            }
         };
     }
 

@@ -79,12 +79,12 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
     @Override
     public double[] getGradientLogDensity() {
 
-        double[] gradientWrtIncrements = rateGradientProvider.getGradientLogDensity();
-        double[] gradientWrtRates = new double[gradientWrtIncrements.length];
+        double[] gradientWrtRates = rateGradientProvider.getGradientLogDensity();
+        double[] gradientWrtIncrements = new double[gradientWrtRates.length];
 
         recursePostOrderToAccumulateGradient(tree.getRoot(), gradientWrtRates, gradientWrtIncrements);
 
-        return gradientWrtRates;
+        return gradientWrtIncrements;
     }
 
     private double recursePostOrderToAccumulateGradient(NodeRef node,
@@ -104,8 +104,8 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
         if (!tree.isRoot(node)) {
             int index = branchRates.getParameterIndexFromNode(node);
             gradientForNode += units.inverseTransformGradient(
-                    gradientWrtIncrements[index], branchRates.getUntransformedBranchRate(tree, node));
-            gradientWrtRates[index] = scaling.inverseRescaleIncrement(gradientForNode, tree.getBranchLength(node));
+                    gradientWrtRates[index], branchRates.getUntransformedBranchRate(tree, node));
+            gradientWrtIncrements[index] = scaling.inverseRescaleIncrement(gradientForNode, tree.getBranchLength(node));
         }
 
         return gradientForNode;

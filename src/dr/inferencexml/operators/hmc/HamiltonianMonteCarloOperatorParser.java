@@ -108,6 +108,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
+        if (parameter == null) {
+            parameter = derivative.getParameter();
+        }
+
         Transform transform = (Transform)
                 xo.getChild(Transform.class);
 
@@ -170,7 +174,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
-            new ElementRule(Parameter.class),
+            new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(MASK, new XMLSyntaxRule[] {

@@ -85,6 +85,10 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         return gradientWrtIncrements;
     }
 
+    public AutoCorrelatedBranchRatesDistribution getDistribution() {
+        return distribution;
+    }
+
     private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
 
         // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)

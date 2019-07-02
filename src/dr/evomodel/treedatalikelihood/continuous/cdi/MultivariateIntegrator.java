@@ -247,6 +247,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final int iMatrix,
             final int jBuffer,
             final int jMatrix,
+            final boolean computeRemainders,
             final boolean incrementOuterProducts
     ) {
         //TODO: MAKE SURE CHANGES DON'T BREAK OTHER THINGS!!!!

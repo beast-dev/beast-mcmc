@@ -1,5 +1,5 @@
 /*
- * AutoCorrelatedGradientWrtIncrements.java
+ * BranchRateGradientWrtIncrements.java
  *
  * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *

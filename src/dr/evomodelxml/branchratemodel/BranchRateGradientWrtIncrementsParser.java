@@ -1,5 +1,5 @@
 /*
- * AutoCorrelatedGradientWrtIncrementsParser.java
+ * BranchRateGradientWrtIncrementsParser.java
  *
  * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,7 +25,6 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.evomodel.branchratemodel.AutoCorrelatedGradientWrtIncrements;
 import dr.evomodel.branchratemodel.BranchRateGradientWrtIncrements;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
@@ -49,7 +48,8 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
         GradientWrtParameterProvider rateProvider = (GradientWrtParameterProvider)
                 xo.getChild(GradientWrtParameterProvider.class);
 
-        if (!(rateProvider instanceof BranchRateGradient)) {
+        if (!(rateProvider instanceof BranchRateGradient) &&
+                !(rateProvider instanceof BranchRateGradientForDiscreteTrait)) {
             throw new XMLParseException("Must provide a branch rate gradient");
         }
 
@@ -61,8 +61,8 @@ public class BranchRateGradientWrtIncrementsParser extends AbstractXMLObjectPars
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element returns an arbitrary rate model." +
-                "The branch rates are drawn from an arbitrary distribution determine by the prior.";
+        return "This element returns the gradient of an arbitrary branch rate model " +
+                "w.r.t. the increments in an auto-correlated rates prior.";
     }
 
     public Class getReturnType() {

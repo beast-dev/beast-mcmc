@@ -217,16 +217,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             @Override
             public double evaluate(double[] argument) {
 
-//                if (transform == null) {
+                if (transform == null) {
 
                     ReadableVector.Utils.setParameter(argument, parameter);
                     return joint.getLogLikelihood();
-//                } else {
-//
-//                    double[] untransformedValue = transform.inverse(argument, 0, argument.length);
-//                    ReadableVector.Utils.setParameter(untransformedValue, parameter);
-//                    return joint.getLogLikelihood() - transform.getLogJacobian(untransformedValue, 0, untransformedValue.length);
-//                }
+                } else {
+
+                    double[] untransformedValue = transform.inverse(argument, 0, argument.length);
+                    ReadableVector.Utils.setParameter(untransformedValue, parameter);
+                    return joint.getLogLikelihood() - transform.getLogJacobian(untransformedValue, 0, untransformedValue.length);
+                }
             }
 
             @Override
@@ -264,17 +264,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
             double[] transformedParameter = transform.transform(parameter.getParameterValues(), 0,
                     parameter.getParameterValues().length);
-            double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, transformedParameter);
+            double[] numericGradientTransformed = NumericalDerivative.gradient(numeric, transformedParameter);
 
-            if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, runtimeOptions.gradientCheckTolerance)) {
-                String sb = "Un-transformed Gradients do not match:\n" +
-                        "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientOriginal) + "\n" +
-                        "\tNumeric : " + new WrappedVector.Raw(numericGradientOriginal) + "\n";
-                throw new RuntimeException(sb);
-            }
-
-            double[] numericGradientTransformed = transform.updateGradientLogDensity(numericGradientOriginal,
-                    parameter.getParameterValues(), 0, parameter.getParameterValues().length);
             double[] analyticalGradientTransformed = transform.updateGradientLogDensity(analyticalGradientOriginal,
                     parameter.getParameterValues(), 0, parameter.getParameterValues().length);
 

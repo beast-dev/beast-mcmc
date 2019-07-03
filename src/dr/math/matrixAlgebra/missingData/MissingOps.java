@@ -402,7 +402,8 @@ public class MissingOps {
                 throw new RuntimeException("SVD decomposition failed");
             }
             double[] values = svd.getSingularValues();
-            double tol = SingularOps.singularThreshold(svd);
+//            double tol = SingularOps.singularThreshold(svd);
+            double tol = 0.0;
 
             int dim = 0;
             double logDet = 0;
@@ -463,28 +464,30 @@ public class MissingOps {
             int dim = 0;
             double logDet = 0;
 
-            if (getLogDeterminant) {
-//                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+            //TODO: getLogDeterminant should never be used any more
+            assert !getLogDeterminant;
+//            if (getLogDeterminant) {
+////                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+////                double[] values = svd.getSingularValues();
+//
+//                SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
+//                if (!svd.decompose(A)) {
+//                    if (SingularOps.rank(svd) == 0)
+//                        return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
+//                    throw new RuntimeException("SVD decomposition failed");
+//                }
 //                double[] values = svd.getSingularValues();
-
-                SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
-                if (!svd.decompose(A)) {
-                    if (SingularOps.rank(svd) == 0)
-                        return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
-                    throw new RuntimeException("SVD decomposition failed");
-                }
-                double[] values = svd.getSingularValues();
-
-                double tol = SingularOps.singularThreshold(svd);
-
-                for (int i = 0; i < values.length; ++i) {
-                    final double lambda = values[i];
-                    if (lambda > tol) {
-                        logDet += Math.log(lambda);
-                        ++dim;
-                    }
-                }
-            }
+//
+//                double tol = SingularOps.singularThreshold(svd);
+//
+//                for (int i = 0; i < values.length; ++i) {
+//                    final double lambda = values[i];
+//                    if (lambda > tol) {
+//                        logDet += Math.log(lambda);
+//                        ++dim;
+//                    }
+//                }
+//            }
 
             result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, logDet, true);
         }

@@ -439,6 +439,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                     throw new NumericInstabilityException();
                 }
             }
+
+            @Override
+            boolean checkPositionTransform() { return false; }
         },
 
         DEBUG {
@@ -456,6 +459,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                     throw new NumericInstabilityException();
                 }
             }
+
+            @Override
+            boolean checkPositionTransform() { return true; }
         },
 
         IGNORE {
@@ -464,13 +470,18 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 // Do nothing
             }
 
+            @Override
             void checkEqual(double x, double y, double eps) {
                 // Do nothing
             }
+
+            @Override
+            boolean checkPositionTransform() { return false; }
         };
 
         abstract void checkValue(double x) throws NumericInstabilityException;
         abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+        abstract boolean checkPositionTransform();
     }
 
     protected InstabilityHandler getDefaultInstabilityHandler() {
@@ -502,9 +513,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                             final double functionalStepSize) throws NumericInstabilityException;
 
         void setParameter(double[] position);
-
-        @SuppressWarnings("unused")
-        void checkPosition(double[] position) throws NumericInstabilityException;
 
         double[] getLastGradient();
 
@@ -573,13 +581,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                     position[i] += functionalStepSize * preconditioning.getVelocity(i, momentum);
                     instabilityHandler.checkValue(position[i]);
                 }
-                checkPosition(position);
-                setParameter(position);
-            }
 
-            @Override
-            public void checkPosition(double[] position) throws NumericInstabilityException {
-                // Do nothing
+                setParameter(position);
             }
 
             public void setParameter(double[] position) {
@@ -622,14 +625,25 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
+            public void updatePosition(double[] position, WrappedVector momentum,
+                                       double functionalStepSize) throws NumericInstabilityException {
+
+                super.updatePosition(position, momentum, functionalStepSize);
+
+                if (instabilityHandler.checkPositionTransform()) {
+                    checkPosition(position);
+                }
+            }
+
+            @Override
             public void setParameter(double[] position) {
                 unTransformedPosition = transform.inverse(position, 0, position.length);
                 super.setParameter(unTransformedPosition);
             }
 
-            @Override
-            public void checkPosition(double[] position) throws NumericInstabilityException {
-                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length), 0, position.length);
+            private void checkPosition(double[] position) throws NumericInstabilityException {
+                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length),
+                        0, position.length);
                 for (int i = 0; i < position.length; i++) {
                     instabilityHandler.checkEqual(position[i], newPosition[i], EPS);
                 }

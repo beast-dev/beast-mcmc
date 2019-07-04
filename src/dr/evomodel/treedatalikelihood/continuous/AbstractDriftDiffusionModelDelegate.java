@@ -101,6 +101,23 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
         return drift;
     }
 
+    protected double[] getDriftRate(NodeRef node) {
+
+        final double[] drift = new double[dim];
+
+        if (branchRateModels != null) {
+
+            int offset = 0;
+
+                for (int model = 0; model < dim; ++model) {
+                    drift[offset] = branchRateModels.get(model).getBranchRate(tree, node);
+                    ++offset;
+                }
+        }
+
+        return drift;
+    }
+
     @Override
     public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
         final double[] drift = new double[dim];

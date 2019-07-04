@@ -1011,6 +1011,53 @@ public class MissingOps {
             }
         }
     }
+
+    public static void diagMult(double[] d, DenseMatrix64F M) {
+        assert d.length == M.getNumRows();
+        for (int i = 0; i < M.getNumRows(); i++) {
+            for (int j = 0; j < M.getNumCols(); j++) {
+                M.unsafe_set(i, j, d[i] * M.unsafe_get(i, j));
+            }
+        }
+    }
+
+    public static void diagMult(DenseMatrix64F M, double[] d) {
+        assert d.length == M.getNumCols();
+        for (int i = 0; i < M.getNumRows(); i++) {
+            for (int j = 0; j < M.getNumCols(); j++) {
+                M.unsafe_set(i, j, d[j] * M.unsafe_get(i, j));
+            }
+        }
+    }
+
+    public static void diagDiv(double[] d, DenseMatrix64F M) {
+        assert d.length == M.getNumRows();
+        for (int i = 0; i < M.getNumRows(); i++) {
+            for (int j = 0; j < M.getNumCols(); j++) {
+                M.unsafe_set(i, j, M.unsafe_get(i, j) / d[i]);
+            }
+        }
+    }
+
+    public static void diagDiv(DenseMatrix64F M, double[] d) {
+        assert d.length == M.getNumCols();
+        for (int i = 0; i < M.getNumRows(); i++) {
+            for (int j = 0; j < M.getNumCols(); j++) {
+                M.unsafe_set(i, j, M.unsafe_get(i, j) / d[j]);
+            }
+        }
+    }
+
+    public static void addTransEquals(DenseMatrix64F M) {
+        assert M.getNumCols() == M.getNumRows();
+        for (int i = 0; i < M.getNumCols(); i++) {
+            M.unsafe_set(i, i, 2 * M.unsafe_get(i, i));
+            for (int j = 0; j < i; j++) {
+                M.unsafe_set(i, j, M.unsafe_get(i, j) + M.unsafe_get(j, i));
+                M.unsafe_set(j, i, M.unsafe_get(i, j));
+            }
+        }
+    }
 }
 
 //    public static void safeSolveSymmPosDef(DenseMatrix64F A,

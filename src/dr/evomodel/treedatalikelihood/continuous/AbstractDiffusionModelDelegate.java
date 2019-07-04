@@ -215,9 +215,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     private DenseMatrix64F getGradientVarianceWrtVariance(double scalar, DenseMatrix64F gradient) {
         DenseMatrix64F result = gradient.copy();
         if (scalar == 0.0) {
-            for (int i = 0; i < result.getNumElements(); i++) {
-                result.set(i, 0.0);
-            }
+            CommonOps.fill(result, 0.0);
         } else {
             CommonOps.scale(scalar, result);
         }

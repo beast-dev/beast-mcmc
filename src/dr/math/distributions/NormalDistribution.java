@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.ErrorFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -35,7 +36,7 @@ import dr.math.UnivariateFunction;
  * @author Korbinian Strimmer
  * @version $Id: NormalDistribution.java,v 1.7 2005/05/24 20:26:01 rambaut Exp $
  */
-public class NormalDistribution implements Distribution, RandomGenerator {
+public class NormalDistribution implements Distribution, GradientProvider, RandomGenerator {
     //
     // Public stuff
     //
@@ -508,5 +509,20 @@ public class NormalDistribution implements Distribution, RandomGenerator {
     public double logPdf(Object x) {
         double v = (Double) x;
         return logPdf(x);
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], m, sd);
+        }
+        return result;
     }
 }

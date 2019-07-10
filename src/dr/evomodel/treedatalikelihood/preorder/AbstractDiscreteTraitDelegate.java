@@ -319,7 +319,21 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         beagle.calculateEdgeDerivative(postBufferIndices, preBufferIndices, getPostOrderPartialIndex(rootNumber),
                 firstDervIndices, secondDeriveIndices, 0, 0, 0, new int[]{Beagle.NONE},
                 tree.getNodeCount() - 1, patternGradient, patternDiagonalHessian);
+
+        if (TEST_NEW_INTERFACE) {
+
+            double[] result = new double[patternGradient.length];
+
+            beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
+                    firstDervIndices, new int[] { 0 }, tree.getNodeCount() - 1,
+                    result, null, null);
+
+            System.err.println("Got here!");
+        }
+
     }
+
+    private static boolean TEST_NEW_INTERFACE = false;
 
     protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
         return evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);

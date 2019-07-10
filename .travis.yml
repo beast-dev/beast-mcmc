@@ -11,4 +11,4 @@ addons:
 script:
   - ant dist
   - cd ci; ./test.sh
-  - ant junit
+  - cd ..; ant junit

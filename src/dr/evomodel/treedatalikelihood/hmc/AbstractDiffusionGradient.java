@@ -25,13 +25,19 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
+import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
+
+import java.util.List;
 
 public abstract class AbstractDiffusionGradient implements GradientWrtParameterProvider, Reportable {
 
@@ -56,6 +62,8 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     public void setOffset(int offset) {
         this.offset = offset;
     }
+
+    public abstract ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter();
 
     @Override
     public Likelihood getLikelihood() {
@@ -146,5 +154,99 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
         }
 
         return getReportString(analytic, testGradient);
+    }
+
+    // Default branch specific class
+    public static class ParameterDiffusionGradient extends AbstractDiffusionGradient implements Reportable {
+
+        protected final int dim;
+        private final BranchSpecificGradient branchSpecificGradient;
+
+        private final Parameter parameter;
+        private final Parameter rawParameter;
+
+        ParameterDiffusionGradient(BranchSpecificGradient branchSpecificGradient,
+                                   Likelihood likelihood,
+                                   Parameter parameter,
+                                   Parameter rawParameter,
+                                   double upperBound,
+                                   double lowerBound) {
+            super(likelihood, upperBound, lowerBound);
+
+            this.parameter = parameter;
+            this.rawParameter = rawParameter;
+
+            this.branchSpecificGradient = branchSpecificGradient;
+            this.dim = parameter.getDimension();
+
+        }
+
+        @Override
+        public Parameter getParameter() {
+            return parameter;
+        }
+
+        @Override
+        public int getDimension() {
+            return dim;
+        }
+
+        @Override
+        public Parameter getRawParameter() {
+            return rawParameter;
+        }
+
+        @Override
+        public double[] getGradientLogDensity() {
+            double[] gradient = branchSpecificGradient.getGradientLogDensity();
+            return getGradientLogDensity(gradient);
+        }
+
+        public double[] getGradientLogDensity(double[] gradient) {
+            return extractGradient(gradient);
+        }
+
+        private double[] extractGradient(double[] gradient) {
+            double[] result = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                result[i] = gradient[offset + i];
+            }
+            return result;
+        }
+
+        @Override
+        public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
+            List<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter> derList = branchSpecificGradient.getDerivationParameter();
+            assert derList.size() == 1;
+            return derList.get(0);
+        }
+
+        @Override
+        public String getReport() {
+            return "Gradient." + rawParameter.getParameterName() + "\n" +
+                    super.getReport();
+        }
+
+        public static ParameterDiffusionGradient createDriftGradient(BranchSpecificGradient branchSpecificGradient,
+                                                                     Likelihood likelihood,
+                                                                     Parameter drift) {
+            return new ParameterDiffusionGradient(
+                    branchSpecificGradient, likelihood,
+                    drift, drift,
+                    Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        }
+
+        public static ParameterDiffusionGradient createDiagonalAttenuationGradient(BranchSpecificGradient branchSpecificGradient,
+                                                                                   Likelihood likelihood,
+                                                                                   MatrixParameterInterface attenuation) {
+            assert (attenuation instanceof DiagonalMatrix)
+                    : "DiagonalAttenuationGradient can only be applied to a DiagonalMatrix.";
+
+            return new ParameterDiffusionGradient(
+                    branchSpecificGradient, likelihood,
+                    ((DiagonalMatrix) attenuation).getDiagonalParameter(),
+                    (DiagonalMatrix) attenuation,
+                    Double.POSITIVE_INFINITY, 0.0);
+        }
     }
 }

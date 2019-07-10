@@ -1021,6 +1021,15 @@ public class MissingOps {
         }
     }
 
+    public static void diagMult(double[] d, DenseMatrix64F source, DenseMatrix64F dest) {
+        assert d.length == source.getNumRows();
+        for (int i = 0; i < source.getNumRows(); i++) {
+            for (int j = 0; j < source.getNumCols(); j++) {
+                dest.unsafe_set(i, j, d[i] * source.unsafe_get(i, j));
+            }
+        }
+    }
+
     public static void diagMult(DenseMatrix64F M, double[] d) {
         assert d.length == M.getNumCols();
         for (int i = 0; i < M.getNumRows(); i++) {

@@ -72,6 +72,8 @@ public interface DiffusionProcessDelegate extends Model {
 
     DenseMatrix64F getGradientVarianceWrtVariance(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
 
+    double[] getGradientDisplacementWrtRoot(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
+
     void storeState();
 
     void restoreState();

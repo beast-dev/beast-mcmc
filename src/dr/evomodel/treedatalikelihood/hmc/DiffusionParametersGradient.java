@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -35,7 +36,7 @@ import dr.xml.Reportable;
 
 public class DiffusionParametersGradient implements GradientWrtParameterProvider, Reportable {
 
-    private final Likelihood likelihood;
+    private final TreeDataLikelihood likelihood;
     private final int dim;
     private final BranchSpecificGradient branchSpecificGradient;
     private final CompoundParameter compoundParameter;
@@ -44,7 +45,7 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
     public DiffusionParametersGradient(BranchSpecificGradient branchSpecificGradient, CompoundGradient parametersGradients) {
 
         this.branchSpecificGradient = branchSpecificGradient;
-        this.likelihood = branchSpecificGradient.getLikelihood();
+        this.likelihood = (TreeDataLikelihood) branchSpecificGradient.getLikelihood();
 
         compoundParameter = new CompoundParameter(null);
         dim = checkAndSetParametersGradients(parametersGradients, compoundParameter);
@@ -55,11 +56,12 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
     private int checkAndSetParametersGradients(CompoundGradient parametersGradients, CompoundParameter parameter) {
         int offset = 0;
         int dim = 0;
+        int dimTrait = likelihood.getDataLikelihoodDelegate().getTraitDim();
         for (GradientWrtParameterProvider gradient : parametersGradients.getDerivativeList()) {
             assert gradient instanceof AbstractDiffusionGradient : "Gradients must all be instances of AbstractDiffusionGradient.";
             ((AbstractDiffusionGradient) gradient).setOffset(offset);
             parameter.addParameter(gradient.getParameter());
-            offset += ((AbstractDiffusionGradient) gradient).getRawParameter().getDimension();
+            offset += ((AbstractDiffusionGradient) gradient).getDerivationParameter().getDimension(dimTrait);
             dim += gradient.getDimension();
         }
         return dim;

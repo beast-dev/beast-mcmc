@@ -209,10 +209,17 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
                                                          ContinuousDiffusionIntegrator cdi,
                                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                                          DenseMatrix64F gradient) {
-        return getGradientVarianceWrtVariance(getScalarNode(node, cdi, likelihoodDelegate), gradient);
+        return scaleGradient(node, cdi, likelihoodDelegate, gradient);
     }
 
-    private DenseMatrix64F getGradientVarianceWrtVariance(double scalar, DenseMatrix64F gradient) {
+    DenseMatrix64F scaleGradient(NodeRef node,
+                                 ContinuousDiffusionIntegrator cdi,
+                                 ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                 DenseMatrix64F gradient) {
+        return scaleGradient(getScalarNode(node, cdi, likelihoodDelegate), gradient);
+    }
+
+    private DenseMatrix64F scaleGradient(double scalar, DenseMatrix64F gradient) {
         DenseMatrix64F result = gradient.copy();
         if (scalar == 0.0) {
             CommonOps.fill(result, 0.0);
@@ -230,5 +237,19 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         } else {
             return cdi.getBranchLength(getMatrixIndex(node.getNumber()));
         }
+    }
+
+    public double[] getGradientDisplacementWrtRoot(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        boolean fixedRoot = likelihoodDelegate.getRootProcessDelegate().getPseudoObservations() == Double.POSITIVE_INFINITY;
+        if (fixedRoot && tree.isRoot(tree.getParent(node))) {
+            return gradient.getData();
+        }
+        if (!fixedRoot && tree.isRoot(node)) {
+            return gradient.getData();
+        }
+        return new double[gradient.getNumRows()];
     }
 }

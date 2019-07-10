@@ -28,10 +28,12 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -101,21 +103,32 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
         return drift;
     }
 
-    protected double[] getDriftRate(NodeRef node) {
+    double[] getDriftRate(NodeRef node) {
 
         final double[] drift = new double[dim];
 
         if (branchRateModels != null) {
-
-            int offset = 0;
-
-                for (int model = 0; model < dim; ++model) {
-                    drift[offset] = branchRateModels.get(model).getBranchRate(tree, node);
-                    ++offset;
-                }
+            for (int model = 0; model < dim; ++model) {
+                drift[model] = branchRateModels.get(model).getBranchRate(tree, node);
+            }
         }
 
         return drift;
+    }
+
+    public boolean isConstantDrift() {
+        if (branchRateModels == null) return false;
+        for (int model = 0; model < dim; ++model) {
+            if (!(branchRateModels.get(model) instanceof StrictClockBranchRates)) return false;
+        }
+        return true;
+    }
+
+    DenseMatrix64F getGradientDisplacementWrtDrift(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        return scaleGradient(node, cdi, likelihoodDelegate, gradient);
     }
 
     @Override

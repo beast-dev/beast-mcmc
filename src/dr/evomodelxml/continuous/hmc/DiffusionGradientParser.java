@@ -31,7 +31,10 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
-import dr.evomodel.treedatalikelihood.hmc.*;
+import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
+import dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient;
+import dr.evomodel.treedatalikelihood.hmc.DiffusionParametersGradient;
+import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.CompoundGradient;
@@ -78,11 +81,13 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
             derivativeList.add(precisionGradient);
         }
 
-        DiagonalAttenuationGradient attenuationGradient = (DiagonalAttenuationGradient) xo.getChild(DiagonalAttenuationGradient.class);
-        if (attenuationGradient != null) {
-            derivationParametersList.add(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH);
-            compoundParameter.addParameter(attenuationGradient.getRawParameter());
-            derivativeList.add(attenuationGradient);
+        List<AbstractDiffusionGradient.ParameterDiffusionGradient> diffGradients = xo.getAllChildren(AbstractDiffusionGradient.ParameterDiffusionGradient.class);
+        if (diffGradients != null) {
+            for (AbstractDiffusionGradient.ParameterDiffusionGradient grad : diffGradients) {
+                derivationParametersList.add(grad.getDerivationParameter());
+                compoundParameter.addParameter(grad.getRawParameter());
+                derivativeList.add(grad);
+            }
         }
 
         CompoundGradient parametersGradients = new CompoundDerivative(derivativeList);

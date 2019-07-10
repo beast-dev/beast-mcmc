@@ -374,6 +374,90 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     }
 
+    @Override
+    DenseMatrix64F getGradientDisplacementWrtDrift(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        DenseMatrix64F result = gradient.copy();
+        if (hasDiagonalActualization()) {
+            actualizeDisplacementGradientDiagonal(cdi, node.getNumber(), result);
+        } else {
+            actualizeDisplacementGradient(cdi, node.getNumber(), result);
+        }
+        return result;
+    }
+
+    private void actualizeDisplacementGradientDiagonal(ContinuousDiffusionIntegrator cdi,
+                                                       int nodeIndex, DenseMatrix64F gradient) {
+        // q_i
+        double[] qi = new double[dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        for (int i = 0; i < dim; i++) {
+            qi[i] = 1.0 - qi[i];
+        }
+        MissingOps.diagMult(qi, gradient);
+    }
+
+    private void actualizeDisplacementGradient(ContinuousDiffusionIntegrator cdi,
+                                               int nodeIndex, DenseMatrix64F gradient) {
+        // q_i
+        double[] qi = new double[dim * dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
+        for (int i = 0; i < dim; i++) {
+            Actu.unsafe_set(i, i, Actu.unsafe_get(i, i) - 1.0);
+        }
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+        CommonOps.mult(Actu, gradient, tmp);
+        CommonOps.scale(-1.0, tmp, gradient);
+    }
+
+    @Override
+    public double[] getGradientDisplacementWrtRoot(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        boolean fixedRoot = likelihoodDelegate.getRootProcessDelegate().getPseudoObservations() == Double.POSITIVE_INFINITY;
+        if (fixedRoot && tree.isRoot(tree.getParent(node))) {
+            return actualizeRootGradient(cdi, node.getNumber(), gradient);
+        }
+        if (!fixedRoot && tree.isRoot(node)) {
+            return gradient.getData();
+        }
+        return new double[gradient.getNumRows()];
+    }
+
+    private double[] actualizeRootGradient(ContinuousDiffusionIntegrator cdi,
+                                           int nodeIndex,
+                                           DenseMatrix64F gradient) {
+        if (hasDiagonalActualization()) {
+            return actualizeRootGradientDiagonal(cdi, nodeIndex, gradient);
+        } else {
+            return actualizeRootGradientFull(cdi, nodeIndex, gradient);
+        }
+    }
+
+    private double[] actualizeRootGradientDiagonal(ContinuousDiffusionIntegrator cdi,
+                                                   int nodeIndex, DenseMatrix64F gradient) {
+        double[] qi = new double[dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+        MissingOps.diagMult(qi, gradient, tmp);
+        return tmp.getData();
+    }
+
+    private double[] actualizeRootGradientFull(ContinuousDiffusionIntegrator cdi,
+                                               int nodeIndex, DenseMatrix64F gradient) {
+        // q_i
+        double[] qi = new double[dim * dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+        CommonOps.mult(Actu, gradient, tmp);
+        return tmp.getData();
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////
     /// Report Functions

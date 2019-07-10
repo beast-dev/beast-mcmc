@@ -1,5 +1,5 @@
 /*
- * AttenuationGradientParser.java
+ * MeanGradientParser.java
  *
  * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -28,20 +28,19 @@ package dr.evomodelxml.continuous.hmc;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
+import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDriftGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+
 
 /**
  * @author Paul Bastide
@@ -49,27 +48,35 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
  */
 
 
-public class AttenuationGradientParser extends AbstractXMLObjectParser {
-    private final static String PRECISION_GRADIENT = "attenuationGradient";
+public class MeanGradientParser extends AbstractXMLObjectParser {
+    private final static String MEAN_GRADIENT = "meanGradient";
     private final static String PARAMETER = "parameter";
-    private final static String ATTENUATION_CORRELATION = "correlation";
-    private final static String ATTENUATION_DIAGONAL = "diagonal";
-    private final static String ATTENUATION_BOTH = "both";
+    private final static String ROOT = "root";
+    private final static String DRIFT = "drift";
+    private final static String OPT = "opt";
+    private final static String BOTH = "both";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
     public String getParserName() {
-        return PRECISION_GRADIENT;
+        return MEAN_GRADIENT;
     }
 
-    private ParameterMode parseParameterMode(XMLObject xo) throws XMLParseException {
+    private ParameterMode parseParameterMode(XMLObject xo,
+                                             ContinuousDataLikelihoodDelegate continuousData,
+                                             Parameter parameter) throws XMLParseException {
         // Choose which parameter(s) to update.
-        ParameterMode mode = ParameterMode.WRT_BOTH;
-        String parameterString = xo.getAttribute(PARAMETER, ATTENUATION_BOTH).toLowerCase();
-        if (parameterString.compareTo(ATTENUATION_CORRELATION) == 0) {
-            mode = ParameterMode.WRT_CORRELATION;
-        } else if (parameterString.compareTo(ATTENUATION_DIAGONAL) == 0) {
-            mode = ParameterMode.WRT_DIAGONAL;
+        ParameterMode mode = ParameterMode.WRT_DRIFT;
+        String parameterString = xo.getAttribute(PARAMETER, DRIFT).toLowerCase();
+        if (parameterString.compareTo(ROOT) == 0) {
+            mode = ParameterMode.WRT_ROOT;
+        } else if (parameterString.compareTo(BOTH) == 0) {
+            mode = ParameterMode.WRT_BOTH;
+        } else {
+            DiffusionProcessDelegate diffusionDelegate = continuousData.getDiffusionProcessDelegate();
+            assert diffusionDelegate instanceof AbstractDriftDiffusionModelDelegate : "Model does not have drift.";
+            assert ((AbstractDriftDiffusionModelDelegate) diffusionDelegate).isConstantDrift() : "Model does not have constant drift.";
+            if (continuousData.getRootPrior().getMeanParameter() == parameter) mode = ParameterMode.WRT_BOTH;
         }
         return mode;
     }
@@ -77,32 +84,24 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     enum ParameterMode {
         WRT_BOTH {
             @Override
-            public Object factory(BranchSpecificGradient branchSpecificGradient,
-                                  TreeDataLikelihood treeDataLikelihood,
-                                  MatrixParameterInterface parameter) {
-                throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
+            public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
+                return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_CONSTANT_DRIFT_AND_ROOT_MEAN;
             }
         },
-        WRT_CORRELATION {
+        WRT_DRIFT {
             @Override
-            public Object factory(BranchSpecificGradient branchSpecificGradient,
-                                  TreeDataLikelihood treeDataLikelihood,
-                                  MatrixParameterInterface parameter) {
-                throw new RuntimeException("Gradient wrt correlation of attenuation not yet implemented.");
+            public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
+                return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_CONSTANT_DRIFT;
             }
         },
-        WRT_DIAGONAL {
+        WRT_ROOT {
             @Override
-            public Object factory(BranchSpecificGradient branchSpecificGradient,
-                                  TreeDataLikelihood treeDataLikelihood,
-                                  MatrixParameterInterface parameter) {
-                return createDiagonalAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
+            public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
+                return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_ROOT_MEAN;
             }
         };
 
-        abstract Object factory(BranchSpecificGradient branchSpecificGradient,
-                                TreeDataLikelihood treeDataLikelihood,
-                                MatrixParameterInterface parameter);
+        abstract ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter();
     }
 
     @Override
@@ -110,7 +109,7 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
 
-        MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
@@ -119,17 +118,19 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         Tree tree = treeDataLikelihood.getTree();
 
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+
+        ParameterMode parameterMode = parseParameterMode(xo, continuousData, parameter);
+
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, tree, continuousData,
-                        new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
-                                Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
+                        new ArrayList<>(
+                                Arrays.asList(parameterMode.getDerivationParameter())
                         ));
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
-        ParameterMode parameterMode = parseParameterMode(xo);
-        return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, parameter);
+        return createDriftGradient(branchSpecificGradient, treeDataLikelihood, parameter);
     }
 
     @Override
@@ -139,7 +140,7 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Likelihood.class),
-            new ElementRule(MatrixParameterInterface.class),
+            new ElementRule(Parameter.class),
     };
 
     @Override

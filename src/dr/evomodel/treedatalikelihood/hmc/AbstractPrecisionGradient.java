@@ -26,6 +26,7 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
@@ -126,6 +127,11 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
     @Override
     public Parameter getRawParameter() {
         return precision;
+    }
+
+    @Override
+    public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
+        return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE;
     }
 
     int getDimensionCorrelation() {

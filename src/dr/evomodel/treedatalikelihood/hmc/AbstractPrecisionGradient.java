@@ -84,9 +84,14 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
 
     enum Parametrization {
         AS_PRECISION {
+//            @Override
+//            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+//                return x; // Do nothing
+//            }
+
             @Override
-            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
-                return x; // Do nothing
+            public double[] getGradientWrtParameter(double[] gradient, double[] vecP, double[] vecV, GradientWrtPrecisionProvider gradientWrtPrecisionProvider) {
+                return gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV, gradient);
             }
 
             @Override
@@ -95,10 +100,15 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
             }
         },
         AS_VARIANCE {
+//            @Override
+//            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+//                MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
+//                return ruleI.chainGradient(x);
+//            }
+
             @Override
-            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
-                MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
-                return ruleI.chainGradient(x);
+            public double[] getGradientWrtParameter(double[] gradient, double[] vecP, double[] vecV, GradientWrtPrecisionProvider gradientWrtPrecisionProvider) {
+                return gradientWrtPrecisionProvider.getGradientWrtVariance(vecP, vecV, gradient);
             }
 
             @Override
@@ -114,7 +124,9 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
 //            }
         };
 
-        abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
+//        abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
+
+        abstract double[] getGradientWrtParameter(double[] gradient, double[] vecP, double[] vecV, GradientWrtPrecisionProvider gradientWrtPrecisionProvider);
 
         abstract void updateParameters(MatrixParameterInterface variance);
     }
@@ -164,14 +176,15 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
         }
 
         // Gradient w.r.t. precision
-        gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV, gradient);
+//        gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV, gradient);
+        gradient = parametrization.getGradientWrtParameter(gradient, vecP, vecV, gradientWrtPrecisionProvider);
 
         if (DEBUG) {
             System.err.println("Gradient Precision: " + new dr.math.matrixAlgebra.Vector(gradient));
         }
 
         // Handle inverse
-        gradient = parametrization.chainRule(gradient, vecP, vecV);
+//        gradient = parametrization.chainRule(gradient, vecP, vecV);
 
         if (CHECK_GRADIENT) {
             System.err.println("Analytic at: \n" + new Vector(compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues())

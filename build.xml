@@ -284,7 +284,7 @@
     <!-- JUnit test -->
     <target name="junit">
         <mkdir dir="${report}"/>
-        <junit printsummary="yes" haltonfailure="yes">
+        <junit printsummary="yes" haltonfailure="no" failureproperty="test.failed">
             <classpath>
                 <path refid="classpath"/>
                 <path location="${build}"/>
@@ -296,28 +296,27 @@
                 <fileset dir="${src}">
                     <include name="test/dr/**/*Test.java"/>
 
-                    <!-- Broken JUnits -->
-                    <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/>
-                    <exclude name="test/dr/app/beagle/MarkovJumpsTest.java"/>
-                    <exclude name="test/dr/distibutions/InvGammaTest.java"/>
-                    <exclude name="test/dr/evolution/TreeMetricsTest.java"/>
-                    <exclude name="test/dr/evomodel/substmodel/CodonPartitionedRobustCountingTest.java"/>
-                    <exclude name="test/dr/evomodel/operators/ExchangeOperatorTest.java"/> <!--too long-->
-                    <exclude name="test/dr/evomodel/arg/operators/ARGAddRemoveOperatorTest.java"/>
-                    <exclude name="test/dr/evomodel/branchratemodel/UncorrelatedRelaxedClockTest.java"/>
-                    <exclude name="test/dr/evomodel/speciation/RLYModelTest.java"/>
-                    <exclude name="test/dr/evomodel/substmodel/EigendecompositionTest.java"/>
-                    <exclude name="test/dr/evomodel/substmodel/ProductChainSubstitutionModelTest.java"/>
-                    <exclude name="test/dr/evomodel/substmodel/StateHistoryTest.java"/>
-                    <exclude name="test/dr/evomodel/substmodel/TwoStateOccupancyMarkovRewardsTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/>
-                    <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
-                    <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
-                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>
 
-                    <!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->
+                    <!-- Broken JUnits -->
+<!--                    <exclude name="test/dr/distibutions/InvGammaTest.java"/>-->
+<!--                    <exclude name="test/dr/evolution/TreeMetricsTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/substmodel/CodonPartitionedRobustCountingTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/operators/ExchangeOperatorTest.java"/> &lt;!&ndash;too long&ndash;&gt;-->
+<!--                    <exclude name="test/dr/evomodel/arg/operators/ARGAddRemoveOperatorTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/branchratemodel/UncorrelatedRelaxedClockTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/speciation/RLYModelTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/substmodel/EigendecompositionTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/substmodel/ProductChainSubstitutionModelTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/substmodel/StateHistoryTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/substmodel/TwoStateOccupancyMarkovRewardsTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/>-->
+<!--                    <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>-->
+<!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
+
+<!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->
 <!--                    <include name="test/dr/evolution/**/*Test.java"/>-->
 <!--                    &lt;!&ndash; <include name="test/dr/evomodel/**/*Test.java" /> &ndash;&gt;-->
 <!--                    &lt;!&ndash; <include name="test/dr/evomodel/arg/**/*Test.java" /> &ndash;&gt;-->
@@ -332,6 +331,7 @@
                 </fileset>
             </batchtest>
         </junit>
+        <fail message="At least one of the JUnits failed the test. Check test results." if="test.failed"/>
         <echo message="JUnit test finished."/>
     </target>
 

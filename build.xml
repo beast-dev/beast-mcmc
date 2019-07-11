@@ -298,6 +298,8 @@
 
 
                     <!-- Broken JUnits -->
+                    <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->
+                    <exclude name="test/dr/app/beagle/MarkovJumpsTest.java"/> <!-- doesn't always fail-->
                     <exclude name="test/dr/distibutions/InvGammaTest.java"/>
                     <exclude name="test/dr/evolution/TreeMetricsTest.java"/>
                     <exclude name="test/dr/evomodel/substmodel/CodonPartitionedRobustCountingTest.java"/>

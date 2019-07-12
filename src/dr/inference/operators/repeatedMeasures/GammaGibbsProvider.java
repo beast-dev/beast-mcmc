@@ -2,15 +2,19 @@ package dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -18,8 +22,10 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuous
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 public interface GammaGibbsProvider {
+
 
     SufficientStatistics getSufficientStatistics(int dim);
 
@@ -103,7 +109,7 @@ public interface GammaGibbsProvider {
 
     class RepeatedMeasuresGibbsProvider implements GammaGibbsProvider {
 
-//        private final RepeatedMeasuresTraitDataModel dataModel;
+        //        private final RepeatedMeasuresTraitDataModel dataModel;
         private final TreeDataLikelihood treeLikelihood;
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
@@ -135,13 +141,12 @@ public interface GammaGibbsProvider {
             for (int taxon = 0; taxon < taxonCount; ++taxon) {
 
                 int offset = traitDim * taxon;
-                if (missingVector == null || !missingVector[dim + offset]){
+                if (missingVector == null || !missingVector[dim + offset]) {
                     double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
                     double tipValue = tipValues[taxon * traitDim + dim];
 
                     SSE += (traitValue - tipValue) * (traitValue - tipValue);
-                }
-                else{
+                } else {
                     missingCount += 1;
                 }
             }
@@ -163,5 +168,98 @@ public interface GammaGibbsProvider {
         }
 
         private static final boolean DEBUG = false;
+    }
+
+    //    TODO: Eliminate code duplication by merging FactorGibbsProvider with RepeatedMeasuresGibbsProvider
+    class FactorGibbsProvider implements GammaGibbsProvider {
+
+        private static final Boolean DEBUG = false;
+
+
+        private final TreeDataLikelihood treeLikelihood;
+        private final CompoundParameter traitParameter;
+        private final Parameter precisionParameter;
+        private final TreeTrait tipTrait;
+        private final boolean[] missingVector;
+
+        private final double tipValues[];
+
+        private final IntegratedFactorAnalysisLikelihood dataModel;
+
+
+        public FactorGibbsProvider(IntegratedFactorAnalysisLikelihood dataModel, TreeDataLikelihood treeLikelihood,
+                                   String traitName) {
+
+            this.dataModel = dataModel;
+            this.treeLikelihood = treeLikelihood;
+            this.traitParameter = dataModel.getParameter();
+            this.precisionParameter = dataModel.getPrecision();
+            this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+            this.missingVector = dataModel.getMissingIndicator();
+
+            int dimTaxa = dataModel.getNumberOfTaxa();
+            int dimData = dataModel.getDataDimension();
+
+            this.tipValues = new double[dimData * dimTaxa];
+
+
+        }
+
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+            final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
+            final int traitDim = dataModel.getDataDimension();
+
+            int missingCount = 0;
+
+            double SSE = 0;
+
+            for (int taxon = 0; taxon < taxonCount; ++taxon) {
+
+                int offset = traitDim * taxon;
+                if (missingVector == null || !missingVector[dim + offset]) {
+                    double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
+                    double tipValue = tipValues[taxon * traitDim + dim];
+
+                    SSE += (traitValue - tipValue) * (traitValue - tipValue);
+                } else {
+                    missingCount += 1;
+                }
+            }
+
+            return new SufficientStatistics(taxonCount - missingCount, SSE);
+
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return precisionParameter;
+        }
+
+        @Override
+        public void drawValues() {
+
+            final int treeTraitDim = treeLikelihood.getDataLikelihoodDelegate().getTraitDim();
+            final int traitDim = dataModel.getDataDimension();
+            final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
+
+            double[] treeTipValues = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+            MatrixParameterInterface loadings = dataModel.getLoadings();
+
+            DenseMatrix64F treeTraitMatrix = DenseMatrix64F.wrap(taxonCount, treeTraitDim, treeTipValues);
+            DenseMatrix64F loadingsMatrix = DenseMatrix64F.wrap(treeTraitDim, traitDim, loadings.getParameterValues());
+
+
+            DenseMatrix64F traitMatrix = DenseMatrix64F.wrap(taxonCount, traitDim, tipValues);
+            org.ejml.ops.CommonOps.mult(treeTraitMatrix, loadingsMatrix, traitMatrix);
+
+            if (DEBUG) {
+                treeTraitMatrix.print();
+                loadingsMatrix.print();
+                traitMatrix.print();
+            }
+
+        }
     }
 }

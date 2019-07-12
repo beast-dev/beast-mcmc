@@ -26,6 +26,7 @@
 package dr.inference.operators;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.GammaDistributionModel;
@@ -47,9 +48,11 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     public static final String OPERATOR_NAME = "normalGammaPrecisionGibbsOperator";
     public static final String LIKELIHOOD = "likelihood";
     private static final String REPEATED_MEASURES = "repeatedMeasures";
+    private static final String INTEGRATED_FACTORS = "integratedFactors";
+    private static final String FACTORS_NAME = "factorsName";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
-    
+
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, Distribution prior,
                                              double weight) {
         this(gammaGibbsProvider, prior, null, weight);
@@ -99,8 +102,13 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
-        double getRate() { return rate; }
-        double getShape() { return shape; }
+        double getRate() {
+            return rate;
+        }
+
+        double getShape() {
+            return shape;
+        }
     }
 
     private double weigh(double working, double prior) {
@@ -191,14 +199,14 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 DistributionLikelihood likelihood = (DistributionLikelihood) xo.getElementFirstChild(LIKELIHOOD);
 
                 if (!((likelihood.getDistribution() instanceof NormalDistributionModel) ||
-                                            (likelihood.getDistribution() instanceof LogNormalDistributionModel)
-                                    )) {
+                        (likelihood.getDistribution() instanceof LogNormalDistributionModel)
+                )) {
                     throw new XMLParseException("Gibbs operator assumes normal-gamma model");
                 }
 
                 gammaGibbsProvider = new GammaGibbsProvider.Default(likelihood);
 
-            } else {
+            } else if (xo.hasChildNamed(REPEATED_MEASURES)) {
 
                 XMLObject cxo = xo.getChild(REPEATED_MEASURES);
 
@@ -209,6 +217,18 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
                 gammaGibbsProvider = new GammaGibbsProvider.RepeatedMeasuresGibbsProvider(
                         dataModel, likelihood, dataModel.getTraitName());
+            } else {
+                //TODO: eliminate code duplication
+                XMLObject cxo = xo.getChild(INTEGRATED_FACTORS);
+
+
+                IntegratedFactorAnalysisLikelihood dataModel = (IntegratedFactorAnalysisLikelihood)
+                        cxo.getChild(IntegratedFactorAnalysisLikelihood.class);
+
+                TreeDataLikelihood likelihood = (TreeDataLikelihood) cxo.getChild(TreeDataLikelihood.class);
+
+                gammaGibbsProvider = new GammaGibbsProvider.FactorGibbsProvider(
+                        dataModel, likelihood, cxo.getStringAttribute(FACTORS_NAME));
             }
 
             return new NormalGammaPrecisionGibbsOperator(gammaGibbsProvider,
@@ -239,11 +259,19 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                                 new XMLSyntaxRule[]{
                                         new ElementRule(DistributionLikelihood.class)
                                 }),
-                        new ElementRule(REPEATED_MEASURES,
-                                new XMLSyntaxRule[]{
-                                        new ElementRule(RepeatedMeasuresTraitDataModel.class),
-                                        new ElementRule(TreeDataLikelihood.class),
-                                })
+                        new XORRule( //TODO: eliminate code duplication
+                                new ElementRule(REPEATED_MEASURES,
+                                        new XMLSyntaxRule[]{
+                                                new ElementRule(RepeatedMeasuresTraitDataModel.class),
+                                                new ElementRule(TreeDataLikelihood.class),
+                                        }),
+                                new ElementRule(INTEGRATED_FACTORS,
+                                        new XMLSyntaxRule[]{
+                                                new ElementRule(IntegratedFactorAnalysisLikelihood.class),
+                                                new ElementRule(TreeDataLikelihood.class),
+                                                AttributeRule.newStringRule(FACTORS_NAME)
+
+                                        }))
                 ),
                 new ElementRule(PRIOR,
                         new XMLSyntaxRule[]{

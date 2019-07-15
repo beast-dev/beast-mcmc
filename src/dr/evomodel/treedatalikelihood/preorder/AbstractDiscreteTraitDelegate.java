@@ -99,6 +99,17 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         final double[] patternWeights = patternList.getPatternWeights();
         sumOverPatterns(tree, patternWeights, patternGradient, gradient);
 
+        if (TEST_NEW_INTERFACE) {
+
+            double[] first = new double[gradient.length];
+            getNodeDerivatives(tree, first, null);
+
+            for (int i = 0; i < gradient.length; ++i) {
+                if (Math.abs(gradient[i] - first[i]) > 0.001) {
+                    throw new RuntimeException("Error in new API");
+                }
+            }
+        }
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++simulateCount;
@@ -261,6 +272,19 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         }
 
         sumOverPatterns(tree, patternWeights, patternDiagonalLogHessian, diagonalLogHessian);
+
+        if (TEST_NEW_INTERFACE) {
+            double[] first = new double[tree.getNodeCount() - 1];
+            double[] second = new double[tree.getNodeCount() - 1];
+            getNodeDerivatives(tree, first, second);
+
+            for (int i = 0; i < diagonalLogHessian.length; ++i) {
+                if (Math.abs(second[i] - diagonalLogHessian[i]) > 0.001) {
+                    throw new RuntimeException("Error in new API");
+                }
+            }
+        }
+
         return diagonalLogHessian;
     }
 
@@ -297,7 +321,46 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
 
+    private void getNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
+        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
+        final int   rootNumber = tree.getRoot().getNumber();
+        final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
+        final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
+
+        cacheDifferentialMassMatrix(tree, second != null);
+
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            if (!tree.isRoot(tree.getNode(nodeNum))) {
+                postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
+                preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
+                firstDervIndices[u]  = getFirstDerivativeMatrixBufferIndex(nodeNum);
+                secondDeriveIndices[u] = getSecondDerivativeMatrixBufferIndex(nodeNum);
+                u++;
+            }
+        }
+
+        double[] firstSquared = (second != null) ? new double[second.length] : null;
+
+        beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
+                firstDervIndices, new int[] { 0 }, tree.getNodeCount() - 1,
+                null, first, firstSquared);
+
+        if (second != null) {
+            beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
+                    secondDeriveIndices, new int[] { 0 }, tree.getNodeCount() - 1,
+                    null, second, null);
+
+            for (int i = 0; i < second.length; ++i) {
+                second[i] = -firstSquared[i];
+            }
+        }
+    }
+
     private void getPatternGradientHessian(Tree tree, double[] patternGradient, double[] patternDiagonalHessian) {
+
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
         final int   rootNumber = tree.getRoot().getNumber();
@@ -320,20 +383,9 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
                 firstDervIndices, secondDeriveIndices, 0, 0, 0, new int[]{Beagle.NONE},
                 tree.getNodeCount() - 1, patternGradient, patternDiagonalHessian);
 
-        if (TEST_NEW_INTERFACE) {
-
-            double[] result = new double[patternGradient.length];
-
-            beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
-                    firstDervIndices, new int[] { 0 }, tree.getNodeCount() - 1,
-                    result, null, null);
-
-            System.err.println("Got here!");
-        }
-
     }
 
-    private static boolean TEST_NEW_INTERFACE = false;
+    private static boolean TEST_NEW_INTERFACE = true;
 
     protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
         return evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);

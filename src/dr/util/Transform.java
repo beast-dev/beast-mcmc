@@ -737,7 +737,7 @@ public interface Transform {
         }
 
         public double getLogJacobian(double value) {
-            return -Math.log(1 - value) - Math.log(1 + value);
+            return -Math.log1p(-value) - Math.log1p(value);
         }
     }
 
@@ -1859,9 +1859,9 @@ public interface Transform {
             int offset = 0;
             for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
-                double tmpVal[] = new double[dim];
+                double[] tmpVal = new double[dim];
                 System.arraycopy(values, offset, tmpVal, 0, dim);
-                double tmpGrad[] = new double[dim];
+                double[] tmpGrad = new double[dim];
                 System.arraycopy(gradient, offset, tmpGrad, 0, dim);
                 System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal, 0, dim), 0, result, offset, dim);
                 offset += dim;

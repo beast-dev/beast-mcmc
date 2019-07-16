@@ -272,6 +272,25 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         }
 
         sumOverPatterns(tree, patternWeights, patternDiagonalLogHessian, diagonalLogHessian);
+//
+//        double[] gradientTmp = new double[tree.getNodeCount() - 1];
+//        sumOverPatterns(tree, patternWeights, patternGradient, gradientTmp);
+//
+//        double[] sqrTmp = new double[patternGradient.length];
+//        for (int i = 0; i < patternGradient.length; ++i) {
+//                sqrTmp[i] = patternGradient[i] * patternGradient[i];
+//        }
+//
+//        double[] sumSqrTmp = new double[tree.getNodeCount() - 1];
+//        sumOverPatterns(tree, patternWeights, sqrTmp, sumSqrTmp);
+//
+//        double[] secondTmp = new double[tree.getNodeCount() - 1];
+//        sumOverPatterns(tree, patternWeights, patternDiagonalHessian, secondTmp);
+//
+//        double[] finalTmp = new double[tree.getNodeCount() - 1];
+//        for (int i = 0; i < finalTmp.length; ++i) {
+//            finalTmp[i] = secondTmp[i] - sumSqrTmp[i];
+//        }
 
         if (TEST_NEW_INTERFACE) {
             double[] first = new double[tree.getNodeCount() - 1];
@@ -354,7 +373,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
                     null, second, null);
 
             for (int i = 0; i < second.length; ++i) {
-                second[i] = -firstSquared[i];
+                second[i] -= firstSquared[i];
             }
         }
     }
@@ -385,7 +404,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     }
 
-    private static boolean TEST_NEW_INTERFACE = true;
+    private static boolean TEST_NEW_INTERFACE = false;
 
     protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
         return evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);

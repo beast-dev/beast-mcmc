@@ -5,6 +5,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
@@ -107,7 +108,7 @@ public interface GammaGibbsProvider {
         }
     }
 
-    class RepeatedMeasuresGibbsProvider implements GammaGibbsProvider {
+    class NormalExtensionGibbsProvider implements GammaGibbsProvider {
 
         //        private final RepeatedMeasuresTraitDataModel dataModel;
         private final TreeDataLikelihood treeLikelihood;
@@ -118,13 +119,13 @@ public interface GammaGibbsProvider {
 
         private double tipValues[];
 
-        public RepeatedMeasuresGibbsProvider(RepeatedMeasuresTraitDataModel dataModel,
-                                             TreeDataLikelihood treeLikelihood,
-                                             String traitName) {
+        public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
+                                            TreeDataLikelihood treeLikelihood,
+                                            String traitName) {
 //            this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.precisionParameter = dataModel.getSamplingPrecision();
+            this.precisionParameter = dataModel.getExtensionPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
             this.missingVector = dataModel.getMissingIndicator();
         }

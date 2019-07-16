@@ -120,7 +120,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         if (!useEmpiricalVariance) {
             tree.addModelListener(this);
             diffusionModel.getPrecisionParameter().addParameterListener(this);
-            dataModel.getPrecisionMatrix().addParameterListener(this);
+            dataModel.getExtensionPrecision().addParameterListener(this);
         }
 
         if (useEmpiricalVariance) {
@@ -440,7 +440,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        assert (variable == dataModel.getSamplingPrecision() || variable == diffusionModel.getPrecisionParameter());
+        assert (variable == dataModel.getExtensionPrecision() || variable == diffusionModel.getPrecisionParameter());
 
         varianceKnown = false;
     }

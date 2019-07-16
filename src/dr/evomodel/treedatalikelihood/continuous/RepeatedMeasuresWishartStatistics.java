@@ -56,10 +56,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
 
     @Override
     public MatrixParameterInterface getPrecisionParameter() {
-
-        assert (traitModel.getSamplingPrecision() instanceof MatrixParameterInterface);
-
-        return (MatrixParameterInterface) traitModel.getSamplingPrecision();
+        return traitModel.getExtensionPrecision();
     }
 
     @Override

@@ -215,7 +215,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
                 TreeDataLikelihood likelihood = (TreeDataLikelihood) cxo.getChild(TreeDataLikelihood.class);
 
-                gammaGibbsProvider = new GammaGibbsProvider.RepeatedMeasuresGibbsProvider(
+                gammaGibbsProvider = new GammaGibbsProvider.NormalExtensionGibbsProvider(
                         dataModel, likelihood, dataModel.getTraitName());
             } else {
                 //TODO: eliminate code duplication

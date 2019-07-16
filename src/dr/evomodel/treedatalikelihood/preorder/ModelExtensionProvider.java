@@ -4,6 +4,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 
 public interface ModelExtensionProvider {
@@ -12,10 +13,11 @@ public interface ModelExtensionProvider {
                                                      TreeTrait treeTrait,
                                                      Tree tree);
 
-    public interface NormalExtensionProvider extends ModelExtensionProvider, ContinuousTraitPartialsProvider {
+    interface NormalExtensionProvider extends ModelExtensionProvider, ContinuousTraitPartialsProvider {
 
         DenseMatrix64F getExtensionVariance();
 
+        MatrixParameterInterface getExtensionPrecision();
     }
 }
 

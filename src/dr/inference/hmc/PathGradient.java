@@ -4,6 +4,8 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.PathDependent;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  */
@@ -27,8 +29,14 @@ public class PathGradient implements GradientWrtParameterProvider, PathDependent
         this.dimension = source.getDimension();
         this.parameter = source.getParameter();
 
-        if (destination.getParameter() != parameter) {
-            throw new RuntimeException("Invalid construction");
+//        if (destination.getParameter() != parameter) {
+//            throw new RuntimeException("Invalid construction");
+//        }
+        if (destination.getDimension() != dimension) {
+            throw new RuntimeException("Unequal parameter dimensions");
+        }
+        if (!Arrays.equals(destination.getParameter().getParameterValues(), parameter.getParameterValues())){
+            throw new RuntimeException("Unequal parameter values");
         }
 
         this.likelihood = new Likelihood.Abstract(source.getLikelihood().getModel()) {

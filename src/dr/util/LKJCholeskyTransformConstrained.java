@@ -63,7 +63,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
             for (int i = 0; i < j; i++) {
                 temp = Z.get(i, j);
                 L.set(i, j, temp * acc);
-                acc *= Math.sqrt(1 - Math.pow(temp, 2));
+                acc *= Math.sqrt(1 - temp * temp);
             }
         }
 
@@ -86,7 +86,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
             for (int i = 0; i < j; i++) {
                 temp = L.get(i, j) / acc;
                 Z.set(i, j, temp);
-                acc *= Math.sqrt(1 - Math.pow(temp, 2));
+                acc *= Math.sqrt(1 - temp * temp);
             }
         }
 
@@ -136,7 +136,7 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
         for (int i = 0; i < dimVector - 2; i++) {
             k++;
             for (int j = i + 2; j < dimVector; j++) {
-                logJacobian += (j - i - 1) * Math.log(1.0 - Math.pow(transformedValues[k], 2));
+                logJacobian += (j - i - 1) * (Math.log1p(-transformedValues[k]) + Math.log1p(transformedValues[k]));
                 k++;
             }
         }

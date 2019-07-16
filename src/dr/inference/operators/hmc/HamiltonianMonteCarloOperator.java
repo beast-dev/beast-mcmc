@@ -272,7 +272,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, runtimeOptions.gradientCheckTolerance)) {
                 String sb = "Transformed Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
-                        "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n";
+                        "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n" +
+                        "\tParameter : " + new WrappedVector.Raw(parameter.getParameterValues()) + "\n" +
+                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n";
                 throw new RuntimeException(sb);
             }
         }
@@ -434,14 +436,21 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
-            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
-                if (Math.abs(x - y) > eps) {
+            void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException {
+                if (!transform.isInInteriorDomain(unTransformedPosition, 0, unTransformedPosition.length)) {
                     throw new NumericInstabilityException();
                 }
             }
 
+//            @Override
+//            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
+//                if (Math.abs(x - y) > eps) {
+//                    throw new NumericInstabilityException();
+//                }
+//            }
+
             @Override
-            boolean checkPositionTransform() { return false; }
+            boolean checkPositionTransform() { return true; }
         },
 
         DEBUG {
@@ -452,13 +461,22 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                     throw new NumericInstabilityException();
                 }
             }
+
             @Override
-            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
-                if (Math.abs(x - y) > eps) {
+            void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException {
+                if (!transform.isInInteriorDomain(unTransformedPosition, 0, unTransformedPosition.length)) {
                     System.err.println("Numerical instability in HMC momentum; throwing exception");
                     throw new NumericInstabilityException();
                 }
             }
+
+//            @Override
+//            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
+//                if (Math.abs(x - y) > eps) {
+//                    System.err.println("Numerical instability in HMC momentum; throwing exception");
+//                    throw new NumericInstabilityException();
+//                }
+//            }
 
             @Override
             boolean checkPositionTransform() { return true; }
@@ -471,16 +489,22 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
-            void checkEqual(double x, double y, double eps) {
+            void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException {
                 // Do nothing
             }
+
+//            @Override
+//            void checkEqual(double x, double y, double eps) {
+//                // Do nothing
+//            }
 
             @Override
             boolean checkPositionTransform() { return false; }
         };
 
         abstract void checkValue(double x) throws NumericInstabilityException;
-        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+//        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+        abstract void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException;
         abstract boolean checkPositionTransform();
     }
 
@@ -631,7 +655,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 super.updatePosition(position, momentum, functionalStepSize);
 
                 if (instabilityHandler.checkPositionTransform()) {
-                    checkPosition(position);
+                    checkPosition(unTransformedPosition);
                 }
             }
 
@@ -641,15 +665,19 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 super.setParameter(unTransformedPosition);
             }
 
-            private void checkPosition(double[] position) throws NumericInstabilityException {
-                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length),
-                        0, position.length);
-                for (int i = 0; i < position.length; i++) {
-                    instabilityHandler.checkEqual(position[i], newPosition[i], EPS);
-                }
+            private void checkPosition(double[] unTransformedPosition) throws NumericInstabilityException {
+                instabilityHandler.checkPosition(transform, unTransformedPosition);
             }
 
-            private double EPS = 10e-10;
+//            private void checkPosition(double[] position) throws NumericInstabilityException {
+//                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length),
+//                        0, position.length);
+//                for (int i = 0; i < position.length; i++) {
+//                    instabilityHandler.checkEqual(position[i], newPosition[i], EPS);
+//                }
+//            }
+//
+//            private double EPS = 10e-10;
         }
     }
 }

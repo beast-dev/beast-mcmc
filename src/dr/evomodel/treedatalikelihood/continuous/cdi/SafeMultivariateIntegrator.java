@@ -406,7 +406,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             if (!(cj.getReturnCode() == NOT_OBSERVED)) {
                 detj = cj.getLogDeterminant();
             }
-            remainder += -0.5 * (deti + detj);
+            remainder += 0.5 * (deti + detj);
 
             if (DEBUG) {
                 System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
@@ -591,7 +591,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             double dettot = (ctot.getReturnCode() == NOT_OBSERVED) ? 0 : ctot.getLogDeterminant();
 
-            final double logLike = -0.5 * dettot - 0.5 * SS;
+            final double logLike = 0.5 * dettot - 0.5 * SS;
 
             final double remainder = remainders[rootBufferIndex * numTraits + trait];
             logLikelihoods[trait] = logLike + remainder;

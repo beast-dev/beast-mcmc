@@ -38,23 +38,23 @@ public class MissingOpsTest {
         public DenseMatrix64F getMatrix() {
             return new DenseMatrix64F(2, 2, true,
                     0.004255873897787696, 0.010962329615067505,
-                           0.010962329615067505, 0.02823689645782389);
+                    0.010962329615067505, 0.02823689645782389);
         }
     };
 
     Instance test1 = new Instance.Basic() {
         public int getRank() {
-            return 2;
+            return 1;
         }
 
         public double getLogDet() {
-            return 42.56618093096408;
+            return 3.4267272543138203;
         }
 
         public DenseMatrix64F getMatrix() {
             return new DenseMatrix64F(2, 2, true,
                     0.004255918204391931, 0.010962443740752292,
-                           0.010962443740752292, 0.028237190424652364);
+                    0.010962443740752292, 0.028237190424652364);
         }
     };
 

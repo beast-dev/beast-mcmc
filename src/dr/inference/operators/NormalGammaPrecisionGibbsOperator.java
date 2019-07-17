@@ -28,6 +28,7 @@ package dr.inference.operators;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -47,11 +48,10 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     public static final String OPERATOR_NAME = "normalGammaPrecisionGibbsOperator";
     public static final String LIKELIHOOD = "likelihood";
-    private static final String REPEATED_MEASURES = "repeatedMeasures";
-    private static final String INTEGRATED_FACTORS = "integratedFactors";
-    private static final String FACTORS_NAME = "factorsName";
+    private static final String NORMAL_EXENSION = "normalExtension";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
+    private static final String TREE_TRAIT_NAME = "treeTraitName";
 
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, Distribution prior,
                                              double weight) {
@@ -206,29 +206,19 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
                 gammaGibbsProvider = new GammaGibbsProvider.Default(likelihood);
 
-            } else if (xo.hasChildNamed(REPEATED_MEASURES)) {
+            } else {
 
-                XMLObject cxo = xo.getChild(REPEATED_MEASURES);
+                XMLObject cxo = xo.getChild(NORMAL_EXENSION);
 
-                RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
-                        cxo.getChild(RepeatedMeasuresTraitDataModel.class);
+                ModelExtensionProvider.NormalExtensionProvider dataModel = (ModelExtensionProvider.NormalExtensionProvider)
+                        cxo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
 
                 TreeDataLikelihood likelihood = (TreeDataLikelihood) cxo.getChild(TreeDataLikelihood.class);
+
+                String treeTraitName = cxo.getStringAttribute(TREE_TRAIT_NAME);
 
                 gammaGibbsProvider = new GammaGibbsProvider.NormalExtensionGibbsProvider(
-                        dataModel, likelihood, dataModel.getTraitName());
-            } else {
-                //TODO: eliminate code duplication
-                XMLObject cxo = xo.getChild(INTEGRATED_FACTORS);
-
-
-                IntegratedFactorAnalysisLikelihood dataModel = (IntegratedFactorAnalysisLikelihood)
-                        cxo.getChild(IntegratedFactorAnalysisLikelihood.class);
-
-                TreeDataLikelihood likelihood = (TreeDataLikelihood) cxo.getChild(TreeDataLikelihood.class);
-
-                gammaGibbsProvider = new GammaGibbsProvider.FactorGibbsProvider(
-                        dataModel, likelihood, cxo.getStringAttribute(FACTORS_NAME));
+                        dataModel, likelihood, treeTraitName);
             }
 
             return new NormalGammaPrecisionGibbsOperator(gammaGibbsProvider,
@@ -259,19 +249,14 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                                 new XMLSyntaxRule[]{
                                         new ElementRule(DistributionLikelihood.class)
                                 }),
-                        new XORRule( //TODO: eliminate code duplication
-                                new ElementRule(REPEATED_MEASURES,
-                                        new XMLSyntaxRule[]{
-                                                new ElementRule(RepeatedMeasuresTraitDataModel.class),
-                                                new ElementRule(TreeDataLikelihood.class),
-                                        }),
-                                new ElementRule(INTEGRATED_FACTORS,
-                                        new XMLSyntaxRule[]{
-                                                new ElementRule(IntegratedFactorAnalysisLikelihood.class),
-                                                new ElementRule(TreeDataLikelihood.class),
-                                                AttributeRule.newStringRule(FACTORS_NAME)
 
-                                        }))
+                        new ElementRule(NORMAL_EXENSION,
+                                new XMLSyntaxRule[]{
+                                        new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class),
+                                        new ElementRule(TreeDataLikelihood.class),
+                                        AttributeRule.newStringRule(TREE_TRAIT_NAME)
+                                })
+
                 ),
                 new ElementRule(PRIOR,
                         new XMLSyntaxRule[]{

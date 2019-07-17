@@ -18,6 +18,8 @@ public interface ModelExtensionProvider {
         DenseMatrix64F getExtensionVariance();
 
         MatrixParameterInterface getExtensionPrecision();
+
+        double[] transformTreeTraits(double[] treeTraits);
     }
 }
 

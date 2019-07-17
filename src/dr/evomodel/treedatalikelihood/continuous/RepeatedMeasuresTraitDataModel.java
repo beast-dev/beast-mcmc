@@ -164,6 +164,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return samplingPrecision;
     }
 
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        return treeTraits;
+    }
+
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";

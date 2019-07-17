@@ -110,7 +110,7 @@ public interface GammaGibbsProvider {
 
     class NormalExtensionGibbsProvider implements GammaGibbsProvider {
 
-        //        private final RepeatedMeasuresTraitDataModel dataModel;
+        private final ModelExtensionProvider.NormalExtensionProvider dataModel;
         private final TreeDataLikelihood treeLikelihood;
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
@@ -122,7 +122,7 @@ public interface GammaGibbsProvider {
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
                                             TreeDataLikelihood treeLikelihood,
                                             String traitName) {
-//            this.dataModel = dataModel;
+            this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
             this.precisionParameter = dataModel.getExtensionPrecision();
@@ -162,7 +162,8 @@ public interface GammaGibbsProvider {
 
         @Override
         public void drawValues() {
-            tipValues = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+            double[] tipTraits = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+            tipValues = dataModel.transformTreeTraits(tipTraits);
             if (DEBUG) {
                 System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));
             }

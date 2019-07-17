@@ -33,8 +33,9 @@ import dr.inferencexml.operators.FireParameterOperatorParser;
  */
 public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public FireParameterOperator(Parameter parameter, double weight) {
+    public FireParameterOperator(Parameter parameter, double[] values, double weight) {
         this.parameter = parameter;
+        this.values = values;
         setWeight(weight);
     }
 
@@ -47,7 +48,16 @@ public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOp
     }
 
     public double doOperation() {
-        parameter.setParameterValue(0, parameter.getParameterValue(0));
+        if (values == null) {
+
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                parameter.setParameterValueQuietly(i, values[i]);
+            }
+            parameter.fireParameterChangedEvent();
+
+        } else {
+            parameter.setParameterValue(0, parameter.getParameterValue(0));
+        }
         return 0;
     }
 
@@ -56,4 +66,5 @@ public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOp
     }
 
     private Parameter parameter;
+    private final double[] values;
 }

@@ -26,8 +26,6 @@
 package dr.inference.operators;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.GammaDistributionModel;
@@ -48,7 +46,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     public static final String OPERATOR_NAME = "normalGammaPrecisionGibbsOperator";
     public static final String LIKELIHOOD = "likelihood";
-    private static final String NORMAL_EXENSION = "normalExtension";
+    private static final String NORMAL_EXTENSION = "normalExtension";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
     private static final String TREE_TRAIT_NAME = "treeTraitName";
@@ -208,7 +206,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
             } else {
 
-                XMLObject cxo = xo.getChild(NORMAL_EXENSION);
+                XMLObject cxo = xo.getChild(NORMAL_EXTENSION);
 
                 ModelExtensionProvider.NormalExtensionProvider dataModel = (ModelExtensionProvider.NormalExtensionProvider)
                         cxo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
@@ -250,7 +248,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                                         new ElementRule(DistributionLikelihood.class)
                                 }),
 
-                        new ElementRule(NORMAL_EXENSION,
+                        new ElementRule(NORMAL_EXTENSION,
                                 new XMLSyntaxRule[]{
                                         new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class),
                                         new ElementRule(TreeDataLikelihood.class),

@@ -40,8 +40,7 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate
-        implements TreeTrait.TraitInfo<double[]> {
+public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate {
 
     private static final String GRADIENT_TRAIT_NAME = "Gradient";
     private static final String HESSIAN_TRAIT_NAME = "Hessian";
@@ -125,17 +124,12 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
             @Override
             public Intent getIntent() {
-                return null;
+                return Intent.BRANCH;
             }
 
             @Override
             public double[] getTrait(Tree tree, NodeRef node) {
-                return AbstractDiscreteTraitDelegate.this.getTrait(tree, node);
-            }
-
-            @Override
-            public String toString() {
-                return AbstractDiscreteTraitDelegate.this.toString();
+                return getGradient(node);
             }
         });
 
@@ -147,34 +141,14 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
             @Override
             public Intent getIntent() {
-                return null;
+                return Intent.BRANCH;
             }
 
             @Override
             public double[] getTrait(Tree tree, NodeRef node) {
                 return getHessian(tree, node);
             }
-
-            @Override
-            public String toString() {
-                return AbstractDiscreteTraitDelegate.this.toString();
-            }
         });
-    }
-
-    @Override
-    public String getTraitName() {
-        return GRADIENT_TRAIT_NAME;
-    }
-
-    @Override
-    public TreeTrait.Intent getTraitIntent() {
-        return TreeTrait.Intent.NODE;
-    }
-
-    @Override
-    public Class getTraitClass() {
-        return double[].class;
     }
 
 //    public enum MatrixChoice {
@@ -229,8 +203,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return second;
     }
 
-    @Override
-    public double[] getTrait(Tree tree, NodeRef node) {
+    private double[] getGradient(NodeRef node) {
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++getTraitCount;
@@ -288,10 +261,10 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return evolutionaryProcessDelegate.getInfinitesimalSquaredMatrixBufferIndex(nodeNum);
     }
 
-    @Override
-    public boolean isTraitLoggable() {
-        return false;
-    }
+//    @Override
+//    public boolean isTraitLoggable() {
+//        return false;
+//    }
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
@@ -309,7 +282,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
-            operations[k++] = Beagle.NONE;//getPreOrderScaleBufferIndex(tmpNodeOperation.getLeftChild()); // TODO:rescaling control
+            operations[k++] = Beagle.NONE;
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());

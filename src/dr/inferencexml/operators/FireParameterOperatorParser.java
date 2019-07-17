@@ -48,7 +48,10 @@ public class FireParameterOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        double[] values = xo.getDoubleArrayAttribute(VALUE);
+        double[] values = null;
+        if (xo.hasAttribute(VALUE)) {
+            values = xo.getDoubleArrayAttribute(VALUE);
+        }
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 

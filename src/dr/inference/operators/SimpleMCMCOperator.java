@@ -184,16 +184,34 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         return 0.0;
     }
 
+    @Override
     public double getMeanEvaluationTime() {
         return (double) sumEvaluationTime / (double) (acceptCount + rejectCount);
     }
 
+    @Override
     public long getTotalEvaluationTime() {
         return sumEvaluationTime;
     }
 
+    @Override
     public void addEvaluationTime(long time) {
         sumEvaluationTime += time;
+    }
+
+    @Override
+    public double getMeanCalculationCount() {
+        return (double) sumCalculationCount / (double) (acceptCount + rejectCount);
+    }
+
+    @Override
+    public void addCalculationCount(long count) {
+        sumCalculationCount += count;
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        return sumCalculationCount;
     }
 
     /**
@@ -213,6 +231,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private boolean operateAllowed = true;
 
     private long sumEvaluationTime = 0;
+    private long sumCalculationCount = 0;
 
     private Deque<Integer> windowAcceptance = new ArrayDeque<Integer>();
 }

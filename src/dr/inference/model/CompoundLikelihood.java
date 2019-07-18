@@ -39,7 +39,7 @@ import java.util.concurrent.*;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
+public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 
     public final static boolean UNROLL_COMPOUND = true;
 
@@ -372,8 +372,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
     		evaluationCounts[i] = 0;
     	}
     }
-
-
+    
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -401,6 +400,17 @@ public class CompoundLikelihood implements Likelihood, Reportable, Keywordable {
             }
         }
         return keywords;
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        long count = 0;
+        for (Likelihood likelihood : likelihoods) {
+            if (likelihood instanceof Profileable) {
+                count += ((Profileable)likelihood).getTotalCalculationCount();
+            }
+        }
+        return count;
     }
 
     private class LikelihoodColumn extends dr.inference.loggers.NumberColumn implements Keywordable {

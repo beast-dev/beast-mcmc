@@ -79,7 +79,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, rateIndicatorParameter.getDimension()));
             this.threshold = threshold;
         }
-        ratesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension()));
+        ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, ratesParameter.getDimension()));
 
         for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
             ratesParameter.setParameterValue(i, 1.0);

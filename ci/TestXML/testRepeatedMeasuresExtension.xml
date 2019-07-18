@@ -148,14 +148,13 @@
 
     <operators id="operators" optimizationSchedule="log">
 
-        <compoundPrecisionOperator weight="1">
-            <diffusionOperator>
-                <precisionGibbsOperator idref="diffOp"/>
-            </diffusionOperator>
-            <residualOperator>
-                <precisionGibbsOperator idref="resOp"/>
-            </residualOperator>
-        </compoundPrecisionOperator>
+        <fireParameterChanged weight="1" value="0.684147 -0.112829 1.89669 -0.112829 1.20292 -1.14092 1.89669 -1.14092 7.08688">
+            <parameter idref="precisionMatrix"/>
+        </fireParameterChanged>
+
+        <fireParameterChanged weight="1" value="19.8544 18.0595 0.784233 18.0595 22.116 -4.46133 0.784233 -4.46133 5.0386">
+            <parameter idref="samplingPrecision"/>
+        </fireParameterChanged>
 
     </operators>
 
@@ -186,45 +185,61 @@
 
 
 
-    <report>
-        With likelihood =
-        <traitDataLikelihood idref="traitLikelihood"/>
-    </report>
-
-    <report>
+    <report id="validationReport">
         Inferred trait mean and variance:
         <traitValidationProvider idref="traitValidationProvider"/>
-        Compare to:
-        mean: 0.31499421247110604 5.882876376088477 5.948909248588295 2.2669520814679913
-        variance: 1.1813     0.0273852  0.0568626  0.0245222
-                0.0273852  1.39617    0.795602   0.0351138
-                0.0568626  0.795602   1.41896    0.204229
-                0.0245222  0.0351138  0.204229   1.57708
     </report>
 
-<!--    <mcmc id="mcmc" chainLength="1000" autoOptimize="true">-->
-<!--        <posterior id="posterior">-->
-<!--            <prior id="prior">-->
-<!--                <gammaPrior idref="samplingPrior"/>-->
-<!--                <multivariateWishartPrior idref="precisionPrior"/>-->
-<!--            </prior>-->
-<!--            <likelihood>-->
-<!--                <traitDataLikelihood idref="traitLikelihood"/>-->
-<!--            </likelihood>-->
-<!--        </posterior>-->
-<!--        <operators idref="operators"/>-->
-<!--        <log id="screenLog" logEvery="10000">-->
-<!--            <column label="Posterior" dp="4" width="12">-->
-<!--                <posterior idref="posterior"/>-->
-<!--            </column>-->
-<!--            <column label="Prior" dp="4" width="12">-->
-<!--                <posterior idref="prior"/>-->
-<!--            </column>-->
-<!--            <column label="Likelihood" dp="4" width="12">-->
-<!--                <posterior idref="traitLikelihood"/>-->
-<!--            </column>-->
-<!--        </log>-->
-<!--        <log id="fileLog" logEvery="100" fileName="precision_log.log">-->
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check trait simulation mean
+        </message>
+        <actual regex="(?s)Mean:\s*(.*?)\n">
+            <traitValidationProvider idref="traitValidationProvider"/>
+        </actual>
+        <expected>
+            0.314994, 5.88288, 5.94891, 2.26695
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="{}">
+        <message>
+            Check trait simulation
+        </message>
+        <actual regex="(?s)Covariance:\s*(.*)">
+            <traitValidationProvider idref="traitValidationProvider"/>
+        </actual>
+        <expected>
+            1.1813     0.0273852  0.0568626  0.0245222
+            0.0273852  1.39617    0.795602   0.0351138
+            0.0568626  0.795602   1.41896    0.204229
+            0.0245222  0.0351138  0.204229   1.57708
+        </expected>
+    </assertEqual>
+
+    <mcmc id="mcmc" chainLength="10" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <gammaPrior idref="samplingPrior"/>
+                <multivariateWishartPrior idref="precisionPrior"/>
+            </prior>
+            <likelihood>
+                <traitDataLikelihood idref="traitLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="100">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <posterior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <posterior idref="traitLikelihood"/>
+            </column>
+        </log>
+<!--        <log id="fileLog" logEvery="1" fileName="precision_log.log">-->
 <!--            <posterior idref="posterior"/>-->
 <!--            <prior idref="prior"/>-->
 <!--            <likelihood idref="traitLikelihood"/>-->
@@ -235,7 +250,39 @@
 <!--            <crossValidation idref="traitValidation"/>-->
 <!--            <traitValidation idref="validation"/>-->
 <!--        </log>-->
-<!--    </mcmc>-->
+    </mcmc>
+
+    <report>
+        Inferred trait mean and variance:
+        <traitValidationProvider idref="traitValidationProvider"/>
+    </report>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check trait simulation mean
+        </message>
+        <actual regex="(?s)Mean:\s*(.*?)\n">
+            <traitValidationProvider idref="traitValidationProvider"/>
+        </actual>
+        <expected>
+            0.0817654, 6.17991, 7.0942, 1.06251
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="{}">
+        <message>
+            Check trait simulation
+        </message>
+        <actual regex="(?s)Covariance:\s*(.*)">
+            <traitValidationProvider idref="traitValidationProvider"/>
+        </actual>
+        <expected>
+            1.63446     0.0345087   1.01502  -1.00054
+            0.0345087   3.47202     2.50475  -0.213948
+            1.01502     2.50475     5.34533  -1.76741
+            -1.00054    -0.213948   -1.76741   1.64619
+        </expected>
+    </assertEqual>
 
 </beast>
 

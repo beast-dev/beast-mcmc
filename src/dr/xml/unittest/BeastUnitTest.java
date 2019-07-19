@@ -75,10 +75,12 @@ public class BeastUnitTest implements Reportable {
 
             private final double tolerance;
             private final String stripChars;
+            private final ToleranceType toleranceType;
 
-            DoubleAssert(double tolerance, String stripChars) {
+            DoubleAssert(double tolerance, ToleranceType tolType, String stripChars) {
                 this.tolerance = tolerance;
                 this.stripChars = stripChars;
+                this.toleranceType = tolType;
             }
 
             @Override
@@ -92,7 +94,7 @@ public class BeastUnitTest implements Reportable {
                 }
 
                 for (int i = 0; i < lhs.length; ++i) {
-                    if (!close(lhs[i], rhs[i], tolerance)) {
+                    if (!toleranceType.close(lhs[i], rhs[i], tolerance)) {
                         return false;
                     }
                 }
@@ -113,11 +115,27 @@ public class BeastUnitTest implements Reportable {
                 return reals;
             }
 
-            private boolean close(double lhs, double rhs, double tolerance) {
-                return Math.abs(lhs - rhs) < tolerance;
+            enum ToleranceType {
+                RELATIVE {
+                    @Override
+                    boolean close(double lhs, double rhs, double tolerance) {
+                        double tol = Math.abs(tolerance * rhs);
+                        return ToleranceType.ABSOLUTE.close(lhs, rhs, tol);
+                    }
+                },
+                ABSOLUTE {
+                    @Override
+                    boolean close(double lhs, double rhs, double tolerance) {
+                        return Math.abs(lhs - rhs) < tolerance;
+                    }
+                };
+
+                abstract boolean close(double lhs, double rhs, double tolerance);
             }
+
         }
     }
+
 
     private static final String CHECK = "assertEqual";
     private static final String MESSAGE = "message";
@@ -127,6 +145,9 @@ public class BeastUnitTest implements Reportable {
     private static final String TOLERANCE_STRING = "tolerance";
     private static final String VERBOSE = "verbose";
     private static final String STRIP_CHARACTERS = "charactersToStrip";
+    private static final String TOLERANCE_TYPE = "toleranceType";
+    private static final String ABSOLUTE = "absolute";
+    private static final String RELATIVE = "relative";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -140,12 +161,32 @@ public class BeastUnitTest implements Reportable {
 
             String expected = parseValue(xo.getChild(EXPECTED));
             String actual = parseValue(xo.getChild(ACTUAL));
-
             String stripChars = xo.getAttribute(STRIP_CHARACTERS, ",");
 
-            AssertType assertType = xo.hasAttribute(TOLERANCE_STRING) ?
-                    new AssertType.DoubleAssert(xo.getDoubleAttribute(TOLERANCE_STRING), stripChars) :
-                    new AssertType.StringAssert();
+            AssertType assertType;
+
+            if (xo.hasAttribute(TOLERANCE_STRING)) {
+                double tolerance = xo.getDoubleAttribute(TOLERANCE_STRING);
+                String tolTypeString = xo.getAttribute(TOLERANCE_TYPE, ABSOLUTE);
+
+                AssertType.DoubleAssert.ToleranceType tolType;
+
+                if (tolTypeString.equalsIgnoreCase(ABSOLUTE)) {
+                    tolType = AssertType.DoubleAssert.ToleranceType.ABSOLUTE;
+
+                } else if (tolTypeString.equalsIgnoreCase(RELATIVE)) {
+                    tolType = AssertType.DoubleAssert.ToleranceType.RELATIVE;
+
+                } else {
+                    throw new XMLParseException("The optional attribute " + TOLERANCE_TYPE + " must be either \"" +
+                            RELATIVE + "\" or \"" + ABSOLUTE + "\"");
+                }
+
+                assertType = new AssertType.DoubleAssert(tolerance, tolType, stripChars);
+
+            } else {
+                assertType = new AssertType.StringAssert();
+            }
 
             BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType);
             unitTest.execute();
@@ -222,5 +263,6 @@ public class BeastUnitTest implements Reportable {
             }, true),
             AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
             AttributeRule.newBooleanRule(VERBOSE, true),
+            AttributeRule.newStringRule(TOLERANCE_TYPE, true)
     };
 }

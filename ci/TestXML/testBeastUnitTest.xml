@@ -249,7 +249,7 @@
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-3" verbose="true">
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true">
         <message>
             Check log likelihood of observed data
         </message>
@@ -258,6 +258,18 @@
         </actual>
         <expected>
             -3337.6458
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="relative" verbose="true">
+        <message>
+            Check log likelihood of observed data
+        </message>
+        <actual regex="logDatumLikelihood:\s+(.*)\n">
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </actual>
+        <expected>
+            -3338
         </expected>
     </assertEqual>
 

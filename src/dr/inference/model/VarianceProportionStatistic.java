@@ -48,6 +48,7 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
+import static java.lang.Math.negateExact;
 import static java.lang.Math.sqrt;
 
 /**
@@ -57,7 +58,8 @@ import static java.lang.Math.sqrt;
  * @author Gabriel Hassler
  */
 
-public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener, ModelListener {
+public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener, ModelListener,
+        Reportable {
 
 
     public static final String PARSER_NAME = "varianceProportionStatistic";
@@ -120,7 +122,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         if (!useEmpiricalVariance) {
             tree.addModelListener(this);
             diffusionModel.getPrecisionParameter().addParameterListener(this);
-            dataModel.getPrecisionMatrix().addParameterListener(this);
+            dataModel.getExtensionPrecision().addParameterListener(this);
         }
 
         if (useEmpiricalVariance) {
@@ -136,6 +138,25 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
         }
 
         this.ratio = ratio;
+    }
+
+    @Override
+    public String getReport() {
+        Matrix mat = new Matrix(dimTrait, dimTrait);
+        for (int i = 0; i < dimTrait; i++) {
+            int offset = dimTrait * i;
+            for (int j = 0; j < dimTrait; j++) {
+                mat.set(i, j, getStatisticValue(offset + j));
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Variance proportion statistic: " + ratio.name());
+        sb.append("\n");
+        sb.append("stat value = ");
+        sb.append(mat);
+        sb.append("\n\n");
+        return sb.toString();
     }
 
     /**
@@ -440,7 +461,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        assert (variable == dataModel.getSamplingPrecision() || variable == diffusionModel.getPrecisionParameter());
+        assert (variable == dataModel.getExtensionPrecision() || variable == diffusionModel.getPrecisionParameter());
 
         varianceKnown = false;
     }

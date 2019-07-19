@@ -25,7 +25,6 @@ import static dr.util.EuclideanToInfiniteNormUnitBallTransform.projection;
  */
 public class MissingOps {
 
-    private static final double TOLERANCE = 1e-10; // TODO Maybe based on SingularOps.singularThreshold(svd)?
 
     public static DenseMatrix64F wrap(final double[] source, final int offset,
                                       final int numRows, final int numCols) {
@@ -370,7 +369,7 @@ public class MissingOps {
         } else {
             double logDet = 0;
             double[] dataLU = alg.getLU().getData();
-            for(int i = 0; i < n * n; i += n + 1) {
+            for (int i = 0; i < n * n; i += n + 1) {
                 logDet += Math.log(Math.abs(dataLU[i]));
             }
 
@@ -398,16 +397,18 @@ public class MissingOps {
 
             SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(source.getNumRows(), source.getNumCols(), false, false, false);
             if (!svd.decompose(source)) {
-                if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
+                if (SingularOps.rank(svd) == 0)
+                    return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
                 throw new RuntimeException("SVD decomposition failed");
             }
             double[] values = svd.getSingularValues();
+            double tol = SingularOps.singularThreshold(svd);
 
             int dim = 0;
             double logDet = 0;
             for (int i = 0; i < values.length; i++) {
                 final double lambda = values[i];
-                if (lambda > TOLERANCE) {
+                if (lambda > tol) {
                     logDet += Math.log(lambda);
                     ++dim;
                 }
@@ -468,16 +469,17 @@ public class MissingOps {
 
                 SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
                 if (!svd.decompose(A)) {
-                    if (SingularOps.rank(svd) == 0) return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
+                    if (SingularOps.rank(svd) == 0)
+                        return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
                     throw new RuntimeException("SVD decomposition failed");
                 }
                 double[] values = svd.getSingularValues();
 
-//                double eps = SingularOps.singularThreshold(svd);
+                double tol = SingularOps.singularThreshold(svd);
 
                 for (int i = 0; i < values.length; ++i) {
                     final double lambda = values[i];
-                    if (lambda > TOLERANCE) {
+                    if (lambda > tol) {
                         logDet += Math.log(lambda);
                         ++dim;
                     }
@@ -639,7 +641,6 @@ public class MissingOps {
             throw new RuntimeException("Partial safeMult not yet implemented.");
         }
     }
-
 
 
 //    public static void safeAdd(DenseMatrix64F source0, DenseMatrix64F source1, DenseMatrix64F destination) {

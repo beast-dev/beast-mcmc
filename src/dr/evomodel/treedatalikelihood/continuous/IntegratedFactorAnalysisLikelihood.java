@@ -29,8 +29,11 @@ import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.hmc.TaxonTaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
@@ -38,6 +41,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
@@ -55,7 +59,7 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
  */
 
 public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
-        implements ContinuousTraitPartialsProvider, Reportable {
+        implements ContinuousTraitPartialsProvider, ModelExtensionProvider.NormalExtensionProvider, Reportable {
 
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
@@ -318,6 +322,48 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final double nuggetPrecision;
     private final TaxonTaskPool taxonTaskPool;
 
+    @Override
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
+                                                            TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait,
+                this, tree);
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance() { //TODO: setup buffer if needed (probably not)
+        //TODO: check that this does what it's supposed to.
+        double[] precisionBuffer = traitPrecision.getParameterValues();
+        DenseMatrix64F varianceMat = MissingOps.wrapDiagonalInverse(precisionBuffer, 0, precisionBuffer.length);
+        return varianceMat;
+    }
+
+    @Override
+    public MatrixParameterInterface getExtensionPrecision() {
+        //TODO: check that this does what it's supposed to.
+        return new DiagonalMatrix(traitPrecision);
+    }
+
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        //TODO: check that this does what it's supposed to.
+
+        DenseMatrix64F treeTraitMatrix = DenseMatrix64F.wrap(numTaxa, numFactors, treeTraits);
+        DenseMatrix64F loadingsMatrix = DenseMatrix64F.wrap(numFactors, dimTrait,
+                loadingsTransposed.getParameterValues());
+
+
+        DenseMatrix64F traitMatrix = new DenseMatrix64F(numTaxa, dimTrait);
+        org.ejml.ops.CommonOps.mult(treeTraitMatrix, loadingsMatrix, traitMatrix);
+
+        if (DEBUG) {
+            treeTraitMatrix.print();
+            loadingsMatrix.print();
+            traitMatrix.print();
+        }
+
+        return traitMatrix.data;
+    }
+
     private class HashedMissingArray {
 
         final private double[] array;
@@ -437,7 +483,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         return ci;
     }
-    
+
     private double computeTraitInnerProduct(final int taxon) {
         final double[] observed = observedIndicators[taxon];
         final Parameter Y = traitParameter.getParameter(taxon);
@@ -542,7 +588,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
             final double traitInnerProduct = USE_INNER_PRODUCT_CACHE ?
-                                traitInnerProducts[taxon] : computeTraitInnerProduct(taxon);
+                    traitInnerProducts[taxon] : computeTraitInnerProduct(taxon);
             final double innerProductChange = traitInnerProduct - factorInnerProduct;
 
             int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension(); //TODO: use this effective dimension in safeMultivariateIntegrator

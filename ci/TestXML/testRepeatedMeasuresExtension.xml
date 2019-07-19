@@ -185,12 +185,12 @@
 
 
 
-    <report id="validationReport">
-        Inferred trait mean and variance:
-        <traitValidationProvider idref="traitValidationProvider"/>
-    </report>
+<!--    <report id="validationReport">-->
+<!--        Inferred trait mean and variance:-->
+<!--        <traitValidationProvider idref="traitValidationProvider"/>-->
+<!--    </report>-->
 
-    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true" charactersToStrip="\[\],">
         <message>
             Check trait simulation mean
         </message>
@@ -202,9 +202,9 @@
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="{}">
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="{}">
         <message>
-            Check trait simulation
+            Check trait simulation covariance
         </message>
         <actual regex="(?s)Covariance:\s*(.*)">
             <traitValidationProvider idref="traitValidationProvider"/>
@@ -252,14 +252,14 @@
 <!--        </log>-->
     </mcmc>
 
-    <report>
-        Inferred trait mean and variance:
-        <traitValidationProvider idref="traitValidationProvider"/>
-    </report>
+<!--    <report>-->
+<!--        Inferred trait mean and variance:-->
+<!--        <traitValidationProvider idref="traitValidationProvider"/>-->
+<!--    </report>-->
 
-    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true" charactersToStrip="\[\],">
         <message>
-            Check trait simulation mean
+            Check new trait simulation mean
         </message>
         <actual regex="(?s)Mean:\s*(.*?)\n">
             <traitValidationProvider idref="traitValidationProvider"/>
@@ -269,9 +269,9 @@
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="{}">
+    <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="{}">
         <message>
-            Check trait simulation
+            Check new trait simulation covariance
         </message>
         <actual regex="(?s)Covariance:\s*(.*)">
             <traitValidationProvider idref="traitValidationProvider"/>

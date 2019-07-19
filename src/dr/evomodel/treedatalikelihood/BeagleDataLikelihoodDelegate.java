@@ -791,6 +791,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 return Double.NEGATIVE_INFINITY;
             }
             beagle.setCategoryRates(categoryRates);
+            // TODO Try beagle.setCategoryWeights() here
         }
 
         if (branchUpdateCount > 0) {
@@ -881,8 +882,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         }
 
         // these could be set only when they change but store/restore would need to be considered
-        beagle.setCategoryWeights(0, categoryWeights);
-        beagle.setStateFrequencies(0, frequencies);
+        beagle.setCategoryWeights(0, categoryWeights); // TODO move
+        beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
 
         double[] sumLogLikelihoods = new double[1];
 

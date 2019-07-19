@@ -1088,7 +1088,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
+        return "BEAGLE likelihood calculation library";
     }
 
     @Override

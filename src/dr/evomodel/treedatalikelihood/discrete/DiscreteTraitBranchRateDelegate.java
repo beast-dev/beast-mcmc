@@ -29,6 +29,9 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
+import dr.util.Citation;
+
+import java.util.List;
 
 /**
  * @author Xiang Ji

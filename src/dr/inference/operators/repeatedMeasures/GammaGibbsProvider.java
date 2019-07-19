@@ -10,6 +10,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
@@ -125,9 +126,23 @@ public interface GammaGibbsProvider {
             this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.precisionParameter = dataModel.getExtensionPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
             this.missingVector = dataModel.getMissingIndicator();
+
+            MatrixParameterInterface matrixParameter = dataModel.getExtensionPrecision();
+
+            if (matrixParameter instanceof DiagonalMatrix) {
+                this.precisionParameter = ((DiagonalMatrix) matrixParameter).getDiagonalParameter();
+
+            } else { //TODO: alternatively, check that the off-diagonal elements are zero every time you update the parameter?
+                //TODO: does this belong in the parser?
+                throw new RuntimeException(this.getClass().getName() +
+                        " only applies to diagonal precision matrices, but the " +
+                        ModelExtensionProvider.NormalExtensionProvider.class.getName() +
+                        " supplied a precision matrix of class " +
+                        matrixParameter.getClass().getName() + ".");
+            }
+
         }
 
         @Override

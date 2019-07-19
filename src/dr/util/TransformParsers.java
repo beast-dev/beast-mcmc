@@ -29,6 +29,9 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static dr.util.Transform.Util.parseMultivariableTransform;
 
 /**
  * @author Marc A. Suchard
@@ -68,6 +71,44 @@ public class TransformParsers {
         @Override
         public String getParserName() {
             return COMPOUND;
+        }
+    };
+
+    @SuppressWarnings("unused")
+    public static XMLObjectParser COMPOUND_MULTIVARIATE_PARSER = new AbstractXMLObjectParser() {
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            List<Transform.MultivariableTransform> transforms = new ArrayList<Transform.MultivariableTransform>();
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                transforms.add(parseMultivariableTransform(xo.getChild(i)));
+            }
+
+            return new Transform.MultivariateArray(transforms);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[] {
+                    new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
+                    new ElementRule(Transform.MultivariableTransform.class, 0, Integer.MAX_VALUE),
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return null;
+        }
+
+        @Override
+        public Class getReturnType() {
+            return Transform.MultivariateArray.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return COMPOUND_MULTIVARIATE;
         }
     };
 
@@ -204,20 +245,30 @@ public class TransformParsers {
              }
 
              Transform.ParsedTransform transform = new Transform.ParsedTransform();
-             transform.transform = thisTransform;
-             if (xo.hasAttribute(START)) {
-                 transform.start = xo.getIntegerAttribute(START);
-                 transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
-                 transform.every = xo.getAttribute(EVERY, 1);
-                 // todo: check values are valid
-                 transform.start--; // zero-indexed
-             } else {
-                 if (xo.hasAttribute(SUM)) {
-                     transform.fixedSum = xo.getDoubleAttribute(SUM);
-                 }
-                 transform.parameters = new ArrayList<Parameter>();
 
-                 transform.parameters.addAll(xo.getAllChildren(Parameter.class));
+             if (xo.hasAttribute(START) && xo.hasAttribute(DIM)) {
+                 throw new XMLParseException("Transform can only have one of attributes 'start' or 'dim'.");
+             }
+
+             if (xo.hasAttribute(DIM)) {
+                 int dim = xo.getIntegerAttribute(DIM);
+                 transform.transform = new Transform.Array(thisTransform, dim, null);
+             } else {
+                 transform.transform = thisTransform;
+                 if (xo.hasAttribute(START)) {
+                     transform.start = xo.getIntegerAttribute(START);
+                     transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
+                     transform.every = xo.getAttribute(EVERY, 1);
+                     // todo: check values are valid
+                     transform.start--; // zero-indexed
+                 } else {
+                     if (xo.hasAttribute(SUM)) {
+                         transform.fixedSum = xo.getDoubleAttribute(SUM);
+                     }
+                     transform.parameters = new ArrayList<Parameter>();
+
+                     transform.parameters.addAll(xo.getAllChildren(Parameter.class));
+                 }
              }
 
              return transform;
@@ -231,6 +282,7 @@ public class TransformParsers {
                      AttributeRule.newIntegerRule(EVERY, true),
                      AttributeRule.newDoubleRule(SUM, true),
                      AttributeRule.newBooleanRule(INVERSE, true),
+                     AttributeRule.newIntegerRule(DIM, true),
                      new ElementRule(Transform.ParsedTransform.class, 0, 1),
                      new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
              };
@@ -261,4 +313,6 @@ public class TransformParsers {
     private static final String OUTER = "outer";
     private static final String INNER = "inner";
     private static final String COMPOUND = "compoundTransform";
+    private static final String DIM = "dim";
+    private static final String COMPOUND_MULTIVARIATE = "multivariateCompoundTransform";
 }

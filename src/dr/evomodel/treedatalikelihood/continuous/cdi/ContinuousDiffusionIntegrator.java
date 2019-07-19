@@ -25,10 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
@@ -49,7 +47,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getPostOrderPartial(int bufferIndex, final double[] partial);
 
-    double getInverseBranchLength(int bufferIndex); // TODO Get rid of inverse
+    double getBranchLength(int bufferIndex);
 
     void getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
 
@@ -78,7 +76,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
 
-    void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
+    void updatePostOrderPartials(final int[] operations, int operationCount, boolean computeRemainders, boolean incrementOuterProducts);
 
     @SuppressWarnings("unused")
     void updatePreOrderPartials(final int[] operations, int operationCount);
@@ -125,7 +123,9 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     int getDimProcess();
 
-    void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+//    void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+
+//    void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
 
     class Basic implements ContinuousDiffusionIntegrator {
 
@@ -232,8 +232,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public double getInverseBranchLength(int bufferIndex) {
-            return 1.0 / branchLengths[bufferIndex * dimMatrix];
+        public double getBranchLength(int bufferIndex) {
+            return branchLengths[bufferIndex * dimMatrix];
         }
 
         @Override
@@ -258,7 +258,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert (precision != null);
             assert (precision.length >= dimTrait * dimTrait);
 
-            double scalar = getInverseBranchLength(bufferIndex);
+            double scalar = 1.0 / getBranchLength(bufferIndex);
             for (int i = 0; i < dimTrait * dimTrait; ++i) { // TODO Write generic function for WrappedVector?
                 precision[i] = scalar * diffusions[precisionOffset + i];
             }
@@ -502,7 +502,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         }
 
         @Override
-        public void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
+        public void updatePostOrderPartials(final int[] operations, int operationCount,
+                                            boolean computeRemainders, boolean incrementOuterProducts) {
 
             if (DEBUG) {
                 System.err.println("Post-order operations:");
@@ -521,6 +522,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         operations[offset + 2],
                         operations[offset + 3],
                         operations[offset + 4],
+                        computeRemainders,
                         incrementOuterProducts
                 );
 
@@ -751,6 +753,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 final int iMatrix,
                 final int jBuffer,
                 final int jMatrix,
+                final boolean computeRemainders,
                 final boolean incrementOuterProducts
         ) {
             // Determine buffer offsets
@@ -832,7 +835,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 // Computer remainder at node k
                 double remainder = 0.0;
-                if (pi != 0 && pj != 0) {
+                if (computeRemainders && pi != 0 && pj != 0) {
 
                     // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
 
@@ -968,9 +971,13 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             return sb.toString();
         }
 
-        public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
-            throw new RuntimeException("Not implemented for unsafe integrators.");
-        }
+//        public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//            throw new RuntimeException("Not implemented for unsafe integrators.");
+//        }
+//
+//        public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//            throw new RuntimeException("Not implemented for unsafe integrators.");
+//        }
 
         private static boolean DEBUG = false;
     }

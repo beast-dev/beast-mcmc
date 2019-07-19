@@ -28,11 +28,15 @@ package dr.util;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.XMLObject;
 import org.apache.commons.math.util.FastMath;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * interface for the one-to-one transform of a continuous variable.
@@ -261,6 +265,8 @@ public interface Transform {
 
     abstract class MultivariableTransform implements Transform {
 
+        abstract public int getDimension();
+
         public double transform(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
@@ -319,6 +325,7 @@ public interface Transform {
             this.dim = dim;
         }
 
+        @Override
         public int getDimension() {
             return dim;
         }
@@ -476,6 +483,10 @@ public interface Transform {
         public double getConstrainedSum() {
             return this.fixedSum;
         }*/
+
+        public int getDimension() {
+            return -1;
+        }
 
         public double[] transform(double[] values, int from, int to) {
             double[] transformedValues = new double[to - from + 1];
@@ -889,6 +900,10 @@ public interface Transform {
 
     class NoTransformMultivariable extends MultivariableTransform {
 
+        public int getDimension() {
+            return -1;
+        }
+
         @Override
         public String getTransformName() {
             return "NoTransformMultivariate";
@@ -1043,8 +1058,13 @@ public interface Transform {
     class ComposeMultivariable extends MultivariableTransform {
 
         public ComposeMultivariable(MultivariableTransform outer, MultivariableTransform inner) {
+            assert outer.getDimension() == inner.getDimension() : "In ComposeMultivariable, transforms should have the same dimension.";
             this.outer = outer;
             this.inner = inner;
+        }
+
+        public int getDimension() {
+            return outer.getDimension();
         }
 
         @Override
@@ -1316,7 +1336,6 @@ public interface Transform {
 
         @Override
         protected double[] inverse(double[] values) {
-
             double[] result = new double[dim];
             result[0] = Math.exp(values[0]);
             for (int i = 1; i < dim; i++) {
@@ -1390,6 +1409,20 @@ public interface Transform {
 //              if (parameter.getDimension() != array.size()) {
 //                  throw new IllegalArgumentException("Dimension mismatch");
 //              }
+          }
+
+          public Array(Transform transform, int dim, Parameter parameter) {
+              List<Transform> repArray = new ArrayList<Transform>();
+              for (int i = 0; i < dim; i++) {
+                  repArray.add(transform);
+              }
+
+              this.parameter = parameter;
+              this.array = repArray;
+          }
+
+          public int getDimension() {
+              return array.size();
           }
 
           public Parameter getParameter() { return parameter; }
@@ -1529,6 +1562,10 @@ public interface Transform {
         public Collection(List<ParsedTransform> segments, Parameter parameter) {
             this.parameter = parameter;
             this.segments = ensureContiguous(segments);
+        }
+
+        public int getDimension() {
+            return parameter.getDimension();
         }
 
         public Parameter getParameter() { return parameter; }
@@ -1744,17 +1781,19 @@ public interface Transform {
 
     class MultivariateArray extends MultivariateTransform {
 
-        private final List<MultivariateTransform> array;
+        private final List<MultivariableTransform> array;
 
-        public MultivariateArray(List<MultivariateTransform> array) {
-            super(getDimension(array));
+        public MultivariateArray(List<MultivariableTransform> array) {
+            super(getDimensionArray(array));
             this.array = array;
         }
 
-        private static int getDimension(List<MultivariateTransform> array) {
+        private static int getDimensionArray(List<MultivariableTransform> array) {
             int dim = 0;
-            for (MultivariateTransform anArray : array) {
-                dim += anArray.getDimension();
+            for (MultivariableTransform anArray : array) {
+                int dimArray = anArray.getDimension();
+                assert dimArray > 0 : "MultivariateArray only allows for transforms with a defined dimension.";
+                dim += dimArray;
             }
             return dim;
         }
@@ -1765,11 +1804,11 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmp[] = new double[dim];
                 System.arraycopy(values, offset, tmp, 0, dim);
-                System.arraycopy(anArray.transform(tmp), 0, result, offset, dim);
+                System.arraycopy(anArray.transform(tmp, 0, dim), 0, result, offset, dim);
                 offset += dim;
             }
             return result;
@@ -1781,11 +1820,11 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmp[] = new double[dim];
                 System.arraycopy(values, offset, tmp, 0, dim);
-                System.arraycopy(anArray.inverse(tmp), 0, result, offset, dim);
+                System.arraycopy(anArray.inverse(tmp, 0, dim), 0, result, offset, dim);
                 offset += dim;
             }
             return result;
@@ -1802,7 +1841,7 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmp[] = new double[dim];
                 System.arraycopy(values, offset, tmp, 0, dim);
@@ -1818,13 +1857,13 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmpVal[] = new double[dim];
                 System.arraycopy(values, offset, tmpVal, 0, dim);
                 double tmpGrad[] = new double[dim];
                 System.arraycopy(gradient, offset, tmpGrad, 0, dim);
-                System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal), 0, result, offset, dim);
+                System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal, 0, dim), 0, result, offset, dim);
                 offset += dim;
             }
             return result;
@@ -1835,7 +1874,7 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmpVal[] = new double[dim];
                 System.arraycopy(values, offset, tmpVal, 0, dim);
@@ -1855,13 +1894,13 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmpVal[] = new double[dim];
                 System.arraycopy(values, offset, tmpVal, 0, dim);
                 double tmpGrad[] = new double[dim];
                 System.arraycopy(gradient, offset, tmpGrad, 0, dim);
-                System.arraycopy(anArray.updateGradientInverseUnWeightedLogDensity(tmpGrad, tmpVal), 0, result, offset, dim);
+                System.arraycopy(anArray.updateGradientInverseUnWeightedLogDensity(tmpGrad, tmpVal, 0, dim), 0, result, offset, dim);
                 offset += dim;
             }
             return result;
@@ -1873,7 +1912,7 @@ public interface Transform {
             final double[] result = values.clone();
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmp[] = new double[dim];
                 System.arraycopy(values, offset, tmp, 0, dim);
@@ -1889,11 +1928,11 @@ public interface Transform {
             double sum = 0.0;
 
             int offset = 0;
-            for (MultivariateTransform anArray : array) {
+            for (MultivariableTransform anArray : array) {
                 int dim = anArray.getDimension();
                 double tmp[] = new double[dim];
                 System.arraycopy(values, offset, tmp, 0, dim);
-                sum += anArray.getLogJacobian(tmp);
+                sum += anArray.getLogJacobian(tmp, 0, dim);
                 offset += dim;
             }
             return sum;
@@ -1977,6 +2016,16 @@ public interface Transform {
                     = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
             if (transform == null && parsedTransform != null) return parsedTransform.transform;
             return transform;
+        }
+
+        public static MultivariableTransform parseMultivariableTransform(Object obj) {
+            if (obj instanceof MultivariableTransform) {
+                return (MultivariableTransform) obj;
+            }
+            if (obj instanceof Transform.ParsedTransform) {
+                return (MultivariableTransform) ((Transform.ParsedTransform) obj).transform;
+            }
+            return null;
         }
     }
 

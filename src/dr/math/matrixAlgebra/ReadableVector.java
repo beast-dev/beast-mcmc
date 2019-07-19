@@ -26,6 +26,7 @@
 package dr.math.matrixAlgebra;
 
 
+import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
 
 /**
@@ -134,6 +135,25 @@ public interface ReadableVector {
             parameter.fireParameterChangedEvent();
         }
 
+//        public static void setParameter(WrappedVector position, FastMatrixParameter parameter) {
+//            parameter.setAllParameterValuesQuietly(position.getBuffer(),
+//                    position.getOffset());
+//            parameter.fireParameterChangedEvent();
+//        }
+
+        public static void setParameter(WrappedVector position, Parameter.Default parameter) {
+
+            double[] par = parameter.inspectParameterValues();
+            double[] pos = position.getBuffer();
+            int posOffset = position.getOffset();
+
+            for (int j = 0, dim = position.getDim(); j < dim; ++j) {
+                par[j] = pos[posOffset + j];
+//                parameter.setParameterValueQuietly(j, position.get(j));
+            }
+            parameter.fireParameterChangedEvent();
+        }        
+
         public static double innerProduct(ReadableVector lhs, ReadableVector rhs) {
 
             assert (lhs.getDim() == rhs.getDim());
@@ -141,6 +161,22 @@ public interface ReadableVector {
             double sum = 0;
             for (int i = 0, dim = lhs.getDim(); i < dim; ++i) {
                 sum += lhs.get(i) * rhs.get(i);
+            }
+
+            return sum;
+        }
+
+        public static double innerProduct(WrappedVector lhs, WrappedVector rhs) {
+
+            assert (lhs.getDim() == rhs.getDim());
+            double[] l = lhs.getBuffer();
+            double[] r = rhs.getBuffer();
+            int lOffset = lhs.getOffset();
+            int rOffset = rhs.getOffset();
+
+            double sum = 0;
+            for (int i = 0, dim = l.length; i < dim; ++i) {
+                sum += l[lOffset + i] * r[rOffset + i];
             }
 
             return sum;

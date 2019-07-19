@@ -44,7 +44,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         this.inverse = inverse;
         this.parameter.addVariableListener(this);
         Bounds bounds = parameter.getBounds();
-        if (bounds != null) {
+        if (bounds != null && !(transform instanceof Transform.MultivariateTransform)) {
             addBounds(bounds);
         }
     }

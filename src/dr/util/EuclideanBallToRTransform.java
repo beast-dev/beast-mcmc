@@ -152,7 +152,7 @@ public class EuclideanBallToRTransform extends Transform.MultivariateTransform {
             int dim = xo.getIntegerAttribute(DIMENSION);
 
             // Spherical (Euclidean to unconstrained)
-            List<MultivariateTransform> transformsMul = new ArrayList<MultivariateTransform>();
+            List<MultivariableTransform> transformsMul = new ArrayList<MultivariableTransform>();
             for (int i = 0; i < dim + 1; i++) {
                 transformsMul.add(new EuclideanBallToRTransform(dim));
             }

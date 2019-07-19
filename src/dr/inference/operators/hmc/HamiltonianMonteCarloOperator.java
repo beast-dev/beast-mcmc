@@ -42,6 +42,7 @@ import dr.util.Transform;
 
 /**
  * @author Max Tolkoff
+ * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
 
@@ -50,7 +51,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
-    protected LeapFrogEngine leapFrogEngine;
+    LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
     private final Options runtimeOptions;
@@ -380,7 +381,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         for (int i = 0; i < nStepsThisLeap; i++) { // Leap-frog
 
-            leapFrogEngine.updatePosition(position, momentum, stepSize);
+            try {
+                leapFrogEngine.updatePosition(position, momentum, stepSize);
+            } catch (ArithmeticException e) {
+                throw new NumericInstabilityException();
+            }
 
             if (i < (nStepsThisLeap - 1)) {
 
@@ -427,12 +432,26 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             void checkValue(double x) throws NumericInstabilityException {
                 if (Double.isNaN(x)) throw new NumericInstabilityException();
             }
+
+            @Override
+            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
+                if (Math.abs(x - y) > eps) {
+                    throw new NumericInstabilityException();
+                }
+            }
         },
 
         DEBUG {
             @Override
             void checkValue(double x) throws NumericInstabilityException {
                 if (Double.isNaN(x)) {
+                    System.err.println("Numerical instability in HMC momentum; throwing exception");
+                    throw new NumericInstabilityException();
+                }
+            }
+            @Override
+            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
+                if (Math.abs(x - y) > eps) {
                     System.err.println("Numerical instability in HMC momentum; throwing exception");
                     throw new NumericInstabilityException();
                 }
@@ -444,9 +463,14 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             void checkValue(double x) {
                 // Do nothing
             }
+
+            void checkEqual(double x, double y, double eps) {
+                // Do nothing
+            }
         };
 
         abstract void checkValue(double x) throws NumericInstabilityException;
+        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
     }
 
     protected InstabilityHandler getDefaultInstabilityHandler() {
@@ -475,9 +499,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         void updatePosition(final double[] position,
                             final WrappedVector momentum,
-                            final double functionalStepSize);
+                            final double functionalStepSize) throws NumericInstabilityException;
 
         void setParameter(double[] position);
+
+        @SuppressWarnings("unused")
+        void checkPosition(double[] position) throws NumericInstabilityException;
 
         double[] getLastGradient();
 
@@ -486,7 +513,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
-            final private InstabilityHandler instabilityHandler;
+            final InstabilityHandler instabilityHandler;
             final private MassPreconditioner preconditioning;
 
             final double[] mask;
@@ -494,9 +521,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             double[] lastGradient;
             double[] lastPosition;
 
-            protected Default(Parameter parameter, InstabilityHandler instabilityHandler,
-                              MassPreconditioner preconditioning,
-                              double[] mask) {
+            Default(Parameter parameter, InstabilityHandler instabilityHandler,
+                    MassPreconditioner preconditioning,
+                    double[] mask) {
                 this.parameter = parameter;
                 this.instabilityHandler = instabilityHandler;
                 this.preconditioning = preconditioning;
@@ -539,13 +566,20 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
             @Override
             public void updatePosition(double[] position, WrappedVector momentum,
-                                       double functionalStepSize) {
+                                       double functionalStepSize) throws NumericInstabilityException {
 
                 final int dim = momentum.getDim();
                 for (int i = 0; i < dim; i++) {
                     position[i] += functionalStepSize * preconditioning.getVelocity(i, momentum);
+                    instabilityHandler.checkValue(position[i]);
                 }
+                checkPosition(position);
                 setParameter(position);
+            }
+
+            @Override
+            public void checkPosition(double[] position) throws NumericInstabilityException {
+                // Do nothing
             }
 
             public void setParameter(double[] position) {
@@ -593,6 +627,15 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 super.setParameter(unTransformedPosition);
             }
 
+            @Override
+            public void checkPosition(double[] position) throws NumericInstabilityException {
+                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length), 0, position.length);
+                for (int i = 0; i < position.length; i++) {
+                    instabilityHandler.checkEqual(position[i], newPosition[i], EPS);
+                }
+            }
+
+            private double EPS = 10e-10;
         }
     }
 }

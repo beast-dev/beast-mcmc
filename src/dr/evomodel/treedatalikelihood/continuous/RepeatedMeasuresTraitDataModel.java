@@ -51,8 +51,8 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Gabriel Hassler
  */
-public class RepeatedMeasuresTraitDataModel extends
-        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider, ModelExtensionProvider.NormalExtensionProvider {
+public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel implements ContinuousTraitPartialsProvider,
+        ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
     private final MatrixParameterInterface samplingPrecision;
@@ -119,14 +119,6 @@ public class RepeatedMeasuresTraitDataModel extends
         return partial;
     }
 
-    public MatrixParameterInterface getPrecisionMatrix() {
-        return samplingPrecision;
-    }
-
-
-    public Parameter getSamplingPrecision() {
-        return samplingPrecision;
-    }
 
     private void recomputeVariance() {
         if (!varianceKnown) {
@@ -156,14 +148,27 @@ public class RepeatedMeasuresTraitDataModel extends
     }
 
     @Override
-    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate, TreeTrait treeTrait, Tree tree) {
-        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait, this, tree);
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
+                                                            TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait,
+                this, tree);
     }
 
     @Override
     public DenseMatrix64F getExtensionVariance() {
+        recomputeVariance();
         double[] buffer = samplingVariance.toArrayComponents();
         return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
+    }
+
+    @Override
+    public MatrixParameterInterface getExtensionPrecision() {
+        return samplingPrecision;
+    }
+
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        return treeTraits;
     }
 
 

@@ -201,14 +201,10 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
             int dim = xo.getIntegerAttribute(DIMENSION);
 
             // Fisher Z  (Infinte norm unit ball to unconstrained)
-            List<Transform> transforms = new ArrayList<Transform>();
-            for (int i = 0; i < dim * (dim + 1); i++) {
-                transforms.add(Transform.FISHER_Z);
-            }
-            Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
+            Transform.Array fisherZTransforms = new Transform.Array(Transform.FISHER_Z, dim * (dim + 1), null);
 
             // Spherical (Euclidean to Infinite norm unit ball)
-            List<MultivariateTransform> transformsMul = new ArrayList<MultivariateTransform>();
+            List<MultivariableTransform> transformsMul = new ArrayList<MultivariableTransform>();
             for (int i = 0; i < dim + 1; i++) {
                 transformsMul.add(new EuclideanToInfiniteNormUnitBallTransform(dim));
             }

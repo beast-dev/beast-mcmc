@@ -63,7 +63,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
-        boolean old = xo.getAttribute(OLD, true);
+        boolean old = xo.getAttribute(OLD, false);
 
         if (localScale != null) {
             if (old) {

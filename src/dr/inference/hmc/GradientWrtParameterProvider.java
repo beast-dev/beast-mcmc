@@ -173,7 +173,11 @@ public interface GradientWrtParameterProvider {
 
             if (checkValues) {
                 for (int i = 0; i < analytic.length; ++i) {
-                    if (Math.abs((analytic[i] - numeric[i]) / analytic[i]) > tolerance) {
+                    double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
+                    if (Math.abs(relativeDifference) > tolerance) {
+                        sb.append("\nDifference @ ").append(i + 1).append(": ")
+                                .append(analytic[i]).append(" ").append(numeric[i])
+                                .append(" ").append(relativeDifference).append("\n");
                         Logger.getLogger("dr.inference.hmc").info(sb.toString());
                         throw new GradientMismatchException();
                     }
@@ -207,5 +211,5 @@ public interface GradientWrtParameterProvider {
         return report;
     }
 
-    Double TOLERANCE = 1E-2;
+    Double TOLERANCE = 1E-1;
 }

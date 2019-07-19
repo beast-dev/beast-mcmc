@@ -100,7 +100,8 @@ public class ContinuousExtensionDelegate {
         @Override
         public double[] getExtendedValues() {
             double[] treeValues = super.getExtendedValues();
-            return getExtendedValues(treeValues);
+            double[] transformedValues = dataModel.transformTreeTraits(treeValues);
+            return getExtendedValues(transformedValues);
         }
 
         @Override

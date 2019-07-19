@@ -36,7 +36,7 @@ import dr.math.UnivariateFunction;
  * @author Korbinian Strimmer
  * @version $Id: NormalDistribution.java,v 1.7 2005/05/24 20:26:01 rambaut Exp $
  */
-public class NormalDistribution implements Distribution, GradientProvider, RandomGenerator {
+public class NormalDistribution implements Distribution, RandomGenerator, GradientProvider {
     //
     // Public stuff
     //
@@ -521,7 +521,7 @@ public class NormalDistribution implements Distribution, GradientProvider, Rando
         double[] x = GradientProvider.toDoubleArray(obj);
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {
-            result[i] = gradLogPdf(x[i], m, sd);
+            result[i] = gradLogPdf(x[i], getMean(), getSD());
         }
         return result;
     }

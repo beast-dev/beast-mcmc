@@ -26,7 +26,7 @@
 package dr.inference.operators;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -46,10 +46,11 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     public static final String OPERATOR_NAME = "normalGammaPrecisionGibbsOperator";
     public static final String LIKELIHOOD = "likelihood";
-    private static final String REPEATED_MEASURES = "repeatedMeasures";
+    private static final String NORMAL_EXTENSION = "normalExtension";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
-    
+    private static final String TREE_TRAIT_NAME = "treeTraitName";
+
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, Distribution prior,
                                              double weight) {
         this(gammaGibbsProvider, prior, null, weight);
@@ -99,8 +100,13 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
-        double getRate() { return rate; }
-        double getShape() { return shape; }
+        double getRate() {
+            return rate;
+        }
+
+        double getShape() {
+            return shape;
+        }
     }
 
     private double weigh(double working, double prior) {
@@ -191,8 +197,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 DistributionLikelihood likelihood = (DistributionLikelihood) xo.getElementFirstChild(LIKELIHOOD);
 
                 if (!((likelihood.getDistribution() instanceof NormalDistributionModel) ||
-                                            (likelihood.getDistribution() instanceof LogNormalDistributionModel)
-                                    )) {
+                        (likelihood.getDistribution() instanceof LogNormalDistributionModel)
+                )) {
                     throw new XMLParseException("Gibbs operator assumes normal-gamma model");
                 }
 
@@ -200,15 +206,17 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
             } else {
 
-                XMLObject cxo = xo.getChild(REPEATED_MEASURES);
+                XMLObject cxo = xo.getChild(NORMAL_EXTENSION);
 
-                RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
-                        cxo.getChild(RepeatedMeasuresTraitDataModel.class);
+                ModelExtensionProvider.NormalExtensionProvider dataModel = (ModelExtensionProvider.NormalExtensionProvider)
+                        cxo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
 
                 TreeDataLikelihood likelihood = (TreeDataLikelihood) cxo.getChild(TreeDataLikelihood.class);
 
-                gammaGibbsProvider = new GammaGibbsProvider.RepeatedMeasuresGibbsProvider(
-                        dataModel, likelihood, dataModel.getTraitName());
+                String treeTraitName = cxo.getStringAttribute(TREE_TRAIT_NAME);
+
+                gammaGibbsProvider = new GammaGibbsProvider.NormalExtensionGibbsProvider(
+                        dataModel, likelihood, treeTraitName);
             }
 
             return new NormalGammaPrecisionGibbsOperator(gammaGibbsProvider,
@@ -239,11 +247,14 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                                 new XMLSyntaxRule[]{
                                         new ElementRule(DistributionLikelihood.class)
                                 }),
-                        new ElementRule(REPEATED_MEASURES,
+
+                        new ElementRule(NORMAL_EXTENSION,
                                 new XMLSyntaxRule[]{
-                                        new ElementRule(RepeatedMeasuresTraitDataModel.class),
+                                        new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class),
                                         new ElementRule(TreeDataLikelihood.class),
+                                        AttributeRule.newStringRule(TREE_TRAIT_NAME)
                                 })
+
                 ),
                 new ElementRule(PRIOR,
                         new XMLSyntaxRule[]{

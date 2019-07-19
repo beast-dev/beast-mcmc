@@ -32,11 +32,9 @@ import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.CommonCitations;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 

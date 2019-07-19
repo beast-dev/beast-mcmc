@@ -315,4 +315,26 @@ public class CommonCitations {
             67, 82,
             Citation.Status.PUBLISHED
     );
+
+    public static Citation PYBUS_2012_UNIFYING = new Citation(
+            new Author[] {
+                    new Author("OG", "Pybus"),
+                    new Author("MA", "Suchard"),
+                    new Author("P", "Lemey"),
+                    new Author("F", "Bernadin"),
+                    new Author("A", "Rambaut"),
+                    new Author("FW", "Crawford"),
+                    new Author("RR", "Gray"),
+                    new Author("N", "Arinaminpathy"),
+                    new Author("S", "Stramer"),
+                    new Author("MP", "Busch"),
+                    new Author("E", "Delwart")
+            },
+            "Unifying the spatial epidemiology and evolution of emerging epidemics",
+            2012,
+            "Proceedings of the National Academy of Sciences",
+            109,
+            15066, 15071,
+            Citation.Status.PUBLISHED
+    );
 }

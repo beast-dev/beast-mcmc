@@ -168,7 +168,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
     @Override
     public String getReport() {
-        int iterations = 100000;
+        int iterations = 1000000;
         int nMissing = missingInds.length;
 
         double[] sums = new double[nMissing];

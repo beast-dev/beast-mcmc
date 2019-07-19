@@ -66,6 +66,9 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
         this.patternList = likelihoodDelegate.getPatternList();
         this.gradient = new double[tree.getNodeCount() - 1];
+
+        likelihoodDelegate.addModelListener(this);
+        this.substitutionProcessKnown = false;
     }
 
     @Override
@@ -216,6 +219,8 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
 
+    private static final boolean USE_CACHE = true;
+
     private void getNodeDerivatives(Tree tree, double[] first, double[] second) {
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
@@ -223,7 +228,10 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
         final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
 
-        cacheDifferentialMassMatrix(tree, second != null); // TODO only call when necessary
+        if (!USE_CACHE || !substitutionProcessKnown) {
+            cacheDifferentialMassMatrix(tree, second != null);
+            substitutionProcessKnown = true;
+        }
 
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
@@ -268,7 +276,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        // Do nothing
+        substitutionProcessKnown = false;
     }
 
     @Override
@@ -333,6 +341,8 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
     private int preOrderPartialOffset;
 
     protected final double[] gradient;
+
+    private boolean substitutionProcessKnown;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private long simulateCount = 0;

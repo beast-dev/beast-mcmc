@@ -788,6 +788,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
 
             // we are currently assuming a no-category model...
+            // This should probably explicitly be the state frequencies for the root node...
+            double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+            beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
         }
 
         if (updateSiteModel) {
@@ -799,6 +802,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             }
             beagle.setCategoryRates(categoryRates);
             // TODO Try beagle.setCategoryWeights() here
+            double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+            // these could be set only when they change but store/restore would need to be considered
+            beagle.setCategoryWeights(0, categoryWeights); // TODO move
         }
 
         if (branchUpdateCount > 0) {
@@ -877,11 +883,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
 
-        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-
-        // This should probably explicitly be the state frequencies for the root node...
-        double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
-
         int cumulateScaleBufferIndex = Beagle.NONE;
 
         if (useScaleFactors) {
@@ -896,10 +897,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } else if (useAutoScaling) {
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
-
-        // these could be set only when they change but store/restore would need to be considered
-        beagle.setCategoryWeights(0, categoryWeights); // TODO move
-        beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
 
         double[] sumLogLikelihoods = new double[1];
 

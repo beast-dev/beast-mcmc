@@ -40,14 +40,15 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
 
 public abstract class BayesianBridgeDistributionModel extends AbstractModel
         implements ParametricMultivariateDistributionModel, GradientProvider {
-
+    
     BayesianBridgeDistributionModel(Parameter globalScale,
-                                    Parameter exponent) {
+                Parameter exponent, int dim) {
 
         super(BAYESIAN_BRIDGE);
 
         this.globalScale = globalScale;
         this.exponent = exponent;
+        this.dim = dim;
 
         addVariable(globalScale);
         addVariable(exponent);
@@ -68,7 +69,7 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
 
     @Override
     public int getDimension() {
-        return 1;
+        return dim;
     }
 
     @Override
@@ -112,7 +113,7 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
 
     @Override
     public double[] getMean() {
-        throw new RuntimeException("Not implemented");
+        return new double[dim];
     }
 
     @Override
@@ -122,6 +123,7 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
 
     final Parameter globalScale;
     final Parameter exponent;
+    final int dim;
 
     private static final String TYPE = "BayesianBridge";
 }

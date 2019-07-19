@@ -23,20 +23,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.distribution.shrinkage;
+package dr.evomodelxml.branchratemodel;
 
+import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
+import dr.evomodel.branchratemodel.shrinkage.AutoCorrelatedRatesWithBayesianBridge;
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
+@Deprecated
+public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectParser {
 
-    public static final String BAYESIAN_BRIDGE = "bayesianBridge";
-    static final String GLOBAL_SCALE = "globalScale";
-    static final String LOCAL_SCALE = "localScale";
-    static final String EXPONENT = "exponent";
-    private static final String OLD = "old";
+    private static final String BAYESIAN_BRIDGE = "autoCorrelatedRatesBayesianBridge";
+    private static final String GLOBAL_SCALE = "globalScale";
+    private static final String LOCAL_SCALE = "localScale";
+    private static final String EXPONENT = "exponent";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE;
@@ -44,7 +46,8 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter coefficients = (Parameter) xo.getChild(Parameter.class);
+        AutoCorrelatedBranchRatesDistribution ratesDistribution = (AutoCorrelatedBranchRatesDistribution)
+                xo.getChild(AutoCorrelatedBranchRatesDistribution.class);
 
         XMLObject globalXo = xo.getChild(GLOBAL_SCALE);
         Parameter globalScale = (Parameter) globalXo.getChild(Parameter.class);
@@ -54,34 +57,21 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
 
-            if (localScale.getDimension() != coefficients.getDimension()) {
+            if (localScale.getDimension() != ratesDistribution.getDimension()) {
                 throw new XMLParseException("Local scale dimension (" + localScale.getDimension()
-                        + ") != coefficient dimension (" + coefficients.getDimension() + ")");
+                        + ") != rates dimension (" + ratesDistribution.getDimension() + ")");
             }
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
-        boolean old = xo.getAttribute(OLD, false);
+        BayesianBridgeDistributionModel distributionModel = (localScale != null) ?
+                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, 1) :
+                new MarginalBayesianBridgeDistributionModel(globalScale, exponent, 1);
 
-        if (localScale != null) {
-            if (old) {
-                return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
-            } else {
-                return new BayesianBridgeLikelihood(coefficients,
-                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent,
-                                coefficients.getDimension()));
-            }
-        } else {
-            if (old) {
-                return new OldMarginalBayesianBridge(coefficients, globalScale, exponent);
-            } else {
-                return new BayesianBridgeLikelihood(coefficients,
-                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
-                                coefficients.getDimension()));
-            }
-        }
+        return new AutoCorrelatedRatesWithBayesianBridge(ratesDistribution,
+                distributionModel);
     }
 
     //************************************************************************
@@ -93,14 +83,13 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(Parameter.class),
+            new ElementRule(AutoCorrelatedBranchRatesDistribution.class),
             new ElementRule(GLOBAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(EXPONENT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
-            AttributeRule.newBooleanRule(OLD, true),
     };
 
     public String getParserDescription() {
@@ -109,6 +98,6 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return BayesianBridgeLikelihood.class;
+        return AutoCorrelatedRatesWithBayesianBridge.class;
     }
 }

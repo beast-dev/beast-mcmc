@@ -30,6 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates.BranchRateTransform;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 
 /**
  * @author Marc Suchard
@@ -40,10 +42,11 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     final private CompoundParameter parameter;
     final private BranchRateModel branchRateModel;
     final private Parameter rootParameter;
-    final private Tree tree;
+    final private TreeModel tree;
+    final private TreeParameterModel indexHelper;
 
     public BranchParameter(String name,
-                           Tree tree,
+                           TreeModel tree,
                            BranchRateModel branchRateModel,
                            Parameter rootParameter) {
         super(name);
@@ -54,14 +57,17 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
 
         branchRateModel.addModelListener(this);
         this.parameter = constructParameter();
+        this.indexHelper = new TreeParameterModel(tree, parameter, false);
 
     }
 
     private CompoundParameter constructParameter() {
         CompoundParameter compoundParameter =  new CompoundParameter(getId() + ".parameter");
         for (int i = 0; i < tree.getNodeCount(); i++) {
-            BranchSpecificProxyParameter proxyParameter = new BranchSpecificProxyParameter(branchRateModel, tree, i);
-            compoundParameter.addParameter(proxyParameter);
+            if (!tree.isRoot(tree.getNode(i))) {
+                BranchSpecificProxyParameter proxyParameter = new BranchSpecificProxyParameter(branchRateModel, tree, i);
+                compoundParameter.addParameter(proxyParameter);
+            }
         }
         return compoundParameter;
     }
@@ -71,7 +77,7 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
     }
 
     public BranchSpecificProxyParameter getParameter(int dim) {
-        return (BranchSpecificProxyParameter) parameter.getParameter(dim);
+        return (BranchSpecificProxyParameter) parameter.getParameter(indexHelper.getParameterIndexFromNodeNumber(dim));
     }
 
     public BranchRateTransform getTransform() {
@@ -96,7 +102,7 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
         if (dim == tree.getRoot().getNumber()) {
             return rootParameter.getParameterValue(0);
         } else {
-            return branchRateModel.getBranchRate(tree, tree.getNode(dim));
+            return branchRateModel.getBranchRate(tree, tree.getNode(indexHelper.getNodeNumberFromParameterIndex(dim)));
         }
 
     }
@@ -206,13 +212,18 @@ public class BranchParameter extends Parameter.Abstract implements VariableListe
 
         @Override
         public double getParameterValue(int dim) {
-            return branchRateModel.getBranchRate(tree, tree.getNode(nodeNum));
+            if (tree.isRoot(tree.getNode(nodeNum))) {
+                return rootParameter.getParameterValue(0);
+            } else {
+                return branchRateModel.getBranchRate(tree, tree.getNode(nodeNum));
+            }
         }
 
         @Override
         public void setParameterValue(int dim, double value) {
-//            branchRateModel.setBranchRate(tree, tree.getNode(nodeNum), value);
-            throw new RuntimeException("Not yet implemented!");
+            if (tree.isRoot(tree.getNode(nodeNum))) {
+                rootParameter.setParameterValue(0, value);
+            }
         }
 
         @Override

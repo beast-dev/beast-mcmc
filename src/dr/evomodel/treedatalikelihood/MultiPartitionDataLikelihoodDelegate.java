@@ -1383,7 +1383,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
+        return "BEAGLE likelihood calculation library";
     }
 
     @Override

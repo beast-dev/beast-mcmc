@@ -105,7 +105,7 @@ public interface GradientWrtParameterProvider {
         private final boolean checkValues;
         private final double tolerance;
 
-        public CheckGradientNumerically(GradientWrtParameterProvider provider,
+        CheckGradientNumerically(GradientWrtParameterProvider provider,
                                         double lowerBound, double upperBound,
                                         Double nullableTolerance) {
             this.provider = provider;

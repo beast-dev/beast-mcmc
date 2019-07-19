@@ -41,13 +41,13 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
     public static final String ARBITRARY_BRANCH_RATES = "arbitraryBranchRates";
     private static final String RATES = "rates";
-    public static final String RECIPROCAL = "reciprocal";
-    public static final String EXP = "exp";
-    private static final String MULTIPLER = "multiplier";
+    static final String RECIPROCAL = "reciprocal";
+    static final String EXP = "exp";
+    private static final String MULTIPLIER = "multiplier";
     private static final String CENTER_AT_ONE = "centerAtOne";
 
-    public static final String LOCATION = "location";
-    public static final String SCALE = "scale";
+    static final String LOCATION = "location";
+    static final String SCALE = "scale";
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;
@@ -63,8 +63,11 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean centerAtOne = xo.getAttribute(CENTER_AT_ONE, true);
 
-
         final int numBranches = tree.getNodeCount() - 1;
+        if (rateCategoryParameter.getDimension() > 1 && (rateCategoryParameter.getDimension() != numBranches)) {
+            throw new XMLParseException("Incorrect number of rate parameters");
+        }
+
         if (rateCategoryParameter.getDimension() != numBranches) {
             rateCategoryParameter.setDimension(numBranches);
         }
@@ -88,14 +91,14 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
                 "The branch rates are drawn from an arbitrary distribution determine by the prior.";
     }
 
-    public static ArbitraryBranchRates.BranchRateTransform parseTransform (XMLObject xo) throws XMLParseException {
+    static ArbitraryBranchRates.BranchRateTransform parseTransform (XMLObject xo) throws XMLParseException {
 
         boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
         Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
 
         boolean exp = xo.getAttribute(EXP, false);
 
-        boolean multipler = xo.getAttribute(MULTIPLER, false);
+        boolean multiplier = xo.getAttribute(MULTIPLIER, false);
 
         BranchSpecificFixedEffects locationParameter = null;
         if (xo.hasChildNamed(LOCATION)) {
@@ -112,7 +115,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             scaleParameter = (Parameter) xo.getElementFirstChild(SCALE);
         }
 
-        return make(reciprocal, exp, multipler, locationParameter, scaleParameter);
+        return make(reciprocal, exp, multiplier, locationParameter, scaleParameter);
     }
 
     public Class getReturnType() {
@@ -132,6 +135,4 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
             new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),
     };
-
-
 }

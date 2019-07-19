@@ -30,8 +30,11 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -43,7 +46,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Profileable, Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Citable, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -156,7 +159,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
-    
+
     public final boolean isLikelihoodKnown() {
         return likelihoodKnown;
     }
@@ -424,6 +427,27 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     public void addTraits(TreeTrait[] traits) {
         treeTraits.addTraits(traits);
+    }
+
+    @Override
+    public Citation.Category getCategory() { return Citation.Category.FRAMEWORK; }
+
+    @Override
+    public String getDescription() {
+        if (likelihoodDelegate instanceof Citable) {
+            return ((Citable)likelihoodDelegate).getDescription();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        if (likelihoodDelegate instanceof Citable) {
+            return ((Citable)likelihoodDelegate).getCitations();
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     // **************************************************************

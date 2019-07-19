@@ -520,6 +520,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
+            updateRootFrequency = true;
 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
@@ -798,6 +799,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 return Double.NEGATIVE_INFINITY;
             }
             beagle.setCategoryRates(categoryRates);
+            // TODO Try beagle.setCategoryWeights() here
+            double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+            // these could be set only when they change but store/restore would need to be considered
+            beagle.setCategoryWeights(0, categoryWeights); // TODO move
+        }
+
+        if (updateRootFrequency) {
+            double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+            beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
         }
 
         if (branchUpdateCount > 0) {
@@ -876,11 +886,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
 
-        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-
-        // This should probably explicitly be the state frequencies for the root node...
-        double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
-
         int cumulateScaleBufferIndex = Beagle.NONE;
 
         if (useScaleFactors) {
@@ -895,10 +900,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } else if (useAutoScaling) {
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
-
-        // these could be set only when they change but store/restore would need to be considered
-        beagle.setCategoryWeights(0, categoryWeights);
-        beagle.setStateFrequencies(0, frequencies);
 
         double[] sumLogLikelihoods = new double[1];
 
@@ -968,6 +969,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         updateSubstitutionModel = false;
         updateSiteModel = false;
+        updateRootFrequency = false;
         //********************************************************************
 
         // If these are needed...
@@ -993,6 +995,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public void makeDirty() {
         updateSiteModel = true;
         updateSubstitutionModel = true;
+        updateRootFrequency = true;
     }
 
     @Override
@@ -1001,6 +1004,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             updateSiteModel = true;
         } else if (model == branchModel) {
             updateSubstitutionModel = true;
+            updateRootFrequency = true;
         }
 
         // Tell TreeDataLikelihood to update all nodes
@@ -1038,6 +1042,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public void restoreState() {
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
+        updateRootFrequency = true;
 
         partialBufferHelper.restoreState();
         evolutionaryProcessDelegate.restoreState();
@@ -1121,7 +1126,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
+        return "BEAGLE likelihood calculation library";
     }
 
     @Override
@@ -1249,6 +1254,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to specify that the site model has changed
      */
     private boolean updateSiteModel;
+
+    /**
+     * Flag to specify that the root frequencies has changed
+     */
+    private boolean updateRootFrequency;
 
     /**
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain

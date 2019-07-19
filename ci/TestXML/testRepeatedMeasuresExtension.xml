@@ -204,7 +204,7 @@
 
     <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="{}">
         <message>
-            Check trait simulation
+            Check trait simulation covariance
         </message>
         <actual regex="(?s)Covariance:\s*(.*)">
             <traitValidationProvider idref="traitValidationProvider"/>
@@ -259,7 +259,7 @@
 
     <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true" charactersToStrip="\[\],">
         <message>
-            Check trait simulation mean
+            Check new trait simulation mean
         </message>
         <actual regex="(?s)Mean:\s*(.*?)\n">
             <traitValidationProvider idref="traitValidationProvider"/>
@@ -271,7 +271,7 @@
 
     <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true" charactersToStrip="{}">
         <message>
-            Check trait simulation
+            Check new trait simulation covariance
         </message>
         <actual regex="(?s)Covariance:\s*(.*)">
             <traitValidationProvider idref="traitValidationProvider"/>

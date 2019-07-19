@@ -228,7 +228,8 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
         final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
 
-        if (!USE_CACHE || !substitutionProcessKnown) {
+        boolean needsUpdate = !substitutionProcessKnown || second != null;
+        if (!USE_CACHE || needsUpdate) {
             cacheDifferentialMassMatrix(tree, second != null);
             substitutionProcessKnown = true;
         }

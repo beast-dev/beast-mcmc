@@ -119,6 +119,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return 1;
     }
 
+    @Override
     public int getDataDimension() {
         return dimTrait;
     }

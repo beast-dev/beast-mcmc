@@ -171,6 +171,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return treeTraits;
     }
 
+    @Override
+    public int getDataDimension() {
+        return dimTrait;
+    }
+
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";

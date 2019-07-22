@@ -149,7 +149,7 @@ public interface GammaGibbsProvider {
         public SufficientStatistics getSufficientStatistics(int dim) {
 
             final int taxonCount = treeLikelihood.getTree().getExternalNodeCount();
-            final int traitDim = treeLikelihood.getDataLikelihoodDelegate().getTraitDim();
+            final int traitDim = dataModel.getDataDimension();
             int missingCount = 0;
 
             double SSE = 0;

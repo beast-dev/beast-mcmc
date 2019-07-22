@@ -36,13 +36,14 @@ import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.GammaDistribution;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
     public static final String OPERATOR_NAME = "normalGammaPrecisionGibbsOperator";
     public static final String LIKELIHOOD = "likelihood";
@@ -84,6 +85,29 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     public String getOperatorName() {
         return OPERATOR_NAME;
+    }
+
+    @Override
+    public String getReport() {
+        int dimTrait = precisionParameter.getDimension();
+        double[] obsCounts = new double[dimTrait];
+        double[] sumSquaredErrors = new double[dimTrait];
+
+        gammaGibbsProvider.drawValues();
+
+        for (int i = 0; i < dimTrait; i++) {
+            final GammaGibbsProvider.SufficientStatistics statistics = gammaGibbsProvider.getSufficientStatistics(i);
+            obsCounts[i] = statistics.observationCount;
+            sumSquaredErrors[i] = statistics.sumOfSquaredErrors;
+        }
+
+        StringBuilder sb = new StringBuilder(OPERATOR_NAME + " report:\n");
+        sb.append("Observation counts:\t");
+        sb.append(new Vector(obsCounts));
+        sb.append("\n");
+        sb.append("Sum of squared errors:\t");
+        sb.append(new Vector(sumSquaredErrors));
+        return sb.toString();
     }
 
     static class GammaParametrization {

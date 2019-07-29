@@ -68,6 +68,8 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         this.gradient = new double[tree.getNodeCount() - 1];
 
         likelihoodDelegate.addModelListener(this);
+        likelihoodDelegate.addModelRestoreListener(this);
+
         this.substitutionProcessKnown = false;
     }
 
@@ -282,7 +284,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     @Override
     public void modelRestored(Model model) {
-        // Do nothing
+        substitutionProcessKnown = false;
     }
 
     @Override

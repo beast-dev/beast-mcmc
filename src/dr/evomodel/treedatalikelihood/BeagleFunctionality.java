@@ -18,7 +18,7 @@ public class BeagleFunctionality {
         return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
     }
 
-    static boolean IS_PRE_ORDER_SUPPORTER() {
+    static boolean IS_PRE_ORDER_SUPPORTED() {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
         return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 2;
     }

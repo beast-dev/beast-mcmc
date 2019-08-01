@@ -457,7 +457,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 useAmbiguities = true;
             }
 
-            if (!IS_PRE_ORDER_SUPPORTER() && settings.usePreOrder) {
+            if (!IS_PRE_ORDER_SUPPORTED() && settings.usePreOrder) {
                 throw new IllegalArgumentException("BEAGLE library does not support pre-order computation");
             }
 

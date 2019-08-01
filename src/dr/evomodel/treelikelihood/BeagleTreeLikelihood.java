@@ -68,6 +68,9 @@ import dr.util.CommonCitations;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.IS_ODD_STATE_SSE_FIXED;
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.IS_THREAD_COUNT_COMPATIBLE;
+
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
@@ -80,16 +83,6 @@ import java.util.logging.Logger;
 @SuppressWarnings("serial")
 @Deprecated // Switching to TreeDataLikelihood
 public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Citable {
-    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
-    }
-
-    public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
-    }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then

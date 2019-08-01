@@ -48,6 +48,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
 /**
  * BeagleDataLikelihoodDelegate
  *
@@ -65,17 +67,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final boolean RESCALING_OFF = false; // a debugging switch
 
     private static final boolean DEBUG = false; // write debug information to stdOut
-
-    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
-    }
-
-    public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
-    }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -464,6 +455,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
+            }
+
+            if (!IS_PRE_ORDER_SUPPORTER() && settings.usePreOrder) {
+                throw new IllegalArgumentException("BEAGLE library does not support pre-order computation");
             }
 
             //add in logger info for preOrder traversal

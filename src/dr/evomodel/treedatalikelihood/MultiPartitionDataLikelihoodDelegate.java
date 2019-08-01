@@ -644,43 +644,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
     }
 
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
     private int getScaleBufferCount() {
         return internalNodeCount + 1;
     }

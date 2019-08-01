@@ -1,7 +1,7 @@
 /*
  * BeagleDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,7 +43,6 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -561,43 +560,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return this.patternList;
     }
 
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
     public Beagle getBeagleInstance() { return beagle; }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
 
     private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;

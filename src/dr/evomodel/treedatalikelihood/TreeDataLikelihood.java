@@ -113,7 +113,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         return this;
     }
 
-    @Override
+    @Override @SuppressWarnings("Duplicates")
     public final double getLogLikelihood() {
         if (COUNT_TOTAL_OPERATIONS)
             totalGetLogLikelihoodCount++;
@@ -130,7 +130,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         return logLikelihood;
     }
 
-    public final void calculatePostOrderStatistics() {
+    final void calculatePostOrderStatistics() {
         if (COUNT_TOTAL_OPERATIONS) {
             totalPostOrderStatistics++;
         }
@@ -489,9 +489,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     private double logLikelihood;
     private double storedLogLikelihood;
-    protected boolean likelihoodKnown = false;
+    protected boolean likelihoodKnown;
 
-    private boolean hasInitialized = false;
+    private boolean hasInitialized;
 
     private final boolean isTreeRandom;
 

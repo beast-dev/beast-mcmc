@@ -156,47 +156,6 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         });
     }
 
-//    public enum MatrixChoice {
-//        GRADIENT {
-//            @Override
-//            public void getMatrix(SubstitutionModel model, double[] matrix) {
-//                model.getInfinitesimalMatrix(matrix);
-//            }
-//
-//            @Override
-//            public double getRateDifferential(double rate) {
-//                return rate;
-//            }
-//        },
-//        HESSIAN {
-//            @Override
-//            public void getMatrix(SubstitutionModel model, double[] matrix) {
-//                double[] tmp = new double[matrix.length];
-//                model.getInfinitesimalMatrix(tmp);
-//                Arrays.fill(matrix, 0.0);
-//
-//                final int stateCount = model.getDataType().getStateCount();
-//                for (int i = 0; i < stateCount; ++i){
-//                    for ( int j = 0; j < stateCount; ++j){
-//                        for ( int k = 0; k < stateCount; ++k){
-//                            matrix[i * stateCount + j] += tmp[i * stateCount + k] * tmp[k * stateCount + j];
-//                        }
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public double getRateDifferential(double rate) {
-//                return rate * rate;
-//            }
-//        };
-//
-//        public abstract void getMatrix(SubstitutionModel model, double[] matrix);
-//
-//        public abstract double getRateDifferential(double rate);
-//
-//    }
-
     private double[] getHessian(Tree tree, NodeRef node) {
 
         //update all preOrder partials first
@@ -271,11 +230,6 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
     protected int getSecondDerivativeMatrixBufferIndex(int nodeNum) {
         return evolutionaryProcessDelegate.getInfinitesimalSquaredMatrixBufferIndex(nodeNum);
     }
-
-//    @Override
-//    public boolean isTraitLoggable() {
-//        return false;
-//    }
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
@@ -352,4 +306,3 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
     private long getTraitCount = 0;
     private long updatePrePartialCount = 0;
 }
-

@@ -232,19 +232,34 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return ratios;
     }
 
+    @Override
+    double getLogJacobian(double[] values) {
+        double logJacobian = 0.0;
+        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            final int ratioNum = indexHelper.getParameterIndexFromNodeNumber(i) - tree.getExternalNodeCount();
+            if (!tree.isRoot(node)) {
+                Epoch epoch = nodeEpochMap.get(i);
+                logJacobian += Math.log((tree.getNodeHeight(node) - epoch.getAnchorTipHeight())
+                        / ratios.getParameterValue(ratioNum));
+            }
+        }
+        return logJacobian;
+    }
+
     private class Epoch implements Comparable {
-        private final NodeRef anchorTipNode;
+        private final int anchorTipNodeNumber;
         private List<NodeRef> internalNodes = new ArrayList<NodeRef>();
         private Epoch lastEpoch;
         private NodeRef connectingNode;
 
         private Epoch(NodeRef anchorTipNode) {
-            this.anchorTipNode = anchorTipNode;
+            this.anchorTipNodeNumber = anchorTipNode.getNumber();
             epochs.add(this);
         }
 
         public double getAnchorTipHeight() {
-            return tree.getNodeHeight(anchorTipNode);
+            return tree.getNodeHeight(tree.getNode(anchorTipNodeNumber));
         }
 
         public void endEpoch(NodeRef node, Epoch lastEpoch) {

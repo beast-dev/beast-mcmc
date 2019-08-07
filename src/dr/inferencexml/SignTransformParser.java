@@ -65,8 +65,8 @@ public class SignTransformParser extends AbstractXMLObjectParser {
             int start = xo.getIntegerAttribute(START) - 1;
             int end = xo.getIntegerAttribute(END);
 
-            if (start >= parameter.getDimension() ||
-                    end >= parameter.getDimension() ||
+            if (start > parameter.getDimension() ||
+                    end > parameter.getDimension() ||
                     start > end) {
                 throw new XMLParseException("Invalid start/end values for parameter");
             }

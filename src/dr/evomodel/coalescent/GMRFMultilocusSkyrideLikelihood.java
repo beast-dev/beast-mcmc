@@ -931,11 +931,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         int popSizeDim = popSizeParameter.getSize();
 
-        gradLogDens[0] = numGridPoints/(2*currentPrec);
+        double grad = numGridPoints / (2 * currentPrec);
         for(int i = 0; i < numGridPoints; i++) {
-            gradLogDens[0] = gradLogDens[0]
-                    - 1 / 2 * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
+            grad -= 0.5 * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i]);
         }
+
+        gradLogDens[0] = grad;
 
         if(beta != null){
             for (int k = 0; k < beta.size(); k++) {

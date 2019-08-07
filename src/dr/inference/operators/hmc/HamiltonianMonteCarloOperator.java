@@ -58,21 +58,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     protected final double[] mask;
     protected final Transform transform;
 
-    HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                  Parameter parameter, Transform transform, Parameter mask,
-                                  double stepSize, int nSteps,
-                                  double randomStepCountFraction,
-                                  double gradientCheckTolerance) {
-        this(mode, weight, gradientProvider,
-                parameter, transform, mask,
-                new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0,
-                        0, gradientCheckTolerance,
-                        10, 0.1),
-                MassPreconditioner.Type.NONE
-        );
-    }
-
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
@@ -278,7 +263,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
     }
-
 
     static double[] mask(double[] vector, double[] mask) {
 

@@ -36,6 +36,7 @@ import dr.inference.model.Parameter;
  * @author Xiang Ji
  */
 public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel {
+    //TODO: remove this class when finished with everything
     protected TreeModel tree;
     protected Parameter nodeHeights;
     protected TreeParameterModel indexHelper;
@@ -81,5 +82,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
     abstract String getReport();
 
     abstract Parameter getParameter();
+
+    abstract double getLogJacobian(double[] values);
 
 }

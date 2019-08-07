@@ -105,7 +105,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     protected double getLogJacobian(double[] values) {
-        throw new RuntimeException("Not yet implemented!");
+        return nodeHeightTransformDelegate.getLogJacobian(values);
     }
 
 

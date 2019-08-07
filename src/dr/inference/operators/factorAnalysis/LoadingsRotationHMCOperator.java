@@ -5,12 +5,12 @@ import dr.inference.model.MatrixParameterInterface;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.xml.*;
 
-public class LoadingsReflectionHMCOperator extends HamiltonianMonteCarloOperator {
+public class LoadingsRotationHMCOperator extends HamiltonianMonteCarloOperator {
 
 
     private final MatrixParameterInterface parameter;
 
-    public LoadingsReflectionHMCOperator(HamiltonianMonteCarloOperator hmcOp, MatrixParameterInterface parameter) {
+    public LoadingsRotationHMCOperator(HamiltonianMonteCarloOperator hmcOp, MatrixParameterInterface parameter) {
 
         super(hmcOp);
         this.parameter = parameter;
@@ -40,7 +40,7 @@ public class LoadingsReflectionHMCOperator extends HamiltonianMonteCarloOperator
 
     }
 
-    public static final String PARSER_NAME = "loadingsReflectionHMCOperator";
+    public static final String PARSER_NAME = "loadingsRotationHMCOperator";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
@@ -48,7 +48,7 @@ public class LoadingsReflectionHMCOperator extends HamiltonianMonteCarloOperator
             HamiltonianMonteCarloOperator hmcOp = (HamiltonianMonteCarloOperator)
                     xo.getChild(HamiltonianMonteCarloOperator.class);
             MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
-            return new LoadingsReflectionHMCOperator(hmcOp, parameter);
+            return new LoadingsRotationHMCOperator(hmcOp, parameter);
         }
 
         @Override
@@ -66,7 +66,7 @@ public class LoadingsReflectionHMCOperator extends HamiltonianMonteCarloOperator
 
         @Override
         public Class getReturnType() {
-            return LoadingsReflectionHMCOperator.class;
+            return LoadingsRotationHMCOperator.class;
         }
 
         @Override

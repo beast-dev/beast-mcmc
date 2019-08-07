@@ -7,13 +7,13 @@ import dr.inference.operators.GeneralOperator;
 import dr.inference.operators.PathDependent;
 import dr.xml.*;
 
-public class LoadingsReflectionOperator extends AbstractAdaptableOperator implements GeneralOperator, PathDependent {
+public class LoadingsRotationOperator extends AbstractAdaptableOperator implements GeneralOperator, PathDependent {
 
     private final AbstractAdaptableOperator baseOperator;
     private final MatrixParameterInterface parameter;
 
-    public LoadingsReflectionOperator(AbstractAdaptableOperator baseOperator,
-                                      MatrixParameterInterface parameter) {
+    public LoadingsRotationOperator(AbstractAdaptableOperator baseOperator,
+                                    MatrixParameterInterface parameter) {
         this.baseOperator = baseOperator;
         this.parameter = parameter;
     }
@@ -90,7 +90,7 @@ public class LoadingsReflectionOperator extends AbstractAdaptableOperator implem
     }
 
 
-    public static final String PARSER_NAME = "loadingsReflectionHMCOperator";
+    public static final String PARSER_NAME = "loadingsRotationOperator";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -102,7 +102,7 @@ public class LoadingsReflectionOperator extends AbstractAdaptableOperator implem
             MatrixParameterInterface parameter = (MatrixParameterInterface)
                     xo.getChild(MatrixParameterInterface.class);
 
-            return new LoadingsReflectionOperator(baseOperator, parameter);
+            return new LoadingsRotationOperator(baseOperator, parameter);
 
         }
 
@@ -121,7 +121,7 @@ public class LoadingsReflectionOperator extends AbstractAdaptableOperator implem
 
         @Override
         public Class getReturnType() {
-            return LoadingsReflectionOperator.class;
+            return LoadingsRotationOperator.class;
         }
 
         @Override

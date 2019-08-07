@@ -157,7 +157,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         } else {
             return new NoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
-                    runtimeOptions);
+                    runtimeOptions, preconditioningType);
         }
 
     }

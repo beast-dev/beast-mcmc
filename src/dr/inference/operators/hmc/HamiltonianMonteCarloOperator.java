@@ -140,7 +140,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         if (shouldCheckGradient()) {
             checkGradient(joint);
-
         }
 
         if (shouldUpdatePreconditioning()) {
@@ -202,11 +201,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    private boolean shouldCheckGradient() {
+    boolean shouldCheckGradient() {
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    private void checkGradient(final Likelihood joint) {
+    void checkGradient(final Likelihood joint) {
 
         if (parameter.getDimension() != gradientProvider.getDimension()) {
             throw new RuntimeException("Unequal dimensions");

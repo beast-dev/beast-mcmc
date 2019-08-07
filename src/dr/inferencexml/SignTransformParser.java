@@ -47,8 +47,14 @@ public class SignTransformParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        boolean hasStartOrEnd = xo.hasAttribute(START) || xo.hasAttribute(END);
+
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
         if (parameter == null) {  // TODO: generalize to multivariate or move out
+            if (hasStartOrEnd) {
+                throw new XMLParseException("Cannot provide dimension start/end without a parameter");
+            }
             return new Transform.LogTransform();
         }
         Bounds<Double> bounds = parameter.getBounds();
@@ -58,6 +64,12 @@ public class SignTransformParser extends AbstractXMLObjectParser {
         if (xo.hasAttribute(START) && xo.hasAttribute(END)) {
             int start = xo.getIntegerAttribute(START) - 1;
             int end = xo.getIntegerAttribute(END);
+
+            if (start >= parameter.getDimension() ||
+                    end >= parameter.getDimension() ||
+                    start > end) {
+                throw new XMLParseException("Invalid start/end values for parameter");
+            }
 
             for (int i = 0; i < parameter.getDimension(); ++i) {
                 if (i >= start && i < end) {

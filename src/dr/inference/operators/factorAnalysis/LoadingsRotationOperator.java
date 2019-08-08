@@ -26,6 +26,8 @@ public class LoadingsRotationOperator extends AbstractAdaptableOperator implemen
     @Override
     public double doOperation(Likelihood joint) {
 
+        syncBaseOperator();
+
         double hastingsRatio = baseOperator.doOperation(joint);
 
         double oldLikelihood = joint.getLogLikelihood();
@@ -49,8 +51,8 @@ public class LoadingsRotationOperator extends AbstractAdaptableOperator implemen
 
             if (parameter.getParameterValue(i, i) < 0) {
                 changed = true;
-                for (int j = i; j < parameter.getColumnDimension(); j++) {
-                    parameter.setParameterValueQuietly(i, j, -parameter.getParameterValue(i, j));
+                for (int j = i; j < parameter.getRowDimension(); j++) {
+                    parameter.setParameterValueQuietly(j, i, -parameter.getParameterValue(j, i));
                 }
             }
         }
@@ -62,11 +64,19 @@ public class LoadingsRotationOperator extends AbstractAdaptableOperator implemen
 
     @Override
     public double doOperation() {
-        
+
+        syncBaseOperator();
+
         double hastingsRatio = baseOperator.doOperation();
         reflect();
 
         return hastingsRatio;
+    }
+
+    private void syncBaseOperator() {
+        baseOperator.setAcceptCount(getAcceptCount());
+        baseOperator.setRejectCount(getRejectCount());
+        baseOperator.setSumDeviation(getSumDeviation());
     }
 
     @Override

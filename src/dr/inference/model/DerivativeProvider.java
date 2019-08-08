@@ -1,5 +1,5 @@
 /*
- * CompoundGradient.java
+ * GradientProvider2.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,41 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.hmc;
-
-import java.util.List;
+package dr.inference.model;
 
 /**
  * @author Marc A. Suchard
- * @author Xiang Ji
  */
+public interface DerivativeProvider {
 
-@Deprecated
-public class CompoundDerivative extends CompoundGradient implements HessianWrtParameterProvider{
-    public CompoundDerivative(List<GradientWrtParameterProvider> derivativeList) {
-        super(derivativeList);
-    }
+    int getDimension(DerivativeOrder order);
 
-    @Override
-    public double[] getDiagonalHessianLogDensity() {
+    double[] getDerivativeLogDensity(Object obj, DerivativeOrder order);
 
-        double[] result = new double[dimension];
-
-        int offset = 0;
-        for (GradientWrtParameterProvider derivative : derivativeList) {
-
-            assert(derivative instanceof HessianWrtParameterProvider);
-
-            double[] tmp = ((HessianWrtParameterProvider) derivative).getDiagonalHessianLogDensity();
-            System.arraycopy(tmp, 0, result, offset, derivative.getDimension());
-            offset += derivative.getDimension();
-        }
-
-        return result;
-    }
-
-    @Override
-    public double[][] getHessianLogDensity() {
-        throw new RuntimeException("Not implemented");
-    }
+    DerivativeOrder getHighestOrder();
 }

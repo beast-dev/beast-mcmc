@@ -4,7 +4,7 @@ BEAST is a cross-platform program for Bayesian analysis of molecular sequences u
 
 ## Download BEAST
 
-[Download BEAST v1.10.1 binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.10.1)
+[Download BEAST v1.10.X binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases)
 
 [The previous major release of BEAST was v1.8.4 --- binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.8.4)
 

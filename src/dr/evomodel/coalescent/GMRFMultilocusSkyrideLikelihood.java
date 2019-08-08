@@ -30,7 +30,10 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.inference.model.*;
+import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -824,8 +827,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
 
     }
-
-
+    
     private SymmTridiagMatrix getScaledWeightMatrixForMissingCovRecent(double precision, int covIndex, int firstObs) {
         SymmTridiagMatrix a = weightMatricesForMissingCovRecent.get(covIndex).copy();
         for (int i = 0; i < a.numRows() - 1; i++) {
@@ -924,6 +926,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return getGradientLogDensity();
     }
 
+    public double[] getDiagonalHessianWrtLogPopulationSize() { return getDiagonalHessianLogDensity(); }
+
     public double[] getGradientWrtPrecision() { // Keep on natural-scale, use transformGradient later if wanted
         double [] gradLogDens = new double [precisionParameter.getSize()];
         double[] currentGamma = popSizeParameter.getParameterValues();
@@ -938,7 +942,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         gradLogDens[0] = grad;
 
-        if(beta != null){
+        if (beta != null) {
             for (int k = 0; k < beta.size(); k++) {
 
                 Parameter bk = beta.get(k);
@@ -956,12 +960,24 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return gradLogDens;
     }
 
+    public double[] getDiagonalHessianWrtPrecision() {
+
+        double currentPrec = precisionParameter.getParameterValue(0);
+        double hessian = -numGridPoints / (2 * currentPrec * currentPrec);
+
+        if (beta != null) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return new double[] { hessian };
+    }
+
     public double[] getGradientWrtRegressionCoefficients() {
         double [] gradLogDens = new double [beta.size()];
         double[] currentGamma = popSizeParameter.getParameterValues();
         double currentPrec = precisionParameter.getParameterValue(0);
 
-        if(beta != null){
+        if (beta != null) {
             for (int k = 0; k < beta.size(); k++) {
 
                 MatrixParameter covk = covariates.get(k);
@@ -994,7 +1010,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         gradLogDens[popSizeDim-1] = -currentPrec*(currentGamma[popSizeDim-1]-currentGamma[popSizeDim-2])
                 - numCoalEvents[popSizeDim-1] + sufficientStatistics[popSizeDim-1]*Math.exp(-currentGamma[popSizeDim-1]);
 
-        if(beta != null) {
+        if (beta != null) {
             for (int k = 0; k < beta.size(); k++) {
 
                 Parameter b = beta.get(k);
@@ -1012,7 +1028,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             gradLogDens[i] = -currentPrec*(-currentGamma[i-1] + 2*currentGamma[i] - currentGamma[i+1])
                     - numCoalEvents[i] + sufficientStatistics[i]*Math.exp(-currentGamma[i]);
 
-            if(beta != null) {
+            if (beta != null) {
                 for (int k = 0; k < beta.size(); k++) {
 
                     Parameter bk = beta.get(k);
@@ -1028,13 +1044,34 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return gradLogDens;
     }
 
-    /*public int getCoalescentIntervalLineageCount(int i) {
-        return 0;
-    }
+    private double[] getDiagonalHessianLogDensity() {
 
-    public IntervalType getCoalescentIntervalType(int i) {
-        return null;
-    }*/
+        double[] hessianLogDens = new double[popSizeParameter.getSize()];
+        double[] currentGamma = popSizeParameter.getParameterValues();
+        double currentPrec = precisionParameter.getParameterValue(0);
+        int popSizeDim = popSizeParameter.getSize();
+
+        hessianLogDens[0] = -currentPrec
+                - sufficientStatistics[0] * Math.exp(-currentGamma[0]);
+
+        hessianLogDens[popSizeDim - 1] = -currentPrec
+                - sufficientStatistics[popSizeDim - 1] * Math.exp(-currentGamma[popSizeDim - 1]);
+
+        if (beta != null) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        for (int i = 1; i < (popSizeDim - 1); i++) {
+
+            hessianLogDens[i] = -2 * currentPrec - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
+
+            if (beta != null) {
+                throw new RuntimeException("Not yet implemented");
+            }
+        }
+
+        return hessianLogDens;
+    }
 
     class SkygridHelper {
 

@@ -342,10 +342,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 }
             }
 
-            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
-                // if single precision not explicitly set then prefer double
-                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-            }
+//            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+//                // if single precision not explicitly set then prefer double
+//                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+//            }
+
+            requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
 
             if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
@@ -456,9 +458,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 useAmbiguities = true;
             }
 
-            if (!IS_PRE_ORDER_SUPPORTED() && settings.usePreOrder) {
-                throw new IllegalArgumentException("BEAGLE library does not support pre-order computation");
-            }
+//            if (!IS_PRE_ORDER_SUPPORTED() && settings.usePreOrder) {
+//                throw new IllegalArgumentException("BEAGLE library does not support pre-order computation");
+//            }
 
             //add in logger info for preOrder traversal
             logger.info("  " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");

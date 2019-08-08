@@ -11,7 +11,8 @@ import dr.math.MachineAccuracy;
  * @author Xiang Ji
  */
 public class NumericalHessianFromGradient implements HessianWrtParameterProvider {
-    GradientWrtParameterProvider gradientProvider;
+
+    private final GradientWrtParameterProvider gradientProvider;
 
     public NumericalHessianFromGradient(GradientWrtParameterProvider gradientWrtParameterProvider) {
         this.gradientProvider = gradientWrtParameterProvider;

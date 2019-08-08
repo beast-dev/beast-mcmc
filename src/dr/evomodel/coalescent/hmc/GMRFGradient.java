@@ -2,6 +2,7 @@ package dr.evomodel.coalescent.hmc;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -10,7 +11,7 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  * @author Mandev Gill
  */
-public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
+public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
     private final WrtParameter wrtParameter;
@@ -44,11 +45,26 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
     }
 
     @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return wrtParameter.getDiagonalHessianLogDensity(skygridLikelihood);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public String getReport() {
         String header = skygridLikelihood + "." + wrtParameter.name + "\n";
-        return header + GradientWrtParameterProvider.getReportAndCheckForError(this,
+
+        header += GradientWrtParameterProvider.getReportAndCheckForError(this,
                 wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
-                tolerance);
+                tolerance) + " \n";
+
+        header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+
+        return header;
     }
 
     public enum WrtParameter {
@@ -62,6 +78,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
             @Override
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
                 return likelihood.getGradientWrtLogPopulationSize();
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getDiagonalHessianWrtLogPopulationSize();
             }
 
             @Override
@@ -79,6 +100,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
             }
 
             @Override
+            double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return likelihood.getDiagonalHessianWrtPrecision();
+            }
+
+            @Override
             double getParameterLowerBound() { return 0.0; }
         },
         REGRESSION_COEFFICIENTS("regressionCoefficients") {
@@ -93,6 +119,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
             }
 
             @Override
+            double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            @Override
             double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
         };
 
@@ -103,6 +134,8 @@ public class GMRFGradient implements GradientWrtParameterProvider, Reportable {
         abstract Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood);
 
         abstract double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
+
+        abstract double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
 
         abstract double getParameterLowerBound();
 

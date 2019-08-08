@@ -100,7 +100,7 @@ public interface GradientWrtParameterProvider {
         }
     }
 
-    class GradientMismatchException extends Exception { }
+    class MismatchException extends Exception { }
 
     class CheckGradientNumerically {
 
@@ -168,31 +168,40 @@ public interface GradientWrtParameterProvider {
             return testGradient;
         }
 
-        public String getReport() throws GradientMismatchException {
+        public String getReport() throws MismatchException {
 
             double[] analytic = provider.getGradientLogDensity();
             double[] numeric = getNumericalGradient();
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(analytic));
-            sb.append("\n");
-            sb.append("numeric : ").append(new dr.math.matrixAlgebra.Vector(numeric));
+            return makeReport("Gradient\n", analytic, numeric, checkValues, tolerance);
+        }
+    }
 
-            if (checkValues) {
-                for (int i = 0; i < analytic.length; ++i) {
-                    double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
-                    if (Math.abs(relativeDifference) > tolerance) {
-                        sb.append("\nDifference @ ").append(i + 1).append(": ")
-                                .append(analytic[i]).append(" ").append(numeric[i])
-                                .append(" ").append(relativeDifference).append("\n");
-                        Logger.getLogger("dr.inference.hmc").info(sb.toString());
-                        throw new GradientMismatchException();
-                    }
+    static String makeReport(String header,
+                             double[] analytic,
+                             double[] numeric,
+                             boolean checkValues,
+                             double tolerance) throws MismatchException {
+
+        StringBuilder sb = new StringBuilder(header);
+        sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(analytic));
+        sb.append("\n");
+        sb.append("numeric : ").append(new dr.math.matrixAlgebra.Vector(numeric));
+
+        if (checkValues) {
+            for (int i = 0; i < analytic.length; ++i) {
+                double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
+                if (Math.abs(relativeDifference) > tolerance) {
+                    sb.append("\nDifference @ ").append(i + 1).append(": ")
+                            .append(analytic[i]).append(" ").append(numeric[i])
+                            .append(" ").append(relativeDifference).append("\n");
+                    Logger.getLogger("dr.inference.hmc").info(sb.toString());
+                    throw new MismatchException();
                 }
             }
-
-            return sb.toString();
         }
+
+        return sb.toString();
     }
 
     static String getReportAndCheckForError(GradientWrtParameterProvider provider,
@@ -204,7 +213,7 @@ public interface GradientWrtParameterProvider {
                     lowerBound, upperBound,
                     nullableTolerance
             ).getReport();
-        } catch (GradientMismatchException e) {
+        } catch (MismatchException e) {
             String message = e.getMessage();
             if (message == null) {
                 message = provider.getParameter().getParameterName();

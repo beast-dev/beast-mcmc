@@ -25,17 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * MultiPartitionDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @author Guy Baele
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -58,6 +47,17 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
+/**
+ * MultiPartitionDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @author Guy Baele
+ * @version $Id$
+ */
 
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
 

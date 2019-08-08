@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 
 public class GammaDistributionModel extends AbstractModel
-        implements ParametricDistributionModel, GradientProvider {
+        implements ParametricDistributionModel, GradientProvider, HessianProvider {
 
     public enum GammaParameterizationType {
         ShapeScale,
@@ -207,6 +207,26 @@ public class GammaDistributionModel extends AbstractModel
             result[i] = GammaDistribution.gradLogPdf(x[i] - offset, shape, scale);
         }
         return result;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        double shape = getShape();
+        double scale = getScale();
+
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = GammaDistribution.hessianLogPdf(x[i] - offset, shape, scale);
+        }
+        return result;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+        return HessianProvider.expandDiagonals(getDiagonalHessianLogDensity(obj));
     }
 
     // **************************************************************

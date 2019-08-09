@@ -85,4 +85,6 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
 
     abstract double getLogJacobian(double[] values);
 
+    abstract double[] updateGradientLogDensity(double[] gradient, double[] value);
+
 }

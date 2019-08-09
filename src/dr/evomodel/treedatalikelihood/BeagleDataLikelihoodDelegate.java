@@ -347,7 +347,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 //                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
 //            }
 
-            requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+//            requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
 
             if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();

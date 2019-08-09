@@ -3,9 +3,12 @@ package dr.evomodel.coalescent.hmc;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -110,7 +113,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
         REGRESSION_COEFFICIENTS("regressionCoefficients") {
             @Override
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
-                return likelihood.getBetaParameter();
+                return likelihood.getBetaListAsSingleParameter();
             }
 
             @Override

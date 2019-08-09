@@ -866,6 +866,23 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return beta;
     }
 
+    private Parameter betaListAsSingleParameter;
+
+    public Parameter getBetaListAsSingleParameter() {
+        if (betaListAsSingleParameter == null) {
+            if (beta != null) {
+                CompoundParameter compound = new CompoundParameter("compoundBeta");
+                for (Parameter b : beta) {
+                    compound.addParameter(b);
+                }
+                addVariable(compound);
+                betaListAsSingleParameter = compound;
+            }
+        }
+
+        return betaListAsSingleParameter;
+    }
+
     public List<MatrixParameter> getCovariates() {
         return covariates;
     }
@@ -924,27 +941,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     public double[] getDiagonalHessianWrtLogPopulationSize() { return getDiagonalHessianLogDensity(); }
 
-    private void subtractCovariateMean(double[] gamma) {
-
-        if (beta != null) {
-
-            for (int k = 0; k < beta.size(); ++k) {
-
-                Parameter bk = beta.get(k);
-                MatrixParameterInterface Xk = covariates.get(k);
-
-                for (int i = 0; i < gamma.length; ++i) {
-                    gamma[i] -= bk.getParameterValue(0) * Xk.getParameterValue(0, i); // TODO Generalize for matrices
-                }
-            }
-        }
+    private double[] getMeanAdjustedGamma() {
+        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+        skygridHelper.updateGammaWithCovariates(currentGamma);
+        return currentGamma.getData();
     }
 
-    public double[] getGradientWrtPrecision() { // Keep on natural-scale, use transformGradient later if wanted
+    public double[] getGradientWrtPrecision() {
 
-        double[] gamma = popSizeParameter.getParameterValues();
-        subtractCovariateMean(gamma);;
-
+        double[] gamma = getMeanAdjustedGamma();
         double currentPrec = precisionParameter.getParameterValue(0);
 
         double grad = numGridPoints / (2 * currentPrec);
@@ -967,8 +972,14 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         if (beta == null) return null;
 
+        // TODO I believe we need one Parameter beta (is the same across loci) and List covariates (can differ across loci)
+
+
+        // TODO Need to delegate to SkygridCovariateHelper
+
         double [] gradLogDens = new double [beta.size()];
-        double[] currentGamma = popSizeParameter.getParameterValues();
+        double[] gamma = getMeanAdjustedGamma();
+        
         double currentPrec = precisionParameter.getParameterValue(0);
 
         for (int k = 0; k < beta.size(); k++) {
@@ -976,14 +987,14 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             MatrixParameter covk = covariates.get(k);
 
             gradLogDens[k] = numGridPoints / 2
-                    + currentPrec * (currentGamma[0]             - currentGamma[1]                ) * covk.getParameterValue(0,0)
-                    + currentPrec * (currentGamma[numGridPoints] - currentGamma[numGridPoints - 1]) * covk.getParameterValue(0, numGridPoints)
-                    - 0.5 * currentPrec * (currentGamma[1] - currentGamma[0]) * (currentGamma[1] - currentGamma[0]);
+                    + currentPrec * (gamma[0]             - gamma[1]                ) * covk.getParameterValue(0,0)
+                    + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * covk.getParameterValue(0, numGridPoints)
+                    - 0.5 * currentPrec * (gamma[1] - gamma[0]) * (gamma[1] - gamma[0]);
 
             for(int i = 1; i < numGridPoints; i++){
-                gradLogDens[k] = gradLogDens[k]
-                        - 0.5 * currentPrec * (currentGamma[i + 1] - currentGamma[i]) * (currentGamma[i + 1] - currentGamma[i])
-                        + currentPrec * (-currentGamma[i - 1] + 2 * currentGamma[i] -currentGamma[i + 1]) * covk.getParameterValue(i);
+                gradLogDens[k] +=
+                        - 0.5 * currentPrec * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i])
+                        + currentPrec * (-gamma[i - 1] + 2 * gamma[i] -gamma[i + 1]) * covk.getParameterValue(i);
             }
         }
 
@@ -994,9 +1005,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         final int dim = popSizeParameter.getSize();
         double[] gradLogDens = new double[dim];
-
-        double[] gamma = popSizeParameter.getParameterValues();
-        subtractCovariateMean(gamma);
+        double[] gamma = getMeanAdjustedGamma();
 
         double currentPrec = precisionParameter.getParameterValue(0);
 
@@ -1015,6 +1024,26 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 * Math.exp(-popSizeParameter.getParameterValue(dim-1));
 
         return gradLogDens;
+
+//        // TODO Am unclear why the code below does not work for Hessian (???)
+//        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+//
+//        // Use same code as skygridHelper -- TODO remove code duplication
+//        skygridHelper.updateGammaWithCovariates(currentGamma);
+//        SymmTridiagMatrix currentQ = getScaledWeightMatrix(
+//                precisionParameter.getParameterValue(0),
+//                lambdaParameter.getParameterValue(0));
+//
+//        DenseVector g = new DenseVector(fieldLength);
+//        currentQ.mult(currentGamma, g);
+//
+//        double[] gradient = g.getData();
+//
+//        for (int i = 0; i < fieldLength; ++i) {
+//            gradient[i] += -numCoalEvents[i] + sufficientStatistics[i] * Math.exp(-popSizeParameter.getParameterValue(i));
+//        }
+//
+//        return gradient;
     }
 
     private double[] getDiagonalHessianLogDensity() {
@@ -1030,32 +1059,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         hessianLogDens[popSizeDim - 1] = -currentPrec
                 - sufficientStatistics[popSizeDim - 1] * Math.exp(-currentGamma[popSizeDim - 1]);
 
-        if (beta != null) {
-
-//            for (int k = 0; k < beta.size(); k++) {
-//
-//                Parameter b = beta.get(k);
-//                MatrixParameter covariate = covariates.get(k);
-//
-////                hessianLogDens[0] += currentPrec*covariate.getParameterValue(0, 0) * b.getParameterValue(0)
-////                                        - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
-//
-//
-//                gradLogDens[0] = gradLogDens[0] + currentPrec*covariate.getParameterValue(0, 0) * b.getParameterValue(0)
-//                        - precisionParameter.getParameterValue(0) * covariate.getParameterValue(0, 1) * b.getParameterValue(0);
-//
-//                gradLogDens[popSizeDim - 1] = gradLogDens[popSizeDim - 1] + currentPrec * covariate.getParameterValue(0, popSizeDim - 1) * b.getParameterValue(0)
-//                        - currentPrec*covariate.getParameterValue(0, popSizeDim - 2) * b.getParameterValue(0);
-//            }
-        }
-
         for (int i = 1; i < (popSizeDim - 1); i++) {
-
             hessianLogDens[i] = -2 * currentPrec - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
-
-            if (beta != null) {
-//                throw new RuntimeException("Not yet implemented");
-            }
         }
 
         return hessianLogDens;

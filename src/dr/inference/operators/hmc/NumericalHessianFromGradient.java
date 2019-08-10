@@ -5,12 +5,13 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;
+import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class NumericalHessianFromGradient implements HessianWrtParameterProvider {
+public class NumericalHessianFromGradient implements HessianWrtParameterProvider, Reportable {
 
     private final GradientWrtParameterProvider gradientProvider;
 
@@ -84,5 +85,12 @@ public class NumericalHessianFromGradient implements HessianWrtParameterProvider
         }
 
         return hessian;
+    }
+
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.TOLERANCE);
     }
 }

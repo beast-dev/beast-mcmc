@@ -129,8 +129,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
-                throw new RuntimeException("Not yet implemented");
-//                return new double[] { 1.0 };
+                return likelihood.getDiagonalHessianWrtRegressionCoefficients();
             }
 
             @Override

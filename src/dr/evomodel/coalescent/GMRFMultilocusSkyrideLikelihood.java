@@ -986,6 +986,39 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return gradLogDens;
     }
 
+    public double[] getDiagonalHessianWrtRegressionCoefficients() {
+
+        if (this.beta == null) return null;
+
+        if (this.beta.size() > 1 || covariates.size() > 1) {
+            throw new RuntimeException("This is not the way to handle multidimensional parameters");
+        }
+
+        Parameter beta = this.beta.get(0);
+        MatrixParameter covk = covariates.get(0);
+
+        double[] hessian = new double [beta.getDimension()];
+        double currentPrec = precisionParameter.getParameterValue(0);
+
+        for (int k = 0; k < beta.getDimension(); k++) {
+
+            double h = // numGridPoints / 2
+                    - currentPrec * (covk.getParameterValue(k, 0) - covk.getParameterValue(k,1)) * covk.getParameterValue(k,0)
+                    - currentPrec * (covk.getParameterValue(k, numGridPoints) - covk.getParameterValue(k, numGridPoints - 1)) * covk.getParameterValue(k, numGridPoints)
+                    ;
+
+            for(int i = 1; i < numGridPoints; i++){
+                h += - currentPrec * (-covk.getParameterValue(k, i - 1) + 2 * covk.getParameterValue(k, i) - covk.getParameterValue(k, i + 1)) * covk.getParameterValue(k, i)
+                        ;
+
+            }
+
+            hessian[k] = h;
+        }
+
+        return hessian;
+    }
+
     private double[] getGradientLogDensity() {
 
         checkIntervals();

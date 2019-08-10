@@ -113,7 +113,13 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
         REGRESSION_COEFFICIENTS("regressionCoefficients") {
             @Override
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
-                return likelihood.getBetaListAsSingleParameter();
+                List<Parameter> allBetas = likelihood.getBetaListParameter();
+
+                if (allBetas.size() > 1) {
+                    throw new RuntimeException("This is not the correct way of handling multidimensional parameters");
+                }
+
+                return allBetas.get(0);
             }
 
             @Override
@@ -124,6 +130,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             @Override
             double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
                 throw new RuntimeException("Not yet implemented");
+//                return new double[] { 1.0 };
             }
 
             @Override

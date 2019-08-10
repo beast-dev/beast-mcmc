@@ -862,25 +862,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return ploidyFactors.getParameterValue(nt);
     }
 
+    @Deprecated
     public List<Parameter> getBetaListParameter() {
         return beta;
-    }
-
-    private Parameter betaListAsSingleParameter;
-
-    public Parameter getBetaListAsSingleParameter() {
-        if (betaListAsSingleParameter == null) {
-            if (beta != null) {
-                CompoundParameter compound = new CompoundParameter("compoundBeta");
-                for (Parameter b : beta) {
-                    compound.addParameter(b);
-                }
-                addVariable(compound);
-                betaListAsSingleParameter = compound;
-            }
-        }
-
-        return betaListAsSingleParameter;
     }
 
     public List<MatrixParameter> getCovariates() {
@@ -970,32 +954,40 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     public double[] getGradientWrtRegressionCoefficients() {
 
-        if (beta == null) return null;
+        if (this.beta == null) return null;
+
+        if (this.beta.size() > 1 || covariates.size() > 1) {
+            throw new RuntimeException("This is not the way to handle multidimensional parameters");
+        }
+
+        Parameter beta = this.beta.get(0);
+        MatrixParameter covk = covariates.get(0);
 
         // TODO I believe we need one Parameter beta (is the same across loci) and List covariates (can differ across loci)
 
 
         // TODO Need to delegate to SkygridCovariateHelper
 
-        double [] gradLogDens = new double [beta.size()];
+        double[] gradLogDens = new double [beta.getDimension()];
         double[] gamma = getMeanAdjustedGamma();
         
         double currentPrec = precisionParameter.getParameterValue(0);
 
-        for (int k = 0; k < beta.size(); k++) {
+        for (int k = 0; k < beta.getDimension(); k++) {
 
-            MatrixParameter covk = covariates.get(k);
-
-            gradLogDens[k] = numGridPoints / 2
-                    + currentPrec * (gamma[0]             - gamma[1]                ) * covk.getParameterValue(0,0)
-                    + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * covk.getParameterValue(0, numGridPoints)
-                    - 0.5 * currentPrec * (gamma[1] - gamma[0]) * (gamma[1] - gamma[0]);
+            double gradient = // numGridPoints / 2
+                    + currentPrec * (gamma[0]             - gamma[1]                ) * covk.getParameterValue(k,0)
+                    + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * covk.getParameterValue(k, numGridPoints)
+//                    - 0.5 * currentPrec * (gamma[1] - gamma[0]) * (gamma[1] - gamma[0])
+                    ;
 
             for(int i = 1; i < numGridPoints; i++){
-                gradLogDens[k] +=
-                        - 0.5 * currentPrec * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i])
-                        + currentPrec * (-gamma[i - 1] + 2 * gamma[i] -gamma[i + 1]) * covk.getParameterValue(i);
+                gradient +=
+//                        -0.5 * currentPrec * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i])
+                        + currentPrec * (-gamma[i - 1] + 2 * gamma[i] -gamma[i + 1]) * covk.getParameterValue(k, i);
             }
+
+            gradLogDens[k] = gradient;
         }
 
         return gradLogDens;

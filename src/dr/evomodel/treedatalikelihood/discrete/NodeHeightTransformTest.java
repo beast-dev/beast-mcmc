@@ -23,10 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-package test.dr.evomodel.treedatalikelihood.discrete;
+package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
-import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;

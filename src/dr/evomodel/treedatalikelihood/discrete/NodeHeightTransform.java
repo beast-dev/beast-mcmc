@@ -108,6 +108,10 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
         return nodeHeightTransformDelegate.getLogJacobian(values);
     }
 
+    @Override
+    protected double[] updateGradientLogDensity(double[] gradient, double[] value) {
+        return nodeHeightTransformDelegate.updateGradientLogDensity(gradient, value);
+    }
 
     @Override
     public String getReport() {

@@ -143,7 +143,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
             final double anchorNodeHeight = epoch.getAnchorTipHeight();
             for (NodeRef node : epoch.getInternalNodes()) {
-                final int ratioNum = indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount();
+                final int ratioNum = getRatiosIndex(node);
                 final double currentNodeHeight = tree.getNodeHeight(node);
                 ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
                 previousNodeHeight = currentNodeHeight;
@@ -166,13 +166,17 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             if (!tree.isRoot(node) && !tree.isExternal(node)) {
                 Epoch epoch = nodeEpochMap.get(node.getNumber());
                 final NodeRef parentNode = tree.getParent(node);
-                final double ratio = ratios.getParameterValue(indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount());
+                final double ratio = ratios.getParameterValue(getRatiosIndex(node));
                 final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
 //                tree.setNodeHeight(node, nodeHeight);
-                nodeHeights.setParameterValueQuietly(indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount(), nodeHeight);
+                nodeHeights.setParameterValueQuietly(getRatiosIndex(node), nodeHeight);
             }
         }
         tree.pushTreeChangedEvent();
+    }
+
+    private int getRatiosIndex(NodeRef node) {
+        return indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount();
     }
 
     @Override
@@ -237,7 +241,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         double logJacobian = 0.0;
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
-            final int ratioNum = indexHelper.getParameterIndexFromNodeNumber(i) - tree.getExternalNodeCount();
+            final int ratioNum = getRatiosIndex(node);
             if (!tree.isRoot(node)) {
                 Epoch epoch = nodeEpochMap.get(i);
                 logJacobian += Math.log((tree.getNodeHeight(node) - epoch.getAnchorTipHeight())
@@ -245,6 +249,10 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             }
         }
         return logJacobian;
+    }
+
+    private int getNodeHeightGradientIndex(NodeRef node) {
+        return node.getNumber() - tree.getExternalNodeCount();
     }
 
     @Override
@@ -261,35 +269,30 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             final NodeRef leftChild = tree.getNode(op.getLeftChild());
             final NodeRef rightChild = tree.getNode(op.getRightChild());
 
-            final int nodeIndex = indexHelper.getParameterIndexFromNodeNumber(op.getNodeNumber());
-            final int leftChildIndex = indexHelper.getParameterIndexFromNodeNumber(op.getLeftChild());
-            final int rightChildIndex = indexHelper.getParameterIndexFromNodeNumber(op.getRightChild());
+            final int nodeIndex = getRatiosIndex(node);
 
             if (!tree.isRoot(node)) {
                 final double nodePartial = (tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight()) / ratios.getParameterValue(nodeIndex);
-                ratiosGradientUnweightedLogDensity[nodeIndex] += nodePartial * gradient[indexHelper.getParameterIndexFromNodeNumber(node.getNumber())];
-                if (tree.isExternal(leftChild)) {
-                    ratiosGradientUnweightedLogDensity[nodeIndex] += 0.0;
-                } else if (nodeEpochMap.get(leftChild.getNumber()) == nodeEpochMap.get(node.getNumber())) {
-                    ratiosGradientUnweightedLogDensity[nodeIndex] +=
-                            ratiosGradientUnweightedLogDensity[leftChildIndex] * ratios.getParameterValue(nodeIndex)
-                                    / ratios.getParameterValue(leftChildIndex);
-                    ratiosGradientUnweightedLogDensity[nodeIndex] +=
-                            ratiosGradientUnweightedLogDensity[rightChildIndex] * ratios.getParameterValue(nodeIndex)
-                                    / (tree.getNodeHeight(node) - nodeEpochMap.get(rightChild.getNumber()).getAnchorTipHeight());
-                } else if (nodeEpochMap.get(rightChild.getNumber()) == nodeEpochMap.get(node.getNumber())) {
-                    ratiosGradientUnweightedLogDensity[nodeIndex] +=
-                            ratiosGradientUnweightedLogDensity[rightChildIndex] * ratios.getParameterValue(nodeIndex)
-                                    / ratios.getParameterValue(rightChildIndex);
-                    ratiosGradientUnweightedLogDensity[nodeIndex] +=
-                            ratiosGradientUnweightedLogDensity[leftChildIndex] * ratios.getParameterValue(nodeIndex)
-                                    / (tree.getNodeHeight(node) - nodeEpochMap.get(leftChild.getNumber()).getAnchorTipHeight());
-                } else {
-                    throw new RuntimeException("Not a valid case.");
-                }
+                ratiosGradientUnweightedLogDensity[nodeIndex] += nodePartial * gradient[getNodeHeightGradientIndex(node)];
+                ratiosGradientUnweightedLogDensity[nodeIndex] += getEpochGradientAddition(node, leftChild, ratiosGradientUnweightedLogDensity);
+                ratiosGradientUnweightedLogDensity[nodeIndex] += getEpochGradientAddition(node, rightChild, ratiosGradientUnweightedLogDensity);
             }
         }
         return ratiosGradientUnweightedLogDensity;
+    }
+
+    private double getEpochGradientAddition(NodeRef node, NodeRef child, double[] ratiosGradientUnweightedLogDensity) {
+        final int childIndex = getRatiosIndex(child);
+        final int nodeIndex = getRatiosIndex(node);
+        if (childIndex < 0) {
+            return 0.0;
+        } else if (nodeEpochMap.get(child.getNumber()) == nodeEpochMap.get(node.getNumber())){
+            return ratiosGradientUnweightedLogDensity[childIndex] *
+                    ratios.getParameterValue(nodeIndex) / ratios.getParameterValue(childIndex);
+        } else {
+            return ratiosGradientUnweightedLogDensity[childIndex] * ratios.getParameterValue(nodeIndex)
+                    / (tree.getNodeHeight(node) - nodeEpochMap.get(child.getNumber()).getAnchorTipHeight());
+        }
     }
 
     private class Epoch implements Comparable {

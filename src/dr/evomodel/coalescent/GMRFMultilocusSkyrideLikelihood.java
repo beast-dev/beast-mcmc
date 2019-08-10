@@ -708,12 +708,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     protected double calculateLogCoalescentLikelihood() {
 
-        if (!intervalsKnown) {
-            // intervalsKnown -> false when handleModelChanged event occurs in super.
-            wrapSetupIntervals();
-            setupSufficientStatistics();
-            intervalsKnown = true;
-        }
+        checkIntervals();
 
         // Matrix operations taken from block update sampler to calculate data likelihood and field prior
 
@@ -926,9 +921,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     public double[] getDiagonalHessianWrtLogPopulationSize() { return getDiagonalHessianLogDensity(); }
 
     private double[] getMeanAdjustedGamma() {
-        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-        skygridHelper.updateGammaWithCovariates(currentGamma);
-        return currentGamma.getData();
+        return skygridHelper.getMeanAdjustedGamma().getData();
     }
 
     public double[] getGradientWrtPrecision() {
@@ -995,6 +988,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     private double[] getGradientLogDensity() {
 
+        checkIntervals();
+
         final int dim = popSizeParameter.getSize();
         double[] gradLogDens = new double[dim];
         double[] gamma = getMeanAdjustedGamma();
@@ -1040,6 +1035,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     private double[] getDiagonalHessianLogDensity() {
 
+        checkIntervals();
+
         double[] hessianLogDens = new double[popSizeParameter.getSize()];
         double[] currentGamma = popSizeParameter.getParameterValues();
         double currentPrec = precisionParameter.getParameterValue(0);
@@ -1058,6 +1055,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return hessianLogDens;
     }
 
+    private void checkIntervals() {
+        if (!intervalsKnown) {
+            //intervalsKnown -> false when handleModelChanged event occurs in super.
+            wrapSetupIntervals();
+            setupSufficientStatistics();
+            intervalsKnown = true;
+        }
+    }
+
     class SkygridHelper {
 
         SkygridHelper() { }
@@ -1066,23 +1072,22 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             // Do nothing
         }
 
+        private DenseVector getMeanAdjustedGamma() {
+            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+            updateGammaWithCovariates(currentGamma);
+            return currentGamma;
+        }
+
         double handleMissingValues() {
             return 0.0;
         }
 
         double getLogFieldLikelihood() {
 
-            if (!intervalsKnown) {
-                //intervalsKnown -> false when handleModelChanged event occurs in super.
-                wrapSetupIntervals();
-                setupSufficientStatistics();
-                intervalsKnown = true;
-            }
+            checkIntervals(); // TODO Is this really necessary?  Computation below does not appear to depend on intervals.
 
             DenseVector diagonal1 = new DenseVector(fieldLength);
-            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-
-            updateGammaWithCovariates(currentGamma);
+            DenseVector currentGamma = getMeanAdjustedGamma();
 
             double currentLike = handleMissingValues();
 
@@ -1263,7 +1268,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     @Override
     public String getDescription() {
-        return "Skyride coalescent";
+        return "Skygrid coalescent";
     }
 
     @Override

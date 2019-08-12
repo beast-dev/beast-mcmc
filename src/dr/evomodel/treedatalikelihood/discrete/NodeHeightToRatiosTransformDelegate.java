@@ -241,11 +241,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         double logJacobian = 0.0;
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
-            final int ratioNum = getRatiosIndex(node);
             if (!tree.isRoot(node)) {
                 Epoch epoch = nodeEpochMap.get(i);
-                logJacobian += Math.log((tree.getNodeHeight(node) - epoch.getAnchorTipHeight())
-                        / ratios.getParameterValue(ratioNum));
+                logJacobian += Math.log(getNodePartial(node));
             }
         }
         return logJacobian;
@@ -272,13 +270,18 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             final int nodeIndex = getRatiosIndex(node);
 
             if (!tree.isRoot(node)) {
-                final double nodePartial = (tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight()) / ratios.getParameterValue(nodeIndex);
+                final double nodePartial = getNodePartial(node);
                 ratiosGradientUnweightedLogDensity[nodeIndex] += nodePartial * gradient[getNodeHeightGradientIndex(node)];
                 ratiosGradientUnweightedLogDensity[nodeIndex] += getEpochGradientAddition(node, leftChild, ratiosGradientUnweightedLogDensity);
                 ratiosGradientUnweightedLogDensity[nodeIndex] += getEpochGradientAddition(node, rightChild, ratiosGradientUnweightedLogDensity);
             }
         }
         return ratiosGradientUnweightedLogDensity;
+    }
+
+    private double getNodePartial(NodeRef node) {
+        final int nodeIndex = getRatiosIndex(node);
+        return (tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight()) / ratios.getParameterValue(nodeIndex);
     }
 
     private double getEpochGradientAddition(NodeRef node, NodeRef child, double[] ratiosGradientUnweightedLogDensity) {
@@ -288,10 +291,11 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             return 0.0;
         } else if (nodeEpochMap.get(child.getNumber()) == nodeEpochMap.get(node.getNumber())){
             return ratiosGradientUnweightedLogDensity[childIndex] *
-                    ratios.getParameterValue(nodeIndex) / ratios.getParameterValue(childIndex);
+                    ratios.getParameterValue(childIndex) / ratios.getParameterValue(nodeIndex);
         } else {
-            return ratiosGradientUnweightedLogDensity[childIndex] * ratios.getParameterValue(nodeIndex)
-                    / (tree.getNodeHeight(node) - nodeEpochMap.get(child.getNumber()).getAnchorTipHeight());
+            return ratiosGradientUnweightedLogDensity[childIndex] * ratios.getParameterValue(childIndex)
+                    / (tree.getNodeHeight(child) - nodeEpochMap.get(child.getNumber()).getAnchorTipHeight())
+                    * getNodePartial(node);
         }
     }
 

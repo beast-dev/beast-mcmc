@@ -298,7 +298,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                     ratios.getParameterValue(childIndex) / ratios.getParameterValue(nodeIndex);
         } else {
             return ratiosGradientUnweightedLogDensity[childIndex] * ratios.getParameterValue(childIndex)
-                    / (tree.getNodeHeight(child) - nodeEpochMap.get(child.getNumber()).getAnchorTipHeight())
+                    / (tree.getNodeHeight(node) - nodeEpochMap.get(child.getNumber()).getAnchorTipHeight())
                     * getNodePartial(node);
         }
     }

@@ -93,8 +93,12 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             final double rightAnchorHeight = getAnchorTipHeight(rightChild);
 
             if (tree.isRoot(node)) {
-                nodeEpochMap.get(leftChild.getNumber()).endEpoch(node, null);
-                nodeEpochMap.get(rightChild.getNumber()).endEpoch(node, null);
+                if (!tree.isExternal(leftChild)) {
+                    nodeEpochMap.get(leftChild.getNumber()).endEpoch(node, null);
+                }
+                if (!tree.isExternal(rightChild)) {
+                    nodeEpochMap.get(rightChild.getNumber()).endEpoch(node, null);
+                }
             } else {
                 if (rightAnchorHeight > leftAnchorHeight) {
                     addToEpoch(node, rightChild, leftChild);

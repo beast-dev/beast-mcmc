@@ -55,7 +55,7 @@ public class NodeHeightTransformTest implements Reportable{
         String message = nodeHeightGradient.getReport();
         double[] gradient = nodeHeightGradient.getGradientLogDensity();
         double[] updatedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
-        double[] numericGradient = NumericalDerivative.diagonalHessian(numeric1, ratios.getParameterValues());
+        double[] numericGradient = NumericalDerivative.gradient(numeric1, ratios.getParameterValues());
 
         StringBuilder sb = new StringBuilder();
         sb.append("\nGradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(updatedGradient));

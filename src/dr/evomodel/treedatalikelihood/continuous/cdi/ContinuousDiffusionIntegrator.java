@@ -27,6 +27,8 @@ package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
 
@@ -52,6 +54,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     void getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
 
     void getBranchPrecision(int bufferIndex, double[] precision);
+
+    void getBranchVariance(int bufferIndex, double[] variance);
 
     void getBranchDisplacement(int bufferIndex, double[] displacement);
 
@@ -262,6 +266,13 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             for (int i = 0; i < dimTrait * dimTrait; ++i) { // TODO Write generic function for WrappedVector?
                 precision[i] = scalar * diffusions[precisionOffset + i];
             }
+        }
+
+        @Override
+        public void getBranchVariance(int bufferIndex, double[] variance) {
+            getBranchPrecision(bufferIndex, variance);
+            DenseMatrix64F Var = DenseMatrix64F.wrap(dimTrait, dimTrait, variance);
+            CommonOps.invert(Var);
         }
 
         @Override

@@ -54,6 +54,20 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
+    public void getBranchVariance(int bufferIndex, double[] variance) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        assert (variance != null);
+        assert (variance.length >= dimTrait * dimTrait);
+
+        System.arraycopy(variances, bufferIndex * dimTrait * dimTrait,
+                variance, 0, dimTrait * dimTrait);
+    }
+
+    @Override
     public void getRootPrecision(int priorBufferIndex, double[] precision) {
 
         assert (precision != null);
@@ -471,7 +485,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vip = matrix0;
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
+            if (allZeroOrInfinite(Vip)) {
+                throw new RuntimeException("Zero-length branch on data is not allowed.");
+            }
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {

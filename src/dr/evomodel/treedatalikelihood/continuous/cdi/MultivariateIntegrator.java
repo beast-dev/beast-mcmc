@@ -121,6 +121,22 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
+    public void getBranchVariance(int bufferIndex, double[] variance) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        assert (variance != null);
+        assert (variance.length >= dimTrait * dimTrait);
+
+        double scalar = getBranchLength(bufferIndex);
+        for (int i = 0; i < dimTrait * dimTrait; ++i) {
+            variance[i] = scalar * inverseDiffusions[precisionOffset + i];
+        }
+    }
+
+    @Override
     public void updatePreOrderPartial(
             final int kBuffer, // parent
             final int iBuffer, // node

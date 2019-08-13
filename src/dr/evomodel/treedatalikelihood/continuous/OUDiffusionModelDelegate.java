@@ -249,7 +249,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         // q_i^-1
 //        DenseMatrix64F qiInv = wrapDiagonalInverse(actualization, 0, dim);
         // Q_i^-
-        DenseMatrix64F Wi = statistics.getAbove().getRawVariance();
+        DenseMatrix64F Wi = statistics.getAbove().getRawVarianceCopy();
         // Gamma
         DenseMatrix64F Gamma = wrap(
                 ((SafeMultivariateDiagonalActualizedWithDriftIntegrator) cdi).getStationaryVariance(getEigenBufferOffsetIndex(0)),

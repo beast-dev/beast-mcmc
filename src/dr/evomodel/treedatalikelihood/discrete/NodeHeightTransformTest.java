@@ -54,16 +54,22 @@ public class NodeHeightTransformTest implements Reportable{
     public String getReport() {
         String message = nodeHeightGradient.getReport();
         double[] gradient = nodeHeightGradient.getGradientLogDensity();
-        double[] updatedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
-        double[] numericGradient = NumericalDerivative.gradient(numeric1, ratios.getParameterValues());
+        double[] updatedUnweightedGradient = nodeHeightTransform.updateGradientUnWeightedLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
+        double[] numericUnweightedGradient = NumericalDerivative.gradient(numericUnweighted, ratios.getParameterValues());
+        double[] updatedWeightedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
+        double[] numericWeightedGradient = NumericalDerivative.gradient(numericWeighted, ratios.getParameterValues());
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\nGradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(updatedGradient));
-        sb.append("\nGradient Numeric: ").append(new dr.math.matrixAlgebra.Vector(numericGradient));
+        sb.append("\nGradient wrt Unweighted LogLikelihood:");
+        sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedUnweightedGradient));
+        sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericUnweightedGradient));
+        sb.append("\nGradient wrt Weighted LogLikelihood:");
+        sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedWeightedGradient));
+        sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericWeightedGradient));
         return message + sb.toString();
     }
 
-    protected MultivariateFunction numeric1 = new MultivariateFunction() {
+    protected MultivariateFunction numericUnweighted = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
 
@@ -74,6 +80,35 @@ public class NodeHeightTransformTest implements Reportable{
 
 //            treeDataLikelihood.makeDirty();
             return nodeHeightGradient.getLikelihood().getLogLikelihood();
+        }
+
+        @Override
+        public int getNumArguments() {
+            return ratios.getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return 1.0;
+        }
+    };
+
+    protected MultivariateFunction numericWeighted = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            for (int i = 0; i < argument.length; ++i) {
+                ratios.setParameterValueQuietly(i, argument[i]);
+            }
+            ratios.fireParameterChangedEvent();
+
+//            treeDataLikelihood.makeDirty();
+            return nodeHeightGradient.getLikelihood().getLogLikelihood() + nodeHeightTransform.getLogJacobian(argument);
         }
 
         @Override

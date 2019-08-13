@@ -104,6 +104,11 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
     }
 
     @Override
+    double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
     }

@@ -246,7 +246,6 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                Epoch epoch = nodeEpochMap.get(i);
                 logJacobian += Math.log(getNodePartial(node));
             }
         }
@@ -259,6 +258,24 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     double[] updateGradientLogDensity(double[] gradient, double[] value) {
+        double[] logTime = new double[gradient.length];
+        for (int i = 0; i < gradient.length; i++) {
+            final int nodeNumber = i + tree.getExternalNodeCount();
+            NodeRef node = tree.getNode(nodeNumber);
+            if (!tree.isRoot(node)) {
+                logTime[i] = 1.0 / (tree.getNodeHeight(node) - nodeEpochMap.get(nodeNumber).getAnchorTipHeight());
+            }
+        }
+        double[] gradientLogJacobianDeterminant = updateGradientUnWeightedLogDensity(logTime, value, 0, value.length);
+        double[] gradientLogDensity = updateGradientUnWeightedLogDensity(gradient, value, 0, value.length);
+        for (int i = 0; i < ratios.getDimension(); i++) {
+            gradientLogDensity[i] += gradientLogJacobianDeterminant[i] - 1.0 / ratios.getParameterValue(i);
+        }
+        return gradientLogDensity;
+    }
+
+    @Override
+    double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
         // gradient is wrt nodeHeight, value = ratios
         double[] ratiosGradientUnweightedLogDensity = new double[ratios.getDimension()];
         postOrderTraversal.updateAllNodes();

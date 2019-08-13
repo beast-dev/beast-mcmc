@@ -87,4 +87,6 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
 
     abstract double[] updateGradientLogDensity(double[] gradient, double[] value);
 
+    abstract double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to);
+
 }

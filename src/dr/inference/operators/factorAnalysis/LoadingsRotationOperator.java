@@ -13,7 +13,9 @@ public class LoadingsRotationOperator extends AbstractAdaptableOperator implemen
     private final MatrixParameterInterface parameter;
 
     public LoadingsRotationOperator(AbstractAdaptableOperator baseOperator,
-                                    MatrixParameterInterface parameter) {
+                                    MatrixParameterInterface parameter
+    ) {
+        super(baseOperator.mode, baseOperator.getTargetAcceptanceProbability());
         this.baseOperator = baseOperator;
         this.parameter = parameter;
     }

@@ -94,6 +94,22 @@ public class LKJCholeskyTransformConstrained extends Transform.MultivariateTrans
     }
 
     @Override
+    public boolean isInInteriorDomain(double[] values) {
+        WrappedMatrix.WrappedStrictlyUpperTriangularMatrix L
+                = new WrappedMatrix.WrappedStrictlyUpperTriangularMatrix(values, dimVector);
+
+        if (Math.abs(L.get(0, 0)) >= 1.0) return false;
+        for (int j = 1; j < dimVector; j++) {
+            double norm = 0.0;
+            for (int i = 0; i < j; i++) {
+                norm += Math.pow(L.get(i, j), 2);
+            }
+            if (norm >= 1.0) return false;
+        }
+        return true;
+    }
+
+    @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
         throw new RuntimeException("Not relevant for the LKJ transform.");
     }

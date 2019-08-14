@@ -32,7 +32,6 @@ import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
-import dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiffusionParametersGradient;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -74,16 +73,9 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
         CompoundParameter compoundParameter = new CompoundParameter(null);
         List<GradientWrtParameterProvider> derivativeList = new ArrayList<GradientWrtParameterProvider>();
 
-        AbstractPrecisionGradient precisionGradient = (AbstractPrecisionGradient) xo.getChild(AbstractPrecisionGradient.class);
-        if (precisionGradient != null) {
-            derivationParametersList.add(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE);
-            compoundParameter.addParameter(precisionGradient.getRawParameter());
-            derivativeList.add(precisionGradient);
-        }
-
-        List<AbstractDiffusionGradient.ParameterDiffusionGradient> diffGradients = xo.getAllChildren(AbstractDiffusionGradient.ParameterDiffusionGradient.class);
+        List<AbstractDiffusionGradient> diffGradients = xo.getAllChildren(AbstractDiffusionGradient.class);
         if (diffGradients != null) {
-            for (AbstractDiffusionGradient.ParameterDiffusionGradient grad : diffGradients) {
+            for (AbstractDiffusionGradient grad : diffGradients) {
                 derivationParametersList.add(grad.getDerivationParameter());
                 compoundParameter.addParameter(grad.getRawParameter());
                 derivativeList.add(grad);
@@ -94,7 +86,7 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
 
 //        testSameModel(precisionGradient, attenuationGradient);
 
-        TreeDataLikelihood treeDataLikelihood = ((TreeDataLikelihood) precisionGradient.getLikelihood());
+        TreeDataLikelihood treeDataLikelihood = ((TreeDataLikelihood) diffGradients.get(0).getLikelihood());
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
         int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
         Tree tree = treeDataLikelihood.getTree();

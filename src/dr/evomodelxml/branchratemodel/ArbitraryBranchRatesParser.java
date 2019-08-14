@@ -48,6 +48,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String RANDOMIZE_RATES = "randomizeRates";
     static final String LOCATION = "location";
     static final String SCALE = "scale";
+    public static boolean randomize;
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;
@@ -69,6 +70,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
         }
 
+        randomize = randomizeRates;
+
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() > 1 && (rateCategoryParameter.getDimension() != numBranches)) {
             throw new XMLParseException("Incorrect number of rate parameters");
@@ -85,7 +88,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
 
-        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne, randomizeRates);
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
     }
 
     //************************************************************************

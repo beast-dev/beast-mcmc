@@ -60,6 +60,11 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
     public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
                                 boolean setRates) {
         this(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, tree, rateParameter, transform, setRates);
+        if (ArbitraryBranchRatesParser.randomize) {
+            for (int i = 0; i < rateParameter.getDimension(); i++) {
+                rateParameter.setValue(i, MathUtils.uniform(0,10));
+            }
+        }
     }
 
     public ArbitraryBranchRates(String name, TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
@@ -89,17 +94,6 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         this.rateParameter = rateParameter;
 
         addModel(rates);
-    }
-
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, BranchRateTransform transform, boolean setRates, boolean randomizeRates) {
-        this(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, tree, rateParameter, transform, setRates);
-
-        boolean randomize = randomizeRates;
-        if(randomize) {
-            for (int i = 0; i < rateParameter.getDimension(); i++) {
-                rateParameter.setValue(i, MathUtils.uniform(0,10));
-            }
-        }
     }
 
 

@@ -29,6 +29,7 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -70,8 +71,6 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
         }
 
-        randomize = randomizeRates;
-
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() > 1 && (rateCategoryParameter.getDimension() != numBranches)) {
             throw new XMLParseException("Incorrect number of rate parameters");
@@ -87,6 +86,12 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
 
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
+
+        if (randomizeRates) {
+            for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
+                rateCategoryParameter.setValue(i, MathUtils.uniform(0,10));
+            }
+        }
 
         return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
     }

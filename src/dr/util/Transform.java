@@ -28,11 +28,8 @@ package dr.util;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.XMLObject;
 import org.apache.commons.math.util.FastMath;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1960,6 +1957,182 @@ public interface Transform {
 
         public boolean isMultivariate() {
             return true;
+        }
+    }
+
+    class MultipleTransform implements Transform {
+
+        private final List<Transform> array;
+
+        public MultipleTransform(List<Transform> array) {
+            this.array = array;
+        }
+
+        @Override
+        public double transform(double value) {
+            double result = value;
+            for (Transform transform : array) {
+                result = transform.transform(result);
+            }
+            return result;
+        }
+
+        @Override
+        public double[] transform(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (Transform transform : array) {
+                result = transform.transform(result, from, to);
+            }
+            return result;
+        }
+
+        @Override
+        public double inverse(double value) {
+            double result = value;
+            for (Transform transform : array) {
+                result = transform.inverse(result);
+            }
+            return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to) {
+            double[] result = values.clone();
+            for (Transform transform : array) {
+                result = transform.inverse(result, from, to);
+            }
+            return result;
+        }
+
+        @Override
+        public double[] inverse(double[] values, int from, int to, double sum) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double updateGradientLogDensity(double gradient, double value) {
+            double updatedGradient = gradient;
+            double transformedValue = value;
+            for (Transform transform : array) {
+                updatedGradient = transform.updateGradientLogDensity(gradient, transformedValue);
+                transformedValue = transform.transform(value);
+            }
+            return updatedGradient;
+        }
+
+        @Override
+        public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+            double[] updatedGradient = gradient.clone();
+            double[] transformedValue = value.clone();
+            for (Transform transform : array) {
+                updatedGradient = transform.updateGradientLogDensity(updatedGradient, transformedValue, from, to);
+                transformedValue = transform.transform(transformedValue, from, to);
+            }
+            return updatedGradient;
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double[][] updateHessianLogDensity(double[][] hessian, double[][] transformationHessian, double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double updateGradientInverseUnWeightedLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double updateGradientUnWeightedLogDensity(double gradient, double value) {
+            double updatedGradient = gradient;
+            double transformedValue = value;
+            for (Transform transform : array) {
+                updatedGradient = transform.updateGradientUnWeightedLogDensity(updatedGradient, transformedValue);
+                transformedValue = transform.transform(transformedValue);
+            }
+            return updatedGradient;
+        }
+
+        @Override
+        public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+            double[] updatedGradient = gradient.clone();
+            double[] transformedValue = value.clone();
+            for (Transform transform : array) {
+                updatedGradient = transform.updateGradientUnWeightedLogDensity(updatedGradient, transformedValue, from, to);
+                transformedValue = transform.transform(transformedValue, from, to);
+            }
+            return updatedGradient;
+        }
+
+        @Override
+        public double gradient(double value) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double[] gradient(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public double[] gradientInverse(double[] values, int from, int to) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public String getTransformName() {
+            return "Multiple Transforms";
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            double result = 0.0;
+            double transformedValue = value;
+            for (Transform transform : array) {
+                result += transform.getLogJacobian(transformedValue);
+                transformedValue = transform.transform(transformedValue);
+            }
+            return result;
+        }
+
+        @Override
+        public double getLogJacobian(double[] values, int from, int to) {
+            double[] transformedValues = values.clone();
+            double result = 0.0;
+            for (Transform transform : array) {
+                result += transform.getLogJacobian(transformedValues, from, to);
+                transformedValues = transform.transform(transformedValues, from, to);
+            }
+            return result;
+        }
+
+        @Override
+        public boolean isMultivariate() {
+            return false;
         }
     }
 

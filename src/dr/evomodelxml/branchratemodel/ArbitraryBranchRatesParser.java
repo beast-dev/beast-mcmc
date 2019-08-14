@@ -49,7 +49,6 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String RANDOMIZE_RATES = "randomizeRates";
     static final String LOCATION = "location";
     static final String SCALE = "scale";
-    public static boolean randomize;
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;

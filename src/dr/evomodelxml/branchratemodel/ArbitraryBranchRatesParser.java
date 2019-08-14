@@ -45,7 +45,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     static final String EXP = "exp";
     private static final String MULTIPLIER = "multiplier";
     private static final String CENTER_AT_ONE = "centerAtOne";
-
+    private static final String RANDOMIZE_RATES = "randomizeRates";
     static final String LOCATION = "location";
     static final String SCALE = "scale";
 
@@ -63,6 +63,12 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean centerAtOne = xo.getAttribute(CENTER_AT_ONE, true);
 
+        boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
+
+        if(centerAtOne && randomizeRates == true) {
+            throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
+        }
+
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() > 1 && (rateCategoryParameter.getDimension() != numBranches)) {
             throw new XMLParseException("Incorrect number of rate parameters");
@@ -79,7 +85,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
 
-        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne, randomizeRates);
     }
 
     //************************************************************************
@@ -131,6 +137,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(RATES, Parameter.class, "The rate parameter"),
             AttributeRule.newBooleanRule(RECIPROCAL, true),
             AttributeRule.newBooleanRule(CENTER_AT_ONE, true),
+            AttributeRule.newBooleanRule(RANDOMIZE_RATES, true),
             AttributeRule.newBooleanRule(EXP, true),
             new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
             new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),

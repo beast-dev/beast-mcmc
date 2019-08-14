@@ -34,6 +34,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -89,6 +90,18 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
         addModel(rates);
     }
+
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, BranchRateTransform transform, boolean setRates, boolean randomizeRates) {
+        this(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, tree, rateParameter, transform, setRates);
+
+        boolean randomize = randomizeRates;
+        if(randomize) {
+            for (int i = 0; i < rateParameter.getDimension(); i++) {
+                rateParameter.setValue(i, MathUtils.uniform(0,10));
+            }
+        }
+    }
+
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {
         rates.setNodeValue(tree, node, value);

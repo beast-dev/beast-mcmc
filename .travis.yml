@@ -7,5 +7,9 @@ addons:
  apt:
    packages:
    - ant
+   - ant-optional
 
-script: ant dist
+script:
+  - ant dist
+  - cd ci; ./test.sh
+  - cd ..; ant junit

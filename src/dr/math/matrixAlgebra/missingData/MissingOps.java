@@ -415,7 +415,7 @@ public class MissingOps {
                 }
             }
 
-            if (!invert) {
+            if (invert) {
                 logDet = -logDet;
             }
 

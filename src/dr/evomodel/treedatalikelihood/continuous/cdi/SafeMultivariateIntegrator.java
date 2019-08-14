@@ -498,9 +498,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             safeInvert2(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
-            if (getDeterminant && getEffectiveDimension(iBuffer) == 0) ci = safeDeterminant(tmp1, false);
+            if (getDeterminant && getEffectiveDimension(iBuffer) == 0) ci = safeDeterminant(tmp1, true);
             CommonOps.mult(Pi, tmp1, Pip);
-            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) ci = safeDeterminant(Pip, false);
+            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) ci = safeDeterminant(Pip, true);
         }
 
         if (TIMING) {

@@ -24,7 +24,7 @@ public interface CrossValidationProvider {
         private final int dimStat;
 //        boolean statKnown = false;
 
-        CrossValidator(CrossValidationProvider provider) {
+        public CrossValidator(CrossValidationProvider provider) {
             this.provider = provider;
             this.relevantDims = provider.getRelevantDimensions();
 
@@ -77,7 +77,7 @@ public interface CrossValidationProvider {
 
     class CrossValidatorSum extends CrossValidator {
 
-        CrossValidatorSum(CrossValidationProvider provider) {
+        public CrossValidatorSum(CrossValidationProvider provider) {
             super(provider);
         }
 

@@ -197,10 +197,10 @@ public class CheckPointModifier extends BeastCheckpointer {
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
                 MCMCOperator operator = operatorSchedule.getOperator(i);
                 if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match operator: " + fields[1]);
+                    throw new RuntimeException("Unable to match operator: " + fields[1] + " vs. " + operator.getOperatorName());
                 }
                 if (fields.length < 4) {
-                    throw new RuntimeException("Operator missing values: " + fields[1]);
+                    throw new RuntimeException("Operator missing values: " + fields[1] + ", length=" + fields.length);
                 }
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));

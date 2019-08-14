@@ -8,13 +8,20 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inferencexml.model.TraitValidationProviderParser;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
-public class TraitValidationProvider implements CrossValidationProvider {
+/**
+ * @author Gabriel Hassler
+ */
+
+public class TraitValidationProvider implements CrossValidationProvider, Reportable {
 
     private final Parameter trueTraits;
     private final int[] missingInds;
@@ -24,14 +31,14 @@ public class TraitValidationProvider implements CrossValidationProvider {
     private final ContinuousExtensionDelegate extensionDelegate;
 
 
-    TraitValidationProvider(Parameter trueTraits,
-                            ContinuousTraitPartialsProvider dataModel,
-                            Tree treeModel,
-                            String id,
-                            Parameter missingParameter,
-                            TreeDataLikelihood treeLikelihood,
-                            String inferredValuesName,
-                            List<Integer> trueMissingIndices) {
+    public TraitValidationProvider(Parameter trueTraits,
+                                   ContinuousTraitPartialsProvider dataModel,
+                                   Tree treeModel,
+                                   String id,
+                                   Parameter missingParameter,
+                                   TreeDataLikelihood treeLikelihood,
+                                   String inferredValuesName,
+                                   List<Integer> trueMissingIndices) {
 
 
         this.trueTraits = trueTraits;
@@ -104,9 +111,7 @@ public class TraitValidationProvider implements CrossValidationProvider {
     }
 
     private String getId(String id) {
-        if (id == null) {
-            id = PARSER.getParserName();
-        }
+        if (id == null) return TraitValidationProviderParser.TRAIT_VALIDATION_PROVIDER;
         return id;
     }
 
@@ -161,88 +166,50 @@ public class TraitValidationProvider implements CrossValidationProvider {
         return sumName;
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    @Override
+    public String getReport() {
+        int iterations = 1000000;
+        int nMissing = missingInds.length;
 
-        final static String PARSER_NAME = "traitValidation";
-        final static String MASK = "mask";
-        final static String INFERRED_NAME = "inferredTrait";
-        final static String LOG_SUM = "logSum";
+        double[] sums = new double[nMissing];
+        double[][] sumSquares = new double[nMissing][nMissing];
 
+        for (int iteration = 0; iteration < iterations; iteration++) {
 
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            String trueValuesName = xo.getStringAttribute(TreeTraitParserUtilities.TRAIT_NAME);
-            String inferredValuesName = xo.getStringAttribute(INFERRED_NAME);
+            double[] extendedVals = extensionDelegate.getExtendedValues();
 
-            TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+            for (int i = 0; i < nMissing; i++) {
 
-            ContinuousDataLikelihoodDelegate delegate =
-                    (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
+                double vi = extendedVals[missingInds[i]];
 
-            ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
-            Tree treeModel = treeLikelihood.getTree();
+                sums[i] += vi;
+                sumSquares[i][i] += vi * vi;
 
+                for (int j = 0; j < i; j++) {
 
-            TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-
-
-            TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, trueValuesName,
-                            treeModel, true);
-
-            Parameter trueParameter = returnValue.traitParameter;
-            List<Integer> trueMissing = returnValue.missingIndices;
-            Parameter missingParameter = null;
-            if (xo.hasChildNamed(MASK)) {
-                missingParameter = (Parameter) xo.getElementFirstChild(MASK);
+                    double vj = extendedVals[missingInds[j]];
+                    sumSquares[i][j] += vi * vj;
+                }
             }
-
-
-            String id = xo.getId();
-
-
-            TraitValidationProvider provider = new TraitValidationProvider(trueParameter, dataModel, treeModel, id,
-                    missingParameter, treeLikelihood, inferredValuesName, trueMissing);
-
-            boolean logSum = xo.getAttribute(LOG_SUM, false);
-
-            if (logSum) return new CrossValidatorSum(provider);
-            return new CrossValidator(provider);
-
         }
 
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return new XMLSyntaxRule[]{
-
-                    new ElementRule(TreeDataLikelihood.class),
-                    AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-                    AttributeRule.newStringRule(INFERRED_NAME),
-                    AttributeRule.newBooleanRule(LOG_SUM, true),
-                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
-                    }),
-                    new ElementRule(MASK, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
-                    }, true)
-            };
+        for (int i = 0; i < nMissing; i++) {
+            sums[i] = sums[i] / iterations;
+            sumSquares[i][i] = sumSquares[i][i] / iterations - sums[i] * sums[i];
+            for (int j = 0; j < i; j++) {
+                sumSquares[i][j] = sumSquares[i][j] / iterations - sums[i] * sums[j];
+                sumSquares[j][i] = sumSquares[i][j];
+            }
         }
 
-        @Override
-        public String getParserDescription() {
-            return null;
-        }
-
-        @Override
-        public Class getReturnType() {
-            return CrossValidator.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return PARSER_NAME;
-        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Mean:\t");
+        sb.append(new Vector(sums));
+        sb.append("\n");
+        sb.append("Covariance:\t");
+        sb.append(new Matrix(sumSquares));
 
 
-    };
+        return sb.toString();
+    }
 }

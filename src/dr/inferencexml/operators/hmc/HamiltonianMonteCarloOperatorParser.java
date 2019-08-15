@@ -122,7 +122,12 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         Transform transform = parseTransform(xo);
 
-        if (derivative.getDimension() != parameter.getDimension()) {
+        boolean dimensionMismatch = derivative.getDimension() != parameter.getDimension();
+        if (transform != null && transform instanceof Transform.MultivariableTransform) {
+            dimensionMismatch = dimensionMismatch && ((Transform.MultivariableTransform) transform).getDimension() != parameter.getDimension();
+        }
+
+        if (dimensionMismatch) {
             throw new XMLParseException("Gradient (" + derivative.getDimension() +
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }

@@ -31,6 +31,7 @@ import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
 
 /**
@@ -44,6 +45,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     private static final String NODEHEIGHT = "nodeHeights";
     private static final String RATIO = "ratios";
     private static final String COALESCENT_INTERVAL = "coalescentIntervals";
+    private static final String LOGIT_RATIO = "logit";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -72,17 +74,23 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        NodeHeightTransform nodeHeightTransform;
+        Transform nodeHeightTransform;
         if (ratioParameter != null) {
-            nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+            NodeHeightTransform transform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+            if (xo.getChild(RATIO).getAttribute(LOGIT_RATIO, false)) {
+                Transform.Array logitTransforms = new Transform.Array(Transform.LOGIT, ratioParameter.getDimension(), null);
+                nodeHeightTransform = new Transform.ComposeMultivariable(logitTransforms, transform);
+            } else {
+                nodeHeightTransform = transform;
+            }
         } else {
             nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, tree, skyrideLikelihood);
-            coalescentIntervals = nodeHeightTransform.getParameter();
+            coalescentIntervals = ((NodeHeightTransform) nodeHeightTransform).getParameter();
             cxo = xo.getChild(COALESCENT_INTERVAL);
             coalescentIntervals.setId(cxo.getId());
             cxo.setNativeObject(coalescentIntervals);
         }
-        nodeHeightTransform.transform(nodeHeightParameter.getParameterValues(), 0, nodeHeightParameter.getDimension());
+
         return nodeHeightTransform;
     }
 
@@ -94,7 +102,8 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                         ),
                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
                 new ElementRule(TreeModel.class),
-                new ElementRule(BranchRateModel.class)
+                new ElementRule(BranchRateModel.class),
+                AttributeRule.newBooleanRule(LOGIT_RATIO, true),
         };
     }
 
@@ -105,7 +114,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return NodeHeightTransform.class;
+        return Transform.class;
     }
 
     @Override

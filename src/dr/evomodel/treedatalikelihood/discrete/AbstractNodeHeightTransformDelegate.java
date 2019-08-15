@@ -58,6 +58,10 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         tree.pushTreeChangedEvent();
     }
 
+    public Parameter getNodeHeights() {
+        return nodeHeights;
+    }
+
     private double[] processNodeHeights(double[] nodeHeights) {
         if (nodeHeights.length == this.nodeHeights.getDimension()) {
             return nodeHeights;

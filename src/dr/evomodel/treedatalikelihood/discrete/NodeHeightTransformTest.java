@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.util.Transform;
 import dr.xml.*;
 
 /**
@@ -39,6 +40,7 @@ public class NodeHeightTransformTest implements Reportable{
     private final NodeHeightTransform nodeHeightTransform;
     private final NodeHeightGradientForDiscreteTrait nodeHeightGradient;
     private final Parameter ratios;
+    private final Transform.ComposeMultivariable logitRatioTransform;
 
     public NodeHeightTransformTest(NodeHeightTransform nodeHeightTransform,
                                    NodeHeightGradientForDiscreteTrait nodeHeightGradient,
@@ -47,7 +49,8 @@ public class NodeHeightTransformTest implements Reportable{
         this.nodeHeightTransform = nodeHeightTransform;
         this.nodeHeightGradient = nodeHeightGradient;
         this.ratios = ratios;
-
+        Transform.Array logitTransforms = new Transform.Array(Transform.LOGIT, ratios.getDimension(), null);
+        this.logitRatioTransform = new Transform.ComposeMultivariable(logitTransforms, nodeHeightTransform);
     }
 
     @Override
@@ -66,6 +69,16 @@ public class NodeHeightTransformTest implements Reportable{
         sb.append("\nGradient wrt Weighted LogLikelihood:");
         sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedWeightedGradient));
         sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericWeightedGradient));
+
+
+        double[] updatedMultipleWeightedGradient = logitRatioTransform.updateGradientLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension());
+        double[] numericMultipleWeightedGradient = NumericalDerivative.gradient(numericMultipleWeighted,
+                logitRatioTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension()));
+
+        sb.append("\nGradient wrt Multiple Weighted LogLikelihood:");
+        sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedMultipleWeightedGradient));
+        sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericMultipleWeightedGradient));
+
         return message + sb.toString();
     }
 
@@ -108,7 +121,7 @@ public class NodeHeightTransformTest implements Reportable{
             ratios.fireParameterChangedEvent();
 
 //            treeDataLikelihood.makeDirty();
-            return nodeHeightGradient.getLikelihood().getLogLikelihood() + nodeHeightTransform.getLogJacobian(argument);
+            return nodeHeightGradient.getLikelihood().getLogLikelihood() - nodeHeightTransform.getLogJacobian(argument);
         }
 
         @Override
@@ -124,6 +137,39 @@ public class NodeHeightTransformTest implements Reportable{
         @Override
         public double getUpperBound(int n) {
             return 1.0;
+        }
+    };
+
+    protected MultivariateFunction numericMultipleWeighted = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            double[] inverseValues = logitRatioTransform.inverse(argument, 0, argument.length);
+            Parameter nodeHeights = nodeHeightTransform.getNodeHeights();
+
+            for (int i = 0; i < inverseValues.length; ++i) {
+                nodeHeights.setParameterValueQuietly(i, inverseValues[i]);
+            }
+            nodeHeightTransform.getNodeHeights().fireParameterChangedEvent();
+
+            nodeHeightGradient.getLikelihood().makeDirty();
+            final double result = nodeHeightGradient.getLikelihood().getLogLikelihood() - logitRatioTransform.getLogJacobian(inverseValues, 0, argument.length);
+            return result;
+        }
+
+        @Override
+        public int getNumArguments() {
+            return nodeHeightTransform.getNodeHeights().getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
         }
     };
 

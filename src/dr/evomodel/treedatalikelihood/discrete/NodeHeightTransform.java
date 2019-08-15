@@ -59,6 +59,10 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
     }
 
+    public Parameter getNodeHeights() {
+        return nodeHeightTransformDelegate.getNodeHeights();
+    }
+
     public Parameter getParameter() {
         return nodeHeightTransformDelegate.getParameter();
     }

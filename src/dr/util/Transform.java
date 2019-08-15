@@ -653,7 +653,7 @@ public interface Transform {
         }
 
         public double updateGradientLogDensity(double gradient, double value) {
-            throw new RuntimeException("Not yet implemented");
+            return gradient * value * (1.0 - value) - (2.0 * value - 1.0);
         }
 
         protected double getGradientLogJacobianInverse(double value) {

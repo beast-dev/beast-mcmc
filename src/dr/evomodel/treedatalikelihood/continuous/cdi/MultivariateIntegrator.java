@@ -121,7 +121,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
-    public void getBranchVariance(int bufferIndex, double[] variance) {
+    public void getBranchVariance(int bufferIndex, int precisionIndex, double[] variance) {
 
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
@@ -129,6 +129,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         assert (variance != null);
         assert (variance.length >= dimTrait * dimTrait);
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         double scalar = getBranchLength(bufferIndex);
         for (int i = 0; i < dimTrait * dimTrait; ++i) {
@@ -658,9 +660,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
-    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex) {
+    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex) {
 
-        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex);
+        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex, precisionIndex);
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
@@ -688,7 +692,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
-    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
+    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
+                                           final double[] logLikelihoods,
                                            boolean incrementOuterProducts, boolean isIntegratedProcess) {
         assert(logLikelihoods.length == numTraits);
 
@@ -702,6 +707,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         int rootOffset = dimPartial * rootBufferIndex;
         int priorOffset = dimPartial * priorBufferIndex;
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 

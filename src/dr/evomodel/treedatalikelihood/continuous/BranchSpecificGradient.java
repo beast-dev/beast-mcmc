@@ -109,8 +109,6 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
     @Override
     public double[] getGradientLogDensity() {
 
-        treeDataLikelihood.makeDirty(); // TODO can this be removed ? Gradient check in HMC seems to indicate this is needed.
-
         int dimGradient = branchProvider.getDimension();
 
         double[] result = new double[parameter.getDimension()];

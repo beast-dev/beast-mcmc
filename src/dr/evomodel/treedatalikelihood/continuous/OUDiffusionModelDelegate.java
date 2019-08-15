@@ -255,7 +255,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 //                0, dim, dim);
         // Branch variance
         double[] branchVariance = new double[dim * dim];
-        cdi.getBranchVariance(getMatrixBufferOffsetIndex(nodeIndex), branchVariance);
+        cdi.getBranchVariance(getMatrixBufferOffsetIndex(nodeIndex), getEigenBufferOffsetIndex(0) , branchVariance);
         DenseMatrix64F Sigma_i = wrap(branchVariance, 0, dim, dim);
 
         // factor

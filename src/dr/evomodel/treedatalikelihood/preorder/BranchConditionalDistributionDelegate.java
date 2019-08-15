@@ -94,16 +94,16 @@ public class BranchConditionalDistributionDelegate extends
 
         int nodeNumber = (node == null) ? -1 : likelihoodDelegate.getActiveNodeIndex(node.getNumber());
         int branchNumber = (node == null) ? -1 : likelihoodDelegate.getActiveMatrixIndex(node.getNumber());
+        int precisionIndex = likelihoodDelegate.getActivePrecisionIndex(0);
 
         List<BranchSufficientStatistics> statistics = new ArrayList<BranchSufficientStatistics>();
 
         cdi.getPostOrderPartial(nodeNumber, belowPartial);
         if (tree.isRoot(node)){
-            cdi.getRootMatrices(likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(),
+            cdi.getRootMatrices(likelihoodDelegate.getRootProcessDelegate().getPriorBufferIndex(), precisionIndex,
                     branchPrecision, branchDisplacement, branchActualization);
         } else {
-            //TODO: This does not seem to work when cdi is MultivariateIntegrator (problem with `precisionOffset`)
-            cdi.getBranchMatrices(branchNumber, branchPrecision, branchDisplacement, branchActualization);
+            cdi.getBranchMatrices(branchNumber, precisionIndex, branchPrecision, branchDisplacement, branchActualization);
         }
         cdi.getPreOrderPartial(nodeNumber, abovePartial);
 

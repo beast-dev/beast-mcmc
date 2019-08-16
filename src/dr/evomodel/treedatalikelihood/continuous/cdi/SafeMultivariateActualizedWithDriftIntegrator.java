@@ -203,9 +203,7 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
         double[] diagonalActualizations = new double[dimTrait];
         computeOUDiagonal1mActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimProcess,
                 diagonalActualizations, 0);
-        for (int i = 0; i < diagonalActualizations.length; i++) {
-            diagonalActualizations[i] = 1.0 - diagonalActualizations[i];
-        }
+        oneMinus(diagonalActualizations);
         transformDiagonalMatrixBack(diagonalActualizations, actualizations, scaledOffset, rotation, 0);
     }
 

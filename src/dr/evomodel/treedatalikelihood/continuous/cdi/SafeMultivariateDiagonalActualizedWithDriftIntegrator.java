@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -42,12 +43,8 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
     @Override
     public void getBranchActualization(int bufferIndex, double[] diagonalActualization) {
-
         getBranch1mActualization(bufferIndex, diagonalActualization);
-
-        for (int i = 0; i < diagonalActualization.length; i++) {
-            diagonalActualization[i] = 1.0 - diagonalActualization[i];
-        }
+        oneMinus(diagonalActualization);
     }
 
     @Override
@@ -294,35 +291,20 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     /// Tree-traversal functions
     ///////////////////////////////////////////////////////////////////////////
 
-//    @Override
-//    public void updatePreOrderPartial(
-//            final int kBuffer, // parent
-//            final int iBuffer, // node
-//            final int iMatrix,
-//            final int jBuffer, // sibling
-//            final int jMatrix) {
-//
-//        throw new RuntimeException("Not yet implemented");
-//    }
-
     @Override
     void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
         final double[] diagQdj = vectorDiagQdj;
         System.arraycopy(diagonal1mActualizations, jdo, diagQdj, 0, dimTrait);
-        for (int i = 0; i < diagQdj.length; i++) {
-            diagQdj[i] = 1.0 - diagQdj[i];
-        }
-        diagonalProduct(Pjp, diagQdj, QjPjp);
-        diagonalDoubleProduct(Pjp, diagQdj, Pjp);
+        oneMinus(diagQdj);
+        MissingOps.diagMult(diagQdj, Pjp, QjPjp);
+        MissingOps.diagMult(QjPjp, diagQdj, Pjp);
     }
 
     @Override
     void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
         final double[] diagQdi = vectorDiagQdi;
         System.arraycopy(diagonal1mActualizations, ido, diagQdi, 0, dimTrait);
-        for (int i = 0; i < diagQdi.length; i++) {
-            diagQdi[i] = 1.0 - diagQdi[i];
-        }
+        oneMinus(diagQdi);
         diagonalDoubleProduct(Vip, diagQdi, Vip);
     }
 
@@ -346,12 +328,10 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
         final double[] diagQdi = vectorDiagQdi;
         System.arraycopy(diagonal1mActualizations, ido, diagQdi, 0, dimTrait);
+        oneMinus(diagQdi);
         final double[] diagQdj = vectorDiagQdj;
         System.arraycopy(diagonal1mActualizations, jdo, diagQdj, 0, dimTrait);
-        for (int i = 0; i < diagQdi.length; i++) {
-            diagQdi[i] = 1.0 - diagQdi[i];
-            diagQdj[i] = 1.0 - diagQdj[i];
-        }
+        oneMinus(diagQdj);
 
         final DenseMatrix64F QdiPipQdi = matrix0;
         final DenseMatrix64F QdjPjpQdj = matrix1;
@@ -379,39 +359,13 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
     private static void diagonalDoubleProduct(DenseMatrix64F source, double[] diagonalScales,
                                               DenseMatrix64F destination) {
-        double[] scales = new double[diagonalScales.length * diagonalScales.length];
-        diagonalToMatrixDouble(diagonalScales, scales);
-
-        for (int i = 0; i < destination.data.length; ++i) {
-            destination.data[i] = scales[i] * source.data[i];
-        }
+        MissingOps.diagMult(source, diagonalScales, destination);
+        MissingOps.diagMult(diagonalScales, destination);
     }
 
-    private static void diagonalToMatrixDouble(double[] diagonalScales, double[] scales) {
-        int dim = diagonalScales.length;
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                scales[i * dim + j] = diagonalScales[i] * diagonalScales[j];
-            }
-        }
-    }
-
-    private static void diagonalProduct(DenseMatrix64F source, double[] diagonalScales,
-                                        DenseMatrix64F destination) {
-        double[] scales = new double[diagonalScales.length * diagonalScales.length];
-        diagonalToMatrix(diagonalScales, scales);
-
-        for (int i = 0; i < destination.data.length; ++i) {
-            destination.data[i] = scales[i] * source.data[i];
-        }
-    }
-
-    private static void diagonalToMatrix(double[] diagonalScales, double[] scales) {
-        int dim = diagonalScales.length;
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
-                scales[i * dim + j] = diagonalScales[i];
-            }
+    static void oneMinus(double[] x) {
+        for (int i = 0; i < x.length; i++) {
+            x[i] = 1.0 - x[i];
         }
     }
 

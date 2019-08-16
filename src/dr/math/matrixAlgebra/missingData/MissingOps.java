@@ -1013,16 +1013,12 @@ public class MissingOps {
     }
 
     public static void diagMult(double[] d, DenseMatrix64F M) {
-        assert d.length == M.getNumRows();
-        for (int i = 0; i < M.getNumRows(); i++) {
-            for (int j = 0; j < M.getNumCols(); j++) {
-                M.unsafe_set(i, j, d[i] * M.unsafe_get(i, j));
-            }
-        }
+        diagMult(d, M, M);
     }
 
     public static void diagMult(double[] d, DenseMatrix64F source, DenseMatrix64F dest) {
         assert d.length == source.getNumRows();
+        assert source.getNumRows() == dest.getNumRows() && source.getNumCols() == dest.getNumCols();
         for (int i = 0; i < source.getNumRows(); i++) {
             for (int j = 0; j < source.getNumCols(); j++) {
                 dest.unsafe_set(i, j, d[i] * source.unsafe_get(i, j));
@@ -1031,10 +1027,15 @@ public class MissingOps {
     }
 
     public static void diagMult(DenseMatrix64F M, double[] d) {
-        assert d.length == M.getNumCols();
-        for (int i = 0; i < M.getNumRows(); i++) {
-            for (int j = 0; j < M.getNumCols(); j++) {
-                M.unsafe_set(i, j, d[j] * M.unsafe_get(i, j));
+        diagMult(M, d, M);
+    }
+
+    public static void diagMult(DenseMatrix64F source, double[] d, DenseMatrix64F dest) {
+        assert d.length == source.getNumCols();
+        assert source.getNumRows() == dest.getNumRows() && source.getNumCols() == dest.getNumCols();
+        for (int i = 0; i < source.getNumRows(); i++) {
+            for (int j = 0; j < source.getNumCols(); j++) {
+                dest.unsafe_set(i, j, d[j] * source.unsafe_get(i, j));
             }
         }
     }

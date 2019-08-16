@@ -382,9 +382,6 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         // q_i
         double[] qi = new double[dim];
         cdi.getBranch1mActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
-//        for (int i = 0; i < dim; i++) {
-//            qi[i] = 1.0 - qi[i];
-//        }
         MissingOps.diagMult(qi, gradient);
     }
 

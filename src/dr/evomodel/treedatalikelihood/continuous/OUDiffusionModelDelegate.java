@@ -191,7 +191,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     private static double factorFunction(double x, double l) {
         if (x == 0) return l;
-        return (1 - Math.exp(-x * l)) / x;
+        return - Math.expm1(-x * l) / x;
     }
 
 //    private void actualizeGradientOld(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
@@ -242,8 +242,8 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     private DenseMatrix64F getGradientVarianceWrtActualizationDiagonal(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics,
                                                                        int nodeIndex, DenseMatrix64F gradient) {
         // q_i
-        double[] qi = new double[dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+//        double[] qi = new double[dim];
+//        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
 //        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
         // q_i^-1
 //        DenseMatrix64F qiInv = wrapDiagonalInverse(actualization, 0, dim);
@@ -275,14 +275,13 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
         // Wrt attenuation
         double ti = cdi.getBranchLength(getMatrixBufferOffsetIndex(nodeIndex));
-        chainRuleActualizationWrtAttenuationDiagonal(qi, ti, resDiag);
+        chainRuleActualizationWrtAttenuationDiagonal(ti, resDiag);
 
         return resDiag;
 
     }
 
-    private void chainRuleActualizationWrtAttenuationDiagonal(double[] actualization, double ti,
-                                                              DenseMatrix64F grad) {
+    private void chainRuleActualizationWrtAttenuationDiagonal(double ti, DenseMatrix64F grad) {
 //        MissingOps.diagMult(actualization, grad);
         CommonOps.scale(-ti, grad);
     }
@@ -314,7 +313,9 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     private double computeAttenuationFactorActualized(double lambda, double ti) {
         if (lambda == 0) return ti * ti;
-        return 2.0 * (1 - (1 + lambda * ti) * Math.exp( - lambda * ti)) / (lambda * lambda);
+        double em1 = Math.expm1(- lambda * ti);
+        return 2.0 * (em1 * em1 - (em1 + lambda * ti) * Math.exp(- lambda * ti)) / lambda / lambda;
+//        return 2.0 * (1 - (1 + lambda * ti) * Math.exp( - lambda * ti)) / (lambda * lambda);
     }
 
     DenseMatrix64F getGradientDisplacementWrtAttenuation(NodeRef node,
@@ -333,8 +334,8 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                                                          NodeRef node, DenseMatrix64F gradient) {
         int nodeIndex = node.getNumber();
         // q_i
-        double[] qi = new double[dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+//        double[] qi = new double[dim];
+//        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
 //        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
         // q_i^-1
 //        DenseMatrix64F qiInv = wrapDiagonalInverse(actualization, 0, dim);
@@ -356,7 +357,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
         // Wrt attenuation
         double ti = cdi.getBranchLength(getMatrixBufferOffsetIndex(nodeIndex));
-        chainRuleActualizationWrtAttenuationDiagonal(qi, ti, resDiag);
+        chainRuleActualizationWrtAttenuationDiagonal(ti, resDiag);
 
         return resDiag;
 
@@ -380,10 +381,10 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                                        int nodeIndex, DenseMatrix64F gradient) {
         // q_i
         double[] qi = new double[dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
-        for (int i = 0; i < dim; i++) {
-            qi[i] = 1.0 - qi[i];
-        }
+        cdi.getBranch1mActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+//        for (int i = 0; i < dim; i++) {
+//            qi[i] = 1.0 - qi[i];
+//        }
         MissingOps.diagMult(qi, gradient);
     }
 
@@ -391,11 +392,12 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                                int nodeIndex, DenseMatrix64F gradient) {
         // q_i
         double[] qi = new double[dim * dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        cdi.getBranch1mActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
         DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
-        for (int i = 0; i < dim; i++) {
-            Actu.unsafe_set(i, i, Actu.unsafe_get(i, i) - 1.0);
-        }
+        CommonOps.scale(-1.0, Actu);
+//        for (int i = 0; i < dim; i++) {
+//            Actu.unsafe_set(i, i, Actu.unsafe_get(i, i) - 1.0);
+//        }
         DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
         CommonOps.mult(Actu, gradient, tmp);
         CommonOps.scale(-1.0, tmp, gradient);
@@ -544,7 +546,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                         if (ep + eq == 0.0) {
                             var = (tij + 1 / priorSampleSize) * traitVariance[p][q];
                         } else {
-                            var = Math.exp(-ep * ti) * Math.exp(-eq * tj) * ((Math.exp((ep + eq) * tij) - 1) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q];
+                            var = Math.exp(-ep * ti) * Math.exp(-eq * tj) * (Math.expm1((ep + eq) * tij) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q];
                         }
                         varTemp.set(p, q, var);
                     }

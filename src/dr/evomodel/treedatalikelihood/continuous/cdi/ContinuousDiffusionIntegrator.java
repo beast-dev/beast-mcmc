@@ -62,6 +62,8 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void getBranchActualization(int bufferIndex, double[] actualization);
 
+    void getBranch1mActualization(int bufferIndex, double[] actualization);
+
     void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement, double[] expectation);
 
     void getRootMatrices(int priorBufferIndex, int precisionIndex,
@@ -324,6 +326,22 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             for (int i = 0; i < dimTrait; ++i) {
                 actualization[i] = 1.0;
+            }
+        }
+
+        @Override
+        public void getBranch1mActualization(int bufferIndex, double[] actualization) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            // Fill in actualization
+            assert (actualization != null);
+            assert (actualization.length >= dimTrait);
+
+            for (int i = 0; i < dimTrait; ++i) {
+                actualization[i] = 0.0;
             }
         }
 

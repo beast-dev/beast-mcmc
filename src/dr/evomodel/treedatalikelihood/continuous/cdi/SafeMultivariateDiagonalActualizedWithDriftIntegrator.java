@@ -26,22 +26,28 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         System.err.println("Trying SafeMultivariateDiagonalActualizedWithDriftIntegrator");
     }
 
-    // NOTE TO PB: need to merge all SafeMultivariate* together and then delegate specialized work ... avoid massive code duplication
-    // PB: Merged `updatePartial` functions by breaking it into smaller functions.
-
-
     @Override
-    public void getBranchActualization(int bufferIndex, double[] diagonalActualization) {
+    public void getBranch1mActualization(int bufferIndex, double[] diagonal1mActualization) {
 
         if (bufferIndex == -1) {
             throw new RuntimeException("Not yet implemented");
         }
 
-        assert (diagonalActualization != null);
-        assert (diagonalActualization.length >= dimTrait);
+        assert (diagonal1mActualization != null);
+        assert (diagonal1mActualization.length >= dimTrait);
 
-        System.arraycopy(diagonalActualizations, bufferIndex * dimTrait,
-                diagonalActualization, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations, bufferIndex * dimTrait,
+                diagonal1mActualization, 0, dimTrait);
+    }
+
+    @Override
+    public void getBranchActualization(int bufferIndex, double[] diagonalActualization) {
+
+        getBranch1mActualization(bufferIndex, diagonalActualization);
+
+        for (int i = 0; i < diagonalActualization.length; i++) {
+            diagonalActualization[i] = 1.0 - diagonalActualization[i];
+        }
     }
 
     @Override
@@ -69,7 +75,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
 
     private void allocateStorage() {
 
-        diagonalActualizations = new double[dimTrait * bufferCount];
+        diagonal1mActualizations = new double[dimTrait * bufferCount];
         stationaryVariances = new double[dimProcess * dimProcess * diffusionCount];
 
         vectorDiagQdi = new double[dimTrait];
@@ -212,17 +218,17 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                                 final double edgeLength,
                                 final int scaledOffsetDiagonal,
                                 final int scaledOffset) {
-        computeOUDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
-                diagonalActualizations, scaledOffsetDiagonal);
+        computeOUDiagonal1mActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimTrait,
+                diagonal1mActualizations, scaledOffsetDiagonal);
     }
 
-    static void computeOUDiagonalActualization(final double[] source,
+    static void computeOUDiagonal1mActualization(final double[] source,
                                                final double edgeLength,
                                                final int dim,
                                                final double[] destination,
                                                final int destinationOffset) {
         for (int i = 0; i < dim; ++i) {
-            destination[destinationOffset + i] = Math.exp(-source[i] * edgeLength);
+            destination[destinationOffset + i] = - Math.expm1(-source[i] * edgeLength);
         }
     }
 
@@ -230,7 +236,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                                final int scaledOffset,
                                final int scaledOffsetDiagonal,
                                final double edgeLength) {
-        scalingActualizationMatrix(diagonalActualizations, scaledOffsetDiagonal,
+        scalingActualizationMatrix(diagonal1mActualizations, scaledOffsetDiagonal,
                 stationaryVariances, unscaledOffset,
                 variances, scaledOffset,
                 dimTrait,
@@ -239,7 +245,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                 unscaledOffset);
     }
 
-    private static void scalingActualizationMatrix(final double[] diagonalActualizations,
+    private static void scalingActualizationMatrix(final double[] diagonal1mActualizations,
                                                    final int offsetActualization,
                                                    final double[] stationaryVariances,
                                                    final int offsetStationaryVariances,
@@ -252,10 +258,10 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         for (int i = 0; i < dim; ++i) {
             for (int j = 0; j < dim; ++j) {
                 double var = stationaryVariances[offsetStationaryVariances + i * dim + j];
-                if (Double.isInfinite(var) || (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]) == 0.0) {
+                if (Double.isInfinite(var) || (diagonal1mActualizations[offsetActualization + i] + diagonal1mActualizations[offsetActualization + j] == 0.0)) {
                     destination[destinationOffset + i * dim + j] = edgeLength * variance[varianceOffset + i * dim + j];
                 } else {
-                    destination[destinationOffset + i * dim + j] = var * (1 - diagonalActualizations[offsetActualization + i] * diagonalActualizations[offsetActualization + j]);
+                    destination[destinationOffset + i * dim + j] = var * (- diagonal1mActualizations[offsetActualization + i] * diagonal1mActualizations[offsetActualization + j] + diagonal1mActualizations[offsetActualization + i] + diagonal1mActualizations[offsetActualization + j]);
                 }
             }
         }
@@ -280,7 +286,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                                          final int pio) {
 
         for (int j = 0; j < dimTrait; ++j) {
-            displacements[pio + j] = optimalRates[offset + j] * (1 - diagonalActualizations[pio + j]);
+            displacements[pio + j] = optimalRates[offset + j] * diagonal1mActualizations[pio + j];
         }
     }
 
@@ -302,7 +308,10 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     @Override
     void actualizePrecision(DenseMatrix64F Pjp, DenseMatrix64F QjPjp, int jbo, int jmo, int jdo) {
         final double[] diagQdj = vectorDiagQdj;
-        System.arraycopy(diagonalActualizations, jdo, diagQdj, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations, jdo, diagQdj, 0, dimTrait);
+        for (int i = 0; i < diagQdj.length; i++) {
+            diagQdj[i] = 1.0 - diagQdj[i];
+        }
         diagonalProduct(Pjp, diagQdj, QjPjp);
         diagonalDoubleProduct(Pjp, diagQdj, Pjp);
     }
@@ -310,14 +319,17 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
     @Override
     void actualizeVariance(DenseMatrix64F Vip, int ibo, int imo, int ido) {
         final double[] diagQdi = vectorDiagQdi;
-        System.arraycopy(diagonalActualizations, ido, diagQdi, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations, ido, diagQdi, 0, dimTrait);
+        for (int i = 0; i < diagQdi.length; i++) {
+            diagQdi[i] = 1.0 - diagQdi[i];
+        }
         diagonalDoubleProduct(Vip, diagQdi, Vip);
     }
 
     @Override
     void scaleAndDriftMean(int ibo, int imo, int ido) {
         for (int g = 0; g < dimTrait; ++g) {
-            preOrderPartials[ibo + g] = diagonalActualizations[ido + g] * preOrderPartials[ibo + g] + displacements[ido + g];
+            preOrderPartials[ibo + g] = (1.0 - diagonal1mActualizations[ido + g]) * preOrderPartials[ibo + g] + displacements[ido + g];
         }
     }
 
@@ -333,9 +345,13 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
                                  DenseMatrix64F Pip, DenseMatrix64F Pjp, DenseMatrix64F Pk) {
 
         final double[] diagQdi = vectorDiagQdi;
-        System.arraycopy(diagonalActualizations, ido, diagQdi, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations, ido, diagQdi, 0, dimTrait);
         final double[] diagQdj = vectorDiagQdj;
-        System.arraycopy(diagonalActualizations, jdo, diagQdj, 0, dimTrait);
+        System.arraycopy(diagonal1mActualizations, jdo, diagQdj, 0, dimTrait);
+        for (int i = 0; i < diagQdi.length; i++) {
+            diagQdi[i] = 1.0 - diagQdi[i];
+            diagQdj[i] = 1.0 - diagQdj[i];
+        }
 
         final DenseMatrix64F QdiPipQdi = matrix0;
         final DenseMatrix64F QdjPjpQdj = matrix1;
@@ -399,7 +415,7 @@ public class SafeMultivariateDiagonalActualizedWithDriftIntegrator extends SafeM
         }
     }
 
-    private double[] diagonalActualizations;
+    private double[] diagonal1mActualizations;
     double[] stationaryVariances;
     private double[] vectorDiagQdi;
     private double[] vectorDiagQdj;

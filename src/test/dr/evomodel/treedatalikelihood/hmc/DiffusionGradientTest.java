@@ -393,7 +393,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{-2.0})));
 
         DiagonalMatrix strengthOfSelectionMatrixParam
-                = new DiagonalMatrix(new Parameter.Default(new double[]{0.01, 0.5, 1.0, 5.0, 10.0, 50.0}));
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.000005, 1.0, 5.0, 10.0, 50.0}));
 
         // Wrt Precision
         DiffusionProcessDelegate diffusionProcessDelegate

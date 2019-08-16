@@ -427,7 +427,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
 
         DiagonalMatrix strengthOfSelectionMatrixParam
-                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.0, 50.0}));
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.000001, 50.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new OUDiffusionModelDelegate(treeModel, diffusionModel,

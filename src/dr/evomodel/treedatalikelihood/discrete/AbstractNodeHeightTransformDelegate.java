@@ -51,7 +51,10 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
     }
 
     public void setNodeHeights(double[] nodeHeights) {
-        nodeHeights = processNodeHeights(nodeHeights);
+        if (nodeHeights.length != this.nodeHeights.getDimension()) {
+            throw new RuntimeException("Dimension mismatch!");
+        }
+
         for (int i = 0; i < nodeHeights.length; i++) {
             this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
         }
@@ -60,24 +63,6 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
 
     public Parameter getNodeHeights() {
         return nodeHeights;
-    }
-
-    private double[] processNodeHeights(double[] nodeHeights) {
-        if (nodeHeights.length == this.nodeHeights.getDimension()) {
-            return nodeHeights;
-        } else if (nodeHeights.length == this.nodeHeights.getDimension() + 1) {
-            double[] processedNodeHeights = new double[this.nodeHeights.getDimension()];
-            int t = 0;
-            for (int i = 0; i < nodeHeights.length; i++) {
-                if (!tree.isRoot(tree.getNode(i + tree.getExternalNodeCount()))) {
-                    processedNodeHeights[t] = nodeHeights[i];
-                    t++;
-                }
-            }
-            return processedNodeHeights;
-        } else {
-            throw new RuntimeException("Dimension mismatch!");
-        }
     }
 
     @Override

@@ -45,10 +45,10 @@ import java.util.Map;
  */
 public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTransformDelegate {
 
-    private Parameter ratios;
+    protected Parameter ratios;
     private final LikelihoodTreeTraversal postOrderTraversal;
-    private final SimulationTreeTraversal nodeHeightUpdateTraversal;
-    private Map<Integer, Epoch> nodeEpochMap = new HashMap<Integer, Epoch>();
+    protected final SimulationTreeTraversal preOrderTraversal;
+    protected Map<Integer, Epoch> nodeEpochMap = new HashMap<Integer, Epoch>();
     private List<Epoch> epochs = new ArrayList<Epoch>();
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
@@ -64,7 +64,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 branchRateModel,
                 TreeTraversal.TraversalType.POST_ORDER);
 
-        nodeHeightUpdateTraversal = new SimulationTreeTraversal(
+        preOrderTraversal = new SimulationTreeTraversal(
                 tree,
                 branchRateModel,
                 TreeTraversal.TraversalType.PRE_ORDER);
@@ -138,11 +138,12 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return ratios.getParameterValues();
     }
 
-    public void updateRatios() {
+    protected void updateRatios() {
         for (Epoch epoch : epochs) {
             double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
             final double anchorNodeHeight = epoch.getAnchorTipHeight();
-            for (NodeRef node : epoch.getInternalNodes()) {
+            for (int nodeNumber : epoch.getInternalNodes()) {
+                NodeRef node = tree.getNode(nodeNumber);
                 final int ratioNum = getRatiosIndex(node);
                 final double currentNodeHeight = tree.getNodeHeight(node);
                 ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
@@ -157,10 +158,10 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         }
     }
 
-    public void updateNodeHeights() {
-        nodeHeightUpdateTraversal.updateAllNodes();
-        nodeHeightUpdateTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = nodeHeightUpdateTraversal.getNodeOperations();
+    protected void updateNodeHeights() {
+        preOrderTraversal.updateAllNodes();
+        preOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
+        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = preOrderTraversal.getNodeOperations();
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
             NodeRef node = tree.getNode(op.getLeftChild());
             if (!tree.isRoot(node) && !tree.isExternal(node)) {
@@ -175,7 +176,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         tree.pushTreeChangedEvent();
     }
 
-    private int getRatiosIndex(NodeRef node) {
+    protected int getRatiosIndex(NodeRef node) {
         return indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount();
     }
 
@@ -248,30 +249,38 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return logJacobian;
     }
 
-    private int getNodeHeightGradientIndex(NodeRef node) {
+    protected int getNodeHeightGradientIndex(NodeRef node) {
         return node.getNumber() - tree.getExternalNodeCount();
     }
 
     @Override
     double[] updateGradientLogDensity(double[] gradient, double[] value) {
-        double[] logTime = new double[gradient.length];
-        for (int i = 0; i < gradient.length; i++) {
-            final int nodeNumber = i + tree.getExternalNodeCount();
-            NodeRef node = tree.getNode(nodeNumber);
-            if (!tree.isRoot(node)) {
-                logTime[i] = 1.0 / (tree.getNodeHeight(node) - nodeEpochMap.get(nodeNumber).getAnchorTipHeight());
-            }
-        }
-        double[] gradientLogJacobianDeterminant = updateGradientUnWeightedLogDensity(logTime, value, 0, value.length);
-        double[] gradientLogDensity = updateGradientUnWeightedLogDensity(gradient, value, 0, value.length);
+        double[] logTime = getLogTimeArray();
+        double[] gradientLogJacobianDeterminant = updateGradientUnWeightedLogDensity(logTime);
+        double[] gradientLogDensity = updateGradientUnWeightedLogDensity(gradient);
         for (int i = 0; i < ratios.getDimension(); i++) {
             gradientLogDensity[i] -= gradientLogJacobianDeterminant[i] - 1.0 / ratios.getParameterValue(i);
         }
         return gradientLogDensity;
     }
 
+    protected double[] getLogTimeArray() {
+        double[] logTime = new double[tree.getInternalNodeCount()];
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            final int nodeNumber = i + tree.getExternalNodeCount();
+            NodeRef node = tree.getNode(nodeNumber);
+            if (!tree.isRoot(node)) {
+                logTime[i] = 1.0 / (tree.getNodeHeight(node) - nodeEpochMap.get(nodeNumber).getAnchorTipHeight());
+            }
+        }
+        return logTime;
+    }
     @Override
     double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        return updateGradientUnWeightedLogDensity(gradient);
+    }
+
+    private double[] updateGradientUnWeightedLogDensity(double[] gradient) {
         // gradient is wrt nodeHeight, value = ratios
         double[] ratiosGradientUnweightedLogDensity = new double[ratios.getDimension()];
         postOrderTraversal.updateAllNodes();
@@ -316,9 +325,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         }
     }
 
-    private class Epoch implements Comparable {
+    protected class Epoch implements Comparable {
         private final int anchorTipNodeNumber;
-        private List<NodeRef> internalNodes = new ArrayList<NodeRef>();
+        private List<Integer> internalNodes = new ArrayList<Integer>();
         private Epoch lastEpoch;
         private NodeRef connectingNode;
 
@@ -337,10 +346,10 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         }
 
         public void addInternalNode(NodeRef node) {
-            internalNodes.add(0, node);
+            internalNodes.add(0, node.getNumber());
         }
 
-        public List<NodeRef> getInternalNodes() {
+        public List<Integer> getInternalNodes() {
             return internalNodes;
         }
 

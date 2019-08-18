@@ -45,7 +45,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     private static final String NODEHEIGHT = "nodeHeights";
     private static final String RATIO = "ratios";
     private static final String COALESCENT_INTERVAL = "coalescentIntervals";
-    private static final String LOGIT_RATIO = "logit";
+    private static final String REAL_LINE = "realLine";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -77,7 +77,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         Transform nodeHeightTransform;
         if (ratioParameter != null) {
             NodeHeightTransform transform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
-            if (xo.getChild(RATIO).getAttribute(LOGIT_RATIO, false)) {
+            if (xo.getChild(RATIO).getAttribute(REAL_LINE, false)) {
                 Transform.Array logitTransforms = new Transform.Array(Transform.LOGIT, ratioParameter.getDimension(), null);
                 nodeHeightTransform = new Transform.ComposeMultivariable(logitTransforms, transform);
             } else {
@@ -103,7 +103,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class),
-                AttributeRule.newBooleanRule(LOGIT_RATIO, true),
+                AttributeRule.newBooleanRule(REAL_LINE, true),
         };
     }
 

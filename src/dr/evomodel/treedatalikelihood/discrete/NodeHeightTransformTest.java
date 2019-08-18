@@ -31,6 +31,9 @@ import dr.math.NumericalDerivative;
 import dr.util.Transform;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
@@ -40,7 +43,7 @@ public class NodeHeightTransformTest implements Reportable{
     private final NodeHeightTransform nodeHeightTransform;
     private final NodeHeightGradientForDiscreteTrait nodeHeightGradient;
     private final Parameter ratios;
-    private final Transform.ComposeMultivariable logitRatioTransform;
+    private final Transform.ComposeMultivariable realLineTransform;
 
     public NodeHeightTransformTest(NodeHeightTransform nodeHeightTransform,
                                    NodeHeightGradientForDiscreteTrait nodeHeightGradient,
@@ -49,18 +52,25 @@ public class NodeHeightTransformTest implements Reportable{
         this.nodeHeightTransform = nodeHeightTransform;
         this.nodeHeightGradient = nodeHeightGradient;
         this.ratios = ratios;
-        Transform.Array logitTransforms = new Transform.Array(Transform.LOGIT, ratios.getDimension(), null);
-        this.logitRatioTransform = new Transform.ComposeMultivariable(logitTransforms, nodeHeightTransform);
+
+        List<Transform> transforms = new ArrayList<Transform>();
+        if (nodeHeightTransform.getParameter().getDimension() != ratios.getDimension()) {
+            transforms.add(new Transform.LogTransform());
+        }
+        for (int i = 0; i < ratios.getDimension(); i++) {
+            transforms.add(new Transform.LogitTransform());
+        }
+        this.realLineTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, nodeHeightTransform.getParameter()), nodeHeightTransform);
     }
 
     @Override
     public String getReport() {
         String message = nodeHeightGradient.getReport();
         double[] gradient = nodeHeightGradient.getGradientLogDensity();
-        double[] updatedUnweightedGradient = nodeHeightTransform.updateGradientUnWeightedLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
-        double[] numericUnweightedGradient = NumericalDerivative.gradient(numericUnweighted, ratios.getParameterValues());
-        double[] updatedWeightedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
-        double[] numericWeightedGradient = NumericalDerivative.gradient(numericWeighted, ratios.getParameterValues());
+        double[] updatedUnweightedGradient = nodeHeightTransform.updateGradientUnWeightedLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, gradient.length);
+        double[] numericUnweightedGradient = NumericalDerivative.gradient(numericUnweighted, nodeHeightTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues()));
+        double[] updatedWeightedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, gradient.length);
+        double[] numericWeightedGradient = NumericalDerivative.gradient(numericWeighted, nodeHeightTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues()));
 
         StringBuilder sb = new StringBuilder();
         sb.append("\nGradient wrt Unweighted LogLikelihood:");
@@ -71,9 +81,9 @@ public class NodeHeightTransformTest implements Reportable{
         sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericWeightedGradient));
 
 
-        double[] updatedMultipleWeightedGradient = logitRatioTransform.updateGradientLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension());
+        double[] updatedMultipleWeightedGradient = realLineTransform.updateGradientLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension());
         double[] numericMultipleWeightedGradient = NumericalDerivative.gradient(numericMultipleWeighted,
-                logitRatioTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension()));
+                realLineTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension()));
 
         sb.append("\nGradient wrt Multiple Weighted LogLikelihood:");
         sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedMultipleWeightedGradient));
@@ -86,10 +96,7 @@ public class NodeHeightTransformTest implements Reportable{
         @Override
         public double evaluate(double[] argument) {
 
-            for (int i = 0; i < argument.length; ++i) {
-                ratios.setParameterValueQuietly(i, argument[i]);
-            }
-            ratios.fireParameterChangedEvent();
+            nodeHeightTransform.inverse(argument);
 
 //            treeDataLikelihood.makeDirty();
             return nodeHeightGradient.getLikelihood().getLogLikelihood();
@@ -97,7 +104,7 @@ public class NodeHeightTransformTest implements Reportable{
 
         @Override
         public int getNumArguments() {
-            return ratios.getDimension();
+            return nodeHeightTransform.getDimension();
         }
 
         @Override
@@ -114,11 +121,7 @@ public class NodeHeightTransformTest implements Reportable{
     protected MultivariateFunction numericWeighted = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
-
-            for (int i = 0; i < argument.length; ++i) {
-                ratios.setParameterValueQuietly(i, argument[i]);
-            }
-            ratios.fireParameterChangedEvent();
+            nodeHeightTransform.inverse(argument);
 
 //            treeDataLikelihood.makeDirty();
             return nodeHeightGradient.getLikelihood().getLogLikelihood() - nodeHeightTransform.getLogJacobian(argument);
@@ -126,7 +129,7 @@ public class NodeHeightTransformTest implements Reportable{
 
         @Override
         public int getNumArguments() {
-            return ratios.getDimension();
+            return nodeHeightTransform.getDimension();
         }
 
         @Override
@@ -144,7 +147,7 @@ public class NodeHeightTransformTest implements Reportable{
         @Override
         public double evaluate(double[] argument) {
 
-            double[] inverseValues = logitRatioTransform.inverse(argument, 0, argument.length);
+            double[] inverseValues = realLineTransform.inverse(argument, 0, argument.length);
             Parameter nodeHeights = nodeHeightTransform.getNodeHeights();
 
             for (int i = 0; i < inverseValues.length; ++i) {
@@ -153,7 +156,7 @@ public class NodeHeightTransformTest implements Reportable{
             nodeHeightTransform.getNodeHeights().fireParameterChangedEvent();
 
             nodeHeightGradient.getLikelihood().makeDirty();
-            final double result = nodeHeightGradient.getLikelihood().getLogLikelihood() - logitRatioTransform.getLogJacobian(inverseValues, 0, argument.length);
+            final double result = nodeHeightGradient.getLikelihood().getLogLikelihood() - realLineTransform.getLogJacobian(inverseValues, 0, argument.length);
             return result;
         }
 

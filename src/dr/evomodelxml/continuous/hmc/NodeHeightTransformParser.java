@@ -34,6 +34,9 @@ import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
@@ -78,8 +81,15 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         if (ratioParameter != null) {
             NodeHeightTransform transform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
             if (xo.getChild(RATIO).getAttribute(REAL_LINE, false)) {
-                Transform.Array logitTransforms = new Transform.Array(Transform.LOGIT, ratioParameter.getDimension(), null);
-                nodeHeightTransform = new Transform.ComposeMultivariable(logitTransforms, transform);
+
+                List<Transform> transforms = new ArrayList<Transform>();
+                if (nodeHeightParameter.getDimension() != ratioParameter.getDimension()) {
+                    transforms.add(new Transform.LogTransform());
+                }
+                for (int i = 0; i < ratioParameter.getDimension(); i++) {
+                    transforms.add(new Transform.LogitTransform());
+                }
+                nodeHeightTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, nodeHeightParameter), transform);
             } else {
                 nodeHeightTransform = transform;
             }

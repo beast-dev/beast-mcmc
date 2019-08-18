@@ -66,7 +66,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
         this.maxTipHeight = tmpMaxTipHeight;
 
         this.heightParameter = new HeightParameter(tree,
-                new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+                new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         this.rootHeightAndRatios = new CompoundParameter("rootHeightAndRatios",
                 new Parameter[]{heightParameter, ratios});
 
@@ -136,24 +136,6 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
 
         return updatedGradient;
     }
-
-//    private double[] processNodeHeights(double[] nodeHeights) {
-//        if (nodeHeights.length == tree.getInternalNodeCount() - 1) {
-//            return nodeHeights;
-//        } else if (nodeHeights.length == tree.getInternalNodeCount()) {
-//            double[] processedHeights = new double[tree.getInternalNodeCount() - 1];
-//            int tmp = 0;
-//            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-//                NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
-//                if (!tree.isRoot(node)) {
-//                    processedHeights[tmp++] = nodeHeights[i];
-//                }
-//            }
-//            return processedHeights;
-//        } else {
-//            throw new RuntimeException("Dimension mismatch!");
-//        }
-//    }
 
     @Override
     public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {

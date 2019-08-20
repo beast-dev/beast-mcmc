@@ -39,6 +39,7 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
 
         if (!svdKnown) {
             recomputeStatistic();
+            enforceConstraints();
             svdKnown = true;
         }
 
@@ -70,6 +71,27 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
 
         System.arraycopy(svd.getSingularValues(), 0, singularVals, 0, k);
         Matrix V = svd.getV(buffer, true);
+
+    }
+
+    private void enforceConstraints() {
+        int k = parameter.getColumnDimension();
+        int p = parameter.getRowDimension();
+
+        for (int i = 1; i < k; i++) {
+            assert (singularVals[i] <= singularVals[i - 1]); //TODO: svd computation should already enforce ordering
+        }
+
+        for (int i = 0; i < k; i++) {
+            int offset = i * p;
+            if (Vbuffer[offset] < 0) {
+                for (int j = offset; j < offset + p; j++) {
+                    Vbuffer[j] = -Vbuffer[j];
+                }
+            }
+        }
+
+
     }
 
     @Override

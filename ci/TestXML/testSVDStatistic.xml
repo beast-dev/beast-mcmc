@@ -1,0 +1,70 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <matrixParameter id="L">
+        <parameter value="0.00761777  -0.548401  -0.78493    0.306115  -0.216298"/>
+        <parameter value="0.0570252    0.351526   0.245018  -1.03049   -2.13245"/>
+    </matrixParameter>
+
+    <svdStatistic id="svdStat">
+        <matrixParameter idref="L"/>
+    </svdStatistic>
+
+    <report>
+        <svdStatistic idref="svdStat"/>
+    </report>
+
+    <assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check svd
+        </message>
+        <actual regex="values:\s*(.*)\n">
+            <normalGammaPrecisionGibbsOperator idref="svdStat"/>
+        </actual>
+        <expected>
+            2.4100029812397232 1.022446556840847 0.0234733   0.157104   0.117894  -0.43343   -0.879208  0.0102419  -0.51842   -0.754695   0.248404  -0.316018
+        </expected>
+    </assertEqual>
+
+    <mcmc id="mcmc" chainLength="1" autoOptimize="true">
+        <posterior id="posterior">
+            <dummyLikelihood>
+                <parameter idref="L"/>
+            </dummyLikelihood>
+        </posterior>
+        <operators>
+            <fireParameterChanged weight="1"
+                                  value="0.684147 -0.112829 1.89669 -0.112829 1.20292 -1.14092 1.89669 -1.14092 7.08688">
+                <parameter idref="L"/>
+            </fireParameterChanged>
+        </operators>
+    </mcmc>
+
+
+<!--    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check observation counts-->
+<!--        </message>-->
+<!--        <actual regex="(?s)Observation counts:\s*(.*?)\n">-->
+<!--            <normalGammaPrecisionGibbsOperator idref="precisionOp"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            3 4 3-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
+
+<!--    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">-->
+<!--        <message>-->
+<!--            Check squared errors-->
+<!--        </message>-->
+<!--        <actual regex="(?s)Sum of squared errors:\s*(.*)">-->
+<!--            <normalGammaPrecisionGibbsOperator idref="precisionOp"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            93.0053, 15.0377, 14.1228-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
+
+
+</beast>
+

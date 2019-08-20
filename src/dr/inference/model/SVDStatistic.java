@@ -1,12 +1,13 @@
 package dr.inference.model;
 
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.data.Matrix;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 
-public class SVDStatistic extends Statistic.Abstract implements VariableListener {
+public class SVDStatistic extends Statistic.Abstract implements VariableListener, Reportable {
 
     private final MatrixParameterInterface parameter;
     private final double[] singularVals;
@@ -27,8 +28,8 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
 
     @Override
     public int getDimension() {
-        int k = parameter.getRowDimension();
-        int p = parameter.getColumnDimension();
+        int k = parameter.getColumnDimension();
+        int p = parameter.getRowDimension();
 
         return k + k * p;
     }
@@ -41,8 +42,7 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
             svdKnown = true;
         }
 
-        int k = parameter.getRowDimension();
-        int p = parameter.getColumnDimension();
+        int k = parameter.getColumnDimension();
 
 
         if (dim < k) {
@@ -57,24 +57,40 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
 
         double[] values = parameter.getParameterValues();
 
-        int k = parameter.getRowDimension();
-        int p = parameter.getColumnDimension();
+        int k = parameter.getColumnDimension();
+        int p = parameter.getRowDimension();
 
         DenseMatrix64F matrix = DenseMatrix64F.wrap(k, p, values);
         DenseMatrix64F buffer = DenseMatrix64F.wrap(k, p, Vbuffer);
 
         SingularValueDecomposition svd = DecompositionFactory.svd(matrix.numRows, matrix.numCols,
-                false, true, false);
+                false, true, true);
 
         svd.decompose(matrix);
 
         System.arraycopy(svd.getSingularValues(), 0, singularVals, 0, k);
-        Matrix V = svd.getV(buffer, false);
+        Matrix V = svd.getV(buffer, true);
     }
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         svdKnown = false;
+    }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+
+        int n = getDimension();
+        double[] values = new double[n];
+        for (int i = 0; i < n; i++) {
+            values[i] = getStatisticValue(i);
+        }
+        sb.append("values: ");
+        sb.append(new Vector(values));
+        sb.append("\n\n");
+        return sb.toString();
+
     }
 
     public static final String SVD_STATISTIC = "svdStatistic";
@@ -108,4 +124,6 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
             return SVD_STATISTIC;
         }
     };
+
+
 }

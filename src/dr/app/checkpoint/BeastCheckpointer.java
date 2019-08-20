@@ -253,6 +253,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         out.print(parameter.getParameterUntransformedValue(dim));
                     }
                 }
+                out.println();
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {

@@ -45,7 +45,7 @@ import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsReal
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
 import dr.inference.model.*;
-import test.dr.inference.trace.TraceCorrelationAssert;
+import test.dr.evomodel.treedatalikelihood.continuous.ContinuousTraitTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,21 +56,16 @@ import static dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientF
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDriftGradient;
 
-public class DiffusionGradientTest extends TraceCorrelationAssert {
+public class DiffusionGradientTest extends ContinuousTraitTest {
 
     private int dim;
     private CompoundSymmetricMatrix precisionMatrix;
     private CachedMatrixInverse precisionMatrixInv;
 
-    private MultivariateDiffusionModel diffusionModel;
     private MultivariateDiffusionModel diffusionModelVar;
-    private ContinuousTraitPartialsProvider dataModel;
     private ContinuousTraitPartialsProvider dataModelMissing;
-    private ConjugateRootTraitPrior rootPrior;
-    private CompoundParameter meanRoot;
 
-    private ContinuousRateTransformation rateTransformation;
-    private BranchRateModel rateModel;
+    private CompoundParameter meanRoot;
 
     private Boolean fixedRoot = true;
 
@@ -144,22 +139,6 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         PrecisionType precisionType = PrecisionType.FULL;
 
         // Root prior
-//        final String rootVal = fixedRoot ? "Infinity" : "0.1";
-//        String s = "<beast>\n" +
-//                "    <conjugateRootPrior>\n" +
-//                "        <meanParameter>\n" +
-//                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5 -2.5 1.3 4.0\"/>\n" +
-//                "        </meanParameter>\n" +
-//                "        <priorSampleSize>\n" +
-//                "            <parameter id=\"sampleSizeRoot\" value=\"" + rootVal + "\"/>\n" +
-//                "        </priorSampleSize>\n" +
-//                "    </conjugateRootPrior>\n" +
-//                "</beast>";
-//        XMLParser parser = new XMLParser(true, true, true, null);
-//        parser.addXMLObjectParser(new AttributeParser());
-//        parser.addXMLObjectParser(new ParameterParser());
-//        parser.parse(new StringReader(s), true);
-//        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dim);
         final double rootVal = fixedRoot ? Double.POSITIVE_INFINITY : 0.1;
         Parameter rootVar = new Parameter.Default("rootVar", rootVal);
         Parameter[] meanRootList = new Parameter[dim];
@@ -181,6 +160,22 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
                 missingIndices, false,
                 6, precisionType);
 
+        //// Factor Model //// *****************************************************************************************
+        // Error model
+        Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5, 0.1, 0.2, 0.3});
+
+        // Loadings
+        Parameter[] loadingsParameters = new Parameter[2];
+        loadingsParameters[0] = new Parameter.Default(new double[]{1.0, 2.0, 3.0, 0.0, 0.0, 0.0});
+        loadingsParameters[1] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.0, 0.5, 1.0});
+        MatrixParameterInterface loadingsMatrixParameters = new MatrixParameter("loadings", loadingsParameters);
+
+        dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
+                traitParameter,
+                missingIndices,
+                loadingsMatrixParameters,
+                factorPrecisionParameters, 0.0, null);
+
     }
 
     public void testGradientBMWithMissing() {
@@ -200,6 +195,12 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModel, precisionMatrixInv, true);
         System.out.println("\nTest gradient variance with missing.");
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv, false);
+
+        // Factor Model
+        DiffusionProcessDelegate diffusionProcessDelegateFactor
+                = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModelFactor);
+        System.out.println("\nTest gradient precision.");
+        testGradient(diffusionModelFactor, diffusionProcessDelegateFactor, dataModelFactor, rootPriorFactor, rootMeanFactor, precisionMatrixFactor, false);
     }
 
     public void testGradientDriftWithMissing() {
@@ -228,6 +229,17 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModel, precisionMatrixInv);
         System.out.println("\nTest drift gradient variance with missing.");
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv);
+
+        // Factor Model
+        // Diffusion
+        List<BranchRateModel> driftModelsFactor = new ArrayList<BranchRateModel>();
+        driftModelsFactor.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{0.0})));
+        driftModelsFactor.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{200.0})));
+
+        DiffusionProcessDelegate diffusionProcessDelegateFactor
+                = new DriftDiffusionModelDelegate(treeModel, diffusionModelFactor, driftModelsFactor);
+        System.out.println("\nTest gradient precision.");
+        testGradient(diffusionModelFactor, diffusionProcessDelegateFactor, dataModelFactor, rootPriorFactor, rootMeanFactor, precisionMatrixFactor, false);
     }
 
     public void testGradientSingleDriftWithMissing() {
@@ -323,6 +335,23 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         System.out.println("\nTest OU gradient variance with missing.");
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv);
 
+        // Factor Model
+        List<BranchRateModel> optimalTraitsModelsFactor = new ArrayList<BranchRateModel>();
+        optimalTraitsModelsFactor.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{0.0})));
+        optimalTraitsModelsFactor.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+
+        Parameter[] strengthOfSelectionParametersFactor = new Parameter[2];
+        strengthOfSelectionParametersFactor[0] = new Parameter.Default(new double[]{10, 1.0});
+        strengthOfSelectionParametersFactor[1] = new Parameter.Default(new double[]{1.0, 20});
+        MatrixParameter strengthOfSelectionMatrixParamFactor
+                = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParametersFactor);
+
+        DiffusionProcessDelegate diffusionProcessDelegateFactor
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModelsFactor, new MultivariateElasticModel(strengthOfSelectionMatrixParamFactor));
+        System.out.println("\nTest gradient precision.");
+        testGradient(diffusionModelFactor, diffusionProcessDelegateFactor, dataModelFactor, rootPriorFactor, rootMeanFactor, precisionMatrixFactor, false);
+
         //************//
         // Single opt
         List<BranchRateModel> optimalTraitsModelsSingle = new ArrayList<BranchRateModel>();
@@ -414,6 +443,20 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         System.out.println("\nTest Diagonal OU gradient variance with missing.");
         testGradient(diffusionModelVar, diffusionProcessDelegateVariance, dataModelMissing, precisionMatrixInv, strengthOfSelectionMatrixParam);
 
+        // Factor Model
+        List<BranchRateModel> optimalTraitsModelsFactor = new ArrayList<BranchRateModel>();
+        optimalTraitsModelsFactor.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{0.0})));
+        optimalTraitsModelsFactor.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
+
+        DiagonalMatrix strengthOfSelectionMatrixParamFactor
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 50.0}));
+
+        DiffusionProcessDelegate diffusionProcessDelegateFactor
+                = new OUDiffusionModelDelegate(treeModel, diffusionModelFactor,
+                optimalTraitsModelsFactor, new MultivariateElasticModel(strengthOfSelectionMatrixParamFactor));
+        System.out.println("\nTest gradient precision.");
+        testGradient(diffusionModelFactor, diffusionProcessDelegateFactor, dataModelFactor, rootPriorFactor, rootMeanFactor, precisionMatrixFactor, false, strengthOfSelectionMatrixParamFactor, null);
+
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
@@ -421,14 +464,24 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
                               ContinuousTraitPartialsProvider dataModel,
                               MatrixParameterInterface precision,
                               Boolean wishart) {
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, wishart, null, null);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, wishart, null, null);
+    }
+
+    private void testGradient(MultivariateDiffusionModel diffusionModel,
+                              DiffusionProcessDelegate diffusionProcessDelegate,
+                              ContinuousTraitPartialsProvider dataModel,
+                              ConjugateRootTraitPrior rootPrior,
+                              Parameter meanRoot,
+                              MatrixParameterInterface precision,
+                              Boolean wishart) {
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, wishart, null, null);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
                               DiffusionProcessDelegate diffusionProcessDelegate,
                               ContinuousTraitPartialsProvider dataModel,
                               MatrixParameterInterface precision) {
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, false, null, null);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, false, null, null);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
@@ -436,7 +489,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
                               ContinuousTraitPartialsProvider dataModel,
                               MatrixParameterInterface precision,
                               Parameter driftParam) {
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, false, null, driftParam);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, false, null, driftParam);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
@@ -445,7 +498,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
                               MatrixParameterInterface precision,
                               MatrixParameterInterface attenuation,
                               Boolean wishart) {
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, wishart, attenuation, null);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, wishart, attenuation, null);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
@@ -453,7 +506,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
                               ContinuousTraitPartialsProvider dataModel,
                               MatrixParameterInterface precision,
                               MatrixParameterInterface attenuation) {
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, false, attenuation, null);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, false, attenuation, null);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
@@ -462,15 +515,19 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
                               MatrixParameterInterface precision,
                               MatrixParameterInterface attenuation,
                               Parameter drift) {
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, precision, false, attenuation, drift);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModel, rootPrior, meanRoot, precision, false, attenuation, drift);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,
                               DiffusionProcessDelegate diffusionProcessDelegate,
                               ContinuousTraitPartialsProvider dataModel,
+                              ConjugateRootTraitPrior rootPrior,
+                              Parameter meanRoot,
                               MatrixParameterInterface precision, Boolean wishart,
                               MatrixParameterInterface attenuation,
                               Parameter drift) {
+        int dimLocal = rootPrior.getMean().length;
+
         // CDL
         ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(treeModel,
                 diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, true);
@@ -501,7 +558,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
             // Branch Specific
             ContinuousProcessParameterGradient traitGradient =
                     new ContinuousProcessParameterGradient(
-                            dim, treeModel, cdld,
+                            rootPrior.getMean().length, treeModel, cdld,
                             new ArrayList<>(
                                     Arrays.asList(DerivationParameter.WRT_VARIANCE)
                             ));
@@ -566,7 +623,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         if (attenuation != null) {
             ContinuousProcessParameterGradient traitGradientAtt =
                     new ContinuousProcessParameterGradient(
-                            dim, treeModel, cdld,
+                            dimLocal, treeModel, cdld,
                             new ArrayList<>(
                                     Arrays.asList(DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
                             ));
@@ -583,7 +640,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         boolean sameRoot = (drift == meanRoot);
         ContinuousProcessParameterGradient traitGradientRoot =
                 new ContinuousProcessParameterGradient(
-                        dim, treeModel, cdld,
+                        dimLocal, treeModel, cdld,
                         new ArrayList<>(
                                 Arrays.asList(sameRoot ? DerivationParameter.WRT_CONSTANT_DRIFT_AND_ROOT_MEAN : DerivationParameter.WRT_ROOT_MEAN)
                         ));
@@ -598,7 +655,7 @@ public class DiffusionGradientTest extends TraceCorrelationAssert {
         if (drift != null && !sameRoot) {
             ContinuousProcessParameterGradient traitGradientDrift =
                     new ContinuousProcessParameterGradient(
-                            dim, treeModel, cdld,
+                            dimLocal, treeModel, cdld,
                             new ArrayList<>(
                                     Arrays.asList(DerivationParameter.WRT_CONSTANT_DRIFT)
                             ));

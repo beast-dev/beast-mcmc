@@ -3,7 +3,6 @@ package dr.inference.model;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.data.Matrix;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 
@@ -23,6 +22,23 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
         parameter.addParameterListener(this);
 
 
+    }
+
+    private static String SINGULAR_VALUE = "sv";
+    private static String V = "V";
+
+    @Override
+    public String getDimensionName(int dim) {
+        int k = parameter.getColumnDimension();
+        int p = parameter.getRowDimension();
+
+        if (dim < k) {
+            return getStatisticName() + "." + SINGULAR_VALUE + (dim + 1);
+        } else {
+            int row = (dim - k) / p;
+            int col = dim - k - row * p;
+            return getStatisticName() + "." + V + (row + 1) + (col + 1);
+        }
     }
 
 
@@ -70,7 +86,7 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
         svd.decompose(matrix);
 
         System.arraycopy(svd.getSingularValues(), 0, singularVals, 0, k);
-        Matrix V = svd.getV(buffer, true);
+        svd.getV(buffer, true);
 
     }
 
@@ -101,13 +117,21 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
 
     @Override
     public String getReport() {
-        StringBuilder sb = new StringBuilder();
+
+        StringBuilder sb = new StringBuilder("svdStatistic Report\n\n");
+        sb.append("dimension names: ");
 
         int n = getDimension();
+
         double[] values = new double[n];
         for (int i = 0; i < n; i++) {
+            sb.append(getDimensionName(i));
+            if (i != n - 1) {
+                sb.append(" ");
+            }
             values[i] = getStatisticValue(i);
         }
+        sb.append("\n\n");
         sb.append("values: ");
         sb.append(new Vector(values));
         sb.append("\n\n");

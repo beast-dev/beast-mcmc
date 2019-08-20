@@ -28,6 +28,18 @@
         </expected>
     </assertEqual>
 
+    <assertEqual verbose="true">
+        <message>
+            Check svd dim names
+        </message>
+        <actual regex="dimension names:\s*(.*)\n">
+            <svdStatistic idref="svdStat"/>
+        </actual>
+        <expected>
+            svdStat.sv1 svdStat.sv2 svdStat.V11 svdStat.V12 svdStat.V13 svdStat.V14 svdStat.V15 svdStat.V21 svdStat.V22 svdStat.V23 svdStat.V24 svdStat.V25
+        </expected>
+    </assertEqual>
+
     <mcmc id="mcmc" chainLength="1" autoOptimize="true">
         <posterior id="posterior">
             <dummyLikelihood>

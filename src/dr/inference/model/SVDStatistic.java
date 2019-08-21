@@ -1,10 +1,15 @@
 package dr.inference.model;
 
 import dr.math.matrixAlgebra.Vector;
+import dr.util.HeapSort;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
+
+/**
+ * @author Gabriel Hassler
+ */
 
 public class SVDStatistic extends Statistic.Abstract implements VariableListener, Reportable {
 
@@ -16,7 +21,7 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
     SVDStatistic(MatrixParameterInterface parameter) {
 
         this.parameter = parameter;
-        this.singularVals = new double[parameter.getRowDimension()];
+        this.singularVals = new double[parameter.getColumnDimension()];
         this.Vbuffer = new double[parameter.getRowDimension() * parameter.getColumnDimension()];
 
         parameter.addParameterListener(this);
@@ -95,7 +100,10 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
         int p = parameter.getRowDimension();
 
         for (int i = 1; i < k; i++) {
-            assert (singularVals[i] <= singularVals[i - 1]); //TODO: svd computation should already enforce ordering
+            if (singularVals[i] > singularVals[i - 1]) {
+                reorderSVD();
+                break;
+            }
         }
 
         for (int i = 0; i < k; i++) {
@@ -107,7 +115,30 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
             }
         }
 
+    }
 
+    private void reorderSVD() {
+        int k = parameter.getColumnDimension();
+        int p = parameter.getRowDimension();
+        int[] indices = new int[k];
+
+        HeapSort.sort(singularVals, indices);
+
+        for (int i = 0; i < k; i++) { // want descending order
+            indices[i] = k - indices[i] - 1;
+        }
+
+        double[] kBuffer = new double[k];
+        double[] kpBuffer = new double[k * p];
+        for (int i = 0; i < k; i++) {
+            kBuffer[i] = singularVals[indices[i]];
+            for (int j = 0; j < p; j++) {
+                kpBuffer[i * p + j] = Vbuffer[indices[i] * p + j];
+            }
+        }
+
+        System.arraycopy(kBuffer, 0, singularVals, 0, k);
+        System.arraycopy(kpBuffer, 0, Vbuffer, 0, k * p);
     }
 
     @Override
@@ -143,7 +174,7 @@ public class SVDStatistic extends Statistic.Abstract implements VariableListener
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        public Object parseXMLObject(XMLObject xo) {
             MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
             return new SVDStatistic(parameter);
         }

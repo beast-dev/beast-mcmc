@@ -129,6 +129,11 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     }
 
     @Override
+    public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        return nodeHeightTransformDelegate.updateGradientUnWeightedLogDensity(gradient, inverse(value, from, to), from, to);
+    }
+
+    @Override
     public String getReport() {
         return nodeHeightTransformDelegate.getReport();
     }

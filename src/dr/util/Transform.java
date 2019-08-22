@@ -649,7 +649,7 @@ public interface Transform {
         }
 
         public double gradientInverse(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return gradient(inverse(value));
         }
 
         public double updateGradientLogDensity(double gradient, double value) {
@@ -672,7 +672,7 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return value * (1.0 - value);
         }
 
         public String getTransformName() {

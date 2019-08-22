@@ -30,9 +30,11 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.hmc.*;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -114,22 +116,31 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
-        WishartStatisticsWrapper wishartStatistics = (WishartStatisticsWrapper)
-                xo.getChild(WishartStatisticsWrapper.class);
+        ConjugateWishartStatisticsProvider wishartStatistics = (ConjugateWishartStatisticsProvider)
+                xo.getChild(ConjugateWishartStatisticsProvider.class);
         if (wishartStatistics != null) {
             gradientWrtPrecisionProvider = new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
         } else {
-            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
             int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
             Tree tree = treeDataLikelihood.getTree();
 
+            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
             ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-            ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
-                    new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
-                            dim, tree, continuousData,
-                            new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
-                                    Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE)
-                            ));
+
+            ModelExtensionProvider.NormalExtensionProvider extensionProvider = (ModelExtensionProvider.NormalExtensionProvider)
+                    xo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
+            ContinuousTraitGradientForBranch traitGradient;
+            if (extensionProvider != null) {
+                traitGradient =
+                        new ContinuousTraitGradientForBranch.SamplingVarianceGradient(dim, tree, extensionProvider);
+            } else {
+                traitGradient =
+                        new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                                dim, tree, continuousData,
+                                new ArrayList<>(
+                                        Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE)
+                                ));
+            }
             BranchSpecificGradient branchSpecificGradient =
                     new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
@@ -148,6 +159,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(WishartStatisticsWrapper.class, true),
             new ElementRule(BranchRateGradient.class, true),
+            new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class, true),
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
     };

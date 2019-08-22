@@ -32,11 +32,15 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.hmc.MultivariateChainRule;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch.Default.getGradientQInvForBranch;
 
 /**
  * @author Marc A. Suchard
@@ -46,7 +50,7 @@ public interface ContinuousTraitGradientForBranch {
 
     double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node);
 
-    double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node, boolean getGradientQ, boolean getGradientN);
+//    double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node, boolean getGradientQ, boolean getGradientN);
 
     int getParameterIndexFromNode(NodeRef node);
 
@@ -80,9 +84,8 @@ public interface ContinuousTraitGradientForBranch {
             return getGradientForBranch(statistics, node, true, true);
         }
 
-        @Override
-        public double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node,
-                                             boolean getGradientQ, boolean getGradientN) {
+        private double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node,
+                                              boolean getGradientQ, boolean getGradientN) {
             // Joint Statistics
             final NormalSufficientStatistics below = statistics.getBelow();
             final NormalSufficientStatistics above = statistics.getAbove();
@@ -136,9 +139,9 @@ public interface ContinuousTraitGradientForBranch {
         abstract double[] chainRuleRoot(BranchSufficientStatistics statistics, NodeRef node,
                                         DenseMatrix64F gradQInv, DenseMatrix64F gradN);
 
-        private void getGradientQInvForBranch(DenseMatrix64F Qi, DenseMatrix64F Wi,
-                                              DenseMatrix64F Vi, DenseMatrix64F delta,
-                                              DenseMatrix64F grad) {
+        static void getGradientQInvForBranch(DenseMatrix64F Qi, DenseMatrix64F Wi,
+                                             DenseMatrix64F Vi, DenseMatrix64F delta,
+                                             DenseMatrix64F grad) {
 
             CommonOps.scale(0.5, Wi, grad);
 
@@ -492,6 +495,75 @@ public interface ContinuousTraitGradientForBranch {
 
             public abstract int getDimension(int dim);
         }
+    }
+
+    class SamplingVarianceGradient implements ContinuousTraitGradientForBranch {
+
+        final int dim;
+        final Tree tree;
+
+        ModelExtensionProvider.NormalExtensionProvider dataModel;
+
+        DenseMatrix64F gradientSamplingVariance;
+        DenseMatrix64F delta;
+
+
+        public SamplingVarianceGradient(int dim,
+                                        Tree tree,
+                                        ModelExtensionProvider.NormalExtensionProvider dataModel) {
+            this.dim = dim;
+            this.tree = tree;
+            this.dataModel = dataModel;
+
+            this.gradientSamplingVariance = new DenseMatrix64F(dim, dim);
+            this.delta = new DenseMatrix64F(dim, 1);
+
+        }
+
+        @Override
+        public double[] getGradientForBranch(BranchSufficientStatistics statistics, NodeRef node) {
+
+            if (!tree.isExternal(node)) {
+                return new double[getDimension()]; // 0 if not a tip
+            }
+
+            // Joint Statistics F_i | Y
+            final NormalSufficientStatistics below = statistics.getBelow();
+            final NormalSufficientStatistics above = statistics.getAbove();
+            NormalSufficientStatistics jointStatistics =
+                    BranchRateGradient.ContinuousTraitGradientForBranch.Default.computeJointStatistics(
+                            below, above, dim
+                    );
+
+            DenseMatrix64F treeVariance = jointStatistics.getRawVariance();
+
+            // Sampling Parameters
+            DenseMatrix64F samplingVariance = dataModel.getExtensionVariance();
+            DenseMatrix64F samplingPrecision = MissingOps.wrap(dataModel.getExtensionPrecision());
+
+            // Delta = Y_i - E[F_i | Y]
+            for (int row = 0; row < dim; ++row) {
+                delta.unsafe_set(row, 0,
+                        below.getMean(row) - jointStatistics.getMean(row)
+                );
+            }
+
+            getGradientQInvForBranch(samplingPrecision, samplingVariance, treeVariance, delta, gradientSamplingVariance);
+
+            return gradientSamplingVariance.getData();
+
+        }
+
+        @Override
+        public int getParameterIndexFromNode(NodeRef node) {
+            return 0;
+        }
+
+        @Override
+        public int getDimension() {
+            return dim * dim;
+        }
+
     }
 
 }

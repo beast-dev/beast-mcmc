@@ -62,8 +62,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
     private Matrix samplingPrecision;
     private Matrix samplingVariance;
-    private double[][] storedSamplingPrecision;
-    private double[][] storedSamplingVariance;
+    private Matrix storedSamplingPrecision;
+    private Matrix storedSamplingVariance;
     private boolean storedVarianceKnown = false;
     private boolean storedVariableChanged = true;
 
@@ -173,16 +173,22 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
     @Override
     protected void storeState() {
-        storedSamplingPrecision = samplingPrecision.toComponents();
-        storedSamplingVariance = samplingVariance.toComponents();
+        storedSamplingPrecision = samplingPrecision.clone();
+        storedSamplingVariance = samplingVariance.clone();
         storedVarianceKnown = varianceKnown;
         storedVariableChanged = variableChanged;
     }
 
     @Override
     protected void restoreState() {
-        samplingPrecision = new Matrix(storedSamplingPrecision);
-        samplingVariance = new Matrix(storedSamplingVariance);
+        Matrix tmp = samplingPrecision;
+        samplingPrecision = storedSamplingPrecision;
+        storedSamplingPrecision = tmp;
+
+        tmp = samplingVariance;
+        samplingVariance = storedSamplingVariance;
+        storedSamplingVariance = tmp;
+
         varianceKnown = storedVarianceKnown;
         variableChanged = storedVariableChanged;
     }

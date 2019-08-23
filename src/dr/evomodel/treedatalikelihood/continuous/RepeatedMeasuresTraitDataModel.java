@@ -29,7 +29,6 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
@@ -44,11 +43,8 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 import java.util.List;
-
-import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
 /**
  * @author Marc A. Suchard
@@ -60,13 +56,14 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private final String traitName;
     private final MatrixParameterInterface samplingPrecisionParameter;
     private boolean diagonalOnly = false;
+//    private DenseMatrix64F samplingVariance;
     private boolean variableChanged = true;
     private boolean varianceKnown = false;
 
-    private final BufferIndexHelper precisionVarianceBufferHelper;
-    private double[] precisionVarianceBuffer;
-    private int dimPrecisionVarianceBuffer;
-
+    private Matrix samplingPrecision;
+    private Matrix samplingVariance;
+    private double[][] storedSamplingPrecision;
+    private double[][] storedSamplingVariance;
     private boolean storedVarianceKnown = false;
     private boolean storedVariableChanged = true;
 
@@ -79,17 +76,15 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
-
-        assert (samplingPrecision.getRowDimension() == dimTrait && samplingPrecision.getColumnDimension() == dimTrait);
-
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
-        addVariable(samplingPrecisionParameter);
+        addVariable(samplingPrecision);
 
-        precisionVarianceBufferHelper = new BufferIndexHelper(1, 0);
-        dimPrecisionVarianceBuffer = dimTrait * dimTrait * 2;
-        precisionVarianceBuffer = new double[dimPrecisionVarianceBuffer * precisionVarianceBufferHelper.getBufferCount()];
-        setSamplingPrecision();
+        calculatePrecisionInfo();
+
+//        this.samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+        this.samplingVariance = null;
+
 
         samplingPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 samplingPrecision.getDimension()));
@@ -100,8 +95,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
         assert (numTraits == 1);
-
-        precisionVarianceBufferHelper.flipOffset(0);
+        assert (samplingPrecision.rows() == dimTrait && samplingPrecision.columns() == dimTrait);
 
         recomputeVariance();
 
@@ -115,12 +109,12 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         //TODO: remove diagonalOnly part
         if (diagonalOnly) {
             for (int index = 0; index < dimTrait; index++) {
-                V.set(index, index, V.get(index, index) + 1 / getSamplingPrecision(index, index));
+                V.set(index, index, V.get(index, index) + 1 / samplingPrecision.component(index, index));
             }
         } else {
             for (int i = 0; i < dimTrait; i++) {
                 for (int j = 0; j < dimTrait; j++) {
-                    V.set(i, j, V.get(i, j) + getSamplingVariance(i, j));
+                    V.set(i, j, V.get(i, j) + samplingVariance.component(i, j));
                 }
             }
         }
@@ -139,54 +133,18 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private void recomputeVariance() {
         checkVariableChanged();
         if (!varianceKnown) {
-            DenseMatrix64F variance = MissingOps.wrap(precisionVarianceBuffer, getOffsetPrecision(), dimTrait, dimTrait);
-            CommonOps.invert(variance);
-            System.arraycopy(variance.getData(), 0, precisionVarianceBuffer, getOffsetVariance(), dimTrait * dimTrait);
+            samplingVariance = samplingPrecision.inverse();
             varianceKnown = true;
-        }
-    }
-
-    private void checkVariableChanged() {
-        if (variableChanged) {
-            setSamplingPrecision();
-            variableChanged = false;
-            varianceKnown = false;
         }
     }
 
     public Matrix getSamplingVariance() {
         recomputeVariance();
-        double[] buffer = new double[dimTrait * dimTrait];
-        System.arraycopy(precisionVarianceBuffer, getOffsetVariance(), buffer, 0, dimTrait * dimTrait);
-        return new Matrix(buffer, dimTrait, dimTrait);
+        return samplingVariance;
     }
 
     public String getTraitName() {
         return traitName;
-    }
-
-
-    private void setSamplingPrecision() {
-        System.arraycopy(flatten(samplingPrecisionParameter.getParameterAsMatrix()), 0, precisionVarianceBuffer,
-                getOffsetPrecision(), dimTrait * dimTrait);
-        varianceKnown = false;
-    }
-
-    private int getOffsetPrecision() {
-        return precisionVarianceBufferHelper.getOffsetIndex(0) * dimPrecisionVarianceBuffer;
-    }
-
-    private int getOffsetVariance() {
-        return precisionVarianceBufferHelper.getOffsetIndex(0) * dimPrecisionVarianceBuffer + dimTrait * dimTrait;
-    }
-
-    private double getSamplingPrecision(int i, int j) {
-        return precisionVarianceBuffer[getOffsetPrecision() + i * dimTrait + j];
-    }
-
-    private double getSamplingVariance(int i, int j) {
-        recomputeVariance();
-        return precisionVarianceBuffer[getOffsetVariance() + i * dimTrait + j];
     }
 
     @Override
@@ -201,16 +159,30 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         }
     }
 
+    private void calculatePrecisionInfo() {
+        samplingPrecision = new Matrix(samplingPrecisionParameter.getParameterAsMatrix());
+    }
+
+    private void checkVariableChanged() {
+        if (variableChanged) {
+            calculatePrecisionInfo();
+            variableChanged = false;
+            varianceKnown = false;
+        }
+    }
+
     @Override
     protected void storeState() {
-        precisionVarianceBufferHelper.storeState();
+        storedSamplingPrecision = samplingPrecision.toComponents();
+        storedSamplingVariance = samplingVariance.toComponents();
         storedVarianceKnown = varianceKnown;
         storedVariableChanged = variableChanged;
     }
 
     @Override
     protected void restoreState() {
-        precisionVarianceBufferHelper.restoreState();
+        samplingPrecision = new Matrix(storedSamplingPrecision);
+        samplingVariance = new Matrix(storedSamplingVariance);
         varianceKnown = storedVarianceKnown;
         variableChanged = storedVariableChanged;
     }
@@ -226,8 +198,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     @Override
     public DenseMatrix64F getExtensionVariance() {
         recomputeVariance();
-        double[] buffer = new double[dimTrait * dimTrait];
-        System.arraycopy(precisionVarianceBuffer, getOffsetVariance(), buffer, 0, dimTrait * dimTrait);
+        double[] buffer = samplingVariance.toArrayComponents();
         return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
     }
 

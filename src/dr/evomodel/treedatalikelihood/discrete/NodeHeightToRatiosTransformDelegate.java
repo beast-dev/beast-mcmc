@@ -51,6 +51,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     protected Map<Integer, Epoch> nodeEpochMap = new HashMap<Integer, Epoch>();
     private List<Epoch> epochs = new ArrayList<Epoch>();
 
+    private boolean ratiosKnown = false;
+
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
                   Parameter ratios,
@@ -138,17 +140,26 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return ratios.getParameterValues();
     }
 
+    @Override
+    public void setNodeHeights(double[] nodeHeights) {
+        super.setNodeHeights(nodeHeights);
+        ratiosKnown = false;
+    }
+
     protected void updateRatios() {
-        for (Epoch epoch : epochs) {
-            double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
-            final double anchorNodeHeight = epoch.getAnchorTipHeight();
-            for (int nodeNumber : epoch.getInternalNodes()) {
-                NodeRef node = tree.getNode(nodeNumber);
-                final int ratioNum = getRatiosIndex(node);
-                final double currentNodeHeight = tree.getNodeHeight(node);
-                ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
-                previousNodeHeight = currentNodeHeight;
+        if (!ratiosKnown) {
+            for (Epoch epoch : epochs) {
+                double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
+                final double anchorNodeHeight = epoch.getAnchorTipHeight();
+                for (int nodeNumber : epoch.getInternalNodes()) {
+                    NodeRef node = tree.getNode(nodeNumber);
+                    final int ratioNum = getRatiosIndex(node);
+                    final double currentNodeHeight = tree.getNodeHeight(node);
+                    ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
+                    previousNodeHeight = currentNodeHeight;
+                }
             }
+            ratiosKnown = true;
         }
     }
 
@@ -156,6 +167,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         for (int i = 0; i < ratios.length; i++) {
             this.ratios.setParameterValueQuietly(i, ratios[i]);
         }
+        ratiosKnown = true;
     }
 
     protected void updateNodeHeights() {
@@ -187,7 +199,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 TreeModel.TreeChangedEvent changedEvent = (TreeModel.TreeChangedEvent) object;
                 if (changedEvent.isTreeChanged()) {
                     constructEpochs();
-                    updateRatios();
+//                    updateRatios();
+                    ratiosKnown = false;
                 }
             }
         }
@@ -198,7 +211,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         if (variable == ratios) {
             updateNodeHeights();
         } else if (variable == nodeHeights) {
-            updateRatios();
+//            updateRatios();
+            ratiosKnown = false;
         }
     }
 
@@ -234,6 +248,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     Parameter getParameter() {
+        updateRatios();
         return ratios;
     }
 

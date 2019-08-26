@@ -126,6 +126,11 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
     }
 
     @Override
+    protected int getNodeHeightIndex(NodeRef node) {
+        return getNodeHeightGradientIndex(node);
+    }
+
+    @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value) {
         double[] gradientLogDensityWrtRatios = super.updateGradientLogDensity(gradient, value);
         double[] updatedGradient = new double[ratios.getDimension() + 1];

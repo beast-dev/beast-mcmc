@@ -52,6 +52,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     private List<Epoch> epochs = new ArrayList<Epoch>();
 
     private boolean ratiosKnown = false;
+    private boolean epochKnown = false;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
@@ -109,6 +110,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 }
             }
         }
+
+        epochKnown = true;
     }
 
     private void addToEpoch(NodeRef node, NodeRef anchorChild, NodeRef otherChild) {
@@ -148,6 +151,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     protected void updateRatios() {
         if (!ratiosKnown) {
+            if (!epochKnown) {
+                constructEpochs();
+            }
             for (Epoch epoch : epochs) {
                 double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
                 final double anchorNodeHeight = epoch.getAnchorTipHeight();
@@ -188,6 +194,10 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         tree.pushTreeChangedEvent();
     }
 
+    protected int getNodeHeightIndex(NodeRef node) {
+        return getRatiosIndex(node);
+    }
+
     protected int getRatiosIndex(NodeRef node) {
         return indexHelper.getParameterIndexFromNodeNumber(node.getNumber()) - tree.getExternalNodeCount();
     }
@@ -198,9 +208,10 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             if (object instanceof TreeChangedEvent) {
                 TreeModel.TreeChangedEvent changedEvent = (TreeModel.TreeChangedEvent) object;
                 if (changedEvent.isTreeChanged()) {
-                    constructEpochs();
+//                    constructEpochs();
 //                    updateRatios();
                     ratiosKnown = false;
+                    epochKnown = false;
                 }
             }
         }

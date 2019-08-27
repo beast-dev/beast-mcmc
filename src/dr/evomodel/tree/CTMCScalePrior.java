@@ -55,7 +55,12 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     final private TreeModel treeModel;
     private Set<Taxon> taxa = null;
     private double treeLength;
+    private double storedTreeLength;
     private boolean treeLengthKnown;
+
+    private double logLikelihood;
+    private double storedLogLikelihood;
+    private boolean likelihoodKnown = false;
 
     final private boolean reciprocal;
     final private SubstitutionModel substitutionModel;
@@ -82,6 +87,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
         this.ctmcScale = ctmcScale;
         this.treeModel = treeModel;
 
+        addVariable(ctmcScale);
+
         if (taxonList != null) {
             this.taxa = new HashSet<Taxon>();
             for (Taxon taxon : taxonList) {
@@ -89,26 +96,35 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
             }
         }
         addModel(treeModel);
+
         treeLengthKnown = false;
+        likelihoodKnown = false;
+
         this.reciprocal = reciprocal;
         this.substitutionModel = substitutionModel;
         this.trial = trial;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
-            treeLengthKnown = false;
-        }
+        treeLengthKnown = false;
+        likelihoodKnown = false;
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        treeLengthKnown = false;
+        likelihoodKnown = false;
     }
 
     protected void storeState() {
+        storedLogLikelihood = logLikelihood;
+        storedTreeLength = treeLength;
     }
 
     protected void restoreState() {
-        treeLengthKnown = false;
+        logLikelihood = storedLogLikelihood;
+        treeLength = storedTreeLength;
+        treeLengthKnown = true;
+        likelihoodKnown = true;
     }
 
     protected void acceptState() {
@@ -142,11 +158,21 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     public double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+
+        return logLikelihood;
+    }
+
+
+    private double calculateLogLikelihood() {
 
         if (trial) return calculateTrialLikelihood();
 
         double totalTreeTime = getTreeLength();
-            if (reciprocal) {
+        if (reciprocal) {
             totalTreeTime = 1.0 / totalTreeTime;
         }
         if (substitutionModel != null) {
@@ -170,20 +196,21 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     private double getTreeLength() {
-        //if (!treeLengthKnown) {
+        if (!treeLengthKnown) {
             if (taxa == null) {
                 treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
             } else {
                 treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
             }
-        //    treeLengthKnown = true;
-        //}
-        
+            treeLengthKnown = true;
+        }
+
         return treeLength;
     }
 
     public void makeDirty() {
         treeLengthKnown = false;
+        likelihoodKnown = false;
     }
 
     @Override

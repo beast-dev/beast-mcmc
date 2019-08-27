@@ -39,11 +39,13 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final double[] data;
     private final boolean[] missing;
     private final TaxonTaskPool taxonTaskPool;
+    private final ThreadUseProvider threadUseProvider;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                        IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                       TaxonTaskPool taxonTaskPool) {
+                                       TaxonTaskPool taxonTaskPool,
+                                       ThreadUseProvider threadUseProvider) {
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
 
@@ -77,6 +79,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         if (this.taxonTaskPool.getNumTaxon() != tree.getExternalNodeCount()) {
             throw new IllegalArgumentException("Incorrectly specified TaxonTaskPool");
         }
+
+        this.threadUseProvider = threadUseProvider;
 
         if (TIMING) {
             int length = 5;
@@ -190,7 +194,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             stopWatches[2].stop();
             stopWatches[3].start();
         }
-        
+
         final List<WrappedNormalSufficientStatistics> allStatistics =
                 fullConditionalDensity.getTrait(tree, null); // TODO Need to test if faster to load inside loop
 
@@ -200,7 +204,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         assert (allStatistics.size() == tree.getExternalNodeCount());
 
-        if (TIMING) {
+        if (!threadUseProvider.usePool() || TIMING) {
             for (int taxon = 0, end = tree.getExternalNodeCount(); taxon < end; ++taxon) {
                 computeGradientForOneTaxon(0, taxon,
                         loadings, transposedLoadings,
@@ -344,6 +348,22 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return new WrappedNormalSufficientStatistics(buffer, 0, dimFactors, null, PrecisionType.FULL);
     }
 
+    private enum ThreadUseProvider{
+        PARALLEL{
+            @Override
+            boolean usePool(){return true;}
+        },
+
+        SERIAL{
+            @Override
+            boolean usePool(){return false;}
+        };
+
+        abstract boolean usePool();
+
+
+    }
+
     @Override
     public String getReport() {
 
@@ -379,6 +399,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private static final boolean DEBUG = false;
 
     private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
+    private static final String THREAD_TYPE = "threadType";
+    private static final String PARALLEL = "parallel";
+    private static final String SERIAL = "serial";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -402,13 +425,37 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
             TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
 
+            String threadType = xo.getAttribute(THREAD_TYPE, PARALLEL);
+            ThreadUseProvider threadProvider;
+
+            if (threadType.equalsIgnoreCase(PARALLEL)) {
+                threadProvider = ThreadUseProvider.PARALLEL;
+            } else if (threadType.equalsIgnoreCase(SERIAL)) {
+                threadProvider = ThreadUseProvider.SERIAL;
+            } else {
+                throw new XMLParseException("The attribute " + THREAD_TYPE + " must have values \"" + PARALLEL +
+                        "\" or \"" + SERIAL + "\".");
+            }
+
+
+            if (TIMING) {
+                System.out.println("WARNING: " + PARSER_NAME + " is running serially (not in parallel).");
+            }
+
+            if (taxonTaskPool != null && threadType != PARALLEL) {
+                throw new XMLParseException("Cannot simultaneously provide " + TaxonTaskPool.PARSER.getParserName() +
+                        " and " + THREAD_TYPE + "=\"" + threadType + "\". Please either change to " + THREAD_TYPE +
+                        "=\"" + PARALLEL + "\" or remove the " +  TaxonTaskPool.PARSER.getParserName() + " element.");
+            }
+
             // TODO Check dimensions, parameters, etc.
 
             return new IntegratedLoadingsGradient(
                     treeDataLikelihood,
                     continuousDataLikelihoodDelegate,
                     factorAnalysis,
-                    taxonTaskPool);
+                    taxonTaskPool,
+                    threadProvider);
         }
 
         @Override
@@ -435,6 +482,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 new ElementRule(IntegratedFactorAnalysisLikelihood.class),
                 new ElementRule(TreeDataLikelihood.class),
                 new ElementRule(TaxonTaskPool.class, true),
+                AttributeRule.newStringRule(THREAD_TYPE, true)
         };
     };
 

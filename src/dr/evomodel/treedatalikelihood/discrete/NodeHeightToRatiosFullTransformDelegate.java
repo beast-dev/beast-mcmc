@@ -69,6 +69,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
                 new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         this.rootHeightAndRatios = new CompoundParameter("rootHeightAndRatios",
                 new Parameter[]{heightParameter, ratios});
+        this.nodeHeights = new NodeHeightParameter("internalNodeHeights", tree, true);
 
     }
 
@@ -123,6 +124,22 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
         setNodeHeights(values);
         updateRatios();
         return setCombinedValues();
+    }
+
+    @Override
+    String getReport() {
+        updateRatios();
+        StringBuilder sb = new StringBuilder();
+        sb.append("NodeHeight by inverse ratios: ").append(new dr.math.matrixAlgebra.Vector(inverse(setCombinedValues())));
+        sb.append("\n");
+        sb.append("NodeHeights: ").append(new dr.math.matrixAlgebra.Vector(getNodeHeights().getParameterValues()));
+        sb.append("\n\n");
+        sb.append("ratios by transform nodeHeights: ").append(new dr.math.matrixAlgebra.Vector(transform(nodeHeights.getParameterValues())));
+        sb.append("\n");
+        sb.append("ratios: ").append(new dr.math.matrixAlgebra.Vector(setCombinedValues()));
+        sb.append("\n");
+
+        return sb.toString();
     }
 
     @Override

@@ -159,6 +159,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 final double anchorNodeHeight = epoch.getAnchorTipHeight();
                 for (int nodeNumber : epoch.getInternalNodes()) {
                     NodeRef node = tree.getNode(nodeNumber);
+                    if (nodeNumber == 206) {
+//                        System.err.println("stop here");
+                    }
                     final int ratioNum = getRatiosIndex(node);
                     final double currentNodeHeight = tree.getNodeHeight(node);
                     ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
@@ -185,12 +188,19 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             if (!tree.isRoot(node) && !tree.isExternal(node)) {
                 Epoch epoch = nodeEpochMap.get(node.getNumber());
                 final NodeRef parentNode = tree.getParent(node);
+                if (node.getNumber() == 206 || node.getNumber() == 193) {
+//                    System.err.println("stop here");
+                }
                 final double ratio = ratios.getParameterValue(getRatiosIndex(node));
                 final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
 //                tree.setNodeHeight(node, nodeHeight);
-                nodeHeights.setParameterValueQuietly(getRatiosIndex(node), nodeHeight);
+                if (Double.isNaN(nodeHeight)) {
+                    System.err.println("why");
+                }
+                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
             }
         }
+        int a = 0;
         tree.pushTreeChangedEvent();
     }
 
@@ -245,15 +255,11 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     String getReport() {
         updateRatios();
         StringBuilder sb = new StringBuilder();
-        sb.append("NodeHeight ratios: ").append(new dr.math.matrixAlgebra.Vector(getRatios()));
+        sb.append("NodeHeights: ").append(new dr.math.matrixAlgebra.Vector(getNodeHeights().getParameterValues()));
         sb.append("\n");
+//        sb.append("NodeHeight by inverse ratios: ").append(new dr.math.matrixAlgebra.Vector(inverse(getRatios())));
+//        sb.append("\n");
 
-//            Parameter testRatios = new Parameter.Default(tree.getNodeCount() - tree.getExternalNodeCount() - 1, 0.99);
-//            inverse(testRatios.getParameterValues(), 0, testRatios.getDimension());
-//
-//            sb.append("New NodeHeights: ").append(new dr.math.matrixAlgebra.Vector(getNodeHeights()));
-//            sb.append("\n");
-//            sb.append(tree.getNewick()).append("\n");
         return sb.toString();
     }
 

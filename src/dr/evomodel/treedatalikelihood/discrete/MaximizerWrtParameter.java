@@ -94,6 +94,10 @@ public class MaximizerWrtParameter implements Reportable {
         this.settings = settings;
     }
 
+    public Likelihood getLikelihood() {
+        return likelihood;
+    }
+
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();

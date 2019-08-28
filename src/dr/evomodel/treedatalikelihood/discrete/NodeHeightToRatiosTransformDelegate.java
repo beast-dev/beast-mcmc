@@ -158,13 +158,15 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
                 final double anchorNodeHeight = epoch.getAnchorTipHeight();
                 for (int nodeNumber : epoch.getInternalNodes()) {
+
                     NodeRef node = tree.getNode(nodeNumber);
-                    if (nodeNumber == 206) {
-//                        System.err.println("stop here");
-                    }
+
                     final int ratioNum = getRatiosIndex(node);
+
                     final double currentNodeHeight = tree.getNodeHeight(node);
+
                     ratios.setParameterValueQuietly(ratioNum, (currentNodeHeight - anchorNodeHeight) / (previousNodeHeight - anchorNodeHeight));
+
                     previousNodeHeight = currentNodeHeight;
                 }
             }
@@ -188,19 +190,13 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             if (!tree.isRoot(node) && !tree.isExternal(node)) {
                 Epoch epoch = nodeEpochMap.get(node.getNumber());
                 final NodeRef parentNode = tree.getParent(node);
-                if (node.getNumber() == 206 || node.getNumber() == 193) {
-//                    System.err.println("stop here");
-                }
+
                 final double ratio = ratios.getParameterValue(getRatiosIndex(node));
                 final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
-//                tree.setNodeHeight(node, nodeHeight);
-                if (Double.isNaN(nodeHeight)) {
-                    System.err.println("why");
-                }
+
                 nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
             }
         }
-        int a = 0;
         tree.pushTreeChangedEvent();
     }
 
@@ -218,8 +214,6 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             if (object instanceof TreeChangedEvent) {
                 TreeModel.TreeChangedEvent changedEvent = (TreeModel.TreeChangedEvent) object;
                 if (changedEvent.isTreeChanged()) {
-//                    constructEpochs();
-//                    updateRatios();
                     ratiosKnown = false;
                     epochKnown = false;
                 }
@@ -232,7 +226,6 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         if (variable == ratios) {
             updateNodeHeights();
         } else if (variable == nodeHeights) {
-//            updateRatios();
             ratiosKnown = false;
         }
     }

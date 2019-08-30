@@ -334,8 +334,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Pjp = matrixPjp;
 
 
-            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true);
-            InversionResult cj = increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, true);
+            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, computeRemainders);
+            InversionResult cj = increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, computeRemainders);
 
             if (TIMING) {
                 endTime("peel2");
@@ -375,47 +375,50 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // Computer remainder at node k
             double remainder = 0.0;
 
-            if (DEBUG) {
-                reportInversions(ci, cj, Pip, Pjp);
-            }
-
-            if (TIMING) {
-                startTime("remain");
-            }
-
-            if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
-
-                // Inner products
-                double SS = computeSS(ibo, Pip, jbo, Pjp, kbo, Pk, dimTrait);
-
-                remainder += -0.5 * SS;
+            if (computeRemainders) {
 
                 if (DEBUG) {
-                    System.err.println("\t\t\tSS = " + (SS));
+                    reportInversions(ci, cj, Pip, Pjp);
                 }
-            } // End if remainder
 
-            double effectiveDimension = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
-            remainder += -effectiveDimension * LOG_SQRT_2_PI;
+                if (TIMING) {
+                    startTime("remain");
+                }
 
-            double deti = 0;
-            double detj = 0;
-            if (!(ci.getReturnCode() == NOT_OBSERVED)) {
-                deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
-            }
-            if (!(cj.getReturnCode() == NOT_OBSERVED)) {
-                detj = cj.getLogDeterminant();
-            }
-            remainder += -0.5 * (deti + detj);
+                if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
 
-            if (DEBUG) {
-                System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
-                System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
-                System.err.println("\t\tremainder: " + remainder);
-            }
+                    // Inner products
+                    double SS = computeSS(ibo, Pip, jbo, Pjp, kbo, Pk, dimTrait);
 
-            if (TIMING) {
-                endTime("remain");
+                    remainder += -0.5 * SS;
+
+                    if (DEBUG) {
+                        System.err.println("\t\t\tSS = " + (SS));
+                    }
+                } // End if remainder
+
+                double effectiveDimension = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
+                remainder += -effectiveDimension * LOG_SQRT_2_PI;
+
+                double deti = 0;
+                double detj = 0;
+                if (!(ci.getReturnCode() == NOT_OBSERVED)) {
+                    deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
+                }
+                if (!(cj.getReturnCode() == NOT_OBSERVED)) {
+                    detj = cj.getLogDeterminant();
+                }
+                remainder += -0.5 * (deti + detj);
+
+                if (DEBUG) {
+                    System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
+                    System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
+                    System.err.println("\t\tremainder: " + remainder);
+                }
+
+                if (TIMING) {
+                    endTime("remain");
+                }
             }
 
             // Accumulate remainder up tree and store

@@ -650,9 +650,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final boolean DEBUG = false;
 
     private void checkStatistics() {
-        if (!statisticsKnown) {
-            setupStatistics();
-            statisticsKnown = true;
+        synchronized (this) {
+            if (!statisticsKnown) {
+                setupStatistics();
+                statisticsKnown = true;
+            }
         }
     }
 

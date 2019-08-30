@@ -442,8 +442,8 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
     }
 
     public String getReport(int indent) {
+        String message = "\n";
         if (EVALUATION_TIMERS) {
-            String message = "\n";
             boolean first = true;
 
             final NumberFormatter nf = new NumberFormatter(6);
@@ -487,10 +487,20 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
                 index++;
             }
 
-            return message;
         } else {
-            return "No evaluation timer report available";
+            message += "No evaluation timer report available";
         }
+
+        if (indent == 0) {
+            message += "\n";
+            message += "likelihood: ";
+            message += getLogLikelihood();
+            message += "\n\n";
+
+        }
+
+        return message;
+
     }
 
 

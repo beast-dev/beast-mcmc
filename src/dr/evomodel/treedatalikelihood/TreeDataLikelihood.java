@@ -344,7 +344,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     /**
      * Set update flag for all nodes
      */
-    protected void updateAllNodes() {
+    public void updateAllNodes() {
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateAllCount++;
 

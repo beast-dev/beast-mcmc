@@ -51,6 +51,9 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
     private boolean validSimulation;
 
+    private boolean ignoreRemainders = false;
+
+
     public ProcessSimulation(TreeDataLikelihood treeDataLikelihood,
                              ProcessSimulationDelegate simulationDelegate) {
 
@@ -72,11 +75,14 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         validSimulation = false;
     }
 
-    private static final boolean IGNORE_REMAINDER = false;
-    
+    public final void setIgnoreRemainders(boolean bool) {
+        ignoreRemainders = bool;
+    }
+
+
     public final void cacheSimulatedTraits(final NodeRef node) {
 
-        if (IGNORE_REMAINDER) {
+        if (ignoreRemainders) {
 
             if (!validSimulation) {
                 treeDataLikelihood.calculatePostOrderStatistics();

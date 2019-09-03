@@ -87,7 +87,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
-            new ElementRule(TreeModel.class),
+            new ElementRule(TreeModel.class, true),
             new ElementRule(GMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),
     };

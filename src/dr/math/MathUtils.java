@@ -25,10 +25,10 @@
 
 package dr.math;
 
+import dr.util.NumberFormatter;
+
 import java.text.NumberFormat;
 import java.text.ParseException;
-
-import dr.util.NumberFormatter;
 
 /**
  * Handy utility functions which have some Mathematical relavance.
@@ -466,7 +466,7 @@ public class MathUtils {
 		if (x.length != y.length) return false;
 
 		for (int i = 0, dim = x.length; i < dim; ++i) {
-			if (Math.abs(x[i] - y[i]) > tolerance) return false;
+			if (!(Math.abs(x[i] - y[i]) <= tolerance)) return false;
 		}
 
 		return true;

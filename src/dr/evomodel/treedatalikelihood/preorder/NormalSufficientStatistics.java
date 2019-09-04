@@ -70,11 +70,7 @@ public class NormalSufficientStatistics {
     }
 
     public double getVariance(int row, int col) {
-        if (variance == null) {
-            variance = new DenseMatrix64F(precision.numRows, precision.numCols);
-            safeInvert2(precision, variance, false);
-        }
-
+        computeVariance();
         return variance.unsafe_get(row, col);
     }
 
@@ -86,14 +82,27 @@ public class NormalSufficientStatistics {
 
     @Deprecated
     public DenseMatrix64F getRawVariance() {
-        if (variance == null) { // TODO Code duplication
-            variance = new DenseMatrix64F(precision.numRows, precision.numCols);
-            safeInvert2(precision, variance, false);
-        }
-
+        computeVariance();
         return variance;
     }
 
+    public DenseMatrix64F getRawPrecisionCopy() {
+        return precision.copy();
+    }
+
+    public DenseMatrix64F getRawMeanCopy() { return mean.copy(); }
+
+    public DenseMatrix64F getRawVarianceCopy() {
+        computeVariance();
+        return variance.copy();
+    }
+
+    private void computeVariance() {
+        if (variance == null) {
+            variance = new DenseMatrix64F(precision.numRows, precision.numCols);
+            safeInvert2(precision, variance, false);
+        }
+    }
     public String toString() {
         return mean + " " + precision;
     }

@@ -25,27 +25,20 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.model.*;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Vector;
-import dr.xml.AttributeParser;
-import dr.xml.XMLParser;
-import test.dr.inference.trace.TraceCorrelationAssert;
 
-import java.io.StringReader;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static test.dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegateTest.getConditionalSimulations;
 import static test.dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegateTest.getLogDatumLikelihood;
@@ -54,20 +47,11 @@ import static test.dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikel
  * @author Paul Bastide
  */
 
-public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
+public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 
-    private int dimTrait;
-    private int nTips;
-
-    // Diffusion
-    private MultivariateDiffusionModel diffusionModel;
-    private ConjugateRootTraitPrior rootPrior;
 
     // Data Models
     private RepeatedMeasuresTraitDataModel dataModelRepeatedMeasures;
-    private IntegratedFactorAnalysisLikelihood dataModelFactor;
-
-    private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 
     public RepeatedMeasureFactorTest(String name) {
         super(name);
@@ -76,61 +60,8 @@ public class RepeatedMeasureFactorTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        dimTrait = 3;
-
-        format.setMaximumFractionDigits(5);
-
-        // Tree
-        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
-        treeModel = createPrimateTreeModel();
-
-        // Data
-        nTips = 6;
-        Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
-        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0});
-        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5});
-        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0});
-        CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
-
         List<Integer> missingIndices = new ArrayList<Integer>();
         traitParameter.setParameterValue(2, 0);
-//        missingIndices.add(3);
-//        missingIndices.add(4);
-//        missingIndices.add(5);
-//        missingIndices.add(7);
-
-        //// Standard Model //// ***************************************************************************************
-
-        // Diffusion
-        Parameter[] precisionParameters = new Parameter[dimTrait];
-        precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.2});
-        precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0, 0.0});
-        precisionParameters[2] = new Parameter.Default(new double[]{0.2, 0.0, 3.0});
-        MatrixParameterInterface diffusionPrecisionMatrixParameter
-                = new MatrixParameter("precisionMatrix", precisionParameters);
-        diffusionModel = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameter);
-
-        PrecisionType precisionType = PrecisionType.FULL;
-
-        // Root prior
-        String s = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parser = new XMLParser(true, true, true, null);
-        parser.addXMLObjectParser(new AttributeParser());
-        parser.addXMLObjectParser(new ParameterParser());
-        parser.parse(new StringReader(s), true);
-        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
 
         // Error model
         Parameter[] samplingPrecision = new Parameter[dimTrait];

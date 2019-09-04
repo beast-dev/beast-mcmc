@@ -119,7 +119,7 @@
 		<nodeHeights internalNodes="true" rootNode="true">
 			<parameter id="treeModel.allInternalNodeHeights"/>
 		</nodeHeights>
-		<nodeTraits name="simTrait" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="4">
+		<nodeTraits name="simTrait" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="4" asMatrix="true">
 			<parameter id="leafTraits"/>
 		</nodeTraits>
 	</treeModel>
@@ -137,6 +137,24 @@
         </precisionMatrix>
 	</multivariateDiffusionModel>
 
+	<repeatedMeasuresModel id="repeatedMeasures" traitName="simTrait">
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+		<samplingPrecision>
+            <compoundSymmetricMatrix id="sampling.precisionMatrix" asCorrelation="true" isCholesky="true">
+                <diagonal>
+                    <parameter id="sampling.precision.diagonal" value="1 1 1 1" lower="0"/>
+                </diagonal>
+                <offDiagonal>
+                    <parameter id="sampling.precision.offDiagonal" value="0 0 0 0 0 0" />
+                </offDiagonal>
+            </compoundSymmetricMatrix>
+		</samplingPrecision>
+		<multivariateDiffusionModel idref="diffusionModel"/>
+	</repeatedMeasuresModel>
+
 	<diagonalMatrix id="attenuation.matrix">
 		<parameter id="attenuation.diagonal" value="0.1 0.2 0.3 0.4" lower="0 0 0 0"/>
 	</diagonalMatrix>
@@ -144,12 +162,18 @@
     <traitDataLikelihood id="ouLikelihood" traitName="simTrait" forceFullPrecision="true">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
-        <traitParameter>
-            <parameter idref="leafTraits"/>
-        </traitParameter>
+        <!-- <traitParameter> -->
+        <!--     <parameter idref="leafTraits"/> -->
+        <!-- </traitParameter> -->
+		<repeatedMeasuresModel idref="repeatedMeasures"/>
         <conjugateRootPrior>
             <meanParameter>
-                <parameter id="meanRoot"  value="0.0 0.0 0.0 0.0"/>
+                <compoundParameter id="meanRoot">
+                    <parameter id="opt.1" value="1.0"/>
+                    <parameter id="opt.2" value="2.0"/>
+                    <parameter id="opt.3" value="-1.0"/>
+                    <parameter id="opt.4" value="-2.0"/>
+                </compoundParameter>
             </meanParameter>
             <priorSampleSize>
                 <parameter id="sampleSizeRoot" value="2.0"/>
@@ -158,22 +182,22 @@
         <optimalTraits id="opt">
             <strictClockBranchRates>
                 <rate>
-                    <parameter value="1.0"/>
+                    <parameter idref="opt.1"/>
                 </rate>
             </strictClockBranchRates>
             <strictClockBranchRates>
                 <rate>
-                    <parameter value="2.0"/>
+                    <parameter idref="opt.2"/>
                 </rate>
             </strictClockBranchRates>
             <strictClockBranchRates>
                 <rate>
-                    <parameter value="-1.0"/>
+                    <parameter idref="opt.3"/>
                 </rate>
             </strictClockBranchRates>
             <strictClockBranchRates>
                 <rate>
-                    <parameter value="-2.0"/>
+                    <parameter idref="opt.4"/>
                 </rate>
             </strictClockBranchRates>
         </optimalTraits>
@@ -190,18 +214,22 @@
         <compoundSymmetricMatrix idref="attenuation.matrix"/>
     </attenuationGradient>
 
+    <report>
+        <compoundGradient idref="attenuationDiagonalGradient"/>
+    </report>
+
     <halfNormalPrior id="attenuation.diagonal.prior" mean="0" stdev="7.07306">
         <parameter idref="attenuation.diagonal"/>
     </halfNormalPrior>
 
 	<operators id="ouOperators.diagonalAttenuation.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
- 			drawVariance="1.0">
+                                       drawVariance="1.0" gradientCheckCount="1000" gradientCheckTolerance="0.001">
             <jointGradient>
-                <!-- <gradient> -->
-                <!--     <distributionLikelihood idref="attenuation.diagonal.prior"/> -->
-                <!--     <parameter idref="attenuation.diagonal"/> -->
-                <!-- </gradient> -->
+                <gradient>
+                    <distributionLikelihood idref="attenuation.diagonal.prior"/>
+                    <parameter idref="attenuation.diagonal"/>
+                </gradient>
                 <gradient idref="attenuationDiagonalGradient"/>
             </jointGradient>
 			<parameter idref="attenuation.diagonal"/>
@@ -215,7 +243,7 @@
         </randomWalkOperator>
 	</operators>
 
-	<mcmc id="mcmc.diagonalAttenuation.hmcVanilla" chainLength="100000" autoOptimize="false">
+	<mcmc id="mcmc.diagonalAttenuation.hmcVanilla" chainLength="5000" autoOptimize="false">
 		<posterior>
             <prior>
                 <halfNormalPrior idref="attenuation.diagonal.prior"/>
@@ -225,8 +253,7 @@
             </likelihood>
 		</posterior>
 		<operators idref="ouOperators.diagonalAttenuation.hmcVanilla"/>
-
-		<log logEvery="1000">
+		<log logEvery="100">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.diagonalAttenuation.hmcVanilla"/>
 			</column>
@@ -234,13 +261,13 @@
                 <parameter idref="attenuation.diagonal"/>
 			</column>
 		</log>
-		<log logEvery="100" fileName="testOUDIffusionAttenuationDiagonalHmcVanilla.log">
+		<log logEvery="10" fileName="testOUDIffusionAttenuationDiagonalHmcVanilla.log">
             <likelihood idref="likelihood.diagonalAttenuation.hmcVanilla"/>
             <matrixParameter idref="attenuation.diagonal"/>
 		</log>
 	</mcmc>
 
-	<mcmc id="mcmc.diagonalAttenuation.randomWalk" chainLength="1000000" autoOptimize="false">
+	<mcmc id="mcmc.diagonalAttenuation.randomWalk" chainLength="100000" autoOptimize="false">
 		<posterior>
             <prior>
                 <halfNormalPrior idref="attenuation.diagonal.prior"/>
@@ -250,8 +277,7 @@
             </likelihood>
 		</posterior>
 		<operators idref="ouOperators.diagonalAttenuation.randomWalk"/>
-
-		<log logEvery="10000">
+		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.diagonalAttenuation.randomWalk"/>
 			</column>
@@ -259,7 +285,7 @@
                 <parameter idref="attenuation.diagonal"/>
 			</column>
 		</log>
-		<log logEvery="1000" fileName="testOUDIffusionAttenuationDiagonalRandomWalk.log">
+		<log logEvery="100" fileName="testOUDIffusionAttenuationDiagonalRandomWalk.log">
             <likelihood idref="likelihood.diagonalAttenuation.randomWalk"/>
             <matrixParameter idref="attenuation.diagonal"/>
 		</log>
@@ -281,34 +307,33 @@
 	
 	<traceAnalysis fileName="testOUDIffusionAttenuationDiagonalHmcVanilla.log" stdError="true"/>
 
-    <maximizeWrtParameter id="maximize.diagonalAttenuation"  nIteration="100" printToScreen="true">
-        <densityWrtParameter>
-            <traitDataLikelihood idref="ouLikelihood"/>
-            <parameter idref="attenuation.diagonal"/>
-        </densityWrtParameter>
-    </maximizeWrtParameter>
+    <!-- <maximizeWrtParameter id="maximize.diagonalAttenuation"  nIteration="100" printToScreen="true"> -->
+        <!-- <densityWrtParameter> -->
+            <!-- <traitDataLikelihood idref="ouLikelihood"/> -->
+            <!-- <parameter idref="attenuation.diagonal"/> -->
+        <!-- </densityWrtParameter> -->
+    <!-- </maximizeWrtParameter> -->
 
-    <report>
-        <maximizeWrtParameter idref="maximize.diagonalAttenuation"/> 
-    </report>
+    <!-- <report> -->
+        <!-- <maximizeWrtParameter idref="maximize.diagonalAttenuation"/> --> 
+    <!-- </report> -->
 
 <!--
-
-burnIn   <= 100000,   maxState  = 1000000
-statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
-likelihood.diagonalAttenuation.randomWalk   -688.3552   1.222   -688.0923   -690.6059   -686.7181   901 -688.3819   -687.1548   
-attenuation.diagonal1   0.0533  0.0359  0.0468  8.0713E-6   0.1221  817.3367    3.6787E-3   0.049   
-attenuation.diagonal2   0.1596  0.0704  0.1581  0.0273  0.2985  901 0.1022  0.1979  
-attenuation.diagonal3   0.2059  0.086   0.2038  0.0409  0.3699  901 0.1349  0.2515  
-attenuation.diagonal4   0.1919  0.0656  0.1912  0.0637  0.3172  566.3738    0.152   0.2348  
-
 burnIn   <= 10000,   maxState  = 100000
 statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
-likelihood.diagonalAttenuation.hmcVanilla   -688.3628   1.2215  -688.0938   -690.7254   -686.7389   860.5009    -688.4611   -687.2154   
-attenuation.diagonal1   0.0529  0.0362  0.0469  6.6772E-6   0.1182  901 2.7564E-3   0.0486  
-attenuation.diagonal2   0.1626  0.0679  0.161   0.0416  0.301   827.8394    0.1287  0.2211  
-attenuation.diagonal3   0.2111  0.0851  0.2144  0.0468  0.3645  747.0269    0.1592  0.276   
-attenuation.diagonal4   0.1976  0.0687  0.1983  0.0659  0.3317  901 0.1538  0.2458  
+likelihood.diagonalAttenuation.randomWalk   -688.0058   1.0978  -687.8078   -689.9418   -686.3998   901 -688.1327   -686.8719   
+attenuation.diagonal1   0.0598  0.0392  0.0549  1.5896E-4   0.1324  901 0.0147  0.0667  
+attenuation.diagonal2   0.1415  0.0676  0.1396  9.893E-3    0.255   901 0.1038  0.1975  
+attenuation.diagonal3   0.1942  0.084   0.1964  0.0298  0.345   901 0.1218  0.239   
+attenuation.diagonal4   0.179   0.069   0.1798  0.0434  0.313   901 0.1594  0.2523  
+
+burnIn   <= 500,   maxState  = 5000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonalAttenuation.hmcVanilla   -688.0754   1.1359  -687.8416   -690.308    -686.4935   337.6882    -688.1455   -686.9745   
+attenuation.diagonal1   0.0634  0.0382  0.0583  1.9341E-3   0.1303  422.5307    0.0236  0.0761  
+attenuation.diagonal2   0.1475  0.0726  0.144   0.0225  0.2884  349.8929    0.0976  0.2003  
+attenuation.diagonal3   0.2047  0.0842  0.2023  0.0451  0.3539  350.8413    0.1279  0.2387  
+attenuation.diagonal4   0.1778  0.0674  0.1796  0.0522  0.3089  367.1038    0.1455  0.2341  
 
 X: [ 0.033394320144921844, 0.1637186636208327, 0.20851782773214472, 0.1949744758261829]
 Gradient: [ -7.382849298204062E-6, -6.556047238695691E-6, 5.366065111122075E-5, 6.384566938950876E-6]
@@ -318,49 +343,306 @@ Time: 0.363s
 Count: 450
 -->
 
-    <!-- ************************************************** -->
-    <!-- Compound Attenuation Precision -->
 
-    <precisionGradient id="precisionDiagonalGradientPreOrder" parameter="diagonal" traitName="simTrait">
+    <!-- ************************************************** -->
+    <!-- Optima -->
+
+    <meanGradient id="meanGradient" parameter="opt" traitName="simTrait">
+        <traitDataLikelihood idref="ouLikelihood"/>
+        <parameter idref="meanRoot"/>
+    </meanGradient>
+
+    <report>
+        <compoundGradient idref="meanGradient"/>
+    </report>
+
+    <normalPrior id="meanRoot.prior" mean="0" stdev="5">
+        <parameter idref="meanRoot"/>
+    </normalPrior>
+
+	<operators id="ouOperators.meanRoot.hmcVanilla">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="1000" gradientCheckTolerance="0.001">
+            <jointGradient>
+                <gradient>
+                    <distributionLikelihood idref="meanRoot.prior"/>
+                    <parameter idref="meanRoot"/>
+                </gradient>
+                <gradient idref="meanGradient"/>
+            </jointGradient>
+			<parameter idref="meanRoot"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<operators id="ouOperators.meanRoot.randomWalk">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="meanRoot"/>
+        </randomWalkOperator>
+	</operators>
+
+	<mcmc id="mcmc.meanRoot.hmcVanilla" chainLength="5000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <normalPrior idref="meanRoot.prior"/>
+            </prior>
+            <likelihood id="likelihood.meanRoot.hmcVanilla">
+                <traitDataLikelihood idref="ouLikelihood"/>
+            </likelihood>
+		</posterior>
+		<operators idref="ouOperators.meanRoot.hmcVanilla"/>
+		<log logEvery="100">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.meanRoot.hmcVanilla"/>
+			</column>
+			<column label="opt" dp="4" width="12">
+                <parameter idref="meanRoot"/>
+			</column>
+		</log>
+		<log logEvery="10" fileName="testOUDIffusionMeanRootHmcVanilla.log">
+            <likelihood idref="likelihood.meanRoot.hmcVanilla"/>
+            <matrixParameter idref="meanRoot"/>
+		</log>
+	</mcmc>
+
+	<mcmc id="mcmc.meanRoot.randomWalk" chainLength="100000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <normalPrior idref="meanRoot.prior"/>
+            </prior>
+            <likelihood id="likelihood.meanRoot.randomWalk">
+                <traitDataLikelihood idref="ouLikelihood"/>
+            </likelihood>
+		</posterior>
+		<operators idref="ouOperators.meanRoot.randomWalk"/>
+		<log logEvery="1000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.meanRoot.randomWalk"/>
+			</column>
+			<column label="opt" dp="4" width="12">
+                <parameter idref="meanRoot"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testOUDIffusionMeanRootRandomWalk.log">
+            <likelihood idref="likelihood.meanRoot.randomWalk"/>
+            <matrixParameter idref="meanRoot"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.meanRoot.randomWalk"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testOUDIffusionMeanRootRandomWalk.log" stdError="true"/>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc.meanRoot.hmcVanilla"/>
+		</property>
+	</report>
+	
+	<traceAnalysis fileName="testOUDIffusionMeanRootHmcVanilla.log" stdError="true"/>
+
+    <!-- <maximizeWrtParameter id="maximize.meanRoot"  nIteration="100" printToScreen="true"> -->
+        <!-- <densityWrtParameter> -->
+            <!-- <traitDataLikelihood idref="ouLikelihood"/> -->
+            <!-- <parameter idref="meanRoot"/> -->
+        <!-- </densityWrtParameter> -->
+    <!-- </maximizeWrtParameter> -->
+
+    <!-- <report> -->
+        <!-- <maximizeWrtParameter idref="maximize.meanRoot"/> --> 
+    <!-- </report> -->
+
+<!--
+burnIn   <= 10000,   maxState  = 100000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.meanRoot.randomWalk  -680.8512   1.2593  -680.605    -683.2751   -679.0706   864.8036    -680.7076   -679.2639   
+opt.1   3.0264  0.866   3.036   1.2745  4.6202  759.3108    2.5391  3.6784  
+opt.2   -0.0069 0.8647  0.0274  -1.6517 1.6237  901 -0.3268 0.8517  
+opt.3   0.0173  1.0586  -0.0284 -1.9415 2.103   703.6241    -0.7348 0.6993  
+opt.4   -0.0291 1.0841  -0.0188 -2.0188 2.1463  901 -0.8151 0.6718  
+
+burnIn   <= 500,   maxState  = 5000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.meanRoot.hmcVanilla  -680.7351   1.2106  -680.5474   -682.963    -679.0118   211.673 -680.9758   -679.5805   
+opt.1   3.0878  0.8358  3.1057  1.4429  4.4912  230.4449    2.6471  3.7832  
+opt.2   0.0889  0.7804  0.0868  -1.392  1.7437  39.307  -0.5918 0.3964  *
+opt.3   -0.052  1.0169  -0.0459 -1.8343 2.0961  371.7816    -0.8189 0.4826  
+opt.4   0.0193  1.1228  -0.0102 -1.9906 2.0369  331.1373    -0.7538 0.7302  
+
+X: [ 2.903709111492328, 0.0018041112396677728, -0.098598294574799, 0.24466909674874276]
+Gradient: [ 7.81758508469746E-6, 1.1423482563585885E-5, 1.04169939580184E-5, 3.0648284556831573E-6]
+Gradient type: numerical
+Fx: 677.4352424945262
+Time: 0.059s
+Count: 72
+-->
+
+    <!-- ************************************************** -->
+    <!-- Compound Attenuation Precision Opt -->
+
+    <precisionGradient id="precisionDiagonalGradientPreOrder" parameter="both" traitName="simTrait">
         <traitDataLikelihood idref="ouLikelihood"/>
         <compoundSymmetricMatrix idref="precisionMatrix"/>
     </precisionGradient>
 
-    <logNormalPrior id="prior.diagonal" mean="0.0" stdev="1.0" offset="0.0" meanInRealSpace="false">
-        <parameter idref="precision.diagonal"/>
-    </logNormalPrior>
+    <report>
+        <precisionGradient idref="precisionDiagonalGradientPreOrder"/>
+    </report>
 
-    <compoundParameter id="attenuation.precision.diagonal">
-        <parameter idref="attenuation.diagonal"/>
-        <parameter idref="precision.diagonal"/>
-    </compoundParameter>
+    <diffusionGradient id="allGradient">
+        <precisionGradient parameter="both" traitName="simTrait">
+            <traitDataLikelihood idref="ouLikelihood"/>
+            <compoundSymmetricMatrix idref="precisionMatrix"/>
+        </precisionGradient>
+        <attenuationGradient parameter="diagonal" traitName="simTrait">
+            <traitDataLikelihood idref="ouLikelihood"/>
+            <compoundSymmetricMatrix idref="attenuation.matrix"/>
+        </attenuationGradient>
+        <meanGradient parameter="opt" traitName="simTrait">
+            <traitDataLikelihood idref="ouLikelihood"/>
+            <parameter idref="meanRoot"/>
+        </meanGradient>
+    </diffusionGradient>
+
+    <precisionGradient id="errorModel.gradient"  parameter="both" traitName="simTrait">
+		<repeatedMeasuresModel idref="repeatedMeasures"/>
+        <traitDataLikelihood idref="ouLikelihood"/>
+        <compoundSymmetricMatrix idref="sampling.precisionMatrix"/>
+    </precisionGradient>
+
+    <compoundGradient id="likelihoodGradient">
+        <diffusionGradient idref="allGradient"/>
+        <precisionGradient idref="errorModel.gradient"/>
+    </compoundGradient>
+
+    <report>
+        <diffusionGradient idref="allGradient"/>
+    </report>
+
+    <!-- <compoundGradient id="allCompoundGradient"> -->
+    <!--     <precisionGradient parameter="both" traitName="simTrait"> -->
+    <!--         <traitDataLikelihood idref="ouLikelihood"/> -->
+    <!--         <compoundSymmetricMatrix idref="precisionMatrix"/> -->
+    <!--     </precisionGradient> -->
+    <!--     <attenuationGradient parameter="diagonal" traitName="simTrait"> -->
+    <!--         <traitDataLikelihood idref="ouLikelihood"/> -->
+    <!--         <compoundSymmetricMatrix idref="attenuation.matrix"/> -->
+    <!--     </attenuationGradient> -->
+    <!--     <meanGradient parameter="opt" traitName="simTrait"> -->
+    <!--         <traitDataLikelihood idref="ouLikelihood"/> -->
+    <!--         <parameter idref="meanRoot"/> -->
+    <!--     </meanGradient> -->
+    <!-- </compoundGradient> -->
+
+    <!-- <report> -->
+    <!--     <compoundGradient idref="allCompoundGradient"/> -->
+    <!-- </report> -->
+
+	<halfTPrior id="prior.diagonal" df="1" scale="2.5">
+		<parameter idref="precision.diagonal"/>
+	</halfTPrior>
+    <halfTPrior id="prior.sampling.precision.diagonal" df="1" scale="2.5">
+        <parameter idref="sampling.precision.diagonal"/>
+    </halfTPrior>
+
+    <LKJCorrelationPrior id="prior.cholesky" shapeParameter="1.0" dimension="4">
+        <data>
+            <parameter idref="precision.correlation"/>
+        </data>
+    </LKJCorrelationPrior>
+    <LKJCorrelationPrior id="prior.sampling.precision.offDiagonal" shapeParameter="1.0" dimension="4">
+        <data>
+            <parameter idref="sampling.precision.offDiagonal"/>
+        </data>
+    </LKJCorrelationPrior>
+
+    <compoundGradient id="priorGradient">
+        <gradient>
+            <halfTPrior idref="prior.diagonal"/>
+            <parameter idref="precision.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="prior.cholesky"/>
+        </gradient>
+        <gradient>
+            <distributionLikelihood idref="attenuation.diagonal.prior"/>
+            <parameter idref="attenuation.diagonal"/>
+        </gradient>
+        <gradient>
+            <distributionLikelihood idref="meanRoot.prior"/>
+            <parameter idref="meanRoot"/>
+        </gradient>
+        <gradient>
+            <halfTPrior idref="prior.sampling.precision.diagonal"/>
+            <parameter idref="sampling.precision.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="prior.sampling.precision.offDiagonal"/>
+        </gradient>
+    </compoundGradient>
 
 	<operators id="ouOperators.compoundDiagonalAttenuationPrecision.hmcVanilla">
  		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
- 			drawVariance="1.0">
-            <compoundGradient>
-                    <gradient idref="attenuationDiagonalGradient"/>
-                    <gradient idref="precisionDiagonalGradientPreOrder"/>
-            </compoundGradient>
-            <parameter idref="attenuation.precision.diagonal"/>
-            <transform type="log"/>
+                                       drawVariance="1.0" gradientCheckCount="5000" gradientCheckTolerance="0.01">
+            <jointGradient id="post.precisionBothGradient">
+                <diffusionGradient idref="likelihoodGradient"/>
+                <!-- <compoundGradient idref="allCompoundGradient"/> -->
+                <compoundGradient idref="priorGradient"/>
+            </jointGradient>
+            <compoundParameter id="attenuation.precision.diagonal">
+                <parameter idref="precision.diagonal"/>
+                <parameter idref="precision.correlation"/>
+                <parameter idref="attenuation.diagonal"/>
+                <parameter idref="meanRoot"/>
+                <parameter idref="sampling.precision.diagonal"/>
+                <parameter idref="sampling.precision.offDiagonal"/>
+            </compoundParameter>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="4"/>
+                <LKJTransform dimension="4"/>
+                <transform type="log" dim="4"/>
+                <transform type="none" dim="4"/>
+                <transform type="log" dim="4"/>
+                <LKJTransform dimension="4"/>
+            </multivariateCompoundTransform>
  		</hamiltonianMonteCarloOperator>
 	</operators>
 
 	<operators id="ouOperators.compoundDiagonalAttenuationPrecision.randomWalk">
         <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.diagonal"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.correlation"/>
+            <LKJTransform dimension = "4"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
             <parameter idref="attenuation.diagonal"/>
         </randomWalkOperator>
         <randomWalkOperator windowSize="1.0" weight="1">
-            <parameter idref="precision.diagonal"/>
+            <parameter idref="meanRoot"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="sampling.precision.diagonal"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="sampling.precision.offDiagonal"/>
+            <LKJTransform dimension = "4"/>
         </randomWalkOperator>
 	</operators>
 
-	<mcmc id="mcmc.compoundDiagonalAttenuationPrecision.hmcVanilla" chainLength="100000" autoOptimize="false">
+	<mcmc id="mcmc.compoundDiagonalAttenuationPrecision.hmcVanilla" chainLength="5000" autoOptimize="false">
 		<posterior>
             <prior>
+                <halfTPrior idref="prior.diagonal"/>
+                <LKJCorrelationPrior idref="prior.cholesky"/>
                 <halfNormalPrior idref="attenuation.diagonal.prior"/>
-                <logNormalPrior idref="prior.diagonal"/>
+                <normalPrior idref="meanRoot.prior"/>
+                <halfTPrior idref="prior.sampling.precision.diagonal"/>
+                <LKJCorrelationPrior idref="prior.sampling.precision.offDiagonal"/>
             </prior>
             <likelihood id="likelihood.compoundDiagonalAttenuationPrecision.hmcVanilla">
                 <traitDataLikelihood idref="ouLikelihood"/>
@@ -368,7 +650,7 @@ Count: 450
 		</posterior>
 		<operators idref="ouOperators.compoundDiagonalAttenuationPrecision.hmcVanilla"/>
 
-		<log logEvery="1000">
+		<log logEvery="100">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.compoundDiagonalAttenuationPrecision.hmcVanilla"/>
 			</column>
@@ -378,19 +660,30 @@ Count: 450
 			<column label="precision" dp="4" width="12">
                 <matrixParameter idref="precisionMatrix"/>
 			</column>
+			<column label="opt" dp="4" width="12">
+                <parameter idref="meanRoot"/>
+			</column>
 		</log>
-		<log logEvery="100" fileName="testOUDIffusionAttenuationPrecisionDiagonalHmcVanilla.log">
+		<log logEvery="10" fileName="testOUDIffusionAttenuationPrecisionDiagonalHmcVanilla.log">
             <likelihood idref="likelihood.compoundDiagonalAttenuationPrecision.hmcVanilla"/>
-            <matrixParameter idref="attenuation.diagonal"/>
             <matrixParameter idref="precision.diagonal"/>
+            <matrixParameter idref="precision.correlation"/>
+            <matrixParameter idref="attenuation.diagonal"/>
+            <parameter idref="meanRoot"/>
+            <parameter idref="sampling.precision.diagonal"/>
+            <parameter idref="sampling.precision.offDiagonal"/>
 		</log>
 	</mcmc>
 
-	<mcmc id="mcmc.compoundDiagonalAttenuationPrecision.randomWalk" chainLength="1000000" autoOptimize="false">
+	<mcmc id="mcmc.compoundDiagonalAttenuationPrecision.randomWalk" chainLength="100000" autoOptimize="false">
 		<posterior>
             <prior>
-                <halfNormalPrior idref="attenuation.diagonal.prior"/>
                 <logNormalPrior idref="prior.diagonal"/>
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+                <halfNormalPrior idref="attenuation.diagonal.prior"/>
+                <normalPrior idref="meanRoot.prior"/>
+                <halfTPrior idref="prior.sampling.precision.diagonal"/>
+                <LKJCorrelationPrior idref="prior.sampling.precision.offDiagonal"/>
             </prior>
             <likelihood id="likelihood.compoundDiagonalAttenuationPrecision.randomWalk">
                 <traitDataLikelihood idref="ouLikelihood"/>
@@ -398,7 +691,7 @@ Count: 450
 		</posterior>
 		<operators idref="ouOperators.compoundDiagonalAttenuationPrecision.randomWalk"/>
 
-		<log logEvery="10000">
+		<log logEvery="1000">
 			<column label="Likelihood" dp="4" width="12">
 				<likelihood idref="likelihood.compoundDiagonalAttenuationPrecision.randomWalk"/>
 			</column>
@@ -408,11 +701,18 @@ Count: 450
 			<column label="precision" dp="4" width="12">
                 <matrixParameter idref="precisionMatrix"/>
 			</column>
+			<column label="opt" dp="4" width="12">
+                <parameter idref="meanRoot"/>
+			</column>
 		</log>
-		<log logEvery="1000" fileName="testOUDIffusionAttenuationPrecisionDiagonalRandomWalk.log">
+		<log logEvery="100" fileName="testOUDIffusionAttenuationPrecisionDiagonalRandomWalk.log">
             <likelihood idref="likelihood.compoundDiagonalAttenuationPrecision.randomWalk"/>
-            <matrixParameter idref="attenuation.diagonal"/>
             <matrixParameter idref="precision.diagonal"/>
+            <matrixParameter idref="precision.correlation"/>
+            <matrixParameter idref="attenuation.diagonal"/>
+            <parameter idref="meanRoot"/>
+            <parameter idref="sampling.precision.diagonal"/>
+            <parameter idref="sampling.precision.offDiagonal"/>
 		</log>
 	</mcmc>
 
@@ -432,54 +732,87 @@ Count: 450
 	
 	<traceAnalysis fileName="testOUDIffusionAttenuationPrecisionDiagonalHmcVanilla.log" stdError="true"/>
 
-    <maximizeWrtParameter id="maximize.compoundDiagonalAttenuationPrecision"  nIteration="100" printToScreen="true">
-        <densityWrtParameter>
-            <traitDataLikelihood idref="ouLikelihood"/>
-            <parameter idref="attenuation.precision.diagonal"/>
-        </densityWrtParameter>
-        <signTransform>
-            <parameter idref="attenuation.precision.diagonal"/>
-        </signTransform>
-    </maximizeWrtParameter>
+    <!-- <maximizeWrtParameter id="maximize.compoundDiagonalAttenuationPrecision"  nIteration="100" printToScreen="true"> -->
+    <!--     <densityWrtParameter> -->
+    <!--         <traitDataLikelihood idref="ouLikelihood"/> -->
+    <!--         <parameter idref="attenuation.precision.diagonal"/> -->
+    <!--     </densityWrtParameter> -->
+    <!--     <signTransform> -->
+    <!--         <parameter idref="attenuation.precision.diagonal"/> -->
+    <!--     </signTransform> -->
+    <!-- </maximizeWrtParameter> -->
 
-    <report>
-        <maximizeWrtParameter idref="maximize.compoundDiagonalAttenuationPrecision"/> 
-    </report>
+    <!-- <report> -->
+    <!--     <maximizeWrtParameter idref="maximize.compoundDiagonalAttenuationPrecision"/> --> 
+    <!-- </report> -->
 
 <!--
-
-burnIn   <= 100000,   maxState  = 1000000
-statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
-likelihood.compoundDiagonalAttenuationPrecision.randomWalk  -685.0097   1.9137  -684.6666   -688.665    -682.1564   901 -685.2653   -683.1704   
-attenuation.diagonal1   0.0687  0.044   0.0631  1.2045E-5   0.1498  870.8622    0.0277  0.0838  
-attenuation.diagonal2   0.0846  0.0589  0.0729  2.165E-4    0.1938  882.564 2.165E-4    0.0729  
-attenuation.diagonal3   0.1795  0.1049  0.1683  4.2457E-4   0.3728  901 0.0764  0.2175  
-attenuation.diagonal4   0.1101  0.065   0.103   1.6652E-4   0.2335  892.4632    0.0507  0.1386  
-precision.diagonal1 0.9288  0.1455  0.9202  0.673   1.2194  494.8994    0.7848  0.9834  
-precision.diagonal2 0.7313  0.1133  0.7279  0.5203  0.9542  865.2673    0.6767  0.8275  
-precision.diagonal3 0.3746  0.0679  0.3728  0.2533  0.5098  899.8076    0.3222  0.4117  
-precision.diagonal4 0.3697  0.0592  0.3665  0.2658  0.4905  901 0.3217  0.4004  
-
 burnIn   <= 10000,   maxState  = 100000
 statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
-likelihood.compoundDiagonalAttenuationPrecision.hmcVanilla  -684.8142   1.7149  -684.4525   -688.4747   -682.2567   901 -685.0526   -683.1027   
-attenuation.diagonal1   0.0638  0.0422  0.0565  5.0038E-4   0.141   824.9165    0.0177  0.0724  
-attenuation.diagonal2   0.0859  0.0576  0.0784  2.1211E-4   0.1931  901 0.0274  0.1031  
-attenuation.diagonal3   0.1761  0.1044  0.1621  3.7187E-5   0.3698  901 0.077   0.2176  
-attenuation.diagonal4   0.1147  0.0619  0.1095  3.0131E-4   0.2272  901 0.0686  0.1528  
-precision.diagonal1 0.9267  0.1407  0.9199  0.6878  1.2278  752.6356    0.8179  0.9994  
-precision.diagonal2 0.7396  0.1149  0.7309  0.5372  0.9799  778.0558    0.6396  0.791   
-precision.diagonal3 0.3751  0.0663  0.374   0.243   0.4926  793.3666    0.3087  0.3997  
-precision.diagonal4 0.3676  0.0569  0.3652  0.2619  0.4809  848.6445    0.3289  0.4054  
+likelihood.compoundDiagonalAttenuationPrecision.randomWalk  -679.8275   3.1518  -679.7752   -686.3239   -674.3445   261.8543    -681.5004   -677.2769   
+precision.diagonal1 1.3337  0.3178  1.2731  0.8306  1.9396  170.9912    1.1112  1.4521  
+precision.diagonal2 1.0426  0.3006  0.9985  0.6033  1.711   106.7892    0.754   1.1117  
+precision.diagonal3 0.6659  0.2286  0.6229  0.3465  1.2107  80.0149 0.4634  0.6852  *
+precision.diagonal4 0.5423  0.1727  0.5031  0.2791  0.9218  63.7293 0.3871  0.5682  *
+precision.correlation1  0.0358  0.1448  0.0334  -0.2208 0.3126  157.1126    -0.061  0.1168  
+precision.correlation2  -0.0144 0.1619  -0.0222 -0.3199 0.2888  150.1907    -0.1472 0.0698  
+precision.correlation3  -0.127  0.1412  -0.1269 -0.3757 0.1326  212.7175    -0.2781 -0.0798 
+precision.correlation4  0.1866  0.1387  0.1935  -0.0633 0.4451  175.4591    0.0498  0.2438  
+precision.correlation5  -0.1505 0.1289  -0.1497 -0.4046 0.0869  253.8774    -0.2249 -0.0466 
+precision.correlation6  -0.0946 0.1485  -0.0929 -0.3711 0.2121  143.3965    -0.1571 0.0153  
+attenuation.diagonal1   0.0663  0.0539  0.0532  1.7045E-4   0.1754  156.9677    1.028E-3    0.0532  
+attenuation.diagonal2   0.1332  0.1025  0.1116  5.3949E-4   0.3275  167.8794    0.0158  0.1222  
+attenuation.diagonal3   0.1046  0.0838  0.0866  1.7621E-5   0.2739  216.5619    6.1417E-3   0.091   
+attenuation.diagonal4   0.11    0.0881  0.0887  5.3186E-4   0.28    135.2316    5.3186E-4   0.0887  
+opt.1   3.1326  0.8244  3.1231  1.7319  4.8146  404.3797    2.4038  3.4495  
+opt.2   6.805E-3    0.6921  0.0102  -1.3952 1.2937  352.0298    -0.5025 0.3699  
+opt.3   3.5822E-3   0.9746  0.046   -1.7515 1.8547  383.9355    -0.6627 0.6233  
+opt.4   -0.0605 1.114   -0.0409 -2.4133 1.8967  582.8257    -0.6485 0.7489  
+sampling.precision.diagonal1    32.9601 50.7749 15.8196 2.0348  108.5888    148.2856    3.6087  16.5183 
+sampling.precision.diagonal2    19.8911 52.3391 7.3385  1.4272  63.9006 51.3127 2.8195  7.667   *
+sampling.precision.diagonal3    5.047   5.6982  3.4673  1.309   12.7085 165.2882    1.4369  3.4673  
+sampling.precision.diagonal4    12.8808 36.7036 3.4105  1.0347  40.1371 65.1936 1.2075  3.5315  *
+sampling.precision.offDiagonal1 -0.0792 0.3026  -0.0799 -0.6032 0.5232  204.9373    -0.3201 0.0772  
+sampling.precision.offDiagonal2 -0.0561 0.3394  -0.0603 -0.6772 0.564   155.4718    -0.362  0.0963  
+sampling.precision.offDiagonal3 -0.0815 0.3418  -0.0749 -0.7205 0.5814  274.5868    -0.3242 0.1322  
+sampling.precision.offDiagonal4 -0.2831 0.2836  -0.3305 -0.7299 0.2763  176.0636    -0.6043 -0.2658 
+sampling.precision.offDiagonal5 -0.0367 0.2943  -0.0219 -0.6274 0.5102  196.2497    -0.2035 0.1811  
+sampling.precision.offDiagonal6 0.1545  0.3012  0.1842  -0.4714 0.6725  166.8563    -0.0772 0.3417  
 
-Gradient is taken with respect to the transformed paramter values.
-Untransformed X: [ 0.040868869819634106, 0.05029981094747352, 0.1608509148688695, 0.10499439225770903, 0.9641974943706341, 0.764386646157769, 0.3768862388752234, 0.36455170666474995]
-X: [ -3.1973866348435007, -2.989753960383039, -1.8272773375988254, -2.25384833732026, -0.036459135675437404, -0.2686815364732616, -0.975811890717541, -1.0090868811750275]
-Gradient: [ -9.436202138085786E-6, 6.942193907631154E-6, 1.2157240311462369E-5, 5.436975389075515E-6, -4.3069393879337726E-5, -1.32211549223778E-5, -2.1927624919349028E-5, -9.172162202580065E-6]
-Gradient type: numerical
-Fx: 681.4411786219556
-Time: 0.807s
-Count: 1071
+ * WARNING: The results of this MCMC analysis may be invalid as 
+            one or more statistics had very low effective sample sizes (ESS)
+
+burnIn   <= 500,   maxState  = 5000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.compoundDiagonalAttenuationPrecision.hmcVanilla  -679.747    3.3918  -679.3564   -686.3842   -674.4055   425.751 -680.557    -676.4883   
+precision.diagonal1 1.3425  0.3434  1.2753  0.7106  1.9352  451 1.0044  1.3614  
+precision.diagonal2 1.0957  0.3658  1.0283  0.533   1.909   396.5464    0.7802  1.1538  
+precision.diagonal3 0.6765  0.2212  0.6351  0.3192  1.1053  451 0.443   0.6996  
+precision.diagonal4 0.5199  0.1612  0.4918  0.221   0.7993  339.9195    0.3704  0.5501  
+precision.correlation1  0.0391  0.1617  0.0322  -0.2558 0.357   451 -0.0474 0.1539  
+precision.correlation2  -0.0274 0.1529  -0.0265 -0.3164 0.2611  325.5907    -0.132  0.0532  
+precision.correlation3  -0.1213 0.131   -0.1258 -0.3363 0.1646  399.455 -0.2289 -0.0521 
+precision.correlation4  0.1926  0.1494  0.1895  -0.1057 0.449   347.4288    0.1363  0.3454  
+precision.correlation5  -0.1578 0.1356  -0.1522 -0.4012 0.1032  420.5342    -0.2594 -0.0757 
+precision.correlation6  -0.0905 0.1373  -0.093  -0.3428 0.1571  380.0698    -0.2125 -0.0241 
+attenuation.diagonal1   0.0638  0.0593  0.0481  1.4102E-4   0.1782  451 9.8393E-4   0.0487  
+attenuation.diagonal2   0.1353  0.1081  0.1089  6.6066E-4   0.3453  367.0686    6.6066E-4   0.1089  
+attenuation.diagonal3   0.0988  0.0743  0.0812  1.1319E-4   0.2423  422.9245    0.0146  0.0941  
+attenuation.diagonal4   0.1176  0.0892  0.1011  3.7913E-4   0.2805  371.5897    2.3063E-3   0.1024  
+opt.1   3.0673  0.7816  3.0625  1.7145  4.8349  427.0109    2.7185  3.7002  
+opt.2   0.0271  0.7224  0.0286  -1.1669 1.534   451 -0.3093 0.571   
+opt.3   0.0103  0.9983  -0.0536 -2.0647 1.7119  451 -0.7531 0.4672  
+opt.4   0.0431  1.0442  0.0756  -2.1377 2.0085  446.4062    -0.5771 0.7098  
+sampling.precision.diagonal1    46.8849 142.2461    14.8113 2.5049  152.3387    431.5422    2.6914  14.8786 
+sampling.precision.diagonal2    18.407  67.1178 6.6625  1.6419  53.112  451 2.1705  6.8302  
+sampling.precision.diagonal3    5.1439  6.2681  3.392   0.9654  14.2714 331.4296    1.3302  3.5149  
+sampling.precision.diagonal4    10.9384 23.3276 4.2423  0.8438  36.9961 351.3806    1.031   4.3025  
+sampling.precision.offDiagonal1 -0.0552 0.3142  -0.0612 -0.6361 0.553   420.848 -0.2581 0.1526  
+sampling.precision.offDiagonal2 -0.0652 0.3342  -0.0613 -0.6204 0.6099  401.0311    -0.219  0.2318  
+sampling.precision.offDiagonal3 -0.0628 0.3322  -0.0938 -0.6415 0.6109  451 -0.3584 0.0831  
+sampling.precision.offDiagonal4 -0.246  0.2939  -0.2843 -0.7762 0.3071  451 -0.5528 -0.1644 
+sampling.precision.offDiagonal5 2.6042E-3   0.3109  0.0107  -0.62   0.5259  451 -0.1956 0.2377  
+sampling.precision.offDiagonal6 0.1475  0.3045  0.1599  -0.3772 0.793   447.361 0.0252  0.4257  
 -->
 
 </beast>

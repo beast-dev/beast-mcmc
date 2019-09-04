@@ -37,7 +37,11 @@ import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 
 public interface GradientWrtPrecisionProvider {
 
-    double[] getGradientWrtPrecision(double[] vecV);
+//    double[] getGradientWrtPrecision(double[] vecV);
+
+    double[] getGradientWrtPrecision(double[] vecV, double[] gradient);
+
+    double[] getGradientWrtVariance(double[] vecP, double[] vecV, double[] gradient);
 
     ConjugateWishartStatisticsProvider getWishartStatistic();
 
@@ -64,7 +68,7 @@ public interface GradientWrtPrecisionProvider {
             this.dim = wishartStatistics.getPrecisionParameter().getRowDimension();
         }
 
-        public double[] getGradientWrtPrecision(double[] vecV) {
+        public double[] getGradientWrtPrecision(double[] vecV, double[] gradient) {
             // Statistics
             WishartSufficientStatistics wss = wishartStatistics.getWishartStatistics();
             double[] vecS = wss.getScaleMatrix();
@@ -88,6 +92,11 @@ public interface GradientWrtPrecisionProvider {
             return gradient;
         }
 
+        public double[] getGradientWrtVariance(double[] vecP, double[] vecV, double[] gradient) {
+            MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
+            return ruleI.chainGradient(getGradientWrtPrecision(vecV, gradient));
+        }
+
         @Override
         public ConjugateWishartStatisticsProvider getWishartStatistic() {
             return wishartStatistics;
@@ -103,10 +112,18 @@ public interface GradientWrtPrecisionProvider {
             this.dim = ((TreeDataLikelihood) branchSpecificGradient.getLikelihood()).getDataLikelihoodDelegate().getTraitDim();
         }
 
-        public double[] getGradientWrtPrecision(double[] vecV) {
-            double[] gradient = branchSpecificGradient.getGradientLogDensity(); // Get gradient wrt variance
+//        public double[] getGradientWrtPrecision(double[] vecV) {
+//            double[] gradient = branchSpecificGradient.getGradientLogDensity(); // Get gradient wrt variance
+//            return getGradientWrtPrecision(vecV, gradient);
+//        }
+
+        public double[] getGradientWrtPrecision(double[] vecV, double[] gradient) {
             MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecV);
             return ruleI.chainGradient(gradient);
+        }
+
+        public double[] getGradientWrtVariance(double[] vecP, double[] vecV, double[] gradient) {
+            return gradient;
         }
 
         @Override

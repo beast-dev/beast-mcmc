@@ -147,6 +147,9 @@ public class BranchSpecificGradient implements GradientWrtParameterProvider, Rep
 //        return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
 
+    public List<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter> getDerivationParameter() {
+        return ((ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient) branchProvider).getDerivationParameter();
+    }
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override

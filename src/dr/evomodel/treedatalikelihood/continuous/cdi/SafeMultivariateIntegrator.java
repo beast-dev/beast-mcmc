@@ -40,6 +40,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     private static final boolean TIMING = false;
 
     @Override
+    public void getBranchPrecision(int bufferIndex, int precisionIndex, double[] precision) {
+        getBranchPrecision(bufferIndex, precision);
+    }
+
     public void getBranchPrecision(int bufferIndex, double[] precision) {
 
         if (bufferIndex == -1) {
@@ -54,7 +58,29 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void getRootPrecision(int priorBufferIndex, double[] precision) {
+    public void getBranchVariance(int bufferIndex, int precisionIndex, double[] precision) {
+        getBranchVariance(bufferIndex, precision);
+    }
+
+    public void getBranchVariance(int bufferIndex, double[] variance) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        assert (variance != null);
+        assert (variance.length >= dimTrait * dimTrait);
+
+        System.arraycopy(variances, bufferIndex * dimTrait * dimTrait,
+                variance, 0, dimTrait * dimTrait);
+    }
+
+    @Override
+    public void getRootPrecision(int priorBufferIndex, int precisionIndex, double[] precision) {
+        getRootPrecision(priorBufferIndex, precision);
+    }
+
+    private void getRootPrecision(int priorBufferIndex, double[] precision) {
 
         assert (precision != null);
         assert (precision.length >= dimTrait * dimTrait);
@@ -474,7 +500,9 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vip = matrix0;
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
+            if (allZeroOrInfinite(Vip)) {
+                throw new RuntimeException("Zero-length branch on data is not allowed.");
+            }
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
@@ -538,11 +566,14 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
+    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
+                                           final double[] logLikelihoods,
                                            boolean incrementOuterProducts, boolean isIntegratedProcess) {
         assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

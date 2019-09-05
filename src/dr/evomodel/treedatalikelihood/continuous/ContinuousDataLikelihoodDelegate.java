@@ -639,6 +639,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         this.computeRemainders = !computePostOrderStatistic;
     }
 
+    public boolean getComputePostOrderStatisticsOnly() {
+        return !computeRemainders;
+    }
+
     @Override
     public boolean providesPostOrderStatisticsOnly() {
         return cdi instanceof ContinuousDiffusionIntegrator.Basic; // TODO Check instanceDetails

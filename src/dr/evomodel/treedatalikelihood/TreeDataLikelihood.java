@@ -120,6 +120,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 totalCalculateLikelihoodCount++;
             }
 
+            likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -139,7 +140,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
             calculateLogLikelihood();
-            likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
+//            likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
 
             if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
                 likelihoodKnown = true;
@@ -299,7 +300,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
-        setAllNodesUpdated();
+        if (!likelihoodDelegate.getComputePostOrderStatisticsOnly()) {
+            setAllNodesUpdated(); //TODO: this isn't ideal behavior, as dataLikelihoodDelegate should be able to tell whether it needs to update a node for a given purpose (likelihood or remainders)
+        }
 
         return logL;
     }

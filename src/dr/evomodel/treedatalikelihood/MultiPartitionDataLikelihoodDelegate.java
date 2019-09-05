@@ -1351,6 +1351,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
+    public boolean getComputePostOrderStatisticsOnly() { return false; }
+
+    @Override
     public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override

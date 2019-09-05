@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -38,8 +39,6 @@ import dr.xml.Reportable;
 
 import java.util.Arrays;
 
-import static dr.math.MachineAccuracy.SQRT_EPSILON;
-
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
@@ -50,6 +49,8 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
 
     private final double[] nodeHeights;
     private final TreeModel treeModel;
+    protected TreeParameterModel indexHelper;
+    private final AbstractNodeHeightTransformDelegate.NodeHeightParameter nodeHeightParameter;
 
 
     public NodeHeightGradientForDiscreteTrait(String traitName,
@@ -64,11 +65,15 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         this.treeModel = (TreeModel) treeDataLikelihood.getTree();
 
         this.nodeHeights = new double[tree.getInternalNodeCount()];
+
+        indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
+
+        this.nodeHeightParameter = new AbstractNodeHeightTransformDelegate.NodeHeightParameter("internalNodeHeights", treeModel, true);
     }
 
     @Override
     public Parameter getParameter() {
-        return treeModel.createNodeHeightsParameter(true, true, false);
+        return nodeHeightParameter;
     }
 
     @Override
@@ -84,12 +89,12 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
             final NodeRef internalNode = tree.getInternalNode(i);
             if (!tree.isRoot(internalNode)) {
-                final int internalNodeNumber = internalNode.getNumber();
+                final int internalNodeNumber = indexHelper.getParameterIndexFromNodeNumber(internalNode.getNumber());
                 result[i] -= gradient[internalNodeNumber] * branchRateModel.getBranchRate(tree, internalNode);
             }
             for (int j = 0; j < tree.getChildCount(internalNode); ++j){
                 NodeRef childNode = tree.getChild(internalNode, j);
-                final int childNodeNumber = childNode.getNumber();
+                final int childNodeNumber = indexHelper.getParameterIndexFromNodeNumber(childNode.getNumber());
                 result[i] += gradient[childNodeNumber] * branchRateModel.getBranchRate(tree, childNode);
             }
         }

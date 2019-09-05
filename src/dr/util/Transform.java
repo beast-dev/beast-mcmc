@@ -28,11 +28,8 @@ package dr.util;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.XMLObject;
 import org.apache.commons.math.util.FastMath;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -652,11 +649,11 @@ public interface Transform {
         }
 
         public double gradientInverse(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return gradient(inverse(value));
         }
 
         public double updateGradientLogDensity(double gradient, double value) {
-            throw new RuntimeException("Not yet implemented");
+            return gradient * value * (1.0 - value) - (2.0 * value - 1.0);
         }
 
         protected double getGradientLogJacobianInverse(double value) {
@@ -675,7 +672,7 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return value * (1.0 - value);
         }
 
         public String getTransformName() {

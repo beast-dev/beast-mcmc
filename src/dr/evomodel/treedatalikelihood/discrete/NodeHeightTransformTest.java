@@ -28,7 +28,11 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.util.Transform;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -39,6 +43,7 @@ public class NodeHeightTransformTest implements Reportable{
     private final NodeHeightTransform nodeHeightTransform;
     private final NodeHeightGradientForDiscreteTrait nodeHeightGradient;
     private final Parameter ratios;
+    private final Transform.ComposeMultivariable realLineTransform;
 
     public NodeHeightTransformTest(NodeHeightTransform nodeHeightTransform,
                                    NodeHeightGradientForDiscreteTrait nodeHeightGradient,
@@ -48,29 +53,50 @@ public class NodeHeightTransformTest implements Reportable{
         this.nodeHeightGradient = nodeHeightGradient;
         this.ratios = ratios;
 
+        List<Transform> transforms = new ArrayList<Transform>();
+        if (nodeHeightTransform.getParameter().getDimension() != ratios.getDimension()) {
+            transforms.add(new Transform.LogTransform());
+        }
+        for (int i = 0; i < ratios.getDimension(); i++) {
+            transforms.add(new Transform.LogitTransform());
+        }
+        this.realLineTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, nodeHeightTransform.getParameter()), nodeHeightTransform);
     }
 
     @Override
     public String getReport() {
         String message = nodeHeightGradient.getReport();
         double[] gradient = nodeHeightGradient.getGradientLogDensity();
-        double[] updatedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightGradient.getParameter().getParameterValues(), 0, gradient.length);
-        double[] numericGradient = NumericalDerivative.diagonalHessian(numeric1, ratios.getParameterValues());
+        double[] updatedUnweightedGradient = nodeHeightTransform.updateGradientUnWeightedLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, gradient.length);
+        double[] numericUnweightedGradient = NumericalDerivative.gradient(numericUnweighted, nodeHeightTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues()));
+        double[] updatedWeightedGradient = nodeHeightTransform.updateGradientLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, gradient.length);
+        double[] numericWeightedGradient = NumericalDerivative.gradient(numericWeighted, nodeHeightTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues()));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\nGradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(updatedGradient));
-        sb.append("\nGradient Numeric: ").append(new dr.math.matrixAlgebra.Vector(numericGradient));
+        sb.append("\nGradient wrt Unweighted LogLikelihood:");
+        sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedUnweightedGradient));
+        sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericUnweightedGradient));
+        sb.append("\nGradient wrt Weighted LogLikelihood:");
+        sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedWeightedGradient));
+        sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericWeightedGradient));
+
+
+        double[] updatedMultipleWeightedGradient = realLineTransform.updateGradientLogDensity(gradient, nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension());
+        double[] numericMultipleWeightedGradient = NumericalDerivative.gradient(numericMultipleWeighted,
+                realLineTransform.transform(nodeHeightTransform.getNodeHeights().getParameterValues(), 0, nodeHeightTransform.getNodeHeights().getDimension()));
+
+        sb.append("\nGradient wrt Multiple Weighted LogLikelihood:");
+        sb.append("\nPeeling: ").append(new dr.math.matrixAlgebra.Vector(updatedMultipleWeightedGradient));
+        sb.append("\nNumeric: ").append(new dr.math.matrixAlgebra.Vector(numericMultipleWeightedGradient));
+
         return message + sb.toString();
     }
 
-    protected MultivariateFunction numeric1 = new MultivariateFunction() {
+    protected MultivariateFunction numericUnweighted = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
 
-            for (int i = 0; i < argument.length; ++i) {
-                ratios.setParameterValueQuietly(i, argument[i]);
-            }
-            ratios.fireParameterChangedEvent();
+            nodeHeightTransform.inverse(argument);
 
 //            treeDataLikelihood.makeDirty();
             return nodeHeightGradient.getLikelihood().getLogLikelihood();
@@ -78,7 +104,7 @@ public class NodeHeightTransformTest implements Reportable{
 
         @Override
         public int getNumArguments() {
-            return ratios.getDimension();
+            return nodeHeightTransform.getDimension();
         }
 
         @Override
@@ -89,6 +115,64 @@ public class NodeHeightTransformTest implements Reportable{
         @Override
         public double getUpperBound(int n) {
             return 1.0;
+        }
+    };
+
+    protected MultivariateFunction numericWeighted = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+            nodeHeightTransform.inverse(argument);
+
+//            treeDataLikelihood.makeDirty();
+            return nodeHeightGradient.getLikelihood().getLogLikelihood() - nodeHeightTransform.getLogJacobian(argument);
+        }
+
+        @Override
+        public int getNumArguments() {
+            return nodeHeightTransform.getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return 0;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return 1.0;
+        }
+    };
+
+    protected MultivariateFunction numericMultipleWeighted = new MultivariateFunction() {
+        @Override
+        public double evaluate(double[] argument) {
+
+            double[] inverseValues = realLineTransform.inverse(argument, 0, argument.length);
+            Parameter nodeHeights = nodeHeightTransform.getNodeHeights();
+
+            for (int i = 0; i < inverseValues.length; ++i) {
+                nodeHeights.setParameterValueQuietly(i, inverseValues[i]);
+            }
+            nodeHeightTransform.getNodeHeights().fireParameterChangedEvent();
+
+            nodeHeightGradient.getLikelihood().makeDirty();
+            final double result = nodeHeightGradient.getLikelihood().getLogLikelihood() - realLineTransform.getLogJacobian(inverseValues, 0, argument.length);
+            return result;
+        }
+
+        @Override
+        public int getNumArguments() {
+            return nodeHeightTransform.getNodeHeights().getDimension();
+        }
+
+        @Override
+        public double getLowerBound(int n) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        @Override
+        public double getUpperBound(int n) {
+            return Double.POSITIVE_INFINITY;
         }
     };
 

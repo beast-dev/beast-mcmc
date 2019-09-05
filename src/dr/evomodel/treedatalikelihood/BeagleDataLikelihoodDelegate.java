@@ -401,7 +401,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    numMatrices + 32,
+                    numMatrices,
                     categoryCount,
                     numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,

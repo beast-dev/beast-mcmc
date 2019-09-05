@@ -31,6 +31,7 @@ import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.inference.model.Model;
+import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.List;
 
@@ -73,11 +74,45 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         this.substitutionProcessKnown = false;
     }
 
+    private void printMatrix(double[] matrix) {
+        for (int rate = 0; rate < siteRateModel.getCategoryCount(); ++rate) {
+
+            System.err.println("\nRate = " + rate);
+            for (int i = 0; i < stateCount; ++i) {
+                double[] row = new double[stateCount];
+                System.arraycopy(matrix, rate * stateCount * stateCount + i * stateCount,
+                        row, 0, stateCount);
+                System.err.println(new WrappedVector.Raw(row));
+            }
+        }
+    }
+
+    private void debugMatrixTranspose(final int[] operations) {
+
+        double[] matrix = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+        int matrixIndex = operations[4];
+        beagle.getTransitionMatrix(matrixIndex, matrix);
+
+        printMatrix(matrix);
+
+        int dest = 100;
+
+        beagle.transposeTransitionMatrices(new int[]{ matrixIndex }, new int[]{ dest }, 1);
+        beagle.getTransitionMatrix(dest, matrix);
+
+        printMatrix(matrix);
+    }
+
+    private static final boolean DEBUG_TRANSPOSE = false;
+
     @Override
     public void simulate(final int[] operations, final int operationCount,
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes
         this.simulateRoot(rootNodeNumber);
+
+        if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
+
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
 
         getNodeDerivatives(tree, gradient, null);

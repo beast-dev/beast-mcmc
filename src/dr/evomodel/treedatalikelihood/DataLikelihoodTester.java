@@ -26,7 +26,6 @@
 package dr.evomodel.treedatalikelihood;
 
 
-import dr.evolution.alignment.Patterns;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -52,8 +51,6 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.util.MessageLogHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,7 +136,7 @@ public class DataLikelihoodTester {
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -164,7 +161,7 @@ public class DataLikelihoodTester {
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -464,7 +461,7 @@ public class DataLikelihoodTester {
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
                 dataLikelihoodDelegateOne,
@@ -490,7 +487,7 @@ public class DataLikelihoodTester {
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(
                 dataLikelihoodDelegateTwo,

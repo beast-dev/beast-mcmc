@@ -51,6 +51,19 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
             double[] infinitesimalMatrix = new double[stateCount * stateCount];
             SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
             substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
+
+//            if (stateCount > 4) {
+//                double[] transpose = new double[stateCount * stateCount];
+//                for (int row = 0; row < stateCount; ++row) {
+//                    for (int col = 0; col < stateCount; ++col) {
+//                        transpose[col * stateCount + row] = infinitesimalMatrix[row * stateCount + col];
+//                    }
+//                }
+//
+//                infinitesimalMatrix = transpose;
+//            }
+
+
             double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT);
             evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
             if (cacheSquaredMatrix) {

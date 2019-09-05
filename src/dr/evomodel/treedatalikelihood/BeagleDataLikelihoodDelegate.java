@@ -100,22 +100,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private long totalPartialsUpdateCount = 0;
     private long totalEvaluationCount = 0;
 
-
-    public static class PreOrderSettings {
-        boolean usePreOrder;
-        boolean branchRateDerivative;
-        boolean branchInfinitesimalDerivative;
-
-        public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative) {
-            this.usePreOrder = usePreOrder;
-            this.branchRateDerivative = branchRateDerivative;
-            this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
-        }
-
-        public static PreOrderSettings getDefault () {
-            return new PreOrderSettings(false, false, false);
-        }
-    }
+    private final int startExtraMatrices;
 
     /**
      *
@@ -365,6 +350,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
             }
 
+            if (settings.usePreOrder && stateCount > 4) {
+                requirementFlags |= BeagleFlag.PREORDER_TRANSPOSE_AUTO.getMask();
+            }
+
             // start auto resource selection
             String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
             if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
@@ -414,13 +403,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    numMatrices,
+                    numMatrices + 32,
                     categoryCount,
                     numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,
                     preferenceFlags,
                     requirementFlags
             );
+
+            this.startExtraMatrices = numMatrices;
+
+            System.err.println("\n\nstartExtraMatrices = " + startExtraMatrices + "\n\n");  // 70
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;

@@ -474,30 +474,30 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return currentTimeIndex;
     }
 
-    private class CurrentAndNextTime {
-        private double currentTime;
-        private double nextTime;
-
-        public double getCurrentTime() {
-            return currentTime;
-        }
-
-        public double getNextTime() {
-            return nextTime;
-        }
-
-        public void setCurrentTime(int treeIndex, int timeIndex) {
-            currentTime = getTime(treeIndex, timeIndex);
-        }
-
-        private double getTime(int treeIndex, int timeIndex) {
-            return intervalsList.get(treeIndex).getIntervalTime(timeIndex);
-        }
-
-        public void setNextTime(int treeIndex, int timeIndex) {
-            nextTime = getTime(treeIndex, timeIndex);
-        }
-    }
+//    private class CurrentAndNextTime {
+//        private double currentTime;
+//        private double nextTime;
+//
+//        public double getCurrentTime() {
+//            return currentTime;
+//        }
+//
+//        public double getNextTime() {
+//            return nextTime;
+//        }
+//
+//        public void setCurrentTime(int treeIndex, int timeIndex) {
+//            currentTime = getTime(treeIndex, timeIndex);
+//        }
+//
+//        private double getTime(int treeIndex, int timeIndex) {
+//            return intervalsList.get(treeIndex).getIntervalTime(timeIndex);
+//        }
+//
+//        public void setNextTime(int treeIndex, int timeIndex) {
+//            nextTime = getTime(treeIndex, timeIndex);
+//        }
+//    }
 
     protected void setupSufficientStatistics() {
 
@@ -589,7 +589,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                         numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
 
-                        while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
+                         while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
                             //check to see if interval is coalescent interval or sampling interval
                             if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
                                 numCoalEvents[currentGridIndex]++;

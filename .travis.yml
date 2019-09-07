@@ -11,13 +11,22 @@ addons:
 
 before_install:
   - export BEAGLE_BRANCH=hmc-clock
-  - git clone -b ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git
-  - cd beagle-lib
+  - mkdir -p ${BEAGLE_LIB}
+  - git clone -b ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git ${BEAGLE_BUILD}
+  - cd ${BEAGLE_BUILD}
   - ./autogen.sh
-  - ./configure --without-cuda --without-opencl
+  - ./configure --without-cuda --without-opencl --prefix=${BEAGLE_LIB}
   - make
+  - make install
+  - export LD_LIBRARY_PATH=${BEAGLE_LIB}
+  - cd ..
 
 script:
   - ant dist
   - cd ci; ./test.sh
   - cd ..; ant junit
+
+env:
+  global:
+    - BEAGLE_BUILD=$HOME/beagle-build
+    - BEAGLE_LIB=$HOME/beagle-lib

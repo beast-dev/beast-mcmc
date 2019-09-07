@@ -11,7 +11,7 @@ addons:
 
 before_install:
   - export BEAGLE_BRANCH=hmc-clock
-  - git clone -branch ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git
+  - git clone -b ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git
   - cd beagle-lib
   - ./autogen.sh
   - ./configure --without-cuda --without-opencl

@@ -10,7 +10,7 @@ addons:
    - ant-optional
 
 before_install:
-  - export BEAGLE_BRANCH=hmc_clock
+  - export BEAGLE_BRANCH=hmc-clock
   - git clone -branch ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib
   - cd beagle-lib
   - ./autogen.sh

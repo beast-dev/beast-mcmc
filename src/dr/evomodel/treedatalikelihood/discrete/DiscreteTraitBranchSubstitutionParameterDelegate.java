@@ -97,7 +97,7 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
         return GRADIENT_TRAIT_NAME + ":" + name;
     }
 
-    public static class BranchDifferentialMassProvider {
+    class BranchDifferentialMassProvider {
 
         private TreeParameterModel indexHelper;
         private List<DifferentialMassProvider> differentialMassProviderList;

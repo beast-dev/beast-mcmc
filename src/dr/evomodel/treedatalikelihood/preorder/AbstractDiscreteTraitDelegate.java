@@ -95,10 +95,10 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
         printMatrix(matrix);
 
-        int dest = 100;
+        int destination = 1;
 
-        beagle.transposeTransitionMatrices(new int[]{ matrixIndex }, new int[]{ dest }, 1);
-        beagle.getTransitionMatrix(dest, matrix);
+        beagle.transposeTransitionMatrices(new int[]{ matrixIndex }, new int[]{ destination }, 1);
+        beagle.getTransitionMatrix(destination, matrix);
 
         printMatrix(matrix);
     }

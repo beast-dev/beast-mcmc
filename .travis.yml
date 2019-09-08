@@ -16,20 +16,21 @@ before_install:
   - git clone -b ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git ${BEAGLE_BUILD}
   - cd ${BEAGLE_BUILD}
   - ./autogen.sh
-  - ./configure --without-cuda --without-opencl --prefix=${BEAGLE_LIB}
+  - ./configure --without-cuda --without-opencl --prefix=${BEAGLE}
   - make
   - make install
-  - export LD_LIBRARY_PATH=${BEAGLE_LIB}/lib
-  - export beagle.library.path=${BEAGLE_LIB}/lib
+  - export LD_LIBRARY_PATH=${BEAGLE_LIB}
+#  - export beagle.library.path=${BEAGLE_LIB}
   - ls ${BEAGLE_LIB}/lib
   - popd
 
 script:
   - ant dist
   - cd ci; ./test.sh
-  - cd ..; ant junit
+  - cd ..; ant -Djava.library.path=${BEAGLE_LIB} junit
 
 env:
   global:
     - BEAGLE_BUILD=$HOME/beagle-build
-    - BEAGLE_LIB=$HOME/beagle-lib
+    - BEAGLE=$HOME/beagle-lib
+    - BEAGLE_LIB=${BEAGLE}/lib

@@ -10,6 +10,7 @@ addons:
    - ant-optional
 
 before_install:
+  - pushd .
   - export BEAGLE_BRANCH=hmc-clock
   - mkdir -p ${BEAGLE_LIB}
   - git clone -b ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git ${BEAGLE_BUILD}
@@ -18,9 +19,9 @@ before_install:
   - ./configure --without-cuda --without-opencl --prefix=${BEAGLE_LIB}
   - make
   - make install
-  - export LD_LIBRARY_PATH=${BEAGLE_LIB}
-  - cd ~
-  - ls ${BEAGLE_LIB}
+  - export LD_LIBRARY_PATH=${BEAGLE_LIB}/lib
+  - ls ${BEAGLE_LIB}/lib
+  - popd
 
 script:
   - ant dist

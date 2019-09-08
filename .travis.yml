@@ -19,7 +19,8 @@ before_install:
   - make
   - make install
   - export LD_LIBRARY_PATH=${BEAGLE_LIB}
-  - cd ..
+  - cd ~
+  - ls ${BEAGLE_LIB}
 
 script:
   - ant dist

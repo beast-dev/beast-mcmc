@@ -20,6 +20,7 @@ before_install:
   - make
   - make install
   - export LD_LIBRARY_PATH=${BEAGLE_LIB}/lib
+  - export beagle.library.path=${BEAGLE_LIB}/lib
   - ls ${BEAGLE_LIB}/lib
   - popd
 

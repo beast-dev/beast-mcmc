@@ -25,9 +25,9 @@
 
 package dr.evomodel.substmodel.geneconversion;
 
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PairedDataType;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.AbstractCovarionModel;
+import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;

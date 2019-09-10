@@ -47,13 +47,13 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
 
     public PairedParalogGeneConversionSubstitutionModel(String name,
                                                         BaseSubstitutionModel baseSubstitutionModel,
-                                                        Parameter paralogFrequencyParameter,
                                                         Parameter relativeGeneConversionRateParameter,
                                                         PairedDataType dataType) {
 
-        super(name, dataType, baseSubstitutionModel.getFrequencyModel());
+        super(name, dataType, new PairedParalogFrequencyModel(dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter()));
         this.baseSubstitutionModel = baseSubstitutionModel;
         this.igcRateParameter = relativeGeneConversionRateParameter;
+
 
     }
 

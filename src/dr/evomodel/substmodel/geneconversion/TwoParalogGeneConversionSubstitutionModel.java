@@ -29,13 +29,19 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PairedDataType;
 import dr.evomodel.substmodel.*;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Xiang Ji
  * @author Jeff Thorne
  * @author Marc A. Suchard
  */
-public class TwoParalogGeneConversionSubstitutionModel extends AbstractCovarionModel {
+public class TwoParalogGeneConversionSubstitutionModel extends AbstractCovarionModel implements Citable {
 
     private final BaseSubstitutionModel baseSubstitutionModel;
     private final Parameter igcRateParameter;
@@ -66,4 +72,28 @@ public class TwoParalogGeneConversionSubstitutionModel extends AbstractCovarionM
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
         return 0;
     }
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using igc extension model for gene conversion rate estimations.";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    private static final Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("X", "Ji"),
+                    new Author( "A", "Griffing"),
+                    new Author("J", "Thorne"),
+            },
+            "A phylogenetic approach finds abundant interlocus gene conversion in yeast",
+            "Molecular Biology and Evolution",
+            Citation.Status.PUBLISHED);
 }

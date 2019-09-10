@@ -26,7 +26,6 @@
 package dr.evomodel.substmodel.geneconversion;
 
 import dr.evolution.datatype.PairedDataType;
-import dr.evomodel.substmodel.AbstractCovarionModel;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.util.Author;
@@ -41,37 +40,23 @@ import java.util.List;
  * @author Jeff Thorne
  * @author Marc A. Suchard
  */
-public class TwoParalogGeneConversionSubstitutionModel extends AbstractCovarionModel implements Citable {
+public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstitutionModel implements Citable {
 
     private final BaseSubstitutionModel baseSubstitutionModel;
     private final Parameter igcRateParameter;
 
-    public TwoParalogGeneConversionSubstitutionModel(String name,
-                                                     BaseSubstitutionModel baseSubstitutionModel,
-                                                     Parameter paralogFrequencyParameter,
-                                                     Parameter relativeGeneConversionRateParameter,
-                                                     PairedDataType dataType) {
+    public PairedParalogGeneConversionSubstitutionModel(String name,
+                                                        BaseSubstitutionModel baseSubstitutionModel,
+                                                        Parameter paralogFrequencyParameter,
+                                                        Parameter relativeGeneConversionRateParameter,
+                                                        PairedDataType dataType) {
 
-        super(name, dataType, baseSubstitutionModel.getFrequencyModel().getFrequencyParameter(), paralogFrequencyParameter);
+        super(name, dataType, baseSubstitutionModel.getFrequencyModel());
         this.baseSubstitutionModel = baseSubstitutionModel;
         this.igcRateParameter = relativeGeneConversionRateParameter;
 
     }
 
-    @Override
-    protected void frequenciesChanged() {
-
-    }
-
-    @Override
-    protected void ratesChanged() {
-
-    }
-
-    @Override
-    protected double getNormalizationValue(double[][] matrix, double[] pi) {
-        return 0;
-    }
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.FRAMEWORK;
@@ -96,4 +81,19 @@ public class TwoParalogGeneConversionSubstitutionModel extends AbstractCovarionM
             "A phylogenetic approach finds abundant interlocus gene conversion in yeast",
             "Molecular Biology and Evolution",
             Citation.Status.PUBLISHED);
+
+    @Override
+    protected void frequenciesChanged() {
+
+    }
+
+    @Override
+    protected void ratesChanged() {
+
+    }
+
+    @Override
+    protected void setupRelativeRates(double[] rates) {
+
+    }
 }

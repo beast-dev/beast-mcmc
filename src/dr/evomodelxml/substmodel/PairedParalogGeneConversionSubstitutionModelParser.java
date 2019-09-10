@@ -27,7 +27,7 @@ package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.PairedDataType;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
-import dr.evomodel.substmodel.geneconversion.TwoParalogGeneConversionSubstitutionModel;
+import dr.evomodel.substmodel.geneconversion.PairedParalogGeneConversionSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -36,7 +36,7 @@ import dr.xml.*;
  * @author Jeff Thorne
  * @author Marc A. Suchard
  */
-public class TwoParalogGeneConversionSubstitutionModelParser extends AbstractXMLObjectParser {
+public class PairedParalogGeneConversionSubstitutionModelParser extends AbstractXMLObjectParser {
 
     private final String NAME = "twoParalogGeneConversionSubstitutionModel";
     private final String PARALOG_COUNTS = "paralogCounts";
@@ -48,7 +48,7 @@ public class TwoParalogGeneConversionSubstitutionModelParser extends AbstractXML
         Parameter geneConversionRate = (Parameter) xo.getChild(GENE_CONVERSION_RATE).getChild(Parameter.class);
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
         PairedDataType dataType = (PairedDataType) xo.getChild(PairedDataType.class);
-        return new TwoParalogGeneConversionSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
+        return new PairedParalogGeneConversionSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
                 baseSubstitutionModel, paralogFrequencies, geneConversionRate, dataType);
     }
 
@@ -70,7 +70,7 @@ public class TwoParalogGeneConversionSubstitutionModelParser extends AbstractXML
 
     @Override
     public Class getReturnType() {
-        return TwoParalogGeneConversionSubstitutionModel.class;
+        return PairedParalogGeneConversionSubstitutionModel.class;
     }
 
     @Override

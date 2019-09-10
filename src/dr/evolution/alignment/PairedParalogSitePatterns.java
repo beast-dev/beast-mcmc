@@ -68,7 +68,6 @@ public class PairedParalogSitePatterns implements SiteList {
         this.allIds = getAllIds(allSeq);
         this.pairedPatterns = new int[sitePatterns.getPatternCount()][];
         setPairedPatterns();
-        getSitePattern(100);
     }
 
     private void setPairedPatterns() {

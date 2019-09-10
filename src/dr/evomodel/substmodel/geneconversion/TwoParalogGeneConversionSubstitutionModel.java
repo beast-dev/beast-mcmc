@@ -1,5 +1,5 @@
 /*
- * BranchRateGradientForDiscreteTrait.java
+ * TwoParalogGeneConversionSubstitutionModel.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *

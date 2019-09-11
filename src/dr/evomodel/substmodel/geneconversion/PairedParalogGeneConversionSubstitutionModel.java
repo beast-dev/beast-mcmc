@@ -116,12 +116,12 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
 
     @Override
     protected double setupMatrix() {
-        setupQMatrix();
-        makeValid(q, stateCount);
+        super.setupMatrix();
         return 1.0;
     }
 
-    private void setupQMatrix() {
+    @Override
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
         final int baseNumStates = freqModel.getFrequencyParameter().getDimension();
         double[] infinitesimalMatrix = new double[baseNumStates * baseNumStates];
         baseSubstitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
@@ -137,20 +137,20 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
                     final int colIndex1 = dataType.getState(stateTo, state1);
 
                     if (stateTo != state1) {
-                        q[i][colIndex1] = infinitesimalMatrix[stateTo * baseNumStates + state2];
+                        matrix[i][colIndex1] = infinitesimalMatrix[stateTo * baseNumStates + state2];
 
                         if (stateTo == state2) {
-                            q[i][colIndex1] += getIGCRate(1);
+                            matrix[i][colIndex1] += getIGCRate(1);
                         }
                     }
 
                     final int colIndex2 = dataType.getState(state1, stateTo);
 
                     if (stateTo != state2) {
-                        q[i][colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
+                        matrix[i][colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
 
                         if (stateTo == state1) {
-                            q[i][colIndex2] += getIGCRate(0);
+                            matrix[i][colIndex2] += getIGCRate(0);
                         }
                     }
                 }
@@ -158,9 +158,9 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
                 for (int stateTo = 0; stateTo < baseNumStates; stateTo++) {
                     if (stateTo != state1) {
                         final int colIndex1 = dataType.getState(stateTo, state2);
-                        q[i][colIndex1] = infinitesimalMatrix[stateTo * baseNumStates + state2];
+                        matrix[i][colIndex1] = infinitesimalMatrix[stateTo * baseNumStates + state2];
                         final int colIndex2 = dataType.getState(state1, stateTo);
-                        q[i][colIndex2] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
+                        matrix[i][colIndex2] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
                     }
                 }
             }

@@ -40,6 +40,7 @@ import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
@@ -125,6 +126,12 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
         MissingOps.unwrap(P, partial, dimTrait);
         MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);
+
+        if (DEBUG) {
+            System.err.println("taxon " + taxonIndex);
+            System.err.println("\tprecision: " + P);
+            System.err.println("\tmean: " + new WrappedVector.Raw(partial, 0, dimTrait));
+        }
 
         return partial;
     }
@@ -224,6 +231,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return dimTrait;
     }
 
+    private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";

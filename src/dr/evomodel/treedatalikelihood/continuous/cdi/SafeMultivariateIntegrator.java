@@ -6,6 +6,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
+import static dr.math.matrixAlgebra.missingData.InversionResult.mult;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
@@ -510,9 +511,12 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             safeInvert2(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
-            if (getDeterminant && getEffectiveDimension(iBuffer) == 0) ci = safeDeterminant(tmp1, true);
+            if (getDeterminant) ci = safeDeterminant(tmp1, true);
             CommonOps.mult(Pi, tmp1, Pip);
-            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) ci = safeDeterminant(Pip, true);
+            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) {
+                InversionResult cP = safeDeterminant(Pi, true);
+                ci = mult(ci, cP);
+            }
         }
 
         if (TIMING) {

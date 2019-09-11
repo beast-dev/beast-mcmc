@@ -79,7 +79,10 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
                     new Author("J", "Thorne"),
             },
             "A phylogenetic approach finds abundant interlocus gene conversion in yeast",
+            2016,
             "Molecular Biology and Evolution",
+            33,
+            2469, 2476,
             Citation.Status.PUBLISHED);
 
     @Override

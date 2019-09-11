@@ -56,6 +56,9 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
         this.igcRateParameter = relativeGeneConversionRateParameter;
         this.dataType = dataType;
 
+        addVariable(relativeGeneConversionRateParameter);
+        addModel(baseSubstitutionModel);
+
 
     }
 

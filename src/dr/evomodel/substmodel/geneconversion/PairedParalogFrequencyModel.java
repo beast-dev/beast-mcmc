@@ -67,8 +67,8 @@ public class PairedParalogFrequencyModel extends FrequencyModel {
     public double getFrequency(int i) {
         final int numStates = getFrequencyParameter().getDimension();
 
-        final int index1 = i / numStates;
-        final int index2 = i % numStates;
+        final int index1 = getState1(i, numStates);
+        final int index2 = getState2(i, numStates);
 
         double frequency = 0.0;
 
@@ -77,5 +77,14 @@ public class PairedParalogFrequencyModel extends FrequencyModel {
         }
 
         return frequency;
+    }
+
+    public int getState1(int state, int numState) {
+        return state / numState;
+    }
+
+
+    public int getState2(int state, int numState) {
+        return state % numState;
     }
 }

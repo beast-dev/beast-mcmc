@@ -407,7 +407,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         return copy;
     }
 
-    private final double q[][];
+    protected final double q[][];
     protected EigenDecomposition eigenDecomposition;
     private EigenDecomposition storedEigenDecomposition;
 

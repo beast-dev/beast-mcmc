@@ -75,7 +75,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
 
     @Override
     public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override
@@ -115,8 +115,6 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
     protected void setupRelativeRates(double[] rates) {
 
     }
-
-
 
     @Override
     protected double setupMatrix() {

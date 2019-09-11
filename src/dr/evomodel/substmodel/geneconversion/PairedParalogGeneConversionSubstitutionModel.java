@@ -32,6 +32,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -130,6 +131,7 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
         baseSubstitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
 
         for (int i = 0; i < dataType.getStateCount(); i++) {
+            Arrays.fill(matrix[i], 0.0);
             final int state1 = ((PairedParalogFrequencyModel) freqModel).getState1(i, baseNumStates);
             final int state2 = ((PairedParalogFrequencyModel) freqModel).getState2(i, baseNumStates);
 
@@ -137,10 +139,10 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
 
                 for (int stateTo = 0; stateTo < baseNumStates; stateTo++) {
 
-                    final int colIndex1 = dataType.getState(stateTo, state1);
+                    final int colIndex1 = dataType.getState(stateTo, state2);
 
                     if (stateTo != state1) {
-                        matrix[i][colIndex1] = infinitesimalMatrix[stateTo * baseNumStates + state2];
+                        matrix[i][colIndex1] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
 
                         if (stateTo == state2) {
                             matrix[i][colIndex1] += getIGCRate(1);
@@ -161,9 +163,9 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
                 for (int stateTo = 0; stateTo < baseNumStates; stateTo++) {
                     if (stateTo != state1) {
                         final int colIndex1 = dataType.getState(stateTo, state2);
-                        matrix[i][colIndex1] = infinitesimalMatrix[stateTo * baseNumStates + state2];
+                        matrix[i][colIndex1] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
                         final int colIndex2 = dataType.getState(state1, stateTo);
-                        matrix[i][colIndex2] = infinitesimalMatrix[state1 * baseNumStates + stateTo];
+                        matrix[i][colIndex2] = infinitesimalMatrix[state2 * baseNumStates + stateTo];
                     }
                 }
             }

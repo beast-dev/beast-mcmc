@@ -47,7 +47,7 @@ public class PairedParalogGeneConversionSubstitutionModelParser extends Abstract
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
         PairedDataType dataType = new PairedDataType(baseSubstitutionModel.getDataType());
         return new PairedParalogGeneConversionSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
-                baseSubstitutionModel, geneConversionRate, dataType);
+                baseSubstitutionModel, geneConversionRate, dataType, PairedParalogGeneConversionSubstitutionModel.RateCase.SINGLE, PairedParalogGeneConversionSubstitutionModel.NumberParalog.PAIR);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

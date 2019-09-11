@@ -57,10 +57,25 @@ public class PairedParalogFrequencyModel extends FrequencyModel {
     }
 
     public void setFrequency(int i, double value) {
-        throw new UnsupportedOperationException();
+        // do nothing
     }
 
     public int getFrequencyCount() {
         return dataType.getStateCount();
+    }
+
+    public double getFrequency(int i) {
+        final int numStates = getFrequencyParameter().getDimension();
+
+        final int index1 = i / numStates;
+        final int index2 = i % numStates;
+
+        double frequency = 0.0;
+
+        if (index1 == index2) {
+            frequency = getFrequencyParameter().getParameterValue(index1);
+        }
+
+        return frequency;
     }
 }

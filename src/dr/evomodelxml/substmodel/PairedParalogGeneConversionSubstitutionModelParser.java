@@ -38,12 +38,12 @@ import dr.xml.*;
  */
 public class PairedParalogGeneConversionSubstitutionModelParser extends AbstractXMLObjectParser {
 
-    private final String NAME = "twoParalogGeneConversionSubstitutionModel";
+    private final String NAME = "pairedParalogGeneConversionSubstitutionModel";
     private final String GENE_CONVERSION_RATE = "geneConversionRate";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter geneConversionRate = (Parameter) xo.getChild(GENE_CONVERSION_RATE).getChild(Parameter.class);
+        Parameter geneConversionRate = (Parameter) xo.getChild(Parameter.class);
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
         PairedDataType dataType = new PairedDataType(baseSubstitutionModel.getDataType());
         return new PairedParalogGeneConversionSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
@@ -55,7 +55,7 @@ public class PairedParalogGeneConversionSubstitutionModelParser extends Abstract
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(GENE_CONVERSION_RATE, Parameter.class),
+            new ElementRule(Parameter.class),
             new ElementRule(BaseSubstitutionModel.class),
     };
 

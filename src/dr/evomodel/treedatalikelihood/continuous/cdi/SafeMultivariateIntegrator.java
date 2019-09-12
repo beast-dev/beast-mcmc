@@ -507,7 +507,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
 
             final DenseMatrix64F tmp1 = matrix0;
             CommonOps.add(Pi, Pdi, tmp1);
-            final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
+            final DenseMatrix64F tmp2 = matrix1;
             safeInvert2(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);

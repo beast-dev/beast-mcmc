@@ -39,15 +39,22 @@ import dr.xml.*;
 public class PairedParalogGeneConversionSubstitutionModelParser extends AbstractXMLObjectParser {
 
     private final String NAME = "pairedParalogGeneConversionSubstitutionModel";
-    private final String GENE_CONVERSION_RATE = "geneConversionRate";
+    private final String NUM_PARALOG = "numParalog";
+    private final String RATE_CASE = "rateCase";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter geneConversionRate = (Parameter) xo.getChild(Parameter.class);
         BaseSubstitutionModel baseSubstitutionModel = (BaseSubstitutionModel) xo.getChild(BaseSubstitutionModel.class);
         PairedDataType dataType = new PairedDataType(baseSubstitutionModel.getDataType());
+
+        PairedParalogGeneConversionSubstitutionModel.RateCase rateCase =
+                PairedParalogGeneConversionSubstitutionModel.RateCase.factory(xo.getAttribute(RATE_CASE, "single"));
+        PairedParalogGeneConversionSubstitutionModel.NumberParalog numberParalog =
+                PairedParalogGeneConversionSubstitutionModel.NumberParalog.factory((String) xo.getAttribute(NUM_PARALOG));
+
         return new PairedParalogGeneConversionSubstitutionModel(NAME + "(" + baseSubstitutionModel.getModelName() + ")",
-                baseSubstitutionModel, geneConversionRate, dataType, PairedParalogGeneConversionSubstitutionModel.RateCase.SINGLE, PairedParalogGeneConversionSubstitutionModel.NumberParalog.PAIR);
+                baseSubstitutionModel, geneConversionRate, dataType, rateCase, numberParalog);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -57,6 +64,8 @@ public class PairedParalogGeneConversionSubstitutionModelParser extends Abstract
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Parameter.class),
             new ElementRule(BaseSubstitutionModel.class),
+            AttributeRule.newStringRule(NUM_PARALOG),
+            AttributeRule.newStringRule(RATE_CASE, true)
     };
 
     @Override

@@ -127,30 +127,65 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
     }
 
     public enum RateCase {
-        SINGLE {
+        SINGLE("single") {
             @Override
             double getIGCRate(Parameter igcRateParameter, int donorParalogIndex) {
                 return igcRateParameter.getParameterValue(0);
             }
         },
-        ASYMMETRIC {
+        ASYMMETRIC("asymmetric") {
             @Override
             double getIGCRate(Parameter igcRateParameter, int donorParalogIndex) {
                 return igcRateParameter.getParameterValue(donorParalogIndex);
             }
         };
+
+        private final String name;
+
+        RateCase(String name) {
+            this.name = name;
+        }
+
         abstract double getIGCRate(Parameter igcRateParameter, int donorParalogIndex);
+
+        public static RateCase factory(String match) {
+            for (RateCase type : RateCase.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
     }
 
     public enum NumberParalog {
-        SINGLE {
+        SINGLE("1") {
             @Override
             void setupQMatrix(BaseSubstitutionModel baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
                               PairedDataType dataType, double[][] matrix, RateCase rateCase, Parameter igcRateParameter) {
 
+                final int baseNumStates = freqModel.getFrequencyParameter().getDimension();
+                double[] infinitesimalMatrix = new double[baseNumStates * baseNumStates];
+                baseSubstitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
+
+                for (int i = 0; i < dataType.getStateCount(); i++) {
+                    Arrays.fill(matrix[i], 0.0);
+                }
+
+                for (int i = 0; i < baseNumStates; i++) {
+
+                    final int stateFrom = dataType.getState(i, i);
+
+                    for (int j = 0; j < baseNumStates; j++) {
+                        if (j != i) {
+                            final int stateTo = dataType.getState(j, j);
+                            matrix[stateFrom][stateTo] = infinitesimalMatrix[i * baseNumStates + j];
+                        }
+                    }
+                }
             }
         },
-        PAIR {
+        PAIR("2") {
             @Override
             void setupQMatrix(BaseSubstitutionModel baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
                               PairedDataType dataType, double[][] matrix, RateCase rateCase, Parameter igcRateParameter) {
@@ -160,8 +195,8 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
 
                 for (int i = 0; i < dataType.getStateCount(); i++) {
                     Arrays.fill(matrix[i], 0.0);
-                    final int state1 = ((PairedParalogFrequencyModel) freqModel).getState1(i, baseNumStates);
-                    final int state2 = ((PairedParalogFrequencyModel) freqModel).getState2(i, baseNumStates);
+                    final int state1 = freqModel.getState1(i, baseNumStates);
+                    final int state2 = freqModel.getState2(i, baseNumStates);
 
                     if (state1 != state2) {
 
@@ -200,7 +235,22 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
                 }
             }
         };
+
+        NumberParalog(String name) {
+            this.name = name;
+        }
+
         abstract void setupQMatrix(BaseSubstitutionModel baseSubstitutionModel, PairedParalogFrequencyModel freqModel,
                                    PairedDataType dataType, double[][] matrix, RateCase rateCase, Parameter igcRateParameter);
+        private final String name;
+
+        public static NumberParalog factory(String match) {
+            for (NumberParalog type : NumberParalog.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
     }
 }

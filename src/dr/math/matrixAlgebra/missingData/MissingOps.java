@@ -402,8 +402,8 @@ public class MissingOps {
                 throw new RuntimeException("SVD decomposition failed");
             }
             double[] values = svd.getSingularValues();
-//            double tol = SingularOps.singularThreshold(svd);
-            double tol = 0.0;
+            double tol = SingularOps.singularThreshold(svd);
+//            double tol = 0.0;
 
             int dim = 0;
             double logDet = 0;

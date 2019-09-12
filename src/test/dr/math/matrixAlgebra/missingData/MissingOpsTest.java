@@ -44,11 +44,11 @@ public class MissingOpsTest {
 
     Instance test1 = new Instance.Basic() {
         public int getRank() {
-            return 2;
+            return 1;
         }
 
         public double getLogDet() {
-            return -42.56618093096408;
+            return -3.4267272543138203;
         }
 
         public DenseMatrix64F getMatrix() {

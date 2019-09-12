@@ -94,7 +94,9 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 	public int getNextOperatorIndex() {
 
-		checkOperatorAcceptanceRates();
+		if (operatorAcceptanceThreshold > 0.0) {
+			checkOperatorAcceptanceRates();
+		}
 
 		if (sequential) {
 			int index = getWeightedOperatorIndex(current);

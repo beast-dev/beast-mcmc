@@ -243,11 +243,11 @@ public final class MarkovChain implements Serializable {
                 }
 
                 long elapsedTime = 0;
-                long caculationCount = 0;
+                long calculationCount = 0;
                 if (PROFILE) {
                     elapsedTime = System.currentTimeMillis();
                     if (likelihood instanceof Profileable) {
-                        caculationCount = ((Profileable) likelihood).getTotalCalculationCount();
+                        calculationCount = ((Profileable) likelihood).getTotalCalculationCount();
                     }
                 }
 
@@ -257,7 +257,9 @@ public final class MarkovChain implements Serializable {
                 if (PROFILE) {
                     long duration = System.currentTimeMillis() - elapsedTime;
                     mcmcOperator.addEvaluationTime(duration);
-                    mcmcOperator.addCalculationCount(((Profileable) likelihood).getTotalCalculationCount() - caculationCount);
+                    long newCalculationCount = (likelihood instanceof Profileable) ?
+                            ((Profileable) likelihood).getTotalCalculationCount() : 1;
+                    mcmcOperator.addCalculationCount(newCalculationCount - calculationCount);
 
                     if (DEBUG) {
                         System.out.println("Time: " + duration);

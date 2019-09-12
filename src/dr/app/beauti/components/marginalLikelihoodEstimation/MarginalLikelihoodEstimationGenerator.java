@@ -114,7 +114,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("A Matching Coalescent Model cannot be constructed for\n" +
-                            "the Skyride and Skygrid models. Please check the Marginal Likelihood\n" +
+                            "the provided tree prior. Please check the Marginal Likelihood\n" +
+                            "Estimation settings via the MCMC panel.");
+                } else if (mleOptions.choiceTreeWorkingPrior.equals("None")) {
+                    throw new GeneratorException("No tree working prior provided. Please check the Marginal Likelihood\n" +
                             "Estimation settings via the MCMC panel.");
                 }
             }

@@ -25,11 +25,13 @@
 
 package dr.evomodelxml.branchmodel;
 
+import com.sun.xml.internal.rngom.digested.DDataPattern;
 import dr.evomodel.branchmodel.PairedParalogBranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.geneconversion.DuplicationBranchSubstitutionModel;
 import dr.evomodel.substmodel.geneconversion.PairedParalogGeneConversionSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -47,40 +49,36 @@ public class PairedParalogBranchModelParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        int[] substitutionModelAssignment = xo.getIntegerArrayAttribute(SUBST_ASSIGN);
+        String[] substitutionModelAssignmentString = xo.getStringArrayAttribute(SUBST_ASSIGN);
+        int[][] substitutionModelAssignment = PairedParalogBranchModel.parseAssignmentString(substitutionModelAssignmentString);
         List<SubstitutionModel> substitutionModels = new ArrayList<>();
 
         for (PairedParalogGeneConversionSubstitutionModel geneConversionSubstitutionModel : xo.getAllChildren(PairedParalogGeneConversionSubstitutionModel.class)) {
             substitutionModels.add(geneConversionSubstitutionModel);
         }
 
-        for (DuplicationBranchSubstitutionModel duplicationBranchSubstitutionModel : xo.getAllChildren(DuplicationBranchSubstitutionModel.class)) {
-            substitutionModels.add(duplicationBranchSubstitutionModel);
-        }
-
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-        if (substitutionModelAssignment.length != tree.getNodeCount() - 1) {
+        if (substitutionModelAssignment.length != tree.getNodeCount()) {
             throw new RuntimeException("Please specify the substitution model for every branch.");
         }
 
-        List<SubstitutionModel> assignedSubstitutionModels = new ArrayList<>();
-        for (int i : substitutionModelAssignment) {
-            assignedSubstitutionModels.add(substitutionModels.get(i));
-        }
+        List<Parameter> timeToDuplicaitonProportion = xo.getAllChildren(Parameter.class);
 
-        return new PairedParalogBranchModel(NAME, assignedSubstitutionModels, tree);
+        return new PairedParalogBranchModel(NAME, substitutionModels, substitutionModelAssignment, timeToDuplicaitonProportion, tree);
     }
+
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(PairedParalogGeneConversionSubstitutionModel.class, 1, Integer.MAX_VALUE),
-            new ElementRule(DuplicationBranchSubstitutionModel.class, 1, Integer.MAX_VALUE),
+            new ElementRule(PairedParalogGeneConversionSubstitutionModel.class, 2, 2),
+//            new ElementRule(DuplicationBranchSubstitutionModel.class, 1, Integer.MAX_VALUE),
             new ElementRule(TreeModel.class),
-            AttributeRule.newIntegerArrayRule(SUBST_ASSIGN, false),
+            new ElementRule(Parameter.class, "proportion of time until the duplication event on the duplication branch."),
+            AttributeRule.newStringArrayRule(SUBST_ASSIGN),
     };
 
     @Override

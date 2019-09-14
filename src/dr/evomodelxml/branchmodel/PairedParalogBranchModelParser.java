@@ -25,10 +25,8 @@
 
 package dr.evomodelxml.branchmodel;
 
-import com.sun.xml.internal.rngom.digested.DDataPattern;
 import dr.evomodel.branchmodel.PairedParalogBranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.substmodel.geneconversion.DuplicationBranchSubstitutionModel;
 import dr.evomodel.substmodel.geneconversion.PairedParalogGeneConversionSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;

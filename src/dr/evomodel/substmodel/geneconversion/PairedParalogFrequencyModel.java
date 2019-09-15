@@ -50,7 +50,7 @@ public class PairedParalogFrequencyModel extends FrequencyModel {
         final double[] frequencies = new double[dataType.getStateCount()];
 
         for (int i = 0; i < getFrequencyParameter().getDimension(); i++) {
-            frequencies[dataType.getState(i, i)] = getFrequency(i);
+            frequencies[dataType.getState(i, i)] = getFrequencyParameter().getParameterValue(i);
         }
 
         return frequencies;

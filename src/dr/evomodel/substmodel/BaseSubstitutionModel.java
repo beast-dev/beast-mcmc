@@ -26,6 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.geneconversion.PairedParalogFrequencyModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -97,7 +98,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             this.freqModel = freqModel;
             addModel(freqModel);
 
-            if (!(freqModel instanceof CovarionFrequencyModel)) {
+            if (!(freqModel instanceof CovarionFrequencyModel || freqModel instanceof PairedParalogFrequencyModel)) {
                 checkFrequencies();
             }
         }

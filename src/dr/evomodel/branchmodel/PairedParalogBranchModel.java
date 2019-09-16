@@ -152,7 +152,7 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged();
+        fireModelChanged(object, index);
     }
 
     @Override

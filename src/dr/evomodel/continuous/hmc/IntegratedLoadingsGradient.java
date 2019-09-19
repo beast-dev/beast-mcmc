@@ -207,7 +207,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         final List<WrappedNormalSufficientStatistics> allStatistics =
                 fullConditionalDensity.getTrait(tree, null); // TODO Need to test if faster to load inside loop
 
-        treeDataLikelihood.updateAllNodes(); //Needed so that the next time the likelihood is calculated, the whole tree is traversed and remainders are calculated
 
         if (TIMING) {
             stopWatches[3].stop();

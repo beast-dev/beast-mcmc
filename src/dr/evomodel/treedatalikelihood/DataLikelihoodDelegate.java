@@ -69,7 +69,5 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Pr
 
     void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistics);
 
-    boolean getComputePostOrderStatisticsOnly();
-
     boolean providesPostOrderStatisticsOnly();
 }

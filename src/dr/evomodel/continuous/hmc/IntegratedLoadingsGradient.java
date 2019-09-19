@@ -40,6 +40,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final boolean[] missing;
     private final TaxonTaskPool taxonTaskPool;
     private final ThreadUseProvider threadUseProvider;
+    private final RemainderCompProvider remainderCompProvider;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -83,6 +84,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         }
 
         this.threadUseProvider = threadUseProvider;
+        this.remainderCompProvider = remainderCompProvider;
 
         if (TIMING) {
             int length = 5;
@@ -199,6 +201,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             stopWatches[3].start();
         }
 
+        if (remainderCompProvider.computeRemainder()) {
+            likelihood.getLogLikelihood(); // forces full likelihood evaluation (shouldn't add extra work beyond computing remainders)
+        }
+
         final List<WrappedNormalSufficientStatistics> allStatistics =
                 fullConditionalDensity.getTrait(tree, null); // TODO Need to test if faster to load inside loop
 
@@ -226,8 +232,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             );
         }
 
-        likelihood.makeDirty(); //TODO: This should not be necessary. Remove after making changes to TreeDataLikelihood.
-
+        if (!remainderCompProvider.computeRemainder()) {
+            likelihood.makeDirty(); //TODO: This should not be necessary. Remove after making changes to TreeDataLikelihood.
+        }
 
         return join(gradients);
     }

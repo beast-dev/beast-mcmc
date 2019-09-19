@@ -2,9 +2,7 @@ package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
@@ -42,6 +40,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final boolean[] missing;
     private final TaxonTaskPool taxonTaskPool;
     private final ThreadUseProvider threadUseProvider;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -57,10 +56,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
 
         if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
-            ProcessSimulation provider = (ProcessSimulation) likelihoodDelegate.addWrappedFullConditionalDensityTrait(traitName);
-            provider.setIgnoreRemainders(!remainderCompProvider.computeRemainder());
-        } //TODO: what to do if treeDataLikelihood.getTreeTrait(fcdName) != null?
+            likelihoodDelegate.addWrappedFullConditionalDensityTrait(traitName);
+        }
 
+        this.likelihoodDelegate = likelihoodDelegate;
 
         this.fullConditionalDensity = castTreeTrait(treeDataLikelihood.getTreeTrait(fcdName));
         this.tree = treeDataLikelihood.getTree();
@@ -203,10 +202,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             stopWatches[3].start();
         }
 
+        likelihoodDelegate.setComputePostOrderStatisticsOnly(true); //TODO: do this in process simulation, not here
+
         final List<WrappedNormalSufficientStatistics> allStatistics =
                 fullConditionalDensity.getTrait(tree, null); // TODO Need to test if faster to load inside loop
 
-//        treeDataLikelihood.updateAllNodes(); //Needed so that the next time the likelihood is calculated, the whole tree is traversed and remainders are calculated
 
         if (TIMING) {
             stopWatches[3].stop();
@@ -230,6 +230,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                             allStatistics.get(taxon), gradients)
             );
         }
+
+        likelihood.makeDirty(); //TODO: I shouldn't need this. Need to find a way to either only flag on the last evaluation or have the determinant computed on the last step (or something else)
+
 
         return join(gradients);
     }

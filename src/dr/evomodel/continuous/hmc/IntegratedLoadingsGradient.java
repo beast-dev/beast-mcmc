@@ -42,13 +42,13 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final boolean[] missing;
     private final TaxonTaskPool taxonTaskPool;
     private final ThreadUseProvider threadUseProvider;
-    private final TreeDataLikelihood treeDataLikelihood;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                        IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
                                        TaxonTaskPool taxonTaskPool,
-                                       ThreadUseProvider threadUseProvider) {
+                                       ThreadUseProvider threadUseProvider,
+                                       RemainderCompProvider remainderCompProvider) {
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
 
@@ -56,10 +56,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
         String fcdName = WrappedTipFullConditionalDistributionDelegate.getName(traitName);
 
-        this.treeDataLikelihood = treeDataLikelihood;
         if (treeDataLikelihood.getTreeTrait(fcdName) == null) {
             ProcessSimulation provider = (ProcessSimulation) likelihoodDelegate.addWrappedFullConditionalDensityTrait(traitName);
-            provider.setIgnoreRemainders(true);
+            provider.setIgnoreRemainders(!remainderCompProvider.computeRemainder());
         } //TODO: what to do if treeDataLikelihood.getTreeTrait(fcdName) != null?
 
 
@@ -406,6 +405,27 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return sb.toString();
     }
 
+    private enum RemainderCompProvider {
+
+        FULL {
+            @Override
+            boolean computeRemainder() {
+                return true;
+            }
+        },
+
+        SKIP {
+            @Override
+            boolean computeRemainder() {
+                return false;
+            }
+        };
+
+        abstract boolean computeRemainder();
+
+
+    }
+
     private StopWatch[] stopWatches;
     private static final boolean TIMING = false;
 
@@ -415,6 +435,9 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private static final String THREAD_TYPE = "threadType";
     private static final String PARALLEL = "parallel";
     private static final String SERIAL = "serial";
+    private static final String REMAINDER_COMPUTATION = "remainderComputation";
+    private static final String FULL = "full";
+    private static final String SKIP = "skip";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -450,6 +473,18 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                         "\" or \"" + SERIAL + "\".");
             }
 
+            String remComp = xo.getAttribute(REMAINDER_COMPUTATION, SKIP);
+            RemainderCompProvider remainderCompProvider;
+
+            if (remComp.equalsIgnoreCase(SKIP)) {
+                remainderCompProvider = RemainderCompProvider.SKIP;
+            } else if (remComp.equalsIgnoreCase(FULL)) {
+                remainderCompProvider = RemainderCompProvider.FULL;
+            } else {
+                throw new XMLParseException("The attribute " + REMAINDER_COMPUTATION + " must have values \"" + SKIP +
+                        "\" or \"" + FULL + "\".");
+            }
+
 
             if (TIMING) {
                 System.out.println("WARNING: " + PARSER_NAME + " is running serially (not in parallel).");
@@ -468,7 +503,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     continuousDataLikelihoodDelegate,
                     factorAnalysis,
                     taxonTaskPool,
-                    threadProvider);
+                    threadProvider,
+                    remainderCompProvider);
         }
 
         @Override
@@ -495,7 +531,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                 new ElementRule(IntegratedFactorAnalysisLikelihood.class),
                 new ElementRule(TreeDataLikelihood.class),
                 new ElementRule(TaxonTaskPool.class, true),
-                AttributeRule.newStringRule(THREAD_TYPE, true)
+                AttributeRule.newStringRule(THREAD_TYPE, true),
+                AttributeRule.newStringRule(REMAINDER_COMPUTATION, true)
         };
     };
 

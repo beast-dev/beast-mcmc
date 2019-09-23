@@ -27,6 +27,8 @@ package dr.evomodel.substmodel.geneconversion;
 
 import dr.evolution.datatype.PairedDataType;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.ComplexColtEigenSystem;
+import dr.evomodel.substmodel.EigenSystem;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
@@ -115,9 +117,19 @@ public class PairedParalogGeneConversionSubstitutionModel extends BaseSubstituti
     }
 
     @Override
+    public boolean canReturnComplexDiagonalization() {
+        return true;
+    }
+
+    @Override
     protected double setupMatrix() {
         super.setupMatrix();
         return 1.0;
+    }
+
+    @Override
+    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+        return new ComplexColtEigenSystem(stateCount);
     }
 
     @Override

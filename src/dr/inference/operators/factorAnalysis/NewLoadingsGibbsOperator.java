@@ -315,46 +315,47 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         adaptor.drawFactors();
 
         int size = adaptor.getNumberOfTraits();
-        if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) { //TODO: this is always evaluating to 'true'
-            if (DEBUG) {
-                System.err.println("!= length");
-            }
-
-            precisionArray.clear();
-            meanArray.clear();
-            meanMidArray.clear();
-            double[] tempMean;
-            double[][] temp;
-            if (!randomScan) {
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    temp = new double[i + 1][i + 1];
-                    precisionArray.add(temp);
-                }
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[i + 1];
-                    meanArray.add(tempMean);
-                }
-
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[i + 1];
-                    meanMidArray.add(tempMean);
-                }
-            } else {
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    temp = new double[adaptor.getNumberOfFactors() - i][adaptor.getNumberOfFactors() - i];
-                    precisionArray.add(temp);
-                }
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[adaptor.getNumberOfFactors() - i];
-                    meanArray.add(tempMean);
-                }
-
-                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-                    tempMean = new double[adaptor.getNumberOfFactors() - i];
-                    meanMidArray.add(tempMean);
-                }
-            }
-        }
+//        if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) { //TODO: this is always evaluating to 'true'
+//            //TODO: why do we need this if the memory is allocated at instantiation?
+//            if (DEBUG) {
+//                System.err.println("!= length");
+//            }
+//
+//            precisionArray.clear();
+//            meanArray.clear();
+//            meanMidArray.clear();
+//            double[] tempMean;
+//            double[][] temp;
+//            if (!randomScan) {
+//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
+//                    temp = new double[i + 1][i + 1];
+//                    precisionArray.add(temp);
+//                }
+//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
+//                    tempMean = new double[i + 1];
+//                    meanArray.add(tempMean);
+//                }
+//
+//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
+//                    tempMean = new double[i + 1];
+//                    meanMidArray.add(tempMean);
+//                }
+//            } else {
+//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
+//                    temp = new double[adaptor.getNumberOfFactors() - i][adaptor.getNumberOfFactors() - i];
+//                    precisionArray.add(temp);
+//                }
+//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
+//                    tempMean = new double[adaptor.getNumberOfFactors() - i];
+//                    meanArray.add(tempMean);
+//                }
+//
+//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
+//                    tempMean = new double[adaptor.getNumberOfFactors() - i];
+//                    meanMidArray.add(tempMean);
+//                }
+//            }
+//        }
 
         if (pool != null) {
 

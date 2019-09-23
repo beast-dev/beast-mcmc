@@ -315,8 +315,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         adaptor.drawFactors();
 
         int size = adaptor.getNumberOfTraits();
-        if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) {
-
+        if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) { //TODO: this is always evaluating to 'true'
             if (DEBUG) {
                 System.err.println("!= length");
             }
@@ -391,8 +390,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
                     drawI(i, precision, midMean, mean);
                 }
-                constrainedSampler.applyConstraint(adaptor);
-                adaptor.fireLoadingsChanged();
+
             } else {
                 int i = MathUtils.nextInt(adaptor.getNumberOfTraits());
                 ListIterator<double[][]> currentPrecision;
@@ -408,9 +406,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                     currentMean = meanArray.listIterator();
                 }
                 drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
-                constrainedSampler.applyConstraint(adaptor);
-                adaptor.fireLoadingsChanged();
+
             }
+
+            constrainedSampler.applyConstraint(adaptor);
+            adaptor.fireLoadingsChanged();
 
         }
 

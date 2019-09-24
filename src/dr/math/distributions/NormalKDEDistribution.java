@@ -38,6 +38,7 @@ import java.util.Random;
 public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
     public static final int MINIMUM_GRID_SIZE = 512;
+    public static final boolean DEBUG = false;
 
     public NormalKDEDistribution(Double[] sample) {
         this(sample, null, null, null);
@@ -61,13 +62,31 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         }
         this.cut = cut;
 
-        from = DiscreteStatistics.min(super.sample) - this.cut * this.bandWidth;
-        to = DiscreteStatistics.max(super.sample) + this.cut * this.bandWidth;
+        setBounds();
+
+        if (DEBUG) {
+            System.out.println("lo = " + lo);
+            System.out.println("up = " + up);
+        }
+
+        densityKnown = false;
+    }
+
+    void setBounds() {
+        from = DiscreteStatistics.min(this.sample) - this.cut * this.bandWidth;
+        to = DiscreteStatistics.max(this.sample) + this.cut * this.bandWidth;
+
+        if (DEBUG) {
+            System.out.println("min: " + DiscreteStatistics.min(this.sample));
+            System.out.println("max: " + DiscreteStatistics.max(this.sample));
+            System.out.println("bandWidth = " + this.bandWidth);
+            System.out.println("cut = " + this.cut);
+            System.out.println("from = " + from);
+            System.out.println("to = " + to);
+        }
 
         lo = from - 4.0 * this.bandWidth;
         up = to + 4.0 * this.bandWidth;
-
-        densityKnown = false;
     }
 
     public double getFromPoint() {
@@ -80,14 +99,15 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
     /**
      * Returns a linear approximation evaluated at pt
-     * @param x data (assumed sorted increasingly
-     * @param y data
-     * @param pt evaluation point
-     * @param low return value if pt < x
+     *
+     * @param x    data (assumed sorted increasingly
+     * @param y    data
+     * @param pt   evaluation point
+     * @param low  return value if pt < x
      * @param high return value if pt > x
-     * @return  evaluated coordinate
+     * @return evaluated coordinate
      */
-    private double linearApproximate(double[] x, double[] y, double pt, double low, double high) {
+    double linearApproximate(double[] x, double[] y, double pt, double low, double high) {
 
         int i = 0;
         int j = x.length - 1;
@@ -118,7 +138,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         return y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]));
     }
 
-    private double[] rescaleAndTrim(double[] x) {
+    double[] rescaleAndTrim(double[] x) {
         final int length = x.length / 2;
         final double scale = 1.0 / x.length;
         double[] out = new double[length];
@@ -131,9 +151,9 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         return out;
     }
 
-    private double[] massdist(double[] x,
+    double[] massdist(double[] x,
 //                              double[] xmass,
-                              double xlow, double xhigh, int ny) {
+                      double xlow, double xhigh, int ny) {
 
         int nx = x.length;
         double[] y = new double[ny * 2];
@@ -148,7 +168,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
         final double xmi = 1.0 / nx;
         for (int i = 0; i < nx; ++i) {
-            final double xpos = (x[i] - xlow) /  xdelta;
+            final double xpos = (x[i] - xlow) / xdelta;
             final int ix = (int) Math.floor(xpos);
             final double fx = xpos - ix;
 //            final double xmi = xmass[i];
@@ -167,6 +187,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
     /**
      * Override for different kernels
+     *
      * @param ordinates the points in complex space
      * @param bandWidth predetermined bandwidth
      */
@@ -182,21 +203,22 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
     protected void computeDensity() {
         makeOrdinates();
+        makeXGrid();
         transformData();
         densityKnown = true;
     }
 
-    private void transformData() {
-        ComplexArray Y  = new ComplexArray(massdist(this.sample, lo, up, this.gridSize));
+    void transformData() {
+        ComplexArray Y = new ComplexArray(massdist(this.sample, lo, up, this.gridSize));
         FastFourierTransform.fft(Y, false);
 
         ComplexArray product = Y.product(kOrdinates);
         FastFourierTransform.fft(product, true);
 
-        densityPoints = rescaleAndTrim(product.real);        
+        densityPoints = rescaleAndTrim(product.real);
     }
 
-    private void makeOrdinates() {
+    void makeOrdinates() {
 
         final int length = 2 * gridSize;
         if (kOrdinates == null) {
@@ -218,21 +240,29 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
         FastFourierTransform.fft(kOrdinates, false);
         kOrdinates.conjugate();
+    }
 
+    void makeXGrid() {
         // Make x grid
         xPoints = new double[gridSize];
         double x = lo;
         double delta = (up - lo) / (gridSize - 1);
+        if (DEBUG) {
+            System.out.println("X");
+        }
         for (int i = 0; i < gridSize; i++) {
             xPoints[i] = x;
             x += delta;
+            if (DEBUG) {
+                System.out.println(xPoints[i]);
+            }
         }
     }
 
     @Override
-    protected double evaluateKernel(double x) {        
+    protected double evaluateKernel(double x) {
         if (!densityKnown) {
-           computeDensity();
+            computeDensity();
         }
         return linearApproximate(xPoints, densityPoints, x, 0.0, 0.0);
     }
@@ -252,7 +282,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
             this.bandWidth = bandwidthNRD(sample);
         } else
             this.bandWidth = bandWidth;
-                    
+
         densityKnown = false;
     }
 
@@ -275,18 +305,18 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
                 Math.pow(x.length, -0.2);
     }
 
-    private ComplexArray kOrdinates;
-    private double[] xPoints;
-    private double[] densityPoints;
+    ComplexArray kOrdinates;
+    double[] xPoints;
+    double[] densityPoints;
 
-    private int gridSize;
-    private double cut;
-    private double from;
-    private double to;
-    private double lo;
-    private double up;
+    int gridSize;
+    double cut;
+    double from;
+    double to;
+    double lo;
+    double up;
 
-    private boolean densityKnown = false;
+    boolean densityKnown = false;
 
     public static void main(String[] args) {
 
@@ -306,7 +336,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
         long end = System.currentTimeMillis();
 
-        System.out.println("Time: " + (end-start));
+        System.out.println("Time: " + (end - start));
 
     }
 

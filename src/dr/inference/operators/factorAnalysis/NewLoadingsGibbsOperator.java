@@ -496,7 +496,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
     }
 
-    private enum ColumnDimProvider {
+    public enum ColumnDimProvider {
 
 
         NONE("none") {

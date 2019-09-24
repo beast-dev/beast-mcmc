@@ -35,6 +35,7 @@ import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
 import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
+import dr.util.Attribute;
 import dr.xml.*;
 
 /**
@@ -52,6 +53,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final static String NUM_THREADS = "numThreads";
     private final static String MODE = "newMode";
     private final static String CONSTRAINT = "constraint";
+    private final static String SPARSITY_CONSTRAINT = "sparsity";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -104,8 +106,13 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                         xo.getAttribute(CONSTRAINT, NewLoadingsGibbsOperator.ConstrainedSampler.NONE.getName())
                 );
 
+                NewLoadingsGibbsOperator.ColumnDimProvider dimProvider =
+                        NewLoadingsGibbsOperator.ColumnDimProvider.parse(xo.getAttribute(SPARSITY_CONSTRAINT,
+                                NewLoadingsGibbsOperator.ColumnDimProvider.UPPER_TRIANGULAR.getName())
+                        );
+
                 return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
-                        multiThreaded, numThreads, sampler);
+                        multiThreaded, numThreads, sampler, dimProvider);
             } else {
 //                return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
                 return null;
@@ -132,7 +139,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                     new ElementRule(DistributionLikelihood.class),
                     new AndRule(
                             new ElementRule(MomentDistributionModel.class),
-                            new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[] {
+                            new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{
                                     new ElementRule(DistributionLikelihood.class)
                             }))
             ),
@@ -141,6 +148,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(NUM_THREADS, true),
             AttributeRule.newBooleanRule(MODE, true),
             AttributeRule.newStringRule(CONSTRAINT, true),
+            AttributeRule.newStringRule(SPARSITY_CONSTRAINT, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),

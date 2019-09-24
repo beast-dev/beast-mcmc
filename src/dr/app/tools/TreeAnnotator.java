@@ -38,6 +38,7 @@ import dr.geo.contouring.ContourPath;
 import dr.geo.contouring.ContourWithSynder;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
+import dr.util.Pair;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 import org.rosuda.JRI.REXP;
@@ -253,7 +254,7 @@ public class TreeAnnotator {
             }
             case MAX_CLADE_CREDIBILITY: {
                 progressStream.println("Finding maximum credibility tree...");
-                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
+                targetTree = new FlexibleTree(getMCCTree(burnin, cladeSystem, inputFileName));
                 break;
             }
 //            case MAX_SUM_CLADE_CREDIBILITY: {
@@ -357,7 +358,7 @@ public class TreeAnnotator {
         }
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName /*, boolean useSumCladeCredibility */)
+    private Tree getMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
             throws IOException {
 
         Tree bestTree = null;
@@ -399,11 +400,22 @@ public class TreeAnnotator {
         progressStream.println();
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
-//        if (useSumCladeCredibility) {
-//            progressStream.println("Highest Sum Clade Credibility: " + bestScore);
-//        } else {
-            progressStream.println("Highest Log Clade Credibility: " + bestScore);
-//        }
+        progressStream.println("Highest Log Clade Credibility: " + bestScore);
+
+        return bestTree;
+    }
+
+    private Tree getMMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
+            throws IOException {
+
+
+        Tree bestTree = null;
+
+        CladeSystem.Clade rootClade = cladeSystem.getRootClade();
+
+        for (Pair<BitSet, BitSet> node: rootClade.subClades) {
+            
+        }
 
         return bestTree;
     }
@@ -412,7 +424,7 @@ public class TreeAnnotator {
 //        if (useSumCladeCredibility) {
 //            return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
 //        } else {
-            return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
+        return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
 //        }
     }
 
@@ -444,12 +456,13 @@ public class TreeAnnotator {
             // Recurse over the tree and add all the clades (or increment their
             // frequency if already present). The root clade is added too (for
             // annotation purposes).
-            addClades(tree, tree.getRoot(), includeTips);
+            BitSet rootBits = addClades(tree, tree.getRoot(), includeTips);
+            rootClade = cladeMap.get(rootBits);
         }
-//
-//        public Clade getClade(NodeRef node) {
-//            return null;
-//        }
+
+        public Clade getRootClade() {
+            return rootClade;
+        }
 
         private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
 
@@ -466,26 +479,36 @@ public class TreeAnnotator {
 
             } else {
 
+                List<BitSet> subClades = new ArrayList<BitSet>();
+
                 for (int i = 0; i < tree.getChildCount(node); i++) {
 
                     NodeRef node1 = tree.getChild(node, i);
-
-                    bits.or(addClades(tree, node1, includeTips));
+                    BitSet subClade = addClades(tree, node1, includeTips);
+                    bits.or(subClade);
+                    subClades.add(subClade);
                 }
 
-                addClade(bits);
+                Clade clade = addClade(bits);
+
+                if (subClades.size() != 2) {
+                    throw new IllegalArgumentException("TreeAnnotator requires strictly bifurcating trees");
+                }
+                clade.addSubclades(subClades.get(0), subClades.get(1));
             }
 
             return bits;
         }
 
-        private void addClade(BitSet bits) {
+        private Clade addClade(BitSet bits) {
             Clade clade = cladeMap.get(bits);
             if (clade == null) {
                 clade = new Clade(bits);
                 cladeMap.put(bits, clade);
             }
             clade.setCount(clade.getCount() + 1);
+
+            return clade;
         }
 
         public void collectAttributes(Tree tree) {
@@ -855,7 +878,7 @@ public class TreeAnnotator {
                                                     annotate2DHPDAttribute(tree, node, name, "_" + (int) (100 * hpd2D[l]) + "%HPD", hpd2D[l], valuesArray);
                                                 }
 
-                                           }
+                                            }
                                         }
                                     }
                                 }
@@ -1179,6 +1202,13 @@ public class TreeAnnotator {
                 this.credibility = credibility;
             }
 
+            public void addSubclades(BitSet subClade1, BitSet subClade2) {
+                if (this.subClades == null) {
+                    this.subClades = new HashSet<>();
+                }
+                this.subClades.add(new Pair<>(subClade1, subClade2));
+            }
+
             public boolean equals(Object o) {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
@@ -1201,6 +1231,7 @@ public class TreeAnnotator {
             double credibility;
             BitSet bits;
             List<Object[]> attributeValues = null;
+            Set<Pair<BitSet, BitSet>> subClades = null;
         }
 
         //
@@ -1209,13 +1240,15 @@ public class TreeAnnotator {
         TaxonList taxonList = null;
         Map<BitSet, Clade> cladeMap = new HashMap<BitSet, Clade>();
 
+        Clade rootClade;
+
         Tree targetTree;
     }
 
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-//PL:    double hpd2D = 0.80;
+    //PL:    double hpd2D = 0.80;
     double[] hpd2D = {0.80};
 
     private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();

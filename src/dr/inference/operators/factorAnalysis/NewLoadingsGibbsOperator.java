@@ -44,6 +44,7 @@ import java.util.concurrent.Executors;
 /**
  * @author Max R. Tolkoff
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
@@ -238,6 +239,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         }
     }
 
+    private void drawI(int i) {
+        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
+        drawI(i, precisionArray.get(arrayInd), meanMidArray.get(arrayInd), meanArray.get(arrayInd));
+    }
+
 //    @Override
 //    public String getPerformanceSuggestion() {
 //        return null;
@@ -376,38 +382,15 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 System.err.println("inner");
             }
 
-            if (!randomScan) {
-                ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
-                ListIterator<double[]> currentMidMean = meanMidArray.listIterator();
-                ListIterator<double[]> currentMean = meanArray.listIterator();
-                double[][] precision = null;
-                double[] midMean = null;
-                double[] mean = null;
-                for (int i = 0; i < size; i++) {
-                    if (i < adaptor.getNumberOfFactors()) {
-                        precision = currentPrecision.next();
-                        midMean = currentMidMean.next();
-                        mean = currentMean.next();
-                    }
 
-                    drawI(i, precision, midMean, mean);
+            if (!randomScan) {
+                for (int i = 0; i < size; i++) {
+                    drawI(i);
                 }
 
             } else {
                 int i = MathUtils.nextInt(adaptor.getNumberOfTraits());
-                ListIterator<double[][]> currentPrecision;
-                ListIterator<double[]> currentMidMean;
-                ListIterator<double[]> currentMean;
-                if (i < adaptor.getNumberOfFactors()) {
-                    currentPrecision = precisionArray.listIterator(adaptor.getNumberOfFactors() - i - 1);
-                    currentMidMean = meanMidArray.listIterator(adaptor.getNumberOfFactors() - i - 1);
-                    currentMean = meanArray.listIterator(adaptor.getNumberOfFactors() - i - 1);
-                } else {
-                    currentPrecision = precisionArray.listIterator();
-                    currentMidMean = meanMidArray.listIterator();
-                    currentMean = meanArray.listIterator();
-                }
-                drawI(i, currentPrecision.next(), currentMidMean.next(), currentMean.next());
+                drawI(i);
 
             }
 

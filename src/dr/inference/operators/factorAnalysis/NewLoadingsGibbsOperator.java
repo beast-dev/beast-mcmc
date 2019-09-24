@@ -126,7 +126,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
         }
 
-        if (multiThreaded) {
+        if (multiThreaded) { //TODO: don't forget to generalize here too.
             for (int i = 0; i < adaptor.getNumberOfTraits(); i++) {
                 if (i < adaptor.getNumberOfFactors())
                     drawCallers.add(new DrawCaller(i, new double[i + 1][i + 1], new double[i + 1], new double[i + 1]));
@@ -511,4 +511,97 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
     }
+
+    private enum ColumnDimProvider {
+
+
+        NONE("none") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return nRows;
+            }
+
+            @Override
+            int getArrayIndex(int colDim, int nRows) {
+                return 0;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                precisionArray.add(new double[nRows][nRows]);
+                midMeanArray.add(new double[nRows]);
+                meanArray.add(new double[nRows]);
+
+            }
+        },
+
+        UPPER_TRIANGULAR("upperTriangular") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return Math.min(colIndex + 1, nRows);
+            }
+
+            @Override
+            int getArrayIndex(int colDim, int nRows) {
+                return Math.min(colDim - 1, nRows - 1);
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                for (int i = 1; i <= nRows; i++) {
+                    precisionArray.add(new double[i][i]);
+                    midMeanArray.add(new double[i]);
+                    meanArray.add(new double[i]);
+                }
+
+            }
+        };
+
+
+        abstract int getColumnDim(int col, int nRows);
+
+        abstract int getArrayIndex(int colDim, int nRows);
+
+        abstract void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                      ArrayList<double[]> meanArray, int nRows);
+
+
+        private String name;
+
+        ColumnDimProvider(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public static ColumnDimProvider parse(String name) {
+            name = name.toLowerCase();
+            for (ColumnDimProvider dimProvider : ColumnDimProvider.values()) {
+                if (name.compareTo(dimProvider.getName()) == 0) {
+                    return dimProvider;
+                }
+            }
+            throw new IllegalArgumentException("Unknown dimension provider type");
+        }
+
+    }
+
+//    private class LoadingsStatistics {
+//        public final double[][] precision;
+//        public final double[] mean;
+//        public final double[] midMean;
+//
+//        LoadingsStatistics(double[][] precision, double[] midMean, double[] mean) {
+//            this.precision = precision;
+//            this.midMean = midMean;
+//            this.mean = mean;
+//        }
+
 }
+

@@ -377,6 +377,12 @@ public class LogitTransformedNormalKDEDistribution extends NormalKDEDistribution
         }
     }
 
+    @Override
+    protected void setBandWidth(Double bandWidth) {
+        resetIndices(transformIncreasing);
+        super.setBandWidth(bandWidth);
+    }
+
 //    @Override
 //    protected void setBandWidth(Double bandWidth) {
 //        if (bandWidth == null) {
@@ -407,6 +413,7 @@ public class LogitTransformedNormalKDEDistribution extends NormalKDEDistribution
     private double[] finalXPoints, backupXPoints;
     private double[] finalDensityPoints;
     private double[] backupSample, logitSample;
+    private boolean transformIncreasing = true; // log is increasing
 
 //    private int gridSize;
 //    private double cut;

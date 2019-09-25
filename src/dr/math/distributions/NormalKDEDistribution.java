@@ -294,9 +294,11 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 //       4 * 1.06 * min(sqrt(var(x)), h) * length(x)^(-1/5)
 //   }
 
-    public double bandwidthNRD(double[] x) {
-        int[] indices = new int[x.length];
-        HeapSort.sort(x, indices);
+    double bandwidthNRD(double[] x) {
+        if (indices == null) {
+            indices = new int[x.length];
+            HeapSort.sort(x, indices);
+        }
 
         final double h =
                 (DiscreteStatistics.quantile(0.75, x, indices) - DiscreteStatistics.quantile(0.25, x, indices)) / 1.34;
@@ -305,9 +307,17 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
                 Math.pow(x.length, -0.2);
     }
 
+    void resetIndices(boolean transformIncreasing) {
+        if (!transformIncreasing) { // if the transform in not increasing, reset the indices.
+            indices = null;
+        }
+    }
+
     ComplexArray kOrdinates;
     double[] xPoints;
     double[] densityPoints;
+
+    int[] indices;
 
     int gridSize;
     double cut;

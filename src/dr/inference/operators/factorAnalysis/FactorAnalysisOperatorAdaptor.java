@@ -28,6 +28,8 @@ public interface FactorAnalysisOperatorAdaptor {
 
     double getDataValue(int trait, int taxon);
 
+    double getLoadingsValue(int dim);
+
     double getColumnPrecision(int index);
 
     void setLoadingsForTraitQuietly(int trait, double[] value);
@@ -69,6 +71,11 @@ public interface FactorAnalysisOperatorAdaptor {
         @Override
         public void fireLoadingsChanged() {
             loadings.fireParameterChangedEvent();
+        }
+
+        @Override
+        public double getLoadingsValue(int dim){
+            return loadings.getParameterValue(dim);
         }
     }
 

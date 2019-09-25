@@ -33,6 +33,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.Reportable;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -196,21 +197,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private void getPrecision(int i, double[][] answer) {
         int size = adaptor.getNumberOfFactors();
-        if (i < size) {
-            getPrecisionOfTruncated(adaptor, i + 1, i, answer);
-        } else {
-            getPrecisionOfTruncated(adaptor, size, i, answer);
-        }
+        getPrecisionOfTruncated(adaptor, columnDimProvider.getColumnDim(i, size), i, answer);
     }
 
     private void getMean(int i, double[][] variance, double[] midMean, double[] mean) {
 
         int size = adaptor.getNumberOfFactors();
-        if (i < size) {
-            getTruncatedMean(i + 1, i, variance, midMean, mean);
-        } else {
-            getTruncatedMean(size, i, variance, midMean, mean);
-        }
+        getTruncatedMean(columnDimProvider.getColumnDim(i, size), i, variance, midMean, mean);
+
         for (int j = 0; j < mean.length; j++) {
             mean[j] *= pathParameter;  // TODO Is this missing the working prior component?
         }
@@ -258,57 +252,122 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     @Override
     public String getReport() {
-        int repeats = 100000;
+        int repeats = 1000000;
         int nFac = adaptor.getNumberOfFactors();
         int nTaxa = adaptor.getNumberOfTaxa();
-        int dim = nFac * nTaxa;
+        int nTraits = adaptor.getNumberOfTraits();
+//        int dim = nFac * nTaxa;
+//
+//        double[] sums = new double[dim];
+//        double[][] sumSquares = new double[dim][dim];
+//
+//
+//        for (int i = 0; i < repeats; i++) {
+//            adaptor.fireLoadingsChanged();
+//            adaptor.drawFactors();
+//            for (int j = 0; j < nTaxa; j++) {
+//                for (int k = 0; k < nFac; k++) {
+//                    double x = adaptor.getFactorValue(k, j);
+//                    sums[k * nTaxa + j] += x;
+//
+//                    for (int l = 0; l < nTaxa; l++) {
+//                        for (int m = 0; m < nFac; m++) {
+//                            double y = adaptor.getFactorValue(m, l);
+//                            sumSquares[k * nTaxa + j][m * nTaxa + l] += x * y;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        double[] mean = new double[dim];
+//        double[][] cov = new double[dim][dim];
+//        for (int i = 0; i < dim; i++) {
+//            mean[i] = sums[i] / repeats;
+//            for (int j = 0; j < dim; j++) {
+//                sumSquares[i][j] /= repeats;
+//            }
+//        }
+//        for (int i = 0; i < dim; i++) {
+//            for (int j = 0; j < dim; j++) {
+//                cov[i][j] = sumSquares[i][j] - mean[i] * mean[j];
+//            }
+//        }
+//
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(getOperatorName() + "Report:\n");
+//        sb.append("Factor mean:\n");
+//        sb.append(new Vector(mean));
+//        sb.append("\n\n");
+//        sb.append("Factor covariance:\n");
+//        sb.append(new Matrix(cov));
+//        sb.append("\n\n");
 
-        double[] sums = new double[dim];
-        double[][] sumSquares = new double[dim][dim];
+        //TODO: move above somewhere else
 
 
-        for (int i = 0; i < repeats; i++) {
-            adaptor.fireLoadingsChanged();
-            adaptor.drawFactors();
-            for (int j = 0; j < nTaxa; j++) {
-                for (int k = 0; k < nFac; k++) {
-                    double x = adaptor.getFactorValue(k, j);
-                    sums[k * nTaxa + j] += x;
+        int dimLoadings = nTraits * nFac;
+        double[] loadMean = new double[dimLoadings];
+        double[][] loadCov = new double[dimLoadings][dimLoadings];
 
-                    for (int l = 0; l < nTaxa; l++) {
-                        for (int m = 0; m < nFac; m++) {
-                            double y = adaptor.getFactorValue(m, l);
-                            sumSquares[k * nTaxa + j][m * nTaxa + l] += x * y;
-                        }
-                    }
+        double[] originalLoadings = new double[dimLoadings];
+        for (int i = 0; i < dimLoadings; i++) {
+            originalLoadings[i] = adaptor.getLoadingsValue(i);
+        }
+
+
+        for (int rep = 0; rep < repeats; rep++) {
+            doOperation();
+            for (int i = 0; i < dimLoadings; i++) {
+                loadMean[i] += adaptor.getLoadingsValue(i);
+                for (int j = i; j < dimLoadings; j++) {
+                    loadCov[i][j] += adaptor.getLoadingsValue(i) * adaptor.getLoadingsValue(j);
                 }
             }
+            restoreLoadings(originalLoadings);
+            adaptor.fireLoadingsChanged();
         }
 
-        double[] mean = new double[dim];
-        double[][] cov = new double[dim][dim];
-        for (int i = 0; i < dim; i++) {
-            mean[i] = sums[i] / repeats;
-            for (int j = 0; j < dim; j++) {
-                sumSquares[i][j] /= repeats;
+        for (int i = 0; i < dimLoadings; i++) {
+            loadMean[i] /= repeats;
+            for (int j = i; j < dimLoadings; j++) {
+                loadCov[i][j] /= repeats;
             }
         }
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                cov[i][j] = sumSquares[i][j] - mean[i] * mean[j];
+
+
+        for (int i = 0; i < dimLoadings; i++) {
+            for (int j = i; j < dimLoadings; j++) {
+                loadCov[i][j] = loadCov[i][j] - loadMean[i] * loadMean[j];
+                loadCov[j][i] = loadCov[i][j];
             }
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append(getOperatorName() + "Report:\n");
-        sb.append("Factor mean:\n");
-        sb.append(new Vector(mean));
+        sb.append("Loadings mean:\n");
+        sb.append(new Vector(loadMean));
         sb.append("\n\n");
-        sb.append("Factor covariance:\n");
-        sb.append(new Matrix(cov));
-
+        sb.append("Loadings covariance:\n");
+        sb.append(new Matrix(loadCov));
+        sb.append("\n\n");
 
         return sb.toString();
+    }
+
+    private void restoreLoadings(double[] originalLoadings) {
+        int nTraits = adaptor.getNumberOfTraits();
+        int nFac = adaptor.getNumberOfFactors();
+
+        double[] buffer = new double[nFac];
+
+        for (int i = 0; i < nTraits; i++) {
+
+            int offset = nFac * i;
+
+            System.arraycopy(originalLoadings, offset, buffer, 0, nFac);
+            adaptor.setLoadingsForTraitQuietly(i, buffer);
+        }
     }
 
     @Override
@@ -506,7 +565,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
 
             @Override
-            int getArrayIndex(int colDim, int nRows) {
+            int getArrayIndex(int colIndex, int nRows) {
                 return 0;
             }
 
@@ -528,8 +587,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
 
             @Override
-            int getArrayIndex(int colDim, int nRows) {
-                return Math.min(colDim - 1, nRows - 1);
+            int getArrayIndex(int colIndex, int nRows) {
+                return Math.min(colIndex, nRows - 1);
             }
 
             @Override
@@ -548,7 +607,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         abstract int getColumnDim(int colIndex, int nRows);
 
-        abstract int getArrayIndex(int colDim, int nRows);
+        abstract int getArrayIndex(int colIndex, int nRows);
 
         abstract void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
                                       ArrayList<double[]> meanArray, int nRows);
@@ -567,7 +626,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         public static ColumnDimProvider parse(String name) {
             name = name.toLowerCase();
             for (ColumnDimProvider dimProvider : ColumnDimProvider.values()) {
-                if (name.compareTo(dimProvider.getName()) == 0) {
+                if (name.compareTo(dimProvider.getName().toLowerCase()) == 0) {
                     return dimProvider;
                 }
             }

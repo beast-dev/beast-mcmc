@@ -32,6 +32,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
 import dr.geo.contouring.ContourPath;
@@ -66,7 +67,7 @@ public class TreeAnnotator {
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
-        //MAX_SUM_CLADE_CREDIBILITY("Maximum sum of clade credibilities"),
+        MAX_MARGINAL_CLADE_CREDIBILITY("Maximum marginal clade credibilities"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
@@ -179,7 +180,7 @@ public class TreeAnnotator {
                             burnin = totalTrees;
                         }
 
-                        cladeSystem.add(tree, false);
+                        cladeSystem.add(tree, true);
 
                         totalTreesUsed += 1;
                     }
@@ -257,13 +258,14 @@ public class TreeAnnotator {
                 targetTree = new FlexibleTree(getMCCTree(burnin, cladeSystem, inputFileName));
                 break;
             }
-//            case MAX_SUM_CLADE_CREDIBILITY: {
-//                progressStream.println("Finding maximum sum clade credibility tree...");
-//                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
-//                break;
-//            }
+            case MAX_MARGINAL_CLADE_CREDIBILITY: {
+                progressStream.println("Finding maximum marginal credibility tree...");
+                targetTree = new FlexibleTree(getMMCCTree(cladeSystem));
+                break;
+            }
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
+
 
         progressStream.println("Collecting node information...");
         progressStream.println("0              25             50             75            100");
@@ -379,7 +381,7 @@ public class TreeAnnotator {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
-                    double score = scoreTree(tree, cladeSystem /*, useSumCladeCredibility*/);
+                    double score = scoreTree(tree, cladeSystem);
 //                    progressStream.println(score);
                     if (score > bestScore) {
                         bestTree = tree;
@@ -405,19 +407,80 @@ public class TreeAnnotator {
         return bestTree;
     }
 
-    private Tree getMMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
-            throws IOException {
-
-
-        Tree bestTree = null;
+    private Tree getMMCCTree(CladeSystem cladeSystem) {
 
         CladeSystem.Clade rootClade = cladeSystem.getRootClade();
 
-        for (Pair<BitSet, BitSet> node: rootClade.subClades) {
-            
+        credibilityCache.clear();
+        nodeCache.clear();
+
+        double score = findMMCCTree(cladeSystem, rootClade);
+
+        SimpleTree tree = new SimpleTree(buildMCCTree(cladeSystem, rootClade));
+
+        progressStream.println();
+        progressStream.println("Highest Log Marginal Clade Credibility: " + score);
+        progressStream.println();
+
+        return tree;
+    }
+
+    private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
+    private Map<CladeSystem.Clade, SimpleNode> nodeCache = new HashMap<>();
+
+    private double findMMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+
+        double logCredibility = Math.log(clade.credibility);
+
+        if (clade.size > 1) {
+            double bestLogCredibility = Double.NEGATIVE_INFINITY;
+
+            for (Pair<BitSet, BitSet> subClade : clade.subClades) {
+
+                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.fst);
+                if (left == null) {
+                    throw new IllegalArgumentException("no clade found");
+                }
+
+                double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
+                if (Double.isNaN(leftLogCredibility)) {
+                    leftLogCredibility = findMMCCTree(cladeSystem, left);
+                    credibilityCache.put(left, leftLogCredibility);
+                }
+                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.snd);
+                if (right == null) {
+                    throw new IllegalArgumentException("no clade found");
+                }
+                double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
+                if (Double.isNaN(rightLogCredibility)) {
+                    rightLogCredibility = findMMCCTree(cladeSystem, right);
+                    credibilityCache.put(right, rightLogCredibility);
+                }
+
+                if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
+                    bestLogCredibility = leftLogCredibility + rightLogCredibility;
+                    clade.bestLeft = left;
+                    clade.bestRight = right;
+                }
+            }
+
+            logCredibility += bestLogCredibility;
+            clade.bestSubTreeCredibility = logCredibility;
+
         }
 
-        return bestTree;
+        return logCredibility;
+    }
+
+    private SimpleNode buildMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+        SimpleNode newNode = new SimpleNode();
+        if (clade.size == 1) {
+            newNode.setTaxon(clade.taxon);
+        } else {
+            newNode.addChild(buildMCCTree(cladeSystem, clade.bestLeft));
+            newNode.addChild(buildMCCTree(cladeSystem, clade.bestRight));
+        }
+        return newNode;
     }
 
     private double scoreTree(Tree tree, CladeSystem cladeSystem /*, boolean useSumCladeCredibility*/) {
@@ -474,7 +537,8 @@ public class TreeAnnotator {
                 bits.set(index);
 
                 if (includeTips) {
-                    addClade(bits);
+                    Clade clade = addClade(bits);
+                    clade.taxon = tree.getNodeTaxon(node);
                 }
 
             } else {
@@ -594,8 +658,12 @@ public class TreeAnnotator {
             }
         }
 
-        public Map getCladeMap() {
+        public Map<BitSet, Clade> getCladeMap() {
             return cladeMap;
+        }
+
+        public Clade getClade(BitSet bitSet) {
+            return cladeMap.get(bitSet);
         }
 
         public void calculateCladeCredibilities(int totalTreesUsed) {
@@ -1184,6 +1252,7 @@ public class TreeAnnotator {
                 this.bits = bits;
                 count = 0;
                 credibility = 0.0;
+                size = bits.cardinality();
             }
 
             public int getCount() {
@@ -1206,7 +1275,13 @@ public class TreeAnnotator {
                 if (this.subClades == null) {
                     this.subClades = new HashSet<>();
                 }
-                this.subClades.add(new Pair<>(subClade1, subClade2));
+                // Store the subclade with lowest first set bit index as the first of the pair to make
+                // sure the order is the same if the pair is the same.
+                if (subClade1.nextSetBit(0) < subClade2.nextSetBit(0)) {
+                    this.subClades.add(new Pair<>(subClade1, subClade2));
+                } else {
+                    this.subClades.add(new Pair<>(subClade2, subClade1));
+                }
             }
 
             public boolean equals(Object o) {
@@ -1229,16 +1304,21 @@ public class TreeAnnotator {
 
             int count;
             double credibility;
-            BitSet bits;
+            final int size;
+            final BitSet bits;
+            Taxon taxon = null;
             List<Object[]> attributeValues = null;
             Set<Pair<BitSet, BitSet>> subClades = null;
+            Clade bestLeft = null;
+            Clade bestRight = null;
+            double bestSubTreeCredibility;
         }
 
         //
         // Private stuff
         //
         TaxonList taxonList = null;
-        Map<BitSet, Clade> cladeMap = new HashMap<BitSet, Clade>();
+        Map<BitSet, Clade> cladeMap = new HashMap<>();
 
         Clade rootClade;
 
@@ -1439,9 +1519,9 @@ public class TreeAnnotator {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
+                        new Arguments.StringOption("type", new String[] { "mcc", "mmcc" }, false, "an option of 'mcc' or 'mmcc'"),
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
-                                "an option of 'keep' (default), 'median', 'mean' or 'ca'"),
+                                "an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
@@ -1469,7 +1549,7 @@ public class TreeAnnotator {
             System.exit(0);
         }
 
-        HeightsSummary heights = HeightsSummary.KEEP_HEIGHTS;
+        HeightsSummary heights = HeightsSummary.CA_HEIGHTS;
         if (arguments.hasOption("heights")) {
             String value = arguments.getStringOption("heights");
             if (value.equalsIgnoreCase("mean")) {
@@ -1507,6 +1587,10 @@ public class TreeAnnotator {
         }
 
         Target target = Target.MAX_CLADE_CREDIBILITY;
+        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MMCC")) {
+            target = Target.MAX_MARGINAL_CLADE_CREDIBILITY;
+        }
+
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");

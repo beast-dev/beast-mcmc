@@ -412,7 +412,6 @@ public class TreeAnnotator {
         CladeSystem.Clade rootClade = cladeSystem.getRootClade();
 
         credibilityCache.clear();
-        nodeCache.clear();
 
         double score = findMMCCTree(cladeSystem, rootClade);
 
@@ -426,7 +425,6 @@ public class TreeAnnotator {
     }
 
     private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
-    private Map<CladeSystem.Clade, SimpleNode> nodeCache = new HashMap<>();
 
     private double findMMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
 
@@ -483,12 +481,8 @@ public class TreeAnnotator {
         return newNode;
     }
 
-    private double scoreTree(Tree tree, CladeSystem cladeSystem /*, boolean useSumCladeCredibility*/) {
-//        if (useSumCladeCredibility) {
-//            return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
-//        } else {
+    private double scoreTree(Tree tree, CladeSystem cladeSystem) {
         return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
-//        }
     }
 
     private class CladeSystem {

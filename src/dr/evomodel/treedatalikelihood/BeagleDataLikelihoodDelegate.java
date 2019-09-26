@@ -100,8 +100,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private long totalPartialsUpdateCount = 0;
     private long totalEvaluationCount = 0;
 
-    private final int startExtraMatrices;
-
     /**
      *
      * @param tree Used for configuration - shouldn't be watched for changes
@@ -403,17 +401,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    numMatrices + 32,
+                    numMatrices,
                     categoryCount,
                     numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,
                     preferenceFlags,
                     requirementFlags
             );
-
-            this.startExtraMatrices = numMatrices;
-
-            System.err.println("\n\nstartExtraMatrices = " + startExtraMatrices + "\n\n");  // 70
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;

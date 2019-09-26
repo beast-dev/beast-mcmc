@@ -28,12 +28,8 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.DifferentialMassProvider;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
-
-import java.util.List;
 
 /**
  * @author Xiang Ji
@@ -97,21 +93,4 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
         return GRADIENT_TRAIT_NAME + ":" + name;
     }
 
-    public static class BranchDifferentialMassProvider {
-
-        private TreeParameterModel indexHelper;
-        private List<DifferentialMassProvider> differentialMassProviderList;
-
-        BranchDifferentialMassProvider(TreeParameterModel indexHelper,
-                                       List<DifferentialMassProvider> differentialMassProviderList) {
-
-            this.indexHelper = indexHelper;
-            this.differentialMassProviderList = differentialMassProviderList;
-
-        }
-
-        double[] getDifferentialMassMatrixForBranch(NodeRef node, double time) {
-            return differentialMassProviderList.get(indexHelper.getParameterIndexFromNodeNumber(node.getNumber())).getDifferentialMassMatrix(time);
-        }
-    }
 }

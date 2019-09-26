@@ -1,9 +1,9 @@
 package dr.evomodel.coalescent.hmc;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -134,6 +134,43 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+        },
+        NODE_HEIGHT("nodeHeight") {
+
+            Parameter parameter;
+
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                getWarning(likelihood);
+                if (parameter == null) {
+                    TreeModel treeModel = (TreeModel) likelihood.getTree(0);
+                    parameter = treeModel.createNodeHeightsParameter(true, true, false);
+                }
+                return parameter;
+            }
+
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                getWarning(likelihood);
+                return likelihood.getGradientWrtNodeHeights();
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                getWarning(likelihood);
+                return new double[likelihood.getTree(0).getInternalNodeCount()];
+            }
+
+            @Override
+            double getParameterLowerBound() {
+                return 0.0;
+            }
+
+            private void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+                if (likelihood.nLoci() > 1) {
+                    throw new RuntimeException("Not yet implemented for multiple loci.");
+                }
+            }
         };
 
         WrtParameter(String name) {

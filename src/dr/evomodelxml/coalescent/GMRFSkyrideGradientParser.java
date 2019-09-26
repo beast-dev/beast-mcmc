@@ -26,6 +26,7 @@
 package dr.evomodelxml.coalescent;
 
 
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideGradient;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
@@ -62,11 +63,15 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
         // Old behaviour
 
-        GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
+        if (skyrideLikelihood instanceof GMRFMultilocusSkyrideLikelihood) {
+            return new GMRFMultilocusSkyrideGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, tree);
+        } else {
+            GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
 
-        NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
+            NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
 
-        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform);
+            return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform);
+        }
     }
 
     private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {

@@ -1,5 +1,9 @@
 package dr.evomodel.coalescent.hmc;
 
+import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervals;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -152,7 +156,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             @Override
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
                 getWarning(likelihood);
-                return likelihood.getGradientWrtNodeHeights();
+                return getGradientWrtNodeHeights(likelihood);
             }
 
             @Override
@@ -171,6 +175,76 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                     throw new RuntimeException("Not yet implemented for multiple loci.");
                 }
             }
+
+            private double[] getGradientWrtNodeHeights(GMRFMultilocusSkyrideLikelihood likelihood) {
+
+                likelihood.getLogLikelihood();
+
+                if (likelihood.nLoci() > 1) {
+                    throw new RuntimeException("Not yet implemented for multiple loci.");
+                }
+
+                Tree tree = likelihood.getTree(0);
+
+                double[] gradient = new double[tree.getInternalNodeCount()];
+                double[] currentGamma = likelihood.getPopSizeParameter().getParameterValues();
+
+                double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
+
+
+                final TreeIntervals intervals = likelihood.getTreeIntervals(0);
+
+                int[] gridIndices = getGridIndexForInternalNodes(likelihood, 0);
+
+                for (int i = 0; i < intervals.getIntervalCount(); i++) {
+                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+                        final int nodeIndex = getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree);
+
+                        final int numLineage = intervals.getLineageCount(i);
+
+                        gradient[nodeIndex] += -Math.exp(-currentGamma[gridIndices[nodeIndex]]) * numLineage * (numLineage - 1);
+
+                        if (!tree.isRoot(intervals.getCoalescentNode(i))) {
+                            final int nextNumLineage = intervals.getLineageCount(i + 1);
+                            gradient[nodeIndex] -= -Math.exp(-currentGamma[gridIndices[nodeIndex] + 1]) * nextNumLineage * (nextNumLineage - 1);
+                        }
+
+                    }
+                }
+
+                final double multiplier = 0.5 * ploidyFactor;
+                for (int i = 0; i < gradient.length; i++) {
+                    gradient[i] *= multiplier;
+                }
+
+                return gradient;
+            }
+
+            private int getNodeHeightParameterIndex(NodeRef node, Tree tree) {
+                return node.getNumber() - tree.getExternalNodeCount();
+            }
+
+            private int[] getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex) {
+                Tree tree = likelihood.getTree(treeIndex);
+                TreeIntervals intervals = likelihood.getTreeIntervals(treeIndex);
+
+                int[] indices = new int[tree.getInternalNodeCount()];
+
+                int gridIndex = 0;
+                double[] gridPoints = likelihood.getGridPoints();
+                for (int i = 0; i < intervals.getIntervalCount(); i++) {
+                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                        while(gridPoints[gridIndex] < intervals.getInterval(i)) {
+                            gridIndex++;
+                        }
+                        indices[getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree)] = gridIndex;
+                    }
+                }
+
+                return indices;
+            }
+
         };
 
         WrtParameter(String name) {

@@ -27,7 +27,6 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -1092,72 +1091,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return hessianLogDens;
     }
 
-    public double[] getGradientWrtNodeHeights() {
-        checkIntervals();
-
-        if (nLoci() > 1) {
-            throw new RuntimeException("Not yet implemented for multiple loci.");
-        }
-
-        double[] gradient = new double[getTree(0).getInternalNodeCount()];
-        double[] currentGamma = popSizeParameter.getParameterValues();
-
-        double ploidyFactor = 1 / getPopulationFactor(0);
-
-        Tree tree = treeList.get(0);
-
-        final TreeIntervals intervals = intervalsList.get(0);
-
-        int[] gridIndices = getGridIndexForInternalNodes(0);
-
-        for (int i = 0; i < intervals.getIntervalCount(); i++) {
-            if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-
-                final int nodeIndex = getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree);
-
-                final int numLineage = intervals.getLineageCount(i);
-
-                gradient[nodeIndex] += -Math.exp(-currentGamma[gridIndices[nodeIndex]]) * numLineage * (numLineage - 1);
-
-                if (!tree.isRoot(intervals.getCoalescentNode(i))) {
-                    final int nextNumLineage = intervals.getLineageCount(i + 1);
-                    gradient[nodeIndex] -= -Math.exp(-currentGamma[gridIndices[nodeIndex] + 1]) * nextNumLineage * (nextNumLineage - 1);
-                }
-
-            }
-        }
-
-        final double multiplier = 0.5 * ploidyFactor;
-        for (int i = 0; i < gradient.length; i++) {
-            gradient[i] *= multiplier;
-        }
-
-        return gradient;
+    public double[] getGridPoints() {
+        return gridPoints.clone();
     }
-
-    private int getNodeHeightParameterIndex(NodeRef node, Tree tree) {
-        return node.getNumber() - tree.getExternalNodeCount();
-    }
-
-    private int[] getGridIndexForInternalNodes(int treeIndex) {
-        Tree tree = treeList.get(treeIndex);
-        TreeIntervals intervals = intervalsList.get(treeIndex);
-
-        int[] indices = new int[tree.getInternalNodeCount()];
-
-        int gridIndex = 0;
-        for (int i = 0; i < intervals.getIntervalCount(); i++) {
-            if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                while(gridPoints[gridIndex] < intervals.getInterval(i)) {
-                    gridIndex++;
-                }
-                indices[getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree)] = gridIndex;
-            }
-        }
-
-        return indices;
-    }
-
 
     private void checkIntervals() {
         if (!intervalsKnown) {

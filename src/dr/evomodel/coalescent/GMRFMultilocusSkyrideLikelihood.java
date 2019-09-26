@@ -1100,7 +1100,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
 
         double[] gradient = new double[getTree(0).getInternalNodeCount()];
-        double[] currentAndNextTime = new double[2];
+        double[] currentGamma = popSizeParameter.getParameterValues();
 
         double ploidyFactor = 1 / getPopulationFactor(0);
 
@@ -1117,11 +1117,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                 final int numLineage = intervals.getLineageCount(i);
 
-                gradient[nodeIndex] += -Math.exp(popSizeParameter.getParameterValue(gridIndices[nodeIndex])) * numLineage * (numLineage - 1);
+                gradient[nodeIndex] += -Math.exp(-currentGamma[gridIndices[nodeIndex]]) * numLineage * (numLineage - 1);
 
                 if (!tree.isRoot(intervals.getCoalescentNode(i))) {
                     final int nextNumLineage = intervals.getLineageCount(i + 1);
-                    gradient[nodeIndex] -= -Math.exp(popSizeParameter.getParameterValue(gridIndices[nodeIndex] + 1)) * nextNumLineage * (nextNumLineage - 1);
+                    gradient[nodeIndex] -= -Math.exp(-currentGamma[gridIndices[nodeIndex] + 1]) * nextNumLineage * (nextNumLineage - 1);
                 }
 
             }

@@ -216,77 +216,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private static boolean DEBUG = false;
 
-    @Override
-    public String getReport() {
-        int repeats = 1000000;
-        int nFac = adaptor.getNumberOfFactors();
-        int nTraits = adaptor.getNumberOfTraits();
-
-
-        int dimLoadings = nTraits * nFac;
-        double[] loadMean = new double[dimLoadings];
-        double[][] loadCov = new double[dimLoadings][dimLoadings];
-
-        double[] originalLoadings = new double[dimLoadings];
-        for (int i = 0; i < dimLoadings; i++) {
-            originalLoadings[i] = adaptor.getLoadingsValue(i);
-        }
-
-
-        for (int rep = 0; rep < repeats; rep++) {
-            doOperation();
-            for (int i = 0; i < dimLoadings; i++) {
-                loadMean[i] += adaptor.getLoadingsValue(i);
-                for (int j = i; j < dimLoadings; j++) {
-                    loadCov[i][j] += adaptor.getLoadingsValue(i) * adaptor.getLoadingsValue(j);
-                }
-            }
-            restoreLoadings(originalLoadings);
-            adaptor.fireLoadingsChanged();
-        }
-
-        for (int i = 0; i < dimLoadings; i++) {
-            loadMean[i] /= repeats;
-            for (int j = i; j < dimLoadings; j++) {
-                loadCov[i][j] /= repeats;
-            }
-        }
-
-
-        for (int i = 0; i < dimLoadings; i++) {
-            for (int j = i; j < dimLoadings; j++) {
-                loadCov[i][j] = loadCov[i][j] - loadMean[i] * loadMean[j];
-                loadCov[j][i] = loadCov[i][j];
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(getOperatorName() + "Report:\n");
-        sb.append("Loadings mean:\n");
-        sb.append(new Vector(loadMean));
-        sb.append("\n\n");
-        sb.append("Loadings covariance:\n");
-        sb.append(new Matrix(loadCov));
-        sb.append("\n\n");
-
-        return sb.toString();
-    }
-
-    private void restoreLoadings(double[] originalLoadings) {
-        int nTraits = adaptor.getNumberOfTraits();
-        int nFac = adaptor.getNumberOfFactors();
-
-        double[] buffer = new double[nFac];
-
-        for (int i = 0; i < nTraits; i++) {
-
-            for (int j = 0; j < nFac; j++) {
-                buffer[j] = originalLoadings[j * nTraits + i];
-            }
-
-            adaptor.setLoadingsForTraitQuietly(i, buffer);
-        }
-    }
 
     @Override
     public double doOperation() {
@@ -510,6 +439,80 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             throw new IllegalArgumentException("Unknown dimension provider type");
         }
 
+    }
+
+    @Override
+    public String getReport() {
+        int repeats = 1000000;
+        int nFac = adaptor.getNumberOfFactors();
+        int nTraits = adaptor.getNumberOfTraits();
+
+
+        int dimLoadings = nTraits * nFac;
+        double[] loadMean = new double[dimLoadings];
+        double[][] loadCov = new double[dimLoadings][dimLoadings];
+
+        double[] originalLoadings = new double[dimLoadings];
+        for (int i = 0; i < dimLoadings; i++) {
+            originalLoadings[i] = adaptor.getLoadingsValue(i);
+        }
+
+
+        for (int rep = 0; rep < repeats; rep++) {
+            doOperation();
+            for (int i = 0; i < dimLoadings; i++) {
+                loadMean[i] += adaptor.getLoadingsValue(i);
+                for (int j = i; j < dimLoadings; j++) {
+                    loadCov[i][j] += adaptor.getLoadingsValue(i) * adaptor.getLoadingsValue(j);
+                }
+            }
+            adaptor.fireLoadingsChanged();
+        }
+
+        restoreLoadings(originalLoadings);
+        adaptor.fireLoadingsChanged();
+
+        for (int i = 0; i < dimLoadings; i++) {
+            loadMean[i] /= repeats;
+            for (int j = i; j < dimLoadings; j++) {
+                loadCov[i][j] /= repeats;
+            }
+        }
+
+
+        for (int i = 0; i < dimLoadings; i++) {
+            for (int j = i; j < dimLoadings; j++) {
+                loadCov[i][j] = loadCov[i][j] - loadMean[i] * loadMean[j];
+                loadCov[j][i] = loadCov[i][j];
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(getOperatorName() + "Report:\n");
+        sb.append("Loadings mean:\n");
+        sb.append(new Vector(loadMean));
+        sb.append("\n\n");
+        sb.append("Loadings covariance:\n");
+        sb.append(new Matrix(loadCov));
+        sb.append("\n\n");
+
+        return sb.toString();
+    }
+
+    private void restoreLoadings(double[] originalLoadings) {
+        int nTraits = adaptor.getNumberOfTraits();
+        int nFac = adaptor.getNumberOfFactors();
+
+        double[] buffer = new double[nFac];
+
+        for (int i = 0; i < nTraits; i++) {
+
+            for (int j = 0; j < nFac; j++) {
+                buffer[j] = originalLoadings[j * nTraits + i];
+            }
+
+            adaptor.setLoadingsForTraitQuietly(i, buffer);
+        }
     }
 
 }

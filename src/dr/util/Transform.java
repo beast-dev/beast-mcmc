@@ -735,6 +735,70 @@ public interface Transform {
         private final double lower;
     }
 
+    class ScaledLogitTransform extends UnivariableTransform {
+
+        public ScaledLogitTransform() {
+            upper = 1.0;
+            lower = 0.0;
+        }
+
+        public ScaledLogitTransform(double upper, double lower) {
+            this.upper = upper;
+            this.lower = lower;
+        }
+
+        public double transform(double value) {
+            return Math.log((value - lower) / (upper - value));
+        }
+
+        public double inverse(double value) {
+            double x = Math.exp(-value);
+            return (upper + lower * x) / (1.0 + x);
+        }
+
+        public boolean isInInteriorDomain(double value) {
+            return value > lower && value < upper;
+        }
+
+        public double gradientInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            return (value - lower) * (upper - value) / (upper - lower);
+        }
+
+        public String getTransformName() {
+            return "logit";
+        }
+
+        public double getLogJacobian(double value) {
+            return Math.log(upper - lower) - Math.log(upper - value) - Math.log(value - lower);
+        }
+
+        private final double upper;
+        private final double lower;
+    }
+
     class FisherZTransform extends UnivariableTransform {
 
         public double transform(double value) {

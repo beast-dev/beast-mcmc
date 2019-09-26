@@ -438,33 +438,46 @@ public class LogitTransformedNormalKDEDistribution extends NormalKDEDistribution
         }
 
         //Generate R code for visualisation in [0,1]
-        System.out.print("par(mfrow=c(2,2))\n\nsamples <- c(");
+        System.out.print("par(mfrow=c(2,3))\n\nsamples <- c(");
         for (int i = 0; i < samples.length-1; i++) {
             System.out.print(samples[i] + ",");
+            if (i % 10 == 0) System.out.print("\n");
         }
         System.out.println(samples[samples.length-1] + ")\n");
         System.out.println("hist(samples,200,xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
         System.out.println("plot(density(samples),xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
-        LogitTransformedNormalKDEDistribution ltn = new LogitTransformedNormalKDEDistribution(samples, upperlimit);
+        LogitTransformedNormalKDEDistribution ltnOld = new LogitTransformedNormalKDEDistribution(samples, upperlimit);
+        TransformedNormalKDEDistribution ltnNew = TransformedNormalKDEDistribution.getLogitTransformedNormalKDEDistribution(samples, upperlimit);
         NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
 
         System.out.print("normalKDE <- c(");
         for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
             Double test = 0.0 + ((double)i)/(1000);
             System.out.print(nKDE.evaluateKernel(test) + ",");
+            if (i % 10 == 0) System.out.print("\n");
         }
         System.out.println(nKDE.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
         System.out.println("index <- seq(" + (upperlimit-1) + "," + (upperlimit+1) + ",by=0.001)");
         System.out.println("plot(index,normalKDE,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
-        System.out.print("TransKDE <- c(");
+        System.out.print("TransKDEOld <- c(");
         for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
             Double test = 0.0 + ((double)i)/(1000);
-            System.out.print(ltn.evaluateKernel(test) + ",");
+            System.out.print(ltnOld.evaluateKernel(test) + ",");
+            if (i % 10 == 0) System.out.print("\n");
         }
-        System.out.println(ltn.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
-        System.out.println("plot(index,TransKDE,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
+        System.out.println(ltnOld.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
+        System.out.println("plot(index,TransKDEOld,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
+
+        System.out.print("TransKDENew <- c(");
+        for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
+            Double test = 0.0 + ((double)i)/(1000);
+            System.out.print(ltnNew.evaluateKernel(test) + ",");
+            if (i % 10 == 0) System.out.print("\n");
+        }
+        System.out.println(ltnNew.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
+        System.out.println("plot(index,TransKDENew,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
     }
 

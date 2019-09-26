@@ -363,9 +363,10 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         for (int i = 0; i < nTraits; i++) {
 
-            int offset = nFac * i;
+            for (int j = 0; j < nFac; j++) {
+                buffer[j] = originalLoadings[j * nTraits + i];
+            }
 
-            System.arraycopy(originalLoadings, offset, buffer, 0, nFac);
             adaptor.setLoadingsForTraitQuietly(i, buffer);
         }
     }

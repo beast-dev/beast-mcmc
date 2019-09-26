@@ -248,7 +248,8 @@
     </gammaPrior>
 
     <operators id="operators">
-        <loadingsGibbsOperator id="unconstrainedLoadingsOp" weight="5.0" scaleFactor="1.0" randomScan="false" newMode="true"
+        <loadingsGibbsOperator id="unconstrainedLoadingsOp" weight="5.0" scaleFactor="1.0" randomScan="false"
+                               newMode="true"
                                constraint="none" sparsity="none">
             <!--            <integratedFactorModel idref="factorModel"/>-->
             <latentFactorModel idref="lfm"/>
@@ -256,8 +257,36 @@
             <normalPrior idref="loadings.prior.inner"/>
         </loadingsGibbsOperator>
 
-        <loadingsGibbsOperator id="constrainedLoadingsOp" weight="5.0" scaleFactor="1.0" randomScan="false" newMode="true"
+        <loadingsGibbsOperator id="constrainedLoadingsOp" weight="5.0" scaleFactor="1.0" randomScan="false"
+                               newMode="true"
                                constraint="none" sparsity="upperTriangular">
+            <!--            <integratedFactorModel idref="factorModel"/>-->
+            <latentFactorModel idref="lfm"/>
+            <traitDataLikelihood idref="traitLikelihood"/>
+            <normalPrior idref="loadings.prior.inner"/>
+        </loadingsGibbsOperator>
+
+        <loadingsGibbsOperator id="unconstrainedLoadingsOpMulti" weight="5.0" scaleFactor="1.0" randomScan="false"
+                               newMode="true"
+                               constraint="none" sparsity="none" multiThreaded="true">
+            <!--            <integratedFactorModel idref="factorModel"/>-->
+            <latentFactorModel idref="lfm"/>
+            <traitDataLikelihood idref="traitLikelihood"/>
+            <normalPrior idref="loadings.prior.inner"/>
+        </loadingsGibbsOperator>
+
+        <loadingsGibbsOperator id="constrainedLoadingsOpMulti" weight="5.0" scaleFactor="1.0" randomScan="false"
+                               newMode="true"
+                               constraint="none" sparsity="upperTriangular" multiThreaded="true">
+            <!--            <integratedFactorModel idref="factorModel"/>-->
+            <latentFactorModel idref="lfm"/>
+            <traitDataLikelihood idref="traitLikelihood"/>
+            <normalPrior idref="loadings.prior.inner"/>
+        </loadingsGibbsOperator>
+
+        <loadingsGibbsOperator id="unconstrainedLoadingsOpRandScan" weight="5.0" scaleFactor="1.0" randomScan="true"
+                               newMode="true"
+                               constraint="none" sparsity="none">
             <!--            <integratedFactorModel idref="factorModel"/>-->
             <latentFactorModel idref="lfm"/>
             <traitDataLikelihood idref="traitLikelihood"/>
@@ -342,6 +371,133 @@
             0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
             0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
             0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+
+    <cachedReport id="unconstrainedReportMulti">
+        <loadingsGibbsOperator idref="unconstrainedLoadingsOpMulti"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="unconstrainedReportMulti"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="unconstrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check unconstrained loadings covariance (multithreaded)
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="unconstrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="constrainedReportMulti">
+        <loadingsGibbsOperator idref="constrainedLoadingsOpMulti"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="constrainedReportMulti"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check constrained loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="constrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.053731487267558116 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.0 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check constrained loadings covariance (multithreaded)
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="constrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.10822407804554998 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="unconstrainedReportRandScan">
+        <loadingsGibbsOperator idref="unconstrainedLoadingsOpRandScan"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="unconstrainedReportRandScan"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean (random scan)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="unconstrainedReportRandScan"/>
+        </actual>
+        <expected>
+            0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check unconstrained loadings covariance (random scan)
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="unconstrainedReportRandScan"/>
+        </actual>
+        <expected>
+            0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
             0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
             0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
             0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0

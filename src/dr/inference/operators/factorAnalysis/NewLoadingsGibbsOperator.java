@@ -33,11 +33,9 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -90,38 +88,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         this.columnDimProvider = columnDimProvider;
 
 
-//        // TODO Clean up memory allocation
-//        double[] tempMean;
-//        if (!randomScan) {
-//            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                temp = new double[i + 1][i + 1];
-//                precisionArray.add(temp);
-//            }
-//            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                tempMean = new double[i + 1];
-//                meanArray.add(tempMean);
-//            }
-//
-//            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                tempMean = new double[i + 1];
-//                meanMidArray.add(tempMean);
-//            }
-//        } else {
-//            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                temp = new double[adaptor.getNumberOfFactors() - i][adaptor.getNumberOfFactors() - i];
-//                precisionArray.add(temp);
-//            }
-//            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                tempMean = new double[adaptor.getNumberOfFactors() - i];
-//                meanArray.add(tempMean);
-//            }
-//
-//            for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                tempMean = new double[adaptor.getNumberOfFactors() - i];
-//                meanMidArray.add(tempMean);
-//            }
-//        }
-
         priorPrecision = 1 / (prior1.getSD() * prior1.getSD());
         priorMean = prior1.getMean();
 
@@ -131,7 +97,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
         }
 
-        if (multiThreaded) { //TODO: check that this works
+        if (multiThreaded) {
             for (int i = 0; i < adaptor.getNumberOfTraits(); i++) {
                 int dim = columnDimProvider.getColumnDim(i, adaptor.getNumberOfFactors());
                 drawCallers.add(new DrawCaller(i, new double[dim][dim], new double[dim], new double[dim]));
@@ -254,56 +220,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     public String getReport() {
         int repeats = 1000000;
         int nFac = adaptor.getNumberOfFactors();
-        int nTaxa = adaptor.getNumberOfTaxa();
         int nTraits = adaptor.getNumberOfTraits();
-//        int dim = nFac * nTaxa;
-//
-//        double[] sums = new double[dim];
-//        double[][] sumSquares = new double[dim][dim];
-//
-//
-//        for (int i = 0; i < repeats; i++) {
-//            adaptor.fireLoadingsChanged();
-//            adaptor.drawFactors();
-//            for (int j = 0; j < nTaxa; j++) {
-//                for (int k = 0; k < nFac; k++) {
-//                    double x = adaptor.getFactorValue(k, j);
-//                    sums[k * nTaxa + j] += x;
-//
-//                    for (int l = 0; l < nTaxa; l++) {
-//                        for (int m = 0; m < nFac; m++) {
-//                            double y = adaptor.getFactorValue(m, l);
-//                            sumSquares[k * nTaxa + j][m * nTaxa + l] += x * y;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        double[] mean = new double[dim];
-//        double[][] cov = new double[dim][dim];
-//        for (int i = 0; i < dim; i++) {
-//            mean[i] = sums[i] / repeats;
-//            for (int j = 0; j < dim; j++) {
-//                sumSquares[i][j] /= repeats;
-//            }
-//        }
-//        for (int i = 0; i < dim; i++) {
-//            for (int j = 0; j < dim; j++) {
-//                cov[i][j] = sumSquares[i][j] - mean[i] * mean[j];
-//            }
-//        }
-//
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(getOperatorName() + "Report:\n");
-//        sb.append("Factor mean:\n");
-//        sb.append(new Vector(mean));
-//        sb.append("\n\n");
-//        sb.append("Factor covariance:\n");
-//        sb.append(new Matrix(cov));
-//        sb.append("\n\n");
-
-        //TODO: move above somewhere else
 
 
         int dimLoadings = nTraits * nFac;
@@ -382,47 +299,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         adaptor.drawFactors();
 
         int size = adaptor.getNumberOfTraits();
-//        if (adaptor.getNumberOfFactors() != precisionArray.listIterator().next().length) { //TODO: this is always evaluating to 'true'
-//            //TODO: why do we need this if the memory is allocated at instantiation?
-//            if (DEBUG) {
-//                System.err.println("!= length");
-//            }
-//
-//            precisionArray.clear();
-//            meanArray.clear();
-//            meanMidArray.clear();
-//            double[] tempMean;
-//            double[][] temp;
-//            if (!randomScan) {
-//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                    temp = new double[i + 1][i + 1];
-//                    precisionArray.add(temp);
-//                }
-//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                    tempMean = new double[i + 1];
-//                    meanArray.add(tempMean);
-//                }
-//
-//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                    tempMean = new double[i + 1];
-//                    meanMidArray.add(tempMean);
-//                }
-//            } else {
-//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                    temp = new double[adaptor.getNumberOfFactors() - i][adaptor.getNumberOfFactors() - i];
-//                    precisionArray.add(temp);
-//                }
-//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                    tempMean = new double[adaptor.getNumberOfFactors() - i];
-//                    meanArray.add(tempMean);
-//                }
-//
-//                for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-//                    tempMean = new double[adaptor.getNumberOfFactors() - i];
-//                    meanMidArray.add(tempMean);
-//                }
-//            }
-//        }
 
         if (pool != null) {
 
@@ -635,17 +511,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         }
 
     }
-
-//    private class LoadingsStatistics {
-//        public final double[][] precision;
-//        public final double[] mean;
-//        public final double[] midMean;
-//
-//        LoadingsStatistics(double[][] precision, double[] midMean, double[] mean) {
-//            this.precision = precision;
-//            this.midMean = midMean;
-//            this.mean = mean;
-//        }
 
 }
 

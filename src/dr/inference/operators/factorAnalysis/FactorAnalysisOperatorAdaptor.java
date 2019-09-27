@@ -7,14 +7,16 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
-import java.util.List;
+import dr.xml.*;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FACTOR_NAME;
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 public interface FactorAnalysisOperatorAdaptor {
 
@@ -39,10 +41,10 @@ public interface FactorAnalysisOperatorAdaptor {
     void fireLoadingsChanged();
 
     void drawFactors();
-    
+
     boolean isNotMissing(int trait, int taxon);
 
-    abstract class Abstract implements FactorAnalysisOperatorAdaptor {
+    abstract class Abstract implements FactorAnalysisOperatorAdaptor, Reportable {
 
         private final MatrixParameterInterface loadings;
 
@@ -74,8 +76,64 @@ public interface FactorAnalysisOperatorAdaptor {
         }
 
         @Override
-        public double getLoadingsValue(int dim){
+        public double getLoadingsValue(int dim) {
             return loadings.getParameterValue(dim);
+        }
+
+        @Override
+        public String getReport() {
+            int repeats = 1000000;
+            int nFac = getNumberOfFactors();
+            int nTaxa = getNumberOfTaxa();
+            int dim = nFac * nTaxa;
+
+            double[] sums = new double[dim];
+            double[][] sumSquares = new double[dim][dim];
+
+
+            for (int i = 0; i < repeats; i++) {
+
+                fireLoadingsChanged();
+                drawFactors();
+                for (int j = 0; j < nTaxa; j++) {
+                    for (int k = 0; k < nFac; k++) {
+                        double x = getFactorValue(k, j);
+                        sums[k * nTaxa + j] += x;
+
+                        for (int l = 0; l < nTaxa; l++) {
+                            for (int m = 0; m < nFac; m++) {
+                                double y = getFactorValue(m, l);
+                                sumSquares[k * nTaxa + j][m * nTaxa + l] += x * y;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            double[] mean = new double[dim];
+            double[][] cov = new double[dim][dim];
+            for (int i = 0; i < dim; i++) {
+                mean[i] = sums[i] / repeats;
+                for (int j = 0; j < dim; j++) {
+                    sumSquares[i][j] /= repeats;
+                }
+            }
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    cov[i][j] = sumSquares[i][j] - mean[i] * mean[j];
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.getClass() + "Report:\n");
+            sb.append("Factor mean:\n");
+            sb.append(new Vector(mean));
+            sb.append("\n\n");
+            sb.append("Factor covariance:\n");
+            sb.append(new Matrix(cov));
+            sb.append("\n\n");
+            return sb.toString();
         }
     }
 
@@ -168,13 +226,19 @@ public interface FactorAnalysisOperatorAdaptor {
         }
 
         @Override
-        public int getNumberOfTaxa() { return factorLikelihood.getNumberOfTaxa(); }
+        public int getNumberOfTaxa() {
+            return factorLikelihood.getNumberOfTaxa();
+        }
 
         @Override
-        public int getNumberOfTraits() { return factorLikelihood.getNumberOfTraits(); }
+        public int getNumberOfTraits() {
+            return factorLikelihood.getNumberOfTraits();
+        }
 
         @Override
-        public int getNumberOfFactors() { return factorLikelihood.getNumberOfFactors(); }
+        public int getNumberOfFactors() {
+            return factorLikelihood.getNumberOfFactors();
+        }
 
         @Override
         public double getFactorValue(int factor, int taxon) {

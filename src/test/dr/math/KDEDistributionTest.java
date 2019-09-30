@@ -5,19 +5,24 @@ import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.math.MathUtils;
-import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.LogTransformedNormalKDEDistribution;
+import dr.math.distributions.LogitTransformedNormalKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
+import dr.math.distributions.TransformedNormalKDEDistribution;
 import dr.math.matrixAlgebra.Vector;
 
 import java.io.File;
 import java.io.IOException;
 
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogTransformedNormalKDEDistribution;
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogitTransformedNormalKDEDistribution;
+
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 public class KDEDistributionTest extends MathTestCase {
-    
+
     public void testNormalCDF() {
 
         MathUtils.setSeed(666);
@@ -28,6 +33,7 @@ public class KDEDistributionTest extends MathTestCase {
             values[i] = MathUtils.nextGaussian();
         }
 
+        // Normal KDE
         NormalKDEDistribution distribution = new NormalKDEDistribution(values);
 
         double cdf = distribution.cdf(0);
@@ -48,6 +54,72 @@ public class KDEDistributionTest extends MathTestCase {
     }
 
     private final static double cdfTolerance = 1E-2;
+
+    public void testLogNormalCDF() {
+        // Log Normal KDE on truncated normal
+        MathUtils.setSeed(666);
+        int length = 100000;
+
+        Double[] values = new Double[length];
+        for (int i = 0; i < length; ++i) {
+            values[i] = MathUtils.nextGaussian();
+            if (values[i] < 0.0) values[i] = -values[i];
+        }
+
+        // Testing CDF
+        TransformedNormalKDEDistribution distribution = getLogTransformedNormalKDEDistribution(values);
+        double cdf = distribution.cdf(1E-3);
+        System.out.println("cdfLog(0.00) = " + cdf);
+        assertEquals(cdf, 0.0007978844, cdfTolerance);
+
+        cdf = distribution.cdf(1.96);
+        System.out.println("cdfLog(1.96) = " + cdf);
+        assertEquals(cdf, 0.9500042, cdfTolerance);
+
+        // Old is NOT working
+        LogTransformedNormalKDEDistribution distributionOld = new LogTransformedNormalKDEDistribution(values);
+        double cdfOld = distributionOld.cdf(1E-3);
+        System.out.println("cdfLogOld(0.00) = " + cdfOld);
+        cdfOld = distributionOld.cdf(1.96);
+        System.out.println("cdfLogOld(1.96) = " + cdfOld);
+
+    }
+
+    public void testLogitNormalCDF() {
+        // Logit Normal KDE on logit normal
+        MathUtils.setSeed(666);
+        int length = 100000;
+
+        Double[] values = new Double[length];
+        for (int i = 0; i < length; i++) {
+            values[i] = MathUtils.nextGaussian();
+            values[i] = Math.exp(values[i]) / (1 + Math.exp(values[i]));
+        }
+
+        // Testing CDF
+        TransformedNormalKDEDistribution distribution = getLogitTransformedNormalKDEDistribution(values, 1.0);
+        double cdf = distribution.cdf(0.5);
+        System.out.println("cdfLogit(0.00) = " + cdf);
+        assertEquals(cdf, 0.5, cdfTolerance);
+
+        cdf = distribution.cdf(0.75);
+        System.out.println("cdfLogit(0.75) = " + cdf);
+        assertEquals(cdf, 0.8640314, cdfTolerance); // `R pnorm(logit(0.75))`
+
+        cdf = distribution.cdf(0.25);
+        System.out.println("cdfLogit(0.25) = " + cdf);
+        assertEquals(cdf, 0.1359686, cdfTolerance); // `R pnorm(logit(0.25))`
+
+        // Old is NOT working
+        LogitTransformedNormalKDEDistribution distributionOld = new LogitTransformedNormalKDEDistribution(values, 1.0);
+        double cdfOld = distributionOld.cdf(0.5);
+        System.out.println("cdfLogitOld(0.00) = " + cdfOld);
+        cdfOld = distributionOld.cdf(0.75);
+        System.out.println("cdfLogitOld(0.75) = " + cdfOld);
+        cdfOld = distributionOld.cdf(0.25);
+        System.out.println("cdfLogitOld(0.25) = " + cdfOld);
+
+    }
 
     public void testNormalKDE() {
 
@@ -84,7 +156,7 @@ public class KDEDistributionTest extends MathTestCase {
         System.out.println("den[0] = " + testDensity[0]);
         System.out.println("den[N] = " + testDensity[NormalKDEDistribution.MINIMUM_GRID_SIZE - 1]);
 
-      //  System.exit(-1);
+        //  System.exit(-1);
     }
 
     public void testGammaKDE() {
@@ -150,9 +222,9 @@ public class KDEDistributionTest extends MathTestCase {
                 System.out.println(d + " > " + likelihood.calculateLogLikelihood());
             }
 
-        } catch(IOException ioe) {
+        } catch (IOException ioe) {
             System.out.println(ioe);
-        } catch(TraceException te) {
+        } catch (TraceException te) {
             System.out.println(te);
         }
 

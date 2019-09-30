@@ -65,17 +65,26 @@ public class TransformedNormalKDEDistribution extends NormalKDEDistribution {
     private static Double[] getTransform(Double[] x, Transform transform) {
         Double[] logX = new Double[x.length];
         for (int i = 0; i < logX.length; i++) {
+            if (!transform.isInInteriorDomain(x[i])) {
+                throw new RuntimeException("The sample to estimate does not lie in the bound coherent with the transformation: x[" + i + "] = " + x[i] + "." );
+            }
             logX[i] = transform.transform(x[i]);
         }
         return logX;
     }
 
     public double getFromPoint() {
-        return from;
+        return transform.inverse(from);
     }
 
     public double getToPoint() {
-        return to;
+        return transform.inverse(to);
+    }
+
+    @Override
+    protected double evaluateKernel(double x) {
+        if (!transform.isInInteriorDomain(x)) return 0.0;
+        return super.evaluateKernel(x);
     }
 
     @Override

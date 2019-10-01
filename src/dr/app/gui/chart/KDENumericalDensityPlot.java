@@ -25,15 +25,15 @@
 
 package dr.app.gui.chart;
 
-import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.KernelDensityEstimatorDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.util.List;
+
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogTransformedNormalKDEDistribution;
 
 /**
  * @author Marc A. Suchard
@@ -58,7 +58,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot {
         switch (type) {
             case GAUSSIAN: return new NormalKDEDistribution(samples);
             case GAMMA: return new GammaKDEDistribution(samples);
-            case LOG_TRANSFORMED_GAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
+            case LOG_TRANSFORMED_GAUSSIAN: return getLogTransformedNormalKDEDistribution(samples);
             default:
                 throw new RuntimeException("Unknown type");
         }

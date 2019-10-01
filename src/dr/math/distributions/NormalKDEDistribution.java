@@ -138,7 +138,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         return y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]));
     }
 
-    double[] rescaleAndTrim(double[] x) {
+    private double[] rescaleAndTrim(double[] x) {
         final int length = x.length / 2;
         final double scale = 1.0 / x.length;
         double[] out = new double[length];
@@ -151,9 +151,9 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         return out;
     }
 
-    double[] massdist(double[] x,
+    private double[] massdist(double[] x,
 //                              double[] xmass,
-                      double xlow, double xhigh, int ny) {
+                              double xlow, double xhigh, int ny) {
 
         int nx = x.length;
         double[] y = new double[ny * 2];
@@ -191,7 +191,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
      * @param ordinates the points in complex space
      * @param bandWidth predetermined bandwidth
      */
-    protected void fillKernelOrdinates(ComplexArray ordinates, double bandWidth) {
+    private void fillKernelOrdinates(ComplexArray ordinates, double bandWidth) {
                 final int length = ordinates.length;
         final double a = 1.0 / (Math.sqrt(2.0 * Math.PI) * bandWidth);
         final double precision = -0.5 / (bandWidth * bandWidth);
@@ -294,7 +294,7 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 //       4 * 1.06 * min(sqrt(var(x)), h) * length(x)^(-1/5)
 //   }
 
-    double bandwidthNRD(double[] x) {
+    private double bandwidthNRD(double[] x) {
         if (indices == null) {
             indices = new int[x.length];
             HeapSort.sort(x, indices);
@@ -313,14 +313,14 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         }
     }
 
-    ComplexArray kOrdinates;
+    private ComplexArray kOrdinates;
     double[] xPoints;
     double[] densityPoints;
 
-    int[] indices;
+    private int[] indices;
 
-    int gridSize;
-    double cut;
+    private int gridSize;
+    private double cut;
     double from;
     double to;
     double lo;

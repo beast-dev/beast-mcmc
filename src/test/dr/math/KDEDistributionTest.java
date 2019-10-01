@@ -13,6 +13,7 @@ import dr.math.matrixAlgebra.Vector;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 import static dr.math.distributions.TransformedNormalKDEDistribution.getLogTransformedNormalKDEDistribution;
 import static dr.math.distributions.TransformedNormalKDEDistribution.getLogitTransformedNormalKDEDistribution;
@@ -178,10 +179,88 @@ public class KDEDistributionTest extends MathTestCase {
 
     }
 
-    private static double[] rBandWidth = { 12.24266 };
+    private static double[] rBandWidth = {12.24266, 0.0001379084};
+
+    private static double[] rLogBandWidth = {0.1979396};
+
+
+    public void testSampleWitchHat() {
+        // Witch hat gamma
+        Random randUnif = new Random();
+        randUnif.setSeed(17920920); // The day before
+        int length = 10000;
+        Double[] samples = new Double[length];
+        double scale = 0.001;
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = randUnif.nextDouble();
+            samples[i] = -Math.log(samples[i]) * scale; // Gamma(1, scale)
+        }
+
+        // R vector
+        System.out.print("samples <- c(");
+        for (int i = 0; i < samples.length - 1; i++) {
+            System.out.print(samples[i] + ",");
+        }
+        System.out.println(samples[samples.length - 1] + ")\n");
+
+        // Estimations
+        NormalKDEDistribution nKDE = new NormalKDEDistribution(samples, null, null, null, 2048);
+        LogTransformedNormalKDEDistribution ltnOld = new LogTransformedNormalKDEDistribution(samples);
+        TransformedNormalKDEDistribution ltnNew = getLogTransformedNormalKDEDistribution(samples);
+
+        // R estimations
+        /*
+        densNormal <- density(samples, n = 512, bw = "nrd")
+        densLogNormal <- logKDE::logdensity_fft(samples, n = 2048, bw = "nrd")
+         */
+
+        // bandwidth
+        double tolerance = 1E-3;
+        assertEquals(rBandWidth[1], nKDE.getBandWidth(), tolerance);
+        assertEquals(rLogBandWidth[0], ltnNew.getBandWidth(), tolerance);
+
+        System.out.println("bw(normal) = " + nKDE.getBandWidth());
+        System.out.println("bw(logNormal) = " + ltnNew.getBandWidth());
+        System.out.println("bw(logNormalOLD) = " + ltnOld.getBandWidth());
+
+        // cdf normal (Fails)
+        double cdf = nKDE.cdf(0.00005);
+        System.out.println("cdf(0.00005) = " + cdf);
+//        assertEquals(cdf, 0.04877058, cdfTolerance);
+        cdf = nKDE.cdf(0.0001);
+        System.out.println("cdf(0.0001) = " + cdf);
+//        assertEquals(cdf, 0.09516258, cdfTolerance);
+        cdf = nKDE.cdf(0.001);
+        System.out.println("cdf(0.001) = " + cdf);
+//        assertEquals(cdf, 0.6321206, cdfTolerance);
+
+        // cdf log normal (Succeeds)
+        cdf = ltnNew.cdf(0.00005);
+        System.out.println("cdfLog(0.00005) = " + cdf);
+        assertEquals(cdf, 0.04877058, cdfTolerance);
+        cdf = ltnNew.cdf(0.0001);
+        System.out.println("cdfLog(0.0001) = " + cdf);
+        assertEquals(cdf, 0.09516258, cdfTolerance);
+        cdf = ltnNew.cdf(0.001);
+        System.out.println("cdfLog(0.001) = " + cdf);
+        assertEquals(cdf, 0.6321206, cdfTolerance);
+
+        // cdf log normal old (Fails)
+        cdf = ltnOld.cdf(0.00005);
+        System.out.println("cdfLogOld(0.00005) = " + cdf);
+//        assertEquals(cdf, 0.04877058, cdfTolerance);
+        cdf = ltnOld.cdf(0.0001);
+        System.out.println("cdfLogOld(0.0001) = " + cdf);
+//        assertEquals(cdf, 0.09516258, cdfTolerance);
+        cdf = ltnOld.cdf(0.001);
+        System.out.println("cdfLogOld(0.001) = " + cdf);
+//        assertEquals(cdf, 0.6321206, cdfTolerance);
+
+    }
 
     /**
      * Test KDE construction from a BEAST log file
+     *
      * @param args 0: BEAST log file; 1: trace to construct KDE; 2: burn-in
      */
     public static void main(String[] args) {

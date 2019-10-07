@@ -26,12 +26,10 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
-import dr.util.Citation;
-
-import java.util.List;
 
 /**
  * @author Xiang Ji
@@ -64,7 +62,7 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
 //            }
 
 
-            double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT);
+            double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
             evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
             if (cacheSquaredMatrix) {
                 double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
@@ -77,15 +75,16 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
                         infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
                     }
                 }
-                double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN);
+                double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN, siteRateModel);
                 evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, scaledInfinitesimalMatrixSquared);
             }
         }
     }
 
-    private double[] scaleInfinitesimalMatrixByRates(double[] infinitesimalMatrix, DifferentialChoice differentialChoice) {
+    public static double[] scaleInfinitesimalMatrixByRates(double[] infinitesimalMatrix, DifferentialChoice differentialChoice,
+                                                           SiteRateModel siteRateModel) {
 
-        final int matrixSize = stateCount * stateCount;
+        final int matrixSize = infinitesimalMatrix.length;
 
         if (infinitesimalMatrix.length != matrixSize) {
             throw new RuntimeException("Dimension mismatch when preparing scaled differential matrix for branchRateGradient calculations.");

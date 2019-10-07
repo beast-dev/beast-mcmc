@@ -58,11 +58,12 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
                                                              Parameter hyperParameter,
                                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate,  branchParameter, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, useHessian);
 
-        locationScaleTransform = branchParameter.getTransform();
+        throw new RuntimeException("Not yet fixed.");
+//        locationScaleTransform = branchParameter.getTransform();
 
-        this.hyperParameter = hyperParameter;
+//        this.hyperParameter = hyperParameter;
     }
 
     @Override

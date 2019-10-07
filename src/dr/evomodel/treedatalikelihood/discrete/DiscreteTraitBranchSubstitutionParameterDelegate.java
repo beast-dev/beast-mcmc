@@ -63,7 +63,9 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
 
                 final double time = tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node);
                 double[] differentialMassMatrix = branchDifferentialMassProvider.getDifferentialMassMatrixForBranch(node, time);
-                evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);
+                double[] scaledDifferentialMassMatrix = DiscreteTraitBranchRateDelegate.scaleInfinitesimalMatrixByRates(differentialMassMatrix,
+                        DiscreteTraitBranchRateDelegate.DifferentialChoice.GRADIENT, siteRateModel);
+                evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, scaledDifferentialMassMatrix);
             }
         }
         if (cacheSquaredMatrix) {

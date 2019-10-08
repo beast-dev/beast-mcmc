@@ -50,7 +50,7 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     private final double[] nodeHeights;
     private final TreeModel treeModel;
     protected TreeParameterModel indexHelper;
-    private final AbstractNodeHeightTransformDelegate.NodeHeightParameter nodeHeightParameter;
+    private final NodeHeightProxyParameter nodeHeightProxyParameter;
 
 
     public NodeHeightGradientForDiscreteTrait(String traitName,
@@ -68,12 +68,12 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
 
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
 
-        this.nodeHeightParameter = new AbstractNodeHeightTransformDelegate.NodeHeightParameter("internalNodeHeights", treeModel, true);
+        this.nodeHeightProxyParameter = new NodeHeightProxyParameter("internalNodeHeights", treeModel, true);
     }
 
     @Override
     public Parameter getParameter() {
-        return nodeHeightParameter;
+        return nodeHeightProxyParameter;
     }
 
     @Override

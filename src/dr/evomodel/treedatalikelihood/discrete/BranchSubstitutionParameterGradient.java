@@ -87,7 +87,7 @@ public class BranchSubstitutionParameterGradient
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
 
-        String name = DiscreteTraitBranchSubstitutionParameterDelegate.getName(traitName);
+        String name = BranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
@@ -112,7 +112,7 @@ public class BranchSubstitutionParameterGradient
             BranchDifferentialMassProvider branchDifferentialMassProvider =
                     new BranchDifferentialMassProvider(parameterIndexHelper, differentialMassProviderList);
 
-            ProcessSimulationDelegate gradientDelegate = new DiscreteTraitBranchSubstitutionParameterDelegate(traitName,
+            ProcessSimulationDelegate gradientDelegate = new BranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
                     treeDataLikelihood.getBranchRateModel(),

@@ -35,7 +35,7 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
+public class BranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
 
     private final BranchRateModel branchRateModel;
     private final BranchDifferentialMassProvider branchDifferentialMassProvider;
@@ -44,11 +44,11 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
     private static final String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
     private static final String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
-    DiscreteTraitBranchSubstitutionParameterDelegate(String name,
-                                                     Tree tree,
-                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                     BranchRateModel branchRateModel,
-                                                     BranchDifferentialMassProvider branchDifferentialMassProvider) {
+    BranchSubstitutionParameterDelegate(String name,
+                                        Tree tree,
+                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                        BranchRateModel branchRateModel,
+                                        BranchDifferentialMassProvider branchDifferentialMassProvider) {
         super(name, tree, likelihoodDelegate);
         this.name = name;
         this.branchRateModel = branchRateModel;

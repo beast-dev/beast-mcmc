@@ -30,7 +30,7 @@ import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterGradient;
+import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.xml.*;
@@ -65,7 +65,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
 
-        return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
+        return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
                 branchParameter, branchRateModel, useHessian);
     }
 
@@ -88,6 +88,6 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
     @Override
     public Class getReturnType() {
-        return DiscreteTraitBranchSubstitutionParameterGradient.class;
+        return BranchSubstitutionParameterGradient.class;
     }
 }

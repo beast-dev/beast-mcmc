@@ -57,7 +57,7 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class DiscreteTraitBranchSubstitutionParameterGradient
+public class BranchSubstitutionParameterGradient
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
@@ -74,12 +74,12 @@ public class DiscreteTraitBranchSubstitutionParameterGradient
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     protected long getGradientLogDensityCount = 0;
 
-    public DiscreteTraitBranchSubstitutionParameterGradient(String traitName,
-                                                            TreeDataLikelihood treeDataLikelihood,
-                                                            BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                            CompoundParameter branchParameter,
-                                                            BranchRateModel branchRateModel,
-                                                            boolean useHessian) {
+    public BranchSubstitutionParameterGradient(String traitName,
+                                               TreeDataLikelihood treeDataLikelihood,
+                                               BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                               CompoundParameter branchParameter,
+                                               BranchRateModel branchRateModel,
+                                               boolean useHessian) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchParameter = branchParameter;

@@ -45,7 +45,7 @@ import dr.xml.Reportable;
  */
 
 //TODO: combine this with HyperParameterBranchRateGradient to remove code duplication
-public abstract class HyperParameterBranchSubstitutionParameterGradient extends DiscreteTraitBranchSubstitutionParameterGradient
+public abstract class HyperParameterBranchSubstitutionParameterGradient extends BranchSubstitutionParameterGradient
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     protected final ArbitraryBranchRates.BranchRateTransform locationScaleTransform;

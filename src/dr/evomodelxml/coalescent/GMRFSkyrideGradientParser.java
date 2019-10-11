@@ -57,6 +57,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
         GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
         if (type != null) {
+            type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
             return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
         }
 

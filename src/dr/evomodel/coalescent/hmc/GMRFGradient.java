@@ -94,6 +94,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+
+            @Override
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+
+            }
         },
         PRECISION("precision") {
             @Override
@@ -113,6 +118,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double getParameterLowerBound() { return 0.0; }
+
+            @Override
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+
+            }
         },
         REGRESSION_COEFFICIENTS("regressionCoefficients") {
             @Override
@@ -138,6 +148,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+
+            @Override
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+
+            }
         },
         NODE_HEIGHT("nodeHeight") {
 
@@ -145,7 +160,6 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
-                getWarning(likelihood);
                 if (parameter == null) {
                     TreeModel treeModel = (TreeModel) likelihood.getTree(0);
                     parameter = treeModel.createNodeHeightsParameter(true, true, false);
@@ -155,13 +169,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
-                getWarning(likelihood);
                 return getGradientWrtNodeHeights(likelihood);
             }
 
             @Override
             double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
-                getWarning(likelihood);
                 return new double[likelihood.getTree(0).getInternalNodeCount()];
             }
 
@@ -170,7 +182,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 return 0.0;
             }
 
-            private void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
                 if (likelihood.nLoci() > 1) {
                     throw new RuntimeException("Not yet implemented for multiple loci.");
                 }
@@ -180,17 +192,12 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 likelihood.getLogLikelihood();
 
-                if (likelihood.nLoci() > 1) {
-                    throw new RuntimeException("Not yet implemented for multiple loci.");
-                }
-
                 Tree tree = likelihood.getTree(0);
 
                 double[] gradient = new double[tree.getInternalNodeCount()];
                 double[] currentGamma = likelihood.getPopSizeParameter().getParameterValues();
 
                 double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
-
 
                 final TreeIntervals intervals = likelihood.getTreeIntervals(0);
 
@@ -258,6 +265,8 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
         abstract double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
 
         abstract double getParameterLowerBound();
+
+        public abstract void getWarning(GMRFMultilocusSkyrideLikelihood likelihood);
 
         private final String name;
 

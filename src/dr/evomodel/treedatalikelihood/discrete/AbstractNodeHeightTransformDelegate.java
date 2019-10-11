@@ -45,7 +45,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
                                                Parameter nodeHeights) {
         super(NodeHeightTransformParser.NAME);
         this.tree = treeModel;
-        this.nodeHeights = new NodeHeightParameter("internalNodeHeights", tree, false);
+        this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, false);
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
     }
@@ -59,46 +59,6 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
             this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
         }
         tree.pushTreeChangedEvent();
-    }
-
-    public static class NodeHeightParameter extends Parameter.Proxy {
-
-        private TreeModel tree;
-        private TreeParameterModel indexHelper;
-
-        public NodeHeightParameter(String name,
-                                   TreeModel tree,
-                                   boolean includeRoot) {
-            super(name, includeRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1);
-            this.tree = tree;
-            this.indexHelper = new TreeParameterModel(tree,
-                    new Parameter.Default(includeRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1, 0.0),
-                    includeRoot);
-        }
-
-        private int getNodeNumber(int index) {
-            return indexHelper.getNodeNumberFromParameterIndex(index) + tree.getExternalNodeCount();
-        }
-
-        @Override
-        public double getParameterValue(int dim) {
-            return tree.getNodeHeight(tree.getNode(getNodeNumber(dim)));
-        }
-
-        @Override
-        public void setParameterValue(int dim, double value) {
-            tree.setNodeHeight(tree.getNode(getNodeNumber(dim)), value);
-        }
-
-        @Override
-        public void setParameterValueQuietly(int dim, double value) {
-            tree.setNodeHeightQuietly(tree.getNode(getNodeNumber(dim)), value);
-        }
-
-        @Override
-        public void setParameterValueNotifyChangedAll(int dim, double value) {
-            setParameterValue(dim, value);
-        }
     }
 
     public Parameter getNodeHeights() {

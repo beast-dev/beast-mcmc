@@ -64,7 +64,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
 
-        super(mode, 0.8); // Stan default
+        super(mode, runtimeOptions.targetAcceptanceProbability);
 
         setWeight(weight);
 
@@ -304,11 +304,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
+        final double targetAcceptanceProbability;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
                        int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
                        int gradientCheckCount, double gradientCheckTolerance,
-                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor) {
+                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
+                       double targetAcceptanceProbability) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
@@ -319,6 +321,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
+            this.targetAcceptanceProbability = targetAcceptanceProbability;
         }
     }
 

@@ -28,10 +28,14 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
-import dr.math.distributions.*;
+import dr.math.distributions.GammaKDEDistribution;
+import dr.math.distributions.MultivariateKDEDistribution;
+import dr.math.distributions.NormalKDEDistribution;
+import dr.math.distributions.TransformedNormalKDEDistribution;
 import dr.util.FileHelpers;
 import dr.xml.*;
 
@@ -330,7 +334,7 @@ public class WorkingPriorParsers {
                                 System.out.println(((Statistic) xo.getChild(j)).toString());
                                 System.out.println(((Statistic) xo.getChild(j)).getDimension());
                             }
-                            likelihood.addData((Statistic) xo.getChild(j));
+                            likelihood.addData((Parameter) xo.getChild(j));
                         } else {
                             throw new XMLParseException("illegal element in " + xo.getName() + " element");
                         }
@@ -513,7 +517,7 @@ public class WorkingPriorParsers {
                                 System.out.println(((Statistic) xo.getChild(j)).toString());
                                 System.out.println(((Statistic) xo.getChild(j)).getDimension());
                             }
-                            likelihood.addData((Statistic) xo.getChild(j));
+                            likelihood.addData((Parameter) xo.getChild(j));
                         } else {
                             throw new XMLParseException("illegal element in " + xo.getName() + " element");
                         }
@@ -670,7 +674,7 @@ public class WorkingPriorParsers {
                                 System.out.println(((Statistic) xo.getChild(j)).toString());
                                 System.out.println(((Statistic) xo.getChild(j)).getDimension());
                             }
-                            likelihood.addData((Statistic) xo.getChild(j));
+                            likelihood.addData((Parameter) xo.getChild(j));
                         } else {
                             throw new XMLParseException("illegal element in " + xo.getName() + " element");
                         }

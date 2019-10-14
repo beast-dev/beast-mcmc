@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.ComplexArray;
 import dr.math.FastFourierTransform;
 import dr.stats.DiscreteStatistics;
@@ -35,7 +36,7 @@ import java.util.Random;
 /**
  * @author Marc A. Suchard
  */
-public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
+public class NormalKDEDistribution extends KernelDensityEstimatorDistribution implements GradientProvider {
 
     public static final int MINIMUM_GRID_SIZE = 512;
     public static final boolean DEBUG = false;
@@ -136,6 +137,39 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
             return y[i];
         }
         return y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]));
+    }
+
+    /**
+     * Returns the gradient of a log linear approximation evaluated at pt
+     *
+     * @param x    data (assumed sorted increasingly
+     * @param y    data
+     * @param pt   evaluation point
+     * @return evaluated coordinate
+     */
+    private double gradientLogLinearApproximate(double[] x, double[] y, double pt) {
+
+        int i = 0;
+        int j = x.length - 1;
+
+        if (pt < x[i] || pt > x[j]) {
+            return 0.0;
+        }
+
+        // Bisection search
+        while (i < j - 1) {
+            int ij = (i + j) / 2;
+            if (pt < x[ij]) {
+                j = ij;
+            } else {
+                i = ij;
+            }
+        }
+
+        double slope =  (y[j] - y[i]) / (x[j] - x[i]);
+        double eval = y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]));
+//        return slope / eval;
+        return 1 / ((pt - x[i]) + y[i] / slope);
     }
 
     private double[] rescaleAndTrim(double[] x) {
@@ -311,6 +345,34 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         if (!transformIncreasing) { // if the transform in not increasing, reset the indices.
             indices = null;
         }
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        if (!densityKnown) {
+            computeDensity();
+        }
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradientLogLinearApproximate(xPoints, densityPoints, x[i]);
+        }
+        return result;
+    }
+
+    double getGradLogDensity(double x) {
+        if (!densityKnown) {
+            computeDensity();
+        }
+        return gradientLogLinearApproximate(xPoints, densityPoints, x);
+        // NOTE: This is the gradient of the log of the linear approximation.
+        // NOTE: This is NOT the log linear approximation of the gradient of the kernels.
+        // NOTE: Tis is NOT the KDE estimation of the true gradient.
     }
 
     private ComplexArray kOrdinates;

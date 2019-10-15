@@ -240,7 +240,7 @@
     	Analytic answer = -32.56001
     </report>
 
-    <assertEqual tolerance="1e-2" verbose="true">
+    <assertEqual tolerance="1e-1" verbose="true">
         <message>
             Check MLE with GSS and HMC
         </message>

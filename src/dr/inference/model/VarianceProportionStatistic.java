@@ -270,6 +270,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             }
             double[] tipTraits = (double[]) treeTrait.getTrait(treeLikelihood.getTree(), null);
             double[] data = extensionDelegate.getExtendedValues(tipTraits);
+            treeLikelihood.getLogLikelihood(); //Needed to avoid assertion error
 
             int nTaxa = tree.getExternalNodeCount();
 

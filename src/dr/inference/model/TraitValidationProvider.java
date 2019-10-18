@@ -122,7 +122,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
             int taxonInd = i / dimTrait;
             int traitInd = i - taxonInd * dimTrait;
             String taxonName = treeModel.getTaxonId(taxonInd);
-            dimNames[dim] = id + "." + taxonName + (traitInd + 1);
+            dimNames[dim] = id + "." + taxonName + "." + (traitInd + 1);
             dim += 1;
         }
     }

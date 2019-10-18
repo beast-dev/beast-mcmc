@@ -74,14 +74,25 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
             SSE += x * x;
         }
 
-        final double shape = priorShape + n / 2.0;
-        final double rate = priorRate + 0.5 * SSE;
+        final double shape = priorShape + pathParameter * n / 2.0;
+        final double rate = priorRate + pathParameter * 0.5 * SSE;
+
 
         final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
         precision.setParameterValue(0, draw);
 
         return 0;
     }
+
+    @Override
+    public void setPathParameter(double beta) {
+        if (beta < 0.0 || beta > 1.0) {
+            throw new IllegalArgumentException("Invalid pathParameter value");
+        }
+
+        this.pathParameter = beta;
+    }
+
 
     /**
      * @return the number of steps the operator performs in one go.
@@ -152,4 +163,6 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
     private final Distribution prior;
     private final Parameter data;
     private final Parameter precision;
+    
+    private double pathParameter = 1.0;
 }

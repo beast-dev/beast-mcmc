@@ -7,3 +7,9 @@ dist/
 out/
 .idea
 .DS_Store
+
+*.log
+*.trees
+*.tree
+*.xml
+!examples/**/*.xml

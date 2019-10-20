@@ -55,7 +55,7 @@ public class BeastVersion implements Version, Citable {
      */
     private static final String VERSION = "1.10.5";
 
-    private static final String DATE_STRING = "2002-2018";
+    private static final String DATE_STRING = "2002-2019";
 
     private static final boolean IS_PRERELEASE = true;
 

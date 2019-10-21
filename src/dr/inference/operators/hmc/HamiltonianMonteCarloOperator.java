@@ -181,7 +181,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             ++iterations;
         }
 
-        if (!acceptableSize) {
+        if (!acceptableSize && iterations < runtimeOptions.checkStepSizeMaxIterations) {
             throw new RuntimeException("Unable to find acceptable initial HMC step-size");
         }
     }

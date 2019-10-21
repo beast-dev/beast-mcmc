@@ -210,11 +210,13 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                         final int numLineage = intervals.getLineageCount(i);
 
-                        gradient[nodeIndex] += -Math.exp(-currentGamma[gridIndices[nodeIndex]]) * numLineage * (numLineage - 1);
+                        final double currentPopSize = Math.exp(-currentGamma[gridIndices[nodeIndex]]);
+
+                        gradient[nodeIndex] += -currentPopSize * numLineage * (numLineage - 1);
 
                         if (!tree.isRoot(intervals.getCoalescentNode(i))) {
                             final int nextNumLineage = intervals.getLineageCount(i + 1);
-                            gradient[nodeIndex] -= -Math.exp(-currentGamma[gridIndices[nodeIndex]]) * nextNumLineage * (nextNumLineage - 1);
+                            gradient[nodeIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
                         }
 
                     }

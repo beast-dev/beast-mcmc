@@ -432,7 +432,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     sum += temp * temp;
                 }
                 if (sum > 1.0) {
-                    assertEquals(sum, 1.0, 1E-6);
+                    assertEquals(1.0, sum, 1E-6);
                     sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));

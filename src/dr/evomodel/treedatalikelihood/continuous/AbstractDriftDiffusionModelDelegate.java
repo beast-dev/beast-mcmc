@@ -44,7 +44,6 @@ import java.util.List;
  */
 public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
-    protected final int dim;
     private final List<BranchRateModel> branchRateModels;
 
     AbstractDriftDiffusionModelDelegate(Tree tree,
@@ -53,8 +52,6 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
                                         int partitionNumber) {
         super(tree, diffusionModel, partitionNumber);
         this.branchRateModels = branchRateModels;
-
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
 
         if (branchRateModels != null) {
 
@@ -105,7 +102,7 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     }
 
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
         final double[] drift = new double[dim];
         System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
         double[] displacement = new double[dim];
@@ -117,17 +114,17 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
                 actualization = new double[dim * dim];
             }
         }
-        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization);
+        recursivelyAccumulateDrift(node, drift, cdi, displacement, actualization, dim);
         return drift;
     }
 
     private void recursivelyAccumulateDrift(final NodeRef node, final double[] drift,
                                             ContinuousDiffusionIntegrator cdi,
-                                            double[] displacement, double[] actualization) {
+                                            double[] displacement, double[] actualization, int dim) {
         if (!tree.isRoot(node)) {
 
             // Compute parent
-            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization);
+            recursivelyAccumulateDrift(tree.getParent(node), drift, cdi, displacement, actualization, dim);
 
             // Node
             cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(node.getNumber()), displacement);

@@ -1,16 +1,15 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.inference.model.CompoundParameter;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.inference.model.MatrixParameterInterface;
-import dr.math.distributions.WishartStatistics;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 
@@ -22,81 +21,69 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
 
 
     private final RepeatedMeasuresTraitDataModel traitModel;
-    private final WishartStatisticsWrapper treeWishartStatistics;
-    private final TreeDataLikelihood treeLikelihood;
+    private final Tree tree;
     private final TreeTrait tipTrait;
     private final String traitName;
-    private final RepeatedMeasuresTraitSimulator traitSimulator;
+    private final ContinuousExtensionDelegate extensionDelegate;
+    private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+    private final double[] outerProduct;
+    private final int dimTrait;
+    private final int nTaxa;
+    private final double[] buffer;
+    private boolean forceResample;
 
     public RepeatedMeasuresWishartStatistics(RepeatedMeasuresTraitDataModel traitModel,
                                              TreeDataLikelihood treeLikelihood,
-                                             WishartStatisticsWrapper treeWishartStatistics) {
+                                             boolean forceResample) {
         this.traitModel = traitModel;
-        this.treeWishartStatistics = treeWishartStatistics;
-        this.treeLikelihood = treeLikelihood;
         this.traitName = traitModel.getTraitName();
-        this.traitSimulator = new RepeatedMeasuresTraitSimulator(traitModel, treeLikelihood);
+        this.tree = treeLikelihood.getTree();
 
         this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+        this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
+        this.extensionDelegate = traitModel.getExtensionDelegate(likelihoodDelegate, tipTrait, tree);
+
+        this.dimTrait = traitModel.getTraitDimension();
+        this.nTaxa = tree.getExternalNodeCount();
+
+        this.outerProduct = new double[dimTrait * dimTrait];
+        this.buffer = new double[nTaxa * dimTrait];
+
+        this.forceResample = forceResample;
+
+    }
+
+
+    @Override
+    public MatrixParameterInterface getPrecisionParameter() {
+        return traitModel.getExtensionPrecision();
     }
 
     @Override
     public WishartSufficientStatistics getWishartStatistics() {
 
-        treeWishartStatistics.simulateMissingTraits();
-        return getRepeatedMeasuresStatistics();
+        if (forceResample) {
+            likelihoodDelegate.fireModelChanged();
+        }
+        double[] treeValues = (double[]) tipTrait.getTrait(tree, null);
+        double[] dataValues = extensionDelegate.getExtendedValues(treeValues);
+
+        DenseMatrix64F XminusY = DenseMatrix64F.wrap(nTaxa, dimTrait, buffer);
+        DenseMatrix64F X = DenseMatrix64F.wrap(nTaxa, dimTrait, treeValues);
+        DenseMatrix64F Y = DenseMatrix64F.wrap(nTaxa, dimTrait, dataValues);
+
+        CommonOps.subtract(X, Y, XminusY);
+
+        DenseMatrix64F outerProductMat = DenseMatrix64F.wrap(dimTrait, dimTrait, outerProduct);
+
+        CommonOps.multTransA(XminusY, XminusY, outerProductMat);
+
+
+        return new WishartSufficientStatistics(nTaxa, outerProduct);
     }
 
-    @Override
-    public MatrixParameterInterface getPrecisionParameter() {
-
-        assert (traitModel.getSamplingPrecision() instanceof MatrixParameterInterface);
-
-        return (MatrixParameterInterface) traitModel.getSamplingPrecision();
-    }
-
-    private WishartSufficientStatistics getRepeatedMeasuresStatistics() {
-
-
-        double[] tipValues = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
-
-        if (DEBUG) {
-            System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));
-        }
-
-        traitSimulator.simulateMissingData(tipValues);
-
-        CompoundParameter traitParameter = traitModel.getParameter();
-
-
-        int n = traitParameter.getParameterCount();
-        int dim = traitModel.getTraitDimension();
-
-        DenseMatrix64F XminusY = MissingOps.wrap(tipValues, 0, n, dim);
-
-
-        for (int i = 0; i < n; i++) {
-
-            for (int j = 0; j < dim; j++) {
-
-                double traitValue = traitParameter.getParameterValue(j, i);
-                double test_values = XminusY.get(i, j);
-
-                XminusY.set(i, j, XminusY.get(i, j) - traitValue);
-            }
-
-
-        }
-
-        DenseMatrix64F XminusYtXminusY = new DenseMatrix64F(dim, dim);
-
-        org.ejml.ops.CommonOps.multTransA(XminusY, XminusY, XminusYtXminusY);
-
-        double[] outerProduct = new double[dim * dim];
-
-        MissingOps.unwrap(XminusYtXminusY, outerProduct, 0);
-
-        return new WishartSufficientStatistics(n, outerProduct);
+    public void setForceResample(Boolean b) {
+        forceResample = b;
     }
 
 
@@ -104,18 +91,19 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
 
 
     private static final String RM_WISHART_STATISTICS = "repeatedMeasuresWishartStatistics";
+    private static final String FORCE_RESAMPLE = "forceResample";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             TreeDataLikelihood dataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
             RepeatedMeasuresTraitDataModel traitModel =
                     (RepeatedMeasuresTraitDataModel) xo.getChild(RepeatedMeasuresTraitDataModel.class);
-            WishartStatisticsWrapper treeWishartStatistics =
-                    (WishartStatisticsWrapper) xo.getChild(WishartStatisticsWrapper.class);
 
+            boolean forceResample = xo.getAttribute(FORCE_RESAMPLE, true);
 
-            return new RepeatedMeasuresWishartStatistics(traitModel, dataLikelihood, treeWishartStatistics);
+            return new RepeatedMeasuresWishartStatistics(traitModel, dataLikelihood, forceResample);
         }
 
         @Override
@@ -126,7 +114,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
         XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(RepeatedMeasuresTraitDataModel.class),
                 new ElementRule(TreeDataLikelihood.class),
-                new ElementRule(WishartStatisticsWrapper.class)
+                AttributeRule.newBooleanRule(FORCE_RESAMPLE, true)
         };
 
         @Override

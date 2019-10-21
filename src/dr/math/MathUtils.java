@@ -466,7 +466,21 @@ public class MathUtils {
 		if (x.length != y.length) return false;
 
 		for (int i = 0, dim = x.length; i < dim; ++i) {
+			if (Double.isNaN(x[i]) || Double.isNaN(y[i])) return false;
 			if (Math.abs(x[i] - y[i]) > tolerance) return false;
+		}
+
+		return true;
+	}
+
+	public static boolean isRelativelyClose(double[] x, double[] y, double relativeTolerance) {
+		if (x.length != y.length) return false;
+
+		for (int i = 0, dim = x.length; i < dim; ++i) {
+			double relativeDifference = 2 * (x[i] - y[i]) / (x[i] + y[i]);
+			if (Math.abs(relativeDifference) > relativeTolerance) {
+				return false;
+			}
 		}
 
 		return true;

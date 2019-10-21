@@ -28,10 +28,7 @@ package test.dr.util;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
-import dr.util.CorrelationToCholesky;
-import dr.util.LKJCholeskyTransformConstrained;
-import dr.util.LKJTransformConstrained;
-import dr.util.Transform;
+import dr.util.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import test.dr.inference.trace.TraceCorrelationAssert;
@@ -109,8 +106,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testTransformation() {
         System.out.println("\nTest LKJ transform.");
 
-        double[] transformedValue = transform.inverse(CPCs);
-        double[] inverseTransformedValues = transform.transform(transformedValue);
+        double[] transformedValue = transform.inverse(CPCs, 0, CPCs.length);
+        double[] inverseTransformedValues = transform.transform(transformedValue, 0, transformedValue.length);
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);
 
@@ -137,8 +134,8 @@ public class LKJTransformTest extends TraceCorrelationAssert {
     public void testTransformationLimit() {
         System.out.println("\nTest LKJ transform on the border.");
 
-        double[] transformedValue = transform.inverse(CPCsLimit);
-        double[] inverseTransformedValues = transform.transform(transformedValue);
+        double[] transformedValue = transform.inverse(CPCsLimit, 0, CPCsLimit.length);
+        double[] inverseTransformedValues = transform.transform(transformedValue, 0, transformedValue.length);
 
         SymmetricMatrix R = compoundCorrelationSymmetricMatrix(transformedValue, dim);
         ;
@@ -166,7 +163,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         System.out.println("\nTest LKJ transform.");
 
         double[] transformedValue = transform.inverseRecursion(CPCs, 0, CPCs.length);
-        double[] transformedValueChol = transform.inverse(CPCs);
+        double[] transformedValueChol = transform.inverse(CPCs, 0, CPCs.length);
 
         for (int k = 0; k < transformedValueChol.length; k++) {
             assertEquals("transform chol rec k=" + k,
@@ -203,7 +200,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         System.out.println("\nTest LKJ transform on the border.");
 
         double[] transformedValue = transform.inverseRecursion(CPCsLimit, 0, CPCsLimit.length);
-        double[] transformedValueChol = transform.inverse(CPCsLimit);
+        double[] transformedValueChol = transform.inverse(CPCsLimit, 0, CPCsLimit.length);
 
         for (int k = 0; k < transformedValueChol.length; k++) {
             assertEquals("transform chol rec k=" + k,
@@ -305,7 +302,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         System.out.println("\nTest Correlation to Cholesky Jacobian.");
 
         // Matrix
-        double[] cholValues = transformChol.inverse(CPCs);
+        double[] cholValues = transformChol.inverse(CPCs, 0, CPCs.length);
         double[][] jacobianMat = transformCorrToChol.computeJacobianMatrixInverse(cholValues);
 
         Matrix Jac = new Matrix(jacobianMat);
@@ -339,9 +336,9 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         System.out.println("\nTest LKJ Composition Cholesky Jacobian.");
 
         // Transforms
-        double[] cholValues = transformChol.inverse(CPCs);
-        double[] corrValues = transform.inverse(CPCs);
-        double[] corrValuesBis = transformCorrToChol.inverse(cholValues);
+        double[] cholValues = transformChol.inverse(CPCs, 0, CPCs.length);
+        double[] corrValues = transform.inverse(CPCs, 0, CPCs.length);
+        double[] corrValuesBis = transformCorrToChol.inverse(cholValues, 0, cholValues.length);
 
         Transform.MultivariableTransform transformComposition = new Transform.ComposeMultivariable(transformChol, transformCorrToChol);
         double[] corrValuesTer = transformComposition.inverse(CPCs, 0, CPCs.length);
@@ -357,6 +354,26 @@ public class LKJTransformTest extends TraceCorrelationAssert {
             assertEquals("inverse transform k=" + k,
                     format.format(corrValues[k]),
                     format.format(corrValuesTer[k]));
+        }
+
+        double jacobianDet2ToInf = 0.0;
+        for (int k = 1; k < dim; k++) {
+            double[] tempCPC = new double[k];
+            double[] tempChol = new double[k];
+            int l = k - 1;
+            for (int i = 0; i < k; i++) {
+                tempCPC[i] = CPCs[l];
+                tempChol[i] = cholValues[l];
+                l += dim - i - 2;
+            }
+            EuclideanToInfiniteNormUnitBallTransform transform2ToInf = new EuclideanToInfiniteNormUnitBallTransform(k);
+            double[] cholValuesBis = transform2ToInf.inverse(tempCPC, 0, tempCPC.length);
+            jacobianDet2ToInf += transform2ToInf.getLogJacobian(tempChol, 0, tempChol.length);
+            for (int i = 0; i < k; i++) {
+                assertEquals("spherical=" + k + i,
+                        format.format(tempChol[i]),
+                        format.format(cholValuesBis[i]));
+            }
         }
 
         // Determinant
@@ -377,6 +394,10 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         assertEquals("jacobian log det",
                 format.format(jacobianDetCorrToCPC),
                 format.format(jacobianDetCorrToCPCComp));
+
+        assertEquals("jacobian log det",
+                format.format(jacobianDetCholToCPC),
+                format.format(jacobianDet2ToInf));
 
         // Matrices
         DenseMatrix64F jacobianMatCholToCPC = new DenseMatrix64F(transformChol.computeJacobianMatrixInverse(CPCs));

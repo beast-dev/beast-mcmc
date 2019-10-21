@@ -26,11 +26,11 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.codon.MG94CodonModel;
+import dr.evomodel.substmodel.codon.CodonOptions;
 import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
+import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
-import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -46,6 +46,8 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
     public static final String BETA = "beta";
     public static final String KAPPA = GY94CodonModelParser.KAPPA;
     public static final String NORMALIZED = ComplexSubstitutionModelParser.NORMALIZED;
+
+    private static final String TOTAL_RATES = "areParametersTotalRates";
 
     //for GTR extension
     public static final String GTR_MODEL = GTRParser.GTR_MODEL;
@@ -73,10 +75,13 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
         Parameter betaParam = (Parameter) xo.getElementFirstChild(BETA);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
-        MG94CodonModel codonModel;
+        boolean isParameterTotalRate = xo.getAttribute(TOTAL_RATES, true);
+
+        MG94HKYCodonModel codonModel;
         if (xo.hasChildNamed(GTR_MODEL)) {
-            //TODO: change this into constructing a MG94CodonModel (needs to be written), which is started underneath
-            codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+            //TODO: change this into constructing a MG94HKYCodonModel (needs to be written), which is started underneath
+            codonModel = new MG94K80CodonModel(codons, alphaParam, betaParam, freqModel,
+                    new CodonOptions(isParameterTotalRate));
 
             Parameter rateACValue = null;
             if (xo.hasChildNamed(A_TO_C)) {
@@ -121,17 +126,19 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
 
         }  else if (xo.hasChildNamed(KAPPA)) {
             Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
-            codonModel = new MG94HKYCodonModel(codons, alphaParam, betaParam, kappaParam, freqModel);
-//            System.err.println("setting up MG94HKYCodonModel");
+            codonModel = new MG94HKYCodonModel(codons, alphaParam, betaParam, kappaParam, freqModel,
+                    new CodonOptions(isParameterTotalRate));
+//            System.err.println("setting up MG94K80CodonModel");
         }  else {
             //resort to standard MG94 without nucleotide rate bias
-            codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+            codonModel = new MG94K80CodonModel(codons, alphaParam, betaParam, freqModel,
+                    new CodonOptions(isParameterTotalRate));
         }
 
 
         if (!xo.getAttribute(NORMALIZED, true)) {
 //            codonModel.setNormalization(false);
-//            Logger.getLogger("dr.app.beagle.evomodel").info("MG94CodonModel normalization: false");
+//            Logger.getLogger("dr.app.beagle.evomodel").info("MG94HKYCodonModel normalization: false");
         }
 
         return codonModel;
@@ -146,7 +153,7 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return MG94CodonModel.class;
+        return MG94HKYCodonModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -157,6 +164,7 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
             new StringAttributeRule(GeneticCode.GENETIC_CODE,
                     "The genetic code to use",
                     GeneticCode.GENETIC_CODE_NAMES, true),
+            AttributeRule.newBooleanRule(TOTAL_RATES, true),
             new ElementRule(ALPHA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(BETA,

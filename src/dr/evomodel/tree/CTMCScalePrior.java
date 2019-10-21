@@ -1,7 +1,7 @@
 /*
  * CTMCScalePrior.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,10 +29,8 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.*;
 import dr.math.GammaFunction;
 import dr.util.Author;
 import dr.util.Citable;
@@ -50,7 +48,7 @@ import java.util.Set;
  *         Date: Aug 22, 2008
  *         Time: 3:26:57 PM
  */
-public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
+public class CTMCScalePrior extends AbstractModelLikelihood implements GradientWrtParameterProvider, Citable {
     final private Parameter ctmcScale;
     final private TreeModel treeModel;
     private Set<Taxon> taxa = null;
@@ -60,26 +58,15 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
 
     private double logLikelihood;
     private double storedLogLikelihood;
-    private boolean likelihoodKnown = false;
+    private boolean likelihoodKnown;
 
     final private boolean reciprocal;
     final private SubstitutionModel substitutionModel;
     final private boolean trial;
 
-    private static final double logGammaOneHalf = GammaFunction.lnGamma(0.5);
+    private static final double shape = 0.5;
 
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel) {
-        this(name, ctmcScale, treeModel, false);
-    }
-
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal) {
-        this(name, ctmcScale, treeModel, reciprocal, null);
-    }
-
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
-                          SubstitutionModel substitutionModel) {
-        this(name, ctmcScale, treeModel, null, reciprocal, substitutionModel, false);
-    }
+    private static final double logGammaOneHalf = GammaFunction.lnGamma(shape);
 
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, TaxonList taxonList, boolean reciprocal,
                           SubstitutionModel substitutionModel, boolean trial) {
@@ -90,7 +77,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
         addVariable(ctmcScale);
 
         if (taxonList != null) {
-            this.taxa = new HashSet<Taxon>();
+            this.taxa = new HashSet<>();
             for (Taxon taxon : taxonList) {
                 this.taxa.add(taxon);
             }
@@ -102,6 +89,9 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
 
         this.reciprocal = reciprocal;
         this.substitutionModel = substitutionModel;
+        if (substitutionModel != null) {
+            addModel(substitutionModel);
+        }
         this.trial = trial;
     }
 
@@ -137,6 +127,19 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     private double calculateTrialLikelihood() {
         double totalTreeTime = getTreeLength();
 
+        double lambda2 = -secondLargestEigenvalue();
+
+        double logNormalization = shape * Math.log(lambda2) - logGammaOneHalf;
+
+        double logLike = 0;
+        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+            double ab = ctmcScale.getParameterValue(i) * totalTreeTime;
+            logLike += logNormalization - shape * Math.log(ab) - ab * lambda2;
+        }
+        return logLike;
+    }
+
+    private double secondLargestEigenvalue() {
         double[] eigenValues = substitutionModel.getEigenDecomposition().getEigenValues();
         // Find second largest
         double lambda2 = Double.NEGATIVE_INFINITY;
@@ -145,18 +148,21 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
                 lambda2 = l;
             }
         }
-        lambda2 = -lambda2;
-
-        double logNormalization = 0.5 * Math.log(lambda2) - logGammaOneHalf;
-
-        double logLike = 0;
-        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
-            double ab = ctmcScale.getParameterValue(i) * totalTreeTime;
-            logLike += logNormalization - 0.5 * Math.log(ab) - ab * lambda2;
-        }
-        return logLike;
+        return lambda2;
     }
 
+    private double scaledTotalTreeTime() {
+        double totalTreeTime = getTreeLength();
+        if (reciprocal) {
+            totalTreeTime = 1.0 / totalTreeTime;
+        }
+
+        if (substitutionModel != null) {
+            totalTreeTime *= -secondLargestEigenvalue(); // TODO Should this be /=?
+        }
+        return totalTreeTime;
+    }
+    
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
             logLikelihood = calculateLogLikelihood();
@@ -171,26 +177,13 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
 
         if (trial) return calculateTrialLikelihood();
 
-        double totalTreeTime = getTreeLength();
-        if (reciprocal) {
-            totalTreeTime = 1.0 / totalTreeTime;
-        }
-        if (substitutionModel != null) {
-            double[] eigenValues = substitutionModel.getEigenDecomposition().getEigenValues();
-            // Find second largest
-            double lambda2 = Double.NEGATIVE_INFINITY;
-            for (double l : eigenValues) {
-                if (l > lambda2 && l < 0.0) {
-                    lambda2 = l;
-                }
-            }
-            totalTreeTime *= -lambda2; // TODO Should this be /=?
-        }
-        double logNormalization = 0.5 * Math.log(totalTreeTime) - logGammaOneHalf;
+        double totalTreeTime = scaledTotalTreeTime();
+
+        double logNormalization = shape * Math.log(totalTreeTime) - logGammaOneHalf;
         double logLike = 0;
         for (int i = 0; i < ctmcScale.getDimension(); ++i) {
             double ab = ctmcScale.getParameterValue(i);
-            logLike += logNormalization - 0.5 * Math.log(ab) - ab * totalTreeTime; // TODO Change to treeLength and confirm results
+            logLike += logNormalization - shape * Math.log(ab) - ab * totalTreeTime; // TODO Change to treeLength and confirm results
         }
         return logLike;
     }
@@ -240,4 +233,33 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
             355, 368,
             Citation.Status.PUBLISHED
     );
+
+    @Override
+    public Likelihood getLikelihood() {
+        return this;
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return ctmcScale;
+    }
+
+    @Override
+    public int getDimension() {
+        return ctmcScale.getDimension();
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+
+        double[] gradLogLike = new double[ctmcScale.getDimension()];
+
+        double totalTreeTime = scaledTotalTreeTime();
+
+        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+            double ab = ctmcScale.getParameterValue(i);
+            gradLogLike[i] = -shape / ab - totalTreeTime;
+        }
+        return gradLogLike;
+    }
 }

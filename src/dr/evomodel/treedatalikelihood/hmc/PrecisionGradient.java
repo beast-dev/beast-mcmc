@@ -29,7 +29,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 
 /**
@@ -45,8 +44,6 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
         super(gradientWrtPrecisionProvider, likelihood, parameter);
     }
 
-    NumericalHessianFromGradient hessianFromGradient;
-
     @Override
     double[] getGradientParameter(double[] gradient) {
 
@@ -59,7 +56,7 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
 
     @Override
     public Parameter getParameter() {
-        return compoundSymmetricMatrix;
+        return compoundSymmetricMatrix.getUntransformedCompoundParameter();
     }
 
     @Override
@@ -68,27 +65,28 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
     }
 
     private double[] mergeGradients(double[] gradientDiagonal, double[] gradientCorrelation) {
-        throw new RuntimeException("Not yet implemented");
+        double[] gradient = new double[gradientDiagonal.length + gradientCorrelation.length];
+        System.arraycopy(gradientDiagonal, 0, gradient, 0, gradientDiagonal.length);
+        System.arraycopy(gradientCorrelation, 0, gradient, gradientDiagonal.length, gradientCorrelation.length);
+        return gradient;
     }
 
-
     MultivariateFunction getNumeric() {
-        return null;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     String checkNumeric(double[] analytic) {
-        return "";
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-
-        return new double[0];
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[][] getHessianLogDensity() {
-        return new double[0][];
+        throw new RuntimeException("Not yet implemented");
     }
 }

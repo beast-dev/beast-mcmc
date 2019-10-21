@@ -45,7 +45,7 @@ public class ConjugateRootTraitPrior extends AbstractModel {
     private final Parameter mean;
     private final Parameter pseudoObservations;
 
-    private ConjugateRootTraitPrior(Parameter mean,
+    public ConjugateRootTraitPrior(Parameter mean,
                                     Parameter pseudoObservations) {
         super("ConjugateRootTraitPrior");
         this.mean = mean;

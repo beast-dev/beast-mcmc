@@ -2,15 +2,20 @@ package dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -18,8 +23,10 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuous
 
 /**
  * @author Marc A. Suchard
+ * @author Gabriel Hassler
  */
 public interface GammaGibbsProvider {
+
 
     SufficientStatistics getSufficientStatistics(int dim);
 
@@ -31,7 +38,7 @@ public interface GammaGibbsProvider {
         final public int observationCount;
         final public double sumOfSquaredErrors;
 
-        SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
+        public SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
             this.observationCount = observationCount;
             this.sumOfSquaredErrors = sumOfSquaredErrors;
         }
@@ -101,26 +108,26 @@ public interface GammaGibbsProvider {
         }
     }
 
-    class RepeatedMeasuresGibbsProvider implements GammaGibbsProvider {
+    class NormalExtensionGibbsProvider implements GammaGibbsProvider {
 
-//        private final RepeatedMeasuresTraitDataModel dataModel;
+        private final ModelExtensionProvider.NormalExtensionProvider dataModel;
         private final TreeDataLikelihood treeLikelihood;
         private final CompoundParameter traitParameter;
         private final Parameter precisionParameter;
         private final TreeTrait tipTrait;
         private final boolean[] missingVector;
 
-        private double tipValues[];
+        private double[] tipValues;
 
-        public RepeatedMeasuresGibbsProvider(RepeatedMeasuresTraitDataModel dataModel,
-                                             TreeDataLikelihood treeLikelihood,
-                                             String traitName) {
-//            this.dataModel = dataModel;
+        public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
+                                            TreeDataLikelihood treeLikelihood,
+                                            String traitName) {
+            this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.precisionParameter = dataModel.getSamplingPrecision();
+            this.precisionParameter = dataModel.getExtensionPrecision();
             this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
-            this.missingVector = dataModel.getMissingVector();
+            this.missingVector = dataModel.getMissingIndicator();
         }
 
         @Override
@@ -135,13 +142,12 @@ public interface GammaGibbsProvider {
             for (int taxon = 0; taxon < taxonCount; ++taxon) {
 
                 int offset = traitDim * taxon;
-                if (missingVector == null || !missingVector[dim + offset]){
+                if (missingVector == null || !missingVector[dim + offset]) {
                     double traitValue = traitParameter.getParameter(taxon).getParameterValue(dim);
                     double tipValue = tipValues[taxon * traitDim + dim];
 
                     SSE += (traitValue - tipValue) * (traitValue - tipValue);
-                }
-                else{
+                } else {
                     missingCount += 1;
                 }
             }
@@ -156,7 +162,8 @@ public interface GammaGibbsProvider {
 
         @Override
         public void drawValues() {
-            tipValues = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+            double[] tipTraits = (double[]) tipTrait.getTrait(treeLikelihood.getTree(), null);
+            tipValues = dataModel.transformTreeTraits(tipTraits);
             if (DEBUG) {
                 System.err.println("tipValues: " + new WrappedVector.Raw(tipValues));
             }
@@ -164,4 +171,5 @@ public interface GammaGibbsProvider {
 
         private static final boolean DEBUG = false;
     }
+
 }

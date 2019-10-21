@@ -49,14 +49,13 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
     }
 
     @Override
-    public Parameter getParameter() {
-        return compoundSymmetricMatrix.getUntransformedOffDiagonalParameter();
-    }
-
-
-    @Override
     public int getDimension() {
         return getDimensionCorrelation();
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return compoundSymmetricMatrix.getUntransformedOffDiagonalParameter();
     }
 
     MultivariateFunction getNumeric() {

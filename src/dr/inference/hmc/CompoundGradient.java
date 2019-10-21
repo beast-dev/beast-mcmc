@@ -25,10 +25,8 @@
 
 package dr.inference.hmc;
 
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +36,17 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class CompoundGradient implements GradientWrtParameterProvider {
+public class CompoundGradient implements GradientWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
 
     protected final int dimension;
-    protected final List<GradientWrtParameterProvider> derivativeList;
+    final List<GradientWrtParameterProvider> derivativeList;
     private final Likelihood likelihood;
     private final Parameter parameter;
 
-    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    private final List<DerivativeWrtParameterProvider> newDerivativeList;
+    private final DerivativeOrder highestOrder;
+
+    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
 
         this.derivativeList = derivativeList;
 
@@ -54,7 +55,7 @@ public class CompoundGradient implements GradientWrtParameterProvider {
             parameter = derivativeList.get(0).getParameter();
             dimension = parameter.getDimension();
         } else {
-            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+            List<Likelihood> likelihoodList = new ArrayList<>();
             CompoundParameter compoundParameter = new CompoundParameter("hmc");
 
             int dim = 0;
@@ -75,6 +76,16 @@ public class CompoundGradient implements GradientWrtParameterProvider {
             parameter = compoundParameter;
             dimension = dim;
         }
+
+        // NEW
+        this.newDerivativeList = new ArrayList<>();
+        for (GradientWrtParameterProvider p : derivativeList) {
+            if (p instanceof DerivativeWrtParameterProvider) { // TODO Remove if
+                DerivativeWrtParameterProvider provider = (DerivativeWrtParameterProvider) p;
+                newDerivativeList.add(provider);
+            }
+        }
+        this.highestOrder = DerivativeWrtParameterProvider.getHighestOrder(newDerivativeList);
     }
 
     @Override
@@ -88,16 +99,38 @@ public class CompoundGradient implements GradientWrtParameterProvider {
     }
 
     @Override
+    public int getDimension(DerivativeOrder order) {
+        return order.getDerivativeDimension(dimension);
+    }
+
+    @Override
     public int getDimension() {
         return dimension;
     }
 
-//    @Override
-//    public void getGradientLogDensity(final double[] destination, final int offset) {
-//        double[] grad = getGradientLogDensity();
-//        System.arraycopy(grad, 0, destination, offset, grad.length);
-//    }
+    @Override
+    public double[] getDerivativeLogDensity(DerivativeOrder order) {
 
+        assert (highestOrder.getValue() >= order.getValue());
+
+        double[] result = new double[dimension];
+
+          int offset = 0;
+          for (DerivativeWrtParameterProvider provider : newDerivativeList) {
+
+              double[] tmp = provider.getDerivativeLogDensity(order);
+              System.arraycopy(tmp, 0, result, offset, tmp.length);
+              offset += tmp.length;
+          }
+
+          return result;
+    }
+
+    @Override
+    public DerivativeOrder getHighestOrder() {
+        return highestOrder;
+    }
+    
     @Override
     public double[] getGradientLogDensity() {
 
@@ -112,5 +145,13 @@ public class CompoundGradient implements GradientWrtParameterProvider {
         }
 
         return result;
+    }
+
+    @Override
+    public String getReport() {
+        return  "compoundGradient." + parameter.getParameterName() + "\n" +
+                GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.TOLERANCE);
     }
 }

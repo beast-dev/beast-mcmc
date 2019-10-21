@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
@@ -55,6 +56,8 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
+    protected final int dim;
+
     AbstractDiffusionModelDelegate(Tree tree, MultivariateDiffusionModel diffusionModel,
                                    int partitionNumber) {
 
@@ -63,6 +66,8 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         this.tree = tree;
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
+
+        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(1, 0, partitionNumber);
@@ -164,6 +169,11 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
+    public boolean isIntegratedProcess() {
+        return false;
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionModel) {
             fireModelChanged(model);
@@ -195,7 +205,30 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public void getGradientPrecision(double scalar, DenseMatrix64F gradient) {
-        CommonOps.scale(scalar, gradient);
+    public void getGradientVarianceWrtVariance(NodeRef node,
+                                               ContinuousDiffusionIntegrator cdi,
+                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                               DenseMatrix64F gradient) {
+        getGradientVarianceWrtVariance(getScalarNode(node, cdi, likelihoodDelegate), gradient);
+    }
+
+    private void getGradientVarianceWrtVariance(double scalar, DenseMatrix64F gradient) {
+        if (scalar == 0.0) {
+            for (int i = 0; i < gradient.getNumElements(); i++) {
+                gradient.set(i, 0.0);
+            }
+        } else {
+            CommonOps.scale(scalar, gradient);
+        }
+    }
+
+    private double getScalarNode(NodeRef node,
+                                 ContinuousDiffusionIntegrator cdi,
+                                 ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+        if (tree.isRoot(node)) {
+            return 1.0 / likelihoodDelegate.getRootProcessDelegate().getPseudoObservations();
+        } else {
+            return cdi.getBranchLength(getMatrixIndex(node.getNumber()));
+        }
     }
 }

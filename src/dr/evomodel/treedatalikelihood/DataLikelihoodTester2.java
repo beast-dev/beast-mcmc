@@ -135,7 +135,7 @@ public class DataLikelihoodTester2 {
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -160,7 +160,7 @@ public class DataLikelihoodTester2 {
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         treeDataLikelihood = new TreeDataLikelihood(
                 dataLikelihoodDelegate,
@@ -460,7 +460,7 @@ public class DataLikelihoodTester2 {
                 siteRateModel, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodOne = new TreeDataLikelihood(
                 dataLikelihoodDelegateOne,
@@ -486,7 +486,7 @@ public class DataLikelihoodTester2 {
                 siteRateModel2, false,
                 PartialsRescalingScheme.NONE,
                 false,
-                BeagleDataLikelihoodDelegate.PreOrderSettings.getDefault());
+                PreOrderSettings.getDefault());
 
         TreeDataLikelihood treeDataLikelihoodTwo = new TreeDataLikelihood(
                 dataLikelihoodDelegateTwo,

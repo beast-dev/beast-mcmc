@@ -29,6 +29,11 @@ import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
+import dr.math.MultivariateFunction;
+import dr.math.NumericalDerivative;
+import dr.xml.Reportable;
+
+import java.util.logging.Logger;
 
 /**
  * @author Max Tolkoff
@@ -44,9 +49,7 @@ public interface GradientWrtParameterProvider {
 
     double[] getGradientLogDensity();
 
-//    void getGradientLogDensity(double[] destination, int offset);
-
-    class ParameterWrapper implements GradientWrtParameterProvider, HessianWrtParameterProvider{
+    class ParameterWrapper implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
         final GradientProvider provider;
         final Parameter parameter;
@@ -89,5 +92,140 @@ public interface GradientWrtParameterProvider {
         public double[][] getHessianLogDensity() {
             throw new RuntimeException("Not yet implemented");
         }
+
+        @Override
+        public String getReport() {
+            return getReportAndCheckForError(this, parameter.getBounds().getLowerLimit(0),
+                    parameter.getBounds().getUpperLimit(0), null);
+        }
     }
+
+    class MismatchException extends Exception { }
+
+    class CheckGradientNumerically {
+
+        private final GradientWrtParameterProvider provider;
+        private final Parameter parameter;
+        private final double lowerBound;
+        private final double upperBound;
+
+        private final boolean checkValues;
+        private final double tolerance;
+
+        CheckGradientNumerically(GradientWrtParameterProvider provider,
+                                        double lowerBound, double upperBound,
+                                        Double nullableTolerance) {
+            this.provider = provider;
+            this.parameter = provider.getParameter();
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
+
+            this.checkValues = nullableTolerance != null;
+            this.tolerance = checkValues ? nullableTolerance : 0.0;
+        }
+
+
+        private MultivariateFunction numeric = new MultivariateFunction() {
+
+            @Override
+            public double evaluate(double[] argument) {
+
+                setParameter(argument);
+                return provider.getLikelihood().getLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() {
+                return parameter.getDimension();
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return lowerBound;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return upperBound;
+            }
+        };
+
+        private void setParameter(double[] values) {
+
+            for (int i = 0; i < values.length; ++i) {
+                parameter.setParameterValueQuietly(i, values[i]);
+            }
+
+            parameter.fireParameterChangedEvent();
+        }
+
+        private double[] getNumericalGradient() {
+
+            double[] savedValues = parameter.getParameterValues();
+            double[] testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
+
+            setParameter(savedValues);
+            return testGradient;
+        }
+
+        public String getReport() throws MismatchException {
+
+            double[] analytic = provider.getGradientLogDensity();
+            double[] numeric = getNumericalGradient();
+
+            return makeReport("Gradient\n", analytic, numeric, checkValues, tolerance);
+        }
+    }
+
+    static String makeReport(String header,
+                             double[] analytic,
+                             double[] numeric,
+                             boolean checkValues,
+                             double tolerance) throws MismatchException {
+
+        StringBuilder sb = new StringBuilder(header);
+        sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(analytic));
+        sb.append("\n");
+        sb.append("numeric : ").append(new dr.math.matrixAlgebra.Vector(numeric));
+
+        if (checkValues) {
+            for (int i = 0; i < analytic.length; ++i) {
+                double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
+                if (Math.abs(relativeDifference) > tolerance) {
+                    sb.append("\nDifference @ ").append(i + 1).append(": ")
+                            .append(analytic[i]).append(" ").append(numeric[i])
+                            .append(" ").append(relativeDifference).append("\n");
+                    Logger.getLogger("dr.inference.hmc").info(sb.toString());
+                    throw new MismatchException();
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
+    static String getReportAndCheckForError(GradientWrtParameterProvider provider,
+                                            double lowerBound, double upperBound,
+                                            Double nullableTolerance) {
+        String report;
+        try {
+            report = new CheckGradientNumerically(provider,
+                    lowerBound, upperBound,
+                    nullableTolerance
+            ).getReport();
+        } catch (MismatchException e) {
+            String message = e.getMessage();
+            if (message == null) {
+                message = provider.getParameter().getParameterName();
+            }
+            if (message == null) {
+                message = "Gradient check failure";
+            }
+            throw new RuntimeException(message);
+        }
+
+        return report;
+    }
+
+    Double TOLERANCE = 1E-1;
 }

@@ -26,15 +26,18 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.NoUTurnOperator;
 import dr.util.Transform;
 import dr.xml.*;
+
+import static dr.util.Transform.Util.parseTransform;
 
 /**
  * @author Max Tolkoff
@@ -53,10 +56,12 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+    private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     private final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
     private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
+    private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
     private final static String MASK = "mask";
 
     @Override
@@ -98,17 +103,32 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 
+        int preconditioningMemory = xo.getAttribute(PRECONDITIONING_MEMORY, 0);
+
         AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
+        if (preconditioningType != MassPreconditioner.Type.NONE &&
+                !(derivative instanceof HessianWrtParameterProvider)) {
+            throw new XMLParseException("Unable precondition without a Hessian provider");
+        }
+
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        Transform transform = (Transform)
-                xo.getChild(Transform.class);
+        if (parameter == null) {
+            parameter = derivative.getParameter();
+        }
 
-        if (derivative.getDimension() != parameter.getDimension()) {
+        Transform transform = parseTransform(xo);
+
+        boolean dimensionMismatch = derivative.getDimension() != parameter.getDimension();
+        if (transform != null && transform instanceof Transform.MultivariableTransform) {
+            dimensionMismatch = ((Transform.MultivariableTransform) transform).getDimension() != parameter.getDimension();
+        }
+
+        if (dimensionMismatch) {
             throw new XMLParseException("Gradient (" + derivative.getDimension() +
                     ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
         }
@@ -127,13 +147,24 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double gradientCheckTolerance = xo.getAttribute(GRADIENT_CHECK_TOLERANCE, 1E-3);
         int maxIterations = xo.getAttribute(MAX_ITERATIONS, 10);
         double reductionFactor = xo.getAttribute(REDUCTION_FACTOR, 0.1);
+        double targetAcceptanceProbability = xo.getAttribute(TARGET_ACCEPTANCE_PROBABILITY,
+                0.8); // Stan default
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
-                preconditioningUpdateFrequency, preconditioningDelay, gradientCheckCount, gradientCheckTolerance,
-                maxIterations, reductionFactor
+                preconditioningUpdateFrequency, preconditioningDelay, preconditioningMemory,
+                gradientCheckCount, gradientCheckTolerance,
+                maxIterations, reductionFactor,
+                targetAcceptanceProbability
         );
 
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode);
+    }
+
+    protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
+                                                    Parameter parameter, Transform transform, Parameter mask,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    int runMode) {
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                     parameter, transform, mask,
@@ -141,8 +172,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         } else {
             return new NoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
-                    stepSize, nSteps);
+                    runtimeOptions, preconditioningType);
         }
+
     }
 
     @Override
@@ -150,7 +182,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         return rules;
     }
 
-    private final XMLSyntaxRule[] rules = {
+    protected final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newIntegerRule(N_STEPS, true),
             AttributeRule.newDoubleRule(STEP_SIZE),
@@ -158,7 +190,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newStringRule(PRECONDITIONING, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
-            new ElementRule(Parameter.class),
+            AttributeRule.newDoubleRule(TARGET_ACCEPTANCE_PROBABILITY, true),
+            new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(MASK, new XMLSyntaxRule[] {

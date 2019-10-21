@@ -17,7 +17,7 @@ public class MissingOpsTest {
 
         int getRank();
 
-        double getDet();
+        double getLogDet();
 
         DenseMatrix64F getMatrix();
 
@@ -28,17 +28,17 @@ public class MissingOpsTest {
 
     Instance test0 = new Instance.Basic() {
         public int getRank() {
-            return 1;
+            return 2;
         }
 
-        public double getDet() {
-            return 30.776076925902927;
+        public double getLogDet() {
+            return 42.160726233513714;
         }
 
         public DenseMatrix64F getMatrix() {
             return new DenseMatrix64F(2, 2, true,
                     0.004255873897787696, 0.010962329615067505,
-                           0.010962329615067505, 0.02823689645782389);
+                    0.010962329615067505, 0.02823689645782389);
         }
     };
 
@@ -47,14 +47,14 @@ public class MissingOpsTest {
             return 1;
         }
 
-        public double getDet() {
-            return 30.775756527836183;
+        public double getLogDet() {
+            return 3.4267272543138203;
         }
 
         public DenseMatrix64F getMatrix() {
             return new DenseMatrix64F(2, 2, true,
                     0.004255918204391931, 0.010962443740752292,
-                           0.010962443740752292, 0.028237190424652364);
+                    0.010962443740752292, 0.028237190424652364);
         }
     };
 
@@ -66,13 +66,13 @@ public class MissingOpsTest {
         for (Instance test : all) {
 
             int rank_test = test.getRank();
-            double det_test = test.getDet();
+            double logDet_test = test.getLogDet();
 
             DenseMatrix64F P = test.getMatrix();
 
             InversionResult c = MissingOps.safeDeterminant(P, false);
 
-            assertEquals(c.getDeterminant(), det_test, 1e-6);
+            assertEquals(c.getLogDeterminant(), logDet_test, 1e-6);
             assertEquals(c.getEffectiveDimension(), rank_test, 1e-6);
         }
     }

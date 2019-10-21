@@ -53,7 +53,7 @@ public class TaxonTaskPool {
     public int getNumTaxon() { return taxonCount; }
 
     private List<TaxonTaskIndices> setupTasks(int taxonCount, int threadCount) {
-        List<TaxonTaskIndices> tasks = new ArrayList<TaxonTaskIndices>(threadCount);
+        List<TaxonTaskIndices> tasks = new ArrayList<>(threadCount);
 
         int length = taxonCount / threadCount;
         if (taxonCount % threadCount != 0) ++length;
@@ -101,17 +101,13 @@ public class TaxonTaskPool {
                 pool = setupParallelServices(threadCount);
             }
 
-            List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
+            List<Callable<Object>> calls = new ArrayList<>();
 
             for (final TaxonTaskIndices indexSet : indices) {
 
-                calls.add(Executors.callable(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                for (int taxon = indexSet.start; taxon < indexSet.stop; ++taxon) {
-                                    runnable.execute(taxon, indexSet.task);
-                                }
+                calls.add(Executors.callable(() -> {
+                            for (int taxon = indexSet.start; taxon < indexSet.stop; ++taxon) {
+                                runnable.execute(taxon, indexSet.task);
                             }
                         }
                 ));

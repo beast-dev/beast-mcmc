@@ -1,6 +1,5 @@
 package dr.evomodel.coalescent.hmc;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -11,7 +10,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;
@@ -214,24 +212,25 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 final TreeIntervals intervals = likelihood.getTreeIntervals(0);
 
-                int[] gridIndices = getGridIndexForInternalNodes(likelihood, 0);
+                int[] intervalIndices = new int[tree.getInternalNodeCount()];
+                int[] gridIndices = new int[tree.getInternalNodeCount()];
 
-                for (int i = 0; i < intervals.getIntervalCount(); i++) {
-                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                getGridIndexForInternalNodes(likelihood, 0, intervalIndices, gridIndices);
 
-                        final int nodeIndex = getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree);
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
 
-                        final int numLineage = intervals.getLineageCount(i);
+                    final int nodeIndex = getNodeHeightParameterIndex(node, tree);
 
-                        final double currentPopSize = Math.exp(-currentGamma[gridIndices[nodeIndex]]);
+                    final int numLineage = intervals.getLineageCount(intervalIndices[i]);
 
-                        gradient[nodeIndex] += -currentPopSize * numLineage * (numLineage - 1);
+                    final double currentPopSize = Math.exp(-currentGamma[gridIndices[nodeIndex]]);
 
-                        if (!tree.isRoot(intervals.getCoalescentNode(i))) {
-                            final int nextNumLineage = intervals.getLineageCount(i + 1);
-                            gradient[nodeIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
-                        }
+                    gradient[nodeIndex] += -currentPopSize * numLineage * (numLineage - 1);
 
+                    if (!tree.isRoot(node)) {
+                        final int nextNumLineage = intervals.getLineageCount(intervalIndices[i] + 1);
+                        gradient[nodeIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
                     }
                 }
 
@@ -247,7 +246,8 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 return node.getNumber() - tree.getExternalNodeCount();
             }
 
-            private int[] getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex) {
+            private void getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex,
+                                                       int[] intervalIndices, int[] gridIndices) {
                 Tree tree = likelihood.getTree(treeIndex);
                 double[] sortedValues = new double[tree.getInternalNodeCount()];
                 double[] nodeHeights = parameter.getParameterValues();
@@ -261,18 +261,21 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                     sortedValues[i] = nodeHeights[nodeIndices[i]];
                 }
 
-                int[] indices = new int[tree.getInternalNodeCount()];
-
                 int gridIndex = 0;
                 double[] gridPoints = likelihood.getGridPoints();
+                int intervalIndex = 0;
+                final TreeIntervals intervals = likelihood.getTreeIntervals(treeIndex);
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                     while(gridIndex < gridPoints.length && gridPoints[gridIndex] < sortedValues[i]) {
                         gridIndex++;
                     }
-                    indices[nodeIndices[i]] = gridIndex;
-                }
+                    gridIndices[nodeIndices[i]] = gridIndex;
 
-                return indices;
+                    while(intervalIndex < intervals.getIntervalCount() - 1 && intervals.getIntervalTime(intervalIndex) < sortedValues[i]) {
+                        intervalIndex++;
+                    }
+                    intervalIndices[nodeIndices[i]] = intervalIndex;
+                }
             }
 
         };

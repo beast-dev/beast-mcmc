@@ -11,9 +11,13 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.util.ComparableDouble;
+import dr.util.HeapSort;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,7 +75,9 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
                 tolerance) + " \n";
 
-        header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+        if (wrtParameter != WrtParameter.NODE_HEIGHT){
+            header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+        }
 
         return header;
     }
@@ -243,19 +249,27 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             private int[] getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex) {
                 Tree tree = likelihood.getTree(treeIndex);
-                TreeIntervals intervals = likelihood.getTreeIntervals(treeIndex);
+                double[] sortedValues = new double[tree.getInternalNodeCount()];
+                double[] nodeHeights = parameter.getParameterValues();
+                int[] nodeIndices = new int[tree.getInternalNodeCount()];
+                ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();
+                for (int i = 0; i < nodeIndices.length; i++) {
+                    sortedInternalNodes.add(new ComparableDouble(tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i))));
+                }
+                HeapSort.sort(sortedInternalNodes, nodeIndices);
+                for (int i = 0; i < nodeIndices.length; i++) {
+                    sortedValues[i] = nodeHeights[nodeIndices[i]];
+                }
 
                 int[] indices = new int[tree.getInternalNodeCount()];
 
                 int gridIndex = 0;
                 double[] gridPoints = likelihood.getGridPoints();
-                for (int i = 0; i < intervals.getIntervalCount(); i++) {
-                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                        while(gridPoints[gridIndex] < intervals.getInterval(i) && gridIndex < gridPoints.length - 1) {
-                            gridIndex++;
-                        }
-                        indices[getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree)] = gridIndex;
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    while(gridIndex < gridPoints.length && gridPoints[gridIndex] < sortedValues[i]) {
+                        gridIndex++;
                     }
+                    indices[nodeIndices[i]] = gridIndex;
                 }
 
                 return indices;

@@ -44,7 +44,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private static final String WRT_PARAMETER = "wrtParameter";
 
     private static final String COALESCENT_INTERVAL = "coalescentInterval";
-    private static final String NODE_HEIGHT = "nodeHeight";
+    private static final String NODE_HEIGHTS = "nodeHeights";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -73,7 +73,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {
         if (wrtParameterCase.equalsIgnoreCase(COALESCENT_INTERVAL)) {
             return GMRFSkyrideGradient.WrtParameter.COALESCENT_INTERVAL;
-        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHT)) {
+        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHTS)) {
             return GMRFSkyrideGradient.WrtParameter.NODE_HEIGHTS;
         }
         else {

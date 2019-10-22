@@ -8,6 +8,8 @@ import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -18,7 +20,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Mandev Gill
  */
-public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
+public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
     private final WrtParameter wrtParameter;
@@ -72,6 +74,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
         header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
 
         return header;
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        return Loggable.getColumnsFromReport(this, "GMRFGradient report");
     }
 
     public enum WrtParameter {

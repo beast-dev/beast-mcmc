@@ -69,6 +69,11 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
     }
 
     @Override
+    public void fireParameterChangedEvent() {
+        tree.fireModelChanged();
+    }
+
+    @Override
     public void setParameterValueNotifyChangedAll(int dim, double value) {
         setParameterValue(dim, value);
     }

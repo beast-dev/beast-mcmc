@@ -250,11 +250,13 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                                                        int[] intervalIndices, int[] gridIndices) {
                 Tree tree = likelihood.getTree(treeIndex);
                 double[] sortedValues = new double[tree.getInternalNodeCount()];
-                double[] nodeHeights = parameter.getParameterValues();
+                double[] nodeHeights = new double[tree.getInternalNodeCount()];
                 int[] nodeIndices = new int[tree.getInternalNodeCount()];
                 ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();
                 for (int i = 0; i < nodeIndices.length; i++) {
-                    sortedInternalNodes.add(new ComparableDouble(tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i))));
+                    final double nodeHeight = tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i));
+                    sortedInternalNodes.add(new ComparableDouble(nodeHeight));
+                    nodeHeights[i] = nodeHeight;
                 }
                 HeapSort.sort(sortedInternalNodes, nodeIndices);
                 for (int i = 0; i < nodeIndices.length; i++) {

@@ -77,7 +77,15 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
         ALL {
             @Override
             int[] getLoggableIndices(ModelExtensionProvider extensionProvider) {
-                return null;
+
+                int dim = extensionProvider.getParameter().getDimension();
+                int[] allDims = new int[dim];
+
+                for (int i = 0; i < dim; i++) {
+                    allDims[i] = i;
+                }
+
+                return allDims;
             }
 
             @Override
@@ -89,7 +97,13 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
         MISSING {
             @Override
             int[] getLoggableIndices(ModelExtensionProvider extensionProvider) {
-                return null;
+                int[] missingInds = new int[extensionProvider.getMissingIndices().size()];
+
+                for (int i = 0; i < missingInds.length; i++) {
+                    missingInds[i] = extensionProvider.getMissingIndices().get(i);
+                }
+
+                return missingInds;
             }
 
             @Override

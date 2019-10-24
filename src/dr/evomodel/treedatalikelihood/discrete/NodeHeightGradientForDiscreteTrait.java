@@ -104,12 +104,14 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     @Override
     public String getReport() {
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY,
+                tolerance, smallValueThreshold);
 
         return message;
     }
 
     private final double tolerance = 1E-2;
+    private final double smallValueThreshold = 1E-3;
 
     private static final boolean DEBUG = true;
 

@@ -7,13 +7,13 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider
 import dr.inference.model.MatrixParameterInterface;
 import org.ejml.data.DenseMatrix64F;
 
-public interface ModelExtensionProvider {
+public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider {
 
     ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
                                                      TreeTrait treeTrait,
                                                      Tree tree);
 
-    interface NormalExtensionProvider extends ModelExtensionProvider, ContinuousTraitPartialsProvider {
+    interface NormalExtensionProvider extends ModelExtensionProvider {
 
         DenseMatrix64F getExtensionVariance();
 

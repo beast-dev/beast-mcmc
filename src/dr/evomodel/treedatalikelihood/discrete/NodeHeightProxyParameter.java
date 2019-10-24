@@ -61,6 +61,7 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
     @Override
     public void setParameterValue(int dim, double value) {
         tree.setNodeHeight(tree.getNode(getNodeNumber(dim)), value);
+        tree.pushTreeChangedEvent(tree.getNode(getNodeNumber(dim)));
     }
 
     @Override
@@ -70,7 +71,7 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
 
     @Override
     public void fireParameterChangedEvent() {
-        tree.fireModelChanged();
+        tree.pushTreeChangedEvent();
     }
 
     @Override

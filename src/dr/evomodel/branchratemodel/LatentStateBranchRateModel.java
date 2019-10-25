@@ -31,10 +31,10 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
+
+import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  * LatentStateBranchRateModel
@@ -68,8 +68,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     private final Parameter latentTransitionFrequencyParameter;
     private final TreeParameterModel latentStateProportions;
     private final Parameter latentStateProportionParameter;
-    private final Parameter latentBranchRateParameter;
+    private final Parameter baseRateForLatentBranchesParameter;
     private final CountableBranchCategoryProvider branchCategoryProvider;
+    private final int maximumNumberOfLatentPeriods;
 
     private TwoStateOccupancyMarkovReward markovReward;
     private TwoStateOccupancyMarkovReward storedMarkovReward;
@@ -94,12 +95,12 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
                                               Parameter latentTransitionFrequencyParameter,
                                               Parameter latentStateProportionParameter,
                                               Parameter latentBranchRateParameter,
-                                              CountableBranchCategoryProvider branchCategoryProvider) {
+                                              CountableBranchCategoryProvider branchCategoryProvider,
+                                                int maximumNumberOfLatentPeriods) {
         super(name);
 
         this.tree = treeModel;
         addModel(tree);
-
         this.nonLatentRateModel = nonLatentRateModel;
         addModel(nonLatentRateModel);
 
@@ -109,7 +110,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         this.latentTransitionFrequencyParameter = latentTransitionFrequencyParameter;
         addVariable(latentTransitionFrequencyParameter);
 
-        this.latentBranchRateParameter = latentBranchRateParameter;
+        this.baseRateForLatentBranchesParameter = latentBranchRateParameter;
         if(latentBranchRateParameter!=null) {
             addVariable(latentBranchRateParameter);
         }
@@ -142,6 +143,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
             setUpdateAllBranches();
         }
+        addStatistic(errorStatistic);
+
+        this.maximumNumberOfLatentPeriods = maximumNumberOfLatentPeriods;
     }
 
     public LatentStateBranchRateModel(Parameter rate, Parameter prop) {
@@ -152,8 +156,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         latentTransitionFrequencyParameter = prop;
         latentStateProportions = null;
         this.latentStateProportionParameter = null;
-        this.latentBranchRateParameter = null;
+        this.baseRateForLatentBranchesParameter = null;
         this.branchCategoryProvider = null;
+        this.maximumNumberOfLatentPeriods =5;
     }
 
     private double[] createLatentInfinitesimalMatrix() {
@@ -172,7 +177,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     }
 
     private TwoStateOccupancyMarkovReward createMarkovReward() {
-        TwoStateOccupancyMarkovReward markovReward = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
+        TwoStateOccupancyMarkovReward markovReward = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix(),this.maximumNumberOfLatentPeriods *2);
         return markovReward;
     }
 
@@ -188,8 +193,8 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
 
         double latentProportion = getLatentProportion(tree, node);
-        if(this.latentBranchRateParameter!=null && latentProportion>0){
-            nonLatentRate = this.latentBranchRateParameter.getParameterValue(0);
+        if(this.baseRateForLatentBranchesParameter!=null && latentProportion>0){
+            nonLatentRate = this.baseRateForLatentBranchesParameter.getParameterValue(0);
         }
 
         return calculateBranchRate(nonLatentRate, latentProportion);
@@ -248,9 +253,6 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             }
             likelihoodKnown = false;
             fireModelChanged();
-        }else if(variable == latentBranchRateParameter){
-            // similar to nonLatentRateModel change
-            //TODO maybe remove this case once verified
         }
     }
 
@@ -401,23 +403,36 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         // Therefore all nodes are in state 0
 //        double joint = markovReward.computePdf(reward, branchLength)[state];
 
-        final double joint = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
-
-        final double marg = markovReward.computeConditionalProbability(branchLength, 0, 0);
-
         final double rate = latentTransitionRateParameter.getParameterValue(0) *
                 latentTransitionFrequencyParameter.getParameterValue(0) * branchLength;
         final double zeroJumps = Math.exp(-rate);
+        double joint = zeroJumps;
+        if(proportion>0){
+            joint = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
+        }
+
+//        final double joint = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
+
+        final double marg = markovReward.computeConditionalProbability(branchLength, 0, 0);
 
         // Check numerical tolerance
         if (marg - zeroJumps <= 0.0) {
             return 0.0;
         }
 
+        //Check Truncation for error tolerance
+
+        double truncatedJumpProbability = Arrays.stream(markovReward.getJumpProbabilities(branchLength)).sum();
+
+        if((marg-(zeroJumps+truncatedJumpProbability))>1e-6){
+            Logger.getLogger("error").warning("Insufficient truncation in latent branch rate model");
+        }
+
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
-        double density = joint / (marg - zeroJumps); // conditional on ending state and >= 2 jumps
-        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
+//        double density = joint / (marg - zeroJumps); // conditional on ending state  >= 2 jumps
+        double density = joint / marg;
+//        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
 
         if (DEBUG) {
             if (Double.isInfinite(Math.log(density))) {

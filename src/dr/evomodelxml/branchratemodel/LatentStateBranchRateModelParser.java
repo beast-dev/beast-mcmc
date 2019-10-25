@@ -38,11 +38,12 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String LATENT_TRANSITION_RATE = "latentTransitionRate";
     public static final String LATENT_TRANSITION_FREQUENCY = "latentTransitionFrequency";
     public static final String LATENT_STATE_PROPORTIONS = "latentStateProportions";
-    public static final String LATENT_BRANCH_RATE = "latentBranchRate";
+    public static final String BASE_RATE_FOR_LATENT_BRANCHES = "baseRateForLatentBranches";
+    public static final String MAXIMUM_LATENT_PERIODS="maximumNumberOfLatentPeriods";
 
 
     public String getParserName() {
-        return SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL;
+        return LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -57,17 +58,19 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(LATENT_STATE_PROPORTIONS)) {
             latentStateProportionParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_PROPORTIONS);
         }
-        Parameter latentBranchRateParameter = null;
-        if(xo.hasChildNamed(LATENT_BRANCH_RATE)){
-            latentBranchRateParameter = (Parameter) xo.getElementFirstChild(LATENT_BRANCH_RATE);
+        Parameter baseRateForLatentBranchesParameter = null;
+        if(xo.hasChildNamed(BASE_RATE_FOR_LATENT_BRANCHES)){
+            baseRateForLatentBranchesParameter = (Parameter) xo.getElementFirstChild(BASE_RATE_FOR_LATENT_BRANCHES);
         }
 
-        Logger.getLogger("dr.evomodel").info("\nCreating a latent state branch rate model");
+        int maximumNumberOfLatentPeriods = xo.getAttribute(MAXIMUM_LATENT_PERIODS,5);
+
+        Logger.getLogger("dr").info("\nCreating a latent state branch rate model");
 
         return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,
                 latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-                latentStateProportionParameter, latentBranchRateParameter ,branchCategoryProvider);
+                latentStateProportionParameter, baseRateForLatentBranchesParameter ,branchCategoryProvider,maximumNumberOfLatentPeriods);
 
 
 //        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
@@ -100,8 +103,8 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
             new ElementRule(LATENT_TRANSITION_RATE, Parameter.class, "A parameter which gives the instantaneous rate of switching to and from the latent state", false),
             new ElementRule(LATENT_TRANSITION_FREQUENCY, Parameter.class, "A parameter which gives the rate bias of switching to and from the latent state", false),
             new ElementRule(LATENT_STATE_PROPORTIONS, Parameter.class, "The proportion of each branch which is spend in a latent state", true),
-            new ElementRule(LATENT_BRANCH_RATE,Parameter.class, "An optional rate that will override the branch rates from the branch rate model when proportion latent is greater than 0", true)
-
+            new ElementRule(BASE_RATE_FOR_LATENT_BRANCHES,Parameter.class, "An optional rate that will override the branch rates from the branch rate model when proportion latent is greater than 0", true),
+            new ElementRule(MAXIMUM_LATENT_PERIODS,int.class,"An optional integer specifying the number of latent periods used in calculating the likelihood of the latent proportion",true)
     };
 
 }

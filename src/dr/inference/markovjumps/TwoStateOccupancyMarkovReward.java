@@ -54,15 +54,17 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
     private static final boolean DEBUG2 = false;
 
     public TwoStateOccupancyMarkovReward(double[] Q) {
-        this(Q, 1E-10);
+        this(Q, 1E-10,10);
     }
 
-    public TwoStateOccupancyMarkovReward(double[] Q, double epsilon) {
+    public TwoStateOccupancyMarkovReward(double[] Q, int maximumNumberOfJumps){this(Q,1e-10, maximumNumberOfJumps);}
+
+    public TwoStateOccupancyMarkovReward(double[] Q, double epsilon,int maximumNumberOfJumps) {
         this.Q = Q;
         this.maxTime = 0;
         this.epsilon = epsilon;
 
-        this.maxK = 10;  // TODO How to determine?
+        this.maximumNumberOfJumps = maximumNumberOfJumps;  // TODO How to determine?
 
         eigenSystem = new DefaultEigenSystem(2);
 
@@ -106,7 +108,7 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 
         if (lambda1 == lambda2) return;
 
-        for (int k = 0; k < maxK / 2; ++k) {
+        for (int k = 0; k < maximumNumberOfJumps / 2; ++k) {
             final double l1l2k = Math.pow(lambda1 * lambda2, k);
 
             for (int i = 0; i <= k + 1; ++i) {
@@ -142,20 +144,20 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
     private void computeJumpProbabilities(double lambda1, double lambda2, double time,
                                           final double[][] C, final double[][] D, double[] jumpProbabilities) {
 
-//        jumpProbabilities = new double[maxK];
+//        jumpProbabilities = new double[maximumNumberOfJumps];
 
         final double expLambda1Time = Math.exp(-lambda1 * time);
         final double expLambda2Time = Math.exp(-lambda2 * time);
 
         if (lambda1 == lambda2) {
-            for (int m = 1; m < maxK / 2 + 1; ++m) {
+            for (int m = 1; m < maximumNumberOfJumps / 2 + 1; ++m) {
                 final int k = 2 * m;
                 jumpProbabilities[k] = expLambda1Time * Math.pow(lambda1 * time, k)
                         / Math.exp(GammaFunction.lnGamma(k + 1));
             }
         } else {
 
-            for (int k = 1; k < maxK / 2; ++k) {
+            for (int k = 1; k < maximumNumberOfJumps / 2; ++k) {
                 double sum = 0.0;
                 double multiplicativeFactor = 1.0;
                 for (int i = 1; i <= k + 1; ++i) {
@@ -183,7 +185,24 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 
     public double[][] getD() { return D; }
 
-    public double[] getJumpProbabilities() { return jumpProbabilities; }
+    public double[] getJumpProbabilities(double time) {
+
+            final double lambda0 = -Q[idx(0,0)];
+            final double lambda1 = -Q[idx(1,1)];
+
+            final boolean symmetric = (lambda0 == lambda1);
+
+            if (!symmetric && C == null) {
+                C = new double[(maximumNumberOfJumps / 2) + 1][(maximumNumberOfJumps / 2) + 1];
+                D = new double[(maximumNumberOfJumps / 2) + 1][(maximumNumberOfJumps / 2) + 1];
+                computeCDForJumpProbabilities(lambda0, lambda1, C, D);
+            }
+
+            jumpProbabilities = new double[maximumNumberOfJumps + 1];
+            computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities); // are function of time.
+
+        return jumpProbabilities;
+    }
 
     public double computeCdf(double x, double time, int i, int j) {
         throw new RuntimeException("Not yet implemented");
@@ -199,13 +218,13 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
         final boolean symmetric = (lambda0 == lambda1);
 
         if (!symmetric && C == null) {
-            C = new double[(maxK / 2) + 1][(maxK / 2) + 1];
-            D = new double[(maxK / 2) + 1][(maxK / 2) + 1];
+            C = new double[(maximumNumberOfJumps / 2) + 1][(maximumNumberOfJumps / 2) + 1];
+            D = new double[(maximumNumberOfJumps / 2) + 1][(maximumNumberOfJumps / 2) + 1];
             computeCDForJumpProbabilities(lambda0, lambda1, C, D);
         }
 
         if (jumpProbabilities == null) {
-            jumpProbabilities = new double[maxK + 1];
+            jumpProbabilities = new double[maximumNumberOfJumps + 1];
 //            computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities);   // Error: probs are function of time
         }
         computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities); // are function of time.
@@ -217,7 +236,7 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
             double sum = 0.0;
 
             // if time - x > 0, then there must have been at least k = 2 jumps
-            for (int m = 1; m <= maxK / 2; ++m) {
+            for (int m = 1; m <= maximumNumberOfJumps / 2; ++m) {
                 final int k = 2 * m;
                 sum +=  jumpProbabilities[k] *
                         Math.exp(
@@ -230,7 +249,7 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
         } else {
             // Two rate model
             double sum = 0.0;
-            for (int m = 1; m <= maxK / 2; ++m) {
+            for (int m = 1; m <= maximumNumberOfJumps / 2; ++m) {
                 final int k = 2 * m;
                 sum += jumpProbabilities[k] *
                         GammaDistribution.pdf(x, m, 1.0 / lambda1) *
@@ -373,7 +392,7 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
     }
 
     private final double[] Q;
-    private final int maxK;
+    private final int maximumNumberOfJumps;
 
     private final double epsilon;
 

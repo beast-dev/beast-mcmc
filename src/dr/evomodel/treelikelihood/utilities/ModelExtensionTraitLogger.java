@@ -47,8 +47,10 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
 
 
         LogColumn[] columns = new LogColumn[logDims.length];
-
+        int i = 0;
         for (int dim : logDims) {
+            final int ind = i;
+
             int taxaInd = dim / traitDim;
             int traitInd = dim - taxaInd * traitDim;
 
@@ -56,17 +58,17 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
             Taxon taxon = tree.getNodeTaxon(node);
             String taxonName = (taxon != null) ? taxon.getId() : ("taxon_" + taxaInd);
 
-            columns[dim] = new LogColumn.Abstract(traitName + "." + taxonName + "." + (traitInd + 1)) {
+            columns[i] = new LogColumn.Abstract(traitName + "." + taxonName + "." + (traitInd + 1)) {
                 @Override
                 protected String getFormattedValue() {
-                    if (dim == 0) {
+                    if (ind == 0) {
                         traits = extensionDelegate.getExtendedValues();
                     }
                     return Double.toString(traits[dim]);
                 }
             };
 
-
+            i++;
         }
 
         return columns;

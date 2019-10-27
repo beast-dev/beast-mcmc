@@ -81,7 +81,8 @@ public class ZigZagOperator extends AbstractParticleOperator {
             }
 
             MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(position, velocity);
-            MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum);
+
+            MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum, bounceState);
 
             if (DEBUG) {
                 System.err.println("boundary: " + boundaryBounce);
@@ -167,14 +168,23 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
     private MinimumTravelInformation getNextGradientBounce(ReadableVector action,
                                                            ReadableVector gradient,
-                                                           ReadableVector momentum) {
-
+                                                           ReadableVector momentum,
+                                                           BounceState bounceState) {
         double minimumRoot = Double.POSITIVE_INFINITY;
         int index = -1;
 
         for (int i = 0, len = action.getDim(); i < len; ++i) {
+           double root;
+           if(bounceState.type == Type.GRADIENT && i == bounceState.index){
+               if(gradient.get(i) * action.get(i) > 0) {
+                root = gradient.get(i) * 2.0 / action.get(i);
+               } else {
+                 root = Double.POSITIVE_INFINITY;
+               }
+           } else {
+               root = minimumPositiveRoot(action.get(i) / 2, -gradient.get(i), -momentum.get(i));
+            }
 
-            double root = minimumPositiveRoot(action.get(i) / 2, -gradient.get(i), -momentum.get(i));
             if (root < minimumRoot) {
                 minimumRoot = root;
                 index = i;
@@ -311,9 +321,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
                 reflectMomentum(momentum, position, eventIndex);
 
             } else { // Bounce caused by the gradient
-
                 eventType = Type.GRADIENT;
                 eventIndex = gradientBounce.index;
+                setZeroMomentum(momentum, eventIndex);
 
             }
 
@@ -350,6 +360,12 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         momentum.set(eventIndex, -momentum.get(eventIndex));
         position.set(eventIndex, 0.0); // Exactly on boundary to avoid potential round-off error
+    }
+
+    private static void setZeroMomentum(WrappedVector momentum,
+                                        int grandientEventIndex) {
+
+        momentum.set(grandientEventIndex, 0.0); // Exactly zero on gradient event to avoid potential round-off error
     }
 
     private static void reflectVelocity(WrappedVector velocity,

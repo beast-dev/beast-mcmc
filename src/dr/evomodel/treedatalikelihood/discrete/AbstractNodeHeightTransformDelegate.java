@@ -36,6 +36,7 @@ import dr.inference.model.Parameter;
  * @author Xiang Ji
  */
 public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel {
+    //TODO: remove this class when finished with everything
     protected TreeModel tree;
     protected Parameter nodeHeights;
     protected TreeParameterModel indexHelper;
@@ -44,7 +45,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
                                                Parameter nodeHeights) {
         super(NodeHeightTransformParser.NAME);
         this.tree = treeModel;
-        this.nodeHeights = nodeHeights;
+        this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, false);
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
     }
@@ -53,10 +54,15 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         if (nodeHeights.length != this.nodeHeights.getDimension()) {
             throw new RuntimeException("Dimension mismatch!");
         }
+
         for (int i = 0; i < nodeHeights.length; i++) {
             this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
         }
         tree.pushTreeChangedEvent();
+    }
+
+    public Parameter getNodeHeights() {
+        return nodeHeights;
     }
 
     @Override
@@ -81,5 +87,11 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
     abstract String getReport();
 
     abstract Parameter getParameter();
+
+    abstract double getLogJacobian(double[] values);
+
+    abstract double[] updateGradientLogDensity(double[] gradient, double[] value);
+
+    abstract double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to);
 
 }

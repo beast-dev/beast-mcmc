@@ -58,10 +58,10 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-        final SubtreeLeapOperator.DistanceKernelType distanceKernel = SubtreeLeapOperator.DistanceKernelType.NORMAL;
+        SubtreeLeapOperator.DistanceKernelType distanceKernel = SubtreeLeapOperator.DistanceKernelType.NORMAL;
         if (xo.hasAttribute(DISTANCE_KERNEL)) {
             try {
-                SubtreeLeapOperator.DistanceKernelType.valueOf(xo.getStringAttribute(DISTANCE_KERNEL).trim().toUpperCase());
+                distanceKernel = SubtreeLeapOperator.DistanceKernelType.valueOf(xo.getStringAttribute(DISTANCE_KERNEL).trim().toUpperCase());
             } catch (IllegalArgumentException iae) {
                 throw new XMLParseException("Unrecognised distanceKernel attribute: " + xo.getStringAttribute(DISTANCE_KERNEL));
             }

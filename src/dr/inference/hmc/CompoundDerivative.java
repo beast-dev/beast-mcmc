@@ -32,6 +32,7 @@ import java.util.List;
  * @author Xiang Ji
  */
 
+@Deprecated
 public class CompoundDerivative extends CompoundGradient implements HessianWrtParameterProvider{
     public CompoundDerivative(List<GradientWrtParameterProvider> derivativeList) {
         super(derivativeList);

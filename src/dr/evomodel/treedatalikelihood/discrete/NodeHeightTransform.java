@@ -48,7 +48,13 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
                                BranchRateModel branchrateModel) {
         super(nodeHeights.getDimension());
         this.tree = tree;
-        this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        if (nodeHeights.getDimension() == tree.getInternalNodeCount()) {
+            this.nodeHeightTransformDelegate = new NodeHeightToRatiosFullTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        } else if (nodeHeights.getDimension() == tree.getInternalNodeCount() - 1) {
+            this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
+        } else {
+            throw new RuntimeException("Check internal nodeHeight parameter dimentions.");
+        }
     }
 
     public NodeHeightTransform(Parameter nodeHeights,
@@ -57,6 +63,10 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
         super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
+    }
+
+    public Parameter getNodeHeights() {
+        return nodeHeightTransformDelegate.getNodeHeights();
     }
 
     public Parameter getParameter() {
@@ -105,9 +115,23 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     @Override
     protected double getLogJacobian(double[] values) {
-        throw new RuntimeException("Not yet implemented!");
+        return nodeHeightTransformDelegate.getLogJacobian(values);
     }
 
+    @Override
+    protected double[] updateGradientLogDensity(double[] gradient, double[] value) {
+        return nodeHeightTransformDelegate.updateGradientLogDensity(gradient, value);
+    }
+
+    @Override
+    public double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        return nodeHeightTransformDelegate.updateGradientUnWeightedLogDensity(gradient, value, from, to);
+    }
+
+    @Override
+    public double[] updateGradientInverseUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        return nodeHeightTransformDelegate.updateGradientUnWeightedLogDensity(gradient, inverse(value, from, to), from, to);
+    }
 
     @Override
     public String getReport() {

@@ -31,6 +31,7 @@ import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.inference.model.Model;
+import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.List;
 
@@ -68,14 +69,50 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         this.gradient = new double[tree.getNodeCount() - 1];
 
         likelihoodDelegate.addModelListener(this);
+        likelihoodDelegate.addModelRestoreListener(this);
+
         this.substitutionProcessKnown = false;
     }
+
+    private void printMatrix(double[] matrix) {
+        for (int rate = 0; rate < siteRateModel.getCategoryCount(); ++rate) {
+
+            System.err.println("\nRate = " + rate);
+            for (int i = 0; i < stateCount; ++i) {
+                double[] row = new double[stateCount];
+                System.arraycopy(matrix, rate * stateCount * stateCount + i * stateCount,
+                        row, 0, stateCount);
+                System.err.println(new WrappedVector.Raw(row));
+            }
+        }
+    }
+
+    private void debugMatrixTranspose(final int[] operations) {
+
+        double[] matrix = new double[stateCount * stateCount * siteRateModel.getCategoryCount()];
+        int matrixIndex = operations[4];
+        beagle.getTransitionMatrix(matrixIndex, matrix);
+
+        printMatrix(matrix);
+
+        int destination = 1;
+
+        beagle.transposeTransitionMatrices(new int[]{ matrixIndex }, new int[]{ destination }, 1);
+        beagle.getTransitionMatrix(destination, matrix);
+
+        printMatrix(matrix);
+    }
+
+    private static final boolean DEBUG_TRANSPOSE = false;
 
     @Override
     public void simulate(final int[] operations, final int operationCount,
                          final int rootNodeNumber) {
         //This function updates preOrder Partials for all nodes
         this.simulateRoot(rootNodeNumber);
+
+        if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
+
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
 
         getNodeDerivatives(tree, gradient, null);
@@ -154,47 +191,6 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         });
     }
 
-//    public enum MatrixChoice {
-//        GRADIENT {
-//            @Override
-//            public void getMatrix(SubstitutionModel model, double[] matrix) {
-//                model.getInfinitesimalMatrix(matrix);
-//            }
-//
-//            @Override
-//            public double getRateDifferential(double rate) {
-//                return rate;
-//            }
-//        },
-//        HESSIAN {
-//            @Override
-//            public void getMatrix(SubstitutionModel model, double[] matrix) {
-//                double[] tmp = new double[matrix.length];
-//                model.getInfinitesimalMatrix(tmp);
-//                Arrays.fill(matrix, 0.0);
-//
-//                final int stateCount = model.getDataType().getStateCount();
-//                for (int i = 0; i < stateCount; ++i){
-//                    for ( int j = 0; j < stateCount; ++j){
-//                        for ( int k = 0; k < stateCount; ++k){
-//                            matrix[i * stateCount + j] += tmp[i * stateCount + k] * tmp[k * stateCount + j];
-//                        }
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public double getRateDifferential(double rate) {
-//                return rate * rate;
-//            }
-//        };
-//
-//        public abstract void getMatrix(SubstitutionModel model, double[] matrix);
-//
-//        public abstract double getRateDifferential(double rate);
-//
-//    }
-
     private double[] getHessian(Tree tree, NodeRef node) {
 
         //update all preOrder partials first
@@ -270,11 +266,6 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return evolutionaryProcessDelegate.getInfinitesimalSquaredMatrixBufferIndex(nodeNum);
     }
 
-//    @Override
-//    public boolean isTraitLoggable() {
-//        return false;
-//    }
-
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
         substitutionProcessKnown = false;
@@ -282,7 +273,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     @Override
     public void modelRestored(Model model) {
-        // Do nothing
+        substitutionProcessKnown = false;
     }
 
     @Override
@@ -350,4 +341,3 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
     private long getTraitCount = 0;
     private long updatePrePartialCount = 0;
 }
-

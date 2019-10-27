@@ -25,17 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * MultiPartitionDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @author Guy Baele
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -57,28 +46,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
+/**
+ * MultiPartitionDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @author Guy Baele
+ * @version $Id$
+ */
+
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
     private static final boolean RESCALING_OFF = false; // a debugging switch
     private static final boolean DEBUG = false;
-
-    public static boolean IS_MULTI_PARTITION_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3;
-    }
-
-    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
-    }
-
-    public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
-    }
 
     public static boolean IS_MULTI_PARTITION_RECOMMENDED() {
         if (!IS_MULTI_PARTITION_COMPATIBLE()) {
@@ -656,43 +642,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 updateSiteRateModels[i] = true;
             }
         }
-    }
-
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
     }
 
     private int getScaleBufferCount() {

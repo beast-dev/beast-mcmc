@@ -212,5 +212,5 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     protected final Parameter parameter;
     protected final Transform transform;
     protected final boolean inverse;
-    private Bounds<Double> transformedBounds;
+    protected Bounds<Double> transformedBounds;
 }

@@ -1,7 +1,7 @@
 /*
  * CTMCScalePrior.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -53,7 +53,12 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements GradientW
     final private TreeModel treeModel;
     private Set<Taxon> taxa = null;
     private double treeLength;
+    private double storedTreeLength;
     private boolean treeLengthKnown;
+
+    private double logLikelihood;
+    private double storedLogLikelihood;
+    private boolean likelihoodKnown;
 
     final private boolean reciprocal;
     final private SubstitutionModel substitutionModel;
@@ -63,33 +68,25 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements GradientW
 
     private static final double logGammaOneHalf = GammaFunction.lnGamma(shape);
 
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel) {
-        this(name, ctmcScale, treeModel, false);
-    }
-
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal) {
-        this(name, ctmcScale, treeModel, reciprocal, null);
-    }
-
-    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
-                          SubstitutionModel substitutionModel) {
-        this(name, ctmcScale, treeModel, null, reciprocal, substitutionModel, false);
-    }
-
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, TaxonList taxonList, boolean reciprocal,
                           SubstitutionModel substitutionModel, boolean trial) {
         super(name);
         this.ctmcScale = ctmcScale;
         this.treeModel = treeModel;
 
+        addVariable(ctmcScale);
+
         if (taxonList != null) {
-            this.taxa = new HashSet<Taxon>();
+            this.taxa = new HashSet<>();
             for (Taxon taxon : taxonList) {
                 this.taxa.add(taxon);
             }
         }
         addModel(treeModel);
+
         treeLengthKnown = false;
+        likelihoodKnown = false;
+
         this.reciprocal = reciprocal;
         this.substitutionModel = substitutionModel;
         if (substitutionModel != null) {
@@ -99,19 +96,25 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements GradientW
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
-            treeLengthKnown = false;
-        }
+        treeLengthKnown = false;
+        likelihoodKnown = false;
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        treeLengthKnown = false;
+        likelihoodKnown = false;
     }
 
     protected void storeState() {
+        storedLogLikelihood = logLikelihood;
+        storedTreeLength = treeLength;
     }
 
     protected void restoreState() {
-        treeLengthKnown = false;
+        logLikelihood = storedLogLikelihood;
+        treeLength = storedTreeLength;
+        treeLengthKnown = true;
+        likelihoodKnown = true;
     }
 
     protected void acceptState() {
@@ -161,6 +164,16 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements GradientW
     }
     
     public double getLogLikelihood() {
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+
+        return logLikelihood;
+    }
+
+
+    private double calculateLogLikelihood() {
 
         if (trial) return calculateTrialLikelihood();
 
@@ -176,20 +189,21 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements GradientW
     }
 
     private double getTreeLength() {
-        //if (!treeLengthKnown) {
+        if (!treeLengthKnown) {
             if (taxa == null) {
                 treeLength = TreeUtils.getTreeLength(treeModel, treeModel.getRoot());
             } else {
                 treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
             }
-        //    treeLengthKnown = true;
-        //}
-        
+            treeLengthKnown = true;
+        }
+
         return treeLength;
     }
 
     public void makeDirty() {
         treeLengthKnown = false;
+        likelihoodKnown = false;
     }
 
     @Override

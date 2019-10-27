@@ -1,7 +1,7 @@
 /*
  * BeagleDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,10 +43,11 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
 
 /**
  * BeagleDataLikelihoodDelegate
@@ -65,17 +66,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final boolean RESCALING_OFF = false; // a debugging switch
 
     private static final boolean DEBUG = false; // write debug information to stdOut
-
-    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
-    }
-
-    public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
-    }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -109,23 +99,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private long totalMatrixUpdateCount = 0;
     private long totalPartialsUpdateCount = 0;
     private long totalEvaluationCount = 0;
-
-
-    public static class PreOrderSettings {
-        boolean usePreOrder;
-        boolean branchRateDerivative;
-        boolean branchInfinitesimalDerivative;
-
-        public PreOrderSettings(boolean usePreOrder, boolean branchRateDerivative, boolean branchInfinitesimalDerivative) {
-            this.usePreOrder = usePreOrder;
-            this.branchRateDerivative = branchRateDerivative;
-            this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
-        }
-
-        public static PreOrderSettings getDefault () {
-            return new PreOrderSettings(false, false, false);
-        }
-    }
 
     /**
      *
@@ -352,10 +325,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 }
             }
 
-            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
-                // if single precision not explicitly set then prefer double
-                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-            }
+//            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+//                // if single precision not explicitly set then prefer double
+//                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+//            }
+
+//            requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
 
             if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
@@ -371,6 +346,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 // when using non-CPU preferences or prioritising non-CPU resource
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
                 preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            }
+
+            if (settings.usePreOrder && stateCount > 4) {
+                requirementFlags |= BeagleFlag.PREORDER_TRANSPOSE_AUTO.getMask();
             }
 
             // start auto resource selection
@@ -465,6 +444,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
             }
+
+//            if (!IS_PRE_ORDER_SUPPORTED() && settings.usePreOrder) {
+//                throw new IllegalArgumentException("BEAGLE library does not support pre-order computation");
+//            }
 
             //add in logger info for preOrder traversal
             logger.info("  " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
@@ -566,43 +549,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return this.patternList;
     }
 
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
     public Beagle getBeagleInstance() { return beagle; }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
 
     private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;

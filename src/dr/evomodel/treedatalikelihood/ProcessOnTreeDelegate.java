@@ -25,8 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-import dr.inference.model.Model;
-
 import java.util.List;
 
 /**
@@ -41,7 +39,7 @@ public interface ProcessOnTreeDelegate {
     TreeTraversal.TraversalType getOptimalTraversalType();
 
     final class BranchOperation {
-        public BranchOperation(int branchNumber, double branchLength) {
+        BranchOperation(int branchNumber, double branchLength) {
             this.branchNumber = branchNumber;
             this.branchLength = branchLength;
         }
@@ -63,7 +61,7 @@ public interface ProcessOnTreeDelegate {
     }
 
     final class NodeOperation {
-        public NodeOperation(int nodeNumber, int leftChild, int rightChild) {
+        NodeOperation(int nodeNumber, int leftChild, int rightChild) {
             this.nodeNumber = nodeNumber;
             this.leftChild = leftChild;
             this.rightChild = rightChild;
@@ -91,7 +89,7 @@ public interface ProcessOnTreeDelegate {
     }
 
     final class BranchNodeOperation {
-        public BranchNodeOperation(int nodeNumber, int parentNumber, double branchLength) {
+        BranchNodeOperation(int nodeNumber, int parentNumber, double branchLength) {
             this.nodeNumber = nodeNumber;
             this.parentNumber = parentNumber;
             this.branchLength = branchLength;
@@ -116,6 +114,7 @@ public interface ProcessOnTreeDelegate {
 
     final class Utils {
 
+        @SuppressWarnings("unused")
         static <T> String toString(List<T> operations) {
             StringBuilder sb = new StringBuilder();
             for (T op : operations) {

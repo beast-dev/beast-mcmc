@@ -34,7 +34,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marc Suchard
@@ -45,6 +47,7 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
     private final ParameterReplaceableSubstitutionModel substitutionModel;
     private final TreeModel tree;
     private final List<SubstitutionModel> substitutionModelList;
+    private Map<BranchRateModel, CompoundParameter> substitutionParameterMap = new HashMap<BranchRateModel, CompoundParameter>();
 
     public BranchSpecificSubstitutionParameterBranchModel(String name,
                                                           List<Parameter> substitutionParameterList,
@@ -70,11 +73,26 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
             List<Parameter> newSubstitutionParameterList = new ArrayList<>();
             for (int j = 0; j < branchRateModelList.size(); j++) {
                 Parameter rootParameter = substitutionParameterList.get(j);
-                newSubstitutionParameterList.add(new ProxySubstitutionParameter(branchRateModelList.get(j), tree, rootParameter, i));
+                Parameter branchProxyParameter = new ProxySubstitutionParameter(branchRateModelList.get(j), tree, rootParameter, i);
+                mapParamter(branchRateModelList.get(j), branchProxyParameter);
+                newSubstitutionParameterList.add(branchProxyParameter);
             }
             substitutionModelList.add(substitutionModel.factory(substitutionParameterList, newSubstitutionParameterList));
         }
         return substitutionModelList;
+    }
+
+    public CompoundParameter getBranchSpecificParameters(BranchRateModel branchRateModel) {
+        return substitutionParameterMap.get(branchRateModel);
+    }
+
+    private void mapParamter(BranchRateModel branchRateModel, Parameter branchProxyParameter) {
+        CompoundParameter parameters = substitutionParameterMap.get(branchRateModel);
+        if (parameters == null) {
+            parameters = new CompoundParameter("branchSpecific." + branchRateModel.getId());
+            substitutionParameterMap.put(branchRateModel, parameters);
+        }
+        parameters.addParameter(branchProxyParameter);
     }
 
     private class ProxySubstitutionParameter extends Parameter.Proxy implements ModelListener {
@@ -153,6 +171,10 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModelList;
+    }
+
+    public SubstitutionModel getSubstitutionModel(NodeRef branch) {
+        return substitutionModelList.get(branch.getNumber());
     }
 
     @Override

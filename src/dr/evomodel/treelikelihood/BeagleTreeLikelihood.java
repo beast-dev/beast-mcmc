@@ -68,6 +68,8 @@ import dr.util.CommonCitations;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
@@ -80,16 +82,6 @@ import java.util.logging.Logger;
 @SuppressWarnings("serial")
 @Deprecated // Switching to TreeDataLikelihood
 public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Citable {
-    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
-    }
-
-    public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
-    }
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -542,42 +534,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
         this.useAmbiguities = useAmbiguities;
         hasInitialized = true;
-    }
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
     }
 
     public TipStatesModel getTipStatesModel() {

@@ -94,6 +94,21 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
     }
 
     @Override
+    double getLogJacobian(double[] values) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    double[] updateGradientLogDensity(double[] gradient, double[] value) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    double[] updateGradientUnWeightedLogDensity(double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
     }

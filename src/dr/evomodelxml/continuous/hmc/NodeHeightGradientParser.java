@@ -27,11 +27,9 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -57,32 +55,27 @@ public class NodeHeightGradientParser extends AbstractXMLObjectParser {
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
-        if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
+        Parameter branchRates = null;
+        if (branchRateModel instanceof ArbitraryBranchRates) {
+            branchRates = ((ArbitraryBranchRates) branchRateModel).getRateParameter();
+        }
 
-            Parameter branchRates = null;
-            if (branchRateModel instanceof ArbitraryBranchRates) {
-                branchRates = ((ArbitraryBranchRates) branchRateModel).getRateParameter();
-            }
+        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
-            DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-
-            if (delegate instanceof ContinuousDataLikelihoodDelegate) {
+        if (delegate instanceof ContinuousDataLikelihoodDelegate) {
 
 //                ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
 //                return new NodeHeightGradient(traitName, treeDataLikelihood, continuousData, branchRates);
 
-                throw new XMLParseException("Not yet implemented! ");
-            } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
+            throw new XMLParseException("Not yet implemented! ");
+        } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
-                BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                return new NodeHeightGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates);
-            } else {
-                throw new XMLParseException("Unknown likelihood delegate type");
-            }
-
+            BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
+            return new NodeHeightGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates);
         } else {
-            throw new XMLParseException("Only implemented for an arbitrary rates model");
+            throw new XMLParseException("Unknown likelihood delegate type");
         }
+
     }
 
     @Override

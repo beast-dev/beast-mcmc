@@ -943,6 +943,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         updateSiteModel = true;
         updateSubstitutionModel = true;
         updateRootFrequency = true;
+        fireModelChanged();
     }
 
     @Override

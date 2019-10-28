@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.loggers.LogColumn;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
 import dr.inference.model.*;
 
@@ -144,6 +145,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             setUpdateAllBranches();
         }
         addStatistic(errorStatistic);
+        addStatistic(exogenousMeanRate);
 
         this.maximumNumberOfLatentPeriods = maximumNumberOfLatentPeriods;
     }
@@ -529,6 +531,97 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         System.out.println(model.getMarkovReward());
 
     }
+
+    private Statistic errorStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "truncationError";
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public String getDimensionName(int dim) {
+            return getId();
+        }
+
+        public double getStatisticValue(int dim) {
+            return getError();
+        }
+
+    };
+
+    public final double getError(){
+        double error = 0.0;
+
+        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+            NodeRef node = tree.getNode(i);
+            if (node != tree.getRoot()) {
+                double branchLength = tree.getBranchLength(node);
+                 error += markovReward.getTruncationError(branchLength,0,0);
+            }
+        }
+        return error;
+    }
+
+    private Statistic exogenousMeanRate = new Statistic.Abstract() {
+        //shameful hack  - code borrowed from RateStatistic
+        // A statistic to log the mean rate of the nonLatent bits of the tree.
+        public String getStatisticName() {
+            return "exogenousMeanRate";
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public String getDimensionName(int dim) {
+            return getId();
+        }
+
+        public double getStatisticValue(int dim) {
+
+            int length = 0;
+            int offset = 0;
+
+            length += tree.getExternalNodeCount();
+            offset = length;
+            length += tree.getInternalNodeCount() - 1;
+
+
+            final double[] rates = new double[length];
+            // need those only for mean
+            final double[] branchLengths = new double[length];
+
+            for (int i = 0; i < offset; i++) {
+                NodeRef child = tree.getExternalNode(i);
+                NodeRef parent = tree.getParent(child);
+                branchLengths[i] = tree.getNodeHeight(parent) - tree.getNodeHeight(child) *(1-getLatentProportion(tree,child));
+                rates[i] = nonLatentRateModel.getBranchRate(tree, child);
+            }
+            final int n = tree.getInternalNodeCount();
+            int k = offset;
+            for (int i = 0; i < n; i++) {
+                NodeRef child = tree.getInternalNode(i);
+                if (!tree.isRoot(child)) {
+                    NodeRef parent = tree.getParent(child);
+                    branchLengths[k] = tree.getNodeHeight(parent) - tree.getNodeHeight(child)*(1-getLatentProportion(tree,child));
+                    rates[k] = nonLatentRateModel.getBranchRate(tree, child);
+                    k++;
+                }
+            }
+            double totalWeightedRate = 0.0;
+            double totalTreeLength = 0.0;
+            for (int i = 0; i < rates.length; i++) {
+                    totalWeightedRate += rates[i] * branchLengths[i];
+                    totalTreeLength += branchLengths[i];
+                }
+                return totalWeightedRate / totalTreeLength;
+        }
+
+
+    };
 
     private static boolean DEBUG = true;
 

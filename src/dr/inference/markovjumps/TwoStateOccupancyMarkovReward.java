@@ -261,6 +261,48 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
         }
     }
 
+    /**
+     * A method that returns the difference in probability of ending in the start state calculated from the truncated sum
+     * jumpProbabilities and the conditional probability that used matrix exponenitiation to sum over all possible number of jumps
+     * @param time - the total time i.e., the branch length
+     * @param i
+     * @param j
+     * @return
+     */
+    public double getTruncationError(double time, int i, int j){
+        if (i != 0 || j != 0) throw new RuntimeException("Not yet implemented");
+
+        final double lambda0 = -Q[idx(0,0)];
+        final double lambda1 = -Q[idx(1,1)];
+
+        final boolean symmetric = (lambda0 == lambda1);
+
+        if (!symmetric && C == null) {
+            C = new double[(maximumNumberOfJumps / 2) + 1][(maximumNumberOfJumps / 2) + 1];
+            D = new double[(maximumNumberOfJumps / 2) + 1][(maximumNumberOfJumps / 2) + 1];
+            computeCDForJumpProbabilities(lambda0, lambda1, C, D);
+        }
+
+        if (jumpProbabilities == null) {
+            jumpProbabilities = new double[maximumNumberOfJumps + 1];
+//            computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities);   // Error: probs are function of time
+        }
+        computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities); // are function of time.
+
+        double sum = 0.0;
+        for (int m = 1; m <= maximumNumberOfJumps / 2; ++m) {
+            final int k = 2 * m;
+            sum +=  jumpProbabilities[k];
+
+        }
+        final double rate = lambda0 * time;
+        sum += Math.exp(-rate); // include no jump possibility
+
+        double marg = computeConditionalProbability(time,i,j);
+        return Math.abs(sum-marg);
+
+    }
+
     public double[] computePdf(double x, double time) {
         throw new RuntimeException("Not yet implemented");
     }

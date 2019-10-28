@@ -215,8 +215,6 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
 
-    private static final boolean USE_CACHE = true;
-
     private void getNodeDerivatives(Tree tree, double[] first, double[] second) {
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
@@ -225,7 +223,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
 
         boolean needsUpdate = !substitutionProcessKnown || second != null;
-        if (!USE_CACHE || needsUpdate) {
+        if (needsUpdate) {
             cacheDifferentialMassMatrix(tree, second != null);
             substitutionProcessKnown = true;
         }

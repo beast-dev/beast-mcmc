@@ -222,13 +222,16 @@ public class ZigZagOperator extends AbstractParticleOperator {
                                               double b,
                                               double c) {
 
+        b = b * sign(a);
+        c = c * sign(a);
+        a = Math.abs(a);
+
         double discriminant = b * b - 4 * a * c;
         if (discriminant < 0.0) {
             return Double.POSITIVE_INFINITY;
         }
 
         double sqrtDiscriminant = Math.sqrt(discriminant);
-
         double root = (-b - sqrtDiscriminant) / (2 * a);
         if (root <= 0.0) {
             root = (-b + sqrtDiscriminant) / (2 * a);

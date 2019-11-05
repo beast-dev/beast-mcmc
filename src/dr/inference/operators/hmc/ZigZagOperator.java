@@ -1,7 +1,7 @@
 /*
  * NewHamiltonianMonteCarloOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -366,9 +366,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private static void setZeroMomentum(WrappedVector momentum,
-                                        int grandientEventIndex) {
+                                        int gradientEventIndex) {
 
-        momentum.set(grandientEventIndex, 0.0); // Exactly zero on gradient event to avoid potential round-off error
+        momentum.set(gradientEventIndex, 0.0); // Exactly zero on gradient event to avoid potential round-off error
     }
 
     private static void reflectVelocity(WrappedVector velocity,

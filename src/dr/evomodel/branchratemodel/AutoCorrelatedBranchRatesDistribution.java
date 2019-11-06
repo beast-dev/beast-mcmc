@@ -102,6 +102,10 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         }
     }
 
+    public ParametricMultivariateDistributionModel getPrior() {
+        return distribution;
+    }
+
     @Override
     public Likelihood getLikelihood() {
         return this;
@@ -353,6 +357,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double transformGradient(double gradient, double value) { return gradient; }
 
             @Override
+            double inverseTransformGradient(double gradient, double value) { return gradient; }
+
+            @Override
             boolean needsIncrementCorrection() { return false; }
         },
 
@@ -382,6 +389,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             }
 
             @Override
+            double inverseTransformGradient(double gradient, double value) {
+                return gradient * value;
+            }
+
+            @Override
             boolean needsIncrementCorrection() { return true; }
         };
 
@@ -393,11 +405,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         abstract double transform(double x);
 
+        abstract double transformGradient(double gradient, double value);
+
         abstract double  getTransformLogJacobian(double x);
 
         abstract double inverseTransform(double x);
 
-        abstract double transformGradient(double gradient, double value);
+        abstract double inverseTransformGradient(double gradient, double value);
 
         abstract boolean needsIncrementCorrection();
     }

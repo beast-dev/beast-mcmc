@@ -85,6 +85,10 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         return gradientWrtIncrements;
     }
 
+    public AutoCorrelatedBranchRatesDistribution getDistribution() {
+        return distribution;
+    }
+
     private int recursePostOrderToCorrectGradient(NodeRef node, double[] gradientWrtIncrements) {
 
         // On STRICTLY_POSITIVE scale, log-likelihood includes log-Jacobian (\sum_{increments} -> rate)
@@ -149,6 +153,15 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
                 }
 
                 rateParameter.fireParameterChangedEvent();
+            }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder(String.valueOf(getParameterValue(0)));
+                for (int i = 1; i < dim; ++i) {
+                    sb.append(", ").append(getParameterValue(i));
+                }
+                return sb.toString();
             }
         };
     }

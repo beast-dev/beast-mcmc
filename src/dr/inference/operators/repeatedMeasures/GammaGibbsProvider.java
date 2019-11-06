@@ -39,7 +39,7 @@ public interface GammaGibbsProvider {
         final public int observationCount;
         final public double sumOfSquaredErrors;
 
-        SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
+        public SufficientStatistics(int observationCount, double sumOfSquaredErrors) {
             this.observationCount = observationCount;
             this.sumOfSquaredErrors = sumOfSquaredErrors;
         }
@@ -118,7 +118,7 @@ public interface GammaGibbsProvider {
         private final TreeTrait tipTrait;
         private final boolean[] missingVector;
 
-        private double tipValues[];
+        private double[] tipValues;
 
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
                                             TreeDataLikelihood treeLikelihood,

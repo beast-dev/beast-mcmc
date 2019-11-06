@@ -7,6 +7,7 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.model.Parameter;
 import dr.math.AdaptableCovariance;
 import dr.math.AdaptableVector;
 import dr.math.MathUtils;
@@ -41,7 +42,12 @@ public interface MassPreconditioner {
         NONE("none") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                return new NoPreconditioning(gradient.getDimension());
+                final Parameter parameter = gradient.getParameter();
+                int dim = parameter.getDimension();
+                if (transform != null && transform instanceof Transform.MultivariableTransform) {
+                    dim = ((Transform.MultivariableTransform) transform).getDimension();
+                }
+                return new NoPreconditioning(dim);
             }
         },
         DIAGONAL("diagonal") {

@@ -8,6 +8,8 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
+
+@Deprecated
 public class AutoCorrelatedRatesWithBayesianBridge implements BayesianBridgeStatisticsProvider {
 
     private final AutoCorrelatedBranchRatesDistribution rates;

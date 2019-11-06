@@ -170,7 +170,7 @@ public interface ReadableVector {
 
             assert (lhs.getDim() == rhs.getDim());
             double[] l = lhs.getBuffer();
-            double[] r = lhs.getBuffer();
+            double[] r = rhs.getBuffer();
             int lOffset = lhs.getOffset();
             int rOffset = rhs.getOffset();
 

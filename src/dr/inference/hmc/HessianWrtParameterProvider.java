@@ -28,18 +28,13 @@ package dr.inference.hmc;
 import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inference.operators.hmc.NumericalHessianFromGradient;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
 public interface HessianWrtParameterProvider extends GradientWrtParameterProvider {
-
-//    Likelihood getLikelihood();
-
-//    Parameter getParameter();
-
-//    int getDimension();
 
     double[] getDiagonalHessianLogDensity();
 
@@ -88,4 +83,50 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
         }
     }
 
+    class CheckHessianNumerically {
+
+        private final HessianWrtParameterProvider provider;
+        private final NumericalHessianFromGradient numericProvider;
+
+        private final boolean checkValues;
+        private final double tolerance;
+
+        CheckHessianNumerically(HessianWrtParameterProvider provider,
+                                        Double nullableTolerance) {
+            this.provider = provider;
+            this.numericProvider = new NumericalHessianFromGradient(provider);
+
+            this.checkValues = nullableTolerance != null;
+            this.tolerance = checkValues ? nullableTolerance : 0.0;
+        }
+
+        public String getReport() throws MismatchException {
+
+            double[] analytic = provider.getDiagonalHessianLogDensity();
+            double[] numeric = numericProvider.getDiagonalHessianLogDensity();
+
+            return GradientWrtParameterProvider.makeReport("Hessian\n", analytic, numeric, checkValues, tolerance);
+        }
+    }
+
+    static String getReportAndCheckForError(HessianWrtParameterProvider provider,
+                                            Double nullableTolerance) {
+        String report;
+        try {
+            report = new CheckHessianNumerically(provider,
+                    nullableTolerance
+            ).getReport();
+        } catch (MismatchException e) {
+            String message = e.getMessage();
+            if (message == null) {
+                message = provider.getParameter().getParameterName();
+            }
+            if (message == null) {
+                message = "Hessian check failure";
+            }
+            throw new RuntimeException(message);
+        }
+
+        return report;
+    }
 }

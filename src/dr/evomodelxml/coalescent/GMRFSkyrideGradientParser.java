@@ -30,8 +30,8 @@ import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
@@ -49,13 +49,15 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+//        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         GMRFSkyrideLikelihood skyrideLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
 
         GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
         if (type != null) {
+            type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
             return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
         }
 
@@ -65,7 +67,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
         NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
 
-        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, parameter, nodeHeightTransform);
+        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform);
     }
 
     private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {
@@ -86,7 +88,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
-            new ElementRule(Parameter.class, true),
+            new ElementRule(TreeModel.class, true),
             new ElementRule(GMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),
     };

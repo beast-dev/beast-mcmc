@@ -25,23 +25,15 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evomodel.branchmodel.ArbitrarySubstitutionParameterBranchModel;
 import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
-import dr.evomodel.substmodel.DifferentialMassProvider;
+import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchSubstitutionParameterGradient;
+import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
@@ -66,14 +58,15 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        ArbitrarySubstitutionParameterBranchModel branchModel = (ArbitrarySubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
+        BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
 
-        BranchParameter branchParameter = (BranchParameter) xo.getChild(Parameter.class);
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
 
-        return new DiscreteTraitBranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                branchParameter, useHessian);
+        return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
+                branchParameter, branchRateModel, useHessian);
     }
 
     @Override
@@ -84,8 +77,8 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(ArbitrarySubstitutionParameterBranchModel.class),
-            new ElementRule(Parameter.class)
+            new ElementRule(BranchSpecificSubstitutionParameterBranchModel.class),
+            new ElementRule(BranchRateModel.class)
     };
 
     @Override
@@ -95,6 +88,6 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
     @Override
     public Class getReturnType() {
-        return DiscreteTraitBranchSubstitutionParameterGradient.class;
+        return BranchSubstitutionParameterGradient.class;
     }
 }

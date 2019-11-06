@@ -70,14 +70,16 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
                 return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
-                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent));
+                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent,
+                                coefficients.getDimension()));
             }
         } else {
             if (old) {
                 return new OldMarginalBayesianBridge(coefficients, globalScale, exponent);
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
-                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent));
+                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
+                                coefficients.getDimension()));
             }
         }
     }

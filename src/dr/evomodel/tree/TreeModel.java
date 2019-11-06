@@ -565,6 +565,9 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
         ((Node) n).setHeight(height);
     }
 
+    public void setNodeHeightQuietly(NodeRef n, double height) {
+        ((Node) n).setHeightQuietly(height);
+    }
 
     public void setNodeRate(NodeRef n, double rate) {
         if (!hasRates) throw new IllegalArgumentException("Rate parameters have not been created");
@@ -1495,6 +1498,10 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
 
         public final void setHeight(double height) {
             heightParameter.setParameterValue(0, height);
+        }
+
+        public final void setHeightQuietly(double height) {
+            heightParameter.setParameterValueQuietly(0, height);
         }
 
         public final void setRate(double rate) {

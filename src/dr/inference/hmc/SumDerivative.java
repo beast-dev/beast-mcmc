@@ -26,6 +26,7 @@
 package dr.inference.hmc;
 
 import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.DerivativeOrder;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -39,13 +40,16 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 public class SumDerivative implements GradientWrtParameterProvider, HessianWrtParameterProvider,
-        Reportable {
+        DerivativeWrtParameterProvider, Reportable {
 
     private final int dimension;
     private final Likelihood likelihood;
     private final Parameter parameter;
 
     private final List<GradientWrtParameterProvider> derivativeList;
+
+    private final List<DerivativeWrtParameterProvider> newDerivativeList;
+    private final DerivativeOrder highestOrder;
 
     public SumDerivative(List<GradientWrtParameterProvider> derivativeList){
 
@@ -58,7 +62,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
         if (derivativeList.size() == 1) {
             likelihood = first.getLikelihood();
         } else {
-            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+            List<Likelihood> likelihoodList = new ArrayList<>();
 
             for (GradientWrtParameterProvider grad : derivativeList) {
                 if (grad.getDimension() != dimension) {
@@ -72,10 +76,20 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
                         likelihoodList.add(likelihood);
                     }
                 }
-//                likelihoodList.add(grad.getLikelihood());
             }
             likelihood = new CompoundLikelihood(likelihoodList);
         }
+
+        // NEW
+
+        this.newDerivativeList = new ArrayList<>();
+        for (GradientWrtParameterProvider p : derivativeList) {
+            if (p instanceof DerivativeWrtParameterProvider) { // TODO Remove if when conversion finished
+                DerivativeWrtParameterProvider provider = (DerivativeWrtParameterProvider) p;
+                newDerivativeList.add(provider);
+            }
+        }
+        this.highestOrder = DerivativeWrtParameterProvider.getHighestOrder(newDerivativeList);
     }
 
     @Override
@@ -89,8 +103,39 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
     }
 
     @Override
+    public int getDimension(DerivativeOrder order) {
+        return order.getDerivativeDimension(dimension);
+    }
+
+    @Override
     public int getDimension() {
         return dimension;
+    }
+
+    @Override
+    public double[] getDerivativeLogDensity(DerivativeOrder type) {
+
+        assert (highestOrder.getValue() >= type.getValue());
+
+        int size = newDerivativeList.size();
+
+        final double[] derivative = newDerivativeList.get(0).getDerivativeLogDensity(type);
+
+        for (int i = 1; i < size; i++) {
+
+            final double[] temp = newDerivativeList.get(i).getDerivativeLogDensity(type);
+
+            for (int j = 0; j < temp.length; j++) {
+                derivative[j] += temp[j];
+            }
+        }
+
+        return derivative;
+    }
+
+    @Override
+    public DerivativeOrder getHighestOrder() {
+        return highestOrder;
     }
 
     @Override
@@ -109,7 +154,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             // stop timer
             String name = derivativeList.get(0).getLikelihood().getId();
             System.err.println(name);
-            System.err.println(hessian.toString());
+            System.err.println(Arrays.deepToString(hessian));
         }
 
         for (int i = 1; i < size; i++) {
@@ -120,7 +165,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
             if (DEBUG) {
                 String name = derivativeList.get(i).getLikelihood().getId();
                 System.err.println(name);
-                System.err.println(temp.toString());
+                System.err.println(Arrays.deepToString(temp));
             }
 
             for (int j = 0; j < temp[0].length; j++) {

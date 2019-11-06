@@ -6,8 +6,9 @@ import dr.math.distributions.MarginalizedAlphaStableDistribution;
 public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel {
 
     public MarginalBayesianBridgeDistributionModel(Parameter globalScale,
-                                                   Parameter exponent) {
-        super(globalScale, exponent);
+                                                   Parameter exponent,
+                                                   int dim) {
+        super(globalScale, exponent, dim);
     }
 
     @Override

@@ -106,8 +106,8 @@ public class MultivariateTraitDebugUtilities {
         return variance;
     }
 
-    public static double[][] getTreeVariance(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
-
+    @Deprecated
+    public static double[][] getTreeVarianceOld(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
         final int tipCount = tree.getExternalNodeCount();
 
         double[][] variance = new double[tipCount][tipCount];
@@ -132,6 +132,79 @@ public class MultivariateTraitDebugUtilities {
 
         return variance;
     }
+
+    public static double[][] getTreeVariance(final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
+
+        final int tipCount = tree.getExternalNodeCount();
+
+        double[][] variance = new double[tipCount][tipCount];
+
+        NodeRef rootNode = tree.getRoot();
+
+        recursiveTreeVariance(variance, rootNode, tree, branchRates, normalization, priorSampleSize);
+
+        makeSymmetric(variance);
+        addPrior(variance, priorSampleSize);
+
+        return variance;
+
+    }
+
+
+    public static PostOrderBranchStats recursiveTreeVariance(double[][] treeVariance, NodeRef node, final Tree tree, final BranchRates branchRates, final double normalization, final double priorSampleSize) {
+        if (tree.isExternal(node)) {
+            return new PostOrderBranchStats(new int[]{node.getNumber()}, getScaledBranchLength(node, tree, branchRates, normalization));
+        }
+
+        PostOrderBranchStats pobsL = recursiveTreeVariance(treeVariance, tree.getChild(node, 0), tree, branchRates, normalization, priorSampleSize);
+        PostOrderBranchStats pobsR = recursiveTreeVariance(treeVariance, tree.getChild(node, 1), tree, branchRates, normalization, priorSampleSize);
+
+        accumulateBranchLengths(treeVariance, pobsL);
+        accumulateBranchLengths(treeVariance, pobsR);
+
+
+        int nL = pobsL.dims.length;
+        int nR = pobsR.dims.length;
+        int n = nL + nR;
+
+        int[] dims = new int[n];
+        System.arraycopy(pobsL.dims, 0, dims, 0, nL);
+        System.arraycopy(pobsR.dims, 0, dims, nL, nR);
+
+        double scaledBranchLength = getScaledBranchLength(node, tree, branchRates, normalization);
+
+        return new PostOrderBranchStats(dims, scaledBranchLength);
+
+    }
+
+    private static double getScaledBranchLength(NodeRef node, Tree tree, BranchRates branchRates, double normalization) {
+        double branchLength = tree.getBranchLength(node);
+        if (branchRates != null) {
+            branchLength *= branchRates.getBranchRate(tree, node);
+        }
+        branchLength *= normalization;
+        return branchLength;
+    }
+
+    private static void accumulateBranchLengths(double[][] treeVariance, PostOrderBranchStats pobs) {
+        for (int i : pobs.dims) {
+            for (int j : pobs.dims) {
+                treeVariance[i][j] += pobs.branchLength;
+            }
+        }
+    }
+
+    private static class PostOrderBranchStats {
+        private final int[] dims;
+        private final double branchLength;
+
+        PostOrderBranchStats(int[] dims, double branchLength) {
+            this.dims = dims;
+            this.branchLength = branchLength;
+        }
+
+    }
+
 
     private static void makeSymmetric(final double[][] variance) {
         for (int i = 0; i < variance.length; i++) {

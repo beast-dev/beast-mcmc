@@ -305,12 +305,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
         final double targetAcceptanceProbability;
+        final InstabilityHandler instabilityHandler;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
                        int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
                        int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
-                       double targetAcceptanceProbability) {
+                       double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
@@ -322,6 +323,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
             this.targetAcceptanceProbability = targetAcceptanceProbability;
+            this.instabilityHandler = instabilityHandler;
         }
     }
 
@@ -411,9 +413,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return stepSize;
     }
 
-    enum InstabilityHandler {
+    public enum InstabilityHandler {
 
-        REJECT {
+        REJECT("reject") {
             @Override
             void checkValue(double x) throws NumericInstabilityException {
                 if (Double.isNaN(x)) throw new NumericInstabilityException();
@@ -427,7 +429,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
         },
 
-        DEBUG {
+        DEBUG("debug") {
             @Override
             void checkValue(double x) throws NumericInstabilityException {
                 if (Double.isNaN(x)) {
@@ -444,7 +446,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
         },
 
-        IGNORE {
+        IGNORE("ignore") {
             @Override
             void checkValue(double x) {
                 // Do nothing
@@ -455,6 +457,21 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
         };
 
+        private final String name;
+
+        InstabilityHandler(String name) {
+            this.name = name;
+        }
+
+        public static InstabilityHandler factory(String match) {
+            for (InstabilityHandler type : InstabilityHandler.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
+
         abstract void checkValue(double x) throws NumericInstabilityException;
         abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
     }
@@ -463,7 +480,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         if (DEBUG) {
             return InstabilityHandler.DEBUG;
         } else {
-            return InstabilityHandler.REJECT;
+            return runtimeOptions.instabilityHandler;
         }
     }
 

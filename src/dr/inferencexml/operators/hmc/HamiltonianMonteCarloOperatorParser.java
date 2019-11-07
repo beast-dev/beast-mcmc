@@ -62,6 +62,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
     private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
+    private final static String INSTABILITY_HANDLER = "instabilityHandler";
     private final static String MASK = "mask";
 
     @Override
@@ -149,13 +150,16 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double reductionFactor = xo.getAttribute(REDUCTION_FACTOR, 0.1);
         double targetAcceptanceProbability = xo.getAttribute(TARGET_ACCEPTANCE_PROBABILITY,
                 0.8); // Stan default
+        String instabilityHandlerCase = (String) xo.getAttribute(INSTABILITY_HANDLER, "reject");
+        HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
                 preconditioningUpdateFrequency, preconditioningDelay, preconditioningMemory,
                 gradientCheckCount, gradientCheckTolerance,
                 maxIterations, reductionFactor,
-                targetAcceptanceProbability
+                targetAcceptanceProbability,
+                instabilityHandler
         );
 
         return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode);

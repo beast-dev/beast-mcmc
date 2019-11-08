@@ -15,6 +15,9 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
     public Parameter getLocalScale() { return null; }
 
     @Override
+    public Parameter getSlabWidth() { return null; }
+
+    @Override
     double[] gradientLogPdf(double[] x) {
         final int dim = x.length;
         final double scale = globalScale.getParameterValue(0);
@@ -28,14 +31,13 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
     }
 
     @Override
-    public double logPdf(double[] x) {
-        final int dim = x.length;
+    public double logPdf(double[] v) {
         final double scale = globalScale.getParameterValue(0);
         final double alpha = exponent.getParameterValue(0);
 
         double sum = 0.0;
-        for (int i = 0; i < dim; ++i) {
-            sum += MarginalizedAlphaStableDistribution.logPdf(x[i], scale, alpha);
+        for (double x : v) {
+            sum += MarginalizedAlphaStableDistribution.logPdf(x, scale, alpha);
         }
         return sum;
     }

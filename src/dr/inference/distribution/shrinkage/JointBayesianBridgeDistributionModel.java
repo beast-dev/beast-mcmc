@@ -8,9 +8,11 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
     public JointBayesianBridgeDistributionModel(Parameter globalScale,
                                                 Parameter localScale,
                                                 Parameter exponent,
+                                                Parameter slabWidth,
                                                 int dim) {
         super(globalScale, exponent, dim);
         this.localScale = localScale;
+        this.slabWidth = slabWidth;
 
         if (dim != localScale.getDimension()) {
             throw new IllegalArgumentException("Invalid dimensions");
@@ -21,6 +23,9 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
 
     @Override
     public Parameter getLocalScale() { return localScale; }
+
+    @Override
+    public Parameter getSlabWidth() { return slabWidth; }
 
     @Override
     double[] gradientLogPdf(double[] x) {
@@ -46,8 +51,14 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
     }
 
     private double getStandardDeviation(int index) {
-        return globalScale.getParameterValue(0) * localScale.getParameterValue(index);
+        double globalLocalProduct = globalScale.getParameterValue(0) * localScale.getParameterValue(index);
+        if (slabWidth != null) {
+            double ratio = globalLocalProduct / slabWidth.getParameterValue(0);
+            globalLocalProduct /= Math.sqrt(1.0 + ratio * ratio);
+        }
+        return globalLocalProduct;
     }
 
     private final Parameter localScale;
+    private final Parameter slabWidth;
 }

@@ -82,17 +82,17 @@ public class IntersectionBounds implements Bounds<Double> {
     }
 
     public String toString() {
-        String str = "upper=[" + getUpperLimit(0);
+        StringBuilder str = new StringBuilder("upper=[" + getUpperLimit(0));
         for (int i = 1; i < getBoundsDimension(); i++) {
-            str += ", " + getUpperLimit(i);
+            str.append(", ").append(getUpperLimit(i));
         }
-        str += "] lower=[" + getLowerLimit(0);
+        str.append("] lower=[").append(getLowerLimit(0));
         for (int i = 1; i < getBoundsDimension(); i++) {
-            str += ", " + getLowerLimit(i);
+            str.append(", ").append(getLowerLimit(i));
         }
 
-        str += "]";
-        return str;
+        str.append("]");
+        return str.toString();
     }
 
     private ArrayList<Bounds<Double>> bounds = null;

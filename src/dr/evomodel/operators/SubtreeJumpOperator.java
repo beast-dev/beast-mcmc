@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A tunable version of the fixed height subtree prune regraft move.
+ * This is an adaptable version of the FixedHeightSubtreePruneRegraft move by Sebastian Hoehna.
  *
  * @author Andrew Rambaut
  * @author Luiz Max Carvalho

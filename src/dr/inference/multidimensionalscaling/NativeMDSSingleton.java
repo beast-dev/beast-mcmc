@@ -40,12 +40,23 @@ package dr.inference.multidimensionalscaling;
  */
 public class NativeMDSSingleton {
 
-    public static final String LIBRARY_NAME = "mds_jni";
-    public static final String LIBRARY_PATH_LABEL = "mds.library.path";
-    public static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
-    public static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();
-    public static final String LIBRARY_PLATFORM_PREFIX = getPlatformSpecificLibraryPrefix();
+    private static final String LIBRARY_NAME = "mds_jni";
+    private static final String LIBRARY_PATH_LABEL = "mds.library.path";
+    private static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
+    private static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();
+    private static final String LIBRARY_PLATFORM_PREFIX = getPlatformSpecificLibraryPrefix();
 
+    static final String THREADS = "mds.threads";
+    static final String MDS_RESOURCE = "mds.resource";
+
+//    private int getThreads() {
+//        String r = System.getProperty(THREADS);
+//        int i = 1;
+//        if (r != null) {
+//            i = Integer.parseInt(r.trim());
+//        }
+//        return i;
+//    }
 
     private NativeMDSSingleton() {
     } // ensure singleton
@@ -104,7 +115,12 @@ public class NativeMDSSingleton {
 
     private static NativeMDSSingleton INSTANCE = null;
 
-    public native int initialize(int dimensionCount, int locationCount, long flags);
+    public int initialize(int dimensionCount, int locationCount, MultiDimensionalScalingCore.CoreInformation information) {
+        return initialize(dimensionCount, locationCount,
+                information.flags, information.deviceNumber, information.numThreads);
+    }
+
+    private native int initialize(int dimensionCount, int locationCount, long flags, int deviceNumber, int threads);
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
@@ -126,6 +142,8 @@ public class NativeMDSSingleton {
 
     public native void getLocationGradient(int instance, double[] gradient);
 
+    public native int getInternalDimension(int instance);
+
 //jsize size = env->GetArrayLength( arr );
 //std::vector<double> input( size );
 //env->GetDoubleArrayRegion( arr, 0, size, &input[0] );
@@ -135,4 +153,55 @@ public class NativeMDSSingleton {
 //jdoubleArray output = env->NewDoubleArray( results.size() );
 //env->SetDoubleArrayRegion( output, 0, results.size(), &results[0] );
 
+    public class ResourceDetails {
+        private final int number;
+        private String name;
+        private String description;
+        private long flags;
+
+        public ResourceDetails(int number) {
+            this.number = number;
+        }
+
+        public int getNumber() {
+            return this.number;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getDescription() {
+            return this.description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public long getFlags() {
+            return this.flags;
+        }
+
+        public void setFlags(long flags) {
+            this.flags = flags;
+        }
+
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("").append(getNumber()).append(" : ").append(getName()).append("\n");
+            if (this.getDescription() != null) {
+                sb.append("    ").append(getDescription());
+            }
+
+            sb.append("    Flags:");
+            sb.append(getFlags());
+            sb.append("\n");
+            return sb.toString();
+        }
+    }
 }

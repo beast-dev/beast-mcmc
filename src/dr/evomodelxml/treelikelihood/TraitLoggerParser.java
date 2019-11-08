@@ -39,6 +39,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "traitLogger";
     public static final String TRAIT_NAME = "traitName";
+    private static final String TAXON_NAME_EXPLICIT = "taxonNameExplicit";
     private static final String NODES = "nodes";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -47,8 +48,9 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
         TreeTrait trait = parseTreeTrait(xo, false);
         TreeTraitLogger.NodeRestriction nodes = TreeTraitLogger.NodeRestriction.parse(
                 xo.getAttribute(NODES, "all"));
+        boolean taxonNameExplicit = xo.getAttribute(TAXON_NAME_EXPLICIT, false);
 
-        return new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, nodes);
+        return new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, nodes, taxonNameExplicit);
     }
 
     static TreeTrait parseTreeTrait(XMLObject xo, boolean wholeTreeOnly) throws XMLParseException {

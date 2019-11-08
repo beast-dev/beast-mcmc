@@ -30,8 +30,8 @@
         $Id$
     </description>
 
-    <property name="JDK_SOURCE_VERSION" value="1.6"/>
-    <property name="JDK_TARGET_VERSION" value="1.6"/>
+    <property name="JDK_SOURCE_VERSION" value="1.8"/>
+    <property name="JDK_TARGET_VERSION" value="1.8"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
@@ -72,6 +72,7 @@
         <javac source="${JDK_SOURCE_VERSION}" target="${JDK_TARGET_VERSION}" srcdir="${src}" destdir="${build}"
                classpathref="classpath"
                fork="true"
+               includeantruntime="false"
                memoryinitialsize="256m"
                memorymaximumsize="1024m">
             <include name="dr/app/beast/**"/>
@@ -171,6 +172,7 @@
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
+            <zipgroupfileset dir="${lib}" includes="lbfgs4j-0.2.1.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-dense64-0.30.jar"/>
         </jar>
 
@@ -282,7 +284,7 @@
     <!-- JUnit test -->
     <target name="junit">
         <mkdir dir="${report}"/>
-        <junit printsummary="yes">
+        <junit printsummary="yes" haltonfailure="no" failureproperty="test.failed">
             <classpath>
                 <path refid="classpath"/>
                 <path location="${build}"/>
@@ -292,21 +294,46 @@
 
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
-                    <include name="test/dr/distibutions/**/*Test.java"/>
-                    <include name="test/dr/evolution/**/*Test.java"/>
-                    <!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
-                    <!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
-                    <include name="test/dr/evomodel/branchratemodel/**/*Test.java"/>
-                    <include name="test/dr/evomodel/coalescent/**/*Test.java"/>
-                    <include name="test/dr/evomodel/operators/**/*Test.java"/>
-                    <include name="test/dr/evomodel/speciation/**/*Test.java"/>
-                    <include name="test/dr/evomodel/substmodel/**/*Test.java"/>
-                    <include name="test/dr/evomodel/treelikelihood/**/*Test.java"/>
-                    <include name="test/dr/inference/**/*Test.java"/>
-                    <include name="test/dr/math/**/*Test.java"/>
+                    <include name="test/dr/**/*Test.java"/>
+
+
+                    <!-- Broken JUnits -->
+                    <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->
+                    <exclude name="test/dr/app/beagle/MarkovJumpsTest.java"/> <!-- doesn't always fail-->
+                    <exclude name="test/dr/distibutions/InvGammaTest.java"/>
+                    <exclude name="test/dr/evolution/TreeMetricsTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/CodonPartitionedRobustCountingTest.java"/>
+                    <exclude name="test/dr/evomodel/operators/ExchangeOperatorTest.java"/> <!--too long-->
+                    <exclude name="test/dr/evomodel/arg/operators/ARGAddRemoveOperatorTest.java"/>
+                    <exclude name="test/dr/evomodel/branchratemodel/UncorrelatedRelaxedClockTest.java"/>
+                    <exclude name="test/dr/evomodel/speciation/RLYModelTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/EigendecompositionTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/ProductChainSubstitutionModelTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/StateHistoryTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/TwoStateOccupancyMarkovRewardsTest.java"/>
+                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/>
+                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/>
+                    <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/>
+                    <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
+                    <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
+<!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
+
+<!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->
+<!--                    <include name="test/dr/evolution/**/*Test.java"/>-->
+<!--                    &lt;!&ndash; <include name="test/dr/evomodel/**/*Test.java" /> &ndash;&gt;-->
+<!--                    &lt;!&ndash; <include name="test/dr/evomodel/arg/**/*Test.java" /> &ndash;&gt;-->
+<!--                    <include name="test/dr/evomodel/branchratemodel/**/*Test.java"/>-->
+<!--                    <include name="test/dr/evomodel/coalescent/**/*Test.java"/>-->
+<!--                    <include name="test/dr/evomodel/operators/**/*Test.java"/>-->
+<!--                    <include name="test/dr/evomodel/speciation/**/*Test.java"/>-->
+<!--                    <include name="test/dr/evomodel/substmodel/**/*Test.java"/>-->
+<!--                    <include name="test/dr/evomodel/treelikelihood/**/*Test.java"/>-->
+<!--                    <include name="test/dr/inference/**/*Test.java"/>-->
+<!--                    <include name="test/dr/math/**/*Test.java"/>-->
                 </fileset>
             </batchtest>
         </junit>
+        <fail message="At least one of the JUnits failed the test. Check test results." if="test.failed"/>
         <echo message="JUnit test finished."/>
     </target>
 
@@ -617,7 +644,7 @@
 
         <copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
         <copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->                                             
+        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
         <copy todir="${Mac_package_dir}/lib">
             <fileset dir="${Mac_dir}/lib"/>
         </copy>

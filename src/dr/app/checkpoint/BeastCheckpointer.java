@@ -242,16 +242,17 @@ public class BeastCheckpointer implements StateLoaderSaver {
             out.println(lnL);
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                out.print("parameter");
-                out.print("\t");
-                out.print(parameter.getParameterName());
-                out.print("\t");
-                out.print(parameter.getDimension());
-                for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                if (!parameter.isImmutable()) {
+                    out.print("parameter");
                     out.print("\t");
-                    out.print(parameter.getParameterValue(dim));
+                    out.print(parameter.getParameterName());
+                    out.print("\t");
+                    out.print(parameter.getDimension());
+                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                        out.print("\t");
+                        out.print(parameter.getParameterUntransformedValue(dim));
+                    }
                 }
-                out.println();
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -442,7 +443,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.out.print("restoring " + fields[1] + " with values ");
                     }
                     for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                        parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
                         if (DEBUG) {
                             System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
                         }

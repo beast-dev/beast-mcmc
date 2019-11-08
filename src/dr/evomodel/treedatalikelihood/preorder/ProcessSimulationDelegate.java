@@ -35,7 +35,9 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     void setCallback(ProcessSimulation simulationProcess);
 
     int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations);
+
+    int getSingleOperationSize();
 
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
@@ -191,6 +195,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
+        public int getSingleOperationSize() {
+            return ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
+
+        @Override
         protected final double getNormalization() {
             return rateTransformation.getNormalization();
         }
@@ -250,8 +259,21 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
 
+        static DenseMatrix64F getCholeskyOfVariance(DenseMatrix64F variance, final int dim) {
+
+            org.ejml.interfaces.decomposition.CholeskyDecomposition<DenseMatrix64F> engine =
+                    DecompositionFactory.chol(dim, true);
+            engine.decompose(variance);
+
+            return engine.getT(null);
+        }
+
+//        static WrappedMatrix getCholeskyOfVariance(final ReadableMatrix variance, final int dim) {
+//            return CholeskyDecomposition.execute(variance, dim);
+//        }
+
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
-            return new SymmetricMatrix(precision).inverse().toVectorizedComponents();
+            return new SymmetricMatrix(precision).inverse().toArrayComponents();
         }
 
     }

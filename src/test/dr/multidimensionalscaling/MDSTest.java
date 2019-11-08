@@ -25,6 +25,7 @@
 
 package test.dr.multidimensionalscaling;
 
+import dr.inference.multidimensionalscaling.MultiDimensionalScalingCore;
 import dr.inference.multidimensionalscaling.NativeMDSSingleton;
 import test.dr.math.MathTestCase;
 
@@ -47,9 +48,12 @@ public class MDSTest extends MathTestCase {
 
     public void testInitialization() {
         if (mds != null) {
-            int i = mds.initialize(2, 100, 0);
+
+            MultiDimensionalScalingCore.CoreInformation information = new MultiDimensionalScalingCore.CoreInformation();
+
+            int i = mds.initialize(2, 100, information);
             assertEquals(i, 0);
-            i = mds.initialize(2, 100, 0);
+            i = mds.initialize(2, 100, information);
             assertEquals(i, 1);
         } else {
             System.out.println("testInitialization skipped");

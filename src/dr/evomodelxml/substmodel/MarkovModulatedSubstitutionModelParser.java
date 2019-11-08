@@ -58,7 +58,8 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 
         DataType dataType = DataTypeUtils.getDataType(xo);
         if (!(dataType instanceof HiddenDataType)) {
-            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types");
+            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden data types. " +
+                    "You may need to provide the `-universal` extension to your hidden code type.");
         }
 
         Parameter switchingRates = (Parameter) xo.getElementFirstChild(SWITCHING_RATES);

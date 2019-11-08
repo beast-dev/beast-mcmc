@@ -58,7 +58,7 @@ import java.util.Map;
  * @author Mathieu Fourment
  * @version $Id$
  */
-public class SubtreeLeapOperator extends AbstractTreeOperator implements AdaptableMCMCOperator {
+public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
     public enum DistanceKernelType {
         NORMAL("normal") {
@@ -93,9 +93,8 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
     private double size;
 
     private final TreeModel tree;
-    private final AdaptationMode mode;
-    private final double targetAcceptance;
     private final DistanceKernelType distanceKernel;
+    private final boolean slideOnly;
 
     private final List<NodeRef> tips;
 
@@ -106,16 +105,32 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param targetAcceptance the desired acceptance probability
-     * @param distanceKernel the distribution from which to draw the patristic distance 
+     * @param distanceKernel the distribution from which to draw the patristic distance
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        this(tree, weight, size, distanceKernel, false, mode, targetAcceptance);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param tree   the tree
+     * @param weight the weight
+     * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param targetAcceptance the desired acceptance probability
+     * @param distanceKernel the distribution from which to draw the patristic distance
+     * @param slideOnly if true, only slide up and down the tree, never across (mimics SubtreeSlide)
+     * @param mode   coercion mode
+     */
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, DistanceKernelType distanceKernel, boolean slideOnly, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
         this.tree = tree;
         setWeight(weight);
         this.size = size;
-        this.targetAcceptance = targetAcceptance;
         this.distanceKernel = distanceKernel;
-        this.mode = mode;
+        this.slideOnly = slideOnly;
         this.tips = null;
     }
 
@@ -128,13 +143,14 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, double targetAcceptance, DistanceKernelType distanceKernel, AdaptationMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, TaxonList taxa, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
         this.tree = tree;
         setWeight(weight);
         this.size = size;
-        this.targetAcceptance = targetAcceptance;
         this.distanceKernel = distanceKernel;
-        this.mode = mode;
+        this.slideOnly = false;
         this.tips = new ArrayList<NodeRef>();
 
         for (Taxon taxon : taxa) {
@@ -190,7 +206,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         // and its grand parent
         final NodeRef grandParent = tree.getParent(parent);
 
-        final Map<NodeRef, Double> destinations = getDestinations(node, parent, sibling, delta);
+        final Map<NodeRef, Double> destinations = getDestinations(node, parent, sibling, delta, slideOnly);
         final List<NodeRef> destinationNodes = new ArrayList<NodeRef>(destinations.keySet());
 
         // pick uniformly from this list
@@ -260,7 +276,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
             throw new IllegalArgumentException("height error");
         }
 
-        final Map<NodeRef, Double> reverseDestinations = getDestinations(node, parent, getOtherChild(tree, parent, node), delta);
+        final Map<NodeRef, Double> reverseDestinations = getDestinations(node, parent, getOtherChild(tree, parent, node), delta, slideOnly);
         double reverseProbability = 1.0 / reverseDestinations.size();
 
         // hastings ratio = reverse Prob / forward Prob
@@ -268,7 +284,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         return logq;
     }
 
-    private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
+    private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta, boolean slideOnly) {
 
         final Map<NodeRef, Double> destinations = new LinkedHashMap<NodeRef, Double>();
 
@@ -302,21 +318,24 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
             if (parent1 != null) {
                 final double height1 = tree.getNodeHeight(parent1);
                 if (height1 < heightAbove) {
-                    // haven't reached the height above the original height so go down
-                    // the sibling subtree
-                    NodeRef sibling1 = getOtherChild(tree, parent1, node1);
+                    if (!slideOnly) { // if we are not just sliding up or down...
+                        
+                        // We haven't reached the height above the original height so go down
+                        // the sibling subtree to look for other possible destinations
+                        NodeRef sibling1 = getOtherChild(tree, parent1, node1);
 
-                    double heightBelow1 = height1 - (heightAbove - height1);
+                        double heightBelow1 = height1 - (heightAbove - height1);
 
-                    if (heightBelow1 > tree.getNodeHeight(node)) {
+                        if (heightBelow1 > tree.getNodeHeight(node)) {
 
-                        final List<NodeRef> edges = new ArrayList<NodeRef>();
+                            final List<NodeRef> edges = new ArrayList<NodeRef>();
 
-                        getIntersectingEdges(tree, sibling1, heightBelow1, edges);
+                            getIntersectingEdges(tree, sibling1, heightBelow1, edges);
 
-                        // add the intersecting edges and the height
-                        for (NodeRef n : edges) {
-                            destinations.put(n, heightBelow1);
+                            // add the intersecting edges and the height
+                            for (NodeRef n : edges) {
+                                destinations.put(n, heightBelow1);
+                            }
                         }
                     }
                 } else {
@@ -362,45 +381,19 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Adaptab
         this.size = size;
     }
 
-    public double getAdaptableParameter() {
-        return Math.log(getSize());
-    }
-
-    public void setAdaptableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
-    public double getRawParameter() {
-        return getSize();
-    }
-
-    public AdaptationMode getMode() {
-        return mode;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-        return null;
+    @Override
+    protected double getAdaptableParameterValue() {
+        return Math.log(getSize());
     }
 
     @Override
-    public double getTargetAcceptanceProbability() {
-        return targetAcceptance;
+    public double getRawParameter() {
+        return getSize();
     }
 
     public String getAdaptableParameterName() {

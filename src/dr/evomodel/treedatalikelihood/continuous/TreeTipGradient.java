@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.preorder.NewTipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -77,6 +78,11 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
             likelihoodDelegate.addFullConditionalDensityTrait(traitName);
         }
 
+        String nFcdName = NewTipFullConditionalDistributionDelegate.getName(traitName);
+        if (treeDataLikelihood.getTreeTrait(nFcdName) == null) {
+            likelihoodDelegate.addNewFullConditionalDensityTrait(traitName);
+        }
+        
         treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
 
         assert (treeTraitProvider != null);

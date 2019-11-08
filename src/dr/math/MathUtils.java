@@ -25,10 +25,10 @@
 
 package dr.math;
 
+import dr.util.NumberFormatter;
+
 import java.text.NumberFormat;
 import java.text.ParseException;
-
-import dr.util.NumberFormatter;
 
 /**
  * Handy utility functions which have some Mathematical relavance.
@@ -460,5 +460,28 @@ public class MathUtils {
 		synchronized (random) {
 			random.setRandomState(rngState);
 		}
+	}
+
+	public static boolean isClose(double[] x, double[] y, double tolerance) {
+		if (x.length != y.length) return false;
+
+		for (int i = 0, dim = x.length; i < dim; ++i) {
+			if (!(Math.abs(x[i] - y[i]) <= tolerance)) return false;
+		}
+
+		return true;
+	}
+
+	public static boolean isRelativelyClose(double[] x, double[] y, double relativeTolerance) {
+		if (x.length != y.length) return false;
+
+		for (int i = 0, dim = x.length; i < dim; ++i) {
+			double relativeDifference = 2 * (x[i] - y[i]) / (x[i] + y[i]);
+			if (Math.abs(relativeDifference) > relativeTolerance) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

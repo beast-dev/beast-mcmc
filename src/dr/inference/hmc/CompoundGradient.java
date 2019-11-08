@@ -25,11 +25,11 @@
 
 package dr.inference.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +39,14 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class CompoundGradient implements GradientWrtParameterProvider {
+public class CompoundGradient implements GradientWrtParameterProvider, Reportable {
 
-    private final int dimension;
-    private final List<GradientWrtParameterProvider> derivativeList;
+    protected final int dimension;
+    final List<GradientWrtParameterProvider> derivativeList;
     private final Likelihood likelihood;
     private final Parameter parameter;
 
-    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
 
         this.derivativeList = derivativeList;
 
@@ -55,12 +55,17 @@ public class CompoundGradient implements GradientWrtParameterProvider {
             parameter = derivativeList.get(0).getParameter();
             dimension = parameter.getDimension();
         } else {
-            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+            List<Likelihood> likelihoodList = new ArrayList<>();
             CompoundParameter compoundParameter = new CompoundParameter("hmc");
 
             int dim = 0;
             for (GradientWrtParameterProvider grad : derivativeList) {
-                likelihoodList.add(grad.getLikelihood());
+                for (Likelihood likelihood : grad.getLikelihood().getLikelihoodSet()) {
+                    if (!(likelihoodList.contains(likelihood))) {
+                        likelihoodList.add(likelihood);
+                    }
+                }
+
                 Parameter p = grad.getParameter();
                 compoundParameter.addParameter(p);
 
@@ -101,14 +106,24 @@ public class CompoundGradient implements GradientWrtParameterProvider {
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
-
-            System.err.println(grad.getLikelihood().getId() + " " + grad.getParameter().getId());
-
+            
             double[] tmp = grad.getGradientLogDensity();
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();
         }
 
         return result;
+    }
+
+    @Override
+    public String getReport() {
+        return  "compoundGradient." + parameter.getParameterName() + "\n" +
+                GradientWrtParameterProvider.getReportAndCheckForError(this,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+                GradientWrtParameterProvider.TOLERANCE);
+    }
+
+    public List<GradientWrtParameterProvider> getDerivativeList() {
+        return derivativeList;
     }
 }

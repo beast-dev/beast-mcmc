@@ -185,18 +185,22 @@ public class TransformedRandomWalkOperator extends AbstractAdaptableOperator {
         return parameter.getParameterName();
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setAdaptableParameter(double value) {
+    @Override
+    public void setAdaptableParameterValue(double value) {
         windowSize = Math.exp(value);
     }
 
+    @Override
     public double getRawParameter() {
         return windowSize;
     }
 
+    @Override
     public String getAdaptableParameterName() {
         return "windowSize";
     }

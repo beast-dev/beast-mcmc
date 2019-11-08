@@ -28,6 +28,7 @@ package dr.inference.operators;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.DirtyLikelihoodOperatorParser;
+import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc Suchard
@@ -124,6 +125,8 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
             double[] x = parameter.getParameterValues();
 
             EllipticalSliceOperator.transformPoint(x, translationInvariant, rotationInvariant, dim);
+
+//            System.err.println("x = " + new WrappedVector.Raw(x, 0, 10));
 
             final int len = x.length;
             for (int i = 0; i < len; ++i) {

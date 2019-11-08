@@ -184,7 +184,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
         public LogColumn[] getColumns() {
             LogColumn[] columns = new LogColumn[getDimension()];
             for (int i = 0; i < getDimension(); i++) {
-                columns[i] = new StatisticColumn(getDimensionName(i), i);
+                 columns[i] = new StatisticColumn(getDimensionName(i), i);
             }
             return columns;
         }

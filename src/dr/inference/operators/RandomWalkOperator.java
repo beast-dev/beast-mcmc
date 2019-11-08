@@ -84,10 +84,14 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
         return windowSize;
     }
 
+    public final BoundaryCondition getBoundaryCondition() {
+        return boundaryCondition;
+    }
+
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         // a random dimension to perturb
         if (parameter.getDimension() <= 0) {
@@ -146,7 +150,12 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
             parameter.setParameterValue(dim, newValue);
 
-            return 0.0;
+            if (parameter.check()) {
+                return 0.0;
+            } else {
+                return Double.NEGATIVE_INFINITY;
+            }
+
         }
 
 }
@@ -155,15 +164,21 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
         double newValue = value;
 
-        if (value < lower) {
+        if (upper == lower) {
+            newValue = upper;
+        } else if (value < lower) {
             if (Double.isInfinite(upper)) {
                 // we are only going to reflect once as the upper bound is at infinity...
                 newValue = lower + (lower - value);
             } else {
-                double remainder = lower - value;
+//                double remainder = lower - value;
+//
+//                double widths = Math.floor(remainder / (upper - lower));
+//                remainder -= (upper - lower) * widths;
 
-                double widths = Math.floor(remainder / (upper - lower));
-                remainder -= (upper - lower) * widths;
+                final double ratio = (lower - value) / (upper - lower);
+                final double widths = Math.floor(ratio);
+                final double remainder = (ratio - widths) * (upper - lower);
 
                 // even reflections
                 if (widths % 2 == 0) {
@@ -179,10 +194,14 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
                 newValue = upper - (newValue - upper);
             } else {
 
-                double remainder = value - upper;
+//                double remainder = value - upper;
+//
+//                double widths = Math.floor(remainder / (upper - lower));
+//                remainder -= (upper - lower) * widths;
 
-                double widths = Math.floor(remainder / (upper - lower));
-                remainder -= (upper - lower) * widths;
+                final double ratio = (value - upper) / (upper - lower);
+                final double widths = Math.floor(ratio);
+                final double remainder = (ratio - widths) * (upper - lower);
 
                 // even reflections
                 if (widths % 2 == 0) {
@@ -218,18 +237,22 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
         return parameter.getParameterName();
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setAdaptableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         windowSize = Math.exp(value);
     }
 
+    @Override
     public double getRawParameter() {
         return windowSize;
     }
 
+    @Override
     public String getAdaptableParameterName() {
         return "windowSize";
     }
@@ -240,7 +263,7 @@ public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
+    protected Parameter parameter = null;
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
     private int updateMapSize;

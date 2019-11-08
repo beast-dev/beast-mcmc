@@ -1,14 +1,15 @@
 language: java
-sudo: false
 
 #jdk:
-#    - oraclejdk7
 #    - oraclejdk8
-#    - openjdk6
 
-#addons:
-#  apt:
-#    packages:
-#    - ant-junit
+addons:
+ apt:
+   packages:
+   - ant
+   - ant-optional
 
-script: ant dist
+script:
+  - ant dist
+  - cd ci; ./test.sh
+  - cd ..; ant junit

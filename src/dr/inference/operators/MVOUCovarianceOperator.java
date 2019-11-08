@@ -159,20 +159,24 @@ public class MVOUCovarianceOperator extends AbstractAdaptableOperator {
                 varMatrix.getId() + ")";
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(mixingFactor / (1.0 - mixingFactor));
 //		return Math.log((1.0 - mixingFactor) / mixingFactor);
     }
 
-    public void setAdaptableParameter(double value) {
+    @Override
+    public void setAdaptableParameterValue(double value) {
         mixingFactor = Math.exp(value) / (1.0 + Math.exp(value));
 //		mixingFactor = Math.exp(-value) / (1.0 + Math.exp(-value));
     }
 
+    @Override
     public double getRawParameter() {
         return mixingFactor;
     }
 
+    @Override
     public String getAdaptableParameterName() {
         return "mixingFactor";
     }

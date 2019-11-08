@@ -34,12 +34,12 @@ package dr.inference.operators;
  */
 public abstract class SimpleOperator implements MCMCOperator {
 
-	/**
-	 *
-	 */
-	public SimpleOperator() {
-		// TODO Auto-generated constructor stub
-	}
+    /**
+     *
+     */
+    public SimpleOperator() {
+        // TODO Auto-generated constructor stub
+    }
 
     public abstract String getOperatorName();
 
@@ -124,6 +124,10 @@ public abstract class SimpleOperator implements MCMCOperator {
         return (double) accepted / (double) (accepted + rejected);
     }
 
+    public final double getSmoothedAcceptanceProbability() {
+        throw new UnsupportedOperationException("Not implemented for SimpleOperator");
+    }
+
     public double getSpan(boolean reset) {
         double span = 0;
         if( spanDeviation[1] > spanDeviation[0] && spanCount > 20 ) {
@@ -138,20 +142,39 @@ public abstract class SimpleOperator implements MCMCOperator {
         return span;
     }
 
+    @Override
     public double getMeanEvaluationTime() {
         return (double) sumEvaluationTime / (double) (accepted + rejected);
     }
 
+    @Override
     public long getTotalEvaluationTime() {
         return sumEvaluationTime;
     }
 
+    @Override
     public void addEvaluationTime(long time) {
         sumEvaluationTime += time;
     }
 
+    @Override
+    public double getMeanCalculationCount() {
+        return (double) sumCalculationCount / (double) (accepted + rejected);
+    }
+
+    @Override
+    public void addCalculationCount(long count) {
+        sumCalculationCount += count;
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        return sumCalculationCount;
+    }
+
     private long sumEvaluationTime = 0;
-   
+    private long sumCalculationCount = 0;
+
     private double[] spanDeviation = {Double.MAX_VALUE,-Double.MAX_VALUE};
     private int spanCount = 0;
 

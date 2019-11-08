@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Reportable {
+public final class TreeDataLikelihood extends AbstractModelLikelihood implements TreeTraitProvider, Profileable, Reportable {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -127,6 +127,26 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         return logLikelihood;
     }
 
+    public final void calculatePostOrderStatistics() {
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalPostOrderStatistics++;
+        }
+
+        if (!likelihoodKnown) {
+            if (COUNT_TOTAL_OPERATIONS) {
+                totalCalculatePostOrderStatistics++;
+            }
+
+            likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
+            calculateLogLikelihood();
+            likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
+
+            if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
+                likelihoodKnown = true;
+            }
+        }
+    }
+
     @Override
     public final void makeDirty() {
         if (COUNT_TOTAL_OPERATIONS)
@@ -136,7 +156,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate.makeDirty();
         updateAllNodes();
     }
-
+    
     public final boolean isLikelihoodKnown() {
         return likelihoodKnown;
     }
@@ -341,12 +361,14 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (hasInitialized) {
             StringBuilder sb = new StringBuilder();
 
+            double loglik = getLogLikelihood();
+
             String delegateString = likelihoodDelegate.getReport();
             if (delegateString != null) {
                 sb.append(delegateString);
             }
 
-            sb.append(getClass().getName()).append("(").append(getLogLikelihood()).append(")");
+            sb.append(getClass().getName()).append("(").append(loglik).append(")");
 
             if (COUNT_TOTAL_OPERATIONS)
                 sb.append("\n  total operations = ").append(totalOperationCount).append(
@@ -356,7 +378,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                           "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
                           "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
                           "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
-                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount);
+                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
+                          "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
+                          "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics);
 
             return sb.toString();
         } else {
@@ -403,6 +427,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        return likelihoodDelegate.getTotalCalculationCount();
+    }
+
+    // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
 
@@ -446,4 +479,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private int totalCalculateLikelihoodCount = 0;
     private int totalRateUpdateAllCount = 0;
     private int totalRateUpdateSingleCount = 0;
+    private int totalPostOrderStatistics = 0;
+    private int totalCalculatePostOrderStatistics = 0;
 }

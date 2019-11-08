@@ -25,11 +25,8 @@
 
 package dr.evomodel.continuous;
 
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
@@ -331,6 +328,11 @@ public class ApproximateFactorAnalysisPrecisionMatrix extends Parameter.Abstract
     @Override
     public String toSymmetricString() {
         return MatrixParameter.toSymmetricString(this);
+    }
+
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
     }
 
     @Override

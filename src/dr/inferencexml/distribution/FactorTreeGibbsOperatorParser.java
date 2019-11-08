@@ -1,11 +1,8 @@
 package dr.inferencexml.distribution;
 
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GibbsSampleFromTreeInterface;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.operators.FactorTreeGibbsOperator;
+import dr.inference.operators.factorAnalysis.FactorTreeGibbsOperator;
 import dr.xml.*;
 
 /**

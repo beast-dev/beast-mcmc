@@ -33,7 +33,7 @@ import dr.xml.*;
  */
 public class MatrixInverseStatistic extends Statistic.Abstract implements VariableListener {
 
-    public static final String INVERSE_STATISTIC = "matrixInverse";
+    private static final String INVERSE_STATISTIC = "matrixInverse";
 
     public MatrixInverseStatistic(MatrixParameter matrix) {
         this.matrix = matrix;

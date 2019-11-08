@@ -79,7 +79,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         this.pathLikelihood = pathLikelihood;
         pathLikelihood.setPathParameter(pathParameter);
 
-        mc = new MarkovChain(pathLikelihood, schedule, criterion, 0, 0, 0.0, true);
+        mc = new MarkovChain(pathLikelihood, schedule, criterion, 0, 0, 0.0, true, false);
 
         this.loggers = loggers;
     }
@@ -103,8 +103,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
 
             for (int i = 0; i < schedule.getOperatorCount(); ++i) {
                 MCMCOperator operator = schedule.getOperator(i);
-                if (operator instanceof PathDependentOperator) {
-                    ((PathDependentOperator)operator).setPathParameter(pathParameter);
+                if (operator instanceof PathDependent) {
+                    ((PathDependent)operator).setPathParameter(pathParameter);
                 }
             }
 

@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
     /**
      * Constructor.
      */
@@ -198,9 +198,13 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public int getDimension() { return 1; }
 
     @Override
-    public double[] getGradientLogDensity(Object x) {
-        double[] result = new double[1];
-        result[0] = NormalDistribution.gradLogPdf((Double) x, mean(), getScale());
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = NormalDistribution.gradLogPdf(x[i], mean(), getScale());
+        }
         return result;
     }
 
@@ -226,4 +230,24 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return mean;
     }
 
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = NormalDistribution.hessianLogPdf(x[i], mean(), getScale());
+        }
+        return result;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+        double[] x = getDiagonalHessianLogDensity(obj);
+        double[][] result = new double[x.length][x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i][i] = x[i];
+        }
+        return result;
+    }
 }

@@ -25,59 +25,60 @@
 
 package dr.inference.model;
 
+import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.util.CorrelationToCholesky;
+import dr.util.Transform;
+
+import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
+
+
 /**
  * @author Marc Suchard
+ * @author Paul Bastide
  */
-public class CompoundSymmetricMatrix extends MatrixParameter {
+public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
 
-    private Parameter diagonalParameter;
-    private Parameter offDiagonalParameter;
+    private final boolean asCorrelation;
+    private final boolean isCholesky;
 
-    private boolean asCorrelation = false;
-
-    private int dim;
-
-    public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
-        super(MATRIX_PARAMETER);
-        diagonalParameter = diagonals;
-        offDiagonalParameter = offDiagonal;
-        addParameter(diagonalParameter);
-        addParameter(offDiagonal);
-        dim = diagonalParameter.getDimension();
+    public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
+        super(diagonals, offDiagonal, getTransformation(diagonals.getDimension(), isCholesky), true);
+        assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         this.asCorrelation = asCorrelation;
+        this.isCholesky = isCholesky;
     }
 
-    public double[] getAttributeValue() {
-        double[] stats = new double[dim * dim];
-        int index = 0;
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-                stats[index] = getParameterValue(i, j);
-                index++;
-            }
-        }        
-        return stats;
+    private static Transform.MultivariableTransform getTransformation(int dim, Boolean isCholesky) {
+        return isCholesky ? new CorrelationToCholesky(dim) : null;
     }
 
-    public double[] getDiagonals() {
-        return diagonalParameter.getParameterValues();
+    @Override
+    public String toString() {
+        return toStringCompoundParameter(getVechDimension(dim));
     }
 
-    public double getOffDiagonal() {
-        return offDiagonalParameter.getParameterValue(0);
+    private static int getVechuDimension(int dim) {
+        return dim * (dim - 1) / 2;
     }
 
+    private static int getVechDimension(int dim) {
+        return dim * (dim + 1) / 2;
+    }
+
+    @Override
     public double getParameterValue(int row, int col) {
         if (row != col) {
             if (asCorrelation) {
-                return offDiagonalParameter.getParameterValue(0) *
+                return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col)) *
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
-            return offDiagonalParameter.getParameterValue(0);
+            return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col));
         }
         return diagonalParameter.getParameterValue(row);
     }
 
+    @Override
     public double[][] getParameterAsMatrix() {
         final int I = dim;
         double[][] parameterAsMatrix = new double[I][I];
@@ -90,12 +91,87 @@ public class CompoundSymmetricMatrix extends MatrixParameter {
         return parameterAsMatrix;
     }
 
-    public int getColumnDimension() {
-        return diagonalParameter.getDimension();
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return true;
     }
 
-    public int getRowDimension() {
-        return diagonalParameter.getDimension();
+    public boolean isCholesky() {
+        return isCholesky;
     }
 
+    public boolean asCorrelation() {
+        return asCorrelation;
+    }
+
+    private double[][] getCorrelationMatrix() {
+        SymmetricMatrix correlation
+                = SymmetricMatrix.compoundCorrelationSymmetricMatrix(offDiagonalParameter.getParameterValues(), dim);
+        if (!asCorrelation) {
+            for (int i = 0; i < dim; i++) {
+                for (int j = i + 1; j < dim; j++) {
+                    correlation.setSymmetric(i, j,
+                            correlation.component(i, j) / Math.sqrt(diagonalParameter.getParameterValue(i) * diagonalParameter.getParameterValue(j)));
+                }
+            }
+        }
+        return correlation.toComponents();
+    }
+
+    public double[] updateGradientOffDiagonal(double[] vecX) {
+
+        assert vecX.length == dim * dim;
+
+        double[] diagQ = diagonalParameter.getParameterValues();
+
+        double[] vechuGradient = new double[getVechuDimension(dim)];
+
+        int k = 0;
+        for (int i = 0; i < dim - 1; ++i) {
+            for (int j = i + 1; j < dim; ++j) {
+                vechuGradient[k] = 2.0 * vecX[i * dim + j] * Math.sqrt(diagQ[i] * diagQ[j]);
+                ++k;
+            }
+        }
+
+        return updateGradientCorrelation(vechuGradient);
+    }
+
+    public double[] updateGradientCorrelation(double[] gradient) {
+        if (!isCholesky) {
+            return gradient;
+        } else {
+            CorrelationToCholesky transform = new CorrelationToCholesky(dim);
+            return transform.updateGradientInverseUnWeightedLogDensity(gradient,
+                    ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
+                    0, gradient.length);
+        }
+    }
+
+    public double[] updateGradientDiagonal(double[] vecX) {
+
+        assert vecX.length == dim * dim;
+
+        double[] diagQ = diagonalParameter.getParameterValues();
+
+        double[] vecC = flatten(getCorrelationMatrix());
+
+        double[] diagGradient = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            double sum = 0.0;
+            for (int k = 0; k < dim; ++k) {
+                sum += vecX[i * dim + k] * Math.sqrt(diagQ[k] / diagQ[i]) * vecC[i * dim + k];
+            }
+
+            diagGradient[i] = sum;
+        }
+
+        return diagGradient;
+    }
+
+    @Override
+    public String getReport() {
+        return new WrappedMatrix.ArrayOfArray(getParameterAsMatrix()).toString();
+    }
 }

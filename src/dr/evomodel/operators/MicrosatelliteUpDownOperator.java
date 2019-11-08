@@ -115,11 +115,12 @@ public class MicrosatelliteUpDownOperator extends AbstractAdaptableOperator {
         return name;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0) / Math.log(10);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.pow(10.0, value) + 1.0);
     }
 

@@ -88,6 +88,11 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     }
 
     @Override
+    public int getInternalDimension() {
+        return embeddingDimension;
+    }
+
+    @Override
     public void setParameters(double[] parameters) {
         precision = parameters[0];
 

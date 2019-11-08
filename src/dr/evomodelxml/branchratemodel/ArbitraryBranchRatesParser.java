@@ -26,21 +26,28 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
+import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
+
 /**
  */
 public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
     public static final String ARBITRARY_BRANCH_RATES = "arbitraryBranchRates";
-    public static final String RATES = "rates";
+    private static final String RATES = "rates";
     public static final String RECIPROCAL = "reciprocal";
     public static final String EXP = "exp";
-    public static final String CENTER_AT_ONE = "centerAtOne";
+    private static final String MULTIPLER = "multiplier";
+    private static final String CENTER_AT_ONE = "centerAtOne";
+
+    public static final String LOCATION = "location";
+    public static final String SCALE = "scale";
 
     public String getParserName() {
         return ARBITRARY_BRANCH_RATES;
@@ -54,23 +61,22 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         Parameter rateCategoryParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
         boolean centerAtOne = xo.getAttribute(CENTER_AT_ONE, true);
-        boolean exp = xo.getAttribute(EXP, false);
+
 
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() != numBranches) {
             rateCategoryParameter.setDimension(numBranches);
-//            throw new XMLParseException("Invalid length for '" + rateCategoryParameter.getId() + "'\n" +
-//            "Should have length = " + numBranches);
         }
 
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
         Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
-        Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
 
-        return new ArbitraryBranchRates(tree, rateCategoryParameter, reciprocal, exp, centerAtOne);
+
+        ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
+
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
     }
 
     //************************************************************************
@@ -80,6 +86,33 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     public String getParserDescription() {
         return "This element returns an arbitrary rate model." +
                 "The branch rates are drawn from an arbitrary distribution determine by the prior.";
+    }
+
+    public static ArbitraryBranchRates.BranchRateTransform parseTransform (XMLObject xo) throws XMLParseException {
+
+        boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
+        Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
+
+        boolean exp = xo.getAttribute(EXP, false);
+
+        boolean multipler = xo.getAttribute(MULTIPLER, false);
+
+        BranchSpecificFixedEffects locationParameter = null;
+        if (xo.hasChildNamed(LOCATION)) {
+            Object locationObject = xo.getElementFirstChild(LOCATION);
+            if ( locationObject instanceof BranchSpecificFixedEffects) {
+                locationParameter = (BranchSpecificFixedEffects) locationObject;
+            } else {
+                locationParameter = new BranchSpecificFixedEffects.None((Parameter) locationObject);
+            }
+        }
+
+        Parameter scaleParameter = null;
+        if (xo.hasChildNamed(SCALE)) {
+            scaleParameter = (Parameter) xo.getElementFirstChild(SCALE);
+        }
+
+        return make(reciprocal, exp, multipler, locationParameter, scaleParameter);
     }
 
     public Class getReturnType() {
@@ -96,6 +129,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RECIPROCAL, true),
             AttributeRule.newBooleanRule(CENTER_AT_ONE, true),
             AttributeRule.newBooleanRule(EXP, true),
+            new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
+            new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),
     };
 
 

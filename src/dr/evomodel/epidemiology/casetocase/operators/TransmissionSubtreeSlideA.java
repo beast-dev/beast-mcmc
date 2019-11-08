@@ -30,6 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.operators.AbstractAdaptableTreeOperator;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
@@ -45,7 +46,7 @@ import java.util.List;
  * @author Matthew Hall
  *
  */
-public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements AdaptableMCMCOperator {
+public class TransmissionSubtreeSlideA extends AbstractAdaptableTreeOperator {
 
     private CaseToCaseTreeLikelihood c2cLikelihood;
     private TreeModel tree;
@@ -65,6 +66,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements A
     public TransmissionSubtreeSlideA(CaseToCaseTreeLikelihood c2cLikelihood, double weight, double size,
                                      boolean gaussian, boolean swapRates, boolean swapTraits,  AdaptationMode mode,
                                      boolean resampleInfectionTimes) {
+        super(mode);
+
         this.c2cLikelihood = c2cLikelihood;
         tree = c2cLikelihood.getTreeModel();
         setWeight(weight);
@@ -415,50 +418,24 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements A
         this.size = size;
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(getSize());
     }
 
-    public void setAdaptableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
+    @Override
     public double getRawParameter() {
         return getSize();
     }
 
     @Override
-    public double getTargetAcceptanceProbability() {
-        return AbstractAdaptableOperator.DEFAULT_ADAPTATION_TARGET;
-    }
-
-    @Override
     public String getAdaptableParameterName() {
         return "size";
-    }
-
-    public AdaptationMode getMode() {
-        return mode;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return MINIMUM_ACCEPTANCE_LEVEL;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return MAXIMUM_ACCEPTANCE_LEVEL;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return MINIMUM_GOOD_ACCEPTANCE_LEVEL;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return MAXIMUM_GOOD_ACCEPTANCE_LEVEL;
-    }
-
-    public String getPerformanceSuggestion() {
-        return "";
     }
 
     public String getOperatorName() {

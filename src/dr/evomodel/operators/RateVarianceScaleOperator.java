@@ -124,11 +124,12 @@ public class RateVarianceScaleOperator extends AbstractAdaptableOperator {
         return "rateVarianceScale";
     }
 
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 

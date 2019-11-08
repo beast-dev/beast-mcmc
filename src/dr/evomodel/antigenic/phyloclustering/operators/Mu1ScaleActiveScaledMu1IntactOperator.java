@@ -94,12 +94,13 @@ public class Mu1ScaleActiveScaledMu1IntactOperator extends AbstractAdaptableOper
 
 	
 	//copied from the original ScaleOperator
-    public double getAdaptableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
 	//copied from the original ScaleOperator
-    public void setAdaptableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 

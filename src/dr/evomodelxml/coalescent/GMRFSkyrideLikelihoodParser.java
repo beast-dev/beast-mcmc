@@ -50,6 +50,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String GROUP_SIZES = "groupSizes";
     public static final String PRECISION_PARAMETER = "precisionParameter";
     public static final String POPULATION_TREE = "populationTree";
+    public static final String BUILD_MAPPING = "intervalNodeMapping";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
     public static final String BETA_PARAMETER = "betaParameter";
     public static final String SINGLE_BETA = "singleBeta";
@@ -71,6 +72,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String COV_PREC_PARAM = "covariatePrecision";
     public static final String COV_PREC_REC = "covariatePrecisionRecent";
     public static final String COV_PREC_DIST = "covariatePrecisionDistant";
+    public static final String REC_INDICES = "covIndicesMissingRecent";
+    public static final String DIST_INDICES = "covIndicesMissingDistant";
 
 
     public String getParserName() {
@@ -88,6 +91,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
+
+        boolean buildIntervalNodeMapping = xo.getAttribute(BUILD_MAPPING, false);
 
         cxo = xo.getChild(POPULATION_TREE);
 
@@ -259,6 +264,26 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Must specify both firstObservedIndex and covariatePrecision");
         }
 
+        Parameter recentIndices = null;
+        if (xo.getChild(REC_INDICES) != null) {
+            cxo = xo.getChild(REC_INDICES);
+            recentIndices = (Parameter) cxo.getChild(Parameter.class);
+        }
+
+        if(firstObservedIndex == null && recentIndices != null){
+            throw new XMLParseException("Cannot specify covIndicesMissingRecent without specifying firstObservedIndex");
+        }
+
+        Parameter distantIndices = null;
+        if (xo.getChild(DIST_INDICES) != null) {
+            cxo = xo.getChild(DIST_INDICES);
+            distantIndices = (Parameter) cxo.getChild(Parameter.class);
+        }
+
+        if(lastObservedIndex == null && distantIndices != null){
+            throw new XMLParseException("Cannot specify covIndicesMissingDistant without specifying lastObservedIndex");
+        }
+
         List<MatrixParameter> covariates = null;
         if (xo.hasChildNamed(COVARIATES)){
             covariates = new ArrayList<MatrixParameter>();
@@ -292,13 +317,13 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
             return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
+                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, buildIntervalNodeMapping);
 
         } else {
             if (xo.getChild(GRID_POINTS) != null) {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                        firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, betaList);
+                        firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
             } else {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                         lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
@@ -344,7 +369,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
-            AttributeRule.newBooleanRule(OLD_SKYRIDE, true)
+            AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
+            AttributeRule.newBooleanRule(BUILD_MAPPING, true)
     };
 
 }

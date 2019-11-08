@@ -30,6 +30,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -60,7 +61,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         super(name);
         this.dataLikelihood = dataLikelihood;
         this.likelihoodDelegate = likelihoodDelegate;
-        this.rateTransformation = likelihoodDelegate.getRateTransformation();
 
         this.dimTrait = likelihoodDelegate.getTraitDim();
         this.numTrait = likelihoodDelegate.getTraitCount();
@@ -72,22 +72,23 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         String partialTraitName = getTipTraitName(traitName);
         tipSampleTrait = dataLikelihood.getTreeTrait(partialTraitName);
 
-//        tipFullConditionalTrait = dataLikelihood.getTreeTrait("fcd." + traitName);
-//
-//        for (TreeTrait t : dataLikelihood.getTreeTraits()) {
-//            System.err.println(t.getTraitName());
-//        }
-//
-//        System.err.println("Found? " + (tipFullConditionalTrait == null ? "no" : "yes"));
-//        System.exit(-1);
-
         treeTraversalDelegate = new LikelihoodTreeTraversal(
                 dataLikelihood.getTree(),
                 dataLikelihood.getBranchRateModel(),
                 TreeTraversal.TraversalType.POST_ORDER);
 
         if (likelihoodDelegate.getIntegrator() instanceof MultivariateIntegrator) {
-            outerProductDelegate = likelihoodDelegate.createObservedDataOnly(likelihoodDelegate);
+
+            ContinuousTraitPartialsProvider dataProvider = likelihoodDelegate.getDataModel();
+
+            if (dataProvider instanceof RepeatedMeasuresTraitDataModel) {
+                dataProvider = new EmptyTraitDataModel(traitName, dataProvider.getParameter(),
+                        dataProvider.getTraitDimension(), PrecisionType.SCALAR);
+            }
+
+            outerProductDelegate = ContinuousDataLikelihoodDelegate.createObservedDataOnly(
+                    likelihoodDelegate, dataProvider);
+
         } else {
             outerProductDelegate = likelihoodDelegate;
         }
@@ -107,16 +108,9 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         return wishartStatistics;
     }
 
-    private void simulateMissingTraits() {
+    public void simulateMissingTraits() {
 
         likelihoodDelegate.fireModelChanged(); // Force new sample!
-
-//        ProcessSimulationDelegate.MeanAndVariance mv =
-//                (ProcessSimulationDelegate.MeanAndVariance) tipFullConditionalTrait.getTrait(
-//                        dataLikelihood.getTree(), dataLikelihood.getTree().getExternalNode(1));
-//
-//        System.err.println("DONE");
-//        System.exit(-1);
 
         double[] sample = (double[]) tipSampleTrait.getTrait(dataLikelihood.getTree(), null);
 
@@ -166,14 +160,9 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         final NodeRef root = dataLikelihood.getTree().getRoot();
 
-        try {
-            outerProductDelegate.setComputeWishartStatistics(true);
-            outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
-            outerProductDelegate.setComputeWishartStatistics(false);
-
-        } catch (DataLikelihoodDelegate.LikelihoodException e) {
-            throw new RuntimeException("Unhandled exception");
-        }
+        outerProductDelegate.setComputeWishartStatistics(true);
+        outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+        outerProductDelegate.setComputeWishartStatistics(false);
 
         wishartStatistics = outerProductDelegate.getWishartStatistics();
 
@@ -268,7 +257,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         @Override
         public Class getReturnType() {
-            return ConjugateWishartStatisticsProvider.class;
+            return WishartStatisticsWrapper.class;
         }
 
         /**
@@ -286,16 +275,13 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
     };
 
     private final LikelihoodTreeTraversal treeTraversalDelegate;
-    private final ContinuousRateTransformation rateTransformation;
     private final TreeTrait tipSampleTrait;
-//    private final TreeTrait tipFullConditionalTrait;
 
     private final int dimTrait;
     private final int numTrait;
     private final int tipCount;
     private final int dimPartial;
 
-    private final ContinuousTraitDataModel continuousTraitDataModel = null;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousDataLikelihoodDelegate outerProductDelegate;
     private final TreeDataLikelihood dataLikelihood;
@@ -308,8 +294,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
     private WishartSufficientStatistics wishartStatistics;
     private WishartSufficientStatistics savedWishartStatistics;
-
-    private double[] tipTraits;
 
     private static final boolean DEBUG = false;
 
@@ -344,7 +328,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         private int index;
 
-        public OuterProductColumn(String label, int index) {
+        private OuterProductColumn(String label, int index) {
             super(label);
             this.index = index;
         }
@@ -360,7 +344,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         private int index;
 
-        public TipSampleColumn(String label, int index) {
+        private TipSampleColumn(String label, int index) {
             super(label);
             this.index = index;
         }

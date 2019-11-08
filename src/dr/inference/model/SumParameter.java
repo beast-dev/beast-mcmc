@@ -44,6 +44,11 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
         return dimension;
     }
 
+    @Override
+    public boolean isImmutable() {
+        return true;
+    }
+
     protected void storeValues() {
         for (Parameter p : parameterList) {
             p.storeParameterValues();

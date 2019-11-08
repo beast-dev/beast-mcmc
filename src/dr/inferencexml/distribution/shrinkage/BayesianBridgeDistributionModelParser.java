@@ -27,6 +27,7 @@ package dr.inferencexml.distribution.shrinkage;
 
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
@@ -63,8 +64,10 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
+
         if (localScale != null) {
-            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, dim);
+            return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth, dim);
         } else {
             return new MarginalBayesianBridgeDistributionModel(globalScale, exponent, dim);
         }
@@ -85,6 +88,8 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SLAB_WIDTH,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),               
             AttributeRule.newIntegerRule(DIMENSION, true),
     };
 

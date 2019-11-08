@@ -42,6 +42,7 @@ import dr.util.HeapSort;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Xiang Ji
@@ -76,7 +77,13 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
     @Override
     public double[] getGradientLogDensity() {
-        likelihood.getLogLikelihood();
+        final double logLikelihood = likelihood.getLogLikelihood();
+        double[] gradient = new double[tree.getInternalNodeCount()];
+
+        if (logLikelihood == Double.NEGATIVE_INFINITY) {
+            Arrays.fill(gradient, Double.NaN);
+            return gradient;
+        }
 
         int[] intervalIndices = new int[tree.getInternalNodeCount()];
         int[] nodeIndices = new int[tree.getInternalNodeCount()];
@@ -87,7 +94,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
-        double[] gradient = new double[tree.getInternalNodeCount()];
         int numSameHeightNodes = 1;
         double thisGradient = 0.0;
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {

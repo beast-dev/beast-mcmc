@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.loggers.LogColumn;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
 import dr.inference.model.*;
 
@@ -69,9 +68,11 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     private final Parameter latentTransitionFrequencyParameter;
     private final TreeParameterModel latentStateProportions;
     private final Parameter latentStateProportionParameter;
-    private final Parameter baseRateForLatentBranchesParameter;
+    private final Parameter nonLatentRateParameter;
     private final CountableBranchCategoryProvider branchCategoryProvider;
     private final int maximumNumberOfLatentPeriods;
+    private final boolean scaleByRootHeight;
+    private  Parameter rootHeightParameter;
 
     private TwoStateOccupancyMarkovReward markovReward;
     private TwoStateOccupancyMarkovReward storedMarkovReward;
@@ -95,9 +96,10 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
                                               Parameter latentTransitionRateParameter,
                                               Parameter latentTransitionFrequencyParameter,
                                               Parameter latentStateProportionParameter,
-                                              Parameter latentBranchRateParameter,
+                                              Parameter nonLatentRate,
                                               CountableBranchCategoryProvider branchCategoryProvider,
-                                                int maximumNumberOfLatentPeriods) {
+                                                int maximumNumberOfLatentPeriods,
+                                      boolean scaleByRootHeight) {
         super(name);
 
         this.tree = treeModel;
@@ -111,9 +113,10 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         this.latentTransitionFrequencyParameter = latentTransitionFrequencyParameter;
         addVariable(latentTransitionFrequencyParameter);
 
-        this.baseRateForLatentBranchesParameter = latentBranchRateParameter;
-        if(latentBranchRateParameter!=null) {
-            addVariable(latentBranchRateParameter);
+
+        this.nonLatentRateParameter = nonLatentRate;
+        if(nonLatentRate!=null) {
+            addVariable(nonLatentRate);
         }
         if (branchCategoryProvider ==  null) {
             this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
@@ -148,6 +151,12 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         addStatistic(exogenousMeanRate);
 
         this.maximumNumberOfLatentPeriods = maximumNumberOfLatentPeriods;
+        this.scaleByRootHeight= scaleByRootHeight;
+        this.rootHeightParameter = null;
+        if(this.scaleByRootHeight){
+            this.rootHeightParameter=tree.getRootHeightParameter();
+            addVariable(tree.getRootHeightParameter());
+        }
     }
 
     public LatentStateBranchRateModel(Parameter rate, Parameter prop) {
@@ -158,13 +167,15 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         latentTransitionFrequencyParameter = prop;
         latentStateProportions = null;
         this.latentStateProportionParameter = null;
-        this.baseRateForLatentBranchesParameter = null;
+        this.nonLatentRateParameter = null;
         this.branchCategoryProvider = null;
         this.maximumNumberOfLatentPeriods =5;
+        this.scaleByRootHeight=false;
+        this.rootHeightParameter=null;
     }
 
     private double[] createLatentInfinitesimalMatrix() {
-        final double rate = latentTransitionRateParameter.getParameterValue(0);
+        final double rate = getLatentTransitionRate();
         final double prop = latentTransitionFrequencyParameter.getParameterValue(0);
 
         double[] mat = new double[]{
@@ -184,9 +195,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     }
 
     public TwoStateOccupancyMarkovReward getMarkovReward() {
-        if (markovReward == null) {
+//        if (markovReward == null) {
             markovReward = createMarkovReward();
-        }
+//        }
         return markovReward;
     }
 
@@ -195,8 +206,8 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
 
         double latentProportion = getLatentProportion(tree, node);
-        if(this.baseRateForLatentBranchesParameter!=null && latentProportion>0){
-            nonLatentRate = this.baseRateForLatentBranchesParameter.getParameterValue(0);
+        if(this.nonLatentRateParameter !=null && latentProportion>0){
+            nonLatentRate = this.nonLatentRateParameter.getParameterValue(0);
         }
 
         return calculateBranchRate(nonLatentRate, latentProportion);
@@ -242,7 +253,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == latentTransitionFrequencyParameter || variable == latentTransitionRateParameter) {
+        if (variable == latentTransitionFrequencyParameter || variable == latentTransitionRateParameter||(variable==rootHeightParameter&&scaleByRootHeight)) {
             // markovReward computations have changed
             markovReward = null;
             setUpdateAllBranches();
@@ -365,7 +376,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
         double logLike = 0.0;
 
-        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (node != tree.getRoot()) {
                 if (updateNeededForNode(tree, node)) {
@@ -405,7 +416,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         // Therefore all nodes are in state 0
 //        double joint = markovReward.computePdf(reward, branchLength)[state];
 
-        final double rate = latentTransitionRateParameter.getParameterValue(0) *
+        final double rate = getLatentTransitionRate() *
                 latentTransitionFrequencyParameter.getParameterValue(0) * branchLength;
         final double zeroJumps = Math.exp(-rate);
         double joint = zeroJumps;
@@ -417,8 +428,8 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
         final double marg = markovReward.computeConditionalProbability(branchLength, 0, 0);
 
-        // Check numerical tolerance
-        if (marg - zeroJumps <= 0.0) {
+//        // Check numerical tolerance
+        if (marg <= zeroJumps) {
             return 0.0;
         }
 
@@ -427,7 +438,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double truncatedJumpProbability = Arrays.stream(markovReward.getJumpProbabilities(branchLength)).sum();
 
         if((marg-(zeroJumps+truncatedJumpProbability))>1e-6){
-            Logger.getLogger("error").warning("Insufficient truncation in latent branch rate model");
+            Logger.getLogger("error").warning("Numerical error. Potentially,insufficient truncation in latent branch rate model with rate of "+getLatentTransitionRate()+" and branchlength "+branchLength);
         }
 
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
@@ -441,7 +452,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
                 System.err.println("Infinite density in LatentStateBranchRateModel:");
                 System.err.println("proportion   = " + proportion);
                 System.err.println("branchLength = " + branchLength);
-                System.err.println("lTRP  = " + latentTransitionRateParameter.getParameterValue(0));
+                System.err.println("lTRP  = " + getLatentTransitionRate());
                 System.err.println("lTFP  = " + latentTransitionFrequencyParameter.getParameterValue(0));
                 System.err.println("rate  = " + rate);
                 System.err.println("joint = " + joint);
@@ -622,6 +633,19 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
 
     };
+
+    /** This is private getter can scale the incoming transition rate by the hieght of the root. The idea here is that
+    there are cases were we don't have much prior information on the instantaneous rate, and so we can set a prior based
+    on how many latent periods we might expect over the course of the tree. This hopefully also helps with the case were
+    latency is added to the root's children which pushes back the root only to lead to more latency there.
+    **/
+    private double getLatentTransitionRate(){
+        if(scaleByRootHeight){
+            return latentTransitionRateParameter.getParameterValue(0)/(rootHeightParameter.getParameterValue(0));
+        }
+        return latentTransitionRateParameter.getParameterValue(0);
+    }
+
 
     private static boolean DEBUG = true;
 

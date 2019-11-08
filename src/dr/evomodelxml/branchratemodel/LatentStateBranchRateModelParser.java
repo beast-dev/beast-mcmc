@@ -38,8 +38,9 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String LATENT_TRANSITION_RATE = "latentTransitionRate";
     public static final String LATENT_TRANSITION_FREQUENCY = "latentTransitionFrequency";
     public static final String LATENT_STATE_PROPORTIONS = "latentStateProportions";
-    public static final String BASE_RATE_FOR_LATENT_BRANCHES = "baseRateForLatentBranches";
+    public static final String NON_LATENT_RATE = "nonLatentRate";
     public static final String MAXIMUM_LATENT_PERIODS="maximumNumberOfLatentPeriods";
+    public static final String SCALE_TRANSITION_RATE_BY_ROOT_HEIGHT= "scaleTransitionRateByRootHeight";
 
 
     public String getParserName() {
@@ -47,6 +48,8 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+
         BranchRateModel nonLatentRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         Parameter latentTransitionRateParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_RATE);
@@ -58,19 +61,20 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(LATENT_STATE_PROPORTIONS)) {
             latentStateProportionParameter = (Parameter) xo.getElementFirstChild(LATENT_STATE_PROPORTIONS);
         }
-        Parameter baseRateForLatentBranchesParameter = null;
-        if(xo.hasChildNamed(BASE_RATE_FOR_LATENT_BRANCHES)){
-            baseRateForLatentBranchesParameter = (Parameter) xo.getElementFirstChild(BASE_RATE_FOR_LATENT_BRANCHES);
+        Parameter nonLatentRate = null;
+        if(xo.hasChildNamed(NON_LATENT_RATE)){
+            nonLatentRate = (Parameter) xo.getElementFirstChild(NON_LATENT_RATE);
         }
 
         int maximumNumberOfLatentPeriods = xo.getAttribute(MAXIMUM_LATENT_PERIODS,5);
+        boolean scaleByRootHeight = xo.getAttribute(SCALE_TRANSITION_RATE_BY_ROOT_HEIGHT,false);
 
         Logger.getLogger("dr").info("\nCreating a latent state branch rate model");
 
         return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,
                 latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-                latentStateProportionParameter, baseRateForLatentBranchesParameter ,branchCategoryProvider,maximumNumberOfLatentPeriods);
+                latentStateProportionParameter, nonLatentRate ,branchCategoryProvider,maximumNumberOfLatentPeriods,scaleByRootHeight);
 
 
 //        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
@@ -103,8 +107,10 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
             new ElementRule(LATENT_TRANSITION_RATE, Parameter.class, "A parameter which gives the instantaneous rate of switching to and from the latent state", false),
             new ElementRule(LATENT_TRANSITION_FREQUENCY, Parameter.class, "A parameter which gives the rate bias of switching to and from the latent state", false),
             new ElementRule(LATENT_STATE_PROPORTIONS, Parameter.class, "The proportion of each branch which is spend in a latent state", true),
-            new ElementRule(BASE_RATE_FOR_LATENT_BRANCHES,Parameter.class, "An optional rate that will override the branch rates from the branch rate model when proportion latent is greater than 0", true),
-            new ElementRule(MAXIMUM_LATENT_PERIODS,int.class,"An optional integer specifying the number of latent periods used in calculating the likelihood of the latent proportion",true)
+            new ElementRule(NON_LATENT_RATE,Parameter.class, "An optional rate that will override the branch rates from the branch rate model when proportion latent is greater than 0", true),
+            new ElementRule(MAXIMUM_LATENT_PERIODS,int.class,"An optional integer specifying the number of latent periods used in calculating the likelihood of the latent proportion",true),
+            new ElementRule(SCALE_TRANSITION_RATE_BY_ROOT_HEIGHT,boolean.class,"An optional boolean specifying that the transition rate parameter should be normalized by the root height.",true),
+
     };
 
 }

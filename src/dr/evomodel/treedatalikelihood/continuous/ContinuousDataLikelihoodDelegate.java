@@ -915,12 +915,15 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     @Override
     public String getDescription() {
-        return "TODO";
+        return "Multivariate diffusion model (first citation) with efficiently integrated internal traits (second citation)";
     }
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.LEMEY_2010_PHYLOGEOGRAPHY);
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(CommonCitations.LEMEY_2010_PHYLOGEOGRAPHY);
+        citations.add(CommonCitations.PYBUS_2012_UNIFYING);
+        return citations;
     }
 
     // **************************************************************

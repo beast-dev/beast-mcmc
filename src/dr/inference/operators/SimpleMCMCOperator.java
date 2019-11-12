@@ -32,7 +32,7 @@ import java.util.Deque;
 
 public abstract class SimpleMCMCOperator implements MCMCOperator {
 
-    public final static int SMOOTHED_ACCEPTANCE_WINDOW_SIZE = 100;
+    private final static int SMOOTHED_ACCEPTANCE_WINDOW_SIZE = 100;
 
     public abstract String getOperatorName();
 
@@ -233,5 +233,5 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private long sumEvaluationTime = 0;
     private long sumCalculationCount = 0;
 
-    private Deque<Integer> windowAcceptance = new ArrayDeque<Integer>();
+    private Deque<Integer> windowAcceptance = new ArrayDeque<>();
 }

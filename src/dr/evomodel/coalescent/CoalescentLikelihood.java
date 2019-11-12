@@ -84,6 +84,10 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return lnL;
 	}
 
+	public DemographicModel getDemoModel() {
+		return demoModel;
+	}
+
 	// **************************************************************
 	// Units IMPLEMENTATION
 	// **************************************************************

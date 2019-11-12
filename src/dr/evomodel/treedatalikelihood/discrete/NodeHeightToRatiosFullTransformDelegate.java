@@ -69,7 +69,7 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
                 new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         this.rootHeightAndRatios = new CompoundParameter("rootHeightAndRatios",
                 new Parameter[]{heightParameter, ratios});
-        this.nodeHeights = new NodeHeightParameter("internalNodeHeights", tree, true);
+        this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, true);
 
     }
 

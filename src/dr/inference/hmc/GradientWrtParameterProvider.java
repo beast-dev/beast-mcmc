@@ -111,10 +111,12 @@ public interface GradientWrtParameterProvider {
 
         private final boolean checkValues;
         private final double tolerance;
+        private final double smallThreshold;
 
         CheckGradientNumerically(GradientWrtParameterProvider provider,
                                         double lowerBound, double upperBound,
-                                        Double nullableTolerance) {
+                                        Double nullableTolerance,
+                                        Double nullableSmallNumberThreshold) {
             this.provider = provider;
             this.parameter = provider.getParameter();
             this.lowerBound = lowerBound;
@@ -122,6 +124,8 @@ public interface GradientWrtParameterProvider {
 
             this.checkValues = nullableTolerance != null;
             this.tolerance = checkValues ? nullableTolerance : 0.0;
+
+            this.smallThreshold = nullableSmallNumberThreshold != null ? nullableSmallNumberThreshold : 0.0;
         }
 
 
@@ -173,7 +177,7 @@ public interface GradientWrtParameterProvider {
             double[] analytic = provider.getGradientLogDensity();
             double[] numeric = getNumericalGradient();
 
-            return makeReport("Gradient\n", analytic, numeric, checkValues, tolerance);
+            return makeReport("Gradient\n", analytic, numeric, checkValues, tolerance, smallThreshold);
         }
     }
 
@@ -181,7 +185,8 @@ public interface GradientWrtParameterProvider {
                              double[] analytic,
                              double[] numeric,
                              boolean checkValues,
-                             double tolerance) throws MismatchException {
+                             double tolerance,
+                             double smallNumberThreshold) throws MismatchException {
 
         StringBuilder sb = new StringBuilder(header);
         sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(analytic));
@@ -191,7 +196,7 @@ public interface GradientWrtParameterProvider {
         if (checkValues) {
             for (int i = 0; i < analytic.length; ++i) {
                 double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
-                if (Math.abs(relativeDifference) > tolerance) {
+                if (Math.abs(relativeDifference) > tolerance && Math.abs(analytic[i]) > smallNumberThreshold && Math.abs(numeric[i]) > smallNumberThreshold) {
                     sb.append("\nDifference @ ").append(i + 1).append(": ")
                             .append(analytic[i]).append(" ").append(numeric[i])
                             .append(" ").append(relativeDifference).append("\n");
@@ -207,11 +212,18 @@ public interface GradientWrtParameterProvider {
     static String getReportAndCheckForError(GradientWrtParameterProvider provider,
                                             double lowerBound, double upperBound,
                                             Double nullableTolerance) {
+        return getReportAndCheckForError(provider, lowerBound, upperBound, nullableTolerance, null);
+    }
+
+    static String getReportAndCheckForError(GradientWrtParameterProvider provider,
+                                            double lowerBound, double upperBound,
+                                            Double nullableTolerance,
+                                            Double nullableSmallNumberThreshold) {
         String report;
         try {
             report = new CheckGradientNumerically(provider,
                     lowerBound, upperBound,
-                    nullableTolerance
+                    nullableTolerance, nullableSmallNumberThreshold
             ).getReport();
         } catch (MismatchException e) {
             String message = e.getMessage();

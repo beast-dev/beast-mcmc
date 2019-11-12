@@ -26,7 +26,7 @@
 package dr.evomodel.coalescent;
 
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.discrete.AbstractNodeHeightTransformDelegate;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
@@ -58,7 +58,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
         this.wrtParameter = wrtParameter;
         this.nodeHeightTransform = nodeHeightTransform;
         if (nodeHeightTransform == null) {
-            this.parameter = new AbstractNodeHeightTransformDelegate.NodeHeightParameter("internalNodeHeights", tree, true);
+            this.parameter = new NodeHeightProxyParameter("internalNodeHeights", tree, true);
         } else {
             this.parameter = nodeHeightTransform.getParameter();
         }

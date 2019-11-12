@@ -306,6 +306,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     private double[] updateGradientUnWeightedLogDensity(double[] gradient) {
+        updateRatios();
         // gradient is wrt nodeHeight, value = ratios
         double[] ratiosGradientUnweightedLogDensity = new double[ratios.getDimension()];
         postOrderTraversal.updateAllNodes();

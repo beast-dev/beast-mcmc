@@ -30,7 +30,10 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.inference.model.*;
+import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -1086,6 +1089,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
 
         return hessianLogDens;
+    }
+
+    public double[] getGridPoints() {
+        return gridPoints.clone();
     }
 
     private void checkIntervals() {

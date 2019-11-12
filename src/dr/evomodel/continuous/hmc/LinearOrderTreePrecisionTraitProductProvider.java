@@ -62,7 +62,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
         final double[] result = new double[vector.getDimension()];
 
-        if (taxonTaskPool.getPool() == null) { // single-threaded
+        if (taxonTaskPool.getNumThreads() == 1) { // single-threaded
 
             final List<WrappedNormalSufficientStatistics> allStatistics;
             if (NEW_DATA) {
@@ -92,20 +92,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
             List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
 
             if (SMART_POOL) {
-
-                for (final TaxonTaskPool.TaxonTaskIndices indices : taxonTaskPool.getIndices()) {
-                    calls.add(Executors.callable(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    for (int taxon = indices.start; taxon < indices.stop; ++taxon) {
-                                        computeProductForOneTaxon(taxon, allStatistics.get(taxon), result);
-                                    }
-                                }
-                            }
-                    ));
-                }
-
+                taxonTaskPool.fork((taxon, thread) ->
+                        computeProductForOneTaxon(taxon, allStatistics.get(taxon), result));
             } else {
 
                 for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {

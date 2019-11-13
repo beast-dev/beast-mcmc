@@ -26,6 +26,7 @@
 package dr.evomodel.branchmodel;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -46,7 +47,7 @@ import java.util.Map;
  */
 public class PairedParalogBranchModel extends AbstractModel implements BranchModel {
 
-    private final TreeModel tree;
+    private final Tree tree;
     private final List<SubstitutionModel> substitutionModels;
     private final int[][] assignments;
     private final List<Parameter> timeToDuplicationProportion;
@@ -56,7 +57,7 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
                                     List<SubstitutionModel> substitutionModels,
                                     int[][] assignments,
                                     List<Parameter> timeToDuplicationProportions,
-                                    TreeModel tree) {
+                                    Tree tree) {
         super(name);
         this.substitutionModels = substitutionModels;
         this.tree = tree;
@@ -104,28 +105,23 @@ public class PairedParalogBranchModel extends AbstractModel implements BranchMod
         return map;
     }
 
-    public static int[][] parseAssignmentString(String[] assignmentString) {
-        int[][] assignment = new int[assignmentString.length][];
+    public static int[] parseAssignmentString(String assignmentString) {
         List<Integer> modelList = new ArrayList<>();
-        for (int i = 0; i < assignmentString.length; i++) {
-            String thisAssignment = assignmentString[i];
-            int start = 0; int end = 0;
-            modelList.clear();
-            while(end < thisAssignment.length()) {
-                Character character = thisAssignment.charAt(end);
-                if( character.equals('+')) {
-                    final int modelIndex = Integer.valueOf(thisAssignment.substring(start, end));
-                    modelList.add(modelIndex);
-                    start = end + 1;
-                }
-                end++;
+        int start = 0; int end = 0;
+        while(end < assignmentString.length()) {
+            Character character = assignmentString.charAt(end);
+            if( character.equals('+')) {
+                final int modelIndex = Integer.valueOf(assignmentString.substring(start, end));
+                modelList.add(modelIndex);
+                start = end + 1;
             }
-            final int modelIndex = Integer.valueOf(thisAssignment.substring(start, end));
-            modelList.add(modelIndex);
-            assignment[i] = new int[modelList.size()];
-            for (int j = 0; j < modelList.size(); j++) {
-                assignment[i][j] = modelList.get(j);
-            }
+            end++;
+        }
+        final int modelIndex = Integer.valueOf(assignmentString.substring(start, end));
+        modelList.add(modelIndex);
+        int[] assignment = new int[modelList.size()];
+        for (int j = 0; j < modelList.size(); j++) {
+            assignment[j] = modelList.get(j);
         }
         return assignment;
     }

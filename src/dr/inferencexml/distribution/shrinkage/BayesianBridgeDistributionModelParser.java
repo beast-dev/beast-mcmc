@@ -66,6 +66,10 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
 
         Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
 
+        if (localScale == null && slabWidth != null) {
+            throw new XMLParseException("Slab-regularization is only available under the joint Bayesian bridge");
+        }
+
         if (localScale != null) {
             return new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth, dim);
         } else {

@@ -603,6 +603,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         ((TreeModel) model).beginTreeEdit();
                         ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
+                            System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
                             ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
                         }
                         ((TreeModel) model).endTreeEdit();

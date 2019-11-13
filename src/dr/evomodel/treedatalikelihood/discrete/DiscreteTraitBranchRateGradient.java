@@ -43,7 +43,13 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
+
+import java.util.Collections;
+import java.util.List;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
 
@@ -52,7 +58,7 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Marc A. Suchard
  */
 public class DiscreteTraitBranchRateGradient
-        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
@@ -266,4 +272,33 @@ public class DiscreteTraitBranchRateGradient
 
         return columns;
     }
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using linear-time branch-specific parameter differential calculations";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    private static final Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("X", "Ji"),
+                    new Author( "Z", "Zhang"),
+                    new Author("A", "Holbrook"),
+                    new Author("A", "Nishimura"),
+                    new Author("G", "Beale"),
+                    new Author("A", "Rambaut"),
+                    new Author("P", "Lemey"),
+                    new Author("MA", "Suchard"),
+            },
+            "Gradients do grow on trees: a linear-time O(N)-dimensional gradient for statistical phylogenetics",
+            "Molecular Biology and Evolution",
+            Citation.Status.IN_SUBMISSION);
 }

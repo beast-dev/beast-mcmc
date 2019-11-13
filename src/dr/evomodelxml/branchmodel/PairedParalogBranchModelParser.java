@@ -81,7 +81,6 @@ public class PairedParalogBranchModelParser extends AbstractXMLObjectParser {
                     throw new RuntimeException("Unrecognized assignment format");
                 }
             }
-            attributeTree.getRoot();
         } catch (FileNotFoundException e) {
             throw new XMLParseException(e.getMessage());
         } catch (Importer.ImportException e) {

@@ -343,10 +343,18 @@ public class HKY extends BaseSubstitutionModel implements Citable,
     }
 
     @Override
-    public WrtParameter factory(Parameter parameter) {
+    public WrtParameter factory(Parameter parameter, int dim) {
         WrtHKYModelParameter wrt;
         if (parameter == kappaParameter) {
             wrt = WrtHKYModelParameter.KAPPA;
+        } else if (parameter == freqModel.getFrequencyParameter()) {
+            switch(dim) {
+                case 0:
+                    wrt = WrtHKYModelParameter.FREQ_A;
+                    break;
+                default:
+                    throw new RuntimeException("Not yet implemented!");
+            }
         } else {
             throw new RuntimeException("Not yet implemented!");
         }
@@ -367,6 +375,17 @@ public class HKY extends BaseSubstitutionModel implements Citable,
             @Override
             public double getNormalizationDifferential() {
                 return 1.0;
+            }
+        },
+        FREQ_A {
+            @Override
+            public double getRate(int switchCase) {
+                return 0;
+            }
+
+            @Override
+            public double getNormalizationDifferential() {
+                return 0;
             }
         }
     }

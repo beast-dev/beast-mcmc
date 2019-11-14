@@ -38,7 +38,7 @@ public interface DifferentiableSubstitutionModel extends SubstitutionModel {
 
     WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt);
 
-    WrtParameter factory(Parameter parameter);
+    WrtParameter factory(Parameter parameter, int dim);
 
     void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant);
 

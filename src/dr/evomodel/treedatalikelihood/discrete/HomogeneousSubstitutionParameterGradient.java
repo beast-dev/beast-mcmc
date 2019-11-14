@@ -57,7 +57,8 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
                                                     Parameter parameter,
-                                                    BeagleDataLikelihoodDelegate likelihoodDelegate) {
+                                                    BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                    int dim) {
         this.parameter = parameter;
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
@@ -73,7 +74,7 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
                 substitutionModel = (DifferentiableSubstitutionModel) likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0);
             }
 
-            DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
+            DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, dim);
             DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter);
             List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();
             differentialMassProviderList.add(differentialMassProvider);

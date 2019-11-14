@@ -279,8 +279,7 @@ public class MG94HKYCodonModel extends AbstractCodonModel implements Citable,
     }
 
     @Override
-    public WrtParameter factory(Parameter parameter) {
-
+    public WrtParameter factory(Parameter parameter, int dim) {
         if (parameter == alphaParameter) {
             return new Alpha(getNumSynTransitions(), options.isParameterTotalRate);
         } else if (parameter == betaParameter) {

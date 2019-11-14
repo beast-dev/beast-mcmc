@@ -48,6 +48,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     private static final String NAME = "branchSubstitutionParameterGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String HOMOGENEOUS_PROCESS = "homogeneous";
+    private static final String DIMENSION = "dim";
     public static final String USE_HESSIAN = "useHessian";
 
     @Override
@@ -66,14 +67,16 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
 
         Boolean homogeneous = xo.getAttribute(HOMOGENEOUS_PROCESS, false);
+
+        int dim = xo.getAttribute(DIMENSION, 0);
         if (homogeneous) {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData);
+            return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData, dim);
         } else {
             BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
             CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                    branchParameter, branchRateModel, useHessian);
+                    branchParameter, branchRateModel, useHessian, dim);
         }
     }
 
@@ -90,7 +93,8 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
                             new ElementRule(BranchSpecificSubstitutionParameterBranchModel.class),
                             new ElementRule(BranchRateModel.class)),
                     new ElementRule(Parameter.class)),
-            AttributeRule.newBooleanRule(HOMOGENEOUS_PROCESS, true)
+            AttributeRule.newBooleanRule(HOMOGENEOUS_PROCESS, true),
+            AttributeRule.newIntegerRule(DIMENSION, true)
     };
 
     @Override

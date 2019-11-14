@@ -277,7 +277,7 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     }
 
     @Override
-    public WrtParameter factory(Parameter parameter) {
+    public WrtParameter factory(Parameter parameter, int dim) {
         WrtParameter wrt;
         if (parameter == omegaParameter) {
             wrt = new Omega();

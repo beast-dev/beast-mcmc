@@ -108,13 +108,16 @@ public class DifferentiableSubstitutionModelUtil {
         final double[] differentialRates = new double[rateCount];
         ((DifferentiableSubstitutionModel) substitutionModel).setupDifferentialRates(wrt, differentialRates, normalizingConstant);
 
+        final double[] differentialFrequencies = new double[stateCount];
+        ((DifferentiableSubstitutionModel) substitutionModel).setupDifferentialFrequency(wrt, differentialFrequencies);
+
         double[][] differentialMassMatrix = new double[stateCount][stateCount];
-        substitutionModel.setupQMatrix(differentialRates, substitutionModel.getFrequencyModel().getFrequencies(), differentialMassMatrix);
+        substitutionModel.setupQMatrix(differentialRates, differentialFrequencies, differentialMassMatrix);
         substitutionModel.makeValid(differentialMassMatrix, stateCount);
 
         final double weightedNormalizationGradient
                 = ((DifferentiableSubstitutionModel) substitutionModel).getWeightedNormalizationGradient(
-                        wrt, differentialMassMatrix, substitutionModel.getFrequencyModel().getFrequencies());
+                        wrt, differentialMassMatrix, differentialFrequencies);
 
         for (int i = 0; i < stateCount; i++) {
             for (int j = 0; j < stateCount; j++) {

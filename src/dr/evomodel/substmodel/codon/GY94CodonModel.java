@@ -267,6 +267,11 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
     }
 
     @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
     public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] frequencies) {
         return getNormalizationValue(differentialMassMatrix, frequencies);
     }
@@ -306,6 +311,16 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable,
         @Override
         public double getNormalizationDifferential() {
             return 1.0;
+        }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+            throw new RuntimeException("Not yet implemented.");
         }
 
     }

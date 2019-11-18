@@ -172,7 +172,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
                                                            BounceState bounceState) {
         double minimumRoot = Double.POSITIVE_INFINITY;
         int index = -1;
-
         for (int i = 0, len = action.getDim(); i < len; ++i) {
            double root;
            if(bounceState.type == Type.GRADIENT && i == bounceState.index){
@@ -221,10 +220,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
     private static double minimumPositiveRoot(double a,
                                               double b,
                                               double c) {
-
-        b = b * sign(a);
-        c = c * sign(a);
-        a = Math.abs(a);
+        double signA = sign(a);
+        b = b * signA;
+        c = c * signA;
+        a = a * signA;
 
         double discriminant = b * b - 4 * a * c;
         if (discriminant < 0.0) {

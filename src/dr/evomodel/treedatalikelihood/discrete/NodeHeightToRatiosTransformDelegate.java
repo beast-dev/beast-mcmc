@@ -271,7 +271,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 logJacobian += Math.log(getNodePartial(node));
             }
         }
-        return logJacobian;
+        return -logJacobian;
     }
 
     protected int getNodeHeightGradientIndex(NodeRef node) {
@@ -284,7 +284,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         double[] gradientLogJacobianDeterminant = updateGradientUnWeightedLogDensity(logTime);
         double[] gradientLogDensity = updateGradientUnWeightedLogDensity(gradient);
         for (int i = 0; i < ratios.getDimension(); i++) {
-            gradientLogDensity[i] -= gradientLogJacobianDeterminant[i] - 1.0 / ratios.getParameterValue(i);
+            gradientLogDensity[i] += gradientLogJacobianDeterminant[i] - 1.0 / ratios.getParameterValue(i);
         }
         return gradientLogDensity;
     }

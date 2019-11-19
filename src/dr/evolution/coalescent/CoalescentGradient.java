@@ -151,9 +151,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
                 finishTime += intervals.getInterval(intervalIndex);
             }
             intervalIndices[nodeIndices[i]] = intervalIndex;
-            intervalIndex++;
-            if (intervalIndex < intervals.getIntervalCount())
-                finishTime += intervals.getInterval(intervalIndex);
         }
     }
 

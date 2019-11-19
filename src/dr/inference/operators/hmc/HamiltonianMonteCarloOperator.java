@@ -95,7 +95,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     private boolean shouldUpdatePreconditioning() {
         return ((runtimeOptions.preconditioningUpdateFrequency > 0)
                 && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                    && (getCount() > runtimeOptions.preconditioningDelay))));
+                    && (getCount() > runtimeOptions.preconditioningDelay))
+                        || getCount() < runtimeOptions.preconditioningDelay));
     }
 
     private static double[] buildMask(Parameter maskParameter) {
@@ -128,10 +129,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
 
         if (shouldUpdatePreconditioning()) {
-            preconditioning.storeSecant(
-                    new WrappedVector.Raw(leapFrogEngine.getLastGradient()),
-                    new WrappedVector.Raw(leapFrogEngine.getLastPosition())
-            );
+            double[] lastGradient = leapFrogEngine.getLastGradient();
+            double[] lastPosition = leapFrogEngine.getLastPosition();
+            if (lastGradient != null && lastPosition != null) {
+                preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+            }
             preconditioning.updateMass();
         }
 

@@ -59,7 +59,7 @@ public interface MassPreconditioner {
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                return new AdaptiveDiagonalPreconditioning(gradient.getDimension(), transform);
+                return new AdaptiveDiagonalPreconditioning(gradient.getDimension(), transform, options.preconditioningDelay);
             }
         },
         FULL("full") {
@@ -333,17 +333,12 @@ public interface MassPreconditioner {
     class AdaptiveDiagonalPreconditioning extends DiagonalPreconditioning {
 
         private AdaptableVector.AdaptableVariance variance;
-        private final int minimumUpdates = 100;
+        private final int minimumUpdates;
 
-        AdaptiveDiagonalPreconditioning(int dim, Transform transform) {
+        AdaptiveDiagonalPreconditioning(int dim, Transform transform, int preconditioningDelay) {
             super(dim, transform);
             this.variance = new AdaptableVector.AdaptableVariance(dim);
-        }
-
-        @Override
-        protected void initializeMass() {
-            super.initializeMass();
-            adaptiveDiagonal.update(new WrappedVector.Raw(inverseMass));
+            this.minimumUpdates = preconditioningDelay;
         }
 
         @Override
@@ -352,9 +347,11 @@ public interface MassPreconditioner {
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
                 adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+            } else {
+                return inverseMass;
             }
 
-            return normalizeVector(adaptiveDiagonal.getMean(), dim);
         }
 
         private double[] normalizeVector(ReadableVector values, double targetSum) {

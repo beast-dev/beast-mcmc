@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -17,11 +18,15 @@ public interface ModelExtensionProvider {
 
         DenseMatrix64F getExtensionVariance();
 
+        DenseMatrix64F getExtensionVariance(NodeRef node);
+
         MatrixParameterInterface getExtensionPrecision();
 
         double[] transformTreeTraits(double[] treeTraits);
 
         int getDataDimension();
+
+        void chainRuleWrtVariance(double[] gradient, NodeRef node);
     }
 }
 

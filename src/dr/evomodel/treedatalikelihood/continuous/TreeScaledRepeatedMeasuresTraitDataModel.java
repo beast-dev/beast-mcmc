@@ -25,9 +25,12 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -85,6 +88,20 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
         for (int i = offset; i < offset + length; i++) {
             x[i] *= t;
         }
+    }
+
+    @Override
+    public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
+        double tipHeight = getTipHeight(node.getNumber());
+        scaleArray(tipHeight, gradient, 0, gradient.length);
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance(NodeRef node) {
+        DenseMatrix64F var = getExtensionVariance();
+        double tipHeight = getTipHeight(node.getNumber());
+        CommonOps.scale(tipHeight, var);
+        return var;
     }
 
     private static final boolean DEBUG = false;

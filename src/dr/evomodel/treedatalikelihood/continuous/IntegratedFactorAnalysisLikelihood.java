@@ -25,10 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.BranchRates;
-import dr.evolution.tree.MutableTreeModel;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.*;
 import dr.evomodel.continuous.hmc.TaxonTaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
@@ -337,6 +334,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public DenseMatrix64F getExtensionVariance(NodeRef node) {
+        return getExtensionVariance();
+    }
+
+    @Override
     public MatrixParameterInterface getExtensionPrecision() {
         //TODO: check that this does what it's supposed to.
         return new DiagonalMatrix(traitPrecision);
@@ -361,6 +363,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
 
         return traitMatrix.data;
+    }
+
+    @Override
+    public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
+        throw new RuntimeException("not yet implemented");
     }
 
     private class HashedMissingArray {

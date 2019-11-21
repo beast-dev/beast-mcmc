@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
@@ -216,6 +217,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     }
 
     @Override
+    public DenseMatrix64F getExtensionVariance(NodeRef node) {
+        return getExtensionVariance();
+    }
+
+    @Override
     public MatrixParameterInterface getExtensionPrecision() {
         checkVariableChanged();
         return samplingPrecisionParameter;
@@ -229,6 +235,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     @Override
     public int getDataDimension() {
         return dimTrait;
+    }
+
+    @Override
+    public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
+        // Do nothing
     }
 
     public void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {

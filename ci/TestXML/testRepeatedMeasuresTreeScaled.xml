@@ -56,17 +56,22 @@
             <parameter idref="leafTraits"/>
         </traitParameter>
         <samplingPrecision>
-            <matrixParameter id="samplingPrecision">
-                <parameter value="3.0 0.3 -0.2 0.2"/>
-                <parameter value="0.3 2.0 0.1 0.3"/>
-                <parameter value="-0.2 0.1 1.0 -0.1"/>
-                <parameter value="0.2 0.3 -0.1 2.0"/>
-            </matrixParameter>
+            <cachedMatrixInverse id="sampling.precision.matrix">
+                <compoundSymmetricMatrix id="sampling.variance.matrix" asCorrelation="true" isCholesky="true">
+                    <diagonal>
+                        <parameter id="sampling.variance.diagonal" value="1 0.01 10 0.1" lower="0"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="sampling.variance.offDiagonal" value="0.1 0.2 0.3 -0.1 -0.2 -0.3"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+            </cachedMatrixInverse>
         </samplingPrecision>
         <multivariateDiffusionModel idref="diffusionModel"/>
     </repeatedMeasuresModel>
 
-    <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">
+    <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true"
+                         useTreeLength="false">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
         <repeatedMeasuresModel idref="repeatedMeasures"/>
@@ -80,6 +85,16 @@
         </conjugateRootPrior>
     </traitDataLikelihood>
 
+    <precisionGradient id="errorModel.gradient" parameter="diagonal" traitName="trait2">
+        <repeatedMeasuresModel idref="repeatedMeasures"/>
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <compoundSymmetricMatrix idref="sampling.precision.matrix"/>
+    </precisionGradient>
+
+    <report>
+        <diffusionGradient idref="errorModel.gradient"/>
+    </report>
+
     <assertEqual tolerance="1e-3" verbose="true">
         <message>
             Check log likelihood of observed data
@@ -88,7 +103,7 @@
             <traitDataLikelihood idref="traitLikelihood"/>
         </actual>
         <expected>
-            -70.76555552968698
+            -57.937925254099724
         </expected>
     </assertEqual>
 

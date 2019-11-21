@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.TreeScaledRepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -48,7 +49,6 @@ import org.ejml.ops.CommonOps;
 import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-import static java.lang.Math.negateExact;
 import static java.lang.Math.sqrt;
 
 /**
@@ -483,6 +483,11 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
             TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
             RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
                     xo.getChild(RepeatedMeasuresTraitDataModel.class);
+            if (dataModel instanceof TreeScaledRepeatedMeasuresTraitDataModel) {
+                throw new RuntimeException(
+                        "varianceProportionStatistic not yet implemented for " +
+                        "repeatedMeasuresModel argument scaleByTreeHeight='true'.");
+            }
 
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
                     xo.getChild(MultivariateDiffusionModel.class);

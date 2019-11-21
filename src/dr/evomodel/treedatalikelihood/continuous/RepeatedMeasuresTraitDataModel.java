@@ -231,11 +231,16 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return dimTrait;
     }
 
+    public void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        // Do nothing
+    }
+
     private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
+    private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
@@ -278,16 +283,29 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 //                missingIndicators[i] = true;
 //            }
 
-            return new RepeatedMeasuresTraitDataModel(
-                    traitName,
-                    traitParameter,
-                    missingIndices,
+            boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
+
+            if (!scaleByTipHeight) {
+                return new RepeatedMeasuresTraitDataModel(
+                        traitName,
+                        traitParameter,
+                        missingIndices,
 //                    missingIndicators,
-                    true,
-                    samplingPrecision.getColumnDimension(),
+                        true,
+                        samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                    samplingPrecision
-            );
+                        samplingPrecision
+                );
+            } else {
+                return new TreeScaledRepeatedMeasuresTraitDataModel(
+                        traitName,
+                        traitParameter,
+                        missingIndices,
+                        true,
+                        samplingPrecision.getColumnDimension(),
+                        samplingPrecision
+                );
+            }
         }
 
         @Override
@@ -324,6 +342,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
+            AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
     };
 

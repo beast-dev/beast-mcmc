@@ -220,6 +220,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             this.index = minIndex;
         }
 
+        public boolean equals(Object obj) {
+
+            if (obj instanceof MinimumTravelInformation) {
+                MinimumTravelInformation rhs = (MinimumTravelInformation) obj;
+                return this.time == rhs.time && this.index == rhs.index;
+            }
+            return false;
+        }
+
         public String toString() {
             return "time = " + time + " @ " + index;
         }

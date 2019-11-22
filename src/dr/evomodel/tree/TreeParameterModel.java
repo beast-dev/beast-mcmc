@@ -77,7 +77,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      */
     public TreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot, Intent intent) {
 
-        super("treeParameterModel");
+        super(parameter.getId());
         this.tree = tree;
         this.parameter = parameter;
 

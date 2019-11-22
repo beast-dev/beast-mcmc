@@ -26,6 +26,7 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -50,10 +51,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
+                             PrecisionColumnProvider columnProvider,
                              double weight, Options runtimeOptions, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
+        this.columnProvider = columnProvider;
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
         this.maskVector = mask.getParameterValues();
@@ -92,7 +95,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         setParameter(position, parameter);
 
-        if (CHECK_MATRIX_ILL_CONDITIONED & getCount() % 100 == 0){
+        if (CHECK_MATRIX_ILL_CONDITIONED & getCount() % 100 == 0) {
             productProvider.getTimeScaleEigen();
         }
 
@@ -166,6 +169,35 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         return new WrappedVector.Raw(product);
+    }
+
+    WrappedVector getPrecisionColumn(int index) {
+
+        double[] precisionColumn = columnProvider.getColumn(index);
+
+        if (mask != null) {
+            applyMask(precisionColumn);
+        }
+
+        return new WrappedVector.Raw(precisionColumn);
+    }
+
+    void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
+
+        WrappedVector column = getPrecisionColumn(eventIndex);
+
+        final double[] a = action.getBuffer();
+        final double[] c = column.getBuffer();
+
+        final double twoV = 2 * velocity.get(eventIndex);
+
+        for (int i = 0, len = a.length; i < len; ++i) {
+            a[i] += twoV * c[i];
+        }
+
+        if (mask != null) {
+            applyMask(a);
+        }
     }
 
     boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
@@ -258,8 +290,43 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
+    class BounceState {
+        final Type type;
+        final int index;
+        final double remainingTime;
+
+        BounceState(Type type, int index, double remainingTime) {
+            this.type = type;
+            this.index = index;
+            this.remainingTime = remainingTime;
+        }
+
+        BounceState(double remainingTime) {
+            this.type = Type.NONE;
+            this.index = -1;
+            this.remainingTime = remainingTime;
+        }
+
+        boolean isTimeRemaining() {
+            return remainingTime > 0.0;
+        }
+
+        public String toString() {
+            return "remainingTime : " + remainingTime + "\n" +
+                    "lastBounceType: " + type + " in dim: " + index;
+        }
+    }
+
+    enum Type {
+        NONE,
+        BOUNDARY,
+        GRADIENT
+    }
+
+
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
+    private final PrecisionColumnProvider columnProvider;
     private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;

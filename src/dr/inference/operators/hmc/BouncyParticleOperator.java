@@ -26,6 +26,7 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -43,8 +44,9 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
+                                  PrecisionColumnProvider columnProvider,
                                   double weight, Options runtimeOptions, Parameter mask) {
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask);
     }
 
     @Override
@@ -57,14 +59,19 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
         WrappedVector velocity = drawInitialVelocity();
         WrappedVector gradient = getInitialGradient();
+        WrappedVector action = getPrecisionProduct(velocity);
 
-        double remainingTime = drawTotalTravelTime();
-        while (remainingTime > 0) {
+        BounceState bounceState = new BounceState(drawTotalTravelTime());
 
-            WrappedVector Phi_v = getPrecisionProduct(velocity);
+        while (bounceState.remainingTime > 0) {
+            if (bounceState.type == Type.BOUNDARY) {
+                updateAction(action, velocity, bounceState.index);
+            } else {
+                action = getPrecisionProduct(velocity);
+            }
 
             double v_Phi_x = -innerProduct(velocity, gradient);
-            double v_Phi_v = innerProduct(velocity, Phi_v);
+            double v_Phi_v = innerProduct(velocity, action);
 
             double tMin = Math.max(0.0, -v_Phi_x / v_Phi_v);
             double U_min = tMin * tMin / 2 * v_Phi_v + tMin * v_Phi_x;
@@ -72,49 +79,55 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
             double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
             MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
 
-            remainingTime = doBounce(
-                    remainingTime, bounceTime, travelInfo,
-                    position, velocity, gradient, Phi_v
+            bounceState = doBounce(
+                    bounceState.remainingTime, bounceTime, travelInfo,
+                    position, velocity, gradient, action
             );
         }
 
         return 0.0;
     }
 
-    private double doBounce(double remainingTime, double bounceTime,
-                            MinimumTravelInformation travelInfo,
-                            WrappedVector position, WrappedVector velocity,
-                            WrappedVector gradient, WrappedVector Phi_v) {
+    private BounceState doBounce(double remainingTime, double bounceTime,
+                                 MinimumTravelInformation boundaryInfo,
+                                 WrappedVector position, WrappedVector velocity,
+                                 WrappedVector gradient, WrappedVector action) {
 
-        double timeToBoundary = travelInfo.time;
-        int boundaryIndex = travelInfo.index;
+        double timeToBoundary = boundaryInfo.time;
+        int boundaryIndex = boundaryInfo.index;
+        final BounceState finalBounceState;
+        final Type eventType;
+        int eventIndex;
 
         if (remainingTime < Math.min(timeToBoundary, bounceTime)) { // No event during remaining time
 
             updatePosition(position, velocity, remainingTime);
-            remainingTime = 0.0;
+            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
+        } else {
+            if (timeToBoundary < bounceTime) { // Reflect against the boundary
+                eventType = Type.BOUNDARY;
+                eventIndex = boundaryIndex;
 
-        } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
+                updatePosition(position, velocity, timeToBoundary);
+                updateGradient(gradient, timeToBoundary, action);
 
-            updatePosition(position, velocity, timeToBoundary);
-            updateGradient(gradient, timeToBoundary, Phi_v);
+                position.set(boundaryIndex, 0.0);
+                velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
 
-            position.set(boundaryIndex, 0.0);
-            velocity.set(boundaryIndex, -1 * velocity.get(boundaryIndex));
+                remainingTime -= timeToBoundary;
 
-            remainingTime -= timeToBoundary;
+            } else { // Bounce caused by the gradient
+                eventType = Type.GRADIENT;
+                eventIndex = -1;
 
-        } else { // Bounce caused by the gradient
-
-            updatePosition(position, velocity, bounceTime);
-            updateGradient(gradient, bounceTime, Phi_v);
-            updateVelocity(velocity, gradient, preconditioning.mass);
-
-            remainingTime -= bounceTime;
-
+                updatePosition(position, velocity, bounceTime);
+                updateGradient(gradient, bounceTime, action);
+                updateVelocity(velocity, gradient, preconditioning.mass);
+                remainingTime -= bounceTime;
+            }
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime);
         }
-
-        return remainingTime;
+        return finalBounceState;
     }
 
     private WrappedVector drawInitialVelocity() {

@@ -87,9 +87,11 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         while (bounceState.isTimeRemaining()) {
 
+
+
             if (DEBUG) {
                 debugBefore(position, count);
-                ++count;
+//                ++count;
             }
 
             MinimumTravelInformation gradientBounce;
@@ -130,6 +132,8 @@ public class ZigZagOperator extends AbstractParticleOperator {
                     System.err.println("Sign error");
                 }
             }
+
+            ++count;
         }
 
         if (DEBUG_SIGN) {
@@ -348,93 +352,39 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return root;
     }
 
-//    // TODO Code duplication with above function
-//    private double getNextGradientBounceUni(int i, double momentum, double gradient, double action, Type type,
-//                                            int index) {
-//        double root;
-//        if (type == Type.GRADIENT && i == index) {
-//            if (gradient * action > 0) {
-//                root = gradient * 2.0 / action;
-//            } else {
-//                root = Double.POSITIVE_INFINITY;
-//            }
-//        } else {
-//            root = minimumPositiveRoot(action / 2, -gradient, -momentum);
-//        }
-//        return root;
-//    }
+    private double findBoundaryTime(int index, double position,
+                                    double velocity) {
 
-    // Keep old fused map-reduction (decreased memory acccess)
-//    private MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
-//                                                           ReadableVector velocity) {
-//
-//
-//        double minimumTime = Double.POSITIVE_INFINITY;
-//        int index = -1;
-//
-//        for (int i = 0, len = position.getDim(); i < len; ++i) {
-//
-//            double x = position.get(i);
-//            double v = velocity.get(i);
-//
-//            if (headingTowardsBoundary(x, v, i)) { // Also ensures x != 0.0
-//                double time = Math.abs(x / v);
-//                if (time < minimumTime) {
-//                    minimumTime = time;
-//                    index = i;
-//                }
-//            }
-//        }
-//
-//        return new MinimumTravelInformation(minimumTime, index);
-//    }
+        double time = Double.POSITIVE_INFINITY;
 
-    private MinimumTravelInformation findMin(double[] vector) {
-        double min = Double.POSITIVE_INFINITY;
+        if (headingTowardsBoundary(position, velocity, index)) { // Also ensures x != 0.0
+            time = Math.abs(position / velocity);
+        }
+
+        return time;
+    }
+
+    private MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
+                                                           WrappedVector inVelocity) {
+
+        final double[] position = inPosition.getBuffer();
+        final double[] velocity = inVelocity.getBuffer();
+
+        double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
 
-        for (int i = 0; i < vector.length; i++) {
-            if (vector[i] < min) {
-                min = vector[i];
+        for (int i = 0, len = position.length; i < len; ++i) {
+
+            double time = findBoundaryTime(i, position[i], velocity[i]);
+
+            if (time < minimumTime) {
+                minimumTime = time;
                 index = i;
             }
         }
-        return new MinimumTravelInformation(min, index);
+
+        return new MinimumTravelInformation(minimumTime, index);
     }
-
-    private MinimumTravelInformation getNextBoundaryBounce(WrappedVector position,
-                                                           WrappedVector velocity) {
-
-
-        double[] minimumTimes = new double[position.getDim()];
-
-        double[] positionBuffer = position.getBuffer();
-        double[] velocityBuffer = velocity.getBuffer();
-
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-
-            double x = positionBuffer[i];
-            double v = velocityBuffer[i];
-
-            if (headingTowardsBoundary(x, v, i)) { // Also ensures x != 0.0
-                minimumTimes[i] = Math.abs(x / v);
-            } else {
-                minimumTimes[i] = Double.POSITIVE_INFINITY;
-            }
-        }
-
-        return findMin(minimumTimes);
-    }
-
-//    private double getNextBoundaryBounceUni(int i, double position, double velocity) {
-//        double minimumTime;
-//        if (headingTowardsBoundary(position, velocity, i)) { // Also ensures x != 0.0
-//            minimumTime = Math.abs(position / velocity);
-//        } else {
-//            minimumTime = Double.POSITIVE_INFINITY;
-//        }
-//        return minimumTime;
-//    }
 
     private static double minimumPositiveRoot(double a,
                                               double b,
@@ -615,7 +565,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;
-    private final static boolean PARALLEL = true;
+    private final static boolean PARALLEL = false;
 
     private final ForkJoinPool customThreadPool;
     private final int dim;

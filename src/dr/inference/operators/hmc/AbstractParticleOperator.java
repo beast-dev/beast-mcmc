@@ -68,15 +68,13 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private void setMissingDataMask() {
 
         int dim = parameter.getDimension();
-        missingDataMask = new double[dim];
+        missingDataMask = new boolean[dim];
         assert (dim == parameter.getBounds().getBoundsDimension());
 
         for (int i = 0; i < dim; ++i) {
 
             missingDataMask[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
-                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 1 : 0;//now value = 1.0 in
-            // the mask means missing observation;
-
+                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY);
         }
     }
 
@@ -168,7 +166,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
 
-        if (missingDataMask[positionIndex] == 1.0) {
+        if (missingDataMask[positionIndex]) {
             return false;
         } else {
             return position * velocity < 0.0;
@@ -263,5 +261,5 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final Parameter mask;
 
     Preconditioning preconditioning;
-    private double[] missingDataMask;
+    private boolean[] missingDataMask;
 }

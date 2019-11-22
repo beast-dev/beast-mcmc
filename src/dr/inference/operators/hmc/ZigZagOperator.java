@@ -214,49 +214,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
     }
 
-//    public List<coefsForQuadraticEquation> zipCoefs(double[] momentum, double[] gradient, double[] action) {
-////        List<coefsForQuadraticEquation> coefs = new ArrayList<>();
-////        for (int i = 0; i < momentum.length; i++) {
-////            coefs.add(new coefsForQuadraticEquation(momentum[i],gradient[i],action[i]));
-////        }
-////        return coefs;
-//        return range(0, momentum.length).mapToObj(i -> new coefsForQuadraticEquation(momentum[i]
-//                , gradient[i], action[i])).collect(Collectors.toList());
-//    }
-//
-//
-//    public List<motion> zipMotions(double[] position, double[] velocity) {
-////        List<motion> motions = new ArrayList<>();
-////        for (int i = 0; i < position.length; i++) {
-////            motions.add(new motion(position[i], velocity[i]));
-////        }
-////        return motions;
-//        return range(0, position.length).mapToObj(i -> new motion(position[i], velocity[i])).collect(Collectors.toList());
-//    }
-//
-//    class coefsForQuadraticEquation {
-//
-//        final double momentum;
-//        final double gradient;
-//        final double action;
-//
-//        coefsForQuadraticEquation(double momentum, double gradient, double action) {
-//            this.gradient = gradient;
-//            this.momentum = momentum;
-//            this.action = action;
-//        }
-//    }
-//
-//    class motion {
-//        final double position;
-//        final double velocity;
-//
-//        motion(double position, double velocity) {
-//            this.position = position;
-//            this.velocity = velocity;
-//        }
-//    }
-
     private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
                                                            WrappedVector inGradient,
                                                            WrappedVector inMomentum,
@@ -281,23 +238,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         return new MinimumTravelInformation(minimumRoot, index);
     }
-
-//    private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
-//                                                           WrappedVector inGradient,
-//                                                           WrappedVector inMomentum,
-//                                                           BounceState bounceState) {
-//
-//        double[] root = new double[inAction.getDim()]; // TODO Allocate once (if really ncessary)
-//        double[] action = inAction.getBuffer();
-//        double[] gradient = inGradient.getBuffer();
-//        double[] momentum = inMomentum.getBuffer();
-//
-//        for (int i = 0, len = action.length; i < len; ++i) {
-//            root[i] = findGradientRoot(i, action[i], gradient[i], momentum[i], bounceState);
-//        }
-//
-//        return findMin(root); // TODO Is this really faster moving into separate function?
-//    }
 
     private MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
                                                                    WrappedVector inGradient,
@@ -450,7 +390,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return new WrappedVector.Raw(velocity);
     }
 
-    private ReadableVector getPrecisionColumn(int index) {
+    private WrappedVector getPrecisionColumn(int index) {
 
         double[] precisionColumn = columnProvider.getColumn(index);
 
@@ -511,17 +451,30 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
     private void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
 
-        ReadableVector column = getPrecisionColumn(eventIndex);
+        WrappedVector column = getPrecisionColumn(eventIndex);
 
-        double v = velocity.get(eventIndex);
-        for (int i = 0, len = action.getDim(); i < len; ++i) {
-            action.set(i,
-                    action.get(i) + 2 * v * column.get(i)
-            );
+        final double[] a = action.getBuffer();
+        final double[] c = column.getBuffer();
+
+        final double twoV = 2 * velocity.get(eventIndex);
+
+//        if (mask == null) {
+//            for (int i = 0, len = a.length; i < len; ++i) {
+//                a[i] += twoV * c[i];
+//            }
+//        } else {
+//            for (int i = 0, len = a.length; i < len; ++i) {
+//                a[i] = maskVector[i] *(a[i] + twoV * c[i]);
+//            }
+//
+//        }
+
+        for (int i = 0, len = a.length; i < len; ++i) {
+            a[i] += twoV * c[i];
         }
 
         if (mask != null) {
-            applyMask(action);
+            applyMask(a);
         }
     }
 
@@ -546,18 +499,32 @@ public class ZigZagOperator extends AbstractParticleOperator {
     }
 
     private void updateMomentum(WrappedVector momentum,
-                                ReadableVector gradient,
-                                ReadableVector action,
+                                WrappedVector gradient,
+                                WrappedVector action,
                                 double eventTime) {
 
-        for (int i = 0, len = momentum.getDim(); i < len; ++i) {
-            momentum.set(i,
-                    momentum.get(i) + eventTime * gradient.get(i) - eventTime * eventTime * action.get(i) / 2
-            );
+        final double[] m = momentum.getBuffer();
+        final double[] g = gradient.getBuffer();
+        final double[] a = action.getBuffer();
+
+        final double halfEventTimeSquared = eventTime * eventTime / 2;
+
+//        if (mask == null) {
+//            for (int i = 0, len = m.length; i < len; ++i) {
+//                m[i] += eventTime * g[i] - halfEventTimeSquared * a[i];
+//            }
+//        } else {
+//            for (int i = 0, len = m.length; i < len; ++i) {
+//                m[i] = maskVector[i] * (m[i] + eventTime * g[i] - halfEventTimeSquared * a[i]);
+//            }
+//        }
+
+        for (int i = 0, len = m.length; i < len; ++i) {
+            m[i] += eventTime * g[i] - halfEventTimeSquared * a[i];
         }
 
         if (mask != null) {
-            applyMask(momentum);
+            applyMask(m);
         }
     }
 

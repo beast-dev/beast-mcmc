@@ -56,6 +56,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.productProvider = multiplicationProvider;
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
+        this.maskVector = mask.getParameterValues();
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
@@ -110,15 +111,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return preconditioning.totalTravelTime * randomFraction;
     }
 
-    static void updateGradient(WrappedVector gradient, double time, ReadableVector action) {
-        for (int i = 0, len = gradient.getDim(); i < len; ++i) {
-            gradient.set(i, gradient.get(i) - time * action.get(i));
+    static void updateGradient(WrappedVector gradient, double time, WrappedVector action) {
+
+        final double[] g = gradient.getBuffer();
+        final double[] a = action.getBuffer();
+
+        for (int i = 0, len = g.length; i < len; ++i) {
+            g[i] -= time * a[i];
         }
     }
 
     static void updatePosition(WrappedVector position, WrappedVector velocity, double time) {
-        for (int i = 0, len = position.getDim(); i < len; ++i) {
-            position.set(i, position.get(i) + time * velocity.get(i));
+
+        final double[] p = position.getBuffer();
+        final double[] v = velocity.getBuffer();
+
+        for (int i = 0, len = p.length; i < len; ++i) {
+            p[i] += time * v[i];
         }
     }
 
@@ -134,12 +143,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     void applyMask(WrappedVector vector) {
-
-        assert (vector.getDim() == mask.getDimension());
-
-        for (int i = 0, dim = vector.getDim(); i < dim; ++i) {
-            vector.set(i, vector.get(i) * mask.getParameterValue(i));
-        }
+        applyMask(vector.getBuffer());
     }
 
     void applyMask(double[] vector) {
@@ -147,7 +151,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         assert (vector.length == mask.getDimension());
 
         for (int i = 0, len = vector.length; i < len; ++i) {
-            vector[i] *= mask.getParameterValue(i);
+            vector[i] *= maskVector[i];
         }
     }
 
@@ -259,6 +263,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
+    final double[] maskVector;
 
     Preconditioning preconditioning;
     private boolean[] missingDataMask;

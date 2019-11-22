@@ -99,6 +99,14 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
                 boundaryBounce = getNextBoundaryBounce(position, velocity);
                 gradientBounce = getNextGradientBounceParallel(action, gradient, momentum, bounceState);
+//                gradientBounce = getNextGradientBounce(action, gradient, momentum, bounceState);
+//                MinimumTravelInformation test = getNextGradientBounceParallel(action, gradient, momentum, bounceState);
+//
+//                if (!gradientBounce.equals(test)) {
+//                    System.err.println(gradientBounce);
+//                    System.err.println(test);
+//                    System.exit(-1);
+//                }
 
             } else {
 
@@ -324,6 +332,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
                                            BounceState bounceState) {
 
         double root = Double.POSITIVE_INFINITY;
+
+        if (gradient == 0.0) {
+            return root;
+        }
 
         if (bounceState.type == Type.GRADIENT && index == bounceState.index) {
             if (gradient * action > 0.0) {
@@ -603,7 +615,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;
-    private final static boolean PARALLEL = false;
+    private final static boolean PARALLEL = true;
 
     private final ForkJoinPool customThreadPool;
     private final int dim;

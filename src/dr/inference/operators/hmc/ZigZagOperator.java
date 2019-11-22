@@ -33,13 +33,9 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static java.util.stream.IntStream.range;
 
 /**
  * @author Aki Nishimura
@@ -56,30 +52,13 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
         this.columnProvider = columnProvider;
+        this.dim = gradientProvider.getDimension();
 
         if (PARALLEL) {
             int numberOfThreads = 4;
             customThreadPool = new ForkJoinPool(numberOfThreads);
-            range = IntStream.range(0, parameter.getDimension()).parallel();
-
-//            Stream<Integer> newRange = IntStream.range(0, parameter.getDimension()).boxed()
-//              .collect(Collectors.toList()).parallelStream();
-
-            try {
-                int actualTotal = customThreadPool.submit(
-                      () -> range.reduce(0, Integer::sum)
-                ).get();
-
-                System.err.println("parallel total = " + actualTotal);
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
         } else {
             customThreadPool = null;
-            range = null;
         }
     }
 
@@ -121,16 +100,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
                 boundaryBounce = getNextBoundaryBounce(position, velocity);
                 gradientBounce = getNextGradientBounceParallel(action, gradient, momentum, bounceState);
 
-//                List<motion> motions = zipMotions(position.getBuffer(), velocity.getBuffer());
-//                boundaryBounce = findMin(getNextBoundaryParallel(motions));
-//
-//                List<coefsForQuadraticEquation> coefs = zipCoefs(momentum.getBuffer(), gradient.getBuffer(),
-//                        action.getBuffer());
-//
-//                final Type type = bounceState.type;
-//                final int index = bounceState.index;
-//                gradientBounce = findMin(getNextGradientBounceParallel(coefs, type, index));
-
             } else {
 
                 boundaryBounce = getNextBoundaryBounce(position, velocity);
@@ -162,20 +131,20 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return 0.0;
     }
 
-    private double[] getNextBoundaryParallel(List<motion> motionList) {
-        return range(0, motionList.size()).parallel().mapToDouble(idx -> getNextBoundaryBounceUni(idx,
-                motionList.get(idx).position,
-                motionList.get(idx).velocity)).toArray();
-    }
-
-    private double[] getNextGradientBounceParallel(List<coefsForQuadraticEquation> coefslist, Type type, int index) {
-        return range(0, coefslist.size()).parallel().mapToDouble(idx -> getNextGradientBounceUni(idx,
-                coefslist.get(idx).momentum,
-                coefslist.get(idx).gradient,
-                coefslist.get(idx).action,
-                type,
-                index)).toArray();
-    }
+//    private double[] getNextBoundaryParallel(List<motion> motionList) {
+//        return range(0, motionList.size()).parallel().mapToDouble(idx -> getNextBoundaryBounceUni(idx,
+//                motionList.get(idx).position,
+//                motionList.get(idx).velocity)).toArray();
+//    }
+//
+//    private double[] getNextGradientBounceParallel(List<coefsForQuadraticEquation> coefslist, Type type, int index) {
+//        return range(0, coefslist.size()).parallel().mapToDouble(idx -> getNextGradientBounceUni(idx,
+//                coefslist.get(idx).momentum,
+//                coefslist.get(idx).gradient,
+//                coefslist.get(idx).action,
+//                type,
+//                index)).toArray();
+//    }
 
     private String printSign(ReadableVector position) {
         StringBuilder sb = new StringBuilder();
@@ -233,72 +202,90 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
     }
 
-    public List<coefsForQuadraticEquation> zipCoefs(double[] momentum, double[] gradient, double[] action) {
-//        List<coefsForQuadraticEquation> coefs = new ArrayList<>();
-//        for (int i = 0; i < momentum.length; i++) {
-//            coefs.add(new coefsForQuadraticEquation(momentum[i],gradient[i],action[i]));
+//    public List<coefsForQuadraticEquation> zipCoefs(double[] momentum, double[] gradient, double[] action) {
+////        List<coefsForQuadraticEquation> coefs = new ArrayList<>();
+////        for (int i = 0; i < momentum.length; i++) {
+////            coefs.add(new coefsForQuadraticEquation(momentum[i],gradient[i],action[i]));
+////        }
+////        return coefs;
+//        return range(0, momentum.length).mapToObj(i -> new coefsForQuadraticEquation(momentum[i]
+//                , gradient[i], action[i])).collect(Collectors.toList());
+//    }
+//
+//
+//    public List<motion> zipMotions(double[] position, double[] velocity) {
+////        List<motion> motions = new ArrayList<>();
+////        for (int i = 0; i < position.length; i++) {
+////            motions.add(new motion(position[i], velocity[i]));
+////        }
+////        return motions;
+//        return range(0, position.length).mapToObj(i -> new motion(position[i], velocity[i])).collect(Collectors.toList());
+//    }
+//
+//    class coefsForQuadraticEquation {
+//
+//        final double momentum;
+//        final double gradient;
+//        final double action;
+//
+//        coefsForQuadraticEquation(double momentum, double gradient, double action) {
+//            this.gradient = gradient;
+//            this.momentum = momentum;
+//            this.action = action;
 //        }
-//        return coefs;
-        return range(0, momentum.length).mapToObj(i -> new coefsForQuadraticEquation(momentum[i]
-                , gradient[i], action[i])).collect(Collectors.toList());
-    }
-
-
-    public List<motion> zipMotions(double[] position, double[] velocity) {
-//        List<motion> motions = new ArrayList<>();
-//        for (int i = 0; i < position.length; i++) {
-//            motions.add(new motion(position[i], velocity[i]));
+//    }
+//
+//    class motion {
+//        final double position;
+//        final double velocity;
+//
+//        motion(double position, double velocity) {
+//            this.position = position;
+//            this.velocity = velocity;
 //        }
-//        return motions;
-        return range(0, position.length).mapToObj(i -> new motion(position[i], velocity[i])).collect(Collectors.toList());
-    }
-
-    class coefsForQuadraticEquation {
-
-        final double momentum;
-        final double gradient;
-        final double action;
-
-        coefsForQuadraticEquation(double momentum, double gradient, double action) {
-            this.gradient = gradient;
-            this.momentum = momentum;
-            this.action = action;
-        }
-    }
-
-    class motion {
-        final double position;
-        final double velocity;
-
-        motion(double position, double velocity) {
-            this.position = position;
-            this.velocity = velocity;
-        }
-    }
+//    }
 
     private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
                                                            WrappedVector inGradient,
                                                            WrappedVector inMomentum,
                                                            BounceState bounceState) {
 
-        double[] root = new double[inAction.getDim()]; // TODO Allocate once (if really ncessary)
-        double[] action = inAction.getBuffer();
-        double[] gradient = inGradient.getBuffer();
-        double[] momentum = inMomentum.getBuffer();
+        final double[] action = inAction.getBuffer();
+        final double[] gradient = inGradient.getBuffer();
+        final double[] momentum = inMomentum.getBuffer();
 
-        for (int i = 0, len = inAction.getDim(); i < len; ++i) {
-            if (bounceState.type == Type.GRADIENT && i == bounceState.index) {
-                if (gradient[i] * action[i] > 0) {
-                    root[i] = gradient[i] * 2.0 / action[i];
-                } else {
-                    root[i] = Double.POSITIVE_INFINITY;
-                }
-            } else {
-                root[i] = minimumPositiveRoot(action[i] / 2, -gradient[i], -momentum[i]);
+        double minimumRoot = Double.POSITIVE_INFINITY;
+        int index = -1;
+
+        for (int i = 0, len = action.length; i < len; ++i) {
+
+            double root = findGradientRoot(i, action[i], gradient[i], momentum[i], bounceState);
+
+            if (root < minimumRoot) {
+                minimumRoot = root;
+                index = i;
             }
         }
-        return findMin(root); // TODO Is this really faster moving into separate function?
+
+        return new MinimumTravelInformation(minimumRoot, index);
     }
+
+//    private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
+//                                                           WrappedVector inGradient,
+//                                                           WrappedVector inMomentum,
+//                                                           BounceState bounceState) {
+//
+//        double[] root = new double[inAction.getDim()]; // TODO Allocate once (if really ncessary)
+//        double[] action = inAction.getBuffer();
+//        double[] gradient = inGradient.getBuffer();
+//        double[] momentum = inMomentum.getBuffer();
+//
+//        for (int i = 0, len = action.length; i < len; ++i) {
+//            root[i] = findGradientRoot(i, action[i], gradient[i], momentum[i], bounceState);
+//        }
+//
+//        return findMin(root); // TODO Is this really faster moving into separate function?
+//    }
 
     private MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
                                                                    WrappedVector inGradient,
@@ -313,9 +300,9 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         try {
             result = customThreadPool.submit(
-                    () -> range.mapToObj(
+                    () -> IntStream.range(0, dim).parallel().mapToObj(
                             (index) -> new MinimumTravelInformation(
-                                    func(index, action[index], gradient[index],
+                                    findGradientRoot(index, action[index], gradient[index],
                                             momentum[index], bounceState
                                     ), index)
                     ).reduce(new MinimumTravelInformation(
@@ -323,49 +310,72 @@ public class ZigZagOperator extends AbstractParticleOperator {
                             (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs)
             ).get();
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
         return result;
     }
 
-    // TODO Should try to use this function (or something like it) in both serial and parallel code
-    private static double func(int index,        // TODO Rename function once working
-                               double action,
-                               double gradient,
-                               double momentum,
-                               BounceState bounceState) {
+    private static double findGradientRoot(int index,
+                                           double action,
+                                           double gradient,
+                                           double momentum,
+                                           BounceState bounceState) {
+
+        double root = Double.POSITIVE_INFINITY;
 
         if (bounceState.type == Type.GRADIENT && index == bounceState.index) {
-            if (gradient * action > 0) {
-                return gradient * 2.0 / action;
-            } else {
-                return Double.POSITIVE_INFINITY;
-            }
-        } else {
-            return minimumPositiveRoot(action / 2, -gradient, -momentum);
-        }
-    }
-
-    // TODO Code duplication with above function
-    private double getNextGradientBounceUni(int i, double momentum, double gradient, double action, Type type,
-                                            int index) {
-        double root;
-        if (type == Type.GRADIENT && i == index) {
-            if (gradient * action > 0) {
+            if (gradient * action > 0.0) {
                 root = gradient * 2.0 / action;
-            } else {
-                root = Double.POSITIVE_INFINITY;
             }
         } else {
-            root = minimumPositiveRoot(action / 2, -gradient, -momentum);
+            root = minimumPositiveRoot(action / 2, -gradient, -momentum); // TODO Might be faster to only negate action
         }
+
         return root;
     }
 
+//    // TODO Code duplication with above function
+//    private double getNextGradientBounceUni(int i, double momentum, double gradient, double action, Type type,
+//                                            int index) {
+//        double root;
+//        if (type == Type.GRADIENT && i == index) {
+//            if (gradient * action > 0) {
+//                root = gradient * 2.0 / action;
+//            } else {
+//                root = Double.POSITIVE_INFINITY;
+//            }
+//        } else {
+//            root = minimumPositiveRoot(action / 2, -gradient, -momentum);
+//        }
+//        return root;
+//    }
+
+    // Keep old fused map-reduction (decreased memory acccess)
+//    private MinimumTravelInformation getNextBoundaryBounce(ReadableVector position,
+//                                                           ReadableVector velocity) {
+//
+//
+//        double minimumTime = Double.POSITIVE_INFINITY;
+//        int index = -1;
+//
+//        for (int i = 0, len = position.getDim(); i < len; ++i) {
+//
+//            double x = position.get(i);
+//            double v = velocity.get(i);
+//
+//            if (headingTowardsBoundary(x, v, i)) { // Also ensures x != 0.0
+//                double time = Math.abs(x / v);
+//                if (time < minimumTime) {
+//                    minimumTime = time;
+//                    index = i;
+//                }
+//            }
+//        }
+//
+//        return new MinimumTravelInformation(minimumTime, index);
+//    }
 
     private MinimumTravelInformation findMin(double[] vector) {
         double min = Double.POSITIVE_INFINITY;
@@ -404,15 +414,15 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return findMin(minimumTimes);
     }
 
-    private double getNextBoundaryBounceUni(int i, double position, double velocity) {
-        double minimumTime;
-        if (headingTowardsBoundary(position, velocity, i)) { // Also ensures x != 0.0
-            minimumTime = Math.abs(position / velocity);
-        } else {
-            minimumTime = Double.POSITIVE_INFINITY;
-        }
-        return minimumTime;
-    }
+//    private double getNextBoundaryBounceUni(int i, double position, double velocity) {
+//        double minimumTime;
+//        if (headingTowardsBoundary(position, velocity, i)) { // Also ensures x != 0.0
+//            minimumTime = Math.abs(position / velocity);
+//        } else {
+//            minimumTime = Double.POSITIVE_INFINITY;
+//        }
+//        return minimumTime;
+//    }
 
     private static double minimumPositiveRoot(double a,
                                               double b,
@@ -596,5 +606,5 @@ public class ZigZagOperator extends AbstractParticleOperator {
     private final static boolean PARALLEL = false;
 
     private final ForkJoinPool customThreadPool;
-    private final IntStream range;
+    private final int dim;
 }

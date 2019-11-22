@@ -249,7 +249,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    final Parameter parameter;
+    private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
 

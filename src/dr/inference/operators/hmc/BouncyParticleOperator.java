@@ -61,7 +61,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         double remainingTime = drawTotalTravelTime();
         while (remainingTime > 0) {
 
-            ReadableVector Phi_v = getPrecisionProduct(velocity);
+            WrappedVector Phi_v = getPrecisionProduct(velocity);
 
             double v_Phi_x = -innerProduct(velocity, gradient);
             double v_Phi_v = innerProduct(velocity, Phi_v);
@@ -84,7 +84,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
     private double doBounce(double remainingTime, double bounceTime,
                             MinimumTravelInformation travelInfo,
                             WrappedVector position, WrappedVector velocity,
-                            WrappedVector gradient, ReadableVector Phi_v) {
+                            WrappedVector gradient, WrappedVector Phi_v) {
 
         double timeToBoundary = travelInfo.time;
         int boundaryIndex = travelInfo.index;

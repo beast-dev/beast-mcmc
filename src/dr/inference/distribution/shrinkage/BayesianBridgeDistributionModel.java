@@ -42,7 +42,8 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
         implements ParametricMultivariateDistributionModel, GradientProvider {
     
     BayesianBridgeDistributionModel(Parameter globalScale,
-                Parameter exponent, int dim) {
+                                    Parameter exponent,
+                                    int dim) {
 
         super(BAYESIAN_BRIDGE);
 
@@ -59,6 +60,9 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
     public Parameter getExponent() { return exponent; }
 
     public abstract Parameter getLocalScale();
+
+    @SuppressWarnings("unused")
+    public abstract Parameter getSlabWidth();
 
     abstract double[] gradientLogPdf(double[] x);
 

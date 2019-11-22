@@ -508,7 +508,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             }
 
             //explicitly link TreeModel (using its unique ID) to a list of TreeParameterModels
-            //this information is currently not yet used
+            //this information is used when tree models adopt trait data.
             HashMap<String, ArrayList<TreeParameterModel>> linkedModels = new HashMap<String, ArrayList<TreeParameterModel>>();
             for (String name : expectedTreeModelNames) {
                 ArrayList<TreeParameterModel> tpmList = new ArrayList<TreeParameterModel>();
@@ -602,9 +602,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         //adopt the loaded tree structure;
                         ((TreeModel) model).beginTreeEdit();
                         ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
-                        if (traitModels.size() > 0) {
-                            System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
-                            ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
+                        String tmid = ((TreeModel)model).getId();
+                        if (linkedModels.get(tmid).size() > 0) {
+                            System.out.println("adopting " + (linkedModels.get(tmid).size()) + " trait models to treeModel " + ((TreeModel)model).getId());
+                            ((TreeModel) model).adoptTraitData(parents, linkedModels.get(tmid), traitValues, taxaNames);
                         }
                         ((TreeModel) model).endTreeEdit();
 

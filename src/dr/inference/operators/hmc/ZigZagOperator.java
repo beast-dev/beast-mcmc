@@ -50,8 +50,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
                           PrecisionColumnProvider columnProvider,
                           double weight, Options runtimeOptions, Parameter mask) {
 
-        super(gradientProvider, multiplicationProvider, weight, runtimeOptions, mask);
-        this.columnProvider = columnProvider;
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask);
         this.dim = gradientProvider.getDimension();
 
         if (PARALLEL) {
@@ -86,8 +85,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         int count = 0;
 
         while (bounceState.isTimeRemaining()) {
-
-
 
             if (DEBUG) {
                 debugBefore(position, count);
@@ -179,39 +176,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
     private void debugBefore(ReadableVector position, int count) {
         System.err.println("before number: " + count);
         System.err.println("init position: " + position);
-    }
-
-    enum Type {
-        NONE,
-        BOUNDARY,
-        GRADIENT
-    }
-
-    class BounceState {
-        final Type type;
-        final int index;
-        final double remainingTime;
-
-        BounceState(Type type, int index, double remainingTime) {
-            this.type = type;
-            this.index = index;
-            this.remainingTime = remainingTime;
-        }
-
-        BounceState(double remainingTime) {
-            this.type = Type.NONE;
-            this.index = -1;
-            this.remainingTime = remainingTime;
-        }
-
-        boolean isTimeRemaining() {
-            return remainingTime > 0.0;
-        }
-
-        public String toString() {
-            return "remainingTime : " + remainingTime + "\n" +
-                    "lastBounceType: " + type + " in dim: " + index;
-        }
     }
 
     private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
@@ -390,17 +354,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         return new WrappedVector.Raw(velocity);
     }
 
-    private WrappedVector getPrecisionColumn(int index) {
-
-        double[] precisionColumn = columnProvider.getColumn(index);
-
-        if (mask != null) {
-            applyMask(precisionColumn);
-        }
-
-        return new WrappedVector.Raw(precisionColumn);
-    }
-
     private BounceState doBounce(BounceState initialBounceState,
                                  MinimumTravelInformation boundaryBounce,
                                  MinimumTravelInformation gradientBounce,
@@ -447,35 +400,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
 
         return finalBounceState;
-    }
-
-    private void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
-
-        WrappedVector column = getPrecisionColumn(eventIndex);
-
-        final double[] a = action.getBuffer();
-        final double[] c = column.getBuffer();
-
-        final double twoV = 2 * velocity.get(eventIndex);
-
-//        if (mask == null) {
-//            for (int i = 0, len = a.length; i < len; ++i) {
-//                a[i] += twoV * c[i];
-//            }
-//        } else {
-//            for (int i = 0, len = a.length; i < len; ++i) {
-//                a[i] = maskVector[i] *(a[i] + twoV * c[i]);
-//            }
-//
-//        }
-
-        for (int i = 0, len = a.length; i < len; ++i) {
-            a[i] += twoV * c[i];
-        }
-
-        if (mask != null) {
-            applyMask(a);
-        }
     }
 
     private static void reflectMomentum(WrappedVector momentum,
@@ -527,8 +451,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
             applyMask(m);
         }
     }
-
-    private final PrecisionColumnProvider columnProvider;
 
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;

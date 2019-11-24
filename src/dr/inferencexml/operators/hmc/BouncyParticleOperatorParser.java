@@ -26,6 +26,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -65,10 +66,13 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
                 xo.getChild(PrecisionMatrixVectorProductProvider.class);
 
+        PrecisionColumnProvider columnProvider = (PrecisionColumnProvider)
+                xo.getChild(PrecisionColumnProvider.class);
+
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
 
-        return new BouncyParticleOperator(derivative, productProvider, weight, runtimeOptions, mask);
+        return new BouncyParticleOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
     }
 
     static Parameter parseMask(XMLObject xo) throws XMLParseException {

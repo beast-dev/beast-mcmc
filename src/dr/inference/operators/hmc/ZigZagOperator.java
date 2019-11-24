@@ -250,7 +250,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
                 root = gradient * 2.0 / action;
             }
         } else {
-            root = minimumPositiveRoot(action / 2, -gradient, -momentum); // TODO Might be faster to only negate action
+            root = minimumPositiveRoot(-action / 2, gradient, momentum);
         }
 
         return root;
@@ -271,6 +271,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
     private MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
                                                            WrappedVector inVelocity) {
 
+        @SuppressWarnings("duplicate")
         final double[] position = inPosition.getBuffer();
         final double[] velocity = inVelocity.getBuffer();
 

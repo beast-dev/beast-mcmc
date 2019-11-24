@@ -145,6 +145,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(gradient);
     }
 
+    @SuppressWarnings("unused")
     void applyMask(WrappedVector vector) {
         applyMask(vector.getBuffer());
     }
@@ -171,7 +172,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(product);
     }
 
-    WrappedVector getPrecisionColumn(int index) {
+    private WrappedVector getPrecisionColumn(int index) {
 
         double[] precisionColumn = columnProvider.getColumn(index);
 
@@ -330,7 +331,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
-    final double[] maskVector;
+    private final double[] maskVector;
 
     Preconditioning preconditioning;
     private boolean[] missingDataMask;

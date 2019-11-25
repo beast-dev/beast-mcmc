@@ -5,16 +5,15 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+import java.util.function.BinaryOperator;
 
 /**
  * @author Marc A. Suchard
  * @author Andrew Holbrook
  */
 
-public class TaxonTaskPool {
+public class TaxonTaskPool<E> {
 
     class TaxonTaskIndices {
 
@@ -85,6 +84,49 @@ public class TaxonTaskPool {
 
     public interface TaxonCallable {
         void execute(int taxon, int thread);
+    }
+
+    public interface RangeCallable<E> {
+        E map(int start, int end, int thread);
+    }
+
+    public E mapReduce(final RangeCallable<E> map, final BinaryOperator<E> reduce) {
+
+        E result = null;
+
+        if (indices.size() == 1) {
+
+            final TaxonTaskIndices index = indices.get(0);
+            result = map.map(index.start, index.stop, 0);
+
+        } else {
+
+            if (pool == null) {
+                pool = setupParallelServices(threadCount);
+            }
+
+            List<Callable<E>> calls = new ArrayList<>();
+
+            for (final TaxonTaskIndices indexSet : indices) {
+                calls.add(() -> map.map(indexSet.start, indexSet.stop, indexSet.task));
+            }
+
+            try {
+
+                List<Future<E>> futures = pool.invokeAll(calls);
+
+                result = futures.get(0).get();
+                for (int i = 1; i < futures.size(); ++i) {
+                    result = reduce.apply(result, futures.get(i).get());
+                }
+
+            } catch (InterruptedException | ExecutionException exception) {
+                exception.printStackTrace();
+            }
+
+        }
+
+        return result;
     }
 
     public void fork(final TaxonCallable runnable) {

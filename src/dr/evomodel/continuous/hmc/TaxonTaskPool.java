@@ -13,7 +13,7 @@ import java.util.function.BinaryOperator;
  * @author Andrew Holbrook
  */
 
-public class TaxonTaskPool<E> {
+public class TaxonTaskPool {
 
     class TaxonTaskIndices {
 
@@ -90,7 +90,7 @@ public class TaxonTaskPool<E> {
         E map(int start, int end, int thread);
     }
 
-    public E mapReduce(final RangeCallable<E> map, final BinaryOperator<E> reduce) {
+    public <E> E mapReduce(final RangeCallable<E> map, final BinaryOperator<E> reduce) {
 
         E result = null;
 

@@ -54,7 +54,7 @@ public class ZigZagOperator extends AbstractParticleOperator {
         if (PARALLEL) {
             int numberOfThreads = 4;
 //            customThreadPool = new ForkJoinPool(numberOfThreads);
-            taskPool = new TaxonTaskPool<>(gradientProvider.getDimension(), numberOfThreads);
+            taskPool = new TaxonTaskPool(gradientProvider.getDimension(), numberOfThreads);
         } else {
 //            customThreadPool = null;
             taskPool = null;
@@ -453,6 +453,6 @@ public class ZigZagOperator extends AbstractParticleOperator {
     private final static boolean PARALLEL = true;
 
 //    private final ForkJoinPool customThreadPool;
-    private final TaxonTaskPool<MinimumTravelInformation> taskPool;
+    private final TaxonTaskPool taskPool;
 //    private final int dim;
 }

@@ -399,7 +399,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                 root = gradient * 2.0 / action;
             }
         } else {
-            root = minimumPositiveRoot(-action / 2, gradient, momentum);
+            root = minimumPositiveRoot(-0.5 * action, gradient, momentum);
         }
 
         return root;

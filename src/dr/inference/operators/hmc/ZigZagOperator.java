@@ -33,6 +33,8 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.BenchmarkTimer;
+import dr.xml.Reportable;
 
 import java.util.function.BinaryOperator;
 
@@ -42,7 +44,7 @@ import java.util.function.BinaryOperator;
  * @author Marc A. Suchard
  */
 
-public class ZigZagOperator extends AbstractParticleOperator {
+public class ZigZagOperator extends AbstractParticleOperator implements Reportable {
 
     public ZigZagOperator(GradientWrtParameterProvider gradientProvider,
                           PrecisionMatrixVectorProductProvider multiplicationProvider,
@@ -84,6 +86,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
         int count = 0;
 
+        if (TIMING) {
+            timer.startTimer("integrateTrajectory");
+        }
+
         while (bounceState.isTimeRemaining()) {
 
             if (DEBUG) {
@@ -95,17 +101,84 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
             if (PARALLEL) {
 
-                boundaryBounce = getNextBoundaryBounce(position, velocity);
+                if (FUSE) {
 
-//                MinimumTravelInformation test = getNextGradientBounce(action, gradient, momentum, bounceState);
-                gradientBounce = getNextGradientBounceParallel(action, gradient, momentum, bounceState);
+                    if (TIMING) {
+                        timer.startTimer("getNext");
+                    }
 
-//                System.err.println(gradientBounce + " -- " + gradientBounce);
+                    MinimumTravelInformation first = getNextBounceParallel(position,
+                            velocity, action, gradient, momentum, bounceState);
+
+                    // TODO Remove scatter
+                    MinimumTravelInformation second = new MinimumTravelInformation(Double.POSITIVE_INFINITY, -1);
+                    if (first.type == Type.BOUNDARY) {
+                        boundaryBounce = first;
+                        gradientBounce = second;
+                    } else if (first.type == Type.GRADIENT) {
+                        gradientBounce = first;
+                        boundaryBounce = second;
+                    } else {
+                        throw new RuntimeException("Unknown bounce type");
+                    }
+
+                    if (TIMING) {
+                        timer.stopTimer("getNext");
+                    }
+
+
+                } else {
+
+                    boundaryBounce = getNextBoundaryBounce(position, velocity);
+                    gradientBounce = getNextGradientBounceParallel(action, gradient, momentum, bounceState);
+                }
+
 
             } else {
 
-                boundaryBounce = getNextBoundaryBounce(position, velocity);
-                gradientBounce = getNextGradientBounce(action, gradient, momentum, bounceState);
+                if (FUSE) {
+
+                    if (TIMING) {
+                        timer.startTimer("getNext");
+                    }
+
+                    MinimumTravelInformation first = getNextBounce(position,
+                            velocity, action, gradient, momentum, bounceState);
+
+                    // TODO Remove scatter
+                    MinimumTravelInformation second = new MinimumTravelInformation(Double.POSITIVE_INFINITY, -1);
+                    if (first.type == Type.BOUNDARY) {
+                        boundaryBounce = first;
+                        gradientBounce = second;
+                    } else if (first.type == Type.GRADIENT) {
+                        gradientBounce = first;
+                        boundaryBounce = second;
+                    } else {
+                        throw new RuntimeException("Unknown bounce type");
+                    }
+
+                    if (TIMING) {
+                        timer.stopTimer("getNext");
+                    }
+                    
+                } else {
+
+                    if (TIMING) {
+                        timer.startTimer("getNextBoundary");
+                    }
+
+                    boundaryBounce = getNextBoundaryBounce(position, velocity);
+
+                    if (TIMING) {
+                        timer.stopTimer("getNextBoundary");
+                        timer.startTimer("getNextGradient");
+                    }
+                    gradientBounce = getNextGradientBounce(action, gradient, momentum, bounceState);
+
+                    if (TIMING) {
+                        timer.stopTimer("getNextGradient");
+                    }
+                }
             }
 
             if (DEBUG) {
@@ -126,6 +199,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
             }
 
             ++count;
+        }
+
+        if (TIMING) {
+            timer.stopTimer("integrateTrajectory");
         }
 
         if (DEBUG_SIGN) {
@@ -158,6 +235,60 @@ public class ZigZagOperator extends AbstractParticleOperator {
         System.err.println("init position: " + position);
     }
 
+    private MinimumTravelInformation getNextBounce(WrappedVector inPosition,
+                                                   WrappedVector inVelocity,
+                                                   WrappedVector inAction,
+                                                   WrappedVector inGradient,
+                                                   WrappedVector inMomentum,
+                                                   BounceState bounceState) {
+
+        final double[] position = inPosition.getBuffer();
+        final double[] velocity = inVelocity.getBuffer();
+        final double[] action = inAction.getBuffer();
+        final double[] gradient = inGradient.getBuffer();
+        final double[] momentum = inMomentum.getBuffer();
+
+        return getNextBounce(0, position.length,
+                position, velocity,
+                action, gradient, momentum,
+                bounceState);
+
+    }
+
+    private MinimumTravelInformation getNextBounce(final int begin, final int end,
+                                                           final double[] position,
+                                                           final double[] velocity,
+                                                           final double[] action,
+                                                           final double[] gradient,
+                                                           final double[] momentum,
+                                                           final BounceState bounceState) {
+
+        double minimumTime = Double.POSITIVE_INFINITY;
+        int index = -1;
+        Type type = Type.NONE;
+
+        for (int i = begin; i < end; ++i) {
+
+            double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
+
+            if (boundaryTime < minimumTime) {
+                minimumTime = boundaryTime;
+                index = i;
+                type = Type.BOUNDARY;
+            }
+
+            double gradientTime = findGradientRoot(i, action[i], gradient[i], momentum[i], bounceState);
+
+            if (gradientTime < minimumTime) {
+                minimumTime = gradientTime;
+                index = i;
+                type = Type.GRADIENT;
+            }
+        }
+
+        return new MinimumTravelInformation(minimumTime, index, type);
+    }
+
     private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
                                                            WrappedVector inGradient,
                                                            WrappedVector inMomentum,
@@ -167,14 +298,14 @@ public class ZigZagOperator extends AbstractParticleOperator {
         final double[] gradient = inGradient.getBuffer();
         final double[] momentum = inMomentum.getBuffer();
 
-        return getNextGradientBounce2(0, action.length, action, gradient, momentum, bounceState);
+        return getNextGradientBounce(0, action.length, action, gradient, momentum, bounceState);
     }
 
-    private MinimumTravelInformation getNextGradientBounce2(final int begin, final int end,
-                                                            final double[] action,
-                                                            final double[] gradient,
-                                                            final double[] momentum,
-                                                            final BounceState bounceState) {
+    private MinimumTravelInformation getNextGradientBounce(final int begin, final int end,
+                                                           final double[] action,
+                                                           final double[] gradient,
+                                                           final double[] momentum,
+                                                           final BounceState bounceState) {
 
         double minimumRoot = Double.POSITIVE_INFINITY;
         int index = -1;
@@ -220,7 +351,30 @@ public class ZigZagOperator extends AbstractParticleOperator {
 //        }
 
         TaxonTaskPool.RangeCallable<MinimumTravelInformation> map =
-                (start, end, thread) -> getNextGradientBounce2(start, end, action, gradient, momentum, bounceState);
+                (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum, bounceState);
+
+        BinaryOperator<MinimumTravelInformation> reduce =
+                (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
+
+        return taskPool.mapReduce(map, reduce);
+    }
+
+    private MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
+                                                           WrappedVector inVelocity,
+                                                           WrappedVector inAction,
+                                                           WrappedVector inGradient,
+                                                           WrappedVector inMomentum,
+                                                           BounceState bounceState) {
+
+        final double[] position = inPosition.getBuffer();
+        final double[] velocity = inVelocity.getBuffer();
+        final double[] action = inAction.getBuffer();
+        final double[] gradient = inGradient.getBuffer();
+        final double[] momentum = inMomentum.getBuffer();
+
+        TaxonTaskPool.RangeCallable<MinimumTravelInformation> map =
+                (start, end, thread) -> getNextBounce(start, end,
+                        position, velocity, action, gradient, momentum, bounceState);
 
         BinaryOperator<MinimumTravelInformation> reduce =
                 (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
@@ -357,6 +511,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
                                  WrappedVector momentum,
                                  WrappedVector gradient, WrappedVector action) {
 
+        if (TIMING) {
+            timer.startTimer("doBounce");
+        }
+
         double remainingTime = initialBounceState.remainingTime;
         double eventTime = Math.min(boundaryBounce.time, gradientBounce.time);
 
@@ -377,10 +535,10 @@ public class ZigZagOperator extends AbstractParticleOperator {
 
                 eventType = Type.BOUNDARY;
                 eventIndex = boundaryBounce.index;
-
                 reflectMomentum(momentum, position, eventIndex);
 
             } else { // Bounce caused by the gradient
+
                 eventType = Type.GRADIENT;
                 eventIndex = gradientBounce.index;
                 setZeroMomentum(momentum, eventIndex);
@@ -390,9 +548,22 @@ public class ZigZagOperator extends AbstractParticleOperator {
             reflectVelocity(velocity, eventIndex);
 
             updateGradient(gradient, eventTime, action);
+
+            if (TIMING) {
+                timer.startTimer("updateAction");
+            }
+
             updateAction(action, velocity, eventIndex);
 
+            if (TIMING) {
+                timer.stopTimer("updateAction");
+            }
+
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+        }
+
+        if (TIMING) {
+            timer.stopTimer("doBounce");
         }
 
         return finalBounceState;
@@ -448,11 +619,22 @@ public class ZigZagOperator extends AbstractParticleOperator {
         }
     }
 
+    @Override
+    public String getReport() {
+        return TIMING ? timer.toString() : "";
+    }
+
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;
     private final static boolean PARALLEL = true;
+    private final static boolean FUSE = true;
 
 //    private final ForkJoinPool customThreadPool;
     private final TaxonTaskPool taskPool;
 //    private final int dim;
+
+
+    private final static boolean TIMING = true;
+    private BenchmarkTimer timer = new BenchmarkTimer();
+
 }

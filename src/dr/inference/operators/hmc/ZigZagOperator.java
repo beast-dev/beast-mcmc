@@ -55,10 +55,8 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         if (PARALLEL) {
             int numberOfThreads = 4;
-//            customThreadPool = new ForkJoinPool(numberOfThreads);
             taskPool = new TaxonTaskPool(gradientProvider.getDimension(), numberOfThreads);
         } else {
-//            customThreadPool = null;
             taskPool = null;
         }
     }
@@ -96,10 +94,12 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                 debugBefore(position, count);
             }
 
-            MinimumTravelInformation gradientBounce;
-            MinimumTravelInformation boundaryBounce;
+//            MinimumTravelInformation gradientBounce;
+//            MinimumTravelInformation boundaryBounce;
 
-            if (PARALLEL) {
+            MinimumTravelInformation firstBounce;
+
+            if (taskPool != null) {
 
                 if (FUSE) {
 
@@ -107,20 +107,8 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                         timer.startTimer("getNext");
                     }
 
-                    MinimumTravelInformation first = getNextBounceParallel(position,
+                    firstBounce = getNextBounceParallel(position,
                             velocity, action, gradient, momentum, bounceState);
-
-                    // TODO Remove scatter
-                    MinimumTravelInformation second = new MinimumTravelInformation(Double.POSITIVE_INFINITY, -1);
-                    if (first.type == Type.BOUNDARY) {
-                        boundaryBounce = first;
-                        gradientBounce = second;
-                    } else if (first.type == Type.GRADIENT) {
-                        gradientBounce = first;
-                        boundaryBounce = second;
-                    } else {
-                        throw new RuntimeException("Unknown bounce type");
-                    }
 
                     if (TIMING) {
                         timer.stopTimer("getNext");
@@ -129,10 +117,15 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
                 } else {
 
-                    boundaryBounce = getNextBoundaryBounce(position, velocity);
-                    gradientBounce = getNextGradientBounceParallel(action, gradient, momentum, bounceState);
-                }
+                    MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
+                            position, velocity);
+                    MinimumTravelInformation gradientBounce = getNextGradientBounceParallel(
+                            action, gradient, momentum, bounceState);
 
+                    firstBounce = (boundaryBounce.time < gradientBounce.time) ?
+                             new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
+                             new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+                }
 
             } else {
 
@@ -142,20 +135,8 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                         timer.startTimer("getNext");
                     }
 
-                    MinimumTravelInformation first = getNextBounce(position,
+                    firstBounce = getNextBounce(position,
                             velocity, action, gradient, momentum, bounceState);
-
-                    // TODO Remove scatter
-                    MinimumTravelInformation second = new MinimumTravelInformation(Double.POSITIVE_INFINITY, -1);
-                    if (first.type == Type.BOUNDARY) {
-                        boundaryBounce = first;
-                        gradientBounce = second;
-                    } else if (first.type == Type.GRADIENT) {
-                        gradientBounce = first;
-                        boundaryBounce = second;
-                    } else {
-                        throw new RuntimeException("Unknown bounce type");
-                    }
 
                     if (TIMING) {
                         timer.stopTimer("getNext");
@@ -167,27 +148,28 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                         timer.startTimer("getNextBoundary");
                     }
 
-                    boundaryBounce = getNextBoundaryBounce(position, velocity);
+                    MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
+                            position, velocity);
 
                     if (TIMING) {
                         timer.stopTimer("getNextBoundary");
                         timer.startTimer("getNextGradient");
                     }
-                    gradientBounce = getNextGradientBounce(action, gradient, momentum, bounceState);
+                    MinimumTravelInformation gradientBounce = getNextGradientBounce(
+                            action, gradient, momentum, bounceState);
 
                     if (TIMING) {
                         timer.stopTimer("getNextGradient");
                     }
+
+                    firstBounce = (boundaryBounce.time < gradientBounce.time) ?
+                            new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
+                            new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+                    
                 }
             }
 
-            if (DEBUG) {
-                System.err.println("boundary: " + boundaryBounce);
-                System.err.println("gradient: " + gradientBounce);
-            }
-
-            bounceState = doBounce(bounceState, boundaryBounce, gradientBounce,
-                    position, velocity, momentum, gradient, action);
+            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
 
             if (DEBUG) {
                 debugAfter(bounceState, position);
@@ -235,22 +217,16 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         System.err.println("init position: " + position);
     }
 
-    private MinimumTravelInformation getNextBounce(WrappedVector inPosition,
-                                                   WrappedVector inVelocity,
-                                                   WrappedVector inAction,
-                                                   WrappedVector inGradient,
-                                                   WrappedVector inMomentum,
+    private MinimumTravelInformation getNextBounce(WrappedVector position,
+                                                   WrappedVector velocity,
+                                                   WrappedVector action,
+                                                   WrappedVector gradient,
+                                                   WrappedVector momentum,
                                                    BounceState bounceState) {
 
-        final double[] position = inPosition.getBuffer();
-        final double[] velocity = inVelocity.getBuffer();
-        final double[] action = inAction.getBuffer();
-        final double[] gradient = inGradient.getBuffer();
-        final double[] momentum = inMomentum.getBuffer();
-
-        return getNextBounce(0, position.length,
-                position, velocity,
-                action, gradient, momentum,
+        return getNextBounce(0, position.getDim(),
+                position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
                 bounceState);
 
     }
@@ -289,16 +265,14 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         return new MinimumTravelInformation(minimumTime, index, type);
     }
 
-    private MinimumTravelInformation getNextGradientBounce(WrappedVector inAction,
-                                                           WrappedVector inGradient,
-                                                           WrappedVector inMomentum,
+    private MinimumTravelInformation getNextGradientBounce(WrappedVector action,
+                                                           WrappedVector gradient,
+                                                           WrappedVector momentum,
                                                            BounceState bounceState) {
 
-        final double[] action = inAction.getBuffer();
-        final double[] gradient = inGradient.getBuffer();
-        final double[] momentum = inMomentum.getBuffer();
-
-        return getNextGradientBounce(0, action.length, action, gradient, momentum, bounceState);
+        return getNextGradientBounce(0, action.getDim(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                bounceState);
     }
 
     private MinimumTravelInformation getNextGradientBounce(final int begin, final int end,
@@ -331,24 +305,6 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         final double[] action = inAction.getBuffer();
         final double[] gradient = inGradient.getBuffer();
         final double[] momentum = inMomentum.getBuffer();
-
-//        MinimumTravelInformation result = null;
-//
-//        try {
-//            result = customThreadPool.submit(
-//                    () -> IntStream.range(0, dim).parallel().mapToObj(
-//                            (index) -> new MinimumTravelInformation(
-//                                    findGradientRoot(index, action[index], gradient[index],
-//                                            momentum[index], bounceState
-//                                    ), index)
-//                    ).reduce(new MinimumTravelInformation(
-//                                    Double.POSITIVE_INFINITY, -1),
-//                            (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs)
-//            ).get();
-//
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//        }
 
         TaxonTaskPool.RangeCallable<MinimumTravelInformation> map =
                 (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum, bounceState);
@@ -505,18 +461,16 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
     }
 
     private BounceState doBounce(BounceState initialBounceState,
-                                 MinimumTravelInformation boundaryBounce,
-                                 MinimumTravelInformation gradientBounce,
+                                 MinimumTravelInformation firstBounce,
                                  WrappedVector position, WrappedVector velocity,
-                                 WrappedVector momentum,
-                                 WrappedVector gradient, WrappedVector action) {
+                                 WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
 
         if (TIMING) {
             timer.startTimer("doBounce");
         }
 
         double remainingTime = initialBounceState.remainingTime;
-        double eventTime = Math.min(boundaryBounce.time, gradientBounce.time);
+        double eventTime = firstBounce.time;
 
         final BounceState finalBounceState;
         if (remainingTime < eventTime) { // No event during remaining time
@@ -529,18 +483,15 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
             updatePosition(position, velocity, eventTime);
             updateMomentum(momentum, gradient, action, eventTime);
 
-            final Type eventType;
-            final int eventIndex;
-            if (boundaryBounce.time < gradientBounce.time) { // Reflect against the boundary
+            final Type eventType = firstBounce.type;
+            final int eventIndex = firstBounce.index;
 
-                eventType = Type.BOUNDARY;
-                eventIndex = boundaryBounce.index;
+            if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+
                 reflectMomentum(momentum, position, eventIndex);
 
             } else { // Bounce caused by the gradient
-
-                eventType = Type.GRADIENT;
-                eventIndex = gradientBounce.index;
+                
                 setZeroMomentum(momentum, eventIndex);
 
             }
@@ -600,16 +551,6 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         final double halfEventTimeSquared = eventTime * eventTime / 2;
 
-//        if (mask == null) {
-//            for (int i = 0, len = m.length; i < len; ++i) {
-//                m[i] += eventTime * g[i] - halfEventTimeSquared * a[i];
-//            }
-//        } else {
-//            for (int i = 0, len = m.length; i < len; ++i) {
-//                m[i] = maskVector[i] * (m[i] + eventTime * g[i] - halfEventTimeSquared * a[i]);
-//            }
-//        }
-
         for (int i = 0, len = m.length; i < len; ++i) {
             m[i] += eventTime * g[i] - halfEventTimeSquared * a[i];
         }
@@ -629,10 +570,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
     private final static boolean PARALLEL = true;
     private final static boolean FUSE = true;
 
-//    private final ForkJoinPool customThreadPool;
     private final TaxonTaskPool taskPool;
-//    private final int dim;
-
 
     private final static boolean TIMING = true;
     private BenchmarkTimer timer = new BenchmarkTimer();

@@ -245,14 +245,22 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
-    protected class MinimumTravelInformation {
+    public class MinimumTravelInformation {
 
         final double time;
         final int index;
+        final Type type;
+
+        MinimumTravelInformation(double minTime, int minIndex, Type type) {
+            this.time = minTime;
+            this.index = minIndex;
+            this.type = type;
+        }
 
         MinimumTravelInformation(double minTime, int minIndex) {
             this.time = minTime;
             this.index = minIndex;
+            this.type = Type.NONE;
         }
 
         public boolean equals(Object obj) {

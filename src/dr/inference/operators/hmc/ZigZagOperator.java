@@ -25,7 +25,7 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evomodel.continuous.hmc.TaxonTaskPool;
+import dr.util.TaskPool;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -33,7 +33,6 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.util.BenchmarkTimer;
 import dr.xml.Reportable;
 
 import java.util.function.BinaryOperator;
@@ -55,7 +54,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         if (PARALLEL) {
             int numberOfThreads = 4;
-            taskPool = new TaxonTaskPool(gradientProvider.getDimension(), numberOfThreads);
+            taskPool = new TaskPool(gradientProvider.getDimension(), numberOfThreads);
         } else {
             taskPool = null;
         }
@@ -306,7 +305,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         final double[] gradient = inGradient.getBuffer();
         final double[] momentum = inMomentum.getBuffer();
 
-        TaxonTaskPool.RangeCallable<MinimumTravelInformation> map =
+        TaskPool.RangeCallable<MinimumTravelInformation> map =
                 (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum, bounceState);
 
         BinaryOperator<MinimumTravelInformation> reduce =
@@ -328,7 +327,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         final double[] gradient = inGradient.getBuffer();
         final double[] momentum = inMomentum.getBuffer();
 
-        TaxonTaskPool.RangeCallable<MinimumTravelInformation> map =
+        TaskPool.RangeCallable<MinimumTravelInformation> map =
                 (start, end, thread) -> getNextBounce(start, end,
                         position, velocity, action, gradient, momentum, bounceState);
 
@@ -560,19 +559,10 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         }
     }
 
-    @Override
-    public String getReport() {
-        return TIMING ? timer.toString() : "";
-    }
-
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;
     private final static boolean PARALLEL = true;
     private final static boolean FUSE = true;
 
-    private final TaxonTaskPool taskPool;
-
-    private final static boolean TIMING = true;
-    private BenchmarkTimer timer = new BenchmarkTimer();
-
+    private final TaskPool taskPool;
 }

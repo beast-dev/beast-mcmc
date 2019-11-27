@@ -1,4 +1,4 @@
-package dr.evomodel.continuous.hmc;
+package dr.util;
 
 import dr.evolution.tree.Tree;
 import dr.xml.*;
@@ -13,15 +13,15 @@ import java.util.function.BinaryOperator;
  * @author Andrew Holbrook
  */
 
-public class TaxonTaskPool {
+public class TaskPool {
 
-    class TaxonTaskIndices {
+    class TaskIndices {
 
         final int start;
         final int stop;
         final int task;
 
-        TaxonTaskIndices(int start, int stop, int task) {
+        TaskIndices(int start, int stop, int task) {
             this.start = start;
             this.stop = stop;
             this.task = task;
@@ -33,34 +33,34 @@ public class TaxonTaskPool {
     }
 
     private ExecutorService pool = null;
-    final private List<TaxonTaskIndices> indices;
-    final private int taxonCount;
+    final private List<TaskIndices> indices;
+    final private int taskCount;
     final private int threadCount;
 
-    public TaxonTaskPool(int taxonCount, int threadCount) {
-        this.indices = setupTasks(taxonCount, Math.abs(threadCount));
-        this.taxonCount = taxonCount;
+    public TaskPool(int taskCount, int threadCount) {
+        this.indices = setupTasks(taskCount, Math.abs(threadCount));
+        this.taskCount = taskCount;
         this.threadCount = threadCount;
     }
 
     public ExecutorService getPool() { return pool; }
 
-    public List<TaxonTaskIndices> getIndices() { return indices; }
+    public List<TaskIndices> getIndices() { return indices; }
 
     public int getNumThreads() { return indices.size(); }
 
-    public int getNumTaxon() { return taxonCount; }
+    public int getNumTaxon() { return taskCount; }
 
-    private List<TaxonTaskIndices> setupTasks(int taxonCount, int threadCount) {
-        List<TaxonTaskIndices> tasks = new ArrayList<>(threadCount);
+    private List<TaskIndices> setupTasks(int taskCount, int threadCount) {
+        List<TaskIndices> tasks = new ArrayList<>(threadCount);
 
-        int length = taxonCount / threadCount;
-        if (taxonCount % threadCount != 0) ++length;
+        int length = taskCount / threadCount;
+        if (taskCount % threadCount != 0) ++length;
 
         int start = 0;
 
-        for (int task = 0; task < threadCount && start < taxonCount; ++task) {
-            tasks.add(new TaxonTaskIndices(start, Math.min(start + length, taxonCount), task));
+        for (int task = 0; task < threadCount && start < taskCount; ++task) {
+            tasks.add(new TaskIndices(start, Math.min(start + length, taskCount), task));
             start += length;
         }
 
@@ -82,8 +82,8 @@ public class TaxonTaskPool {
         return pool;
     }
 
-    public interface TaxonCallable {
-        void execute(int taxon, int thread);
+    public interface TaskCallable {
+        void execute(int task, int thread);
     }
 
     public interface RangeCallable<E> {
@@ -96,7 +96,7 @@ public class TaxonTaskPool {
 
         if (indices.size() == 1) {
 
-            final TaxonTaskIndices index = indices.get(0);
+            final TaskIndices index = indices.get(0);
             result = map.map(index.start, index.stop, 0);
 
         } else {
@@ -107,7 +107,7 @@ public class TaxonTaskPool {
 
             List<Callable<E>> calls = new ArrayList<>();
 
-            for (final TaxonTaskIndices indexSet : indices) {
+            for (final TaskIndices indexSet : indices) {
                 calls.add(() -> map.map(indexSet.start, indexSet.stop, indexSet.task));
             }
 
@@ -129,12 +129,12 @@ public class TaxonTaskPool {
         return result;
     }
 
-    public void fork(final TaxonCallable runnable) {
+    public void fork(final TaskCallable runnable) {
         if (indices.size() == 1) {
 
-            final TaxonTaskIndices index = indices.get(0);
-            for (int taxon = index.start; taxon < index.stop; ++taxon) {
-                runnable.execute(taxon, 0);
+            final TaskIndices index = indices.get(0);
+            for (int task = index.start; task < index.stop; ++task) {
+                runnable.execute(task, 0);
             }
 
         } else {
@@ -145,11 +145,11 @@ public class TaxonTaskPool {
 
             List<Callable<Object>> calls = new ArrayList<>();
 
-            for (final TaxonTaskIndices indexSet : indices) {
+            for (final TaskIndices indexSet : indices) {
 
                 calls.add(Executors.callable(() -> {
-                            for (int taxon = indexSet.start; taxon < indexSet.stop; ++taxon) {
-                                runnable.execute(taxon, indexSet.task);
+                            for (int task = indexSet.start; task < indexSet.stop; ++task) {
+                                runnable.execute(task, indexSet.task);
                             }
                         }
                 ));
@@ -162,43 +162,4 @@ public class TaxonTaskPool {
             }
         }
     }
-
-    private static final String PARSER_NAME = "taxonTaskPool";
-    private static final String THREAD_COUNT = "threadCount";
-
-    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-         @Override
-         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-             Tree tree = (Tree) xo.getChild(Tree.class);
-             int threadCount = xo.getAttribute(THREAD_COUNT, 1);
-             return new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
-         }
-
-         @Override
-         public XMLSyntaxRule[] getSyntaxRules() {
-             return rules;
-         }
-
-         @Override
-         public String getParserDescription() {
-             return "A thread pool for per-taxon specific operations";
-         }
-
-         @Override
-         public Class getReturnType() {
-             return TaxonTaskPool.class;
-         }
-
-         @Override
-         public String getParserName() {
-             return PARSER_NAME;
-         }
-
-         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-                 AttributeRule.newIntegerRule(THREAD_COUNT, true),
-                 new ElementRule(Tree.class),
-         };
-     };
 }

@@ -34,6 +34,8 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.BenchmarkTimer;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 
@@ -45,7 +47,7 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
  * @author Marc A. Suchard
  */
 
-public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
+public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
     private static final boolean CHECK_MATRIX_ILL_CONDITIONED = false;
 
@@ -174,10 +176,18 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private WrappedVector getPrecisionColumn(int index) {
 
+        if (TIMING) {
+            timer.startTimer("getColumn");
+        }
+
         double[] precisionColumn = columnProvider.getColumn(index);
 
         if (mask != null) {
             applyMask(precisionColumn);
+        }
+
+        if (TIMING) {
+            timer.stopTimer("getColumn");
         }
 
         return new WrappedVector.Raw(precisionColumn);
@@ -332,6 +342,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         GRADIENT
     }
 
+    @Override
+    public String getReport() {
+        return TIMING ? timer.toString() : "";
+    }
 
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
@@ -343,4 +357,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     Preconditioning preconditioning;
     private boolean[] missingDataMask;
+
+    final static boolean TIMING = false;
+    BenchmarkTimer timer = new BenchmarkTimer();
 }

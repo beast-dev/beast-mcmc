@@ -8,6 +8,7 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistribu
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
+import dr.util.TaskPool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         this.optimalTravelTimeScalar = optimalTravelTimeScalar;
         this.eigenvalueReplicates = eigenvalueReplicates;
 
-        this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
+        this.taxonTaskPool = new TaskPool(tree.getExternalNodeCount(), threadCount);
     }
     
     @Override
@@ -278,7 +279,7 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         return trait;
     }
 
-    private final TaxonTaskPool taxonTaskPool;
+    private final TaskPool taxonTaskPool;
 
     private final double[][] delta;
     private final double roughTimeGuess;

@@ -49,10 +49,10 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                           PrecisionMatrixVectorProductProvider multiplicationProvider,
                           PrecisionColumnProvider columnProvider,
                           double weight, Options runtimeOptions, Parameter mask,
-                          TaskPool taskPool) {
+                          int threadCount) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask);
-        this.taskPool = taskPool;
+        this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
     }
 
     @Override

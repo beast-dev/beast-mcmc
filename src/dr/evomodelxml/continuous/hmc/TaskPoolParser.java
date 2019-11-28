@@ -40,7 +40,7 @@ public class TaskPoolParser extends AbstractXMLObjectParser {
 
     private static final String TAXON_PARSER_NAME = "taxonTaskPool";
     private static final String TASk_PARSER_NAME = "taskPool";
-    private static final String THREAD_COUNT = "threadCount";
+    public static final String THREAD_COUNT = "threadCount";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

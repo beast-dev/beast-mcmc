@@ -25,15 +25,14 @@
 
 package dr.inferencexml.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.AbstractParticleOperator;
 import dr.inference.operators.hmc.ZigZagOperator;
+import dr.util.TaskPool;
 import dr.xml.*;
 
 import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseMask;
@@ -59,8 +58,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        @SuppressWarnings("unused") AdaptationMode coercionMode = AdaptationMode.parseMode(xo);
-
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
@@ -72,9 +69,11 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
-        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
+        TaskPool taskPool = (TaskPool) xo.getChild(TaskPool.class);
+
+        return new ZigZagOperator(derivative, productProvider, columnProvider, weight,
+                runtimeOptions, mask, taskPool);
     }
 
     @Override
@@ -84,6 +83,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] additionalRules = {
             new ElementRule(PrecisionColumnProvider.class),
+            new ElementRule(TaskPool.class, true),
     };
 
     @Override

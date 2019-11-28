@@ -30,7 +30,6 @@ import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
-import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.AbstractParticleOperator;
 import dr.inference.operators.hmc.BouncyParticleOperator;
@@ -56,23 +55,12 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-
-        AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);
-
-        GradientWrtParameterProvider derivative =
-                (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
-
-        PrecisionMatrixVectorProductProvider productProvider = (PrecisionMatrixVectorProductProvider)
-                xo.getChild(PrecisionMatrixVectorProductProvider.class);
-
-        PrecisionColumnProvider columnProvider = (PrecisionColumnProvider)
-                xo.getChild(PrecisionColumnProvider.class);
-
-        Parameter mask = parseMask(xo);
-        AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
-
-        return new BouncyParticleOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
+        return new BouncyParticleOperator(
+                (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class),
+                (PrecisionMatrixVectorProductProvider) xo.getChild(PrecisionMatrixVectorProductProvider.class),
+                (PrecisionColumnProvider) xo.getChild(PrecisionColumnProvider.class),
+                xo.getDoubleAttribute(MCMCOperator.WEIGHT),
+                parseRuntimeOptions(xo), parseMask(xo));
     }
 
     static Parameter parseMask(XMLObject xo) throws XMLParseException {

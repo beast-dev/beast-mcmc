@@ -48,16 +48,11 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
     public ZigZagOperator(GradientWrtParameterProvider gradientProvider,
                           PrecisionMatrixVectorProductProvider multiplicationProvider,
                           PrecisionColumnProvider columnProvider,
-                          double weight, Options runtimeOptions, Parameter mask) {
+                          double weight, Options runtimeOptions, Parameter mask,
+                          TaskPool taskPool) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask);
-
-        if (PARALLEL) {
-            int numberOfThreads = 4;
-            taskPool = new TaskPool(gradientProvider.getDimension(), numberOfThreads);
-        } else {
-            taskPool = null;
-        }
+        this.taskPool = taskPool;
     }
 
     @Override
@@ -561,7 +556,6 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;
-    private final static boolean PARALLEL = true;
     private final static boolean FUSE = true;
 
     private final TaskPool taskPool;

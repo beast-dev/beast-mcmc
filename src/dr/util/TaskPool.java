@@ -1,8 +1,5 @@
 package dr.util;
 
-import dr.evolution.tree.Tree;
-import dr.xml.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;

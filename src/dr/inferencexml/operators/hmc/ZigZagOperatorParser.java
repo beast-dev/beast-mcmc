@@ -35,6 +35,7 @@ import dr.inference.operators.hmc.ZigZagOperator;
 import dr.util.TaskPool;
 import dr.xml.*;
 
+import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
 import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseMask;
 import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRuntimeOptions;
 
@@ -70,10 +71,10 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
 
-        TaskPool taskPool = (TaskPool) xo.getChild(TaskPool.class);
+        int threadCount = xo.getAttribute(THREAD_COUNT, 1);
 
         return new ZigZagOperator(derivative, productProvider, columnProvider, weight,
-                runtimeOptions, mask, taskPool);
+                runtimeOptions, mask, threadCount);
     }
 
     @Override
@@ -83,6 +84,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] additionalRules = {
             new ElementRule(PrecisionColumnProvider.class),
+
             new ElementRule(TaskPool.class, true),
     };
 

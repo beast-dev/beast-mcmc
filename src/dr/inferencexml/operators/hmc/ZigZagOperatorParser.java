@@ -84,8 +84,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] additionalRules = {
             new ElementRule(PrecisionColumnProvider.class),
-
-            new ElementRule(TaskPool.class, true),
+            AttributeRule.newIntegerRule(THREAD_COUNT, true),
     };
 
     @Override

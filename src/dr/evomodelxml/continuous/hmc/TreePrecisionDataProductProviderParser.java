@@ -26,7 +26,6 @@
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.continuous.hmc.CubicOrderTreePrecisionTraitProductProvider;
-import dr.evomodel.continuous.hmc.OldLinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.TreePrecisionTraitProductProvider;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
@@ -94,8 +93,6 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
 
         if (mode.toLowerCase().compareTo("cubic") == 0) {
             return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);
-        } else if (mode.toLowerCase().compareTo("old") == 0) {
-            return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
                     threadCount, roughTimeGuess, optimalTravelTimeScalar, eigenvalueReplicates);

@@ -38,10 +38,11 @@ public interface PrecisionColumnProvider {
 
     double[] getColumn(int index);
 
+    @SuppressWarnings("unused")
     class Generic extends AbstractModel implements PrecisionColumnProvider {
 
         private final MatrixParameterInterface matrix;
-        private final Map<Integer, double[]> cache = new HashMap<Integer, double[]>();
+        private final Map<Integer, double[]> cache = new HashMap<>();
 
         public Generic(MatrixParameterInterface matrix) {
             super("precisionColumnProvider.Generic");

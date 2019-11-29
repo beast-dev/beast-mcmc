@@ -32,7 +32,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.AbstractParticleOperator;
 import dr.inference.operators.hmc.ZigZagOperator;
-import dr.util.TaskPool;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;

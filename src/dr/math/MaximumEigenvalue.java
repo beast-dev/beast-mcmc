@@ -13,7 +13,7 @@ public interface MaximumEigenvalue {
 
     double find(double[][] matrix);
 
-    public class PowerMethod implements  MaximumEigenvalue {
+    class PowerMethod implements  MaximumEigenvalue {
 
         private final int numIterations;
         private final double err;
@@ -26,23 +26,18 @@ public interface MaximumEigenvalue {
         @Override
         public double find(double[][] matrix) {
 
-            double[] y0 = new double[matrix.length];
-            ReadableVector diff;
-            double maxEigenvalue = 10.0; // TODO Bad magic number
-
-            for (int i = 0; i < matrix.length; ++i) {
-                y0[i] = MathUtils.nextDouble();
-            }
-
-            WrappedVector y = new WrappedVector.Raw(y0);
             final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrix);
+
+            WrappedVector y = getInitialGuess(matrix.length);
+            double maxEigenvalue = Double.NEGATIVE_INFINITY;
 
             for (int i = 0; i < numIterations; ++i) {
 
                 ReadableVector v = new ReadableVector.Scale(1 / norm(y), y);
                 y = product(mat, v);
                 maxEigenvalue = innerProduct(v, y);
-                diff = new ReadableVector.Sum(y,
+
+                ReadableVector diff = new ReadableVector.Sum(y,
                         new ReadableVector.Scale(-maxEigenvalue, v));
 
                 if (ReadableVector.Utils.norm(diff) < err) {
@@ -51,6 +46,16 @@ public interface MaximumEigenvalue {
             }
 
             return maxEigenvalue;
+        }
+
+        private static WrappedVector getInitialGuess(int dim) {
+
+            double[] y = new double[dim];
+            for (int i = 0; i < dim; ++i) {
+                y[i] = MathUtils.nextDouble();
+            }
+
+            return new WrappedVector.Raw(y);
         }
     }
 }

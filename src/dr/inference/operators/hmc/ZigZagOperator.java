@@ -88,10 +88,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                 debugBefore(position, count);
             }
 
-//            MinimumTravelInformation gradientBounce;
-//            MinimumTravelInformation boundaryBounce;
-
-            MinimumTravelInformation firstBounce;
+            final MinimumTravelInformation firstBounce;
 
             if (taskPool != null) {
 
@@ -226,12 +223,12 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
     }
 
     private MinimumTravelInformation getNextBounce(final int begin, final int end,
-                                                           final double[] position,
-                                                           final double[] velocity,
-                                                           final double[] action,
-                                                           final double[] gradient,
-                                                           final double[] momentum,
-                                                           final BounceState bounceState) {
+                                                   final double[] position,
+                                                   final double[] velocity,
+                                                   final double[] action,
+                                                   final double[] gradient,
+                                                   final double[] momentum,
+                                                   final BounceState bounceState) {
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;

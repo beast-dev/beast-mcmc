@@ -98,10 +98,17 @@ public class Patterns implements PatternList {
     /**
      * Constructor
      */
+    public Patterns(SiteList siteList) {
+        this(siteList,true);
+    }
+
+    /**
+     * Constructor
+     */
     public Patterns(SiteList siteList,boolean unique) {
-        if(unique){
+        if (unique) {
             addPatterns(siteList, 0, 0, 1);
-        }else{
+        } else {
             appendPatterns(siteList, 0, 0, 1);
         }
 
@@ -110,39 +117,22 @@ public class Patterns implements PatternList {
     /**
      * Constructor
      */
-    public Patterns(SiteList siteList) {
-        new Patterns(siteList, 0, 0, 1,true);
+    public Patterns(List<SiteList> siteLists) {
+        this(siteLists,true);
     }
 
     /**
      * Constructor
      */
     public Patterns(List<SiteList> siteLists,boolean unique) {
-        if(unique) {
+        if (unique) {
             for (SiteList siteList : siteLists) {
                 addPatterns(siteList, 0, 0, 1);
             }
-        }else{
+        } else {
             for (SiteList siteList : siteLists) {
                 appendPatterns(siteList, 0, 0, 1);
             }
-        }
-    }
-    /**
-     * Constructor
-     */
-    public Patterns(List<SiteList> siteLists) {
-        new Patterns(siteLists,true);
-    }
-
-    /**
-     * Constructor
-     */
-    public Patterns(SiteList siteList, int from, int to, int every, boolean unique) {
-        if(unique){
-            addPatterns(siteList, from, to, every);
-        }else{
-            appendPatterns(siteList, from, to, every);
         }
     }
 
@@ -150,68 +140,75 @@ public class Patterns implements PatternList {
      * Constructor
      */
     public Patterns(SiteList siteList, int from, int to, int every) {
-        new Patterns(siteList, from, to, every,true);
+        this(siteList, from, to, every,true);
     }
 
     /**
      * Constructor
      */
-
-    public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount, boolean unique) {
-        if(unique){
+    public Patterns(SiteList siteList, int from, int to, int every, boolean unique) {
+        if (unique) {
             addPatterns(siteList, from, to, every);
-        }else{
+        } else {
+            appendPatterns(siteList, from, to, every);
+        }
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount) {
+        this(siteList,from,to,every,subSet,subSetCount,true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount, boolean unique) {
+        if (unique) {
+            addPatterns(siteList, from, to, every);
+        } else {
             appendPatterns(siteList, from, to, every);
         }
         subSetPatterns(subSet, subSetCount);
-    }
-    /**
-     * Constructor
-     */
-
-    public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount) {
-        new Patterns(siteList,from,to,every,subSet,subSetCount,true);
-    }
-
-    /**
-     * Constructor
-     */
-    public Patterns(PatternList patternList, boolean unique) {
-        if(unique){
-            addPatterns(patternList);
-        }else{
-            appendPatterns(patternList);
-        }
     }
 
     /**
      * Constructor
      */
     public Patterns(PatternList patternList) {
-        new  Patterns(patternList, true);
+        this(patternList, true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList, boolean unique) {
+        if (unique) {
+            addPatterns(patternList);
+        } else {
+            appendPatterns(patternList);
+        }
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList, int subSet, int subSetCount) {
+        this(patternList,subSet,subSetCount,true);
     }
 
     /**
      * Constructor
      */
     public Patterns(PatternList patternList, int subSet, int subSetCount, boolean unique) {
-        if(unique){
+        if (unique) {
             addPatterns(patternList);
-        }else{
+        } else {
             appendPatterns(patternList);
         }
         subSetPatterns(subSet, subSetCount);
     }
-    /**
-     * Constructor
-     */
-    public Patterns(PatternList patternList, int subSet, int subSetCount) {
-
-        new Patterns(patternList,subSet,subSetCount,true);
-
-    }
-
-
 
     private void subSetPatterns(int subSet, int subSetCount) {
         if (subSetCount > 0) {

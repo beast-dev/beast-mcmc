@@ -11,9 +11,7 @@ import dr.math.MaximumEigenvalue;
 import dr.math.matrixAlgebra.*;
 import dr.util.TaskPool;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
 
 /**
  * @author Marc A. Suchard
@@ -24,7 +22,6 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
     private static final boolean DEBUG = false;
     private static final boolean NEW_DATA = false; // Maybe not useful
-    private static final boolean SMART_POOL = true;
 
     public LinearOrderTreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -89,27 +86,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
             final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(tree, null);
             assert (allStatistics.size() == tree.getExternalNodeCount());
 
-            List<Callable<Object>> calls = new ArrayList<>();
-
-            if (SMART_POOL) {
-                taxonTaskPool.fork((taxon, thread) ->
+            taxonTaskPool.fork((taxon, thread) ->
                         computeProductForOneTaxon(taxon, allStatistics.get(taxon), result));
-            } else {
-
-                for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
-
-                    final int t = taxon;
-                    calls.add(Executors.callable(
-                            () -> computeProductForOneTaxon(t, allStatistics.get(t), result)
-                    ));
-                }
-            }
-
-            try {
-                taxonTaskPool.getPool().invokeAll(calls);
-            } catch (InterruptedException exception) {
-                exception.printStackTrace();
-            }
         }
 
         if (DEBUG) {

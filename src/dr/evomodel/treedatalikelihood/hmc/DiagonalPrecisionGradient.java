@@ -30,9 +30,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
-import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Paul Bastide
@@ -45,7 +42,7 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient impleme
                                      Likelihood likelihood,
                                      MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, 0.0, Double.POSITIVE_INFINITY);
     }
 
     @Override
@@ -63,52 +60,6 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient impleme
         return getGradientDiagonal(gradient);
     }
 
-    MultivariateFunction getNumeric() {
-
-        return new MultivariateFunction() {
-
-            @Override
-            public double evaluate(double[] argument) {
-
-                for (int i = 0; i < argument.length; ++i) {
-                    compoundSymmetricMatrix.getDiagonalParameter().setParameterValue(i, argument[i]);
-                }
-
-                likelihood.makeDirty();
-                return likelihood.getLogLikelihood();
-            }
-
-            @Override
-            public int getNumArguments() {
-                return compoundSymmetricMatrix.getDiagonalParameter().getDimension();
-            }
-
-            @Override
-            public double getLowerBound(int n) {
-                return 0.0;
-            }
-
-            @Override
-            public double getUpperBound(int n) {
-                return Double.POSITIVE_INFINITY;
-            }
-        };
-    }
-
-    @Override
-    String checkNumeric(double[] analytic) {
-
-        System.err.println("Numeric at: \n" + new Vector(compoundSymmetricMatrix.getDiagonalParameter().getParameterValues()));
-
-        double[] storedValues = compoundSymmetricMatrix.getDiagonalParameter().getParameterValues();
-        double[] testGradient = NumericalDerivative.gradient(getNumeric(), storedValues);
-        for (int i = 0; i < storedValues.length; ++i) {
-            compoundSymmetricMatrix.getDiagonalParameter().setParameterValue(i, storedValues[i]);
-        }
-
-        return getReportString(analytic, testGradient);
-    }
-
     @Override
     public double[] getDiagonalHessianLogDensity() {
 
@@ -119,5 +70,11 @@ public class DiagonalPrecisionGradient extends AbstractPrecisionGradient impleme
     @Override
     public double[][] getHessianLogDensity() {
         throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public String getReport() {
+        return "diagonalPrecisionGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
+                super.getReport();
     }
 }

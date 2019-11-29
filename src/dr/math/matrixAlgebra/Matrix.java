@@ -85,6 +85,13 @@ public class Matrix {
     }
 
     /**
+     * Clones a Matrix object.
+     */
+    public Matrix clone() {
+        return new Matrix(components.clone());
+    }
+
+    /**
      * @param a MatrixAlgebra.Matrix
      * @throws dr.math.matrixAlgebra.IllegalDimension
      *          if the supplied matrix

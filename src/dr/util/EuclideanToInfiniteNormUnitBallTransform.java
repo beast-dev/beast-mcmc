@@ -86,6 +86,15 @@ public class EuclideanToInfiniteNormUnitBallTransform extends Transform.Multivar
         return (squaredNorm(x) <= 1.0);
     }
 
+    private boolean isInStrictEuclideanUnitBall(double[] x) {
+        return (squaredNorm(x) <= 1.0);
+    }
+
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        return isInStrictEuclideanUnitBall(values);
+    }
+
     private boolean isInInfiniteUnitBall(double[] x) {
         for (int k = 0; k < dim; k++) {
             if (!(x[k] <= 1.0 && x[k] >= -1.0)) return false;

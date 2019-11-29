@@ -1,6 +1,5 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -16,18 +15,14 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
-import dr.inference.model.*;
+import dr.inference.model.DiagonalMatrix;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Vector;
-import dr.xml.AttributeParser;
-import dr.xml.XMLParser;
-import test.dr.inference.trace.TraceCorrelationAssert;
 
-import java.io.StringReader;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
 
@@ -36,26 +31,7 @@ import static dr.evomodel.branchratemodel.ArbitraryBranchRates.make;
  * @author Paul Bastide
  */
 
-public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert {
-
-    private int dimTrait;
-    private int nTips;
-
-    private MultivariateDiffusionModel diffusionModel;
-    private ContinuousTraitPartialsProvider dataModel;
-    private ContinuousTraitPartialsProvider dataModelIntegrated;
-    private ConjugateRootTraitPrior rootPrior;
-    private ConjugateRootTraitPrior rootPriorInf;
-    private ConjugateRootTraitPrior rootPriorIntegrated;
-
-    private MultivariateDiffusionModel diffusionModelFactor;
-    private IntegratedFactorAnalysisLikelihood dataModelFactor;
-    private ConjugateRootTraitPrior rootPriorFactor;
-
-    private ContinuousRateTransformation rateTransformation;
-    private BranchRateModel rateModel;
-
-    private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+public class ContinuousDataLikelihoodDelegateTest extends ContinuousTraitTest {
 
     public ContinuousDataLikelihoodDelegateTest(String name) {
         super(name);
@@ -63,156 +39,6 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
 
     public void setUp() throws Exception {
         super.setUp();
-
-        dimTrait = 3;
-
-        format.setMaximumFractionDigits(5);
-
-        // Tree
-        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
-        treeModel = createPrimateTreeModel();
-
-        // Rates
-        rateTransformation = new ContinuousRateTransformation.Default(
-                treeModel, false, false);
-        rateModel = new DefaultBranchRateModel();
-
-        // Data
-        nTips = 6;
-        Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
-        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0});
-        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5});
-        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0});
-        CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
-
-        List<Integer> missingIndices = new ArrayList<Integer>();
-        traitParameter.setParameterValue(2, 0);
-        missingIndices.add(3);
-        missingIndices.add(4);
-        missingIndices.add(5);
-        missingIndices.add(7);
-
-        //// Standard Model //// ***************************************************************************************
-
-        // Diffusion
-        Parameter[] precisionParameters = new Parameter[dimTrait];
-        precisionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.2});
-        precisionParameters[1] = new Parameter.Default(new double[]{0.1, 2.0, 0.0});
-        precisionParameters[2] = new Parameter.Default(new double[]{0.2, 0.0, 3.0});
-        MatrixParameterInterface diffusionPrecisionMatrixParameter
-                = new MatrixParameter("precisionMatrix", precisionParameters);
-        diffusionModel = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameter);
-
-        PrecisionType precisionType = PrecisionType.FULL;
-
-        // Root prior
-        String s = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 2.5\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parser = new XMLParser(true, true, true, null);
-        parser.addXMLObjectParser(new AttributeParser());
-        parser.addXMLObjectParser(new ParameterParser());
-        parser.parse(new StringReader(s), true);
-        rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parser.getRoot(), dimTrait);
-
-        // Root prior Inf
-        String sInf = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"-1.0 -3.0 -2.0\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"Infinity\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parserInf = new XMLParser(true, true, true, null);
-        parserInf.addXMLObjectParser(new AttributeParser());
-        parserInf.addXMLObjectParser(new ParameterParser());
-        parserInf.parse(new StringReader(sInf), true);
-        rootPriorInf = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parserInf.getRoot(), dimTrait);
-
-        // Data Model
-        dataModel = new ContinuousTraitDataModel("dataModel",
-                traitParameter,
-                missingIndices, true,
-                dimTrait, precisionType);
-
-        //// Factor Model //// *****************************************************************************************
-        // Diffusion
-        Parameter[] precisionParametersFactor = new Parameter[2];
-        precisionParametersFactor[0] = new Parameter.Default(new double[]{1.0, 0.1});
-        precisionParametersFactor[1] = new Parameter.Default(new double[]{0.1, 1.5});
-        MatrixParameterInterface diffusionPrecisionMatrixParameterFactor
-                = new MatrixParameter("precisionMatrixFactor", precisionParametersFactor);
-        diffusionModelFactor = new MultivariateDiffusionModel(diffusionPrecisionMatrixParameterFactor);
-
-        // Root prior
-        String sFactor = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"-1.0 2.0\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parserFactor = new XMLParser(true, true, true, null);
-        parserFactor.addXMLObjectParser(new AttributeParser());
-        parserFactor.addXMLObjectParser(new ParameterParser());
-        parserFactor.parse(new StringReader(sFactor), true);
-        rootPriorFactor = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parserFactor.getRoot(), 2);
-//        rootPriorFactor = new ConjugateRootTraitPrior(new double[]{-1.0, 2.0}, 10.0, true);
-
-        // Error model
-        Parameter factorPrecisionParameters = new Parameter.Default("factorPrecision", new double[]{1.0, 5.0, 0.5});
-
-        // Loadings
-        Parameter[] loadingsParameters = new Parameter[2];
-        loadingsParameters[0] = new Parameter.Default(new double[]{1.0, 2.0, 3.0});
-        loadingsParameters[1] = new Parameter.Default(new double[]{0.0, 0.5, 1.0});
-        MatrixParameterInterface loadingsMatrixParameters = new MatrixParameter("loadings", loadingsParameters);
-
-        dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
-                traitParameter,
-                missingIndices,
-                loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0, null);
-
-        //// Integrated Process //// ***********************************************************************************
-        // Data Model
-        dataModelIntegrated = new IntegratedProcessTraitDataModel("dataModelIntegrated",
-                traitParameter,
-                missingIndices, true,
-                dimTrait, precisionType);
-
-        // Root prior
-        String sI = "<beast>\n" +
-                "    <conjugateRootPrior>\n" +
-                "        <meanParameter>\n" +
-                "            <parameter id=\"meanRoot\"  value=\"0.0 1.2 -0.5 -1.0 -3.0 2.5\"/>\n" +
-                "        </meanParameter>\n" +
-                "        <priorSampleSize>\n" +
-                "            <parameter id=\"sampleSizeRoot\" value=\"10.0\"/>\n" +
-                "        </priorSampleSize>\n" +
-                "    </conjugateRootPrior>\n" +
-                "</beast>";
-        XMLParser parserI = new XMLParser(true, true, true, null);
-        parserI.addXMLObjectParser(new AttributeParser());
-        parserI.addXMLObjectParser(new ParameterParser());
-        parserI.parse(new StringReader(sI), true);
-        rootPriorIntegrated = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(parserI.getRoot(), 2 * dimTrait);
     }
 
     public void testLikelihoodBM() {
@@ -427,7 +253,7 @@ public class ContinuousDataLikelihoodDelegateTest extends TraceCorrelationAssert
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
 
         DiagonalMatrix strengthOfSelectionMatrixParam
-                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.0, 50.0}));
+                = new DiagonalMatrix(new Parameter.Default(new double[]{0.0, 0.000001, 50.0}));
 
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new OUDiffusionModelDelegate(treeModel, diffusionModel,

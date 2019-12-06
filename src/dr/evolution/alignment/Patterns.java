@@ -392,6 +392,8 @@ public class Patterns implements PatternList {
         arrayListPatterns.add(pattern);
         arrayListWeights.add(weight);
 
+        castWeightsAndPatterns();
+
         patternCount++;
     }
 

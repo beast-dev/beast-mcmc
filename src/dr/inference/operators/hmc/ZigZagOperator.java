@@ -99,7 +99,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                     }
 
                     firstBounce = getNextBounceParallel(position,
-                            velocity, action, gradient, momentum, bounceState);
+                            velocity, action, gradient, momentum);
 
                     if (TIMING) {
                         timer.stopTimer("getNext");
@@ -217,8 +217,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         return getNextBounce(0, position.getDim(),
                 position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                bounceState);
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
 
     }
 
@@ -227,8 +226,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                                                    final double[] velocity,
                                                    final double[] action,
                                                    final double[] gradient,
-                                                   final double[] momentum,
-                                                   final BounceState bounceState) {
+                                                   final double[] momentum) {
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
@@ -244,7 +242,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                 type = Type.BOUNDARY;
             }
 
-            double gradientTime = findGradientRoot(i, action[i], gradient[i], momentum[i], bounceState);
+            double gradientTime = findGradientRoot(action[i], gradient[i], momentum[i]);
 
             if (gradientTime < minimumTime) {
                 minimumTime = gradientTime;
@@ -262,22 +260,20 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                                                            BounceState bounceState) {
 
         return getNextGradientBounce(0, action.getDim(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                bounceState);
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
     }
 
     private MinimumTravelInformation getNextGradientBounce(final int begin, final int end,
                                                            final double[] action,
                                                            final double[] gradient,
-                                                           final double[] momentum,
-                                                           final BounceState bounceState) {
+                                                           final double[] momentum) {
 
         double minimumRoot = Double.POSITIVE_INFINITY;
         int index = -1;
 
         for (int i = begin; i < end; ++i) {
 
-            double root = findGradientRoot(i, action[i], gradient[i], momentum[i], bounceState);
+            double root = findGradientRoot(action[i], gradient[i], momentum[i]);
 
             if (root < minimumRoot) {
                 minimumRoot = root;
@@ -298,7 +294,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         final double[] momentum = inMomentum.getBuffer();
 
         TaskPool.RangeCallable<MinimumTravelInformation> map =
-                (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum, bounceState);
+                (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum);
 
         BinaryOperator<MinimumTravelInformation> reduce =
                 (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
@@ -310,8 +306,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                                                            WrappedVector inVelocity,
                                                            WrappedVector inAction,
                                                            WrappedVector inGradient,
-                                                           WrappedVector inMomentum,
-                                                           BounceState bounceState) {
+                                                           WrappedVector inMomentum) {
 
         final double[] position = inPosition.getBuffer();
         final double[] velocity = inVelocity.getBuffer();
@@ -321,7 +316,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         TaskPool.RangeCallable<MinimumTravelInformation> map =
                 (start, end, thread) -> getNextBounce(start, end,
-                        position, velocity, action, gradient, momentum, bounceState);
+                        position, velocity, action, gradient, momentum);
 
         BinaryOperator<MinimumTravelInformation> reduce =
                 (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
@@ -329,26 +324,16 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         return taskPool.mapReduce(map, reduce);
     }
 
-    private static double findGradientRoot(int index,
-                                           double action,
+    private static double findGradientRoot(double action,
                                            double gradient,
-                                           double momentum,
-                                           BounceState bounceState) {
+                                           double momentum) {
 
         double root = Double.POSITIVE_INFINITY;
 
-        if (gradient == 0.0) {
+        if (gradient == 0.0) { //for fixed dimension, gradient = 0
             return root;
         }
-
-        if (bounceState.type == Type.GRADIENT && index == bounceState.index) {
-            if (gradient * action > 0.0) {
-                root = gradient * 2.0 / action;
-            }
-        } else {
-            root = minimumPositiveRoot(-0.5 * action, gradient, momentum);
-        }
-
+        root = minimumPositiveRoot(-0.5 * action, gradient, momentum);
         return root;
     }
 

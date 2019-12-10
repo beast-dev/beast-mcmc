@@ -47,10 +47,7 @@ class NativeZigZag {
                                                  double[] velocity,
                                                  double[] action,
                                                  double[] gradient,
-                                                 double[] momentum,
-                                                 int type,
-                                                 int index,
-                                                 double time);
+                                                 double[] momentum);
 
     static {
         System.loadLibrary("zig_zag");

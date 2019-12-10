@@ -114,7 +114,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                     }
 
                     if (TEST_NATIVE) {
-                        testNative(firstBounce, bounceState, position, velocity, action, gradient, momentum);
+                        testNative(firstBounce, position, velocity, action, gradient, momentum);
                     }
 
                 } else {
@@ -145,7 +145,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                     }
 
                     if (TEST_NATIVE) {
-                        testNative(firstBounce, bounceState, position, velocity, action, gradient, momentum);
+                        testNative(firstBounce, position, velocity, action, gradient, momentum);
                     }
                     
                 } else {
@@ -199,7 +199,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         return 0.0;
     }
 
-    private void testNative(MinimumTravelInformation firstBounce, BounceState bounceState,
+    private void testNative(MinimumTravelInformation firstBounce,
                             WrappedVector position,
                             WrappedVector velocity,
                             WrappedVector action,
@@ -211,15 +211,14 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         }
 
         MinimumTravelInformation mti = nativeZigZag.testGetNextEvent(position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                bounceState.type.ordinal(), bounceState.index, bounceState.remainingTime);
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
 
         if (TIMING) {
             timer.stopTimer("getNextC++");
         }
 
         if (!firstBounce.equals(mti)) {
-            System.err.println(mti + " ?= " + firstBounce + " : " + bounceState + "\n");
+            System.err.println(mti + " ?= " + firstBounce + "\n");
             System.exit(-1);
         }
 

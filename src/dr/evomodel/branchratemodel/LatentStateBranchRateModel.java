@@ -71,6 +71,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     private final Parameter nonLatentRateParameter;
     private final CountableBranchCategoryProvider branchCategoryProvider;
     private final int maximumNumberOfLatentPeriods;
+    private final boolean conditionOnStateChange;
     private final boolean scaleByRootHeight;
     private  Parameter rootHeightParameter;
 
@@ -99,7 +100,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
                                               Parameter nonLatentRate,
                                               CountableBranchCategoryProvider branchCategoryProvider,
                                                 int maximumNumberOfLatentPeriods,
-                                      boolean scaleByRootHeight) {
+                                      boolean scaleByRootHeight,boolean conditionOnStateChange) {
         super(name);
 
         this.tree = treeModel;
@@ -157,6 +158,31 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             this.rootHeightParameter=tree.getRootHeightParameter();
             addVariable(tree.getRootHeightParameter());
         }
+
+        this.conditionOnStateChange = conditionOnStateChange;
+    }
+
+    public LatentStateBranchRateModel(String name,
+                                      TreeModel treeModel,
+                                      BranchRateModel nonLatentRateModel,
+                                      Parameter latentTransitionRateParameter,
+                                      Parameter latentTransitionFrequencyParameter,
+                                      Parameter latentStateProportionParameter,
+                                      Parameter nonLatentRate,
+                                      CountableBranchCategoryProvider branchCategoryProvider,
+                                      int maximumNumberOfLatentPeriods,
+                                      boolean scaleByRootHeight){
+        this(name,
+                treeModel,
+                nonLatentRateModel,
+                latentTransitionRateParameter,
+                latentTransitionFrequencyParameter,
+                latentStateProportionParameter,
+                nonLatentRate,
+                branchCategoryProvider,
+         maximumNumberOfLatentPeriods,
+        scaleByRootHeight,
+                false);
     }
 
     public LatentStateBranchRateModel(Parameter rate, Parameter prop) {
@@ -172,6 +198,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         this.maximumNumberOfLatentPeriods =5;
         this.scaleByRootHeight=false;
         this.rootHeightParameter=null;
+        this.conditionOnStateChange = true;
     }
 
     private double[] createLatentInfinitesimalMatrix() {
@@ -422,6 +449,8 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double joint = zeroJumps;
         if(proportion>0){
             joint = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
+        }else if(this.conditionOnStateChange){
+                   throw new Error("Proportion latent is 0, but the model is conditioned on at least one state change. Proportion must be greater than 0, or condition must be relaxed.");
         }
 
 //        final double joint = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
@@ -444,7 +473,13 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
 //        double density = joint / (marg - zeroJumps); // conditional on ending state  >= 2 jumps
-        double density = joint / marg;
+        double density;
+        if(this.conditionOnStateChange){
+            density = joint / (marg-zeroJumps);
+        }else{
+            density= joint/ marg;
+        }
+
 //        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
 
         if (DEBUG) {

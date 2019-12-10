@@ -41,6 +41,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     public static final String NON_LATENT_RATE = "nonLatentRate";
     public static final String MAXIMUM_LATENT_PERIODS="maximumNumberOfLatentPeriods";
     public static final String SCALE_TRANSITION_RATE_BY_ROOT_HEIGHT= "scaleTransitionRateByRootHeight";
+    public static final String CONDITION_ON_STATE_CHANGE= "conditionOnStateChange";
 
 
     public String getParserName() {
@@ -67,14 +68,16 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         }
 
         int maximumNumberOfLatentPeriods = xo.getAttribute(MAXIMUM_LATENT_PERIODS,5);
+
         boolean scaleByRootHeight = xo.getAttribute(SCALE_TRANSITION_RATE_BY_ROOT_HEIGHT,false);
 
+        boolean conditionOnStateChange=xo.getAttribute(CONDITION_ON_STATE_CHANGE,false);
         Logger.getLogger("dr").info("\nCreating a latent state branch rate model");
 
         return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,
                 latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-                latentStateProportionParameter, nonLatentRate ,branchCategoryProvider,maximumNumberOfLatentPeriods,scaleByRootHeight);
+                latentStateProportionParameter, nonLatentRate ,branchCategoryProvider,maximumNumberOfLatentPeriods,scaleByRootHeight,conditionOnStateChange);
 
 
 //        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
@@ -110,6 +113,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
             new ElementRule(NON_LATENT_RATE,Parameter.class, "An optional rate that will override the branch rates from the branch rate model when proportion latent is greater than 0", true),
             new ElementRule(MAXIMUM_LATENT_PERIODS,int.class,"An optional integer specifying the number of latent periods used in calculating the likelihood of the latent proportion",true),
             new ElementRule(SCALE_TRANSITION_RATE_BY_ROOT_HEIGHT,boolean.class,"An optional boolean specifying that the transition rate parameter should be normalized by the root height.",true),
+            new ElementRule(CONDITION_ON_STATE_CHANGE,boolean.class,"An optional boolean specifying that the latentState likelihood should be conditioned on at least 1 jump into latency (proportion >0)",true)
 
     };
 

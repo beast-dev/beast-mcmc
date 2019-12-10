@@ -30,10 +30,7 @@ public class NativeZigZagWrapper {
                                                      double[] velocity,
                                                      double[] action,
                                                      double[] gradient,
-                                                     double[] moment,
-                                                     int type,
-                                                     int index,
-                                                     double time) {
-        return NativeZigZag.INSTANCE.getNextEvent(instanceNumber, position, velocity, action, gradient, moment, type, index, time);
+                                                     double[] moment) {
+        return NativeZigZag.INSTANCE.getNextEvent(instanceNumber, position, velocity, action, gradient, moment);
     }
 }

@@ -468,6 +468,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
         if((marg-(zeroJumps+truncatedJumpProbability))>1e-6){
             Logger.getLogger("error").warning("Numerical error. Potentially,insufficient truncation in latent branch rate model with rate of "+getLatentTransitionRate()+" and branchlength "+branchLength);
+            return 0;
         }
 
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf

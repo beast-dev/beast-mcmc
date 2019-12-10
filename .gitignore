@@ -13,3 +13,5 @@ out/
 *.tree
 *.xml
 !examples/**/*.xml
+
+zig_zag

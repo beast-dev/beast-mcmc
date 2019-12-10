@@ -25,6 +25,7 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evomodel.operators.NativeZigZagWrapper;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -61,27 +62,45 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.columnProvider = columnProvider;
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
-        this.maskVector = mask.getParameterValues();
+        this.maskVector = mask != null ? mask.getParameterValues() : null;
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
 
         setWeight(weight);
-        setMissingDataMask();
+        this.missingDataMask = getMissingDataMask();
         checkParameterBounds(parameter);
+
+        if (TEST_NATIVE) {
+            nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), columnProvider,
+                    maskVector, getObservedDataMask());
+        }
     }
 
-    private void setMissingDataMask() {
+    private boolean[] getMissingDataMask() {
 
         int dim = parameter.getDimension();
-        missingDataMask = new boolean[dim];
+        boolean[] missing = new boolean[dim];
         assert (dim == parameter.getBounds().getBoundsDimension());
 
         for (int i = 0; i < dim; ++i) {
 
-            missingDataMask[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
+            missing[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
                     parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY);
         }
+        return missing;
+    }
+
+    private double[] getObservedDataMask() {
+        int dim = parameter.getDimension();
+        double[] observed = new double[dim];
+        assert (dim == parameter.getBounds().getBoundsDimension());
+
+        for (int i = 0; i < dim; ++i) {
+            observed[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
+                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 0.0 : 1.0;
+        }
+        return observed;
     }
 
     @Override
@@ -103,11 +122,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         return hastingsRatio;
     }
-
-//    @Override
-//    public String getPerformanceSuggestion() {
-//        return null;
-//    }
 
     abstract double integrateTrajectory(WrappedVector position);
 
@@ -154,10 +168,17 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void applyMask(double[] vector) {
 
+        if (TIMING) {
+            timer.startTimer("applyMask");
+        }
         assert (vector.length == mask.getDimension());
 
         for (int i = 0, len = vector.length; i < len; ++i) {
             vector[i] *= maskVector[i];
+        }
+
+        if (TIMING) {
+            timer.stopTimer("applyMask");
         }
     }
 
@@ -182,12 +203,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         double[] precisionColumn = columnProvider.getColumn(index);
 
-        if (mask != null) {
-            applyMask(precisionColumn);
-        }
-
         if (TIMING) {
             timer.stopTimer("getColumn");
+        }
+
+        if (mask != null) {
+            applyMask(precisionColumn);
         }
 
         return new WrappedVector.Raw(precisionColumn);
@@ -197,6 +218,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         WrappedVector column = getPrecisionColumn(eventIndex);
 
+        if (TIMING) {
+            timer.startTimer("updateAction");
+        }
+
         final double[] a = action.getBuffer();
         final double[] c = column.getBuffer();
 
@@ -204,6 +229,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         for (int i = 0, len = a.length; i < len; ++i) {
             a[i] += twoV * c[i];
+        }
+
+        if (TIMING) {
+            timer.stopTimer("updateAction");
         }
 
         if (mask != null) {
@@ -253,38 +282,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private boolean shouldUpdatePreconditioning() {
         return runtimeOptions.preconditioningUpdateFrequency > 0
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
-    }
-
-    public class MinimumTravelInformation {
-
-        final double time;
-        final int index;
-        final Type type;
-
-        MinimumTravelInformation(double minTime, int minIndex, Type type) {
-            this.time = minTime;
-            this.index = minIndex;
-            this.type = type;
-        }
-
-        MinimumTravelInformation(double minTime, int minIndex) {
-            this.time = minTime;
-            this.index = minIndex;
-            this.type = Type.NONE;
-        }
-
-        public boolean equals(Object obj) {
-
-            if (obj instanceof MinimumTravelInformation) {
-                MinimumTravelInformation rhs = (MinimumTravelInformation) obj;
-                return this.time == rhs.time && this.index == rhs.index;
-            }
-            return false;
-        }
-
-        public String toString() {
-            return "time = " + time + " @ " + index;
-        }
     }
 
     public static class Options {
@@ -339,7 +336,19 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     enum Type {
         NONE,
         BOUNDARY,
-        GRADIENT
+        GRADIENT;
+
+        public static Type castFromInt(int i) {
+            if (i == 0) {
+                return NONE;
+            } else if (i == 1) {
+                return BOUNDARY;
+            } else if (i == 2) {
+                return GRADIENT;
+            } else {
+                throw new RuntimeException("Unknown type");
+            }
+        }
     }
 
     @Override
@@ -356,8 +365,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final double[] maskVector;
 
     Preconditioning preconditioning;
-    private boolean[] missingDataMask;
+    final private boolean[] missingDataMask;
 
-    final static boolean TIMING = false;
+    final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
+
+    final static boolean TEST_NATIVE = false;
+    NativeZigZagWrapper nativeZigZag;
 }

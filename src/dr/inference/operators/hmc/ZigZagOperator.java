@@ -69,12 +69,20 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
             System.err.println(signString);
         }
 
+        if (TIMING) {
+            timer.startTimer("warmUp");
+        }
+
         WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
         WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
+
+        if (TIMING) {
+            timer.stopTimer("warmUp");
+        }
 
         int count = 0;
 
@@ -105,6 +113,9 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                         timer.stopTimer("getNext");
                     }
 
+                    if (TEST_NATIVE) {
+                        testNative(firstBounce, bounceState, position, velocity, action, gradient, momentum);
+                    }
 
                 } else {
 
@@ -131,6 +142,10 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
                     if (TIMING) {
                         timer.stopTimer("getNext");
+                    }
+
+                    if (TEST_NATIVE) {
+                        testNative(firstBounce, bounceState, position, velocity, action, gradient, momentum);
                     }
                     
                 } else {
@@ -183,6 +198,32 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         }
 
         return 0.0;
+    }
+
+    private void testNative(MinimumTravelInformation firstBounce, BounceState bounceState,
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient,
+                            WrappedVector momentum) {
+
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
+
+        MinimumTravelInformation mti = nativeZigZag.testGetNextEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                bounceState.type.ordinal(), bounceState.index, bounceState.remainingTime);
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        if (!firstBounce.equals(mti)) {
+            System.err.println(mti + " ?= " + firstBounce + " : " + bounceState + "\n");
+            System.exit(-1);
+        }
+
     }
 
     private String printSign(ReadableVector position) {
@@ -412,6 +453,25 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         return root;
     }
 
+//    private static double minimumPositiveRoot(double a,
+//                                              double b,
+//                                              double c) {
+//
+//        double discriminant = b * b - 4 * a * c;
+//        if (discriminant < 0.0) {
+//            return Double.POSITIVE_INFINITY;
+//        }
+//
+//        double sqrtDiscriminant = Math.sqrt(discriminant);
+//        double root1 = (-b - sqrtDiscriminant) / (2 * a);
+//        double root2 = (-b + sqrtDiscriminant) / (2 * a);
+//
+//        root1 = (root1 > 0.0) ? root1 : Double.POSITIVE_INFINITY;
+//        root2 = (root2 > 0.0) ? root2 : Double.POSITIVE_INFINITY;
+//
+//        return (root1 < root2) ? root1 : root2;
+//    }
+
     private WrappedVector drawInitialMomentum() {
 
         ReadableVector mass = preconditioning.mass;
@@ -491,15 +551,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
             updateGradient(gradient, eventTime, action);
 
-            if (TIMING) {
-                timer.startTimer("updateAction");
-            }
-
             updateAction(action, velocity, eventIndex);
-
-            if (TIMING) {
-                timer.stopTimer("updateAction");
-            }
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
         }

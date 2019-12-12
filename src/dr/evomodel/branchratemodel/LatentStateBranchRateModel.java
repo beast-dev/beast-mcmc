@@ -467,7 +467,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double truncatedJumpProbability = Arrays.stream(markovReward.getJumpProbabilities(branchLength)).sum();
 
         if((marg-(zeroJumps+truncatedJumpProbability))>1e-6){
-            Logger.getLogger("error").warning("Numerical error. Potentially,insufficient truncation in latent branch rate model with rate of "+getLatentTransitionRate()+" and branchlength "+branchLength);
+            Logger.getLogger("error").warning("Numerical error. Potentially,insufficient truncation in latent branch rate model with rate of "+Math.round(getLatentTransitionRate())+" and branchlength "+ Math.round(branchLength));
             return 0;
         }
 
@@ -481,7 +481,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
             density= joint/ marg;
         }
 
-//        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
+        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
 
         if (DEBUG) {
             if (Double.isInfinite(Math.log(density))) {

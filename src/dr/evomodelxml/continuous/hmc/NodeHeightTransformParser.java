@@ -54,6 +54,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         XMLObject cxo = xo.getChild(NODEHEIGHT);
         Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
         Parameter ratioParameter = null;
         if (xo.hasChildNamed(RATIO)) {
@@ -62,7 +63,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
 
         if (ratioParameter != null) {
             if (ratioParameter.getDimension() == 1) {
-                ratioParameter.setDimension(nodeHeightParameter.getDimension());
+                ratioParameter.setDimension(tree.getInternalNodeCount() - 1);
             }
             ratioParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ratioParameter.getDimension()));
         }
@@ -74,7 +75,6 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
             skyrideLikelihood = (GMRFSkyrideLikelihood) cxo.getChild(GMRFSkyrideLikelihood.class);
         }
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         Transform nodeHeightTransform;

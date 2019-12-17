@@ -78,6 +78,11 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         constructEpochs();
     }
 
+    @Override
+    public void modelRestored(Model model) {
+        ratios.restoreParameterValues();
+    }
+
     private void constructEpochs() {
         nodeEpochMap.clear();
         epochs.clear();
@@ -170,6 +175,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                     previousNodeHeight = currentNodeHeight;
                 }
             }
+            ratios.storeParameterValues();
             ratiosKnown = true;
         }
     }

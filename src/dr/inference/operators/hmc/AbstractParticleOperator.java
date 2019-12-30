@@ -71,7 +71,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.missingDataMask = getMissingDataMask();
         checkParameterBounds(parameter);
 
-        if (TEST_NATIVE) {
+        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || TEST_FUSED_DYNAMICS) {
             nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), columnProvider,
                     maskVector, getObservedDataMask());
         }
@@ -195,7 +195,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(product);
     }
 
-    private WrappedVector getPrecisionColumn(int index) {
+    WrappedVector getPrecisionColumn(int index) {
 
         if (TIMING) {
             timer.startTimer("getColumn");
@@ -215,6 +215,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
+
+        if (TEST_CRITICAL_REGION) {
+            if (nativeZigZag.inCriticalRegion()) {
+                nativeZigZag.exitCriticalRegion();
+            }
+        }
 
         WrappedVector column = getPrecisionColumn(eventIndex);
 
@@ -328,8 +334,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         public String toString() {
-            return "remainingTime : " + remainingTime + "\n" +
-                    "lastBounceType: " + type + " in dim: " + index;
+            return "remainingTime : " + remainingTime +
+                    " lastBounceType: " + type + " in dim: " + index;
         }
     }
 
@@ -358,7 +364,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    private final PrecisionColumnProvider columnProvider;
+    final PrecisionColumnProvider columnProvider;
     private final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
@@ -370,6 +376,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 
-    final static boolean TEST_NATIVE = false;
+    final static boolean TEST_NATIVE_OPERATOR = false;
+    final static boolean TEST_NATIVE_BOUNCE = false;
+    final static boolean TEST_CRITICAL_REGION = false;
+    final static boolean TEST_NATIVE_INNER_BOUNCE = false;
+    final static boolean TEST_FUSED_DYNAMICS = true;
     NativeZigZagWrapper nativeZigZag;
 }

@@ -35,12 +35,13 @@ class NativeZigZag {
                               double[] observed);
 
     native int operate(int instanceNumber,
-                              double[] position,
-                              double[] velocity,
-                              double[] action,
-                              double[] gradient,
-                              double[] momentum,
-                              double time);
+                       PrecisionColumnProvider columnProvider,
+                       double[] position,
+                       double[] velocity,
+                       double[] action,
+                       double[] gradient,
+                       double[] momentum,
+                       double time);
 
     native MinimumTravelInformation getNextEvent(int instanceNumber,
                                                  double[] position,
@@ -49,9 +50,43 @@ class NativeZigZag {
                                                  double[] gradient,
                                                  double[] momentum);
 
+    native int enterCriticalRegion(int instanceNumber,
+                                   double[] position,
+                                   double[] velocity,
+                                   double[] action,
+                                   double[] gradient,
+                                   double[] momentum);
+
+    native int exitCriticalRegion(int instanceNumber);
+
+    native boolean inCriticalRegion(int instanceNumber);
+
+    native MinimumTravelInformation getNextEventInCriticalRegion(int instanceNumber);
+
+    native void innerBounce(int instanceNumber,
+                            double[] position,
+                            double[] velocity,
+                            double[] action,
+                            double[] gradient,
+                            double[] momentum,
+                            double eventTime, int eventIndex, int eventType);
+
+    native void innerBounceCriticalRegion(int instanceNumber,
+                                          double eventTime, int eventIndex, int eventType);
+
+    native void updateDynamics(int instanceNumber,
+                               double[] position,
+                               double[] velocity,
+                               double[] action,
+                               double[] gradient,
+                               double[] momentum,
+                               double[] column,
+                               double eventTime, int eventIndex, int eventType);
+
     static {
         System.loadLibrary("zig_zag");
         INSTANCE = new NativeZigZag();
     }
+
 
 }

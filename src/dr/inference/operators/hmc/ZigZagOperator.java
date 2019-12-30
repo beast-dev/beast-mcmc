@@ -86,6 +86,24 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         int count = 0;
 
+        double[] p, v, a, g, m;
+        if (TEST_NATIVE_OPERATOR) {
+
+            p = position.getBuffer().clone();
+            v = velocity.getBuffer().clone();
+            a = action.getBuffer().clone();
+            g = gradient.getBuffer().clone();
+            m = momentum.getBuffer().clone();
+
+            nativeZigZag.operate(columnProvider, p, v, a, g, m,
+                    bounceState.remainingTime);
+        }
+
+        if (TEST_CRITICAL_REGION) {
+            nativeZigZag.enterCriticalRegion(position.getBuffer(), velocity.getBuffer(),
+                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+        }
+
         if (TIMING) {
             timer.startTimer("integrateTrajectory");
         }
@@ -113,7 +131,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                         timer.stopTimer("getNext");
                     }
 
-                    if (TEST_NATIVE) {
+                    if (TEST_NATIVE_BOUNCE) {
                         testNative(firstBounce, position, velocity, action, gradient, momentum);
                     }
 
@@ -144,10 +162,10 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                         timer.stopTimer("getNext");
                     }
 
-                    if (TEST_NATIVE) {
+                    if (TEST_NATIVE_BOUNCE) {
                         testNative(firstBounce, position, velocity, action, gradient, momentum);
                     }
-                    
+
                 } else {
 
                     if (TIMING) {
@@ -170,7 +188,7 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
                     firstBounce = (boundaryBounce.time < gradientBounce.time) ?
                             new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
                             new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
-                    
+
                 }
             }
 
@@ -192,11 +210,35 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
             timer.stopTimer("integrateTrajectory");
         }
 
+        if (TEST_CRITICAL_REGION) {
+            nativeZigZag.exitCriticalRegion();
+        }
+
+        if (TEST_NATIVE_OPERATOR) {
+
+            if (!close(p, position.getBuffer())) {
+
+                System.err.println("c: " + new WrappedVector.Raw(p, 0, 10));
+                System.err.println("c: " + new WrappedVector.Raw(position.getBuffer(), 0, 10));
+            } else {
+                System.err.println("close");
+            }
+        }
+
         if (DEBUG_SIGN) {
             printSign(position);
         }
 
         return 0.0;
+    }
+
+    private boolean close(double[] lhs, double[] rhs) {
+        for (int i = 0; i < lhs.length; ++i) {
+            if (Math.abs((lhs[i] - rhs[i]) / (lhs[i] + rhs[i])) > 0.00001) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void testNative(MinimumTravelInformation firstBounce,
@@ -210,8 +252,19 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
             timer.startTimer("getNextC++");
         }
 
-        MinimumTravelInformation mti = nativeZigZag.testGetNextEvent(position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+        final MinimumTravelInformation mti;
+        if (TEST_CRITICAL_REGION) {
+
+            if (!nativeZigZag.inCriticalRegion()) {
+                nativeZigZag.enterCriticalRegion(position.getBuffer(), velocity.getBuffer(),
+                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+            }
+
+            mti = nativeZigZag.getNextEventInCriticalRegion();
+        } else {
+            mti = nativeZigZag.getNextEvent(position.getBuffer(), velocity.getBuffer(),
+                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+        }
 
         if (TIMING) {
             timer.stopTimer("getNextC++");
@@ -509,27 +562,78 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
 
         } else {
 
-            updatePosition(position, velocity, eventTime);
-            updateMomentum(momentum, gradient, action, eventTime);
+            if (TIMING) {
+                timer.startTimer("notUpdateAction");
+            }
 
             final Type eventType = firstBounce.type;
             final int eventIndex = firstBounce.index;
 
-            if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+            if (TEST_FUSED_DYNAMICS) {
 
-                reflectMomentum(momentum, position, eventIndex);
+                WrappedVector column = getPrecisionColumn(eventIndex);
 
-            } else { // Bounce caused by the gradient
-                
-                setZeroMomentum(momentum, eventIndex);
+                if (!TEST_NATIVE_INNER_BOUNCE) {
 
+                    updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                            column.getBuffer(), eventTime, eventIndex);
+
+                } else {
+
+                    nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                            column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
+                }
+
+                if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+
+                    reflectMomentum(momentum, position, eventIndex);
+
+                } else { // Bounce caused by the gradient
+
+                    setZeroMomentum(momentum, eventIndex);
+
+                }
+
+                reflectVelocity(velocity, eventIndex);
+
+            } else {
+
+                if (!TEST_NATIVE_INNER_BOUNCE) {
+                    updatePosition(position, velocity, eventTime);
+                    updateMomentum(momentum, gradient, action, eventTime);
+
+                    if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+
+                        reflectMomentum(momentum, position, eventIndex);
+
+                    } else { // Bounce caused by the gradient
+
+                        setZeroMomentum(momentum, eventIndex);
+
+                    }
+
+                    reflectVelocity(velocity, eventIndex);
+                    updateGradient(gradient, eventTime, action);
+
+                } else {
+
+                    if (TEST_CRITICAL_REGION) {
+                        nativeZigZag.innerBounceCriticalRegion(eventIndex, eventIndex, eventType.ordinal());
+                    } else {
+                        nativeZigZag.innerBounce(position.getBuffer(), velocity.getBuffer(),
+                                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                                eventTime, eventIndex, eventType.ordinal());
+                    }
+                }
+
+                if (TIMING) {
+                    timer.stopTimer("notUpdateAction");
+                }
+
+                updateAction(action, velocity, eventIndex);
             }
-
-            reflectVelocity(velocity, eventIndex);
-
-            updateGradient(gradient, eventTime, action);
-
-            updateAction(action, velocity, eventIndex);
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
         }
@@ -539,6 +643,32 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
         }
 
         return finalBounceState;
+    }
+
+    private void updateDynamics(double[] p,
+                                double[] v,
+                                double[] a,
+                                double[] g,
+                                double[] m,
+                                double[] c,
+                                double time,
+                                int index) {
+
+        final double halfTimeSquared = time * time / 2;
+        final double twoV = 2 * v[index];
+
+        for (int i = 0, len = p.length; i < len; ++i) {
+            final double gi = g[i]; final double ai = a[i];
+
+            p[i] = p[i] + time * v[i];
+            m[i] = m[i] + time * gi - halfTimeSquared * ai;
+            g[i] = gi - time * ai;
+            a[i] = ai - twoV * c[i];
+        }
+
+//        if (mask != null) { // TODO Appears unnecessary
+//            applyMask(m);
+//        }
     }
 
     private static void reflectMomentum(WrappedVector momentum,

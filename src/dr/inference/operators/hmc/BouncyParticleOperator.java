@@ -178,7 +178,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
         double a = v_phi_v / 2;
         double b = v_phi_x;
-        double c = u_min - MathUtils.nextExponential(1);
+        double c = - u_min - MathUtils.nextExponential(1);
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
 

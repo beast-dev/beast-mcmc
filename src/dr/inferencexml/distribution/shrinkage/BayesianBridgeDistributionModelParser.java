@@ -27,6 +27,7 @@ package dr.inferencexml.distribution.shrinkage;
 
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.Parameter;
+import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
@@ -51,7 +52,9 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
         if (xo.hasChildNamed(LOCAL_SCALE)) {
             XMLObject localXo = xo.getChild(LOCAL_SCALE);
             localScale = (Parameter) localXo.getChild(Parameter.class);
-
+            if(localScale instanceof DuplicatedParameter) {
+              throw new XMLParseException("Local scale cannot be a duplicated parameter");
+            }
             dim = localScale.getDimension();
 
             if (xo.hasAttribute(DIMENSION) && (xo.getIntegerAttribute(DIMENSION) != dim)) {

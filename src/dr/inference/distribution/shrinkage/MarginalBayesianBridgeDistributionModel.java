@@ -3,6 +3,11 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MarginalizedAlphaStableDistribution;
 
+/**
+ * @author Marc A. Suchard
+ * @author Akihiko Nishimura
+ */
+
 public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel {
 
     public MarginalBayesianBridgeDistributionModel(Parameter globalScale,

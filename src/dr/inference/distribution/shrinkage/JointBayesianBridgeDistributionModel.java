@@ -9,8 +9,9 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
                                                 Parameter localScale,
                                                 Parameter exponent,
                                                 Parameter slabWidth,
-                                                int dim) {
-        super(globalScale, exponent, dim);
+                                                int dim,
+                                                boolean includeNormalizingConstant) {
+        super(globalScale, exponent, dim, includeNormalizingConstant);
         this.localScale = localScale;
         this.slabWidth = slabWidth;
 
@@ -45,7 +46,10 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
             pdf += NormalDistribution.logPdf(x[i], 0, getStandardDeviation(i));
         }
 
-        // TODO Add density of localScale variables
+        if (includeNormalizingConstant) {
+            // TODO Add density of localScale variables
+            throw new RuntimeException("Not yet implemented");
+        }
 
         return pdf;
     }

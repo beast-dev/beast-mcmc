@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitBranchRateGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -24,7 +24,6 @@
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
-
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -53,6 +52,7 @@ import java.util.List;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
 
+
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -61,12 +61,9 @@ public class DiscreteTraitBranchRateGradient
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
-    protected final TreeTrait treeTraitProvider;
+    private final TreeTrait treeTraitProvider;
     protected final Tree tree;
     protected final boolean useHessian;
-
-    //    private final int nTraits;
-//    private final int dim;
     protected final Parameter rateParameter;
     protected final ArbitraryBranchRates branchRateModel;
 
@@ -154,6 +151,11 @@ public class DiscreteTraitBranchRateGradient
 
     public double[] getGradientLogDensity() {
 
+        long startTime;
+        if (COUNT_TOTAL_OPERATIONS) {
+            startTime = System.nanoTime();
+        }
+
         double[] result = new double[tree.getNodeCount() - 1];
 
         //Do single call to traitProvider with node == null (get full tree)
@@ -175,6 +177,8 @@ public class DiscreteTraitBranchRateGradient
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++getGradientLogDensityCount;
+            long endTime = System.nanoTime();
+            totalGradientTime += (endTime - startTime) / 1000000;
         }
 
         return result;
@@ -192,17 +196,14 @@ public class DiscreteTraitBranchRateGradient
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
 
-//    private static final boolean DEBUG = true;
-
-    protected MultivariateFunction numeric1 = new MultivariateFunction() {
+    MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
 
             for (int i = 0; i < argument.length; ++i) {
                 rateParameter.setParameterValue(i, argument[i]);
             }
-
-//            treeDataLikelihood.makeDirty();
+            
             return treeDataLikelihood.getLogLikelihood();
         }
 
@@ -222,6 +223,7 @@ public class DiscreteTraitBranchRateGradient
         }
     };
 
+    @SuppressWarnings("unused")
     protected boolean valuesAreSufficientlyLarge(double[] vector) {
         for (double x : vector) {
             if (Math.abs(x) < SQRT_EPSILON * 1.2) {
@@ -237,41 +239,34 @@ public class DiscreteTraitBranchRateGradient
 
         StringBuilder sb = new StringBuilder();
         if (COUNT_TOTAL_OPERATIONS) {
-            sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount).append("\n");
-            sb.append(treeTraitProvider.toString()).append("\n");
-            sb.append(treeDataLikelihood.getReport());
+            sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount);
+            sb.append("\n\taverageGradientTime = ").append(totalGradientTime / getGradientLogDensityCount).append("\n");
         }
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+        if (CHECK_GRADIENT_IN_REPORT) {
+            String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
 
-        if (useHessian) {
-            message += "Hessian\n";
-            message += HessianWrtParameterProvider.getReportAndCheckForError(this, null);
+            if (useHessian) {
+                message += "Hessian\n";
+                message += HessianWrtParameterProvider.getReportAndCheckForError(this, null);
+            }
+
+            sb.append(message);
         }
 
-        message += sb.toString();
-
-        return  message;
+        return  sb.toString();
     }
 
-    private static final boolean DEBUG = true;
-
+    private static final boolean CHECK_GRADIENT_IN_REPORT = true;
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
-    protected long getGradientLogDensityCount = 0;
+    private long getGradientLogDensityCount = 0;
+    private long totalGradientTime = 0;
 
     @Override
     public LogColumn[] getColumns() {
-
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new LogColumn.Default("gradient report", new Object() {
-            @Override
-            public String toString() {
-                return "\n" + getReport();
-            }
-        });
-
-        return columns;
+        return Loggable.getColumnsFromReport(this, "gradient report");
     }
+
     @Override
     public Citation.Category getCategory() {
         return Citation.Category.FRAMEWORK;
@@ -290,7 +285,7 @@ public class DiscreteTraitBranchRateGradient
     private static final Citation CITATION = new Citation(
             new Author[]{
                     new Author("X", "Ji"),
-                    new Author( "Z", "Zhang"),
+                    new Author("Z", "Zhang"),
                     new Author("A", "Holbrook"),
                     new Author("A", "Nishimura"),
                     new Author("G", "Beale"),

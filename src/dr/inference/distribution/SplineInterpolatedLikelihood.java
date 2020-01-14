@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.model.Parameter;
 import dr.inference.model.SplineBasis;
 
 /**
@@ -33,7 +34,7 @@ import dr.inference.model.SplineBasis;
  */
 public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihood {
 
-    protected static double outsideLogDensity = Double.NEGATIVE_INFINITY; // Use for a proper posterior
+    private static double outsideLogDensity = Double.NEGATIVE_INFINITY; // Use for a proper posterior
 
     public SplineInterpolatedLikelihood(String fileName, int degree, boolean inverse, boolean byColumn) {
         super(fileName, inverse, byColumn);
@@ -43,6 +44,11 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
 
         // Something is wrong with the spline basis routines...  just do simple linear interpolation
 
+    }
+
+    public SplineInterpolatedLikelihood(Parameter y, Parameter x, int degree, boolean densityInLogSpace, boolean inverse) {
+        super(y.getParameterValues(), x.getParameterValues(), inverse);
+        this.densityInLogSpace = densityInLogSpace;
     }
 
     @Override
@@ -65,12 +71,47 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
             }
         }
 
-        rtnValue = Math.log(rtnValue);
+        if (!densityInLogSpace) {
+            rtnValue = Math.log(rtnValue);
+        }
+
         if (inverse)
             rtnValue *= -1;
   
         return rtnValue;
     }
 
+    @Override
+    protected double gradientLogPdf(double x) {
+
+        final int len = values.length;
+
+        if (x < values[0] || x > values[len - 1]) {
+            return 0.0;
+        }
+
+        double gradient = 0;
+
+        for (int i = 0; i < len; ++i) {
+            if (values[i] > x) {
+                final double diffValue = values[i] - values[i - 1];
+                final double diffDensity = density[i] - density[i - 1];
+                gradient = diffDensity / diffValue;
+                break;
+            }
+        }
+
+        if (!densityInLogSpace) {
+            throw new RuntimeException("Not yet implemented"); // TODO
+        }
+
+        if (inverse) {
+            throw new RuntimeException("Not yet implemented"); // TODO
+        }
+
+        return gradient;
+    }
+
     private SplineBasis splineBasis = null;
+    private boolean densityInLogSpace;
 }

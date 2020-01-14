@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.model.GradientProvider;
 import dr.util.Attribute;
 
 import java.awt.geom.Point2D;
@@ -46,7 +47,8 @@ import java.util.StringTokenizer;
  * @version $Id:$
  */
 
-public abstract class EmpiricalDistributionLikelihood extends AbstractDistributionLikelihood {
+public abstract class EmpiricalDistributionLikelihood extends AbstractDistributionLikelihood
+        implements GradientProvider {
 
     public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empiricalDistributionLikelihood";
 
@@ -59,7 +61,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     private double lower = Double.NEGATIVE_INFINITY;
     private double upper = Double.POSITIVE_INFINITY;
 
-    public EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
+    EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
         super(null);
         this.fileName = fileName;
 
@@ -69,6 +71,13 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             readFileByRow(fileName);
 
         this.inverse = inverse;    
+    }
+
+    EmpiricalDistributionLikelihood(double[] density, double[] value, boolean inverse) {
+        super(null);
+        this.density = density;
+        this.values = value;
+        this.inverse = inverse;
     }
 
     public void setBounds(double lower, double upper) {
@@ -83,19 +92,15 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         }
 
         public int compareTo(ComparablePoint2D pt0) {
-            if (getX() > pt0.getX())
-                return 1;
-            if (getX() == pt0.getX())
-                return 0;
-            return -1;
+            return java.lang.Double.compare(getX(), pt0.getX());
         }
     }
 
-    protected void readFileByRow(String fileName) {
+    private void readFileByRow(String fileName) {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
-            List<ComparablePoint2D> ptList = new ArrayList<ComparablePoint2D>();
+            List<ComparablePoint2D> ptList = new ArrayList<>();
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -162,7 +167,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         }
     }
 
-    protected void readFileByColumn(String fileName) {
+    private void readFileByColumn(String fileName) {
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
@@ -240,7 +245,36 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         return logL;
     }
 
+    public int getDimension() {
+
+        int size = 0;
+        for (Attribute<double[]> data : dataList) {
+            size += data.getAttributeValue().length;
+        }
+
+        return size;
+    }
+
+    public double[] getGradientLogDensity(double[] point) {
+
+        double[] gradient = new double[point.length];
+
+        for (int i = 0; i < point.length; ++i) {
+            double x = point[i] + offset;
+
+            gradient[i] = (x > lower && x < upper) ? gradientLogPdf(x) : 0.0;
+        }
+
+        return gradient;
+    }
+
+    public double[] getGradientLogDensity(Object x) {
+        return getGradientLogDensity(GradientProvider.toDoubleArray(x));
+    }
+
     abstract protected double logPDF(double value);
+
+    abstract protected double gradientLogPdf(double value);
 
     protected  double[] values;
     protected  double[] density;

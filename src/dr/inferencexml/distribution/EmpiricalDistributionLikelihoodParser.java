@@ -25,12 +25,16 @@
 
 package dr.inferencexml.distribution;
 
+import dr.inference.distribution.EmpiricalDistributionData;
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.SplineInterpolatedLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -42,10 +46,10 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     public static final String DATA = "data";
     public static final String FROM = "from";
     public static final String TO = "to";
-    public static final String SPLINE_INTERPOLATION = "splineInterpolation";
-    public static final String DEGREE = "degree";
-    public static final String INVERSE = "inverse";
-    public static final String READ_BY_COLUMN = "readByColumn";
+    private static final String SPLINE_INTERPOLATION = "splineInterpolation";
+    private static final String DEGREE = "degree";
+    private static final String INVERSE = "inverse";
+    private static final String READ_BY_COLUMN = "readByColumn";
     public static final String OFFSET="offset";
     public static final String LOWER = "lower";
     public static final String UPPER = "upper";
@@ -61,9 +65,11 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     }
 
     private Parameter getRawValues(String name, XMLObject xo) throws XMLParseException {
+        return getRawValues(xo.getChild(name));
+    }
 
+    private Parameter getRawValues(XMLObject cxo) throws XMLParseException {
         Parameter parameter;
-        XMLObject cxo = xo.getChild(name);
         if (cxo.getChild(0) instanceof Parameter) {
             parameter = (Parameter) cxo.getChild(Parameter.class);
         } else {
@@ -93,19 +99,28 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
                 throw new XMLParseException("Only spline-interpolated empirical distributions are currently support");
 
         } else {
-            XMLObject cxo = xo.getChild(RAW_VALUES);
 
-            Parameter likelihoodParameter = getRawValues(LIKELIHOOD, cxo);
-            Parameter thetaParameter = getRawValues(VALUES, cxo);
+            List<EmpiricalDistributionData> dataList = new ArrayList<>();
 
-            if (likelihoodParameter.getDimension() != thetaParameter.getDimension()) {
-                throw new XMLParseException("Unequal grid lengths");
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                XMLObject cxo = (XMLObject) xo.getChild(i);
+                if (cxo.getName().equals(RAW_VALUES)) {
+                    Parameter thetaParameter = getRawValues(VALUES, cxo);
+                    Parameter likelihoodParameter = getRawValues(LIKELIHOOD, cxo);
+
+                    if (likelihoodParameter.getDimension() != thetaParameter.getDimension()) {
+                        throw new XMLParseException("Unequal grid lengths");
+                    }
+
+                    boolean densityInLogSpace = cxo.getAttribute(DENSITY_IN_LOG_SPACE, true);
+
+                    dataList.add(new EmpiricalDistributionData(
+                            thetaParameter.getParameterValues(), likelihoodParameter.getParameterValues(),
+                            densityInLogSpace));
+                }
             }
 
-            boolean densityInLogSpace = cxo.getAttribute(DENSITY_IN_LOG_SPACE, true);
-
-            likelihood = new SplineInterpolatedLikelihood(likelihoodParameter, thetaParameter, degree,
-                    densityInLogSpace, inverse);
+            likelihood = new SplineInterpolatedLikelihood(dataList, degree, inverse);
         }
 
         XMLObject cxo1 = xo.getChild(DATA);
@@ -128,6 +143,11 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
             } else {
                 throw new XMLParseException("illegal element in " + cxo1.getName() + " element");
             }
+        }
+
+        if (likelihood.getDistributionDimension() != 1 &&
+                (likelihood.getDistributionDimension() != likelihood.getDimension())) {
+            throw new XMLParseException("Data dimension != distribution dimension");
         }
 
         double offset = cxo1.getAttribute(OFFSET,0); 
@@ -168,8 +188,7 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
                                             new XORRule(
                                                     new ElementRule(Parameter.class),
                                                     new ElementRule(Double.class) // TODO Fix for array
-                                            )}
-                            ),
+                                            )}),
                             new ElementRule(VALUES,
                                     new XMLSyntaxRule[]{
                                             new XORRule(
@@ -178,7 +197,7 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
                                             )}
                             ),
 
-                    })),
+                    }, 1, Integer.MAX_VALUE)),
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(FROM, true),
                     AttributeRule.newIntegerRule(TO, true),

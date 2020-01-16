@@ -229,7 +229,7 @@
 
 	<mcmc id="mcmc.hmc" chainLength="1000000" autoOptimize="true">
         <posterior>
-            <likelihood id="likelihood.hmc">
+            <likelihood id="likelihood.hmc" threads="0">
 	            <empiricalDistributionLikelihood idref="analysis.1"/>
 	            <empiricalDistributionLikelihood idref="analysis.2"/>
 	            <empiricalDistributionLikelihood idref="analysis.3"/>
@@ -277,7 +277,7 @@
 
 	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
         <posterior>
-            <likelihood id="likelihood">
+            <likelihood id="likelihood" threads="0">
 	            <empiricalDistributionLikelihood idref="analysis.1"/>
 	            <empiricalDistributionLikelihood idref="analysis.2"/>
 	            <empiricalDistributionLikelihood idref="analysis.3"/>

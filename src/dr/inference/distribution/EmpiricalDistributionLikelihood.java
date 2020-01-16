@@ -65,18 +65,19 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         super(null);
         this.fileName = fileName;
 
+        boolean densityInLogSpace = false; // TODO Read from file
+
         if (byColumn)
-            readFileByColumn(fileName);
+            readFileByColumn(fileName, densityInLogSpace);
         else
-            readFileByRow(fileName);
+            readFileByRow(fileName, densityInLogSpace);
 
         this.inverse = inverse;    
     }
 
-    EmpiricalDistributionLikelihood(double[] density, double[] value, boolean inverse) {
+    EmpiricalDistributionLikelihood(List<EmpiricalDistributionData> densityList, boolean inverse) {
         super(null);
-        this.density = density;
-        this.values = value;
+        this.densityList = densityList;
         this.inverse = inverse;
     }
 
@@ -96,7 +97,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         }
     }
 
-    private void readFileByRow(String fileName) {
+    private void readFileByRow(String fileName, boolean densityInLogSpace) {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
@@ -138,25 +139,28 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
                 if (pt.getY() == 0)
                     pt.y = minDensity * MIN_DENSITY_PROPORTION;
             }
-            values = new double[ptList.size()];
-            density = new double[ptList.size()];
+            EmpiricalDistributionData data = new EmpiricalDistributionData(
+                    new double[ptList.size()], new double[ptList.size()], densityInLogSpace);
             double total = 0.0;
             for(int i=0; i<ptList.size(); i++) {
                 ComparablePoint2D pt = ptList.get(i);
-                values[i] = pt.getX();
-                density[i] = pt.getY();
+                data.values[i] = pt.getX();
+                data.density[i] = pt.getY();
                 total += pt.getY();
             }
-            for (int i = 0; i < density.length; ++i) {
-                density[i] /= total;
+            for (int i = 0; i < data.density.length; ++i) {
+                data.density[i] /= total;
             }
             reader.close();
 
             if (DEBUG) {
-                System.err.println("EDL File : "+fileName);
-                System.err.println("Min value: "+values[0]);
-                System.err.println("Max value: "+values[values.length-1]);
+                System.err.println("EDL File : " + fileName);
+                System.err.println("Min value: " + data.values[0]);
+                System.err.println("Max value: " + data.values[data.values.length-1]);
             }
+
+            this.densityList = new ArrayList<>();
+            this.densityList.add(data);
 
         } catch (FileNotFoundException e) {
             System.err.println("File not found: "+fileName);
@@ -167,21 +171,24 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         }
     }
 
-    private void readFileByColumn(String fileName) {
+    private void readFileByColumn(String fileName, boolean densityInLogSpace) {
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
             String line1 = reader.readLine();
             StringTokenizer st = new StringTokenizer(line1," ");
-            values = new double[st.countTokens()];
+            double[] values = new double[st.countTokens()];
             for(int i=0; i<values.length; i++)
                 values[i] = Double.valueOf(st.nextToken());
             String line2 = reader.readLine();
             st = new StringTokenizer(line2," ");
-            density = new double[st.countTokens()];
+            double[] density = new double[st.countTokens()];
             for(int i=0; i<density.length; i++)
                 density[i] = Double.valueOf(st.nextToken());
+
+            densityList = new ArrayList<>();
+            densityList.add(new EmpiricalDistributionData(values, density, densityInLogSpace));
 
             reader.close();
 
@@ -222,11 +229,12 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             // see comment in DistributionLikelihood
             final double[] attributeValue = data.getAttributeValue();
 
+            int index = 0;
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 
                 double value = attributeValue[j] + offset;
                 if (value > lower && value < upper) {
-                    logL += logPDF(value);
+                    logL += logPDF(value, densityList.get(index));
                 } else {
                     return Double.NEGATIVE_INFINITY;
                 }
@@ -237,12 +245,21 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
                                 (getId() != null ? getId() : fileName)                        
                         );
                         System.err.println("Evaluated at "+value);
-                        System.err.println("Min: " + values[0] + " Max: " + values[values.length - 1]);
+                        EmpiricalDistributionData d = densityList.get(index);
+                        System.err.println("Min: " + d.values[0] + " Max: " + d.values[d.values.length - 1]);
                     }
+                }
+
+                if (densityList.size() > 1) {
+                    ++index;
                 }
             }
         }
         return logL;
+    }
+
+    public int getDistributionDimension() {
+        return densityList.size();
     }
 
     public int getDimension() {
@@ -257,12 +274,19 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
 
     public double[] getGradientLogDensity(double[] point) {
 
+        assert densityList.size() == 1 || densityList.size() == point.length;
+
         double[] gradient = new double[point.length];
 
+        int index = 0;
         for (int i = 0; i < point.length; ++i) {
             double x = point[i] + offset;
 
-            gradient[i] = (x > lower && x < upper) ? gradientLogPdf(x) : 0.0;
+            gradient[i] = (x > lower && x < upper) ? gradientLogPdf(x, densityList.get(index)) : 0.0;
+
+            if (densityList.size() > 1) {
+                ++index;
+            }
         }
 
         return gradient;
@@ -272,12 +296,15 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         return getGradientLogDensity(GradientProvider.toDoubleArray(x));
     }
 
-    abstract protected double logPDF(double value);
+    abstract protected double logPDF(double value, EmpiricalDistributionData data);
 
-    abstract protected double gradientLogPdf(double value);
+    abstract protected double gradientLogPdf(double value, EmpiricalDistributionData data);
 
-    protected  double[] values;
-    protected  double[] density;
+    private List<EmpiricalDistributionData> densityList;
+//    protected Data data;
+
+//    protected  double[] values;
+//    protected  double[] density;
 
     protected boolean inverse;
 

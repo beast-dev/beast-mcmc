@@ -25,8 +25,9 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.Parameter;
 import dr.inference.model.SplineBasis;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -34,7 +35,7 @@ import dr.inference.model.SplineBasis;
  */
 public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihood {
 
-    private static double outsideLogDensity = Double.NEGATIVE_INFINITY; // Use for a proper posterior
+    private static final double outsideLogDensity = Double.NEGATIVE_INFINITY; // Use for a proper posterior
 
     public SplineInterpolatedLikelihood(String fileName, int degree, boolean inverse, boolean byColumn) {
         super(fileName, inverse, byColumn);
@@ -46,15 +47,16 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
 
     }
 
-    public SplineInterpolatedLikelihood(Parameter y, Parameter x, int degree, boolean densityInLogSpace, boolean inverse) {
-        super(y.getParameterValues(), x.getParameterValues(), inverse);
-        this.densityInLogSpace = densityInLogSpace;
+    public SplineInterpolatedLikelihood(List<EmpiricalDistributionData> dataList, int degree, boolean inverse) {
+        super(dataList, inverse);
     }
 
     @Override
-    protected double logPDF(double x) {
+    protected double logPDF(double x, EmpiricalDistributionData data) {
 //        return splineBasis.evaluate(x);
 
+        final double[] values = data.values;
+        final double[] density = data.density;
         final int len = values.length;
 
         if (x < values[0] || x > values[len - 1])
@@ -71,7 +73,7 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
             }
         }
 
-        if (!densityInLogSpace) {
+        if (!data.densityInLogSpace) {
             rtnValue = Math.log(rtnValue);
         }
 
@@ -82,8 +84,10 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
     }
 
     @Override
-    protected double gradientLogPdf(double x) {
+    protected double gradientLogPdf(double x, EmpiricalDistributionData data) {
 
+        final double[] values = data.values;
+        final double[] density = data.density;
         final int len = values.length;
 
         if (x < values[0] || x > values[len - 1]) {
@@ -101,7 +105,7 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
             }
         }
 
-        if (!densityInLogSpace) {
+        if (!data.densityInLogSpace) {
             throw new RuntimeException("Not yet implemented"); // TODO
         }
 
@@ -113,5 +117,4 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
     }
 
     private SplineBasis splineBasis = null;
-    private boolean densityInLogSpace;
 }

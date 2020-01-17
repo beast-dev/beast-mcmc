@@ -72,8 +72,8 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         validSimulation = false;
     }
 
-    private static final boolean IGNORE_REMAINDER = true;
-    
+    private static final boolean IGNORE_REMAINDER = false; //TODO: this should work with IGNORE_REMAINER=true
+
     public final void cacheSimulatedTraits(final NodeRef node) {
 
         if (IGNORE_REMAINDER) {

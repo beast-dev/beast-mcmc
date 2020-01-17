@@ -697,6 +697,70 @@ public interface Transform {
         }
 
         public double gradientInverse(double value) {
+            return gradient(inverse(value));
+        }
+
+        public double updateGradientLogDensity(double gradient, double value) {
+            return gradient * value * (1.0 - value) - (2.0 * value - 1.0);
+        }
+
+        protected double getGradientLogJacobianInverse(double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian, double gradientI, double gradientJ, double valueI, double valueJ) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        @Override
+        public double gradient(double value) {
+            return value * (1.0 - value);
+        }
+
+        public String getTransformName() {
+            return "logit";
+        }
+
+        public double getLogJacobian(double value) {
+            return -Math.log(1.0 - value) - Math.log(value);
+        }
+
+        private final double range;
+        private final double lower;
+    }
+
+    class ScaledLogitTransform extends UnivariableTransform {
+
+        public ScaledLogitTransform() {
+            upper = 1.0;
+            lower = 0.0;
+        }
+
+        public ScaledLogitTransform(double upper, double lower) {
+            this.upper = upper;
+            this.lower = lower;
+        }
+
+        public double transform(double value) {
+            return Math.log((value - lower) / (upper - value));
+        }
+
+        public double inverse(double value) {
+            double x = Math.exp(-value);
+            return (upper + lower * x) / (1.0 + x);
+        }
+
+        public boolean isInInteriorDomain(double value) {
+            return value > lower && value < upper;
+        }
+
+        public double gradientInverse(double value) {
             throw new RuntimeException("Not yet implemented");
         }
 
@@ -720,7 +784,7 @@ public interface Transform {
 
         @Override
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return (value - lower) * (upper - value) / (upper - lower);
         }
 
         public String getTransformName() {
@@ -728,10 +792,10 @@ public interface Transform {
         }
 
         public double getLogJacobian(double value) {
-            return -Math.log(1.0 - value) - Math.log(value);
+            return Math.log(upper - lower) - Math.log(upper - value) - Math.log(value - lower);
         }
 
-        private final double range;
+        private final double upper;
         private final double lower;
     }
 

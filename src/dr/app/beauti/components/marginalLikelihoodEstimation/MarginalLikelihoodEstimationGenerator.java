@@ -488,7 +488,34 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                         break;
 
-                    default:
+                    case BIRTH_DEATH:
+                    case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+
+
+
+
+
+
+                        break;
+
+                    case BIRTH_DEATH_SERIAL_SAMPLING:
+
+
+
+
+
+
+                        break;
+
+
+                    case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+
+
+
+
+                        //TODO complete
+
+                        break;
 
                 }
 
@@ -627,6 +654,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                             new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES),
                                                             new Attribute.Default<Integer>("dimension", 6),
+                                                            new Attribute.Default<Double>("upperLimit", 6.0),
                                                             new Attribute.Default<String>("parameterNames", customNames),
                                                             new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                                     });
@@ -1154,7 +1182,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             } else if (options.choiceTreeWorkingPrior.equals("Matching coalescent model")) {
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, "coalescentReference");
             } else {
-                writer.writeIDref(YuleModelParser.YULE_MODEL, "yuleReference");
+                writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, "speciationReference");
             }
 
             writer.writeCloseTag(CompoundLikelihoodParser.WORKING_PRIOR);

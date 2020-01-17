@@ -7,10 +7,14 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
 
     public JointBayesianBridgeDistributionModel(Parameter globalScale,
                                                 Parameter localScale,
-                                                Parameter exponent) {
-        super(globalScale, exponent);
+                                                Parameter exponent,
+                                                int dim) {
+        super(globalScale, exponent, dim);
         this.localScale = localScale;
-        this.dim = localScale.getDimension();
+
+        if (dim != localScale.getDimension()) {
+            throw new IllegalArgumentException("Invalid dimensions");
+        }
 
         addVariable(localScale);
     }
@@ -46,5 +50,4 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
     }
 
     private final Parameter localScale;
-    private final int dim;
 }

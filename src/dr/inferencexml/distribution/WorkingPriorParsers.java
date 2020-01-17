@@ -28,16 +28,23 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
-import dr.math.distributions.*;
+import dr.math.distributions.GammaKDEDistribution;
+import dr.math.distributions.MultivariateKDEDistribution;
+import dr.math.distributions.NormalKDEDistribution;
+import dr.math.distributions.TransformedNormalKDEDistribution;
 import dr.util.FileHelpers;
 import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.StringTokenizer;
+
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogTransformedNormalKDEDistribution;
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogitTransformedNormalKDEDistribution;
 
 /**
  * @author Guy Baele
@@ -143,7 +150,7 @@ public class WorkingPriorParsers {
 
                     for (int i = 0; i < dimension; i++) {
                         //look for parameterName1, parameterName2, ... if necessary
-                        String newParameterName = parameterName + (i+1);
+                        String newParameterName = parameterName + (i + 1);
                         int traceIndexParameter = -1;
                         for (int j = 0; j < traces.getTraceCount(); j++) {
                             String traceName = traces.getTraceName(j);
@@ -277,7 +284,7 @@ public class WorkingPriorParsers {
                     Double[] parameterSamples = new Double[traces.getStateCount()];
                     traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
-                    DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution(parameterSamples));
+                    DistributionLikelihood likelihood = new DistributionLikelihood(getLogTransformedNormalKDEDistribution(parameterSamples));
                     for (int j = 0; j < xo.getChildCount(); j++) {
                         if (xo.getChild(j) instanceof Statistic) {
                             if (DEBUG) {
@@ -295,11 +302,11 @@ public class WorkingPriorParsers {
                 } else {
 
                     //dimension > 1
-                    LogTransformedNormalKDEDistribution[] arrayKDE = new LogTransformedNormalKDEDistribution[dimension];
+                    TransformedNormalKDEDistribution[] arrayKDE = new TransformedNormalKDEDistribution[dimension];
 
                     for (int i = 0; i < dimension; i++) {
                         //look for parameterName1, parameterName2, ... if necessary
-                        String newParameterName = parameterName + (i+1);
+                        String newParameterName = parameterName + (i + 1);
                         int traceIndexParameter = -1;
                         for (int j = 0; j < traces.getTraceCount(); j++) {
                             String traceName = traces.getTraceName(j);
@@ -315,7 +322,7 @@ public class WorkingPriorParsers {
                         Double[] parameterSamples = new Double[traces.getStateCount()];
                         traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
-                        arrayKDE[i] = new LogTransformedNormalKDEDistribution(parameterSamples);
+                        arrayKDE[i] = getLogTransformedNormalKDEDistribution(parameterSamples);
 
                     }
 
@@ -327,7 +334,7 @@ public class WorkingPriorParsers {
                                 System.out.println(((Statistic) xo.getChild(j)).toString());
                                 System.out.println(((Statistic) xo.getChild(j)).getDimension());
                             }
-                            likelihood.addData((Statistic) xo.getChild(j));
+                            likelihood.addData((Parameter) xo.getChild(j));
                         } else {
                             throw new XMLParseException("illegal element in " + xo.getName() + " element");
                         }
@@ -444,7 +451,7 @@ public class WorkingPriorParsers {
                     Double[] parameterSamples = new Double[traces.getStateCount()];
                     traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
-                    DistributionLikelihood likelihood = new DistributionLikelihood(new LogitTransformedNormalKDEDistribution(parameterSamples, upperlimit));
+                    DistributionLikelihood likelihood = new DistributionLikelihood(getLogitTransformedNormalKDEDistribution(parameterSamples, upperlimit));
                     for (int j = 0; j < xo.getChildCount(); j++) {
                         if (xo.getChild(j) instanceof Statistic) {
                             if (DEBUG) {
@@ -462,20 +469,20 @@ public class WorkingPriorParsers {
                 } else {
 
                     //dimension > 1
-                    LogitTransformedNormalKDEDistribution[] arrayKDE = new LogitTransformedNormalKDEDistribution[dimension];
+                    TransformedNormalKDEDistribution[] arrayKDE = new TransformedNormalKDEDistribution[dimension];
                     String[] newParameterName = new String[dimension];
 
                     upperlimit = dimension;
-
+                    
                     if (xo.hasAttribute(PARAMETER_NAMES)) {
-                        String temp = (String)xo.getAttribute(PARAMETER_NAMES);
+                        String temp = (String) xo.getAttribute(PARAMETER_NAMES);
                         StringTokenizer token = new StringTokenizer(temp);
                         for (int i = 0; i < dimension; i++) {
                             newParameterName[i] = token.nextToken();
                         }
                     } else {
                         for (int i = 0; i < dimension; i++) {
-                            newParameterName[i] = parameterName + (i+1);
+                            newParameterName[i] = parameterName + (i + 1);
                         }
                     }
 
@@ -498,7 +505,7 @@ public class WorkingPriorParsers {
                         Double[] parameterSamples = new Double[traces.getStateCount()];
                         traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
-                        arrayKDE[i] = new LogitTransformedNormalKDEDistribution(parameterSamples, upperlimit);
+                        arrayKDE[i] = getLogitTransformedNormalKDEDistribution(parameterSamples, upperlimit);
 
                     }
 
@@ -510,7 +517,7 @@ public class WorkingPriorParsers {
                                 System.out.println(((Statistic) xo.getChild(j)).toString());
                                 System.out.println(((Statistic) xo.getChild(j)).getDimension());
                             }
-                            likelihood.addData((Statistic) xo.getChild(j));
+                            likelihood.addData((Parameter) xo.getChild(j));
                         } else {
                             throw new XMLParseException("illegal element in " + xo.getName() + " element");
                         }
@@ -639,7 +646,7 @@ public class WorkingPriorParsers {
 
                     for (int i = 0; i < dimension; i++) {
                         //look for parameterName1, parameterName2, ... if necessary
-                        String newParameterName = parameterName + (i+1);
+                        String newParameterName = parameterName + (i + 1);
                         int traceIndexParameter = -1;
                         for (int j = 0; j < traces.getTraceCount(); j++) {
                             String traceName = traces.getTraceName(j);
@@ -667,7 +674,7 @@ public class WorkingPriorParsers {
                                 System.out.println(((Statistic) xo.getChild(j)).toString());
                                 System.out.println(((Statistic) xo.getChild(j)).getDimension());
                             }
-                            likelihood.addData((Statistic) xo.getChild(j));
+                            likelihood.addData((Parameter) xo.getChild(j));
                         } else {
                             throw new XMLParseException("illegal element in " + xo.getName() + " element");
                         }

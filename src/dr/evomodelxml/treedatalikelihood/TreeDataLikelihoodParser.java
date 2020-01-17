@@ -30,7 +30,6 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -38,7 +37,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
+import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -96,11 +95,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         List<Taxon> patternTaxa = patternLists.get(0).asList();
 
         if (!patternTaxa.containsAll(treeTaxa)) {
-            throw new XMLParseException("TreeModel contains more taxa than the partition pattern list.");
+            throw new XMLParseException("TreeModel "+ treeModel.getId() + " contains more taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() + ").");
         }
 
         if (!treeTaxa.containsAll(patternTaxa)) {
-            throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
+            throw new XMLParseException("TreeModel " + treeModel.getId() + " contains fewer taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() +").");
         }
 
         boolean useBeagle3MultiPartition = false;

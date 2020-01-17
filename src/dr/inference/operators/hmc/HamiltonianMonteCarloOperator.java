@@ -58,28 +58,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     protected final double[] mask;
     protected final Transform transform;
 
-    HamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                                  Parameter parameter, Transform transform, Parameter mask,
-                                  double stepSize, int nSteps,
-                                  double randomStepCountFraction,
-                                  double gradientCheckTolerance) {
-        this(mode, weight, gradientProvider,
-                parameter, transform, mask,
-                new Options(stepSize, nSteps, randomStepCountFraction,
-                        0, 0, 0,
-                        0, gradientCheckTolerance,
-                        10, 0.1),
-                MassPreconditioner.Type.NONE
-        );
-    }
-
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
                                          MassPreconditioner.Type preconditioningType) {
 
-        super(mode, 0.8); // Stan default
+        super(mode, runtimeOptions.targetAcceptanceProbability);
 
         setWeight(weight);
 
@@ -140,7 +125,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         if (shouldCheckGradient()) {
             checkGradient(joint);
-
         }
 
         if (shouldUpdatePreconditioning()) {
@@ -202,11 +186,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    private boolean shouldCheckGradient() {
+    boolean shouldCheckGradient() {
         return getCount() < runtimeOptions.gradientCheckCount;
     }
 
-    private void checkGradient(final Likelihood joint) {
+    void checkGradient(final Likelihood joint) {
 
         if (parameter.getDimension() != gradientProvider.getDimension()) {
             throw new RuntimeException("Unequal dimensions");
@@ -282,7 +266,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
     }
 
-
     static double[] mask(double[] vector, double[] mask) {
 
         assert (mask == null || mask.length == vector.length);
@@ -323,11 +306,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
+        final double targetAcceptanceProbability;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
                        int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
                        int gradientCheckCount, double gradientCheckTolerance,
-                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor) {
+                       int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
+                       double targetAcceptanceProbability) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
@@ -338,6 +323,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
+            this.targetAcceptanceProbability = targetAcceptanceProbability;
         }
     }
 

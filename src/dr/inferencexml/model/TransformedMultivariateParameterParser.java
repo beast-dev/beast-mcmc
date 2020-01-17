@@ -25,6 +25,7 @@
 
 package dr.inferencexml.model;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransformedMultivariateParameter;
 import dr.util.Transform;
@@ -34,6 +35,7 @@ public class TransformedMultivariateParameterParser extends AbstractXMLObjectPar
 
     private static final String TRANSFORMED_MULTIVARIATE_PARAMETER = "transformedMultivariateParameter";
     public static final String INVERSE = "inverse";
+    private static final String BOUNDS = "bounds";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -42,7 +44,16 @@ public class TransformedMultivariateParameterParser extends AbstractXMLObjectPar
                 xo.getChild(Transform.MultivariableTransform.class);
         final boolean inverse = xo.getAttribute(INVERSE, false);
 
-        return new TransformedMultivariateParameter(parameter, transform, inverse);
+        TransformedMultivariateParameter transformedParameter
+                = new TransformedMultivariateParameter(parameter, transform, inverse);
+        if (xo.hasChildNamed(BOUNDS)) {
+            Bounds<Double> bounds = ((Parameter) xo.getElementFirstChild(BOUNDS)).getBounds();
+            transformedParameter.addBounds(bounds);
+        } else {
+            transformedParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
+                    Double.NEGATIVE_INFINITY, parameter.getDimension()));
+        }
+        return transformedParameter;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -53,18 +53,12 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private final Options options = new Options();
-
-    private NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                           Parameter parameter, Transform transform, Parameter mask,
-                           double stepSize, int nSteps) {
-        super(mode, weight, gradientProvider, parameter, transform, mask,
-                stepSize, nSteps, 0.0,1E-3);
-    }
-
+    
     public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, Transform transform, Parameter mask,
-                           HamiltonianMonteCarloOperator.Options runtimeOptions) {
-        this(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions.initialStepSize, runtimeOptions.nSteps);
+                           HamiltonianMonteCarloOperator.Options runtimeOptions,
+                           MassPreconditioner.Type preconditioningType) {
+        super(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions, preconditioningType);
     }
 
     @Override
@@ -81,6 +75,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     @Override
     public double doOperation(Likelihood likelihood) {
+
+        if (shouldCheckGradient()) {
+            checkGradient(likelihood);
+        }
 
         final double[] initialPosition = leapFrogEngine.getInitialPosition();
 

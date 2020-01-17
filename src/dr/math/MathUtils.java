@@ -466,7 +466,8 @@ public class MathUtils {
 		if (x.length != y.length) return false;
 
 		for (int i = 0, dim = x.length; i < dim; ++i) {
-			if (!(Math.abs(x[i] - y[i]) <= tolerance)) return false;
+			if (Double.isNaN(x[i]) || Double.isNaN(y[i])) return false;
+			if (Math.abs(x[i] - y[i]) > tolerance) return false;
 		}
 
 		return true;

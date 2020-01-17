@@ -28,18 +28,14 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.DifferentialMassProvider;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
-
-import java.util.List;
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
+public class BranchSubstitutionParameterDelegate extends AbstractDiscreteTraitDelegate {
 
     private final BranchRateModel branchRateModel;
     private final BranchDifferentialMassProvider branchDifferentialMassProvider;
@@ -48,11 +44,11 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
     private static final String GRADIENT_TRAIT_NAME = "BranchSubstitutionGradient";
     private static final String HESSIAN_TRAIT_NAME = "BranchSubstitutionHessian";
 
-    DiscreteTraitBranchSubstitutionParameterDelegate(String name,
-                                                     Tree tree,
-                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                     BranchRateModel branchRateModel,
-                                                     BranchDifferentialMassProvider branchDifferentialMassProvider) {
+    BranchSubstitutionParameterDelegate(String name,
+                                        Tree tree,
+                                        BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                        BranchRateModel branchRateModel,
+                                        BranchDifferentialMassProvider branchDifferentialMassProvider) {
         super(name, tree, likelihoodDelegate);
         this.name = name;
         this.branchRateModel = branchRateModel;
@@ -67,7 +63,9 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
 
                 final double time = tree.getBranchLength(node) * branchRateModel.getBranchRate(tree, node);
                 double[] differentialMassMatrix = branchDifferentialMassProvider.getDifferentialMassMatrixForBranch(node, time);
-                evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, differentialMassMatrix);
+                double[] scaledDifferentialMassMatrix = DiscreteTraitBranchRateDelegate.scaleInfinitesimalMatrixByRates(differentialMassMatrix,
+                        DiscreteTraitBranchRateDelegate.DifferentialChoice.GRADIENT, siteRateModel);
+                evolutionaryProcessDelegate.cacheFirstOrderDifferentialMatrix(beagle, i, scaledDifferentialMassMatrix);
             }
         }
         if (cacheSquaredMatrix) {
@@ -97,21 +95,4 @@ public class DiscreteTraitBranchSubstitutionParameterDelegate extends AbstractDi
         return GRADIENT_TRAIT_NAME + ":" + name;
     }
 
-    public static class BranchDifferentialMassProvider {
-
-        private TreeParameterModel indexHelper;
-        private List<DifferentialMassProvider> differentialMassProviderList;
-
-        BranchDifferentialMassProvider(TreeParameterModel indexHelper,
-                                       List<DifferentialMassProvider> differentialMassProviderList) {
-
-            this.indexHelper = indexHelper;
-            this.differentialMassProviderList = differentialMassProviderList;
-
-        }
-
-        double[] getDifferentialMassMatrixForBranch(NodeRef node, double time) {
-            return differentialMassProviderList.get(indexHelper.getParameterIndexFromNodeNumber(node.getNumber())).getDifferentialMassMatrix(time);
-        }
-    }
 }

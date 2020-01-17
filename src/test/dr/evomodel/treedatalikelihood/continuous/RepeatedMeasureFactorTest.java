@@ -28,12 +28,11 @@ package test.dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Vector;
 
@@ -49,9 +48,9 @@ import static test.dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikel
 
 public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
 
-
     // Data Models
     private RepeatedMeasuresTraitDataModel dataModelRepeatedMeasures;
+    private RepeatedMeasuresTraitDataModel dataModelRepeatedMeasuresFull;
 
     public RepeatedMeasureFactorTest(String name) {
         super(name);
@@ -60,24 +59,78 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
     public void setUp() throws Exception {
         super.setUp();
 
+        dimTrait = 6;
+
+        // Diffusion Model
+        Parameter offDiagonal = new Parameter.Default(new double[]{0.12, -0.13, 0.14, -0.15, 0.16,
+                -0.12, 0.13, -0.14, 0.15,
+                0.12, -0.13, 0.14,
+                -0.12, 0.13,
+                0.12});
+        offDiagonal.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, dimTrait * (dimTrait - 1) / 2));
+        Parameter diagonal = new Parameter.Default(new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6});
+        diffusionModel = new MultivariateDiffusionModel(new CompoundSymmetricMatrix(diagonal, offDiagonal, true, true));
+
+        // Root prior
+        Parameter rootMean = new Parameter.Default(new double[]{-1.0, -3.0, 2.5, 1.0, -1.0, 0.0});
+        Parameter rootSampleSize = new Parameter.Default(10.0);
+        rootPrior = new ConjugateRootTraitPrior(rootMean, rootSampleSize);
+
+        // Data
+        Parameter[] dataTraits = new Parameter[6];
+        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0, 4.0, 5.0, -6.0});
+        dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0, 16.0, 18.0, 20.0});
+        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5, -5.2, 3.1, 1.1});
+        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0, -4.0, 3.2, 3.4});
+        dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5, 2.4, -4.2, 6.0});
+        dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
+        CompoundParameter traitParameter = new CompoundParameter("trait", dataTraits);
+
         List<Integer> missingIndices = new ArrayList<Integer>();
         traitParameter.setParameterValue(2, 0);
+        missingIndices.add(6);
+        missingIndices.add(7);
+        missingIndices.add(8);
+        missingIndices.add(9);
+        missingIndices.add(10);
+        missingIndices.add(11);
+        missingIndices.add(13);
+        missingIndices.add(15);
+        missingIndices.add(25);
+        missingIndices.add(29);
 
-        // Error model
+        // Error model Diagonal
         Parameter[] samplingPrecision = new Parameter[dimTrait];
-        samplingPrecision[0] = new Parameter.Default(new double[]{0.1, 0.0, 0.0});
-        samplingPrecision[1] = new Parameter.Default(new double[]{0.0, 0.2, 0.0});
-        samplingPrecision[2] = new Parameter.Default(new double[]{0.0, 0.0, 0.3});
+        samplingPrecision[0] = new Parameter.Default(new double[]{0.1, 0.0, 0.0, 0.0, 0.0, 0.0});
+        samplingPrecision[1] = new Parameter.Default(new double[]{0.0, 0.2, 0.0, 0.0, 0.0, 0.0});
+        samplingPrecision[2] = new Parameter.Default(new double[]{0.0, 0.0, 0.3, 0.0, 0.0, 0.0});
+        samplingPrecision[3] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.4, 0.0, 0.0});
+        samplingPrecision[4] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.0, 0.5, 0.0});
+        samplingPrecision[5] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.6});
         MatrixParameterInterface samplingPrecisionParameter
                 = new MatrixParameter("samplingPrecisionMatrix", samplingPrecision);
-        Parameter samplingPrecisionDiagonal = new Parameter.Default("samplingPrecisionMatrix", new double[]{0.1, 0.2, 0.3});
+        Parameter samplingPrecisionDiagonal = new Parameter.Default("samplingPrecisionMatrix", new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6});
+
+        // Error model Full
+        Parameter[] samplingPrecisionFull = new Parameter[dimTrait];
+        samplingPrecision[0] = new Parameter.Default(new double[]{0.5, 0.0, 0.1, 0.1, 0.0, 0.0});
+        samplingPrecision[1] = new Parameter.Default(new double[]{0.0, 0.2, 0.0, 0.0, 0.0, 0.0});
+        samplingPrecision[2] = new Parameter.Default(new double[]{0.1, 0.0, 0.3, 0.0, 0.0, 0.2});
+        samplingPrecision[3] = new Parameter.Default(new double[]{0.1, 0.0, 0.0, 0.4, 0.15, 0.0});
+        samplingPrecision[4] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.15, 0.5, 0.0});
+        samplingPrecision[5] = new Parameter.Default(new double[]{0.0, 0.0, 0.2, 0.0, 0.0, 0.6});
+        MatrixParameterInterface samplingPrecisionParameterFull
+                = new MatrixParameter("samplingPrecisionMatrix", samplingPrecision);
 
         //// Factor Model //// *****************************************************************************************
         // Loadings
-        Parameter[] loadingsParameters = new Parameter[3];
-        loadingsParameters[0] = new Parameter.Default(new double[]{1.0, 0.0, 0.0});
-        loadingsParameters[1] = new Parameter.Default(new double[]{0.0, 1.0, 0.0});
-        loadingsParameters[2] = new Parameter.Default(new double[]{0.0, 0.0, 1.0});
+        Parameter[] loadingsParameters = new Parameter[dimTrait];
+        loadingsParameters[0] = new Parameter.Default(new double[]{1.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+        loadingsParameters[1] = new Parameter.Default(new double[]{0.0, 1.0, 0.0, 0.0, 0.0, 0.0});
+        loadingsParameters[2] = new Parameter.Default(new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 0.0});
+        loadingsParameters[3] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 1.0, 0.0, 0.0});
+        loadingsParameters[4] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
+        loadingsParameters[5] = new Parameter.Default(new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
         MatrixParameterInterface loadingsMatrixParameters = new MatrixParameter("loadings", loadingsParameters);
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
@@ -95,6 +148,13 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
                 true,
                 dimTrait,
                 samplingPrecisionParameter);
+
+        dataModelRepeatedMeasuresFull = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
+                traitParameter,
+                missingIndices,
+                true,
+                dimTrait,
+                samplingPrecisionParameterFull);
 
     }
 
@@ -156,7 +216,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
                 format.format(logDatumLikelihoodRepMea),
                 format.format(likelihoodRepMeaDiffusion));
 
-        System.out.println("likelihoodBMRepMea: " + format.format(logDatumLikelihoodFactor));
+        System.out.println("likelihoodBMRepMea: " + format.format(logDatumLikelihoodRepMea));
 
         // Simulation
         MathUtils.setSeed(17890826);
@@ -171,6 +231,26 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         for (int i = 0; i < traitsFactors.length; i++) {
             assertEquals(format.format(traitsRepMea[i]), format.format(traitsFactors[i]));
         }
+
+        //// Repeated Measures Full //// *******************************************************************************
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegateRepMeaFull = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModelRepeatedMeasuresFull, rootPrior,
+                rateTransformation, rateModel, true);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihoodRepMeaFull
+                = new TreeDataLikelihood(likelihoodDelegateRepMeaFull, treeModel, rateModel);
+
+        double logDatumLikelihoodRepMeaFull = getLogDatumLikelihood(dataLikelihoodRepMeaFull);
+
+        double likelihoodRepMeaDiffusionFull = dataLikelihoodRepMeaFull.getLogLikelihood();
+
+        assertEquals("likelihoodBMRepMea",
+                format.format(logDatumLikelihoodRepMeaFull),
+                format.format(likelihoodRepMeaDiffusionFull));
+
+        System.out.println("likelihoodBMRepMeaFull: " + format.format(logDatumLikelihoodRepMeaFull));
     }
 
     public void testLikelihoodOU() {
@@ -181,11 +261,17 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.1", new double[]{1.0})));
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.2", new double[]{2.0})));
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.3", new double[]{-2.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.4", new double[]{10.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.5", new double[]{20.0})));
+        optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("rate.6", new double[]{-20.0})));
 
-        Parameter[] strengthOfSelectionParameters = new Parameter[3];
-        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{0.5, 0.2, 0.0});
-        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.2, 1.0, 0.1});
-        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{0.0, 0.1, 10.5});
+        Parameter[] strengthOfSelectionParameters = new Parameter[6];
+        strengthOfSelectionParameters[0] = new Parameter.Default(new double[]{1.0, 0.1, 0.0, 0.0, 0.5, 2.0});
+        strengthOfSelectionParameters[1] = new Parameter.Default(new double[]{0.1, 10., 0.0, 0.0, 0.0, 0.0});
+        strengthOfSelectionParameters[2] = new Parameter.Default(new double[]{0.0, 0.0, 20., 0.3, 0.0, 0.0});
+        strengthOfSelectionParameters[3] = new Parameter.Default(new double[]{0.0, 0.0, 0.3, 30., 3.0, 0.0});
+        strengthOfSelectionParameters[4] = new Parameter.Default(new double[]{1.0, 0.0, 0.0, 3.0, 40., 0.0});
+        strengthOfSelectionParameters[5] = new Parameter.Default(new double[]{0.0, 0.0, 0.5, 0.0, 0.0, 50.});
         MatrixParameter strengthOfSelectionMatrixParam
                 = new MatrixParameter("strengthOfSelectionMatrix", strengthOfSelectionParameters);
 
@@ -210,12 +296,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         TreeDataLikelihood dataLikelihoodFactors
                 = new TreeDataLikelihood(likelihoodDelegateFactors, treeModel, rateModel);
 
-        String sf = dataModelFactor.getReport();
-        int indLikBegF = sf.indexOf("logMultiVariateNormalDensity = ") + 31;
-        int indLikEndF = sf.indexOf("\n", indLikBegF);
-        char[] logDatumLikelihoodCharF = new char[indLikEndF - indLikBegF + 1];
-        sf.getChars(indLikBegF, indLikEndF, logDatumLikelihoodCharF, 0);
-        double logDatumLikelihoodFactor = Double.parseDouble(String.valueOf(logDatumLikelihoodCharF));
+        double logDatumLikelihoodFactor = getLogDatumLikelihood(dataModelFactor);
 
         double likelihoodFactorData = dataLikelihoodFactors.getLogLikelihood();
         double likelihoodFactorDiffusion = dataModelFactor.getLogLikelihood();
@@ -241,12 +322,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         TreeDataLikelihood dataLikelihoodRepMea
                 = new TreeDataLikelihood(likelihoodDelegateRepMea, treeModel, rateModel);
 
-        String s = dataLikelihoodRepMea.getReport();
-        int indLikBeg = s.indexOf("logDatumLikelihood:") + 20;
-        int indLikEnd = s.indexOf("\n", indLikBeg);
-        char[] logDatumLikelihoodChar = new char[indLikEnd - indLikBeg + 1];
-        s.getChars(indLikBeg, indLikEnd, logDatumLikelihoodChar, 0);
-        double logDatumLikelihoodRepMea = Double.parseDouble(String.valueOf(logDatumLikelihoodChar));
+        double logDatumLikelihoodRepMea = getLogDatumLikelihood(dataLikelihoodRepMea);
 
         double likelihoodRepMeaDiffusion = dataLikelihoodRepMea.getLogLikelihood();
 
@@ -254,7 +330,7 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
                 format.format(logDatumLikelihoodRepMea),
                 format.format(likelihoodRepMeaDiffusion));
 
-        System.out.println("likelihoodOURepMea: " + format.format(logDatumLikelihoodFactor));
+        System.out.println("likelihoodOURepMea: " + format.format(logDatumLikelihoodRepMea));
 
         // Simulation
         MathUtils.setSeed(17890826);
@@ -269,5 +345,25 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         for (int i = 0; i < traitsFactors.length; i++) {
             assertEquals(format.format(traitsRepMea[i]), format.format(traitsFactors[i]));
         }
+
+        //// Repeated Measures Full //// *******************************************************************************
+        // CDL
+        ContinuousDataLikelihoodDelegate likelihoodDelegateRepMeaFull = new ContinuousDataLikelihoodDelegate(treeModel,
+                diffusionProcessDelegate, dataModelRepeatedMeasuresFull, rootPrior,
+                rateTransformation, rateModel, true);
+
+        // Likelihood Computation
+        TreeDataLikelihood dataLikelihoodRepMeaFull
+                = new TreeDataLikelihood(likelihoodDelegateRepMeaFull, treeModel, rateModel);
+
+        double logDatumLikelihoodRepMeaFull = getLogDatumLikelihood(dataLikelihoodRepMeaFull);
+
+        double likelihoodRepMeaDiffusionFull = dataLikelihoodRepMeaFull.getLogLikelihood();
+
+        assertEquals("likelihoodBMRepMea",
+                format.format(logDatumLikelihoodRepMeaFull),
+                format.format(likelihoodRepMeaDiffusionFull));
+
+        System.out.println("likelihoodBMRepMeaFull: " + format.format(logDatumLikelihoodRepMeaFull));
     }
 }

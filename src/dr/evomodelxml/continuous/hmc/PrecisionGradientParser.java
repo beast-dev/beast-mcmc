@@ -132,7 +132,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             ContinuousTraitGradientForBranch traitGradient;
             if (extensionProvider != null) {
                 traitGradient =
-                        new ContinuousTraitGradientForBranch.SamplingVarianceGradient(dim, tree, extensionProvider);
+                        new ContinuousTraitGradientForBranch.SamplingVarianceGradient(dim, tree, continuousData, extensionProvider);
             } else {
                 traitGradient =
                         new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(

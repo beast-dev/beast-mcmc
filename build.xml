@@ -311,9 +311,9 @@
                     <exclude name="test/dr/evomodel/substmodel/ProductChainSubstitutionModelTest.java"/>
                     <exclude name="test/dr/evomodel/substmodel/StateHistoryTest.java"/>
                     <exclude name="test/dr/evomodel/substmodel/TwoStateOccupancyMarkovRewardsTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/>
-                    <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/>
+                    <!-- <exclude name="test/dr/evomodel/treedatalikelihood/continuous/BranchSpecificGradientTest.java"/> -->
+                    <!-- <exclude name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodDelegateTest.java"/> -->
+                    <!-- <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/> -->
                     <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
                     <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
 <!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->

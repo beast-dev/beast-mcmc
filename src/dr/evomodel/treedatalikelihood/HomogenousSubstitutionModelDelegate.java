@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.PreOrderSettings;
 
 import java.io.Serializable;
 
@@ -167,18 +166,18 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
         assert(bufferIndex == 0);
-        beagle.setTransitionMatrix(getInfinitesimalMatrixBufferIndex(0), differentialMatrix, 0.0);
+        beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(0), differentialMatrix);
     }
 
     @Override
     public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
         assert(bufferIndex == 0);
-        beagle.setTransitionMatrix(getInfinitesimalSquaredMatrixBufferIndex(0), differentialMatrix, 0.0);
+        beagle.setDifferentialMatrix(getInfinitesimalSquaredMatrixBufferIndex(0), differentialMatrix);
     }
 
     @Override
     public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
-        beagle.setTransitionMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix, 0.0);
+        beagle.setDifferentialMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix);
     }
 
     @Override

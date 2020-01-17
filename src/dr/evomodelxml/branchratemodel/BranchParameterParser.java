@@ -25,8 +25,8 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -44,7 +44,7 @@ public class BranchParameterParser extends AbstractXMLObjectParser {
 
         Parameter rootParameter = (Parameter) xo.getChild(Parameter.class);
         BranchRateModel branchRates = (BranchRateModel) xo.getChild(BranchRateModel.class);
-        Tree tree = (Tree) xo.getChild(Tree.class);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
         BranchParameter branchParameter = new BranchParameter(
                 xo.getName(),
@@ -60,7 +60,7 @@ public class BranchParameterParser extends AbstractXMLObjectParser {
         return new XMLSyntaxRule[]{
                 new ElementRule(BranchRateModel.class),
                 new ElementRule(Parameter.class),
-                new ElementRule(Tree.class),
+                new ElementRule(TreeModel.class),
         };
     }
 

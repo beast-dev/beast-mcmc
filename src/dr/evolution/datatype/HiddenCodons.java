@@ -62,10 +62,20 @@ public class HiddenCodons extends Codons implements HiddenDataType {
         return stateSet;
     }
 
-    public final String getTriplet(int state) {
-        int codonState = state % stateCount;
-        int hiddenState = state / stateCount;
-        return super.getTriplet(codonState) + hiddenState;
+    public String getTriplet(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getTriplet);
+    }
+
+    public String getTripletWithoutHiddenCode(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getTriplet);
+    }
+
+    public String getCode(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getCode);
+    }
+
+    public String getCodeWithoutHiddenState(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
     }
 
     public int getStateCount() {

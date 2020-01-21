@@ -546,7 +546,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final boolean doImportTraits() {
-        if (options.taxonList != null) { // validation of check empty taxonList
+        if (true) { // TODO:remove if statement
             File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[] {
                     new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat") });
 
@@ -583,6 +583,7 @@ public class BeautiFrame extends DocumentFrame {
             return true;
 
         } else {
+            //TODO: Remove below
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file.",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
             return false;

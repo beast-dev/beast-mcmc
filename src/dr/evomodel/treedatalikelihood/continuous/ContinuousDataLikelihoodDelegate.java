@@ -286,10 +286,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 final int index = node.getNumber();
 
                 assert (i == index);
-
-                if (!checkDataAlignment(node, tree)) {
-                    throw new TaxonList.MissingTaxonException("Missing taxon");
-                }
+                checkDataAlignment(node, tree);
             }
 
             setAllTipData(dataModel.bufferTips());
@@ -706,15 +703,17 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 tipPartial);
     }
 
-    private boolean checkDataAlignment(NodeRef node, Tree tree) {
+    private void checkDataAlignment(NodeRef node, Tree tree) throws TaxonList.MissingTaxonException {
         int index = node.getNumber();
         Parameter traitParameter = dataModel.getParameter().getParameter(index);
-        if (traitParameter == null) {
-            return true;
-        } else {
+        if (traitParameter != null) {
             String name1 = traitParameter.getParameterName();
             Taxon taxon = tree.getNodeTaxon(node);
-            return name1.contains(taxon.getId());
+            boolean contains = name1.contains(taxon.getId());
+            if (!contains) {
+                throw new TaxonList.MissingTaxonException(
+                        "Parameter name '" + name1 + "' does not contain taxon name '" + taxon.getId() + "'");
+            }
         }
     }
 

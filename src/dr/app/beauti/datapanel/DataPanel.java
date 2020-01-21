@@ -378,6 +378,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public boolean createFromTraits(List<TraitData> traits) {
         int selRow = -1;
 
+        if (options.traits.size() == 0) {
+            frame.doImportTraits();
+
+            //TODO: continue from here
+        }
+
+
         if (selectTraitDialog == null) {
             selectTraitDialog = new SelectTraitDialog(frame);
         }

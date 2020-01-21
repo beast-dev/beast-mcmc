@@ -379,7 +379,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
         int selRow = -1;
 
         if (options.traits.size() == 0) {
-            frame.doImportTraits();
+            Boolean result = frame.doImportTraits();
+
+            if (result == false){
+                return false;
+            }
 
             //TODO: continue from here
         }

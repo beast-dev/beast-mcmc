@@ -341,6 +341,16 @@ public class BEAUTiImporter {
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
 
+        if (taxa == null) {
+            taxa = new Taxa();
+            for (int i = 0; i < taxonNames.length; i++) {
+                taxa.addTaxon(new Taxon(taxonNames[i]));
+            }
+
+            addTaxonList(taxa);
+
+        }
+
         for (int i = 0; i < dataTable.getColumnCount(); i++) {
             boolean warningGiven = false;
 

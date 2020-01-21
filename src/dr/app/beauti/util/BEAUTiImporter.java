@@ -64,7 +64,7 @@ import java.util.List;
 public class BEAUTiImporter {
 
     private final String DEFAULT_NAME = "default";
-    
+
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
@@ -374,7 +374,7 @@ public class BEAUTiImporter {
 
                         if (c1 != c &&
                                 !(c == Double.class && c1 == Integer.class) &&
-                                !warningGiven ) {
+                                !warningGiven) {
                             JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
                                     "Incompatible values", JOptionPane.WARNING_MESSAGE);
                             warningGiven = true;
@@ -427,7 +427,7 @@ public class BEAUTiImporter {
         String extension = "";
         if (fileName.lastIndexOf(".") != -1) {
             extension = fileName.substring(fileName.lastIndexOf(".") + 1);
-            fileName =  fileName.substring(0, fileName.lastIndexOf("."));
+            fileName = fileName.substring(0, fileName.lastIndexOf("."));
         }
         boolean isCSV = extension.toUpperCase().equals("CSV");
 
@@ -460,7 +460,7 @@ public class BEAUTiImporter {
                     matches -= 1;
                 }
             }
-            if (((double)matches) / states.size() > 0.5) { // arbitrary cut off but if 50% matching then presumably they all should
+            if (((double) matches) / states.size() > 0.5) { // arbitrary cut off but if 50% matching then presumably they all should
                 for (String name : stateNamesCol) {
                     if (!states.contains(name)) {
                         JOptionPane.showMessageDialog(frame, "Predictor row label contains unrecognized state '" + name + "'",
@@ -483,7 +483,7 @@ public class BEAUTiImporter {
                     try {
                         data[i][j] = Double.parseDouble(row[j]);
                     } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i+1),
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at row " + (i + 1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -503,9 +503,9 @@ public class BEAUTiImporter {
                 String[] values = dataTable.getColumn(i);
                 for (int j = 0; j < values.length; j++) {
                     try {
-                        data[j][0] =  Double.parseDouble(values[j]);
+                        data[j][0] = Double.parseDouble(values[j]);
                     } catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j+1),
+                        JOptionPane.showMessageDialog(frame, "Predictor '" + name + "' has a bad value at position " + (j + 1),
                                 "Missing value", JOptionPane.ERROR_MESSAGE);
                     }
                 }

@@ -389,7 +389,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             selectTraitDialog = new SelectTraitDialog(frame);
         }
 
-        if (traits==null || traits.size() == 0) {
+        if (traits == null || traits.size() == 0) {
             int result = selectTraitDialog.showDialog(options.traits, null);
             if (result != JOptionPane.CANCEL_OPTION) {
                 TraitData trait = selectTraitDialog.getTrait();
@@ -409,7 +409,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 if (result != JOptionPane.CANCEL_OPTION) {
                     String name = selectTraitDialog.getName();
                     selRow = options.createPartitionForTraits(name, traits);
-                }  else {
+                } else {
                     return false;
                 }
             } else {
@@ -458,7 +458,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             } else {
                 if (partition.getDataType() != dateType) {
                     JOptionPane.showMessageDialog(this, "Can only link the models for data partitions \n" +
-                            "of the same data type (e.g., nucleotides)",
+                                    "of the same data type (e.g., nucleotides)",
                             "Unable to link models",
                             JOptionPane.ERROR_MESSAGE);
                     return;

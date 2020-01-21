@@ -331,7 +331,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
         boolean traitAvailable = options.traits != null && options.traits.size() > 0;
 
-        createTraitPartitionAction.setEnabled(traitAvailable);
+//        createTraitPartitionAction.setEnabled(traitAvailable);
+        createTraitPartitionAction.setEnabled(true);
 
         dataTableModel.fireTableDataChanged();
     }

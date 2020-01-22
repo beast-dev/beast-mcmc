@@ -1,8 +1,8 @@
 package dr.inference.distribution;
 
 public class EmpiricalDistributionData {
-    final double[] values;
-    final double[] density;
+    public final double[] values;
+    public final double[] density;
     final boolean densityInLogSpace;
 
     public EmpiricalDistributionData(double[] values, double[] density, boolean densityInLogSpace) {

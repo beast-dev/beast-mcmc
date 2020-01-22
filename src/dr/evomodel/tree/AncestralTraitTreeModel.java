@@ -341,12 +341,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return treeModel instanceof AbstractModel && ((AbstractModel) treeModel).isVariable();
     }
 
-    public double getNodeHeight(NodeRef inode) {
-        assert (inode != null);
+    public double getNodeHeight(NodeRef iNode) {
+        assert (iNode != null);
 
         checkShadowTree();
 
-        ShadowNode node = (ShadowNode) inode;
+        ShadowNode node = (ShadowNode) iNode;
         int originalNumber = node.getOriginalNumber();
         if (originalNumber >= 0) {
             return treeModel.getNodeHeight(node.getOriginalNode());
@@ -362,12 +362,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-    public double getBranchLength(NodeRef inode) {
-        assert (inode != null);
+    public double getBranchLength(NodeRef iNode) {
+        assert (iNode != null);
 
         checkShadowTree();
 
-        ShadowNode node = (ShadowNode) inode;
+        ShadowNode node = (ShadowNode) iNode;
         if (!node.isUsed()) {
             return 0.0;
         }
@@ -871,8 +871,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 //        System.err.println("Added a CLAMP #" + nodeClamp.getIndex() + " for " + nodeClamp.getTaxon().getId());
     }
 
-    final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<BitSet, AncestralTaxonInTree>();
-    final private Map<Integer, AncestralTaxonInTree> nodeToClampMap = new HashMap<Integer, AncestralTaxonInTree>();
+    final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
+    final private Map<Integer, AncestralTaxonInTree> nodeToClampMap = new HashMap<>();
 
     private boolean validShadowTree = false;
     private boolean savedValidShadowTree;

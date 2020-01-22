@@ -75,7 +75,8 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
         this.inverse = inverse;    
     }
 
-    EmpiricalDistributionLikelihood(List<EmpiricalDistributionData> densityList, boolean inverse) {
+    @SuppressWarnings("all")
+    public EmpiricalDistributionLikelihood(List<EmpiricalDistributionData> densityList, boolean inverse) {
         super(null);
         this.densityList = densityList;
         this.inverse = inverse;

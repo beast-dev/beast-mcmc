@@ -66,7 +66,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     @Override
     public NodeRef getOriginalNode(NodeRef transformedNode) {
-        throw new RuntimeException("Not yet implemented");
+
+        assert (transformedNode != null);
+
+        checkShadowTree();
+        ShadowNode node = (ShadowNode) transformedNode;
+        return node.getOriginalNode();
     }
 
     @Override

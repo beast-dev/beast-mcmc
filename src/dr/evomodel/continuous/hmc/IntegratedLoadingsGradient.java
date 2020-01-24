@@ -231,11 +231,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                             allStatistics.get(taxon), gradients)
             );
         }
-
-        if (!remainderCompProvider.computeRemainder()) {
-            likelihood.makeDirty(); //TODO: This should not be necessary. Remove after making changes to TreeDataLikelihood.
-        }
-
+        
         return join(gradients);
     }
 

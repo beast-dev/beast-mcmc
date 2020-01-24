@@ -124,6 +124,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
 
             logLikelihood = calculateLogLikelihood();
+            setAllNodesUpdated();
             likelihoodKnown = true;
         }
 
@@ -141,7 +142,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
 
             likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
-            calculateLogLikelihood();
+            calculateLogLikelihood(); // after traverse all nodes and patterns have been updated --
+                                        //so change flags to reflect this.
             likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
 
             if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
@@ -300,9 +302,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
 
-        // after traverse all nodes and patterns have been updated --
-        //so change flags to reflect this.
-        setAllNodesUpdated();
 
         return logL;
     }

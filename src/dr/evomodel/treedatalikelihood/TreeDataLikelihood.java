@@ -72,7 +72,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         this.treeModel = treeModel;
         isTreeRandom = (treeModel instanceof AbstractModel) && ((AbstractModel) treeModel).isVariable();
         if (isTreeRandom) {
-            addModel(((AbstractModel)treeModel));
+            addModel(((AbstractModel) treeModel));
         }
 
         likelihoodKnown = false;
@@ -84,7 +84,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         addModel(this.branchRateModel);
 
         treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                    likelihoodDelegate.getOptimalTraversalType()
+                likelihoodDelegate.getOptimalTraversalType()
         );
 
         rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
@@ -113,7 +113,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         return this;
     }
 
-    @Override @SuppressWarnings("Duplicates")
+    @Override
+    @SuppressWarnings("Duplicates")
     public final double getLogLikelihood() {
         if (COUNT_TOTAL_OPERATIONS)
             totalGetLogLikelihoodCount++;
@@ -143,7 +144,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
             calculateLogLikelihood(); // after traverse all nodes and patterns have been updated --
-                                        //so change flags to reflect this.
+            //so change flags to reflect this.
             likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
 
             if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
@@ -374,15 +375,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             if (COUNT_TOTAL_OPERATIONS)
                 sb.append("\n  total operations = ").append(totalOperationCount).append(
-                          "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
-                          "\n  model changes = ").append(totalModelChangedCount).append(
-                          "\n  make dirties = ").append(totalMakeDirtyCount).append(
-                          "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
-                          "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
-                          "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
-                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
-                          "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
-                          "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics);
+                        "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
+                        "\n  model changes = ").append(totalModelChangedCount).append(
+                        "\n  make dirties = ").append(totalMakeDirtyCount).append(
+                        "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
+                        "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
+                        "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
+                        "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
+                        "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
+                        "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics);
 
             return sb.toString();
         } else {
@@ -429,12 +430,14 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     @Override
-    public Citation.Category getCategory() { return Citation.Category.FRAMEWORK; }
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
 
     @Override
     public String getDescription() {
         if (likelihoodDelegate instanceof Citable) {
-            return ((Citable)likelihoodDelegate).getDescription();
+            return ((Citable) likelihoodDelegate).getDescription();
         } else {
             return null;
         }
@@ -443,7 +446,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     public List<Citation> getCitations() {
         if (likelihoodDelegate instanceof Citable) {
-            return ((Citable)likelihoodDelegate).getCitations();
+            return ((Citable) likelihoodDelegate).getCitations();
         } else {
             return new ArrayList<>();
         }

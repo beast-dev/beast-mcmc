@@ -231,7 +231,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                             allStatistics.get(taxon), gradients)
             );
         }
-        
+
         return join(gradients);
     }
 

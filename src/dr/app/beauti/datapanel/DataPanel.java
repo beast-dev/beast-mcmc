@@ -381,11 +381,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.traits.size() == 0) {
             Boolean result = frame.doImportTraits();
 
-            if (result == false){
+            if (result == false) {
                 return false;
             }
-
-            //TODO: continue from here
+            traits = options.traits; //Automatically choos all traits from input file
         }
 
 

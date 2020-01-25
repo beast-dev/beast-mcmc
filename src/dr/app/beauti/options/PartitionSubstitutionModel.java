@@ -566,6 +566,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
                 break;
 
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -832,6 +837,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //                    ops.add(getOperator("onePhaseProb"));
                 }
                 break;
+
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
 
             default:
                 throw new IllegalArgumentException("Unknown data type");

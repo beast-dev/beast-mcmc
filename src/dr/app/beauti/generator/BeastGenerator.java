@@ -429,6 +429,11 @@ public class BeastGenerator extends Generator {
                                 // microsat does not have alignment
                                 patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
                                 break;
+
+                            case DataType.DUMMY:
+                                //Do nothing
+                                break;
+
                             default:
                                 throw new IllegalArgumentException("Unsupported data type");
                         }

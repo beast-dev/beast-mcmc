@@ -576,6 +576,11 @@ public class PartitionModelPanel extends OptionsPanel {
                         .size() > 1);
                 break;
 
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -753,6 +758,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Rate Proportionality:", rateProportionCombo);
                 addComponentWithLabel("Mutational Bias:", mutationBiasCombo);
                 addComponentWithLabel("Phase:", phaseCombo);
+                break;
+
+            case DataType.DUMMY:
+                //Do nothing
                 break;
 
             default:

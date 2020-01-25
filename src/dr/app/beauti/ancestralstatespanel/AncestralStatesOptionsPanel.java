@@ -253,6 +253,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 ancestralReconstructionAvailable = false;
                 countingAvailable = false;
                 break;
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

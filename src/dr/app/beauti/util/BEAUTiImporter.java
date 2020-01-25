@@ -32,9 +32,7 @@ import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
-import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.*;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.MicroSatImporter;
@@ -348,6 +346,16 @@ public class BEAUTiImporter {
             }
 
             addTaxonList(taxa);
+
+            SimpleAlignment dummyAlignment = new SimpleAlignment();
+            dummyAlignment.setDataType(new DummyDataType());
+
+            setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null); //TODO: maybe replace nulls
+
+            frame.setDirty();
+            frame.setAllOptions();
+
+            //TODO: what else needs to happen?
 
         }
 

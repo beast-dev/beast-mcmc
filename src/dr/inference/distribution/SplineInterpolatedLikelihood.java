@@ -64,6 +64,18 @@ public class SplineInterpolatedLikelihood extends EmpiricalDistributionLikelihoo
 
         double rtnValue = 0;
 
+        // Binary search for x below beta:
+//        unsigned int low = 0;
+//        unsigned int high = x.size() - 1;
+//        unsigned int m = 0;
+//        while (high > low) {
+//            m = floor(low + (high-low) / 2.0);
+//            if (x[m] > beta[i] || low == m)
+//                high = m;
+//            else
+//                low = m;
+//        }
+
         for(int i=1; i<len; i++) {
             if (values[i] > x) { // first largest point
                 final double diffValue = values[i] - values[i-1];

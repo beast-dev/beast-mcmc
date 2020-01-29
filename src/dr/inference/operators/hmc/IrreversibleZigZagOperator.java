@@ -58,6 +58,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return null;
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
     BounceState doBounce(BounceState initialBounceState, MinimumTravelInformation firstBounce,
                          WrappedVector position, WrappedVector velocity,
@@ -65,10 +66,81 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         // TODO Probably shares almost all code with doBounce() in ReversibleZigZagOperator, so move shared
         // TODO code into AbstractZigZagOperator
-        
-        return null;
+
+
+        if (TIMING) {
+            timer.startTimer("doBounce");
+        }
+
+        double remainingTime = initialBounceState.remainingTime;
+        double eventTime = firstBounce.time;
+
+        final BounceState finalBounceState;
+        if (remainingTime < eventTime) { // No event during remaining time
+
+            updatePosition(position, velocity, remainingTime);
+            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
+
+        } else {
+
+            final Type eventType = firstBounce.type;
+            final int eventIndex = firstBounce.index;
+
+
+            WrappedVector column = getPrecisionColumn(eventIndex);
+
+            updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                    column.getBuffer(), eventTime, eventIndex);
+
+            if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+
+                reflectMomentum(momentum, position, eventIndex);
+
+            } else { // Bounce caused by the gradient
+
+                setZeroMomentum(momentum, eventIndex);
+
+            }
+
+            reflectVelocity(velocity, eventIndex);
+
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+        }
+
+        if (TIMING) {
+            timer.stopTimer("doBounce");
+        }
+
+        return finalBounceState;
     }
 
+    @SuppressWarnings("Duplicates")
+    private void updateDynamics(double[] p,
+                                double[] v,
+                                double[] a,
+                                double[] g,
+                                double[] m,
+                                double[] c,
+                                double time,
+                                int index) {
+
+        final double halfTimeSquared = time * time / 2;
+        final double twoV = 2 * v[index];
+
+        for (int i = 0, len = p.length; i < len; ++i) {
+            final double gi = g[i]; final double ai = a[i];
+
+            p[i] = p[i] + time * v[i];
+            m[i] = m[i] + time * gi - halfTimeSquared * ai;
+            g[i] = gi - time * ai;
+            a[i] = ai - twoV * c[i];
+        }
+
+//        if (mask != null) { // TODO Appears unnecessary
+//            applyMask(m);
+//        }
+    }
 
     @Override
     public String getOperatorName() {

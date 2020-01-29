@@ -49,9 +49,26 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     @Override
-    double integrateTrajectory(WrappedVector position) {
-        return 0;
+    WrappedVector drawInitialMomentum() {
+        return null;
     }
+
+    @Override
+    WrappedVector drawInitialVelocity(WrappedVector momentum) {
+        return null;
+    }
+
+    @Override
+    BounceState doBounce(BounceState initialBounceState, MinimumTravelInformation firstBounce,
+                         WrappedVector position, WrappedVector velocity,
+                         WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
+
+        // TODO Probably shares almost all code with doBounce() in ReversibleZigZagOperator, so move shared
+        // TODO code into AbstractZigZagOperator
+        
+        return null;
+    }
+
 
     @Override
     public String getOperatorName() {

@@ -43,16 +43,15 @@ import java.util.function.BinaryOperator;
  * @author Marc A. Suchard
  */
 
-public class ZigZagOperator extends AbstractParticleOperator implements Reportable {
+public class ReversibleZigZagOperator extends AbstractZigZagOperator implements Reportable {
 
-    public ZigZagOperator(GradientWrtParameterProvider gradientProvider,
-                          PrecisionMatrixVectorProductProvider multiplicationProvider,
-                          PrecisionColumnProvider columnProvider,
-                          double weight, Options runtimeOptions, Parameter mask,
-                          int threadCount) {
+    public ReversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
+                                    PrecisionMatrixVectorProductProvider multiplicationProvider,
+                                    PrecisionColumnProvider columnProvider,
+                                    double weight, Options runtimeOptions, Parameter mask,
+                                    int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask);
-        this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
     }
 
     @Override
@@ -714,6 +713,4 @@ public class ZigZagOperator extends AbstractParticleOperator implements Reportab
     private final static boolean DEBUG = false;
     private final static boolean DEBUG_SIGN = false;
     private final static boolean FUSE = true;
-
-    private final TaskPool taskPool;
 }

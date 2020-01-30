@@ -415,10 +415,11 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
         }
 
-        if (options.operatorSetType == OperatorSetType.FIXED_TREE) {
-            //TODO: these don't get turned back on. need to fix
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            boolean useOps = (options.operatorSetType != OperatorSetType.FIXED_TREE);
+
             for (int i = originalOps; i < ops.size(); i++) {
-                ops.get(i).setUsed(false);
+                ops.get(i).setUsed(useOps);
             }
         }
 

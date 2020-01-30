@@ -166,7 +166,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 "Birth-Death speciation process rate", PriorScaleType.BIRTH_RATE_SCALE,
                 2.0, 0.0, 100000.0);*/
         createParameterLognormalPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                        + BirthDeathSerialSamplingModelParser.LAMBDA,"Birth-Death speciation process rate",
+                        + BirthDeathSerialSamplingModelParser.LAMBDA, "Birth-Death speciation process rate",
                 PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
@@ -177,14 +177,14 @@ public class PartitionTreePrior extends PartitionOptions {
                 "Birth-Death rate of sampling taxa through time", PriorScaleType.NONE,
                 0.05, 0.0, 100.0);*/
         createParameterLognormalPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                        + BirthDeathSerialSamplingModelParser.PSI,"Birth-Death rate of sampling taxa through time",
+                        + BirthDeathSerialSamplingModelParser.PSI, "Birth-Death rate of sampling taxa through time",
                 PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
         /*createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.ORIGIN,
                 "Birth-Death the time of the lineage originated (must > root height)", PriorScaleType.ORIGIN_SCALE,
                 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);*/
         createParameterLognormalPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                        + BirthDeathSerialSamplingModelParser.ORIGIN,"Birth-Death the time of the lineage originated (must > root height)",
+                        + BirthDeathSerialSamplingModelParser.ORIGIN, "Birth-Death the time of the lineage originated (must > root height)",
                 PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
 
         /*createNonNegativeParameterUniformPrior(BirthDeathEpidemiologyModelParser.ORIGIN,
@@ -198,7 +198,7 @@ public class PartitionTreePrior extends PartitionOptions {
         /*createNonNegativeParameterUniformPrior(BirthDeathEpidemiologyModelParser.RECOVERY_RATE,
                 "recoveryRate", PriorScaleType.NONE,
                 0.05, 0.0, 100.0);*/
-        createParameterLognormalPrior(BirthDeathEpidemiologyModelParser.RECOVERY_RATE,"recoveryRate",
+        createParameterLognormalPrior(BirthDeathEpidemiologyModelParser.RECOVERY_RATE, "recoveryRate",
                 PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
         createParameterBetaDistributionPrior(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY,
                 "samplingProbability",
@@ -343,6 +343,8 @@ public class PartitionTreePrior extends PartitionOptions {
     @Override
     public List<Operator> selectOperators(List<Operator> ops) {
 
+        int originalOps = ops.size();
+
         if (nodeHeightPrior == TreePriorType.CONSTANT) {
             ops.add(getOperator("constant.popSize"));
         } else if (nodeHeightPrior == TreePriorType.EXPONENTIAL) {
@@ -412,6 +414,14 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
             ops.add(getOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
         }
+
+        if (options.operatorSetType == OperatorSetType.FIXED_TREE) {
+            //TODO: these don't get turned back on. need to fix
+            for (int i = originalOps; i < ops.size(); i++) {
+                ops.get(i).setUsed(false);
+            }
+        }
+
         return ops;
     }
 

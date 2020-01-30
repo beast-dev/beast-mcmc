@@ -146,13 +146,15 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
         int intervalIndex = 0;
         double finishTime = intervals.getInterval(intervalIndex);
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            while(intervalIndex < intervals.getIntervalCount() - 1 && finishTime < sortedValues[i]) {
+            while(intervalIndex < intervals.getIntervalCount() - 1 && sortedValues[i] - finishTime > realSmallNumber) {
                 intervalIndex++;
                 finishTime += intervals.getInterval(intervalIndex);
             }
             intervalIndices[nodeIndices[i]] = intervalIndex;
         }
     }
+
+    private final double realSmallNumber = 1E-10;
 
     @Override
     public String getReport() {

@@ -54,13 +54,21 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
         addVariable(coefficients);
     }
 
-    public Parameter getGlobalScale() { return distribution.getGlobalScale(); }
+    public Parameter getGlobalScale() {
+        return distribution.getGlobalScale();
+    }
 
-    public Parameter getExponent() { return distribution.getExponent(); }
+    public Parameter getExponent() {
+        return distribution.getExponent();
+    }
 
-    public Parameter getLocalScale() {return distribution.getLocalScale(); }
+    public Parameter getLocalScale() {
+        return distribution.getLocalScale();
+    }
 
-    public double getCoefficient(int i) { return coefficients.getParameterValue(i); }
+    public double getCoefficient(int i) {
+        return coefficients.getParameterValue(i);
+    }
 
     @Override
     public double getLogLikelihood() {
@@ -104,12 +112,12 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
 
     @Override
     public final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-       // no intermediates need to be recalculated...
+        // no intermediates need to be recalculated...
     }
 
     @Override
     public void storeState() {
-       // Do nothing
+        // Do nothing
     }
 
     @Override

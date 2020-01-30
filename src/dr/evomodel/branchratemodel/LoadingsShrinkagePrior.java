@@ -57,7 +57,7 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
                 gradientLogDensity[j + offset] = grad[offset];
             }
         }
-        
+
         return gradientLogDensity;
     }
 

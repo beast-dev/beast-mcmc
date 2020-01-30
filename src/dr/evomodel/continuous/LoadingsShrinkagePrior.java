@@ -1,4 +1,4 @@
-package dr.evomodel.branchratemodel;
+package dr.evomodel.continuous;
 
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;

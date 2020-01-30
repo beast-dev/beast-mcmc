@@ -175,18 +175,20 @@ public class PartitionTreeModel extends PartitionOptions {
             boolean adaptiveMultivariateInUse = false;
 
             // if not a fixed tree then sample tree space
-            if (options.operatorSetType == OperatorSetType.DEFAULT) {
-                defaultInUse = true;
-                branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
-                newTreeOperatorsInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
-                branchesInUse = true;
-            } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
-                newTreeOperatorsInUse = true;
-                adaptiveMultivariateInUse = true;
-            } else {
-                throw new IllegalArgumentException("Unknown operator set type");
+            if (options.operatorSetType != OperatorSetType.FIXED_TREE) {
+                if (options.operatorSetType == OperatorSetType.DEFAULT) {
+                    defaultInUse = true;
+                    branchesInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
+                    newTreeOperatorsInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+                    branchesInUse = true;
+                } else if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
+                    newTreeOperatorsInUse = true;
+                    adaptiveMultivariateInUse = true;
+                } else {
+                    throw new IllegalArgumentException("Unknown operator set type");
+                }
             }
 
             getOperator("subtreeSlide").setUsed(defaultInUse);

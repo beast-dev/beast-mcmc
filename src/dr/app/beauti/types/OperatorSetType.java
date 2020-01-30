@@ -34,6 +34,7 @@ public enum OperatorSetType {
     FIXED_TREE_TOPOLOGY("fixed tree topology"),
     NEW_TREE_MIX("new tree operator mix"),
     ADAPTIVE_MULTIVARIATE("adaptive multivariate"),
+    FIXED_TREE("fixed tree"),
     CUSTOM("custom operator mix");
 
     OperatorSetType(String displayName) {

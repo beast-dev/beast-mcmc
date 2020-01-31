@@ -37,6 +37,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.DummyDataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
@@ -355,7 +356,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     }
 
-    public void removePartitions(Set<AbstractPartitionData> partitionsToRemove) {
+    private void removePartitions(Set<AbstractPartitionData> partitionsToRemove) {
         boolean hasIdenticalTaxa = options.hasIdenticalTaxa(); // need to check this before removing partitions
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
@@ -898,7 +899,25 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             createFromTraits(null);
+
+            for (AbstractPartitionData partition : options.dataPartitions) {
+
+                if (partition.getDataType() instanceof DummyDataType) {
+
+                    Set<AbstractPartitionData> partitionsToRemove = new HashSet<AbstractPartitionData>();
+                    partitionsToRemove.add(partition);
+                    removePartitions(partitionsToRemove);
+
+                    break; //there should only be one dummy partion
+
+                }
+
+            }
         }
+
+        //TODO: fix error when deleting partition
+        //TODO: set frame to DataPanel (not TraitPanel)
+
     }
 
 //    public class ShowAction extends AbstractAction {

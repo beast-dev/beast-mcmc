@@ -352,8 +352,8 @@ public class BEAUTiImporter {
 
             setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null); //TODO: maybe replace nulls
 
-            frame.setDirty();
-            frame.setAllOptions();
+            frame.setDirty(); //TODO: is this necessary?
+            frame.setAllOptions(); //TODO: is this necessary?
 
             //TODO: what else needs to happen?
 

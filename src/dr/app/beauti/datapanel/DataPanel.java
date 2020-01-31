@@ -351,6 +351,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
 
+        removePartitions(partitionsToRemove);
+
+    }
+
+    public void removePartitions(Set<AbstractPartitionData> partitionsToRemove) {
         boolean hasIdenticalTaxa = options.hasIdenticalTaxa(); // need to check this before removing partitions
 
         // TODO: would probably be a good idea to check if the user wants to remove the last partition

@@ -424,6 +424,31 @@ public class BEAUTiImporter {
         setData(file.getName(), taxa, null, null, null, null, importedTraits, null);
     }
 
+    public void importTaxaFromTraits(final File file) throws Exception {
+
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+
+        String[] taxonNames = dataTable.getRowLabels();
+
+        Taxa taxa = new Taxa();
+        for (int i = 0; i < taxonNames.length; i++) {
+            taxa.addTaxon(new Taxon(taxonNames[i]));
+        }
+
+        addTaxonList(taxa);
+
+        SimpleAlignment dummyAlignment = new SimpleAlignment();
+        dummyAlignment.setDataType(new DummyDataType());
+
+        setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null); //TODO: maybe replace nulls
+
+        frame.setDirty(); //TODO: is this necessary?
+        frame.setAllOptions(); //TODO: is this necessary?
+
+        //TODO: what else needs to happen?
+
+    }
+
     public boolean importPredictors(final File file, final TraitData trait) throws Exception {
         List<Predictor> importedPredictors = new ArrayList<Predictor>();
 //        Taxa taxa = options.taxonList;

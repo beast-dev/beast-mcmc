@@ -40,7 +40,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
     public static final String SCALE_ALL = "scaleAll";
     public static final String SCALE_ALL_IND = "scaleAllIndependently";
     public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String DEGREES_OF_FREEDOM = "df";
+    private static final String DEGREES_OF_FREEDOM = "df";
     public static final String INDICATORS = "indicators";
     public static final String PICKONEPROB = "pickoneprob";
     public static final String IGNORE_BOUNDS = "ignoreBounds";
@@ -111,11 +111,11 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         double indicatorOnProb = 1.0;
         final XMLObject inds = xo.getChild(INDICATORS);
 
-        if(inds != null && xo.hasAttribute(FIXED_DIMENSION)){
-            throw new XMLParseException("Cannot include indicators when specifying the fixed dimension.");
+        if (inds != null && xo.hasAttribute(FIXED_DIMENSION)){
+            throw new XMLParseException("Cannot include indicators when specifying a single fixed dimension.");
         }
 
-        if (inds == null && xo.hasAttribute(FIXED_DIMENSION)) {
+        if (xo.hasAttribute(FIXED_DIMENSION)) {
             int idx = xo.getIntegerAttribute(FIXED_DIMENSION);
             if (idx < 1 || idx > parameter.getDimension()) {
                 throw new XMLParseException("Invalid dimension");
@@ -127,12 +127,8 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
                     indicator.setParameterValue(i, 0.0);
                 }
             }
-        }
-
-        if (inds != null) {
-            if (indicator != null) {
-                indicator = (Parameter) inds.getChild(Parameter.class);
-            }
+        } else if (inds != null) {
+            indicator = (Parameter) inds.getChild(Parameter.class);
             if (inds.hasAttribute(PICKONEPROB)) {
                 indicatorOnProb = inds.getDoubleAttribute(PICKONEPROB);
                 if (!(0 <= indicatorOnProb && indicatorOnProb <= 1)) {
@@ -140,6 +136,7 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
                 }
             }
         }
+        
         ScaleOperator operator = new ScaleOperator(parameter, scaleAll,
                 degreesOfFreedom, scaleFactor,
                 mode, indicator, indicatorOnProb,

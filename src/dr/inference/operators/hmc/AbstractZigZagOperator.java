@@ -380,8 +380,8 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
         return time;
     }
 
-    private MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
-                                                           WrappedVector inVelocity) {
+    MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
+                                                   WrappedVector inVelocity) {
 
         @SuppressWarnings("duplicate")
         final double[] position = inPosition.getBuffer();

@@ -29,6 +29,8 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
+import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.Reportable;
 
@@ -55,7 +57,85 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
     @Override
     WrappedVector drawInitialVelocity(WrappedVector momentum) {
-        return null;
+        ReadableVector mass = preconditioning.mass;
+
+        double[] velocity = new double[mass.getDim()];
+
+        for (int i = 0, len = mass.getDim(); i < len; ++i) {
+            int sign = (MathUtils.nextDouble() > 0.5) ? 1 : -1;
+
+            velocity[i] = sign / Math.sqrt(mass.get(i));
+        }
+        if (mask != null) {
+            applyMask(velocity);
+        }
+        return new WrappedVector.Raw(velocity);
+    }
+
+    double integrateTrajectory(WrappedVector position) {
+
+        WrappedVector velocity = drawInitialVelocity(null);
+        WrappedVector gradient = getInitialGradient();
+        WrappedVector action = getPrecisionProduct(velocity);
+
+        BounceState bounceState = new BounceState(drawTotalTravelTime());
+
+        int count = 0;
+
+        while (bounceState.isTimeRemaining()) {
+
+            final MinimumTravelInformation firstBounce;
+
+            MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
+                    position, velocity);
+
+            MinimumTravelInformation gradientBounce = getNextGradientBounceZigzag(velocity, gradient);
+
+            firstBounce = (boundaryBounce.time < gradientBounce.time) ?
+                    new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
+                    new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+
+            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, null);
+
+            ++count;
+        }
+        return 0.0;
+    }
+
+    MinimumTravelInformation getNextGradientBounceZigzag(WrappedVector velocity,
+                                                         WrappedVector gradient) {
+
+        return getNextGradientBounceZigzag(0, velocity.getDim(),
+                velocity.getBuffer(), gradient.getBuffer());
+    }
+
+    private MinimumTravelInformation getNextGradientBounceZigzag(final int begin, final int end,
+                                                                 final double[] velocity,
+                                                                 final double[] gradient) {
+
+        double minimumRoot = Double.POSITIVE_INFINITY;
+        double root;
+        int index = -1;
+        double expRate;
+
+        for (int i = begin; i < end; ++i) {
+            if (gradient[i] == 0) { // for fix dimension
+                root = Double.POSITIVE_INFINITY;
+            } else {
+                expRate = -velocity[i] * gradient[i];
+                if (expRate < 0) {
+                    root = Double.POSITIVE_INFINITY;
+                } else {
+                    root = MathUtils.nextExponential(expRate);
+                }
+            }
+
+            if (root < minimumRoot) {
+                minimumRoot = root;
+                index = i;
+            }
+        }
+        return new MinimumTravelInformation(minimumRoot, index);
     }
 
     @SuppressWarnings("Duplicates")
@@ -86,25 +166,13 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             final Type eventType = firstBounce.type;
             final int eventIndex = firstBounce.index;
 
-
             WrappedVector column = getPrecisionColumn(eventIndex);
 
             updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                    action.getBuffer(), gradient.getBuffer(), null,
                     column.getBuffer(), eventTime, eventIndex);
 
-            if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
-
-                reflectMomentum(momentum, position, eventIndex);
-
-            } else { // Bounce caused by the gradient
-
-                setZeroMomentum(momentum, eventIndex);
-
-            }
-
             reflectVelocity(velocity, eventIndex);
-
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
         }
 
@@ -125,21 +193,16 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                                 double time,
                                 int index) {
 
-        final double halfTimeSquared = time * time / 2;
         final double twoV = 2 * v[index];
 
         for (int i = 0, len = p.length; i < len; ++i) {
-            final double gi = g[i]; final double ai = a[i];
+            final double gi = g[i];
+            final double ai = a[i];
 
             p[i] = p[i] + time * v[i];
-            m[i] = m[i] + time * gi - halfTimeSquared * ai;
             g[i] = gi - time * ai;
             a[i] = ai - twoV * c[i];
         }
-
-//        if (mask != null) { // TODO Appears unnecessary
-//            applyMask(m);
-//        }
     }
 
     @Override

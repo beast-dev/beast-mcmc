@@ -28,6 +28,9 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
@@ -40,7 +43,7 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
  * @author Marc A. Suchard
  */
 
-public class BouncyParticleOperator extends AbstractParticleOperator {
+public class BouncyParticleOperator extends AbstractParticleOperator implements Loggable { //todo: temporarily loggable
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
@@ -78,18 +81,20 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
 
             double bounceTime = getBounceTime(v_Phi_v, v_Phi_x, U_min);
             MinimumTravelInformation travelInfo = getTimeToBoundary(position, velocity);
+            double refreshTime = getRefreshTime();
 
             bounceState = doBounce(
-                    bounceState.remainingTime, bounceTime, travelInfo,
+                    bounceState.remainingTime, bounceTime, travelInfo, refreshTime,
                     position, velocity, gradient, action
             );
         }
-
+        storedVelocity = velocity;
         return 0.0;
     }
 
     private BounceState doBounce(double remainingTime, double bounceTime,
                                  MinimumTravelInformation boundaryInfo,
+                                 double refreshTime,
                                  WrappedVector position, WrappedVector velocity,
                                  WrappedVector gradient, WrappedVector action) {
 
@@ -104,7 +109,14 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
             updatePosition(position, velocity, remainingTime);
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
         } else {
-            if (timeToBoundary < bounceTime) { // Reflect against the boundary
+            if (refreshTime < Math.min(timeToBoundary, bounceTime)) { //refreshment event
+                eventType = Type.REFRESHMENT;
+                eventIndex = -1;
+                updatePosition(position, velocity, refreshTime);
+                updateGradient(gradient, refreshTime, action);
+
+                refreshVelocity(velocity);
+            } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
                 eventType = Type.BOUNDARY;
                 eventIndex = boundaryIndex;
 
@@ -174,6 +186,10 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
         return new MinimumTravelInformation(minTime, index);
     }
 
+    private double getRefreshTime() {
+        return MathUtils.nextExponential(1) / refreshmentRate;
+    }
+
     @SuppressWarnings("all")
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
         double a = v_phi_v / 2;
@@ -193,4 +209,36 @@ public class BouncyParticleOperator extends AbstractParticleOperator {
             velocity.set(i, velocity.get(i) - 2 * vg / ggDivM * gDivM.get(i));
         }
     }
+
+    private void refreshVelocity(WrappedVector velocity) {
+        ReadableVector mass = preconditioning.mass;
+
+        for (int i = 0, len = velocity.getDim(); i < len; ++i) {
+            velocity.set(i, MathUtils.nextGaussian() / Math.sqrt(mass.get(i)));
+        }
+    }
+
+    private WrappedVector storedVelocity;
+
+    @Override
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[preconditioning.mass.getDim()];
+        for (int i = 0; i < preconditioning.mass.getDim(); ++i) {
+            final int index = i;
+            columns[i] = new NumberColumn("v" + index) {
+                @Override
+                public double getDoubleValue() {
+                    if (storedVelocity != null) {
+                        return storedVelocity.get(index);
+                    } else {
+                        return 0.0;
+                    }
+                }
+            };
+        }
+
+        return columns;
+    }
+
+    private final double refreshmentRate = 1.4;
 }

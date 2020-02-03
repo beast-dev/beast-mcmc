@@ -31,7 +31,7 @@ public interface MassPreconditioner {
 
     double getVelocity(int index, ReadableVector momentum);
 
-    void storeSecant(ReadableVector gradient, ReadableVector position);
+    void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform);
 
     void updateMass();
 
@@ -129,7 +129,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) { }
+        public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform) { }
 
         @Override
         public void updateMass() {
@@ -171,7 +171,7 @@ public interface MassPreconditioner {
             this.inverseMass = computeInverseMass();
         }
 
-        abstract public void storeSecant(ReadableVector gradient, ReadableVector position);
+        abstract public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform);
 
     }
 
@@ -323,7 +323,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+        public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform) {
             // Do nothing
         }
 
@@ -368,7 +368,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+        public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform) {
              variance.update(position);
         }
     }
@@ -535,7 +535,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+        public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform) {
             // Do nothing
         }
 
@@ -583,7 +583,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+        public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform) {
             secantHessian.storeSecant(gradient, position);
         }
     }
@@ -611,7 +611,7 @@ public interface MassPreconditioner {
         }
 
         @Override
-        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+        public void storeSecant(ReadableVector gradient, ReadableVector position, Transform transform) {
 //            adaptableCovariance.update(gradient);
             adaptableCovariance.update(position);
         }

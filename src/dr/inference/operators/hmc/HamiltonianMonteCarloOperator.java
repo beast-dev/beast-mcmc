@@ -132,7 +132,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             double[] lastGradient = leapFrogEngine.getLastGradient();
             double[] lastPosition = leapFrogEngine.getLastPosition();
             if (lastGradient != null && lastPosition != null) {
-                preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+                preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition), transform);
             }
             preconditioning.updateMass();
         }

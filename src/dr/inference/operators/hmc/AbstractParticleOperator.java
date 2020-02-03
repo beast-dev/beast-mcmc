@@ -342,7 +342,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     enum Type {
         NONE,
         BOUNDARY,
-        GRADIENT;
+        GRADIENT,
+        REFRESHMENT;
 
         public static Type castFromInt(int i) {
             if (i == 0) {

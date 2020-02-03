@@ -31,6 +31,7 @@ import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.AbstractParticleOperator;
+import dr.inference.operators.hmc.IrreversibleZigZagOperator;
 import dr.inference.operators.hmc.ReversibleZigZagOperator;
 import dr.xml.*;
 
@@ -47,6 +48,7 @@ import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRu
 public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String ZIG_ZAG_PARSER = "zigZagOperator";
+    private final static String REVERSIBLE_FLG = "reversibleFlag";
 
     @Override
     public String getParserName() {
@@ -72,8 +74,15 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         int threadCount = xo.getAttribute(THREAD_COUNT, 1);
 
-        return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
-                runtimeOptions, mask, threadCount);
+        boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
+
+        if (reversible){
+            return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
+                    runtimeOptions, mask, threadCount);
+        } else {
+            return new IrreversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
+                    runtimeOptions, mask, threadCount);
+        }
     }
 
     @Override

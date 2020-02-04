@@ -1,8 +1,10 @@
 package dr.evomodelxml.continuous;
 
 import dr.evomodel.continuous.LoadingsShrinkagePrior;
+import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inferencexml.distribution.shrinkage.BayesianBridgeDistributionModelParser;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser;
 import dr.xml.*;
 
@@ -20,37 +22,37 @@ public class LoadingsShrinkagePriorParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String name = (String) xo.getAttribute("id", LoadingsShrinkagePrior.class.toString());
+        String name = xo.getAttribute("id", LoadingsShrinkagePrior.class.toString());
 
         MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         XMLObject rpxo = xo.getChild(ROW_PRIORS);
 
-        BayesianBridgeLikelihood[] rowPriors = new BayesianBridgeLikelihood[loadings.getRowDimension()];
+        BayesianBridgeDistributionModel[] rowModels = new BayesianBridgeDistributionModel[loadings.getRowDimension()];
 
         int counter = 0;
 
 
-        for (int i = 0; i < loadings.getRowDimension(); i++) {
+        for (int i = 0; i < rpxo.getChildCount(); i++) {
             Object cxo = rpxo.getChild(i);
-            if (cxo instanceof BayesianBridgeLikelihood) {
-                rowPriors[i] = (BayesianBridgeLikelihood) cxo;
+            if (cxo instanceof BayesianBridgeDistributionModel) {
+                rowModels[i] = (BayesianBridgeDistributionModel) cxo;
                 counter++;
             } else {
                 throw new XMLParseException("The " + ROW_PRIORS + " element should only have "
-                        + BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE + " child elements.");
+                        + BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION + " child elements.");
             }
         }
 
-        if (counter != loadings.getRowDimension()) {
-            throw new XMLParseException("The number of " + BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE +
+        if (counter != loadings.getColumnDimension()) {
+            throw new XMLParseException("The number of " + BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION +
                     " in " + ROW_PRIORS + " must be the same as the number of rows in the matrix " +
-                    loadings.getParameterName() + ". There are currently " + counter +
-                    BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE + " elements and " + loadings.getRowDimension() +
+                    loadings.getParameterName() + ".\nThere are currently " + counter + " " +
+                    BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION + " elements and " + loadings.getRowDimension() +
                     " rows in " + loadings.getParameterName() + ".");
         }
 
 
-        return new LoadingsShrinkagePrior(name, loadings, rowPriors);
+        return new LoadingsShrinkagePrior(name, loadings, rowModels);
     }
 
     @Override
@@ -58,7 +60,7 @@ public class LoadingsShrinkagePriorParser extends AbstractXMLObjectParser {
         return new XMLSyntaxRule[]{
                 new ElementRule(MatrixParameterInterface.class),
                 new ElementRule(ROW_PRIORS, new XMLSyntaxRule[]{
-                        new ElementRule(BayesianBridgeLikelihood.class, 1, Integer.MAX_VALUE)
+                        new ElementRule(BayesianBridgeDistributionModel.class, 1, Integer.MAX_VALUE)
                 })
         };
     }

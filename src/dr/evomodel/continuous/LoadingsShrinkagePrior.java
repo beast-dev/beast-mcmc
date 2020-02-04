@@ -1,5 +1,6 @@
 package dr.evomodel.continuous;
 
+import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -22,11 +23,17 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
 
     public LoadingsShrinkagePrior(String name,
                                   MatrixParameterInterface loadings,
-                                  BayesianBridgeLikelihood[] rowPriors) {
+                                  BayesianBridgeDistributionModel[] rowDistributions) {
         super(name);
 
         this.loadings = loadings;
-        this.rowPriors = rowPriors;
+
+        this.rowPriors = new BayesianBridgeLikelihood[loadings.getColumnDimension()];
+
+        for (int i = 0; i < loadings.getColumnDimension(); i++) {
+            rowPriors[i] = new BayesianBridgeLikelihood(loadings.getParameter(i), rowDistributions[i]);
+        }
+
         this.gradientLogDensity = new double[loadings.getDimension()];
 
     }

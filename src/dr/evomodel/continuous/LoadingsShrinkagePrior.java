@@ -31,7 +31,7 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
         this.rowPriors = new BayesianBridgeLikelihood[loadings.getColumnDimension()];
 
         for (int i = 0; i < loadings.getColumnDimension(); i++) {
-            rowPriors[i] = new BayesianBridgeLikelihood(loadings.getParameter(i), rowDistributions[i]);
+            rowPriors[i] = new BayesianBridgeLikelihood(loadings.getUniqueParameter(i), rowDistributions[i]);
             addModel(rowPriors[i]);
         }
 
@@ -61,10 +61,10 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
         for (int i = 0; i < rowPriors.length; i++) {
             double[] grad = rowPriors[i].getGradientLogDensity();
 
-            int offset = i * loadings.getColumnDimension();
+            int offset = i * loadings.getRowDimension();
 
-            for (int j = 0; j < loadings.getColumnDimension(); j++) {
-                gradientLogDensity[j + offset] = grad[offset];
+            for (int j = 0; j < loadings.getRowDimension(); j++) {
+                gradientLogDensity[j + offset] = grad[j];
             }
         }
 

@@ -27,7 +27,7 @@ public class LoadingsShrinkagePriorParser extends AbstractXMLObjectParser {
         MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         XMLObject rpxo = xo.getChild(ROW_PRIORS);
 
-        BayesianBridgeDistributionModel[] rowModels = new BayesianBridgeDistributionModel[loadings.getRowDimension()];
+        BayesianBridgeDistributionModel[] rowModels = new BayesianBridgeDistributionModel[loadings.getColumnDimension()];
 
         int counter = 0;
 
@@ -44,11 +44,19 @@ public class LoadingsShrinkagePriorParser extends AbstractXMLObjectParser {
         }
 
         if (counter != loadings.getColumnDimension()) {
-            throw new XMLParseException("The number of " + BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION +
-                    " in " + ROW_PRIORS + " must be the same as the number of rows in the matrix " +
-                    loadings.getParameterName() + ".\nThere are currently " + counter + " " +
-                    BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION + " elements and " + loadings.getRowDimension() +
-                    " rows in " + loadings.getParameterName() + ".");
+            throw new XMLParseException(
+                    "The number of " + BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION +
+                            " in " + ROW_PRIORS + " must be the same as the number of rows in the matrix " +
+                            loadings.getParameterName() + ".\nThere are currently " + counter + " " +
+                            BayesianBridgeDistributionModelParser.BAYESIAN_BRIDGE_DISTRIBUTION + " elements and " +
+                            loadings.getRowDimension() + " rows in " + loadings.getParameterName() + ".");
+        }
+
+        for (BayesianBridgeDistributionModel model : rowModels) {
+            if (model.getLocalScale().getDimension() != loadings.getRowDimension()) {
+                throw new XMLParseException("The dimension of the " + BayesianBridgeLikelihoodParser.LOCAL_SCALE +
+                        " must match the number of columns in the loadings matrix");
+            }
         }
 
 

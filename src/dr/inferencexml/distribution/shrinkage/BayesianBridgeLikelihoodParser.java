@@ -34,7 +34,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BAYESIAN_BRIDGE = "bayesianBridge";
     static final String GLOBAL_SCALE = "globalScale";
-    static final String LOCAL_SCALE = "localScale";
+    public static final String LOCAL_SCALE = "localScale";
     static final String EXPONENT = "exponent";
     private static final String OLD = "old";
 

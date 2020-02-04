@@ -32,9 +32,12 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
 
         for (int i = 0; i < loadings.getColumnDimension(); i++) {
             rowPriors[i] = new BayesianBridgeLikelihood(loadings.getParameter(i), rowDistributions[i]);
+            addModel(rowPriors[i]);
         }
 
         this.gradientLogDensity = new double[loadings.getDimension()];
+        addVariable(loadings);
+
 
     }
 
@@ -70,6 +73,7 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        likelihoodKnown = false;
         for (BayesianBridgeLikelihood likelihood : rowPriors) {
             likelihood.handleModelChangedEvent(model, object, index);
         }
@@ -77,6 +81,7 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        likelihoodKnown = false;
         for (BayesianBridgeLikelihood likelihood : rowPriors) {
             likelihood.handleVariableChangedEvent(variable, index, type);
         }

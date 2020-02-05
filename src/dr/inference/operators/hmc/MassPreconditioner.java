@@ -80,7 +80,7 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
 //                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
                 AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
-                return new AdaptiveFullHessianPreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension());
+                return new AdaptiveFullHessianPreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension(), options.preconditioningDelay);
             }
         };
 
@@ -594,32 +594,42 @@ public interface MassPreconditioner {
         private final GradientWrtParameterProvider gradientProvider;
         private final AdaptableVector averageCovariance;
         private final double[] inverseMassBuffer;
+        private final int minimumUpdates;
 
-        AdaptiveFullHessianPreconditioning(GradientWrtParameterProvider gradientProvider, AdaptableCovariance adaptableCovariance, Transform transform, int dim) {
+        AdaptiveFullHessianPreconditioning(GradientWrtParameterProvider gradientProvider,
+                                           AdaptableCovariance adaptableCovariance,
+                                           Transform transform,
+                                           int dim,
+                                           int preconditioningDelay) {
             super(null, transform, dim);
             this.adaptableCovariance = adaptableCovariance;
             this.gradientProvider = gradientProvider;
             this.averageCovariance = new AdaptableVector.Default(dim * dim);
             this.inverseMassBuffer = new double[dim * dim];
+            this.minimumUpdates = preconditioningDelay;
         }
 
         @Override
         protected double[] computeInverseMass() {
 
-            WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
+            if (adaptableCovariance.getUpdateCount() > minimumUpdates) {
+                WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
-            double[] flatCovariance = new double[dim * dim];
-            for (int i = 0; i < dim; i++) {
-                System.arraycopy(covariance.getArrays()[i], 0, flatCovariance, i * dim, dim);
-            }
+                double[] flatCovariance = new double[dim * dim];
+                for (int i = 0; i < dim; i++) {
+                    System.arraycopy(covariance.getArrays()[i], 0, flatCovariance, i * dim, dim);
+                }
 
-            averageCovariance.update(new WrappedVector.Raw(flatCovariance));
+                averageCovariance.update(new WrappedVector.Raw(flatCovariance));
 
 //            double[][] numericHessian = NumericalDerivative.getNumericalHessian(numeric1, gradientProvider.getParameter().getParameterValues());
 
-            cacheAverageCovariance(averageCovariance.getMean());
+                cacheAverageCovariance(averageCovariance.getMean());
 
-            return inverseMassBuffer;
+                return inverseMassBuffer;
+            } else {
+                return inverseMass;
+            }
         }
 
         private void cacheAverageCovariance(ReadableVector mean) {

@@ -96,21 +96,69 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         while (bounceState.isTimeRemaining()) {
 
             final MinimumTravelInformation firstBounce;
+            if (FUSE) {
+                firstBounce = getNextBounce(position,
+                        velocity, signedAction, signedGradient, null);
+            } else {
+                MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
+                        position, velocity);
 
-            MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
-                    position, velocity);
-
-            MinimumTravelInformation gradientBounce = getNextGradientBounceZigzag(signedGradient, signedAction);
-
-            firstBounce = (boundaryBounce.time < gradientBounce.time) ?
-                    new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
-                    new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+                MinimumTravelInformation gradientBounce = getNextGradientBounceZigzag(signedGradient, signedAction);
+                firstBounce = (boundaryBounce.time < gradientBounce.time) ?
+                        new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
+                        new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+            }
 
             bounceState = doBounce(bounceState, firstBounce, position, velocity, signedAction, signedGradient, null);
 
             ++count;
         }
         return 0.0;
+    }
+
+    private MinimumTravelInformation getNextBounce(WrappedVector position,
+                                                   WrappedVector velocity,
+                                                   WrappedVector signedAction,
+                                                   WrappedVector signedGradient,
+                                                   WrappedVector momentum) {
+
+        return getNextBounce(0, position.getDim(),
+                position.getBuffer(), velocity.getBuffer(),
+                signedAction.getBuffer(), signedGradient.getBuffer(), null);
+
+    }
+
+    private MinimumTravelInformation getNextBounce(final int begin, final int end,
+                                                   final double[] position,
+                                                   final double[] velocity,
+                                                   final double[] signedAction,
+                                                   final double[] signedGradient,
+                                                   final double[] momentum) {
+
+        double minimumTime = Double.POSITIVE_INFINITY;
+        int index = -1;
+        Type type = Type.NONE;
+
+        for (int i = begin; i < end; ++i) {
+
+            double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
+
+            if (boundaryTime < minimumTime) {
+                minimumTime = boundaryTime;
+                index = i;
+                type = Type.BOUNDARY;
+            }
+            double T = MathUtils.nextExponential(1);
+            double gradientTime = getSwitchTime(-signedGradient[i], signedAction[i], T);
+
+            if (gradientTime < minimumTime) {
+                minimumTime = gradientTime;
+                index = i;
+                type = Type.GRADIENT;
+            }
+        }
+
+        return new MinimumTravelInformation(minimumTime, index, type);
     }
 
     MinimumTravelInformation getNextGradientBounceZigzag(WrappedVector signedGradient,
@@ -120,6 +168,14 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 signedGradient.getBuffer(), signedAction.getBuffer());
     }
 
+    private double findC(double a, double b, double T) {
+        if (a > 0 || b < 0) {
+            return T;
+        } else {
+            return b * b / (4 * a) + T;
+        }
+    }
+
     private MinimumTravelInformation getNextGradientBounceZigzag(final int begin, final int end,
                                                                  final double[] signedGradient,
                                                                  final double[] signedAction) {
@@ -127,6 +183,9 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         double minimumRoot = Double.POSITIVE_INFINITY;
         double root;
         int index = -1;
+        double a;
+        double b;
+        double c;
 
         for (int i = begin; i < end; ++i) {
             if (signedGradient[i] == 0) { // for fix dimension
@@ -134,8 +193,11 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             } else {
                 double T = MathUtils.nextExponential(1);
                 root = getSwitchTime(-signedGradient[i], signedAction[i], T);
+//                a = -0.5 * signedAction[i];
+//                b = signedGradient[i];
+//                c = findC(a, b, T);
+//                root = minimumPositiveRoot(a, b, c); //if c < 0, root (?)= the large positive root
             }
-
             if (root < minimumRoot) {
                 minimumRoot = root;
                 index = i;
@@ -241,4 +303,5 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public String getOperatorName() {
         return "Irreversible zig-zag operator";
     }
+    private final static boolean FUSE = true;
 }

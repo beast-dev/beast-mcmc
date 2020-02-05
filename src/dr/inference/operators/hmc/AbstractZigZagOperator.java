@@ -368,7 +368,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
         }
     }
 
-    private double findBoundaryTime(int index, double position,
+    protected double findBoundaryTime(int index, double position,
                                     double velocity) {
 
         double time = Double.POSITIVE_INFINITY;

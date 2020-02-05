@@ -592,11 +592,15 @@ public interface MassPreconditioner {
 
         private final AdaptableCovariance adaptableCovariance;
         private final GradientWrtParameterProvider gradientProvider;
+        private final AdaptableVector averageCovariance;
+        private final double[] inverseMassBuffer;
 
         AdaptiveFullHessianPreconditioning(GradientWrtParameterProvider gradientProvider, AdaptableCovariance adaptableCovariance, Transform transform, int dim) {
             super(null, transform, dim);
             this.adaptableCovariance = adaptableCovariance;
             this.gradientProvider = gradientProvider;
+            this.averageCovariance = new AdaptableVector.Default(dim * dim);
+            this.inverseMassBuffer = new double[dim * dim];
         }
 
         @Override
@@ -604,10 +608,24 @@ public interface MassPreconditioner {
 
             WrappedMatrix.ArrayOfArray covariance = (WrappedMatrix.ArrayOfArray) adaptableCovariance.getCovariance();
 
+            double[] flatCovariance = new double[dim * dim];
+            for (int i = 0; i < dim; i++) {
+                System.arraycopy(covariance.getArrays()[i], 0, flatCovariance, i * dim, dim);
+            }
+
+            averageCovariance.update(new WrappedVector.Raw(flatCovariance));
+
 //            double[][] numericHessian = NumericalDerivative.getNumericalHessian(numeric1, gradientProvider.getParameter().getParameterValues());
 
-            return super.computeInverseMass(covariance, gradientProvider, PDTransformMatrix.Negate);
+            cacheAverageCovariance(averageCovariance.getMean());
 
+            return inverseMassBuffer;
+        }
+
+        private void cacheAverageCovariance(ReadableVector mean) {
+            for (int i = 0; i < dim * dim; i++) {
+                inverseMassBuffer[i] = mean.get(i);
+            }
         }
 
         @Override

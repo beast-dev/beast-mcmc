@@ -12,8 +12,8 @@ import dr.xml.*;
  */
 
 
-public class LoadingsShrinkagePriorParser extends AbstractXMLObjectParser {
-    private static final String LOADINGS_SHRINKAGE = "loadingsShrinkagePrior";
+public class LoadingsShrinkageGradientParser extends AbstractXMLObjectParser {
+    private static final String LOADINGS_SHRINKAGE = "loadingsShrinkageGradient";
     private static final String ROW_PRIORS = "rowPriors";
 
 

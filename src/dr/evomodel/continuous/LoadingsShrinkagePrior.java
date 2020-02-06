@@ -23,16 +23,15 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
 
     public LoadingsShrinkagePrior(String name,
                                   MatrixParameterInterface loadings,
-                                  BayesianBridgeDistributionModel[] rowDistributions) {
+                                  BayesianBridgeLikelihood[] rowPriors) {
         super(name);
 
         this.loadings = loadings;
 
-        this.rowPriors = new BayesianBridgeLikelihood[loadings.getColumnDimension()];
+        this.rowPriors = rowPriors;
 
-        for (int i = 0; i < loadings.getColumnDimension(); i++) {
-            rowPriors[i] = new BayesianBridgeLikelihood(loadings.getUniqueParameter(i), rowDistributions[i]);
-            addModel(rowPriors[i]);
+        for (BayesianBridgeLikelihood model : rowPriors) {
+            addModel(model);
         }
 
         this.gradientLogDensity = new double[loadings.getDimension()];

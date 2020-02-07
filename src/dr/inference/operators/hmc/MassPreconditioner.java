@@ -443,7 +443,7 @@ public interface MassPreconditioner {
                 return desc;
             }
 
-            private static final double MIN_EIGENVALUE = -10.0; // TODO Bad magic number
+            private static final double MIN_EIGENVALUE = -20.0; // TODO Bad magic number
             private static final double MAX_EIGENVALUE = -0.5; // TODO Bad magic number
 
             protected void boundEigenvalues(DoubleMatrix1D eigenvalues) {
@@ -624,7 +624,7 @@ public interface MassPreconditioner {
 
 //            double[][] numericHessian = NumericalDerivative.getNumericalHessian(numeric1, gradientProvider.getParameter().getParameterValues());
 
-                cacheAverageCovariance(averageCovariance.getMean());
+                cacheAverageCovariance(normalizeCovariance((WrappedVector.Raw) averageCovariance.getMean()));
 
                 return inverseMassBuffer;
             } else {
@@ -632,9 +632,35 @@ public interface MassPreconditioner {
             }
         }
 
-        private void cacheAverageCovariance(ReadableVector mean) {
+        private ReadableVector normalizeCovariance(WrappedVector flatCovariance) {
+            double sum = 0.0;
+            for (int i = 0; i < dim; i++) {
+                sum += flatCovariance.get(i * dim + i);
+            }
+
+            final double multiplier = dim / sum;
             for (int i = 0; i < dim * dim; i++) {
-                inverseMassBuffer[i] = mean.get(i);
+                flatCovariance.set(i, flatCovariance.get(i) * multiplier);
+            }
+            return flatCovariance;
+        }
+
+        private void cacheAverageCovariance(ReadableVector mean) {
+
+            double[][] tempVariance = new double[dim][dim];
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    tempVariance[i][j] = -mean.get(i * dim + j);
+                }
+            }
+
+            double[] transformedVariance = PDTransformMatrix.Default.transformMatrix(tempVariance, dim);
+
+
+            for (int i = 0; i < dim; i++) {
+                for (int j = 0; j < dim; j++) {
+                    inverseMassBuffer[i * dim + j] = transformedVariance[i * dim + j];
+                }
             }
         }
 

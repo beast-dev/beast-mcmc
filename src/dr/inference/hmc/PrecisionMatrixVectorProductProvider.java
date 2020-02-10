@@ -46,8 +46,10 @@ public interface PrecisionMatrixVectorProductProvider {
 
         private final MatrixParameterInterface matrix;
 
-        public Generic(MatrixParameterInterface matrix) {
+        public Generic(MatrixParameterInterface matrix, double roughTimeGuess) {
+
             this.matrix = matrix;
+            this.roughTimeGuess = roughTimeGuess;
         }
 
         @Override
@@ -85,19 +87,21 @@ public interface PrecisionMatrixVectorProductProvider {
 
         @Override
         public double getTimeScale() {
-            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
-
-            double max = Double.MIN_VALUE;
-            for (int i = 0; i < dim; ++i) {
-                max = Math.max(max, matrix.getParameterValue(i,i));
-            }
-
-            return Math.sqrt(max);
+            return roughTimeGuess;
+//            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
+//
+//            double max = Double.MIN_VALUE;
+//            for (int i = 0; i < dim; ++i) {
+//                max = Math.max(max, matrix.getParameterValue(i,i));
+//            }
+//
+//            return Math.sqrt(max);
         }
 
         @Override
         public double getTimeScaleEigen() {
             return 0;
         }
+        private final double roughTimeGuess;
     }
 }

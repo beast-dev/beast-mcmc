@@ -12,6 +12,7 @@ import dr.xml.*;
 
 public class PrecisionColumnProviderParser extends AbstractXMLObjectParser {
     private static final String PRODUCT_PROVIDER = "precisionColumn";
+    private static final String USE_CACHE = "useCache";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -19,10 +20,12 @@ public class PrecisionColumnProviderParser extends AbstractXMLObjectParser {
         AutoRegressiveNormalDistributionModel ar = (AutoRegressiveNormalDistributionModel) xo.getChild(
                 AutoRegressiveNormalDistributionModel.class);
 
+        boolean useCache = xo.getAttribute(USE_CACHE, true);
+
         if (matrix != null) {
-            return new PrecisionColumnProvider.Generic(matrix);
+            return new PrecisionColumnProvider.Generic(matrix, useCache);
         } else {
-            return new PrecisionColumnProvider.AutoRegressive(ar);
+            return new PrecisionColumnProvider.AutoRegressive(ar, useCache);
         }
     }
 
@@ -36,6 +39,7 @@ public class PrecisionColumnProviderParser extends AbstractXMLObjectParser {
                     new ElementRule(MatrixParameterInterface.class),
                     new ElementRule(AutoRegressiveNormalDistributionModel.class)
             ),
+            AttributeRule.newBooleanRule(USE_CACHE, true),
     };
 
     @Override

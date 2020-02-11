@@ -68,6 +68,24 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
         return new double[dim];
     }
 
+    public double[] getPrecisionColumn(int index) {
+        double[] column = new double[dim];
+
+        if (index == 0) {
+            column[0] = 1.0;
+            column[1] = -decay;
+        } else if (index == dim - 1) {
+            column[dim - 2] = -decay;
+            column[dim - 1] = 1.0;
+        } else {
+            column[index - 1] = -decay;
+            column[index] = 1.0;
+            column[index + 1] = -decay;
+        }
+
+        return column;
+    }
+
     @Override
     public double logPdf(double[] x) {
 

@@ -33,6 +33,7 @@ import dr.xml.*;
 public class AutoRegressiveNormalDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String NORMAL_DISTRIBUTION_MODEL = "autoRegressiveNormalDistributionModel";
+    private static final String DIMENSION = "dim";
     private static final String MARGINAL_PRECISION = "marginalPrecision";
     private static final String DECAY_PRECISION = "decayPrecision";
 
@@ -42,16 +43,15 @@ public class AutoRegressiveNormalDistributionModelParser extends AbstractXMLObje
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(MultivariateDistributionLikelihood.MVN_MEAN);
-        Parameter mean = (Parameter) cxo.getChild(Parameter.class);
+        int dim = xo.getIntegerAttribute(DIMENSION);
 
-        cxo = xo.getChild(MARGINAL_PRECISION);
+        XMLObject cxo = xo.getChild(MARGINAL_PRECISION);
         Parameter marginal = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(DECAY_PRECISION);
         Parameter decay = (Parameter) cxo.getChild(Parameter.class);
 
-        return new AutoRegressiveNormalDistributionModel(mean, marginal, decay);
+        return new AutoRegressiveNormalDistributionModel(dim, marginal, decay);
     }
 
     //************************************************************************
@@ -63,6 +63,7 @@ public class AutoRegressiveNormalDistributionModelParser extends AbstractXMLObje
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newIntegerRule(DIMENSION),
             new ElementRule(MultivariateDistributionLikelihood.MVN_MEAN,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(MARGINAL_PRECISION,

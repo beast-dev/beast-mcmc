@@ -83,6 +83,7 @@ public class BeautiOptions extends ModelOptions {
 
     /**
      * This will register the list of components if not already there...
+     *
      * @param components
      */
     public void registerComponents(ComponentFactory[] components) {
@@ -97,7 +98,6 @@ public class BeautiOptions extends ModelOptions {
 
 
     /**
-     *
      * resets the options to the initial conditions
      */
     public void reset() {
@@ -259,7 +259,7 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus" );
+            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus");
             allMuNus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
@@ -376,8 +376,6 @@ public class BeautiOptions extends ModelOptions {
         }
         return null;
     }
-
-
 
 
     public boolean hasData() {
@@ -971,8 +969,9 @@ public class BeautiOptions extends ModelOptions {
     /**
      * given a list of BEAUti AbstractPartitionData, take the union of taxon list from them
      * but if partition instanceof PartitionPattern and taxon is masked in Patterns class, then not count.
-     * @param partitionDataList    can be BEAUti PartitionData or PartitionPattern or both
-     * @return  num of taxon
+     *
+     * @param partitionDataList can be BEAUti PartitionData or PartitionPattern or both
+     * @return num of taxon
      */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null || partitionDataList.size() == 0) return 0;
@@ -1363,7 +1362,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean useClassicOperatorsAndPriors() {
         return useClassicOperatorsAndPriors;
     }
-    
+
     public boolean useNuRelativeRates() {
         return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
     }

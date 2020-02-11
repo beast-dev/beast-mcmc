@@ -492,16 +492,16 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             traits.add(trait);
 
             if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                discreteCount ++;
+                discreteCount++;
             }
             if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-                continuousCount ++;
+                continuousCount++;
             }
         }
 
         boolean success = false;
         if (discreteCount > 0) {
-            if (continuousCount > 0)  {
+            if (continuousCount > 0) {
                 JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
                 return;
             }

@@ -34,8 +34,8 @@ public class AutoRegressiveNormalDistributionModelParser extends AbstractXMLObje
 
     public static final String NORMAL_DISTRIBUTION_MODEL = "autoRegressiveNormalDistributionModel";
     private static final String DIMENSION = "dim";
-    private static final String MARGINAL_PRECISION = "marginalPrecision";
-    private static final String DECAY_PRECISION = "decayPrecision";
+    private static final String MARGINAL_PRECISION = "scale";
+    private static final String DECAY_PRECISION = "rho";
 
     public String getParserName() {
         return NORMAL_DISTRIBUTION_MODEL;
@@ -48,8 +48,16 @@ public class AutoRegressiveNormalDistributionModelParser extends AbstractXMLObje
         XMLObject cxo = xo.getChild(MARGINAL_PRECISION);
         Parameter marginal = (Parameter) cxo.getChild(Parameter.class);
 
+        if (marginal.getParameterValue(0) <= 0.0) {
+            throw new XMLParseException("Scale must be > 0.0");
+        }
+
         cxo = xo.getChild(DECAY_PRECISION);
         Parameter decay = (Parameter) cxo.getChild(Parameter.class);
+
+        if (Math.abs(decay.getParameterValue(0)) >= 1.0) {
+            throw new XMLParseException("|Rho| must be < 1.0");
+        }
 
         return new AutoRegressiveNormalDistributionModel(dim, marginal, decay);
     }
@@ -64,8 +72,6 @@ public class AutoRegressiveNormalDistributionModelParser extends AbstractXMLObje
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(DIMENSION),
-            new ElementRule(MultivariateDistributionLikelihood.MVN_MEAN,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(MARGINAL_PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(DECAY_PRECISION,

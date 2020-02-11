@@ -390,7 +390,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (result == false) {
                 return false;
             }
-            traits = options.traits; //Automatically choos all traits from input file
+            traits = options.traits; //Automatically choose all traits from input file
         }
 
 

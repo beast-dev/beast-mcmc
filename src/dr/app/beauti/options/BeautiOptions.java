@@ -1094,6 +1094,23 @@ public class BeautiOptions extends ModelOptions {
         return selRow; // only for trait panel
     }
 
+    public boolean onlyContinuousPartitions() {
+        if (dataPartitions.isEmpty()) {
+            return false;
+        }
+
+        boolean onlyContinuous = true;
+
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (partition.getDataType().getType() != DataType.CONTINUOUS) {
+                onlyContinuous = false;
+                break;
+            }
+        }
+
+        return onlyContinuous;
+    }
+
     private void updateTraitParameters(AbstractPartitionData partition) {
         if (partition.isCreatedFromTrait()) {
             ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);

@@ -186,7 +186,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
-        if (options.getPartitionSubstitutionModels().size() > 0) {
+        if (options.getPartitionSubstitutionModels().size() > 0 && !options.onlyContinuousPartitions()) {
             if (selRow < 0) {
                 selRow = 0;
             }

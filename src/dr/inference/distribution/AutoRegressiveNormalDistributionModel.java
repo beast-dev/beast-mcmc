@@ -54,10 +54,6 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
 
         distribution = createNewDistribution();
         distributionKnown = true;
-
-        if (marginal.getParameterValue(0) != 1.0) {
-            throw new IllegalArgumentException("Not yet implemented");
-        }
     }
 
     public Parameter getMeanParameter() {

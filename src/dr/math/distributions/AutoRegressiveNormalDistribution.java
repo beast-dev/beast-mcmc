@@ -49,6 +49,10 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
         if (marginal != 1.0) {
             throw new IllegalArgumentException("Not yet implemented");
         }
+
+        if (Math.abs(decay) >= 1.0) {
+            throw new IllegalArgumentException("|Rho| must be < 1.0");
+        }
     }
 
     public String getType() {
@@ -56,7 +60,7 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     }
 
     private double getLogDet() {
-        return  (1 - dim) * Math.log(1.0 - decay * decay);
+        return  Math.log(1.0 - decay * decay);
     }
 
     @Override
@@ -89,13 +93,19 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     @Override
     public double logPdf(double[] x) {
 
-        double SSE = 0.0;
-        for (int i = 1; i < dim; ++i) {
-            final double delta =  x[i] - decay * x[i - 1];
-            SSE += delta * delta;
+        double SSE = x[0] * x[0] + x[dim - 1] * x[dim - 1];;
+
+        for (int i = 1; i < dim - 1; ++i) {
+            SSE += (1.0 + decay * decay) * x[i] * x[i];
         }
 
-        return dim * logNormalize + 0.5 * (getLogDet() - SSE);
+        for (int i = 1; i < dim; ++i) {
+            SSE -= 2 * decay * x[i - 1] * x[i];
+        }
+
+        final double logDet = getLogDet();
+
+        return dim * logNormalize + 0.5 * (logDet - SSE);
     }
 
     public double[] gradLogPdf(double[] x) {
@@ -105,7 +115,7 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
         gradient[0] = -(x[0] - decay * x[1]);
 
         for (int i = 1; i < dim - 1; ++i) {
-            gradient[i] = -(-decay * x[i - 1] + x[i] - decay * x[i + 1]);
+            gradient[i] = -(-decay * x[i - 1] + (1 + decay * decay) * x[i] - decay * x[i + 1]);
         }
 
         gradient[dim - 1] = -(-decay * x[dim - 2] + x[dim - 1]);

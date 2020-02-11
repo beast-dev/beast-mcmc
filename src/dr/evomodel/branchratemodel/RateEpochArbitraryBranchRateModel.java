@@ -23,6 +23,9 @@ public class RateEpochArbitraryBranchRateModel extends AbstractBranchRateModel {
 
         this.epochBranchRateModel = epochBranchRateModel;
         this.arbitraryBranchRates = arbitraryBranchRates;
+
+        addModel(epochBranchRateModel);
+        addModel(arbitraryBranchRates);
     }
 
     @Override

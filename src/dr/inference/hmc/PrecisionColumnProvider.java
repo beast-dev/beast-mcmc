@@ -41,10 +41,12 @@ public interface PrecisionColumnProvider {
 
     abstract class Base extends AbstractModel implements PrecisionColumnProvider {
 
-        protected final Map<Integer, double[]> cache = new HashMap<>();
+        private final Map<Integer, double[]> cache = new HashMap<>();
+        private final boolean useCache;
 
-        private Base(String name) {
+        private Base(String name, boolean useCache) {
             super(name);
+            this.useCache = useCache;
         }
 
         @Override
@@ -59,12 +61,15 @@ public interface PrecisionColumnProvider {
 
         @Override
         public double[] getColumn(int index) {
+            if (useCache) {
+                if (!cache.containsKey(index)) {
+                    cache.put(index, getColumnWithoutCache(index));
+                }
 
-            if (!cache.containsKey(index)) {
-                cache.put(index, getColumnWithoutCache(index));
+                return cache.get(index);
+            } else {
+                return getColumnWithoutCache(index);
             }
-
-            return cache.get(index);
         }
 
         @Override
@@ -83,8 +88,8 @@ public interface PrecisionColumnProvider {
 
         private final MatrixParameterInterface matrix;
 
-        public Generic(MatrixParameterInterface matrix) {
-            super("precisionColumnProvider.Generic");
+        public Generic(MatrixParameterInterface matrix, boolean useCache) {
+            super("precisionColumnProvider.Generic" , useCache);
 
             this.matrix = matrix;
             addVariable(matrix);
@@ -108,8 +113,8 @@ public interface PrecisionColumnProvider {
 
         private final AutoRegressiveNormalDistributionModel ar;
 
-        public AutoRegressive(AutoRegressiveNormalDistributionModel ar) {
-            super("precisionColumnProvider.AutoRegressive");
+        public AutoRegressive(AutoRegressiveNormalDistributionModel ar, boolean useCache) {
+            super("precisionColumnProvider.AutoRegressive", useCache);
 
             this.ar = ar;
             addModel(ar);

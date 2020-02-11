@@ -39,13 +39,12 @@ import dr.math.distributions.GaussianProcessRandomGenerator;
 public class AutoRegressiveNormalDistributionModel extends AbstractModel implements
         ParametricMultivariateDistributionModel, GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
 
-    public AutoRegressiveNormalDistributionModel(Parameter meanParameter,
+    public AutoRegressiveNormalDistributionModel(int dim,
                                                  Parameter marginalParameter,
                                                  Parameter decayParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
 
-        this.mean = meanParameter;
-        addVariable(meanParameter);
+        this.dim = dim;
 
         this.marginal = marginalParameter;
         addVariable(marginalParameter);
@@ -62,7 +61,7 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
     }
 
     public Parameter getMeanParameter() {
-        return mean;
+        return null;
     }
 
     // *****************************************************************
@@ -85,8 +84,13 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
         throw new RuntimeException("Not yet implemented");
     }
 
+    public double[] getPrecisionColumn(int index) {
+        checkDistribution();
+        return distribution.getPrecisionColumn(index);
+    }
+
     public double[] getMean() {
-        return mean.getParameterValues();
+        return new double[dim];
     }
 
     public String getType() {
@@ -124,7 +128,7 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
 
     @Override
     public int getDimension() {
-        return mean.getDimension();
+        return dim;
     }
 
     @Override
@@ -138,7 +142,7 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
 
     @Override
     public Variable<Double> getLocationVariable() {
-        return mean;
+        return null;
     }
 
     // **************************************************************
@@ -146,11 +150,11 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
     // **************************************************************
 
     private AutoRegressiveNormalDistribution createNewDistribution() {
-        return new AutoRegressiveNormalDistribution(getMean(),
+        return new AutoRegressiveNormalDistribution(getDimension(),
                 marginal.getParameterValue(0), decay.getParameterValue(0));
     }
 
-    private final Parameter mean;
+    private final int dim;
     private final Parameter marginal;
     private final Parameter decay;
 

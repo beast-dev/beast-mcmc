@@ -554,6 +554,7 @@ public class BeautiFrame extends DocumentFrame {
                 BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
                 if (options.taxonList == null) {
                     beautiImporter.importTaxaFromTraits(files[0]);
+                    setDirty();
                 }
                 beautiImporter.importTraits(files[0]);
             } catch (FileNotFoundException fnfe) {

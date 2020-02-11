@@ -339,25 +339,6 @@ public class BEAUTiImporter {
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
 
-        if (taxa == null) {
-            taxa = new Taxa();
-            for (int i = 0; i < taxonNames.length; i++) {
-                taxa.addTaxon(new Taxon(taxonNames[i]));
-            }
-
-            addTaxonList(taxa);
-
-            SimpleAlignment dummyAlignment = new SimpleAlignment();
-            dummyAlignment.setDataType(new DummyDataType());
-
-            setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null); //TODO: maybe replace nulls
-
-            frame.setDirty(); //TODO: is this necessary?
-            frame.setAllOptions(); //TODO: is this necessary?
-
-            //TODO: what else needs to happen?
-
-        }
 
         for (int i = 0; i < dataTable.getColumnCount(); i++) {
             boolean warningGiven = false;
@@ -440,12 +421,7 @@ public class BEAUTiImporter {
         SimpleAlignment dummyAlignment = new SimpleAlignment();
         dummyAlignment.setDataType(new DummyDataType());
 
-        setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null); //TODO: maybe replace nulls
-
-        frame.setDirty(); //TODO: is this necessary?
-        frame.setAllOptions(); //TODO: is this necessary?
-
-        //TODO: what else needs to happen?
+        setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null);
 
     }
 

@@ -913,11 +913,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 }
 
             }
+
+
+            selectDataPanel();
+            //TODO: fix error when deleting partition
+
         }
 
-        //TODO: fix error when deleting partition
-        //TODO: set frame to DataPanel (not TraitPanel)
 
+    }
+
+    private void selectDataPanel() {
+        frame.tabbedPane.setSelectedComponent(this);
     }
 
 //    public class ShowAction extends AbstractAction {

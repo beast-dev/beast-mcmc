@@ -189,4 +189,14 @@ public class AutoRegressiveNormalDistributionModel extends AbstractModel impleme
         checkDistribution();
         return distribution.getHessianLogDensity(x);
     }
+
+    public double[] getPrecisionVectorProduct(double[] x) {
+        checkDistribution();
+        return distribution.getPrecisionVectorProduct(x);
+    }
+
+    public double[] getDiagonal() {
+        checkDistribution();
+        return distribution.getDiagonal();
+    }
 }

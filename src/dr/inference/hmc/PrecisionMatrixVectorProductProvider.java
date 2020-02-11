@@ -25,6 +25,7 @@
 
 package dr.inference.hmc;
 
+import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 
@@ -42,14 +43,63 @@ public interface PrecisionMatrixVectorProductProvider {
 
     double getTimeScaleEigen();
 
-    class Generic implements PrecisionMatrixVectorProductProvider {
+    abstract class Base implements  PrecisionMatrixVectorProductProvider {
+
+        private final double roughTimeGuess;
+
+        private Base(double roughTimeGuess) {
+            this.roughTimeGuess = roughTimeGuess;
+        }
+
+        @Override
+        public double getTimeScale() {
+            return roughTimeGuess;
+//            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
+//
+//            double max = Double.MIN_VALUE;
+//            for (int i = 0; i < dim; ++i) {
+//                max = Math.max(max, matrix.getParameterValue(i,i));
+//            }
+//
+//            return Math.sqrt(max);
+        }
+
+        @Override
+        public double getTimeScaleEigen() {
+            return 0;
+        }
+
+    }
+
+    class AutoRegressive extends Base {
+
+        private final AutoRegressiveNormalDistributionModel ar;
+
+        public AutoRegressive(AutoRegressiveNormalDistributionModel ar, double roughTimeGuess) {
+            super(roughTimeGuess);
+            this.ar = ar;
+
+        }
+
+        @Override
+        public double[] getProduct(Parameter vector) {
+            return ar.getPrecisionVectorProduct(vector.getParameterValues());
+        }
+
+        @Override
+        public double[] getMassVector() {
+            return ar.getDiagonal();
+        }
+    }
+
+    class Generic extends Base {
 
         private final MatrixParameterInterface matrix;
 
         public Generic(MatrixParameterInterface matrix, double roughTimeGuess) {
 
+            super(roughTimeGuess);
             this.matrix = matrix;
-            this.roughTimeGuess = roughTimeGuess;
         }
 
         @Override
@@ -84,24 +134,5 @@ public interface PrecisionMatrixVectorProductProvider {
 
             return mass;
         }
-
-        @Override
-        public double getTimeScale() {
-            return roughTimeGuess;
-//            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
-//
-//            double max = Double.MIN_VALUE;
-//            for (int i = 0; i < dim; ++i) {
-//                max = Math.max(max, matrix.getParameterValue(i,i));
-//            }
-//
-//            return Math.sqrt(max);
-        }
-
-        @Override
-        public double getTimeScaleEigen() {
-            return 0;
-        }
-        private final double roughTimeGuess;
     }
 }

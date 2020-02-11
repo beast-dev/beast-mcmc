@@ -93,7 +93,7 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     @Override
     public double logPdf(double[] x) {
 
-        double SSE = x[0] * x[0] + x[dim - 1] * x[dim - 1];;
+        double SSE = x[0] * x[0] + x[dim - 1] * x[dim - 1];
 
         for (int i = 1; i < dim - 1; ++i) {
             SSE += (1.0 + decay * decay) * x[i] * x[i];
@@ -108,19 +108,43 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
         return dim * logNormalize + 0.5 * (logDet - SSE);
     }
 
-    public double[] gradLogPdf(double[] x) {
+    private double[] scaledPrecisionVectorProduct(double[] x, double scale) {
 
-        double[] gradient = new double[dim];
+        assert (x.length == dim);
 
-        gradient[0] = -(x[0] - decay * x[1]);
+        double[] product = new double[dim];
+
+        product[0] = scale * (x[0] - decay * x[1]);
 
         for (int i = 1; i < dim - 1; ++i) {
-            gradient[i] = -(-decay * x[i - 1] + (1 + decay * decay) * x[i] - decay * x[i + 1]);
+            product[i] = scale * (-decay * x[i - 1] + (1 + decay * decay) * x[i] - decay * x[i + 1]);
         }
 
-        gradient[dim - 1] = -(-decay * x[dim - 2] + x[dim - 1]);
+        product[dim - 1] = scale * (-decay * x[dim - 2] + x[dim - 1]);
 
-        return gradient;
+        return product;
+    }
+
+    public double[] getDiagonal() {
+
+        double[] diagonal = new double[dim];
+        diagonal[0] = 1.0;
+
+        for (int i = 1; i < dim - 1; ++i) {
+            diagonal[i] = 1 + decay * decay;
+        }
+
+        diagonal[dim - 1] = 1.0;
+
+        return diagonal;
+    }
+
+    public double[] gradLogPdf(double[] x) {
+        return scaledPrecisionVectorProduct(x, -1.0);
+    }
+
+    public double[] getPrecisionVectorProduct(double[] x) {
+        return  scaledPrecisionVectorProduct(x, 1.0);
     }
 
     private double[][] hessianLogPdf(double[] x) {

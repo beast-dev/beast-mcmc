@@ -1,13 +1,10 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
 import dr.inference.hmc.PrecisionColumnProvider;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  * @author Zhenyu Zhang
@@ -18,14 +15,28 @@ public class PrecisionColumnProviderParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameterInterface.class);
-        return new PrecisionColumnProvider.Generic(matrix);
+        MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+        AutoRegressiveNormalDistributionModel ar = (AutoRegressiveNormalDistributionModel) xo.getChild(
+                AutoRegressiveNormalDistributionModel.class);
+
+        if (matrix != null) {
+            return new PrecisionColumnProvider.Generic(matrix);
+        } else {
+            return new PrecisionColumnProvider.AutoRegressive(ar);
+        }
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
+        return rules;
     }
+
+    private final XMLSyntaxRule[] rules = {
+            new XORRule(
+                    new ElementRule(MatrixParameterInterface.class),
+                    new ElementRule(AutoRegressiveNormalDistributionModel.class)
+            ),
+    };
 
     @Override
     public String getParserDescription() {

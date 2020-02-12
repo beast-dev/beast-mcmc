@@ -35,7 +35,7 @@ public class RateEpochArbitraryBranchRateModel extends AbstractBranchRateModel {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        fireModelChanged();
     }
 
     @Override

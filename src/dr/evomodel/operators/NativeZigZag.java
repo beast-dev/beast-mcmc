@@ -87,7 +87,8 @@ class NativeZigZag {
                                                              double[] position,
                                                              double[] velocity,
                                                              double[] action,
-                                                             double[] gradient);
+                                                             double[] gradient,
+                                                             long seed);
     static {
         System.loadLibrary("zig_zag");
         INSTANCE = new NativeZigZag();

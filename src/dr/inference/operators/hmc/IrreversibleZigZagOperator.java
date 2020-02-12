@@ -94,12 +94,26 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         int count = 0;
 
+        if (TIMING) {
+            timer.startTimer("integrateTrajectory");
+        }
+
         while (bounceState.isTimeRemaining()) {
 
             final MinimumTravelInformation firstBounce;
 //            if (FUSE) {
+
+            if (TIMING) {
+                timer.startTimer("getNext");
+            }
+
                 firstBounce = getNextBounce(position,
                         velocity, signedAction, signedGradient, null); // TODO Note that velocity is already passed, so no need for "signed" work
+
+            if (TIMING) {
+                timer.stopTimer("getNext");
+            }
+
 //            } else {
 //                MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
 //                        position, velocity);
@@ -114,6 +128,11 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             ++count;
         }
+
+        if (TIMING) {
+            timer.stopTimer("integrateTrajectory");
+        }
+
         return 0.0;
     }
 

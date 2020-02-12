@@ -83,7 +83,7 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
             column[dim - 1] = 1.0;
         } else {
             column[index - 1] = -decay;
-            column[index] = 1.0;
+            column[index] = 1.0 + decay * decay;
             column[index + 1] = -decay;
         }
 

@@ -1,7 +1,7 @@
 /*
  * NewHamiltonianMonteCarloOperator.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,7 +52,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
     @Override
     WrappedVector drawInitialMomentum() {
-        return null;
+        return new WrappedVector.Raw(null, 0, 0);
     }
 
     @Override
@@ -62,18 +62,20 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = mass.getDim(); i < len; ++i) {
-            velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
-            // TODO Handle mass.get(i) at some point in the future
+            velocity[i] = ((MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0) / Math.sqrt(mass.get(i));
         }
+
         if (mask != null) {
-            applyMask(velocity);
+            applyMask(velocity); // TODO Is this necessary?
         }
+
         return new WrappedVector.Raw(velocity);
     }
 
     double integrateTrajectory(WrappedVector position) {
 
-        WrappedVector velocity = drawInitialVelocity(null);
+        WrappedVector momentum = drawInitialMomentum();
+        WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
         WrappedVector action = getPrecisionProduct(velocity);
 
@@ -93,14 +95,13 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 timer.startTimer("getNext");
             }
 
-                firstBounce = getNextBounce(position,
-                        velocity, action, gradient, null);
+            firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
 
             if (TIMING) {
                 timer.stopTimer("getNext");
             }
 
-            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, null);
+            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
 
             ++count;
         }
@@ -121,7 +122,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         return getNextBounce(0, position.getDim(),
                 position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), null);
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
 
     }
 
@@ -145,8 +146,10 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 index = i;
                 type = Type.BOUNDARY;
             }
+            
             double T = MathUtils.nextExponential(1);
-            double gradientTime = getSwitchTime(-velocity[i] * gradient[i], velocity[i] * action[i], T);
+            int sign = sign(velocity[i]);
+            double gradientTime = getSwitchTime(-sign * gradient[i], sign * action[i], T);
 
             if (gradientTime < minimumTime) {
                 minimumTime = gradientTime;

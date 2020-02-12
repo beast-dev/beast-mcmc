@@ -83,10 +83,13 @@ class NativeZigZag {
                                double[] column,
                                double eventTime, int eventIndex, int eventType);
 
+    native MinimumTravelInformation getNextEventIrreversible(int instanceNumber,
+                                                             double[] position,
+                                                             double[] velocity,
+                                                             double[] action,
+                                                             double[] gradient);
     static {
         System.loadLibrary("zig_zag");
         INSTANCE = new NativeZigZag();
     }
-
-
 }

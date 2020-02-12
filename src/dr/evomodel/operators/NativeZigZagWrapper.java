@@ -80,4 +80,11 @@ public class NativeZigZagWrapper {
         NativeZigZag.INSTANCE.updateDynamics(instanceNumber, position, velocity, action, gradient, momentum,
                 column, eventTime, eventIndex, eventType);
     }
+
+    public MinimumTravelInformation getNextEventIrreversible(double[] position,
+                                                             double[] velocity,
+                                                             double[] action,
+                                                             double[] gradient) {
+        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient);
+    }
 }

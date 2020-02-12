@@ -62,7 +62,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         double[] velocity = new double[mass.getDim()];
 
         for (int i = 0, len = mass.getDim(); i < len; ++i) {
-            velocity[i] = ((MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0) / Math.sqrt(mass.get(i));
+            velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
         }
 
         if (mask != null) {
@@ -101,6 +101,10 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 timer.stopTimer("getNext");
             }
 
+            if (CPP_NEXT_BOUNCE) {
+                MinimumTravelInformation test = testNative(position, velocity, action, gradient);
+            }
+
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
 
             ++count;
@@ -111,6 +115,27 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         }
 
         return 0.0;
+    }
+
+    private MinimumTravelInformation testNative(WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient) {
+
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
+
+        final MinimumTravelInformation mti;
+
+        mti = nativeZigZag.getNextEventIrreversible(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        return mti;
     }
 
     // TODO Same as in super-class?
@@ -146,10 +171,9 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 index = i;
                 type = Type.BOUNDARY;
             }
-            
+
             double T = MathUtils.nextExponential(1);
-            int sign = sign(velocity[i]);
-            double gradientTime = getSwitchTime(-sign * gradient[i], sign * action[i], T);
+            double gradientTime = getSwitchTime(-velocity[i] * gradient[i], velocity[i] * action[i], T);
 
             if (gradientTime < minimumTime) {
                 minimumTime = gradientTime;
@@ -256,4 +280,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public String getOperatorName() {
         return "Irreversible zig-zag operator";
     }
+
+    private static final boolean CPP_NEXT_BOUNCE = false;
 }

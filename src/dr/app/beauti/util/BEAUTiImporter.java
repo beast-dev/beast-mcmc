@@ -421,7 +421,7 @@ public class BEAUTiImporter {
         SimpleAlignment dummyAlignment = new SimpleAlignment();
         dummyAlignment.setDataType(new DummyDataType());
 
-        setData("dummyPartition", taxa, dummyAlignment, null, null, null, null, null);
+        setData(file.getName(), taxa, dummyAlignment, null, null, null, null, null);
 
     }
 

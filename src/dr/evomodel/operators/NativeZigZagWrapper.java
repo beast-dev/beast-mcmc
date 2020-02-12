@@ -84,7 +84,8 @@ public class NativeZigZagWrapper {
     public MinimumTravelInformation getNextEventIrreversible(double[] position,
                                                              double[] velocity,
                                                              double[] action,
-                                                             double[] gradient) {
-        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient);
+                                                             double[] gradient,
+                                                             long seed) {
+        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient, seed);
     }
 }

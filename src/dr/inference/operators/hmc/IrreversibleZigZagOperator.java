@@ -129,7 +129,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         final MinimumTravelInformation mti;
 
         mti = nativeZigZag.getNextEventIrreversible(position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer());
+                action.getBuffer(), gradient.getBuffer(), MathUtils.nextLong());
 
         if (TIMING) {
             timer.stopTimer("getNextC++");

@@ -25,6 +25,8 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evomodel.operators.NativeZigZag;
+import dr.evomodel.operators.NativeZigZagOptions;
 import dr.evomodel.operators.NativeZigZagWrapper;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
@@ -40,6 +42,7 @@ import dr.xml.Reportable;
 
 import java.util.Arrays;
 
+import static dr.inference.operators.hmc.IrreversibleZigZagOperator.CPP_NEXT_BOUNCE;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -71,8 +74,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.missingDataMask = getMissingDataMask();
         checkParameterBounds(parameter);
 
-        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || TEST_FUSED_DYNAMICS) {
-            nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), columnProvider,
+        NativeZigZag.Flag flags = NativeZigZag.Flag.PRECISION_DOUBLE;
+        long nativeSeed = MathUtils.nextLong();
+        int nThreads = 2;
+        
+        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || CPP_NEXT_BOUNCE) {
+
+            NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
+
+            nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), options,
                     maskVector, getObservedDataMask());
         }
     }

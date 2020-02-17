@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class MultiplicativeBranchRateModelParser extends AbstractXMLObjectParser {
 
-    public static final String RATE_EPOCH_ARBITRARY_BRANCH_RATES = "multiplicativeBranchRates";
+    public static final String MULTIPLICATIVE_BRANCH_RATES = "multiplicativeBranchRates";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -45,6 +45,6 @@ public class MultiplicativeBranchRateModelParser extends AbstractXMLObjectParser
 
     @Override
     public String getParserName() {
-        return RATE_EPOCH_ARBITRARY_BRANCH_RATES;
+        return MULTIPLICATIVE_BRANCH_RATES;
     }
 }

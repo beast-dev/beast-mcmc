@@ -20,7 +20,7 @@ public class MultiplicativeBranchRateModel extends AbstractBranchRateModel {
     private final int dim;
 
     public MultiplicativeBranchRateModel(List<AbstractBranchRateModel> branchRateModels) {
-        super(MultiplicativeBranchRateModelParser.RATE_EPOCH_ARBITRARY_BRANCH_RATES);
+        super(MultiplicativeBranchRateModelParser.MULTIPLICATIVE_BRANCH_RATES);
 
         this.branchRateModels = branchRateModels;
         this.dim = branchRateModels.size();

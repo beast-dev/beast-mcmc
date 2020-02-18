@@ -11,10 +11,10 @@ public class NativeZigZagWrapper {
     private final int instanceNumber;
 
     public NativeZigZagWrapper(int dimension,
-                               PrecisionColumnProvider columnProvider,
+                               NativeZigZagOptions options,
                                double[] mask,
                                double[] observed) {
-        this.instanceNumber = NativeZigZag.INSTANCE.createInstance(dimension, columnProvider, mask, observed);
+        this.instanceNumber = NativeZigZag.INSTANCE.createInstance(dimension, options, mask, observed);
     }
 
     public void operate(PrecisionColumnProvider columnProvider,
@@ -84,8 +84,7 @@ public class NativeZigZagWrapper {
     public MinimumTravelInformation getNextEventIrreversible(double[] position,
                                                              double[] velocity,
                                                              double[] action,
-                                                             double[] gradient,
-                                                             long seed) {
-        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient, seed);
+                                                             double[] gradient) {
+        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient);
     }
 }

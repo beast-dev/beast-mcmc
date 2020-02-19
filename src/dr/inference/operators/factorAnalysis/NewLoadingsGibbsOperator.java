@@ -26,6 +26,7 @@
 package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -47,7 +48,7 @@ import java.util.concurrent.Executors;
  */
 public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
-    private NormalDistribution workingPrior;
+    private NormalDistributionModel workingPrior;
     private final ArrayList<double[][]> precisionArray;
     private final ArrayList<double[]> meanMidArray;
     private final ArrayList<double[]> meanArray;
@@ -74,9 +75,9 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         this.adaptor = adaptor;
 
-        NormalDistribution prior1 = (NormalDistribution) prior.getDistribution();
+        NormalDistributionModel prior1 = (NormalDistributionModel) prior.getDistribution();
         if (workingPrior != null) {
-            this.workingPrior = (NormalDistribution) workingPrior.getDistribution();
+            this.workingPrior = (NormalDistributionModel) workingPrior.getDistribution();
         }
 
         precisionArray = new ArrayList<double[][]>();
@@ -88,13 +89,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         this.columnDimProvider = columnDimProvider;
 
 
-        priorPrecision = 1 / (prior1.getSD() * prior1.getSD());
-        priorMean = prior1.getMean();
+        priorPrecision = 1 / (prior1.getStdev() * prior1.getStdev());
+        priorMean = prior1.getMean().getValue(0);
 
         if (workingPrior == null) {
             priorPrecisionWorking = priorPrecision;
         } else {
-            priorPrecisionWorking = 1 / (this.workingPrior.getSD() * this.workingPrior.getSD());
+            priorPrecisionWorking = 1 / (this.workingPrior.getStdev() * this.workingPrior.getStdev());
         }
 
         if (multiThreaded) {

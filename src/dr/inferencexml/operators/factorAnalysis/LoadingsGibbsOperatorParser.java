@@ -29,12 +29,16 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
+import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
 import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
+import dr.math.distributions.Distribution;
+import dr.math.distributions.NormalDistribution;
 import dr.util.Attribute;
 import dr.xml.*;
 
@@ -76,6 +80,21 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
         // Get priors
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+
+        Distribution priorDistribution = prior.getDistribution();
+
+        if (!(priorDistribution instanceof NormalDistributionModel)) {
+            if (priorDistribution instanceof NormalDistribution) { //Prior is fixed
+                Parameter mean = new Parameter.Default(((NormalDistribution) priorDistribution).getMean());
+                Parameter stdev = new Parameter.Default(((NormalDistribution) priorDistribution).getSD());
+                NormalDistributionModel normalDist = new NormalDistributionModel(mean, stdev);
+
+                prior = new DistributionLikelihood(normalDist);
+            } else {
+                throw new XMLParseException("The prior on the loadings matrix must be normal.");
+            }
+        }
+
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
 
         DistributionLikelihood cutoffPrior = null;

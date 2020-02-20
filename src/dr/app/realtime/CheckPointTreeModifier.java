@@ -332,7 +332,7 @@ public class CheckPointTreeModifier {
     /**
      * Add the remaining taxa, which can be identified through the TreeDataLikelihood XML elements.
      */
-        public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel, ArrayList<TreeParameterModel> traitModels) {
+    public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel, ArrayList<TreeParameterModel> traitModels) {
         //public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
 
         System.out.println("Tree before adding taxa:\n" + treeModel.toString() + "\n");

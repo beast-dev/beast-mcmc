@@ -27,11 +27,11 @@ package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.Reportable;
 
@@ -56,8 +56,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final boolean randomScan;
     private double pathParameter = 1.0;
 
-    private final double priorPrecision;
-    private final double priorMean;
+    private final NormalStatisticsProvider prior;
     private final double priorPrecisionWorking;
 
     private final FactorAnalysisOperatorAdaptor adaptor;
@@ -65,7 +64,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final ConstrainedSampler constrainedSampler;
     private final ColumnDimProvider columnDimProvider;
 
-    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, DistributionLikelihood prior,
+    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
@@ -75,7 +74,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         this.adaptor = adaptor;
 
-        NormalDistributionModel prior1 = (NormalDistributionModel) prior.getDistribution();
+        this.prior = prior;
+
         if (workingPrior != null) {
             this.workingPrior = (NormalDistributionModel) workingPrior.getDistribution();
         }
@@ -89,11 +89,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         this.columnDimProvider = columnDimProvider;
 
 
-        priorPrecision = 1 / (prior1.getStdev() * prior1.getStdev());
-        priorMean = prior1.getMean().getValue(0);
-
         if (workingPrior == null) {
-            priorPrecisionWorking = priorPrecision;
+            priorPrecisionWorking = getPrecision(prior);
         } else {
             priorPrecisionWorking = 1 / (this.workingPrior.getStdev() * this.workingPrior.getStdev());
         }
@@ -108,6 +105,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             pool = null;
             columnDimProvider.allocateStorage(precisionArray, meanMidArray, meanArray, adaptor.getNumberOfFactors());
         }
+    }
+
+    private double getPrecision(NormalStatisticsProvider provider) {
+        double sd = provider.getNormalSD();
+        return 1.0 / (sd * sd);
     }
 
 
@@ -150,7 +152,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
 
             sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += priorMean * priorPrecision;
+            sum += prior.getNormalMean() * getPrecision(prior);
             midMean[i] = sum;
         }
 
@@ -289,7 +291,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     }
 
     private double getAdjustedPriorPrecision() {
-        return priorPrecision * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
+        return getPrecision(prior) * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
     }
 
     class DrawCaller implements Callable<Double> {

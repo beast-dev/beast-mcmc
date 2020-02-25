@@ -30,6 +30,7 @@ import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelih
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
@@ -79,21 +80,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         }
 
         // Get priors
-        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        NormalStatisticsProvider prior = (NormalStatisticsProvider) xo.getChild(DistributionLikelihood.class);
 
-        Distribution priorDistribution = prior.getDistribution();
-
-        if (!(priorDistribution instanceof NormalDistributionModel)) {
-            if (priorDistribution instanceof NormalDistribution) { //Prior is fixed
-                Parameter mean = new Parameter.Default(((NormalDistribution) priorDistribution).getMean());
-                Parameter stdev = new Parameter.Default(((NormalDistribution) priorDistribution).getSD());
-                NormalDistributionModel normalDist = new NormalDistributionModel(mean, stdev);
-
-                prior = new DistributionLikelihood(normalDist);
-            } else {
-                throw new XMLParseException("The prior on the loadings matrix must be normal.");
-            }
-        }
 
         MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
 
@@ -155,7 +143,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                     )
             ),
             new XORRule(
-                    new ElementRule(DistributionLikelihood.class),
+                    new ElementRule(NormalStatisticsProvider.class),
                     new AndRule(
                             new ElementRule(MomentDistributionModel.class),
                             new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{

@@ -25,7 +25,7 @@
 
 package dr.inference.operators.factorAnalysis;
 
-import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.HashedMissingArray;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.NormalStatisticsProvider;
@@ -53,7 +53,7 @@ import java.util.concurrent.Executors;
 public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
     private static final boolean USE_INNER_PRODUCT_CACHE = true;
-    private Map<IntegratedFactorAnalysisLikelihood.HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
+    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
 
 
     private NormalDistributionModel workingPrior;
@@ -153,12 +153,12 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adaptor, //MatrixParameterInterface full,
                                          int newRowDimension, int row, double[][] answer) {
 
-        final IntegratedFactorAnalysisLikelihood.HashedMissingArray observedArray;
+        final HashedMissingArray observedArray;
         DenseMatrix64F hashedPrecision;
 
         if (USE_INNER_PRODUCT_CACHE) {
             double[] observed = observedIndicators[row];
-            observedArray = new IntegratedFactorAnalysisLikelihood.HashedMissingArray(observed);
+            observedArray = new HashedMissingArray(observed);
             hashedPrecision = precisionMatrixMap.get(observedArray);
         }
 

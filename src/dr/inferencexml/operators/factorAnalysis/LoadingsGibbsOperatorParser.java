@@ -59,6 +59,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     private final static String MODE = "newMode";
     private final static String CONSTRAINT = "constraint";
     private final static String SPARSITY_CONSTRAINT = "sparsity";
+    private final static String USE_CACHE = "cacheInnerProducts";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -127,8 +128,16 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                                 NewLoadingsGibbsOperator.ColumnDimProvider.UPPER_TRIANGULAR.getName())
                         );
 
+                NewLoadingsGibbsOperator.CacheProvider cacheProvider;
+                boolean useCache = xo.getAttribute(USE_CACHE, false);
+                if (useCache) {
+                    cacheProvider = NewLoadingsGibbsOperator.CacheProvider.USE_CACHE;
+                } else {
+                    cacheProvider = NewLoadingsGibbsOperator.CacheProvider.NO_CACHE;
+                }
+
                 return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,
-                        multiThreaded, numThreads, sampler, dimProvider);
+                        multiThreaded, numThreads, sampler, dimProvider, cacheProvider);
             } else {
 //                return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior, multiThreaded, numThreads);
                 return null;
@@ -165,6 +174,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(MODE, true),
             AttributeRule.newStringRule(CONSTRAINT, true),
             AttributeRule.newStringRule(SPARSITY_CONSTRAINT, true),
+            AttributeRule.newBooleanRule(USE_CACHE, true),
             new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
                     new ElementRule(DistributionLikelihood.class)
             }, true),

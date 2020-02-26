@@ -363,11 +363,12 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return traitMatrix.data;
     }
 
-    private class HashedMissingArray {
+    //TODO: move to own class
+    public static class HashedMissingArray {
 
         final private double[] array;
 
-        HashedMissingArray(final double[] array) {
+        public HashedMissingArray(final double[] array) {
             this.array = array;
         }
 

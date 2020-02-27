@@ -176,7 +176,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
                 traitParameter,
                 missingIndices,
                 loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0, null);
+                factorPrecisionParameters, 0.0, null,
+                IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
 
         //// Repeated Measures Model //// *****************************************************************************************
         Parameter offDiagonalSampling = new Parameter.Default(new double[]{0.16, -0.15, 0.14, -0.13, 0.12,

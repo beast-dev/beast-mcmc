@@ -65,7 +65,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                                               MatrixParameterInterface loadings,
                                               Parameter traitPrecision,
                                               double nuggetPrecision,
-                                              TaxonTaskPool taxonTaskPool) {
+                                              TaxonTaskPool taxonTaskPool,
+                                              CacheProvider cacheProvider) {
         super(name);
 
         this.traitParameter = traitParameter;
@@ -98,7 +99,9 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.nuggetPrecision = nuggetPrecision;
         this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool : new TaxonTaskPool(numTaxa, 1);
 
-        if (USE_PRECISION_CACHE && this.taxonTaskPool.getNumThreads() > 1) {
+        this.usePrecisionCache = cacheProvider.useCache();
+
+        if (usePrecisionCache && this.taxonTaskPool.getNumThreads() > 1) {
             throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
         }
 
@@ -369,17 +372,17 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         final double[] observed = observedIndicators[taxon];
 
-        final HashedMissingArray observedArray;
-        DenseMatrix64F hashedPrecision;
+        HashedMissingArray observedArray = null;
+        DenseMatrix64F hashedPrecision = null;
 
-        if (USE_PRECISION_CACHE) {
+        if (usePrecisionCache) {
             observedArray = new HashedMissingArray(observed);
             hashedPrecision = precisionMatrixMap.get(observedArray);
         }
 
         // TODO Only need to compute for each unique set of observed[] << numTaxa
 
-        if (!USE_PRECISION_CACHE || hashedPrecision == null) {
+        if (!usePrecisionCache || hashedPrecision == null) {
 
             // Compute L D_i \Gamma D_i^t L^t
             for (int row = 0; row < numFactors; ++row) {
@@ -398,7 +401,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 }
             }
 
-            if (USE_PRECISION_CACHE) {
+            if (usePrecisionCache) {
                 precisionMatrixMap.put(observedArray, precision);
             }
 
@@ -410,7 +413,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private static final boolean TIMING = false;
     private static final boolean USE_INNER_PRODUCT_CACHE = true;
-    private static final boolean USE_PRECISION_CACHE = false;
 
     private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
 
@@ -596,7 +598,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             variances[i] = new DenseMatrix64F(numFactors, numFactors);
         }
 
-        if (USE_PRECISION_CACHE) {
+        if (usePrecisionCache) {
             precisionMatrixMap.clear();
             if (DEBUG) {
                 System.err.println("Hash CLEARED");
@@ -697,7 +699,31 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final double[][] observedIndicators;
     private final int[] observedDimensions;
 
+    private final boolean usePrecisionCache;
+
+
     private static double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
+
+    //TODO: remove code duplicaton?
+    public enum CacheProvider {
+        USE_CACHE {
+            @Override
+            boolean useCache() {
+                return true;
+            }
+
+        },
+        NO_CACHE {
+            @Override
+            boolean useCache() {
+                return false;
+            }
+        };
+
+        abstract boolean useCache();
+
+    }
+
 
     // TODO Move remainder into separate class file
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -720,8 +746,17 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
 
+            CacheProvider cacheProvider;
+            boolean useCache = xo.getAttribute(CACHE_PRECISION, false);
+            if (useCache) {
+                cacheProvider = CacheProvider.USE_CACHE;
+            } else {
+                cacheProvider = CacheProvider.NO_CACHE;
+            }
+
+
             return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
-                    loadings, traitPrecision, nugget, taxonTaskPool);
+                    loadings, traitPrecision, nugget, taxonTaskPool, cacheProvider);
         }
 
         @Override
@@ -749,6 +784,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final String LOADINGS = "loadings";
     private static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
+    private static final String CACHE_PRECISION = "cachePrecision";
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
@@ -770,6 +806,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             AttributeRule.newBooleanRule(STANDARDIZE, true),
             new ElementRule(TaxonTaskPool.class, true),
             AttributeRule.newDoubleRule(TARGET_SD, true),
+            AttributeRule.newBooleanRule(CACHE_PRECISION, true)
 
     };
 

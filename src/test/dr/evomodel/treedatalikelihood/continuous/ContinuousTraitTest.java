@@ -170,7 +170,8 @@ public class ContinuousTraitTest extends TraceCorrelationAssert {
                 traitParameter,
                 missingIndices,
                 loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0, null);
+                factorPrecisionParameters, 0.0, null,
+                IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
 
         //// Integrated Process //// ***********************************************************************************
         // Data Model

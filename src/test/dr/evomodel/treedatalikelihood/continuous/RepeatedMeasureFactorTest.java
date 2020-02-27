@@ -137,7 +137,8 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
                 traitParameter,
                 missingIndices,
                 loadingsMatrixParameters,
-                samplingPrecisionDiagonal, 0.0, null);
+                samplingPrecisionDiagonal, 0.0, null,
+                IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
 
 
         //// Repeated Measures Model //// ******************************************************************************

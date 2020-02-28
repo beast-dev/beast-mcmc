@@ -59,7 +59,9 @@ public interface MassPreconditioner {
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                return new AdaptiveDiagonalPreconditioning(gradient.getDimension(), transform, options.preconditioningDelay);
+                int dimension = transform instanceof Transform.MultivariableTransform ?
+                        ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
+                return new AdaptiveDiagonalPreconditioning(dimension, transform, options.preconditioningDelay);
             }
         },
         FULL("full") {

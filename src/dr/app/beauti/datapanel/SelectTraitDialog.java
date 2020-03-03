@@ -32,6 +32,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -42,7 +43,9 @@ public class SelectTraitDialog {
 
     private JFrame frame;
 
-    JComboBox traitCombo;
+    //    JComboBox traitCombo;
+    JList traitList;
+    DefaultListModel traitModel;
     JCheckBox copyCheck;
     JTextField nameField;
 
@@ -51,7 +54,8 @@ public class SelectTraitDialog {
     public SelectTraitDialog(JFrame frame) {
         this.frame = frame;
 
-        traitCombo = new JComboBox();
+        traitModel = new DefaultListModel();
+        traitList = new JList(traitModel);
 
         copyCheck = new JCheckBox("Name trait partition:");
         nameField = new JTextField();
@@ -78,12 +82,13 @@ public class SelectTraitDialog {
             nameField.setEnabled(true);
             nameField.selectAll();
         } else {
-            traitCombo.removeAllItems();
+            traitModel.removeAllElements();
+
             for (Object model : traits) {
-                traitCombo.addItem(model);
+                traitModel.addElement(model);
             }
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
-            optionPanel.addComponentWithLabel("Trait:", traitCombo);
+            optionPanel.addComponentWithLabel("Trait(s):", traitList);
             optionPanel.addComponents(copyCheck, nameField);
             nameField.setEnabled(copyCheck.isSelected());
         }
@@ -123,8 +128,8 @@ public class SelectTraitDialog {
         return result;
     }
 
-    public TraitData getTrait() {
-        return (TraitData) traitCombo.getSelectedItem();
+    public List<TraitData> getTraits() {
+        return (List<TraitData>) traitList.getSelectedValuesList();
     }
 
     public boolean getMakeCopy() {

@@ -390,7 +390,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (result == false) {
                 return false;
             }
-            traits = options.traits; //Automatically choose all traits from input file
+//            traits = options.traits; //Automatically choose all traits from input file
         }
 
 
@@ -401,13 +401,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (traits == null || traits.size() == 0) {
             int result = selectTraitDialog.showDialog(options.traits, null);
             if (result != JOptionPane.CANCEL_OPTION) {
-                TraitData trait = selectTraitDialog.getTrait();
-                String name = trait.getName();
+                List<TraitData> selectedTraits = selectTraitDialog.getTraits();
+                String name = selectedTraits.get(0).getName();
                 if (selectTraitDialog.getMakeCopy()) {
                     name = selectTraitDialog.getName();
                 }
 
-                selRow = options.createPartitionForTraits(name, trait);
+                selRow = options.createPartitionForTraits(name, selectedTraits);
             } else {
                 return false;
             }

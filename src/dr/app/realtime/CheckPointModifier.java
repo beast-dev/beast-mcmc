@@ -30,6 +30,8 @@ import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -51,10 +53,13 @@ import java.util.Set;
 public class CheckPointModifier extends BeastCheckpointer {
 
     private static final boolean DEBUG = false;
+    private static final boolean NEW_APPROACH = true;
 
     private CheckPointTreeModifier modifyTree;
     private BranchRates rateModel;
     private ArrayList<TreeParameterModel> traitModels;
+    private Parameter ucldmean;
+    private Parameter ucldstdev;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -146,6 +151,20 @@ public class CheckPointModifier extends BeastCheckpointer {
                             System.err.print(fields[i] + "\t");
                         }
                         System.err.println();
+                    }
+
+                    if (fields[1].equals("ucld.mean")) {
+                        System.out.println("saving ucld.mean");
+                        double ucldmeanval = Double.parseDouble(fields[3]);
+                        parameter.setParameterValue(0,ucldmeanval);
+                        ucldmean = parameter;
+                    }
+
+                    if (fields[1].equals("ucld.stdev")) {
+                        System.out.println("saving ucld.stdev");
+                        double ucldstdevval = Double.parseDouble(fields[3]);
+                        parameter.setParameterValue(0,ucldstdevval);
+                        ucldstdev = parameter;
                     }
 
                     if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
@@ -304,7 +323,15 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                         //perform magic with the acquired information
                         //CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
-                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
+
+                        ParametricDistributionModel pdm;
+                        if(ucldmean!=null && ucldstdev!=null) {
+                            pdm = new LogNormalDistributionModel(ucldmean, ucldstdev, 0.0, true);
+                        }else{
+                            throw new RuntimeException("This parametric distribution model for discretized branch rates is not yet supported ");
+                        }
+                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model, pdm);
+                        //this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
                             modifyTree.adoptTraitData(parents, this.traitModels, traitValues);
@@ -350,8 +377,13 @@ public class CheckPointModifier extends BeastCheckpointer {
         if (this.rateModel == null) {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
-            ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
-            modifyTree.interpolateTraitValues(this.traitModels);
+            if(NEW_APPROACH) {
+                ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel,this.traitModels);
+            }else {
+                //ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
+                //modifyTree.interpolateTraitValues(this.traitModels);
+                throw new RuntimeException("Not using correct branch rate updating method");
+            }
         }
     }
 

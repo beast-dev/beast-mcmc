@@ -38,6 +38,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.distribution.ParametricDistributionModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,16 +52,23 @@ public class CheckPointTreeModifier {
     public final static Double EPSILON = 0.10;
     public final static Double MIN_DIST = 0.00000001;
 
-    public final static boolean CURRENT_APPROACH = true;
+    public final static boolean CURRENT_APPROACH = false;
+    public final static boolean NEW_APPROACH = true;
 
     private TreeModel treeModel;
+    private ParametricDistributionModel pdm;
     private ArrayList<String> newTaxaNames;
     private int[] nodeMap;
     private int additionalTaxa;
 
-    public CheckPointTreeModifier(TreeModel treeModel) {
+    public CheckPointTreeModifier(TreeModel treeModel, ParametricDistributionModel pdm) {
         this.treeModel = treeModel;
+        this.pdm = pdm;
     }
+
+    //public CheckPointTreeModifier(TreeModel treeModel) {
+    //    this.treeModel = treeModel;
+    //}
 
     /**
      * Modifies the current tree by adopting the provided collection of edges and the stored update criterion.
@@ -324,7 +332,8 @@ public class CheckPointTreeModifier {
     /**
      * Add the remaining taxa, which can be identified through the TreeDataLikelihood XML elements.
      */
-    public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
+    public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel, ArrayList<TreeParameterModel> traitModels) {
+        //public ArrayList<NodeRef> incorporateAdditionalTaxa(CheckPointUpdaterApp.UpdateChoice choice, BranchRates rateModel) {
 
         System.out.println("Tree before adding taxa:\n" + treeModel.toString() + "\n");
 
@@ -418,6 +427,125 @@ public class CheckPointTreeModifier {
 
         //add new taxa one at a time
         System.out.println("Adding " + newTaxaNodes.size() + " taxa ...");
+
+        if(NEW_APPROACH){
+            System.out.println("Branch rates are being updated after each new sequence is inserted");
+
+            int numTaxaSoFar = treeModel.getExternalNodeCount() - newTaxaNodes.size();
+            //System.err.println("numTaxaSoFar: " + numTaxaSoFar + " treeModel.getExternalNodeCount(): " + treeModel.getExternalNodeCount() + " newTaxaNodes.size(): " + newTaxaNodes.size());
+
+            for (NodeRef newTaxon : newTaxaNodes) {
+
+                treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
+                System.out.println("\nadding Taxon: " + newTaxon + " (height = " + treeModel.getNodeHeight(newTaxon) + ")");
+                //check if this taxon has a more recent sampling date than all other nodes in the current TreeModel
+                double offset = checkCurrentTreeNodes(newTaxon, treeModel.getRoot());
+                System.out.println("Sampling date offset when adding " + newTaxon + " = " + offset);
+                //if so, update all nodes current in the tree (i.e. recursively from the root)
+                //AND set its current node height to 0.0 IF no originTaxon has been found
+                if (offset < 0.0) {
+                    if (!originTaxon) {
+                        System.out.println("Updating all node heights with offset " + Math.abs(offset));
+                        updateAllTreeNodes(Math.abs(offset), treeModel.getRoot());
+                        treeModel.setNodeHeight(newTaxon, 0.0);
+                    }
+                } else if (offset == 0.0) {
+                    if (!originTaxon) {
+                        treeModel.setNodeHeight(newTaxon, 0.0);
+                    }
+                }
+                //get the closest Taxon to the Taxon that needs to be added
+                //take into account which taxa can currently be chosen
+                Taxon closest = choice.getClosestTaxon(treeModel.getNodeTaxon(newTaxon), currentTaxa);
+                System.out.println("\nclosest Taxon: " + closest + " with original height: " + closest.getHeight());
+                //get the distance between these two taxa
+                double distance = choice.getDistance(treeModel.getNodeTaxon(newTaxon), closest);
+                if(distance == 0.0){
+                    distance = MIN_DIST;
+                }
+                System.out.println("at distance: " + distance);
+                //find the NodeRef for the closest Taxon (do not rely on node numbering)
+                NodeRef closestRef = null;
+                //careful with node numbering and subtract number of new taxa
+                for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+                    if (treeModel.getNodeTaxon(treeModel.getExternalNode(i)) == closest) {
+                        closestRef = treeModel.getExternalNode(i);
+                    }
+                }
+                System.out.println(closestRef + " with height " + treeModel.getNodeHeight(closestRef));
+
+                //begin change
+                //double timeForDistance = distance / rateModel.getBranchRate(treeModel, closestRef);
+                double timeForDistance = distance / getBranchRate(traitModels.get(0), closestRef, numTaxaSoFar);
+                //end change
+
+                System.out.println("timeForDistance = " + timeForDistance);
+                //get parent node of branch that will be split
+                NodeRef parent = treeModel.getParent(closestRef);
+                //child node of branch that will be split (will be assigned value later)
+                NodeRef splitBranchChild;
+
+                //determine height of new node
+                double insertHeight;
+                if (treeModel.getNodeHeight(closestRef) == treeModel.getNodeHeight(newTaxon)) {
+                    insertHeight = treeModel.getNodeHeight(closestRef) + timeForDistance / 2.0;
+                    splitBranchChild = closestRef;
+
+                    if (insertHeight >= treeModel.getNodeHeight(parent)) {
+                        while (insertHeight >= treeModel.getNodeHeight(parent)) {
+                            if(treeModel.getParent(parent)==null){
+                                // Use this insertHeight value in case parent doesn't have parent
+                                // Otherwise, move up tree
+                                insertHeight = treeModel.getNodeHeight(splitBranchChild) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(splitBranchChild));
+                                break;
+                            }else{
+                                splitBranchChild = parent;
+                                parent = treeModel.getParent(splitBranchChild);
+                            }
+                        }
+                    }
+                } else {
+                    double remainder = (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon))) / 2.0;
+                    if (remainder > 0) {
+                        insertHeight = Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)) + remainder;
+                        System.out.println("remainder > 0: " + insertHeight);
+                        splitBranchChild = closestRef;
+
+                        if (insertHeight >= treeModel.getNodeHeight(parent)) {
+                            while (insertHeight >= treeModel.getNodeHeight(parent)) {
+                                if(treeModel.getParent(parent)==null){
+                                    // Use this insertHeight value in case parent doesn't have parent
+                                    // Otherwise, move up tree
+                                    insertHeight = treeModel.getNodeHeight(splitBranchChild) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(splitBranchChild));
+                                    break;
+                                }else {
+                                    splitBranchChild = parent;
+                                    parent = treeModel.getParent(splitBranchChild);
+                                }
+                            }
+                        }
+                    } else {
+                        // Come up with better way to handle this?
+                        insertHeight = EPSILON * (treeModel.getNodeHeight(parent) - Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)));
+                        insertHeight += Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon));
+                        System.out.println("remainder <= 0: " + insertHeight);
+                        splitBranchChild = closestRef;
+                    }
+                }
+
+                System.out.println("insert at height: " + insertHeight);
+                //pass on all the necessary variables to a method that adds the new taxon to the tree
+                addTaxonAlongBranch(newTaxon, parent, splitBranchChild, insertHeight);
+                //option to print tree after each taxon addition
+                System.out.println("\nTree after adding taxon " + newTaxon + ":\n" + treeModel.toString());
+                //add newly added Taxon to list of current taxa
+                currentTaxa.add(treeModel.getNodeTaxon(newTaxon));
+
+                // Update rate categories here
+                interpolateTraitValuesOneInsertion(traitModels,newTaxon);
+                numTaxaSoFar++;
+            }
+        }
 
         if (CURRENT_APPROACH) {
             for (NodeRef newTaxon : newTaxaNodes) {
@@ -525,7 +653,7 @@ public class CheckPointTreeModifier {
                 //add newly added Taxon to list of current taxa
                 currentTaxa.add(treeModel.getNodeTaxon(newTaxon));
             }
-        } else {
+        } else if(!NEW_APPROACH){
 
             //test section for Ebola problem
             throw new RuntimeException("Not yet implemented ...");
@@ -679,6 +807,87 @@ public class CheckPointTreeModifier {
             }
         }
 
+    }
+
+    public final double getBranchRate(TreeParameterModel tpm, NodeRef node, int numTaxa) {
+
+        int numCategories = 2 * numTaxa - 2;
+        int rateCategory = (int) tpm.getNodeValue(treeModel, node);
+        double rate = pdm.quantile((rateCategory + 0.5) / numCategories);
+        return rate;
+    }
+
+
+    public void interpolateTraitValuesOneInsertion(ArrayList<TreeParameterModel> traitModels, NodeRef newTaxon) {
+        System.out.println();
+        for (TreeParameterModel tpm : traitModels) {
+            int numberOfInterpolations = 0;
+
+            // First, find siblings for new branches created by insertion
+            NodeRef newTaxonParent = treeModel.getParent(newTaxon);
+            NodeRef newTaxonParentParent = treeModel.getParent(newTaxonParent);
+            NodeRef newTaxonSibling = treeModel.getChild(newTaxonParent,0);
+            NodeRef newTaxonParentSibling = treeModel.getChild(newTaxonParentParent,0);
+
+            if(newTaxonParent.getNumber() == newTaxonParentSibling.getNumber()){
+                newTaxonParentSibling = treeModel.getChild(newTaxonParentParent,1);
+            }
+            if(newTaxon.getNumber() == newTaxonSibling.getNumber()){
+                newTaxonSibling = treeModel.getChild(newTaxonParent,1);
+            }
+            if(newTaxon.equals(newTaxonSibling)){
+                System.err.println("newTaxon and newTaxonSibling are the same");
+            }
+            if(newTaxonParent.equals(newTaxonParentSibling)){
+                System.err.println("newTaxon and newTaxonSibling are the same");
+            }
+
+            // Set rate category for first of two new branches
+            tpm.setNodeValue(treeModel, newTaxon, tpm.getNodeValue(treeModel, newTaxonSibling) + 1.0);
+            numberOfInterpolations++;
+
+            // Adjust rate categories for other branches
+
+            System.out.println("tree root number: " + treeModel.getRoot().getNumber());
+
+            for (int j = 0; j < treeModel.getNodeCount(); j++) {
+                if (treeModel.getNode(j) != newTaxon) {
+                    double nodeJValue = tpm.getNodeValue(treeModel, treeModel.getNode(j));
+                    if (nodeJValue >= tpm.getNodeValue(treeModel, newTaxon) && j != treeModel.getRoot().getNumber()) {
+                        if(nodeJValue != -1.0) {
+                            System.out.print("Updating trait from " + nodeJValue);
+                            tpm.setNodeValue(treeModel, treeModel.getNode(j), nodeJValue + 1.0);
+                            System.out.println(" to " + (nodeJValue + 1.0) + " (j = " + j + ")");
+                        }
+
+                    }
+                }
+            }
+
+            // Set rate category for second of two new branches
+            tpm.setNodeValue(treeModel, newTaxonParent, tpm.getNodeValue(treeModel, newTaxonParentSibling) + 1.0);
+            numberOfInterpolations++;
+
+            // Adjust rate categories for other branches
+
+            for (int j = 0; j < treeModel.getNodeCount(); j++) {
+                if (treeModel.getNode(j) != newTaxonParent) {
+                    double nodeJValue = tpm.getNodeValue(treeModel, treeModel.getNode(j));
+                    if (nodeJValue >= tpm.getNodeValue(treeModel, newTaxonParent) && j != treeModel.getRoot().getNumber()) {
+                        // This check is unnecessary since we can only get this far if NodeJValue is >= newly imputed category
+                        if(nodeJValue != -1.0) {
+                            System.out.print("Updating trait from " + nodeJValue);
+                            tpm.setNodeValue(treeModel, treeModel.getNode(j), nodeJValue + 1.0);
+                            System.out.println(" to " + (nodeJValue + 1.0) + " (j = " + j + ")");
+                        }
+
+                    }
+                }
+            }
+
+            System.out.println("Number of interpolations: " + numberOfInterpolations);
+        }
+        System.out.println("Done.\n");
     }
 
 }

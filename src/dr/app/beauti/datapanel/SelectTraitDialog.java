@@ -48,6 +48,7 @@ public class SelectTraitDialog {
     DefaultListModel traitModel;
     JCheckBox copyCheck;
     JTextField nameField;
+    JScrollPane scrollPane;
 
     OptionsPanel optionPanel;
 
@@ -56,6 +57,7 @@ public class SelectTraitDialog {
 
         traitModel = new DefaultListModel();
         traitList = new JList(traitModel);
+        scrollPane = new JScrollPane(traitList);
 
         copyCheck = new JCheckBox("Name trait partition:");
         nameField = new JTextField();
@@ -88,7 +90,7 @@ public class SelectTraitDialog {
                 traitModel.addElement(model);
             }
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
-            optionPanel.addComponentWithLabel("Trait(s):", traitList);
+            optionPanel.addComponentWithLabel("Trait(s):", scrollPane);
             optionPanel.addComponents(copyCheck, nameField);
             nameField.setEnabled(copyCheck.isSelected());
         }

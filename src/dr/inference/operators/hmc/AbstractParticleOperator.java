@@ -74,9 +74,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.missingDataMask = getMissingDataMask();
         checkParameterBounds(parameter);
 
-        NativeZigZag.Flag flags = NativeZigZag.Flag.PRECISION_DOUBLE;
+        long flags = NativeZigZag.Flag.PRECISION_DOUBLE.getMask() |
+                NativeZigZag.Flag.FRAMEWORK_TBB.getMask();
         long nativeSeed = MathUtils.nextLong();
-        int nThreads = 2;
+        int nThreads = 4;
         
         if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || CPP_NEXT_BOUNCE) {
 

@@ -103,6 +103,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             if (CPP_NEXT_BOUNCE) {
                 MinimumTravelInformation test = testNative(position, velocity, action, gradient);
+                System.exit(-1);
             }
 
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
@@ -281,5 +282,5 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return "Irreversible zig-zag operator";
     }
 
-    static final boolean CPP_NEXT_BOUNCE = false;
+    static final boolean CPP_NEXT_BOUNCE = true;
 }

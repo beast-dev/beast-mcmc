@@ -5,13 +5,19 @@ package dr.evomodel.operators;
  */
 public class NativeZigZagOptions {
 
-    long flags;
-    long seed;
-    int info;
+    private long flags;
+    private long seed;
+    private int info;
 
-    public NativeZigZagOptions(NativeZigZag.Flag flags, long seed, int info) {
-        this.flags = flags.getMask();
+    public NativeZigZagOptions(long flags, long seed, int info) {
+        this.flags = flags;
         this.seed = seed;
         this.info = info;
     }
+
+    public long getFlags() { return flags; }
+
+    public long getSeed() { return seed; }
+
+    public int getInfo()  { return info; }
 }

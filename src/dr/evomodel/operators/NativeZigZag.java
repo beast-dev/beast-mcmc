@@ -23,9 +23,7 @@ public class NativeZigZag {
         }
 
         @SuppressWarnings("unused")
-        public String getMeaning() {
-            return meaning;
-        }
+        public String getMeaning() { return meaning; }
 
         public long getMask() {
             return this.mask;

@@ -19,7 +19,9 @@ import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -36,6 +38,8 @@ public interface MassPreconditioner {
     void updateMass();
 
     ReadableVector doCollision(int[] indices, ReadableVector momentum);
+
+    int getDimension();
 
     enum Type {
 
@@ -106,6 +110,110 @@ public interface MassPreconditioner {
         }
     }
 
+    class CompoundPreconditioning implements MassPreconditioner {
+
+        final int dim;
+        final List<MassPreconditioner> preconditionerList;
+        boolean velocityKnown = false;
+        double[] velocity;
+
+        CompoundPreconditioning(List<MassPreconditioner> preconditionerList) {
+
+            int thisDim = 0;
+            for (MassPreconditioner preconditioner : preconditionerList) {
+                thisDim += preconditioner.getDimension();
+            }
+            this.dim = thisDim;
+            this.preconditionerList = preconditionerList;
+            this.velocity = new double[dim];
+        }
+
+        @Override
+        public WrappedVector drawInitialMomentum() {
+            WrappedVector initialMomentum = new WrappedVector.Raw(new double[dim]);
+            int currentIndex = 0;
+            for (MassPreconditioner preconditioner : preconditionerList) {
+                WrappedVector currentMomentum = preconditioner.drawInitialMomentum();
+                for (int i = 0; i < preconditioner.getDimension(); i++) {
+                    initialMomentum.set(currentIndex + i, currentMomentum.get(i));
+                }
+                currentIndex += preconditioner.getDimension();
+            }
+            return initialMomentum;
+        }
+
+        @Override
+        public double getVelocity(int index, ReadableVector momentum) {
+            getVelocityVector(momentum);
+            return velocity[index];
+        }
+
+        private void getVelocityVector(ReadableVector momentum) {
+            if (!velocityKnown) {
+                int currentIndex = 0;
+                List<ReadableVector> separatedMomentum = separateVectors(momentum);
+                for (int j = 0; j < preconditionerList.size(); j++) {
+                    MassPreconditioner preconditioner = preconditionerList.get(j);
+                    ReadableVector currentMomentum = separatedMomentum.get(j);
+                    for (int i = 0; i < preconditioner.getDimension(); i++) {
+                        velocity[currentIndex + i] = preconditioner.getVelocity(i, currentMomentum);
+                    }
+                    currentIndex += preconditioner.getDimension();
+                }
+            }
+        }
+
+        private List<ReadableVector> separateVectors(ReadableVector rawVector) {
+            List<ReadableVector> vectors = new ArrayList<>();
+            int currentIndex = 0;
+            for (MassPreconditioner preconditioner : preconditionerList) {
+                WrappedVector thisVector = new WrappedVector.Raw(new double[preconditioner.getDimension()]);
+                for (int i = 0; i < preconditioner.getDimension(); i++) {
+                    thisVector.set(i, rawVector.get(currentIndex + i));
+                }
+                vectors.add(thisVector);
+                currentIndex += preconditioner.getDimension();
+            }
+            return vectors;
+        }
+
+        private ReadableVector combineVectors(List<ReadableVector> vectors) {
+            WrappedVector combinedVector = new WrappedVector.Raw(new double[dim]);
+            int currentIndex = 0;
+            for (ReadableVector readableVector : vectors) {
+                for (int i = 0; i < readableVector.getDim(); i++) {
+                    combinedVector.set(currentIndex + i, readableVector.get(i));
+                }
+            }
+            return combinedVector;
+        }
+
+        @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            List<ReadableVector> separatedGradient = separateVectors(gradient);
+            List<ReadableVector> separatedPosition = separateVectors(position);
+            for (int i = 0; i < preconditionerList.size(); i++) {
+                preconditionerList.get(i).storeSecant(separatedGradient.get(i), separatedPosition.get(i));
+            }
+        }
+
+        @Override
+        public void updateMass() {
+            for (MassPreconditioner preconditioner : preconditionerList) {
+                preconditioner.updateMass();
+            }
+        }
+
+        @Override
+        public ReadableVector doCollision(int[] indices, ReadableVector momentum) {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public int getDimension() {
+            return dim;
+        }
+    }
 
     class NoPreconditioning implements MassPreconditioner {
 
@@ -153,6 +261,11 @@ public interface MassPreconditioner {
             updatedMomentum.set(indices[1], momentum.get(indices[0]));
             return updatedMomentum;
         }
+
+        @Override
+        public int getDimension() {
+            return dim;
+        }
     }
 
     abstract class AbstractMassPreconditioning implements MassPreconditioner {
@@ -171,6 +284,11 @@ public interface MassPreconditioner {
 
         public void updateMass() {
             this.inverseMass = computeInverseMass();
+        }
+
+        @Override
+        public int getDimension() {
+            return dim;
         }
 
         abstract public void storeSecant(ReadableVector gradient, ReadableVector position);

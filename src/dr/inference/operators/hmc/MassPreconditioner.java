@@ -110,14 +110,14 @@ public interface MassPreconditioner {
         }
     }
 
-    class CompoundPreconditioner implements MassPreconditioner {
+    class CompoundPreconditioning implements MassPreconditioner {
 
         final int dim;
         final List<MassPreconditioner> preconditionerList;
         boolean velocityKnown = false;
         double[] velocity;
 
-        CompoundPreconditioner(List<MassPreconditioner> preconditionerList) {
+        CompoundPreconditioning(List<MassPreconditioner> preconditionerList) {
 
             int thisDim = 0;
             for (MassPreconditioner preconditioner : preconditionerList) {

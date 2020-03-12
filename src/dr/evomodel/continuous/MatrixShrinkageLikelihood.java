@@ -129,8 +129,8 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
     @Override
     public double getNormalSD(int dim) {
-        int row = dim / loadings.getColumnDimension();
-        int col = dim - row;
+        int row = dim / loadings.getRowDimension();
+        int col = dim - row * loadings.getRowDimension();
         double globalScale = rowPriors[row].getGlobalScale().getParameterValue(0);
         double localScale = rowPriors[row].getLocalScale().getParameterValue(col);
         return globalScale * localScale;

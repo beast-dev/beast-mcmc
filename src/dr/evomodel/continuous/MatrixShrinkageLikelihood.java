@@ -9,7 +9,7 @@ import dr.inference.model.*;
  * @author Gabriel Hassler
  */
 
-public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements GradientWrtParameterProvider {
+public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider {
 
     private final MatrixParameterInterface loadings;
     private final BayesianBridgeLikelihood[] rowPriors;
@@ -21,9 +21,9 @@ public class LoadingsShrinkagePrior extends AbstractModelLikelihood implements G
 
     private final double[] gradientLogDensity;
 
-    public LoadingsShrinkagePrior(String name,
-                                  MatrixParameterInterface loadings,
-                                  BayesianBridgeLikelihood[] rowPriors) {
+    public MatrixShrinkageLikelihood(String name,
+                                     MatrixParameterInterface loadings,
+                                     BayesianBridgeLikelihood[] rowPriors) {
         super(name);
 
         this.loadings = loadings;

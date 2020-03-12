@@ -400,6 +400,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         if (traits == null || traits.size() == 0) {
             int result = selectTraitDialog.showDialog(options.traits, null);
+            //TODO: check that the traits are continuous / discrete only
             if (result != JOptionPane.CANCEL_OPTION) {
                 List<TraitData> selectedTraits = selectTraitDialog.getTraits();
                 String name = selectedTraits.get(0).getName();

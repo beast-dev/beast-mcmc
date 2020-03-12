@@ -1,6 +1,6 @@
 package dr.evomodel.continuous;
 
-import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -11,7 +11,8 @@ import java.util.Arrays;
  * @author Gabriel Hassler
  */
 
-public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider {
+public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider,
+        NormalStatisticsProvider {
 
     private final MatrixParameterInterface loadings;
     private final BayesianBridgeLikelihood[] rowPriors;
@@ -119,5 +120,19 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
     @Override
     public void makeDirty() {
         likelihood.makeDirty();
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return 0; //BayesianBridgeDistribution assumes zero mean
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        int row = dim / loadings.getColumnDimension();
+        int col = dim - row;
+        double globalScale = rowPriors[row].getGlobalScale().getParameterValue(0);
+        double localScale = rowPriors[row].getLocalScale().getParameterValue(col);
+        return globalScale * localScale;
     }
 }

@@ -5,6 +5,8 @@ import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 
+import java.util.Arrays;
+
 /**
  * @author Gabriel Hassler
  */
@@ -14,12 +16,9 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
     private final MatrixParameterInterface loadings;
     private final BayesianBridgeLikelihood[] rowPriors;
 
-    private boolean likelihoodKnown = false;
-    private double logLikelihood;
-    private boolean storedLikelihoodKnown;
-    private double storedLogLikelihood;
-
     private final double[] gradientLogDensity;
+
+    private final CompoundLikelihood likelihood;
 
     public MatrixShrinkageLikelihood(String name,
                                      MatrixParameterInterface loadings,
@@ -36,6 +35,8 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
         this.gradientLogDensity = new double[loadings.getDimension()];
         addVariable(loadings);
+
+        this.likelihood = new CompoundLikelihood(Arrays.asList(rowPriors));
 
 
     }
@@ -72,7 +73,6 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        likelihoodKnown = false;
         for (BayesianBridgeLikelihood likelihood : rowPriors) {
             likelihood.handleModelChangedEvent(model, object, index);
         }
@@ -80,7 +80,6 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        likelihoodKnown = false;
         for (BayesianBridgeLikelihood likelihood : rowPriors) {
             likelihood.handleVariableChangedEvent(variable, index, type);
         }
@@ -88,8 +87,6 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
     @Override
     protected void storeState() {
-        storedLogLikelihood = logLikelihood;
-        storedLikelihoodKnown = likelihoodKnown;
         for (BayesianBridgeLikelihood likelihood : rowPriors) {
             likelihood.storeState();
         }
@@ -97,8 +94,6 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
     @Override
     protected void restoreState() {
-        logLikelihood = storedLogLikelihood;
-        likelihoodKnown = storedLikelihoodKnown;
         for (BayesianBridgeLikelihood likelihood : rowPriors) {
             likelihood.restoreState();
         }
@@ -118,21 +113,11 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
 
     @Override
     public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = 0;
-            for (BayesianBridgeLikelihood likelihood : rowPriors) {
-                logLikelihood += likelihood.getLogLikelihood();
-            }
-            likelihoodKnown = true;
-        }
-        return logLikelihood;
+        return likelihood.getLogLikelihood();
     }
 
     @Override
     public void makeDirty() {
-        likelihoodKnown = false;
-        for (BayesianBridgeLikelihood likelihood : rowPriors) {
-            likelihood.makeDirty();
-        }
+        likelihood.makeDirty();
     }
 }

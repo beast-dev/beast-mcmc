@@ -1,6 +1,6 @@
 package dr.evomodelxml.continuous;
 
-import dr.evomodel.continuous.LoadingsShrinkageGradient;
+import dr.evomodel.continuous.LoadingsShrinkagePrior;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser;
@@ -20,7 +20,7 @@ public class LoadingsShrinkageGradientParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String name = xo.getAttribute("id", LoadingsShrinkageGradient.class.toString());
+        String name = xo.getAttribute("id", LoadingsShrinkagePrior.class.toString());
 
         MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         XMLObject rpxo = xo.getChild(ROW_PRIORS);
@@ -58,7 +58,7 @@ public class LoadingsShrinkageGradientParser extends AbstractXMLObjectParser {
         }
 
 
-        return new LoadingsShrinkageGradient(name, loadings, rowModels);
+        return new LoadingsShrinkagePrior(name, loadings, rowModels);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class LoadingsShrinkageGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return LoadingsShrinkageGradient.class;
+        return LoadingsShrinkagePrior.class;
     }
 
     @Override

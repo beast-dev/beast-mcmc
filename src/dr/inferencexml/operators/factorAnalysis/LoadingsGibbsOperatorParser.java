@@ -93,6 +93,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("The prior distribution with id " + priorDistLike.getId() +
                         " is not normally distributed. This operator requires a normal prior.");
             }
+        } else {
+            prior = (NormalStatisticsProvider) xo.getChild(NormalStatisticsProvider.class); //Should be null if doesn't exist
         }
 
 
@@ -164,12 +166,14 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                     )
             ),
             new XORRule(
-                    new ElementRule(DistributionLikelihood.class),
-                    new AndRule(
-                            new ElementRule(MomentDistributionModel.class),
-                            new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{
-                                    new ElementRule(DistributionLikelihood.class)
-                            }))
+                    new XMLSyntaxRule[]{
+                            new ElementRule(DistributionLikelihood.class),
+                            new ElementRule(NormalStatisticsProvider.class),
+                            new AndRule(
+                                    new ElementRule(MomentDistributionModel.class),
+                                    new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{
+                                            new ElementRule(DistributionLikelihood.class)
+                                    }))}
             ),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newBooleanRule(MULTI_THREADED, true),

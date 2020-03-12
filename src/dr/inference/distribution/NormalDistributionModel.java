@@ -89,12 +89,12 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public double getNormalMean() {
+    public double getNormalMean(int dim) {
         return mean.getValue(0);
     }
 
     @Override
-    public double getNormalSD() {
+    public double getNormalSD(int dim) {
         return getStdev();
     }
 

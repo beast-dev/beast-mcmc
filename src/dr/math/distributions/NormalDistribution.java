@@ -529,12 +529,12 @@ public class NormalDistribution implements Distribution, RandomGenerator, Gradie
 
     //NormalStatisticsProviderInterface
     @Override
-    public double getNormalMean() {
+    public double getNormalMean(int dim) {
         return getMean();
     }
 
     @Override
-    public double getNormalSD() {
+    public double getNormalSD(int dim) {
         return getSD();
     }
 }

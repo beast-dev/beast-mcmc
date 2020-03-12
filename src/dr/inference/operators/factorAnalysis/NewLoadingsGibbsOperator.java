@@ -102,7 +102,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
 
         if (workingPrior == null) {
-            priorPrecisionWorking = getPrecision(prior);
+            priorPrecisionWorking = getPrecision(prior, 0); //TODO: FIX THIS
         } else {
             priorPrecisionWorking = 1 / (this.workingPrior.getStdev() * this.workingPrior.getStdev());
         }
@@ -151,8 +151,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     }
 
-    private double getPrecision(NormalStatisticsProvider provider) {
-        double sd = provider.getNormalSD();
+    private double getPrecision(NormalStatisticsProvider provider, int dim) {
+        double sd = provider.getNormalSD(dim);
         return 1.0 / (sd * sd);
     }
 
@@ -244,8 +244,10 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
             }
 
+            int priorDim = adaptor.getNumberOfTraits() * i + dataColumn;
+
             sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += prior.getNormalMean() * getPrecision(prior);
+            sum += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
             midMean[i] = sum;
         }
 
@@ -388,7 +390,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     }
 
     private double getAdjustedPriorPrecision() {
-        return getPrecision(prior) * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
+        return getPrecision(prior, 0) * pathParameter + (1 - pathParameter) * priorPrecisionWorking; //TODO: FIX THIS
     }
 
     class DrawCaller implements Callable<Double> {

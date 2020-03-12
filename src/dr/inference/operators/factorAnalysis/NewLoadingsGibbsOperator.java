@@ -102,7 +102,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
 
         if (workingPrior == null) {
-            priorPrecisionWorking = getPrecision(prior, 0); //TODO: FIX THIS
+            priorPrecisionWorking = getPrecision(prior, 0); //TODO: Do I need to let priorPrecisionWorking vary with dimension?
         } else {
             priorPrecisionWorking = 1 / (this.workingPrior.getStdev() * this.workingPrior.getStdev());
         }
@@ -220,7 +220,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             for (int j = i; j < newRowDimension; j++) {
                 answer[i][j] *= this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
-                    answer[i][j] = answer[i][j] * pathParameter + getAdjustedPriorPrecision();
+                    answer[i][j] = answer[i][j] * pathParameter +
+                            getAdjustedPriorPrecision(adaptor.getNumberOfTraits() * i + row);
                 } else {
                     answer[i][j] *= pathParameter;
                     answer[j][i] = answer[i][j];
@@ -389,8 +390,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         pathParameter = beta;
     }
 
-    private double getAdjustedPriorPrecision() {
-        return getPrecision(prior, 0) * pathParameter + (1 - pathParameter) * priorPrecisionWorking; //TODO: FIX THIS
+    private double getAdjustedPriorPrecision(int dim) {
+        return getPrecision(prior, dim) * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
     }
 
     class DrawCaller implements Callable<Double> {

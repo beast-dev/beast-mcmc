@@ -65,8 +65,11 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
             // one event for each tip, internal node and one extra for the top of the stem.
             maxEventCount += tree.getNodeCount() + 1;
         }
-        // two events each for the singletons (one at the top and bottom).
-        maxEventCount += singletonTaxa.getTaxonCount() * 2;
+        if(singletonTaxa!=null){
+            // two events each for the singletons (one at the top and bottom).
+            maxEventCount += singletonTaxa.getTaxonCount() * 2;
+        }
+
 
         this.trees = new ArrayList<Tree>(trees);
         this.singletonTaxa = singletonTaxa;
@@ -216,10 +219,13 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
             // add the nothing event at the top of the stem of the root of each subtree.
             intervals.addNothingEvent(cutoffTime);
         }
-        for (Taxon taxon : singletonTaxa) {
-            intervals.addSampleEvent(taxon.getHeight());
-            intervals.addNothingEvent(cutoffTime);
+        if(singletonTaxa!=null){
+            for (Taxon taxon : singletonTaxa) {
+                intervals.addSampleEvent(taxon.getHeight());
+                intervals.addNothingEvent(cutoffTime);
+            }
         }
+
 
         // call this to sort and calculate the intervals in the inner
         // object.

@@ -57,7 +57,12 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(TREES);
 
         List<Tree> trees = new ArrayList<Tree>(cxo.getAllChildren(Tree.class));
-        Taxa singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
+
+        Taxa singletonTaxa = null;
+                if(xo.hasChildNamed(SINGLETONS)){
+                    singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
+                }
+
 
         double cutoffTime = xo.getDoubleAttribute(CUTOFF);
 

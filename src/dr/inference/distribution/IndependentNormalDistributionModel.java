@@ -4,7 +4,7 @@ import dr.inference.model.*;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.NormalDistribution;
 
-public class IndependentNormalDistributionModel extends AbstractModelLikelihood {
+public class IndependentNormalDistributionModel extends AbstractModelLikelihood implements NormalStatisticsProvider {
     Parameter mean;
     Parameter variance;
     Parameter precision;
@@ -93,5 +93,19 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
 
     public Parameter getMean() {
         return mean;
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return mean.getParameterValue(dim);
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        if (usePrecision) {
+            return 1 / Math.sqrt(precision.getParameterValue(dim));
+        } else {
+            return Math.sqrt(variance.getParameterValue(dim));
+        }
     }
 }

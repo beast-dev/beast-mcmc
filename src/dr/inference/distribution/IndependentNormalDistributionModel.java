@@ -1,8 +1,13 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
-import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.NormalDistribution;
+
+/**
+ * @author Max Tolkoff
+ * @author Gabriel Hassler
+ * @author Marc Suchard
+ */
 
 public class IndependentNormalDistributionModel extends AbstractModelLikelihood implements NormalStatisticsProvider {
     Parameter mean;
@@ -11,15 +16,14 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
     Parameter data;
     boolean usePrecision;
 
-    public IndependentNormalDistributionModel(String id, Parameter mean, Parameter variance, Parameter precision, Parameter data){
+    public IndependentNormalDistributionModel(String id, Parameter mean, Parameter variance, Parameter precision, Parameter data) {
         super(id);
         addVariable(mean);
         this.mean = mean;
-        if(precision != null){
+        if (precision != null) {
             usePrecision = true;
             addVariable(precision);
-        }
-        else{
+        } else {
             usePrecision = false;
             addVariable(variance);
         }
@@ -65,10 +69,9 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
         double sum = 0;
         for (int i = 0; i < data.getDimension(); i++) {
             double sd;
-            if(usePrecision){
+            if (usePrecision) {
                 sd = Math.sqrt(1 / precision.getParameterValue(i));
-            }
-            else{
+            } else {
                 sd = Math.sqrt(variance.getParameterValue(i));
             }
             sum += NormalDistribution.logPdf(data.getParameterValue(i),

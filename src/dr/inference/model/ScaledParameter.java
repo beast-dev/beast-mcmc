@@ -27,4 +27,9 @@ public class ScaledParameter extends ProductParameter {
         return scaleParam.getParameterValue(0) * vecParam.getParameterValue(dim);
     }
 
+    @Override
+    public int getDimension() {
+        return vecParam.getDimension();
+    }
+
 }

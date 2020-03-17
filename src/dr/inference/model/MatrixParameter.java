@@ -497,8 +497,8 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
 
 
     private boolean dimensionsEstablished = false;
-    private int columnDimension = 0;
-    private int rowDimension = 0;
+    protected int columnDimension = 0;
+    protected int rowDimension = 0;
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

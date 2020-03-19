@@ -1,4 +1,4 @@
-                    BEAST v1.10.0 2002-2017
+                    BEAST v1.10.4 2002-2018
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,13 +17,56 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 24th August 2017
+Last updated: a.rambaut@ed.ac.uk - 11th November 2018
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
 
 ================================================================================
 
-Version 1.10.0 VEME2017 pre-release 24th August 2017
+Version 1.10.4  released 11th November 2018
 
+    New command line options for BEAGLE v3.1:
+        -beagle_threading_off | Turn off CPU multithreading in BEAGLE.
+        -beagle_thread_count  | Limit how many CPU threads BEAGLE uses.
+        By default BEAGLE tries to occupy the entire CPU (i.e., all the
+        available cores). Use this option to share the CPU with other users
+        or processes.
+
+	Bug Fixes:
+		Issue 1038: Issue specifying burnin in the command-line LogCombiner.
+
+================================================================================
+
+Version 1.10.3  released 28th October 2018
+
+	Bug Fixes:
+		Issue 1037: Likelihood computation performance reduced with BEAGLE 3 on CPU.
+	    Issue 1036: Truncated normals not working as priors.
+
+================================================================================
+
+Version 1.10.2  released 6th October 2018
+
+	Bug Fixes:
+		Issue 1026: Check LogCombiner & TreeAnnotator use longs for state numbers
+	    Issue 1020: GSS has a problem with novel GTR parameterization
+		Issue 1014: Unable to open BEAUti setting file with some tree priors
+	    Issue 1010: BEAUti puts tmrca priors on the <taxa> ID rather than on the tmrcaStatistic ID
+
+================================================================================
+
+Version 1.10.1  released 8th August 2018
+
+	Bug Fixes:
+	    Issue 1003: Issue with the new parameterization of GTR in BEAUti
+	    Issue 1007: Mac versions not running with Java 10
+
+================================================================================
+
+Version 1.10.0  released 10th June 2018
+	
+	This is a major new release with too many features to enumerate here.
+	See http://beast.community/ for more details.
+	
 ================================================================================
 
 Version 1.8.4 released 17th June 2016

@@ -42,13 +42,13 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * Gibbs samples each of AbritraryBranchRates when their prior is a gamma distribution
+ * Gibbs samples each of ArbitraryBranchRates when their prior is a gamma distribution
  *
  * @author Marc A. Suchard
  */
 public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public static final String GIBBS_OPERATOR = "traitRateGibbsOperator";
+    private static final String GIBBS_OPERATOR = "traitRateGibbsOperator";
 
     private final MutableTreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
@@ -84,8 +84,9 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
             throw new RuntimeException("Can only provide one prior density in TraitRateGibbsOperation");
         }
 
-        if (!branchRateModel.usingReciprocal()) {
-            throw new RuntimeException("ArbitraryBranchRates in TraitRateGibbsOperatior must use reciprocal rates");
+        boolean reciprocal = branchRateModel.usingReciprocal();
+        if (!reciprocal) {
+            throw new RuntimeException("ArbitraryBranchRates in TraitRateGibbsOperator must use reciprocal rates");
         }
 
         Logger.getLogger("dr.evomodel").info("Using Gibbs operator and trait rates");
@@ -184,7 +185,8 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
                 throw new XMLParseException("Currently only works with a GammaDistributionModel or GammaDistribution");
             }
 
-            if (!branchRates.usingReciprocal()) {
+            boolean reciprocal = branchRates.usingReciprocal();
+            if (!reciprocal) {
                 throw new XMLParseException(
                         "Gibbs sampling of rates only works with reciprocal rates under an ArbitraryBranchRates model");
             }

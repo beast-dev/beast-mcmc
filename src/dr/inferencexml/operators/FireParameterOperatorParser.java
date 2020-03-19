@@ -37,6 +37,8 @@ import dr.xml.*;
  */
 public class FireParameterOperatorParser extends AbstractXMLObjectParser {
 
+    private static final String VALUE = "value";
+
     public static final String FIRE_PARAMETER_OPERATOR = "fireParameterChanged";
 
     public String getParserName() {
@@ -46,10 +48,14 @@ public class FireParameterOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+        double[] values = null;
+        if (xo.hasAttribute(VALUE)) {
+            values = xo.getDoubleArrayAttribute(VALUE);
+        }
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        return new FireParameterOperator(parameter, weight);
+        return new FireParameterOperator(parameter, values, weight);
 
     }
 
@@ -72,5 +78,7 @@ public class FireParameterOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             new ElementRule(Parameter.class),
+            AttributeRule.newDoubleArrayRule(VALUE, true)
+
     };
 }

@@ -43,9 +43,9 @@ import java.util.logging.Logger;
  * @author Mandev Gill
  * @version $Id: GMRFMultilocusSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
+public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
 
-    private static boolean FAIL_SILENTLY = false;
+    private static boolean FAIL_SILENTLY = true;
 
     private double scaleFactor;
     private double lambdaScaleFactor;
@@ -65,8 +65,8 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
     private double[] zeros;
 
     public GMRFMultilocusSkyrideBlockUpdateOperator(GMRFMultilocusSkyrideLikelihood gmrfLikelihood,
-                                          double weight, CoercionMode mode, double scaleFactor,
-                                          int maxIterations, double stopValue) {
+                                                    double weight, AdaptationMode mode, double scaleFactor,
+                                                    int maxIterations, double stopValue) {
         super(mode);
         gmrfField = gmrfLikelihood;
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
@@ -186,9 +186,9 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
     public DenseVector getZBeta(List<MatrixParameter> covariates, List<Parameter> beta){
 
         DenseVector temporaryVect = new DenseVector(fieldLength);
-        
+
         // TODO: Update for covariateMatrix block as well !!!
-        
+
         if(covariates != null) {
            // DenseVector currentBeta = new DenseVector(beta.getParameterValues());
             DenseVector currentBeta = new DenseVector(beta.size());
@@ -225,21 +225,19 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
            try {
                 jacobian(data2, iterateGamma, proposedQ).solve(gradient(data1, data2, iterateGamma, proposedQ, ZBeta), tempValue);
            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
                if (FAIL_SILENTLY) {
                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
                    return null;
                }
+               Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                        "Try starting BEAST with a more accurate initial tree.");
            } catch (no.uib.cipr.matrix.MatrixSingularException e) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
                if (FAIL_SILENTLY) {
                    // this replicates the old behaviour of throwing an OperatorFailedException and rejecting the move.
                    return null;
                }
+               Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                        "Try starting BEAST with a more accurate initial tree.");
             }
@@ -409,12 +407,13 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
 //        return Math.log(scaleFactor);
         return Math.sqrt(scaleFactor - 1);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 //        scaleFactor = Math.exp(value);
         scaleFactor = 1 + value * value;
     }
@@ -427,39 +426,8 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
 

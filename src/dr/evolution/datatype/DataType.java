@@ -157,13 +157,16 @@ public abstract class DataType implements Serializable {
                 numNucs++;
             }
 
-            if (c != '-' && c != '?') numChars++;
+            if (c != '-' && c != '?') {
+                numChars++;
+            }
 
             if (c == '0' || c == '1') numBins++;
         }
 
         if (numChars == 0) {
-            numChars = 1;
+            // if empty or only gaps and ? then assume nucleotide
+            return Nucleotides.INSTANCE;
         }
 
         // more than 85 % frequency advocates nucleotide data

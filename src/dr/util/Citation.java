@@ -251,6 +251,7 @@ public class Citation {
         COUNTING_PROCESSES("Counting Processes"), // TODO Decide where MarkovJumpsBTL goes (multiple categories?)
         TREE_PRIORS("Tree Density Models"),
         MOLECULAR_CLOCK("Molecular Clock Models"),
+        TREE_METRICS("Tree Metrics"),
         MISC("Misc"); // Try to avoid this category
 
 

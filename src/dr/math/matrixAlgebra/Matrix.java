@@ -85,6 +85,13 @@ public class Matrix {
     }
 
     /**
+     * Clones a Matrix object.
+     */
+    public Matrix clone() {
+        return new Matrix(components.clone());
+    }
+
+    /**
      * @param a MatrixAlgebra.Matrix
      * @throws dr.math.matrixAlgebra.IllegalDimension
      *          if the supplied matrix
@@ -476,13 +483,19 @@ public class Matrix {
         return answer;
     }
 
-    public double[] toVectorizedComponents() {
+    /**
+     * @return double[]    a copy of the components of the receiver, array in row-major order.
+     */
+    public double[] toArrayComponents() {
         int n = rows();
         int m = columns();
         double[] answer = new double[n * m];
+        int k = 0;
         for (int i = 0; i < n; i++) {
-            for (int j = 0; j < m; j++)
-                answer[i * m  + j] = components[i][j];
+            for (int j = 0; j < m; j++) {
+                answer[k] = components[i][j];
+                k++;
+            }
         }
         return answer;
     }

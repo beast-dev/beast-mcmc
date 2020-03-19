@@ -77,7 +77,7 @@ public class CholeskyDecomposition {
 				}
 				Lrowj[k] = s = (A[j][k] - s) / L[k][k];
 				d = d + s * s;
-				isspd = isspd & (A[k][j] == A[j][k]);
+				isspd = isspd & (Math.abs(A[k][j] - A[j][k]) < tol);
 			}
 			d = A[j][j] - d;
 			isspd = isspd & (d > 0.0);
@@ -115,4 +115,29 @@ public class CholeskyDecomposition {
         }
         return L;
     }
+
+	public double[] getUpperTriangular() {
+		double[] result = new double[n * (n + 1) / 2];
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			for (int j = i; j < n; j++) {
+				result[k] = L[j][i];
+				k++;
+			}
+		}
+		return result;
+	}
+
+	public double[] getStrictlyUpperTriangular() {
+		double[] result = new double[n * (n - 1) / 2];
+		int k = 0;
+		for (int i = 0; i < n - 1; i++) {
+			for (int j = i + 1; j < n; j++) {
+				result[k] = L[j][i];
+				k++;
+			}
+		}
+		return result;
+	}
+	final static double tol = 1e-8;
 }

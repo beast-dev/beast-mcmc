@@ -958,9 +958,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 columns[count] = new LogColumn.Abstract(infected.toString() + "_infector") {
                     protected String getFormattedValue() {
                         if (((PartitionedTreeModel)treeModel).getInfector(infected) == null) {
-                            return "Start";
+                            return "{Start}";
                         } else {
-                            return ((PartitionedTreeModel)treeModel).getInfector(infected).toString();
+                            return ("{" + ((PartitionedTreeModel)treeModel).getInfector(infected).toString() + "}");
                         }
                     }
                 };

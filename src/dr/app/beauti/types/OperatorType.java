@@ -59,7 +59,7 @@ public enum OperatorType {
     UNIFORM("uniform"),
     INTEGER_UNIFORM("integerUniform"),
     SUBTREE_SLIDE("subtreeSlide"),
-    SUBTREE_JUMP("subtreeJump"),
+    FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT("fixedHeightSPR"),
     SUBTREE_LEAP("subtreeLeap"),
     ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),
@@ -67,8 +67,7 @@ public enum OperatorType {
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
     SKY_GRID_GIBBS_OPERATOR("gmrfGibbsOperator"),
 //    PRECISION_GMRF_OPERATOR("precisionGMRFOperator"),
-    WILSON_BALDING("wilsonBalding"),
-    NODE_REHIGHT(TreeNodeSlideParser.TREE_NODE_REHEIGHT); // nodeReHeight
+    WILSON_BALDING("wilsonBalding");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

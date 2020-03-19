@@ -34,7 +34,7 @@ import dr.xml.*;
  */
 public class CorrelationSymmetricMatrixParser extends AbstractXMLObjectParser {
 
-    private final static String MATRIX_PARAMETER = "compoundSymmetricMatrix";
+    private final static String MATRIX_PARAMETER = "correlationSymmetricMatrix";
     private static final String DIAGONAL = "diagonal";
     private static final String OFF_DIAGONAL = "offDiagonal";
 

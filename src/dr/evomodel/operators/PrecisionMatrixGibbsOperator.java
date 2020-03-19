@@ -1,7 +1,7 @@
 /*
  * PrecisionMatrixGibbsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -51,21 +51,16 @@ import dr.xml.*;
 
 import java.util.List;
 
-//import dr.math.matrixAlgebra.Matrix;
-
 /**
  * @author Marc Suchard
  */
 public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
-    //    public static final String PRECISION_MATRIX = "precisionMatrix";
+    private static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
     public static final String TREE_MODEL = "treeModel";
-    //    public static final String OUTCOME = "outcome";
-//    public static final String MEAN = "mean";
     public static final String DISTRIBUTION = "distribution";
     public static final String PRIOR = "prior";
-//    public static final String TRAIT_MODEL = "traitModel";
+    private static final String WORKING = "workingDistribution";
 
     private final AbstractMultivariateTraitLikelihood traitModel;
     private AbstractMultivariateTraitLikelihood debugModel = null;
@@ -74,8 +69,12 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     private final Parameter meanParam;
     private final MatrixParameterInterface precisionParam;
 
+    private Statistics priorStatistics;
+    private Statistics workingStatistics;
+
     private double priorDf;
     private SymmetricMatrix priorInverseScaleMatrix;
+
     private final MutableTreeModel treeModel;
     private final int dim;
     private double numberObservations;
@@ -105,13 +104,37 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.precisionParam = density.getPrecisionMatrixParameter();
         this.dim = meanParam.getDimension();
 
-        setupWishartStatistics(priorDistribution);
+        setupWishartStatistics(priorDistribution); // TODO Deprecate
+        priorStatistics = setupStatistics(priorDistribution);
+
         if (priorDistribution instanceof WishartGammalDistributionModel) {
             wishartIsModel = true;
             priorModel = (WishartGammalDistributionModel) priorDistribution;
         }
 
         setWeight(weight);
+    }
+
+    private class Statistics {
+        final double degreesOfFreedom;
+        final double[][] rateMatrix;
+
+        Statistics(double degreesOfFreedom, double[][] rateMatrix) {
+            this.degreesOfFreedom = degreesOfFreedom;
+            this.rateMatrix = rateMatrix;
+        }
+    }
+
+    private Statistics setupStatistics(WishartStatistics distribution) {
+
+        double[][] scale = distribution.getScaleMatrix();
+        double[][] rate = null;
+
+        if (scale != null) {
+            rate = (new SymmetricMatrix(scale)).inverse().toComponents();
+        }
+
+        return new Statistics(distribution.getDF(), rate);
     }
 
     private void setupWishartStatistics(WishartStatistics priorDistribution) {
@@ -134,9 +157,10 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.conjugateWishartProvider = null;
         this.meanParam = null;
         this.precisionParam = precisionParam;
-//        this.precisionParam = traitModel.getDiffusionModel().getPrecisionParameter();
 
-        setupWishartStatistics(priorDistribution);
+        setupWishartStatistics(priorDistribution); // TODO Deprecate
+        priorStatistics = setupStatistics(priorDistribution);
+
         if (priorDistribution instanceof WishartGammalDistributionModel) {
             wishartIsModel = true;
             priorModel = (WishartGammalDistributionModel) priorDistribution;
@@ -163,6 +187,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             ConjugateWishartStatisticsProvider wishartStatisticsProvider,
             MatrixParameterInterface extraPrecisionParam,
             WishartStatistics priorDistribution,
+            WishartStatistics workingDistribution,
             double weight,
             AbstractMultivariateTraitLikelihood debugModel) {
         super();
@@ -176,25 +201,22 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         this.treeModel = null;
         this.traitName = null;
 
-        setupWishartStatistics(priorDistribution);
+        setupWishartStatistics(priorDistribution); // TODO Deprecate
+        priorStatistics = setupStatistics(priorDistribution);
+
         if (priorDistribution instanceof WishartGammalDistributionModel) {
             wishartIsModel = true;
             priorModel = (WishartGammalDistributionModel) priorDistribution;
         }
 
+        if (workingDistribution != null) {
+            workingStatistics = setupStatistics(workingDistribution);
+        }
+
         setWeight(weight);
 
-//        this.treeModel = traitModel.getTreeModel();
-//        traitName = traitModel.getTraitName();
         dim = precisionParam.getRowDimension(); // assumed to be square
 
-//        isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
-
-//        if (!isSampledTraitLikelihood &&
-//                !(traitModel instanceof ConjugateWishartStatisticsProvider)) {
-//            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood or " +
-//                    "ConjugateWishartStatisticsProvider");
-//        }
 
         multivariateLikelihood = null;
     }
@@ -233,7 +255,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         numberObservations = 0;
         List<Attribute<double[]>> dataList = likelihood.getDataList();
-        int count = 0;
+
         for (Attribute<double[]> d : dataList) {
 
             double[] data = d.getAttributeValue();
@@ -258,11 +280,11 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         final double[] outerProducts = sufficientStatistics.getScaleMatrix();
 
         final double df = sufficientStatistics.getDf();
+
         if (DEBUG) {
             System.err.println("OP df = " + df);
             System.err.println("OP    = " + new Vector(outerProducts));
         }
-//        System.exit(-1);
 
         if (debugModel != null) {
             final WishartSufficientStatistics debug = ((ConjugateWishartStatisticsProvider) debugModel).getWishartStatistics();
@@ -272,15 +294,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             System.err.println(new Vector(debug.getScaleMatrix()));
             System.exit(-1);
         }
-
-
-//        final double df = 2;
-
-//        final double df = integratedLikelihood.getTotalTreePrecision();
-
-//        System.err.println("OuterProducts = \n" + new Matrix(outerProducts));
-//        System.err.println("Total tree DF  = " + df);
-//        System.exit(-1);
 
         final int dim = S.length;
         for (int i = 0; i < dim; i++) {
@@ -333,7 +346,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             incrementOuterProduct(S, treeModel.getChild(node, i));
     }
 
-    public double[][] getOperationScaleMatrixAndSetObservationCount() {
+    private double[][] getOperationScaleMatrixAndSetObservationCount() {
 
         // calculate sum-of-the-weighted-squares matrix over tree
         double[][] S = new double[dim][dim];
@@ -362,23 +375,6 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 S2 = priorInverseScaleMatrix.add(S2);
             inverseS2 = (SymmetricMatrix) S2.inverse();
 
-//            if (S[0][0] < 0.0) {
-//                 System.err.println("ERROR A");
-//                 System.err.println(new Matrix(S));
-//             }
-//
-//            if (S2.component(0, 0) < 0.0) {
-//                 System.err.println("ERROR B");
-//                 System.err.println(S2);
-//             }
-//
-//            if (inverseS2.component(0, 0) < 0.0) {
-//                 System.err.println("ERROR C");
-//                 System.err.println("S:\n" + new Matrix(S));
-//                 System.err.println("S2:\n" + S2);
-//                 System.err.println(inverseS2);
-//             }
-
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
@@ -390,70 +386,42 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     public double doOperation() {
 
+        doOperationDontFireChange();
+        precisionParam.fireParameterChangedEvent();
+
+        return 0;
+    }
+
+    public void doOperationDontFireChange() {
         if (wishartIsModel) {
-            setupWishartStatistics(priorModel);
+            setupWishartStatistics(priorModel); // TODO Deprecate
+            priorStatistics = setupStatistics(priorModel);
         }
 
         final double[][] scaleMatrix = getOperationScaleMatrixAndSetObservationCount();
         final double treeDf = numberObservations;
+
         final double df = priorDf + treeDf * pathWeight;
 
-//        if (scaleMatrix[0][0] < 0.0) {
-//             System.err.println("ERROR");
-//             System.err.println(new Matrix(scaleMatrix));
-//         }
-
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
-//        int tries  = 0;
-//        int limit = 100;
-//        boolean success = false;
-//
-//        double[][] draw = null;
-//
-//        while (!success && tries < limit) {
 
         if (DEBUG) {
             System.err.println("draw = " + new Matrix(draw));
         }
-
-//
-//
-//        draw = WishartDistribution.nextWishart(df, scaleMatrix);
-//
-//        Matrix m = new Matrix(draw);
-//        try {
-//            double logDet = m.logDeterminant();
-//            if (Double.isNaN(logDet)) {
-//                System.err.println("Bad proposal!");
-//                System.err.println("df = " + df);
-//
-////                System.err.println(m);
-////                System.exit(-1);
-//            } else {
-//                success = true;
-//            }
-//
-//        } catch (IllegalDimension illegalDimension) {
-//            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            System.exit(-1);
-//        }
-//
-//            tries++;
-//        }
-//
-//        if (tries >= limit) {
-//            System.err.println("Too many attempts!");
-//            System.exit(-1);
-//        }
 
         for (int i = 0; i < dim; i++) {
             Parameter column = precisionParam.getParameter(i);
             for (int j = 0; j < dim; j++)
                 column.setParameterValueQuietly(j, draw[j][i]);
         }
-        precisionParam.fireParameterChangedEvent();
+    }
 
-        return 0;
+    public MatrixParameterInterface getPrecisionParam() {
+        return precisionParam;
+    }
+
+    public ConjugateWishartStatisticsProvider getConjugateWishartProvider() {
+        return conjugateWishartProvider;
     }
 
     public String getPerformanceSuggestion() {
@@ -548,9 +516,16 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
                 } else {
                     precMatrix = null;
                 }
-                
+
+                WishartStatistics workingDistribution = null;
+                if (xo.hasChildNamed(WORKING)) {
+                    workingDistribution = (WishartStatistics) xo.getElementFirstChild(WORKING);
+                }
+
                 return new PrecisionMatrixGibbsOperator(
-                        ws, precMatrix, (WishartStatistics) prior.getDistribution(), weight, traitModel
+                        ws, precMatrix, (WishartStatistics) prior.getDistribution(),
+                        workingDistribution,
+                        weight, traitModel
                 );
 
             } else {

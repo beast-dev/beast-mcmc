@@ -38,9 +38,6 @@ public interface MCMCOperator extends Serializable {
 
     public static final String WEIGHT = "weight";
 
-// This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator
-//	public static final String ADAPT = "adapt";
-
     /**
      * operates on the model.
      *
@@ -108,36 +105,6 @@ public interface MCMCOperator extends Serializable {
     void setSumDeviation(double sumDeviation);
 
     /**
-     * @return the optimal acceptance probability
-     */
-    double getTargetAcceptanceProbability();
-
-    /**
-     * @return the minimum acceptable acceptance probability
-     */
-    double getMinimumAcceptanceLevel();
-
-    /**
-     * @return the maximum acceptable acceptance probability
-     */
-    double getMaximumAcceptanceLevel();
-
-    /**
-     * @return the minimum good acceptance probability
-     */
-    double getMinimumGoodAcceptanceLevel();
-
-    /**
-     * @return the maximum good acceptance probability
-     */
-    double getMaximumGoodAcceptanceLevel();
-
-    /**
-     * @return a short descriptive message of the performance of this operator.
-     */
-    String getPerformanceSuggestion();
-
-    /**
      * @return the relative weight of this operator.
      */
     double getWeight();
@@ -157,22 +124,37 @@ public interface MCMCOperator extends Serializable {
      */
     String getOperatorName();
 
+    /**
+     * get the average time to evaluate the likelihood after this operator
+     * @return
+     */
     double getMeanEvaluationTime();
 
     void addEvaluationTime(long time);
 
     long getTotalEvaluationTime();
 
-    class Utils {
+    /**
+     * get the average number of granular calculations per operation
+     * What this actually is will depend on the likelihood calculator.
+     * @return
+     */
+    double getMeanCalculationCount();
 
-        public static double getAcceptanceProbability(MCMCOperator op) {
-            final long accepted = op.getAcceptCount();
-            final long rejected = op.getRejectCount();
-            return (double) accepted / (double) (accepted + rejected);
-        }
+    void addCalculationCount(long count);
 
-        public static long getOperationCount(MCMCOperator op) {
-            return op.getAcceptCount() + op.getRejectCount();
-        }
-    }
+    long getTotalCalculationCount();
+
+    /**
+     * Get to total average acceptance probability
+     * @return
+     */
+    double getAcceptanceProbability();
+
+    /**
+     * Get the acceptance probability over a window of operations
+     * @return
+     */
+     double getSmoothedAcceptanceProbability();
+
 }

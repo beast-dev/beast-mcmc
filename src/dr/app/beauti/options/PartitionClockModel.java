@@ -167,7 +167,7 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
 
         // Random local clock
-        createScaleOperator(ClockType.LOCAL_CLOCK + ".relativeRates", demoTuning, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + ".relativeRates", OperatorType.RANDOM_WALK, demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + ".changes", OperatorType.BITFLIP, 1, treeWeights);
         createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
 
@@ -189,13 +189,13 @@ public class PartitionClockModel extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        if (!options.classicOperatorsAndPriors) {
+//        if (!options.useClassicOperatorsAndPriors()) {
             createOperator("rwBranchRateQuantiles", "branchRates.quantiles", "Random walk of branch rate quantiles",
-                    "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 0, branchWeights / 3);
-        } else {
+                    "branchRates.quantiles", OperatorType.RANDOM_WALK_LOGIT, 1, branchWeights / 3);
+//        } else {
             createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
                     "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights / 3);
-        }
+//        }
 
         createOperator("uniformBranchRateDistributionIndex", "branchRates.distributionIndex", "Performs a uniform draw of the distribution index",
                 "branchRates.distributionIndex", OperatorType.INTEGER_UNIFORM, 0, branchWeights / 3);
@@ -385,7 +385,7 @@ public class PartitionClockModel extends PartitionOptions {
 
         if (!rateParam.isPriorEdited()) {
             if (options.treeModelOptions.isNodeCalibrated(partition.treeModel) < 0
-                    && !options.clockModelOptions.isTipCalibrated()) {
+                    && !options.useTipDates) {
                 rateParam.setFixed(true);
             } else {
                 rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
@@ -449,6 +449,7 @@ public class PartitionClockModel extends PartitionOptions {
                 switch (clockType) {
                     case STRICT_CLOCK:
                         ops.add(rateOperator);
+                        addUpDownOperator(ops, rateOperator);
                         break;
 
                     case RANDOM_LOCAL_CLOCK:
@@ -471,19 +472,19 @@ public class PartitionClockModel extends PartitionOptions {
                             case LOGNORMAL:
                                 ops.add(rateOperator = getOperator(ClockType.UCLD_MEAN));
                                 ops.add(getOperator(ClockType.UCLD_STDEV));
-                                isOperatorParameterFixed(ops, rateOperator);
+                                addUpDownOperator(ops, rateOperator);
                                 break;
                             case GAMMA:
                                 ops.add(rateOperator = getOperator(ClockType.UCGD_MEAN));
                                 ops.add(getOperator(ClockType.UCGD_SHAPE));
-                                isOperatorParameterFixed(ops, rateOperator);
+                                addUpDownOperator(ops, rateOperator);
                                 break;
                             case CAUCHY:
 //                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
                                 break;
                             case EXPONENTIAL:
                                 ops.add(rateOperator = getOperator(ClockType.UCED_MEAN));
-                                isOperatorParameterFixed(ops, rateOperator);
+                                addUpDownOperator(ops, rateOperator);
                                 break;
                             case MODEL_AVERAGING:
                                 ops.add(getOperator(ClockType.UCLD_MEAN));
@@ -507,7 +508,7 @@ public class PartitionClockModel extends PartitionOptions {
                         }
 
                         if (isContinuousQuantile()) {
-                            if (!options.classicOperatorsAndPriors) {
+                            if (!options.useClassicOperatorsAndPriors()) {
                                 ops.add(getOperator("rwBranchRateQuantiles"));
                             } else {
                                 ops.add(getOperator("uniformBranchRateQuantiles"));
@@ -529,10 +530,10 @@ public class PartitionClockModel extends PartitionOptions {
             }
         }
 
-        Parameter allMusNus = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "allNus" : "allMus");
+        Parameter allMuNus = getParameter(options.useNuRelativeRates() ? "allNus" : "allMus");
 
-        if (allMusNus.getSubParameters().size() > 1) {
-            ops.add(getOperator(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "deltaNus" : "deltaMus"));
+        if (allMuNus.getSubParameters().size() > 1) {
+            ops.add(getOperator(options.useNuRelativeRates() ? "deltaNus" : "deltaMus"));
         }
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {
@@ -549,7 +550,7 @@ public class PartitionClockModel extends PartitionOptions {
         return ops;
     }
 
-    private void isOperatorParameterFixed(List<Operator> ops, Operator rateOperator) {
+    private void addUpDownOperator(List<Operator> ops, Operator rateOperator) {
         if (!rateOperator.isParameterFixed()) {
             Operator upDownOperator = getUpDownOperator();
             // need to set the node heights parameter again in case the treeModel has changed and

@@ -239,6 +239,11 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         return new MatrixParameter(null, parameter);
     }
 
+    @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
+    }
+
     public void rowMultiply(double a, int row){
         rowMultiplyQuietly(a, row);
         fireParameterChangedEvent();
@@ -506,6 +511,7 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
     public static final String ROW_DIMENSION = "rows";
     public static final String COLUMN_DIMENSION = "columns";
     public static final String TRANSPOSE = "transpose";
+    public static final String EIGEN = "isEigenVectors";
     public static final String AS_COMPOUND = "asCompoundParameter";
     public static final String BEHAVIOR = "test";
 
@@ -520,6 +526,9 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
             final String name = xo.hasId() ? xo.getId() : null;
             boolean transposed = xo.getAttribute(TRANSPOSE, false);
             boolean compound = xo.getAttribute(AS_COMPOUND, false);
+            boolean eigen = xo.getAttribute(EIGEN, false);
+
+            assert (!eigen || !transposed) : "Eigen vector matrix cannot be transposed.";
 
             MatrixParameter matrixParameter;
 
@@ -534,7 +543,11 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
             }
 
             if (!transposed) {
-                matrixParameter = new MatrixParameter(name);
+                if (!eigen) {
+                    matrixParameter = new MatrixParameter(name);
+                } else {
+                    matrixParameter = new EigenVectorsMatrix(name);
+                }
             } else {
                 matrixParameter = new TransposedMatrixParameter(name);
             }
@@ -585,6 +598,7 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
                 AttributeRule.newIntegerRule(ROW_DIMENSION, true),
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
                 AttributeRule.newBooleanRule(TRANSPOSE, true),
+                AttributeRule.newBooleanRule(EIGEN, true),
                 AttributeRule.newBooleanRule(AS_COMPOUND, true),
                 AttributeRule.newBooleanRule(BEHAVIOR, true),
         };

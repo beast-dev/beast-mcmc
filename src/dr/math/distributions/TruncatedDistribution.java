@@ -66,13 +66,13 @@ public class TruncatedDistribution extends AbstractContinuousDistribution implem
             this.lowerCDF = 0;
         }
 
+        double upperCDF = 1.0;
         if (!Double.isInfinite(this.upper)) {
-            this.normalization = source.cdf(upper) - lowerCDF;
-        } else {
-            this.normalization = 1.0 - lowerCDF;
+            upperCDF = source.cdf(upper);
         }
-    }
 
+        this.normalization = upperCDF - lowerCDF;
+    }
 
     public double pdf(double x) {
         if (x >= upper && x < lower)

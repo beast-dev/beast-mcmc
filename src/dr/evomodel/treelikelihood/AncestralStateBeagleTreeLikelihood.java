@@ -25,6 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.datatype.HiddenCodons;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
@@ -287,7 +288,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         } else {
             for (int i : state) {
-                if (dataType.getClass().equals(Codons.class)) {
+                if (dataType instanceof Codons) {
                     sb.append(dataType.getTriplet(i));
                 } else {
                     sb.append(dataType.getChar(i));

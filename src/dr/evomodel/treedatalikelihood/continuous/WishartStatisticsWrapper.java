@@ -30,6 +30,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -77,7 +78,17 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
                 TreeTraversal.TraversalType.POST_ORDER);
 
         if (likelihoodDelegate.getIntegrator() instanceof MultivariateIntegrator) {
-            outerProductDelegate = ContinuousDataLikelihoodDelegate.createObservedDataOnly(likelihoodDelegate);
+
+            ContinuousTraitPartialsProvider dataProvider = likelihoodDelegate.getDataModel();
+
+            if (dataProvider instanceof RepeatedMeasuresTraitDataModel) {
+                dataProvider = new EmptyTraitDataModel(traitName, dataProvider.getParameter(),
+                        dataProvider.getTraitDimension(), PrecisionType.SCALAR);
+            }
+
+            outerProductDelegate = ContinuousDataLikelihoodDelegate.createObservedDataOnly(
+                    likelihoodDelegate, dataProvider);
+
         } else {
             outerProductDelegate = likelihoodDelegate;
         }
@@ -97,7 +108,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         return wishartStatistics;
     }
 
-    private void simulateMissingTraits() {
+    public void simulateMissingTraits() {
 
         likelihoodDelegate.fireModelChanged(); // Force new sample!
 
@@ -246,7 +257,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
         @Override
         public Class getReturnType() {
-            return ConjugateWishartStatisticsProvider.class;
+            return WishartStatisticsWrapper.class;
         }
 
         /**

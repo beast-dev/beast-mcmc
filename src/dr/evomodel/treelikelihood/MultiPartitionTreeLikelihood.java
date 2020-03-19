@@ -50,6 +50,9 @@ import dr.inference.model.ThreadAwareLikelihood;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyStringArray;
+
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
@@ -306,6 +309,17 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
                 matrixBufferCount += substitutionModelDelegate.getMatrixBufferCount();
             }
 
+            if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+
             instanceCount++;
 
             beagle = BeagleFactory.loadBeagleInstance(
@@ -454,42 +468,6 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
         }
         this.useAmbiguities = useAmbiguities;
         hasInitialized = true;
-    }
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
     }
 
     public TipStatesModel getTipStatesModel() {

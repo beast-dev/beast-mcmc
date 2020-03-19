@@ -164,7 +164,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         double substWeights = 1.0;
 
         //Substitution model parameters
-        if (options.FREQUENCIES_DIRICHLET_PRIOR) {
+        if (options.useNewFrequenciesPrior()) {
             createNonNegativeParameterDirichletPrior("frequencies", "base frequencies", this, 4, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP1.frequencies", "base frequencies for codon position 1", this, 4, 1.0, true);
             createNonNegativeParameterDirichletPrior("CP2.frequencies", "base frequencies for codon position 2", this, 4, 1.0, true);
@@ -421,7 +421,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                     params.add(getParameter("CP" + i + ".kappa2"));
                                     break;
                                 case GTR:
-                                    if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+                                    if (options.useNewGTR()) {
                                         params.add(getParameter("CP" + i + "." + GTR_RATES));
                                     } else {
                                         for (String rateName : GTR_RATE_NAMES) {
@@ -450,7 +450,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 params.add(getParameter("CP3.kappa2"));
                                 break;
                             case GTR:
-                                if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+                                if (options.useNewGTR()) {
                                     params.add(getParameter("CP1+2." + GTR_RATES));
                                     params.add(getParameter("CP3." + GTR_RATES));
                                 } else {
@@ -482,8 +482,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             params.add(getParameter("kappa2"));
                             break;
                         case GTR:
-                            if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
-                                params.add(getParameter("gtr"));
+                            if (options.useNewGTR()) {
+                                params.add(getParameter(GTR_RATES));
                             } else {
 
                                 for (String rateName : GTR_RATE_NAMES) {
@@ -612,30 +612,30 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         int[] weights = getPartitionCodonWeights();
         if (getCodonPartitionCount() > 1) {
             if (codonHeteroPattern.equals("123")) {
-                Parameter parameter = getParameter("CP1." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                Parameter parameter = getParameter("CP1." + (options.useNuRelativeRates() ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[0]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP2." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                parameter = getParameter("CP2." + (options.useNuRelativeRates() ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[1]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP3." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                parameter = getParameter("CP3." + (options.useNuRelativeRates() ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[2]);
                 allMus.add(parameter);
             } else if (codonHeteroPattern.equals("112")) {
-                Parameter parameter = getParameter("CP1+2." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                Parameter parameter = getParameter("CP1+2." + (options.useNuRelativeRates() ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[0]);
                 allMus.add(parameter);
 
-                parameter = getParameter("CP3." + (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu"));
+                parameter = getParameter("CP3." + (options.useNuRelativeRates() ? "nu" : "mu"));
                 parameter.setDimensionWeight(weights[1]);
                 allMus.add(parameter);
             } else {
                 throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
             }
         } else {
-            Parameter mu = getParameter(!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION ? "nu" : "mu");
+            Parameter mu = getParameter(options.useNuRelativeRates() ? "nu" : "mu");
             mu.setDimensionWeight(weights[0]);
             allMus.add(mu);
         }
@@ -693,7 +693,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             case GTR:
 
                                 for (int i = 1; i <= 3; i++) {
-                                    if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+                                    if (options.useNewGTR()) {
                                         ops.add(getOperator("CP" + i + ".deltaGTR"));
                                     } else {
                                         for (String rateName : GTR_RATE_NAMES) {
@@ -724,7 +724,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                                 break;
 
                             case GTR:
-                                if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+                                if (options.useNewGTR()) {
                                     ops.add(getOperator("CP1+2.deltaGTR"));
                                     ops.add(getOperator("CP3.deltaGTR"));
                                 } else {
@@ -759,7 +759,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                             break;
 
                         case GTR:
-                            if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+                            if (options.useNewGTR()) {
                                 ops.add(getOperator("deltaGTR"));
                             } else {
                                 for (String rateName : GTR_RATE_NAMES) {
@@ -856,7 +856,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            String name = (!options.classicOperatorsAndPriors && options.LOGIT_PINV_KERNEL ? "rwPInv" : "uniformPInv");
+            String name = (options.usePInvRandomWalk() ? "rwPInv" : "uniformPInv");
             if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1." + name));

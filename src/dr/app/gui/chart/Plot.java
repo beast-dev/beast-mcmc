@@ -50,13 +50,13 @@ public interface Plot {
 
     // These constants are used for automatic scaling to select exactly
     // where the axis starts and stops.
-    static public final int NO_MARK = 0;
-    static public final int POINT_MARK = 1;
-    static public final int CROSS_MARK = 2;
-    static public final int PLUS_MARK = 3;
-    static public final int CIRCLE_MARK = 4;
-    static public final int SQUARE_MARK = 5;
-    static public final int DIAMOND_MARK = 6;
+    int NO_MARK = 0;
+    int POINT_MARK = 1;
+    int CROSS_MARK = 2;
+    int PLUS_MARK = 3;
+    int CIRCLE_MARK = 4;
+    int SQUARE_MARK = 5;
+    int DIAMOND_MARK = 6;
 
     /**
      * Set axes
@@ -131,6 +131,16 @@ public interface Plot {
      */
     String getName();
 
+    int getPlotNumber();
+
+    void setPlotNumber(int plotNumber);
+
+    double getXLocation();
+
+    double getYLocation();
+
+    void setLocation(double x, double y);
+
     /**
      * A point on the plot has been clicked
      */
@@ -149,6 +159,10 @@ public interface Plot {
     Variate getXData();
 
     Variate getYData();
+
+    void setChart(JChart chart);
+
+    JChart getChart();
 
     public interface Listener {
 
@@ -191,7 +205,9 @@ public interface Plot {
      * <p/>
      * Description:	An abstract base class for plots
      */
-    public abstract class AbstractPlot implements Plot {
+    abstract class AbstractPlot implements Plot {
+
+        private JChart chart = null;
 
         protected Axis xAxis, yAxis;
         protected Variate.N xData = null;
@@ -208,12 +224,12 @@ public interface Plot {
         protected Paint markPaint = Color.black;
         protected Paint markFillPaint = Color.black;
 
-        private final Rectangle2D bounds = null;
-
         protected double xScale, yScale, xOffset, yOffset;
 
         private String name;
-        protected int plotNumber, plotCount;
+
+        private int plotNumber = -1, plotCount = -1;
+        private double xLocation = 0, yLocation = 0;
 
         private Set<Integer> selectedPoints = new HashSet<Integer>();
 
@@ -238,6 +254,13 @@ public interface Plot {
             setData(xData, yData);
         }
 
+        public JChart getChart() {
+            return chart;
+        }
+
+        public void setChart(JChart chart) {
+            this.chart = chart;
+        }
 
         /**
          * Set data
@@ -279,6 +302,28 @@ public interface Plot {
          */
         public void resetAxes() {
             setupAxis(xAxis, yAxis, xData, yData);
+        }
+
+        public int getPlotNumber() {
+            return plotNumber;
+        }
+
+        public void setPlotNumber(int plotNumber) {
+            this.plotNumber = plotNumber;
+        }
+
+        public double getXLocation() {
+            return xLocation;
+        }
+
+        public double getYLocation() {
+            return yLocation;
+        }
+
+        @Override
+        public void setLocation(double x, double y) {
+            xLocation = x;
+            yLocation = y;
         }
 
         /**
@@ -432,8 +477,8 @@ public interface Plot {
          * Transform a chart co-ordinates into a drawing co-ordinates
          */
         protected double transformX(double value) {
-            double tx = xAxis.transform(value);
-            if (tx == Double.NaN || tx == Double.NEGATIVE_INFINITY) {
+            double tx = xAxis.transform(value + xLocation);
+            if (Double.isNaN(tx) || tx == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
             return ((tx - xAxis.transform(xAxis.getMinAxis())) * xScale) + xOffset;
@@ -443,8 +488,8 @@ public interface Plot {
          * Transform a chart co-ordinates into a drawing co-ordinates
          */
         protected double transformY(double value) {
-            double ty = yAxis.transform(value);
-            if (ty == Double.NaN || ty == Double.NEGATIVE_INFINITY) {
+            double ty = yAxis.transform(value + yLocation);
+            if (Double.isNaN(ty) || ty == Double.NEGATIVE_INFINITY) {
                 return Double.NEGATIVE_INFINITY;
             }
             return ((ty - yAxis.transform(yAxis.getMinAxis())) * yScale) + yOffset;
@@ -456,7 +501,7 @@ public interface Plot {
         protected double untransformX(double value) {
 
             return xAxis.untransform(
-                    xAxis.transform(xAxis.getMinAxis()) + ((value - xOffset) / xScale));
+                    xAxis.transform(xAxis.getMinAxis()) + ((value - xOffset) / xScale)) - xLocation;
         }
 
         /**
@@ -465,7 +510,7 @@ public interface Plot {
         protected double untransformY(double value) {
 
             return yAxis.untransform(
-                    yAxis.transform(yAxis.getMinAxis()) + ((value - yOffset) / yScale));
+                    yAxis.transform(yAxis.getMinAxis()) + ((value - yOffset) / yScale)) - yLocation;
         }
 
         /**

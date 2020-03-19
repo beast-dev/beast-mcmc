@@ -36,11 +36,11 @@ import dr.math.MathUtils;
  * @author Andrew Rambaut
  * @version $Id: DeltaExchangeOperator.java,v 1.18 2005/06/14 10:40:34 rambaut Exp $
  */
-public class DeltaExchangeOperator extends AbstractCoercableOperator {
+public class DeltaExchangeOperator extends AbstractAdaptableOperator {
 
     public DeltaExchangeOperator(Parameter parameter, double delta) {
 
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 
         this.parameter = parameter;
         this.delta = delta;
@@ -53,7 +53,7 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
         }
     }
 
-    public DeltaExchangeOperator(Parameter parameter, int[] parameterWeights, double delta, double weight, boolean isIntegerOperator, CoercionMode mode) {
+    public DeltaExchangeOperator(Parameter parameter, int[] parameterWeights, double delta, double weight, boolean isIntegerOperator, AdaptationMode mode) {
 
         super(mode);
 
@@ -131,11 +131,12 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(delta);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         delta = Math.exp(value);
     }
 
@@ -143,23 +144,8 @@ public class DeltaExchangeOperator extends AbstractCoercableOperator {
         return delta;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double d = OperatorUtils.optimizeWindowSize(delta, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing delta to about " + d;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing delta to about " + d;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "delta";
     }
 
     public String toString() {

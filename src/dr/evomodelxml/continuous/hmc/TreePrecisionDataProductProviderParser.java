@@ -50,6 +50,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String MASKING = MaskedParameterParser.MASKING;
     private static final String TIME_GUESS = "roughTravelTimeGuess";
+    private static final String OPTIMAL_TRAVEL_TIME_SCALAR = "optimalTravelTimeMultiplyScalar";
     private static final String EIGENVALUE_REPLICATES = "eigenvalueReplicates";
     private static final String MODE = "mode";
     private static final String THREAD_COUNT = "threadCount";
@@ -79,15 +80,17 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     }
 
     private TreePrecisionTraitProductProvider parseComputeMode(XMLObject xo,
-                                                                TreeDataLikelihood treeDataLikelihood,
-                                                                ContinuousDataLikelihoodDelegate continuousData,
-                                                                String traitName) throws XMLParseException {
+                                                               TreeDataLikelihood treeDataLikelihood,
+                                                               ContinuousDataLikelihoodDelegate continuousData,
+                                                               String traitName) throws XMLParseException {
 
-        double roughTimeGuess = xo.getAttribute(TIME_GUESS, -1); // TODO This is bad; magic number, not checking
+        double roughTimeGuess = xo.getAttribute(TIME_GUESS, 0.0);
+        double optimalTravelTimeScalar = xo.getAttribute(OPTIMAL_TRAVEL_TIME_SCALAR, 0.01);
+
         int eigenvalueReplicates = xo.getAttribute(EIGENVALUE_REPLICATES, 1);
 
         String mode = xo.getAttribute(MODE, "linear");
-        int threadCount = xo.getAttribute(THREAD_COUNT, 0);
+        int threadCount = xo.getAttribute(THREAD_COUNT, 1);
 
         if (mode.toLowerCase().compareTo("cubic") == 0) {
             return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);
@@ -95,7 +98,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
             return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
-                    threadCount, roughTimeGuess, eigenvalueReplicates);
+                    threadCount, roughTimeGuess, optimalTravelTimeScalar, eigenvalueReplicates);
         }
     }
 
@@ -105,7 +108,7 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newIntegerRule(THREAD_COUNT, true),
             AttributeRule.newDoubleRule(TIME_GUESS, true),

@@ -36,16 +36,8 @@ public class JGridChart extends JChart {
     private final CustomAxis xVariableAxis;
     private final CustomAxis yVariableAxis;
 
-    public JGridChart() {
-        super(null, null);
-
-        xVariableAxis = new CustomAxis(1, 2);
-        yVariableAxis = new CustomAxis(1, 2);
-
-        //this sets the axes on the JGridChart
-        setXAxis(xVariableAxis);
-        setYAxis(yVariableAxis);
-    }
+    private int rowCount;
+    private int columnCount;
 
     public JGridChart(double aspectRatio) {
         super(null, null, aspectRatio);
@@ -56,17 +48,70 @@ public class JGridChart extends JChart {
         //this sets the axes on the JGridChart
         setXAxis(xVariableAxis);
         setYAxis(yVariableAxis);
+
+        // set the row and column counts to the sqrt of the number of plots
+        rowCount = 0;
+        columnCount = 0;
     }
+
+    public JGridChart(int rowCount, int columnCount, double aspectRatio) {
+        super(null, null, aspectRatio);
+
+        this.rowCount = rowCount;
+        this.columnCount = columnCount;
+
+        xVariableAxis = new CustomAxis(1, 2);
+        yVariableAxis = new CustomAxis(1, 2);
+
+        //this sets the axes on the JGridChart
+        setXAxis(xVariableAxis);
+        setYAxis(yVariableAxis);
+
+    }
+
+    public void setDimensions(int rowCount, int columnCount) {
+        this.rowCount = rowCount;
+        this.columnCount = columnCount;
+
+        xVariableAxis.setRange(1.0, columnCount);
+        yVariableAxis.setRange(1.0, rowCount);
+
+        recalibrate();
+        repaint();
+    }
+
 
     @Override
     public void addPlot(Plot plot) {
 
-        plot.setAxes(xAxis, yAxis);
-        plots.add(plot);
+        super.addPlot(plot);
 
-        // set the range manually to the square root of the number of plots
-        xVariableAxis.setRange(1.0, Math.sqrt(getPlotCount()));
-        yVariableAxis.setRange(1.0, Math.sqrt(getPlotCount()));
+        int rowCount = this.rowCount;
+        int columnCount = this.columnCount;
+
+        if (rowCount < 1 || columnCount < 1) {
+            // set the range manually to the square root of the number of plots
+            int k = (int)Math.sqrt(getPlotCount());
+            rowCount = getPlotCount() / k;
+            columnCount = getPlotCount() % k;
+
+            if (plot.getXLocation() < 0 || plot.getYLocation() < 0) {
+                int x = 0;
+                int y = 0;
+                for (Plot p : getPlots()) {
+                    p.setLocation(x, y);
+                    x++;
+                    if (x >= columnCount) {
+                        x = 0;
+                        y++;
+                    }
+                }
+            }
+        }
+
+        xVariableAxis.setRange(1.0, columnCount);
+        yVariableAxis.setRange(1.0, rowCount);
+
 
         recalibrate();
         repaint();

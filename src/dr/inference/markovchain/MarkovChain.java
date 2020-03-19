@@ -26,10 +26,7 @@
 package dr.inference.markovchain;
 
 import dr.evomodel.continuous.GibbsIndependentCoalescentOperator;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
-import dr.inference.model.PathLikelihood;
+import dr.inference.model.*;
 import dr.inference.operators.*;
 
 import java.io.Serializable;
@@ -63,7 +60,9 @@ public final class MarkovChain implements Serializable {
     private double bestScore, currentScore, initialScore;
     private long currentLength;
 
-    private boolean useCoercion = true;
+    private boolean useAdaptation = true;
+    private final boolean useSmoothedAcceptanceProbability;
+
 
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
@@ -74,13 +73,14 @@ public final class MarkovChain implements Serializable {
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
                        long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
-                       boolean useCoercion) {
+                       boolean useAdaptation, boolean useSmoothedAcceptanceProbability) {
 
         currentLength = 0;
         this.likelihood = likelihood;
         this.schedule = schedule;
         this.acceptor = acceptor;
-        this.useCoercion = useCoercion;
+        this.useAdaptation = useAdaptation;
+        this.useSmoothedAcceptanceProbability = useSmoothedAcceptanceProbability;
 
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
@@ -115,7 +115,7 @@ public final class MarkovChain implements Serializable {
      *
      * @param length number of states to run the chain.
      */
-    public long runChain(long length, boolean disableCoerce) {
+    public long runChain(long length, boolean disableAdaptation) {
 
         likelihood.makeDirty();
         currentScore = evaluate(likelihood);
@@ -207,11 +207,6 @@ public final class MarkovChain implements Serializable {
 
             logr[0] = -Double.MAX_VALUE;
 
-            long elaspedTime = 0;
-            if (PROFILE) {
-                elaspedTime = System.currentTimeMillis();
-            }
-
             // The new model is proposed
             // assert Profiler.startProfile("Operate");
 
@@ -234,14 +229,6 @@ public final class MarkovChain implements Serializable {
                 operatorSucceeded = false;
             }
 
-            if (PROFILE) {
-                long duration = System.currentTimeMillis() - elaspedTime;
-                if (DEBUG) {
-                    System.out.println("Time: " + duration);
-                }
-                mcmcOperator.addEvaluationTime(duration);
-            }
-
             double score = Double.NaN;
             double deviation = Double.NaN;
 
@@ -256,8 +243,12 @@ public final class MarkovChain implements Serializable {
                 }
 
                 long elapsedTime = 0;
+                long calculationCount = 0;
                 if (PROFILE) {
                     elapsedTime = System.currentTimeMillis();
+                    if (likelihood instanceof Profileable) {
+                        calculationCount = ((Profileable) likelihood).getTotalCalculationCount();
+                    }
                 }
 
                 // The new model is evaluated
@@ -265,10 +256,14 @@ public final class MarkovChain implements Serializable {
 
                 if (PROFILE) {
                     long duration = System.currentTimeMillis() - elapsedTime;
+                    mcmcOperator.addEvaluationTime(duration);
+                    long newCalculationCount = (likelihood instanceof Profileable) ?
+                            ((Profileable) likelihood).getTotalCalculationCount() : 1;
+                    mcmcOperator.addCalculationCount(newCalculationCount - calculationCount);
+
                     if (DEBUG) {
                         System.out.println("Time: " + duration);
                     }
-                    mcmcOperator.addEvaluationTime(duration);
                 }
 
                 String diagnosticOperator = "";
@@ -419,15 +414,15 @@ public final class MarkovChain implements Serializable {
             // assert Profiler.stopProfile("Restore");
 
 
-            if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {
-                coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);
+            if (useAdaptation && !disableAdaptation && mcmcOperator instanceof AdaptableMCMCOperator) {
+                adaptAcceptanceProbability((AdaptableMCMCOperator) mcmcOperator, logr[0]);
             }
 
             if (usingFullEvaluation) {
                 if (schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
                         currentState >= fullEvaluationCount) {
                     // full evaluation is only switched off when each operator has done a
-                    // minimum number of operations (currently 1) and fullEvalationCount
+                    // minimum number of operations (currently 1) and fullEvaluationCount
                     // operations in total.
 
                     usingFullEvaluation = false;
@@ -529,34 +524,41 @@ public final class MarkovChain implements Serializable {
      * @param op   The operator
      * @param logr
      */
-    private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
+    private void adaptAcceptanceProbability(AdaptableMCMCOperator op, double logr) {
 
         if (DEBUG) {
-            System.out.println("coerceAcceptanceProbability " + isCoercable(op));
+            System.out.println("adaptAcceptanceProbability " + isAdaptable(op));
         }
 
-        if (isCoercable(op)) {
-            final double p = op.getCoercableParameter();
+        if (isAdaptable(op)) {
+            final double p = op.getAdaptableParameter();
 
-            final double i = schedule.getOptimizationTransform(MCMCOperator.Utils.getOperationCount(op));
+            final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
+
+            double acceptance;
+            if (useSmoothedAcceptanceProbability) {
+                acceptance = op.getSmoothedAcceptanceProbability();
+            } else {
+                acceptance = Math.exp(logr);
+            }
 
             final double target = op.getTargetAcceptanceProbability();
 
-            final double newp = p + ((1.0 / (i + 1.0)) * (Math.exp(logr) - target));
+            final double newp = p + ((1.0 / i) * (acceptance - target));
 
             if (newp > -Double.MAX_VALUE && newp < Double.MAX_VALUE) {
-                op.setCoercableParameter(newp);
+                op.setAdaptableParameter(newp);
                 if (DEBUG) {
-                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " logr: " + logr);
+                    System.out.println("Setting coercable parameter: " + newp + " target: " + target + " current: " + acceptance);
                 }
             }
         }
     }
 
-    private boolean isCoercable(CoercableMCMCOperator op) {
+    private boolean isAdaptable(AdaptableMCMCOperator op) {
 
-        return op.getMode() == CoercionMode.COERCION_ON
-                || (op.getMode() != CoercionMode.COERCION_OFF && useCoercion);
+        return op.getMode() == AdaptationMode.ADAPTATION_ON
+                || (op.getMode() != AdaptationMode.ADAPTATION_OFF && useAdaptation);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {

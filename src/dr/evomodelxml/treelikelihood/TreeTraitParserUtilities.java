@@ -55,6 +55,7 @@ public class TreeTraitParserUtilities {
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
     public static final String STANDARDIZE = "standardize";
+    public static final String TARGET_SD = "targetSd";
     public static final String SAMPLE_MISSING_TRAITS = "sampleMissingTraits";
 
     public static final String LATENT_FROM = "latentFrom";
@@ -402,15 +403,6 @@ public class TreeTraitParserUtilities {
                 }
             }
 
-            // Standardize
-            if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
-
-                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter);
-                String message = st.doStandardization(false);
-
-                Logger.getLogger("dr.evomodel.continous").info(message);
-            }
-
             // Find missing values
             double[] allValues = traitParameter.getParameterValues();
             missingIndices = new ArrayList<Integer>();
@@ -419,6 +411,18 @@ public class TreeTraitParserUtilities {
                     traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
                     missingIndices.add(i);
                 }
+            }
+
+            // Standardize
+            if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
+
+                double targetSd = xo.getAttribute(TARGET_SD, 1.0);
+
+                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter, missingIndices,
+                        targetSd);
+                String message = st.doStandardization(false);
+
+                Logger.getLogger("dr.evomodel.continous").info(message);
             }
 
             if (xo.hasChildNamed(MISSING)) {

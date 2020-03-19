@@ -59,6 +59,8 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
     int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations);
 
+    int getSingleOperationSize();
+
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 
         AbstractDelegate(String name, Tree tree) {
@@ -193,6 +195,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         }
 
         @Override
+        public int getSingleOperationSize() {
+            return ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE;
+        }
+
+        @Override
         protected final double getNormalization() {
             return rateTransformation.getNormalization();
         }
@@ -266,7 +273,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 //        }
 
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
-            return new SymmetricMatrix(precision).inverse().toVectorizedComponents();
+            return new SymmetricMatrix(precision).inverse().toArrayComponents();
         }
 
     }

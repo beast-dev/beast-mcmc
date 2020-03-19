@@ -73,9 +73,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             "format  data files using the 'Import Data' menu option.<br>" +
             "Trees must be rooted and strictly bifurcating (binary).</html>");
 
-//    private JButton treeDisplayButton = new JButton("Display selected tree");
-//    private JButton correctBranchLengthButton = new JButton("Correct branch lengths to get ultrametric tree");
-
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
     private BeautiOptions options = null;
@@ -101,7 +98,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 partitionTreeModel.setPloidyType((PloidyType) ploidyTypeCombo.getSelectedItem());
             }
         });
-        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
+        if (options.isEBSPSharingSamePrior()) {
             ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }
 
@@ -162,44 +159,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
         });
 
-//        PanelUtils.setupComponent(treeDisplayButton);
-//        treeDisplayButton.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                SquareTreePainter treePainter = new SquareTreePainter();
-//                treePainter.setColorAttribute("color");
-//                treePainter.setLineAttribute("line");
-////        treePainter.setShapeAttribute("shape");
-//                treePainter.setLabelAttribute("label");
-//                Tree tree = getSelectedUserTree();
-//                JTreeDisplay treeDisplay = new JTreeDisplay(treePainter, tree);
-//
-//                JTreePanel treePanel = new JTreePanel(treeDisplay);
-//
-//                JOptionPane optionPane = new JOptionPane(treePanel,
-//                        JOptionPane.PLAIN_MESSAGE,
-//                        JOptionPane.OK_OPTION,
-//                        null,
-//                        null,
-//                        null);
-//                optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-//
-//                final JDialog dialog = optionPane.createDialog(parent, "Display the selected starting tree - " + tree.getId());
-//                dialog.setSize(600, 400);
-//                dialog.setResizable(true);
-//                dialog.setVisible(true);
-//            }
-//        });
-
-//        PanelUtils.setupComponent(correctBranchLengthButton);
-//        correctBranchLengthButton.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                Tree tree = getSelectedUserTree();
-//                Tree.Utils.correctBranchLengthToGetUltrametricTree(tree);
-//                partitionTreeModel.setUserStartingTree(tree);
-//            }
-//        });
-
         setupPanel();
+        setOptions();
     }
 
     private void setUserSpecifiedStartingTree() {
@@ -223,7 +184,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         removeAll();
 
-        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
+        if (options.isEBSPSharingSamePrior()) {
             addComponentWithLabel("Ploidy type:", ploidyTypeCombo);
         }
 
@@ -248,15 +209,11 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 }
             }
 
-//            addComponent(treeDisplayButton);  // todo JTreeDisplay not work properly
-
             addComponents(treeFormatLabel, treeFormatCombo);
             addComponent(userTreeInfo);
 
         }
-//		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
-        setOptions();
         validate();
         repaint();
     }
@@ -267,21 +224,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             return;
         }
 
-//        setupPanel();
-
         settingOptions = true;
         initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
-//        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
-//            ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
-//        }
-
-//        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
-//
-//        if (partitionTreeModel.getUserStartingTree() == null) {
-//            userTreeCombo.setSelectedItem(NO_TREE);
-//        } else {
-//            userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree().getId());
-//        }
 
         userTreeRadio.setEnabled(options.userTrees.size() > 0);
 
@@ -291,14 +235,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
-        // all moved to event
-//    	if (options.isEBSPSharingSamePrior() || options.starBEASTOptions.isSpeciesAnalysis()) {
-//
-//        	partitionTreeModel.setPloidyType( (PloidyType) ploidyTypeCombo.getSelectedItem());
-//        }
-//
-//    	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
-//    	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
     }
 
     public boolean isBifurcatingTree(Tree tree, NodeRef node) {

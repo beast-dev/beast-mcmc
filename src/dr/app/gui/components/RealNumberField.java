@@ -136,7 +136,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             setText("");
             return;
         }
-        if (value == Double.NaN) {
+        if (value.isNaN()) {
             setText(NaN);
         } else if (value == Double.POSITIVE_INFINITY) {
             setText(POSITIVE_INFINITY);

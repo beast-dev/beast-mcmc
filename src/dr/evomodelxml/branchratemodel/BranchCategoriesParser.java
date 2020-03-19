@@ -37,9 +37,9 @@ import dr.xml.*;
  */
 public class BranchCategoriesParser extends AbstractXMLObjectParser {
 
-    public static final String BRANCH_CATEGORIES = "branchCategories";
-    public static final String CATEGORY = "category";
-    public static final String ALLOCATION = "rateCategories";
+    private static final String BRANCH_CATEGORIES = "branchCategories";
+    static final String CATEGORY = "category";
+    private static final String ALLOCATION = "rateCategories";
 
     public static final String RANDOMIZE = "randomize";
 
@@ -56,42 +56,49 @@ public class BranchCategoriesParser extends AbstractXMLObjectParser {
         if (!xo.getAttribute(RANDOMIZE, true)) {
             CountableBranchCategoryProvider.CladeBranchCategoryModel cm = new
                     CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, allocationParameter);
-            for (int i = 0; i < xo.getChildCount(); ++i) {
-                if (xo.getChild(i) instanceof XMLObject) {
-                    XMLObject xoc = (XMLObject) xo.getChild(i);
-                    if (xoc.getName().equals(LocalClockModelParser.CLADE)) {
-                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
-
-                        boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
-                        boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
-                        int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
-                        try {
-                            cm.setClade(taxonList, rateCategory, includeStem, excludeClade, false);
-                        } catch (TreeUtils.MissingTaxonException e) {
-                            throw new XMLParseException("Unable to find taxon for clade in countable mixture model: " + e.getMessage());
-                        }
-                    }  else if (xoc.getName().equals(LocalClockModelParser.TRUNK)) {
-                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
-
-                        boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
-                        boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
-                        int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
-                        try {
-                            cm.setClade(taxonList, rateCategory, includeStem, excludeClade, true);
-                        } catch (TreeUtils.MissingTaxonException e) {
-                            throw new XMLParseException("Unable to find taxon for trunk in countable mixture model: " + e.getMessage());
-                        }
-                    }
-                }
-            }
+            parseCladeCategories(xo, cm);
             cladeModel = cm;
         } else {
-            CountableBranchCategoryProvider.IndependentBranchCategoryModel cm = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, allocationParameter);
+            CountableBranchCategoryProvider.IndependentBranchCategoryModel cm =
+                    new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, allocationParameter);
             cm.randomize();
             cladeModel = cm;
         }
 
         return cladeModel;
+    }
+
+    static void parseCladeCategories(XMLObject xo, CountableBranchCategoryProvider.CladeBranchCategoryModel cm)
+            throws XMLParseException {
+
+        for (int i = 0; i < xo.getChildCount(); ++i) {
+            if (xo.getChild(i) instanceof XMLObject) {
+                XMLObject xoc = (XMLObject) xo.getChild(i);
+                if (xoc.getName().equals(LocalClockModelParser.CLADE)) {
+                    TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
+
+                    boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
+                    boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
+                    int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
+                    try {
+                        cm.setClade(taxonList, rateCategory, includeStem, excludeClade, false);
+                    } catch (TreeUtils.MissingTaxonException e) {
+                        throw new XMLParseException("Unable to find taxon for clade in countable mixture model: " + e.getMessage());
+                    }
+                } else if (xoc.getName().equals(LocalClockModelParser.TRUNK)) {
+                    TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
+
+                    boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
+                    boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
+                    int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
+                    try {
+                        cm.setClade(taxonList, rateCategory, includeStem, excludeClade, true);
+                    } catch (TreeUtils.MissingTaxonException e) {
+                        throw new XMLParseException("Unable to find taxon for trunk in countable mixture model: " + e.getMessage());
+                    }
+                }
+            }
+        }
     }
 
     //************************************************************************

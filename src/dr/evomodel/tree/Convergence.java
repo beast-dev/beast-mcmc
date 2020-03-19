@@ -41,6 +41,7 @@ import java.util.*;
 /**
  * @author shhn001
  */
+@Deprecated
 public class Convergence {
 
 

@@ -96,7 +96,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-    protected final void handleModelChangedEvent(Model model, Object object, int index) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
             // treeModel has changed so recalculate the intervals
             eventsKnown = false;
@@ -119,7 +119,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     /**
      * Stores the precalculated state: in this case the intervals
      */
-    protected final void storeState() {
+    protected void storeState() {
         // copy the intervals into the storedIntervals
         storedIntervals.copyIntervals(intervals);
 
@@ -131,7 +131,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     /**
      * Restores the precalculated state: that is the intervals of the tree.
      */
-    protected final void restoreState() {
+    protected void restoreState() {
         // swap the intervals back
         Intervals tmp = storedIntervals;
         storedIntervals = intervals;
@@ -153,7 +153,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         return this;
     }
 
-    public final double getLogLikelihood() {
+    public double getLogLikelihood() {
         if (!eventsKnown) {
             setupIntervals();
         }
@@ -166,7 +166,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         return logLikelihood;
     }
 
-    public final void makeDirty() {
+    public void makeDirty() {
         likelihoodKnown = false;
         eventsKnown = false;
     }
@@ -356,10 +356,10 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;
 
-    private double logLikelihood;
-    private double storedLogLikelihood;
+    protected double logLikelihood;
+    protected double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown = false;
+    protected boolean storedLikelihoodKnown = false;
 
     private double[] coalescentEventStatisticValues;
 }

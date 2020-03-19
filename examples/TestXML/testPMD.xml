@@ -1366,7 +1366,7 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="years">
 		<populationSize>
-			<parameter id="constant.popSize" value="496432.69917113904" lower="0.0" upper="Infinity"/>
+			<parameter id="constant.popSize" value="496432.69917113904" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 	
@@ -1401,7 +1401,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="4.0E-7" lower="0.0" upper="100.0"/>
+			<parameter id="clock.rate" value="4.0E-7" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 	
@@ -1415,7 +1415,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="kappa" value="1.0" lower="1.0E-8" upper="Infinity"/>
+			<parameter id="kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</HKYModel>
 	
@@ -1428,7 +1428,7 @@
 	
 	<sequenceErrorModel id="errorModel" type="transitions">
 		<ageRelatedErrorRate>
-			<parameter id="errorModel.ageRate" value="4.0E-7" lower="0.0" upper="100.0"/>
+			<parameter id="errorModel.ageRate" value="4.0E-7" lower="0.0"/>
 		</ageRelatedErrorRate>
 	</sequenceErrorModel>
 	
@@ -1487,12 +1487,24 @@
 	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
-				<jeffreysPrior>
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
 					<parameter idref="constant.popSize"/>
-				</jeffreysPrior>
-				<jeffreysPrior>
+				</logNormalPrior>
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="kappa"/>
-				</jeffreysPrior>
+				</logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="frequencies"/>
+				</dirichletPrior>
+				<ctmcScalePrior>
+					<ctmcScale>
+						<parameter idref="clock.rate"/>
+					</ctmcScale>
+					<treeModel idref="treeModel"/>
+				</ctmcScalePrior>
+				<exponentialPrior mean="0.5" offset="0.0">
+					<parameter idref="errorModel.ageRate"/>
+				</exponentialPrior>
 				<coalescentLikelihood idref="coalescent"/>
 			</prior>
 			<likelihood id="likelihood">
@@ -1500,6 +1512,7 @@
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
+
 		<log id="screenLog" logEvery="1000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
@@ -1517,6 +1530,7 @@
 				<parameter idref="clock.rate"/>
 			</column>
 		</log>
+
 		<log id="fileLog" logEvery="1000" fileName="testPMD.log">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
@@ -1529,6 +1543,7 @@
 			<treeLikelihood idref="treeLikelihood"/>
 			<coalescentLikelihood idref="coalescent"/>
 		</log>
+
 		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testPMD.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<posterior idref="posterior"/>

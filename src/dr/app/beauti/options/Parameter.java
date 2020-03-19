@@ -518,10 +518,7 @@ public class Parameter implements Serializable {
 
     public boolean isPriorImproper() {
         if (
-            // 1/x is an improper prior but we probably don't want to flag it as
-            // such (or we want to make a more explicit distinction about when it
-            // might be appropriate:
-            /* priorType == PriorType.ONE_OVER_X_PRIOR || */
+                (priorType == PriorType.ONE_OVER_X_PRIOR) ||
                 (priorType == PriorType.NONE_IMPROPER) ||
                         (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(getLowerBound()) || Double.isInfinite(getUpperBound())))) {
             return true;

@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.ExponentialDistribution;
 import org.w3c.dom.Document;
@@ -42,7 +39,8 @@ import org.w3c.dom.Element;
  * @version $Id: ExponentialDistributionModel.java,v 1.12 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class ExponentialDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class ExponentialDistributionModel extends AbstractModel implements
+        ParametricDistributionModel, GradientProvider, HessianProvider {
 
     public static final String EXPONENTIAL_DISTRIBUTION_MODEL = "exponentialDistributionModel";
 
@@ -176,5 +174,64 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     private Variable<Double> mean = null;
     private double offset = 0.0;
 
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        return getDerivativeLogDensity(obj, DerivativeType.DIAGONAL_HESSIAN);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+
+        double[] diagonalHessian = getDiagonalHessianLogDensity(obj);
+        double[][] result = new double[diagonalHessian.length][diagonalHessian.length];
+        for (int i = 0; i < diagonalHessian.length; i++) {
+            result[i][i] = diagonalHessian[i];
+        }
+        return result;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        return getDerivativeLogDensity(obj, DerivativeType.GRADIENT);
+    }
+
+    private double[] getDerivativeLogDensity(Object obj, DerivativeType derivativeType) {
+
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = derivativeType.getDerivativeLogPdf(x[i] - offset, 1.0 / getMean());
+        }
+        return result;
+    }
+
+    private enum DerivativeType {
+        GRADIENT("gradient") {
+            @Override
+            public double getDerivativeLogPdf(double x, double lambda) {
+                return ExponentialDistribution.gradLogPdf(x, lambda);
+            }
+        },
+        DIAGONAL_HESSIAN("diagonalHessian") {
+            @Override
+            public double getDerivativeLogPdf(double x, double lambda) {
+                return ExponentialDistribution.hessianLogPdf(x, lambda);
+            }
+        };
+
+        private String type;
+
+        DerivativeType(String type) {
+            this.type = type;
+        }
+
+        public abstract double getDerivativeLogPdf(double x, double lambda);
+    }
 }
 

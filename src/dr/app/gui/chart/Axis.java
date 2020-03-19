@@ -559,6 +559,11 @@ public interface Axis {
             double r=maxTick-minTick;
             majorTickCount=(int)(r/u);
 
+            if (r == 0) {
+                majorTickCount = 1;
+                return;
+            }
+            
             while (majorTickCount < prefMajorTickCount) {
                 u=majorTick/2;	// Try using halves
                 if (!isDiscrete || u==Math.floor(u)) { // u is an integer

@@ -169,10 +169,10 @@ public class TreeIntervals implements IntervalList {
     public NodeRef getCoalescentNode(int interval) {
         if (getIntervalType(interval) == IntervalType.COALESCENT) {
             if (lineagesRemoved[interval] != null) {
-                if (lineagesRemoved[interval].size() == 1) {
-                    return lineagesRemoved[interval].get(0);
+                if (lineagesAdded[interval].size() == 1) {
+                    return lineagesAdded[interval].get(0);
                 } else throw new IllegalArgumentException("multiple lineages lost over this interval!");
-            } else throw new IllegalArgumentException("Inconsistent: no intervals lost over this interval!");
+            } else throw new IllegalArgumentException("Inconsistent: no lineages lost over this interval!");
         } else throw new IllegalArgumentException("Interval " + interval + " is not a coalescent interval.");
     }
 
@@ -487,8 +487,8 @@ public class TreeIntervals implements IntervalList {
      */
     private boolean intervalsKnown = false;
     private boolean storedIntervalsKnown;
-	
-	private double multifurcationLimit = -1.0;
+
+    private double multifurcationLimit = -1.0;
 
     private static final boolean superStore = true;
 }

@@ -49,7 +49,7 @@ public class OperatorAnalysisPrinter {
      *
      * @param out the print stream to write operator analysis to
      */
-    public static void showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useCoercion) {
+    public static void showOperatorAnalysis(PrintStream out, OperatorSchedule schedule, boolean useAdaptation) {
         out.println();
         out.println("Operator analysis");
         out.println(formatter.formatToFieldWidth("Operator", 50) +
@@ -58,7 +58,8 @@ public class OperatorAnalysisPrinter {
                 formatter.formatToFieldWidth("Time", 9) +
                 formatter.formatToFieldWidth("Time/Op", 9) +
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
-                (useCoercion ? "" : " Performance suggestion"));
+                formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
+                (useAdaptation ? "" : " Performance suggestion"));
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
@@ -67,22 +68,24 @@ public class OperatorAnalysisPrinter {
                 JointOperator jointOp = (JointOperator) op;
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                                    + formattedParameterString(jointOp.getSubOperator(k))
-                                    + formattedCountString(op)
-                                    + formattedTimeString(op)
-                                    + formattedTimePerOpString(op)
-                                    + formattedProbString(jointOp)
-                                    + (useCoercion ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
+                            + formattedParameterString(jointOp.getSubOperator(k))
+                            + formattedCountString(op)
+                            + formattedTimeString(op)
+                            + formattedTimePerOpString(op)
+                            + formattedProbString(jointOp)
+                            + formattedSmoothedProbString(op)
+                            + (useAdaptation ? "" : formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
                     );
                 }
             } else {
                 out.println(formattedOperatorName(op.getOperatorName())
-                                + formattedParameterString(op)
-                                + formattedCountString(op)
-                                + formattedTimeString(op)
-                                + formattedTimePerOpString(op)
-                                + formattedProbString(op)
-                                + (useCoercion ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
+                        + formattedParameterString(op)
+                        + formattedCountString(op)
+                        + formattedTimeString(op)
+                        + formattedTimePerOpString(op)
+                        + formattedProbString(op)
+                        + formattedSmoothedProbString(op)
+                        + (useAdaptation ? "" : formattedDiagnostics(op, op.getAcceptanceProbability()))
                 );
             }
 
@@ -96,8 +99,8 @@ public class OperatorAnalysisPrinter {
 
     private static String formattedParameterString(MCMCOperator op) {
         String pString = "        ";
-        if (op instanceof CoercableMCMCOperator && ((CoercableMCMCOperator) op).getMode() != CoercionMode.COERCION_OFF) {
-            pString = formatter.formatToFieldWidth(formatter.formatDecimal(((CoercableMCMCOperator) op).getRawParameter(), 3), 8);
+        if (op instanceof AdaptableMCMCOperator && ((AdaptableMCMCOperator) op).getMode() != AdaptationMode.ADAPTATION_OFF) {
+            pString = formatter.formatToFieldWidth(formatter.formatDecimal(((AdaptableMCMCOperator) op).getRawParameter(), 3), 8);
         }
         return pString;
     }
@@ -118,37 +121,42 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedProbString(MCMCOperator op) {
-        final double acceptanceProb = MCMCOperator.Utils.getAcceptanceProbability(op);
+        final double acceptanceProb = op.getAcceptanceProbability();
+        return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
+    }
+
+    private static String formattedSmoothedProbString(MCMCOperator op) {
+        final double acceptanceProb = op.getSmoothedAcceptanceProbability();
         return formatter.formatToFieldWidth(formatter.formatDecimal(acceptanceProb, 4), 11) + " ";
     }
 
     private static String formattedDiagnostics(MCMCOperator op, double acceptanceProb) {
 
         String message = "good";
-        if (acceptanceProb < op.getMinimumGoodAcceptanceLevel()) {
-            if (acceptanceProb < (op.getMinimumAcceptanceLevel() / 10.0)) {
+        if (acceptanceProb < AbstractAdaptableOperator.MINIMUM_GOOD_ACCEPTANCE_LEVEL) {
+            if (acceptanceProb < (AbstractAdaptableOperator.MINIMUM_ACCEPTANCE_LEVEL / 10.0)) {
                 message = "very low";
-            } else if (acceptanceProb < op.getMinimumAcceptanceLevel()) {
+            } else if (acceptanceProb < AbstractAdaptableOperator.MINIMUM_ACCEPTANCE_LEVEL) {
                 message = "low";
             } else message = "slightly low";
 
-        } else if (acceptanceProb > op.getMaximumGoodAcceptanceLevel()) {
-            double reallyHigh = 1.0 - ((1.0 - op.getMaximumAcceptanceLevel()) / 10.0);
+        } else if (acceptanceProb > AbstractAdaptableOperator.MAXIMUM_GOOD_ACCEPTANCE_LEVEL) {
+            double reallyHigh = 1.0 - ((1.0 - AbstractAdaptableOperator.MAXIMUM_ACCEPTANCE_LEVEL) / 10.0);
             if (acceptanceProb > reallyHigh) {
                 message = "very high";
-            } else if (acceptanceProb > op.getMaximumAcceptanceLevel()) {
+            } else if (acceptanceProb > AbstractAdaptableOperator.MAXIMUM_ACCEPTANCE_LEVEL) {
                 message = "high";
             } else message = "slightly high";
         }
 
-        String performacsMsg;
+        String performancesMsg = "";
         if (op instanceof GibbsOperator) {
-            performacsMsg = "none (Gibbs operator)";
-        } else {
-            final String suggestion = op.getPerformanceSuggestion();
-            performacsMsg = message + "\t" + suggestion;
+            performancesMsg = "none (Gibbs operator)";
+        } else if (op instanceof AdaptableMCMCOperator){
+            final String suggestion = ((AdaptableMCMCOperator)op).getPerformanceSuggestion();
+            performancesMsg = message + "\t" + suggestion;
         }
 
-        return performacsMsg;
+        return performancesMsg;
     }
 }

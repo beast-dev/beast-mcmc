@@ -1,14 +1,35 @@
 language: java
-sudo: false
 
 #jdk:
-#    - oraclejdk7
 #    - oraclejdk8
-#    - openjdk6
 
-#addons:
-#  apt:
-#    packages:
-#    - ant-junit
+addons:
+ apt:
+   packages:
+   - ant
+   - ant-optional
 
-script: ant dist
+before_install:
+  - pushd .
+  - export BEAGLE_BRANCH=hmc-clock
+  - mkdir -p ${BEAGLE_LIB}
+  - git clone -b ${BEAGLE_BRANCH} https://github.com/beagle-dev/beagle-lib.git ${BEAGLE_BUILD}
+  - cd ${BEAGLE_BUILD}
+  - ./autogen.sh
+  - ./configure --without-cuda --without-opencl --prefix=${BEAGLE}
+  - make
+  - make install
+  - export LD_LIBRARY_PATH=${BEAGLE_LIB}
+  - ls ${BEAGLE_LIB}
+  - popd
+
+script:
+  - ant dist
+  - cd ci; ./test.sh
+  - cd ..; ant -Djava.library.path=${BEAGLE_LIB} junit
+
+env:
+  global:
+    - BEAGLE_BUILD=$HOME/beagle-build
+    - BEAGLE=$HOME/beagle-lib
+    - BEAGLE_LIB=${BEAGLE}/lib

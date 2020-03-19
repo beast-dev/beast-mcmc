@@ -79,7 +79,7 @@ public class FrequencyModel extends AbstractModel {
      * @param frequencies the frequencies
      * @return return the sum of frequencies
      */
-    private double getSumOfFrequencies(Parameter frequencies) {
+    protected double getSumOfFrequencies(Parameter frequencies) {
         double total = 0.0;
         for (int i = 0; i < frequencies.getDimension(); i++) {
             total += frequencies.getParameterValue(i);

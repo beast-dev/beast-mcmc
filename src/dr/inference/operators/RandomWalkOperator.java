@@ -41,7 +41,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id: RandomWalkOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
-public class RandomWalkOperator extends AbstractCoercableOperator {
+public class RandomWalkOperator extends AbstractAdaptableOperator {
 
     public enum BoundaryCondition {
         rejecting,
@@ -51,12 +51,12 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         logit
     }
 
-    public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
+    public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, AdaptationMode mode) {
         this(parameter, null, windowSize, bc, weight, mode);
     }
 
     public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition boundaryCondition,
-                              double weight, CoercionMode mode) {
+                              double weight, AdaptationMode mode) {
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
@@ -84,10 +84,14 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         return windowSize;
     }
 
+    public final BoundaryCondition getBoundaryCondition() {
+        return boundaryCondition;
+    }
+
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         // a random dimension to perturb
         if (parameter.getDimension() <= 0) {
@@ -146,7 +150,12 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
             parameter.setParameterValue(dim, newValue);
 
-            return 0.0;
+            if (parameter.check()) {
+                return 0.0;
+            } else {
+                return Double.NEGATIVE_INFINITY;
+            }
+
         }
 
 }
@@ -155,15 +164,21 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         double newValue = value;
 
-        if (value < lower) {
+        if (upper == lower) {
+            newValue = upper;
+        } else if (value < lower) {
             if (Double.isInfinite(upper)) {
                 // we are only going to reflect once as the upper bound is at infinity...
                 newValue = lower + (lower - value);
             } else {
-                double remainder = lower - value;
+//                double remainder = lower - value;
+//
+//                double widths = Math.floor(remainder / (upper - lower));
+//                remainder -= (upper - lower) * widths;
 
-                double widths = Math.floor(remainder / (upper - lower));
-                remainder -= (upper - lower) * widths;
+                final double ratio = (lower - value) / (upper - lower);
+                final double widths = Math.floor(ratio);
+                final double remainder = (ratio - widths) * (upper - lower);
 
                 // even reflections
                 if (widths % 2 == 0) {
@@ -179,10 +194,14 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
                 newValue = upper - (newValue - upper);
             } else {
 
-                double remainder = value - upper;
+//                double remainder = value - upper;
+//
+//                double widths = Math.floor(remainder / (upper - lower));
+//                remainder -= (upper - lower) * widths;
 
-                double widths = Math.floor(remainder / (upper - lower));
-                remainder -= (upper - lower) * widths;
+                final double ratio = (value - upper) / (upper - lower);
+                final double widths = Math.floor(ratio);
+                final double remainder = (ratio - widths) * (upper - lower);
 
                 // even reflections
                 if (widths % 2 == 0) {
@@ -218,50 +237,24 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         windowSize = Math.exp(value);
     }
 
+    @Override
     public double getRawParameter() {
         return windowSize;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
+    @Override
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
     public String toString() {
@@ -270,7 +263,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
+    protected Parameter parameter = null;
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
     private int updateMapSize;

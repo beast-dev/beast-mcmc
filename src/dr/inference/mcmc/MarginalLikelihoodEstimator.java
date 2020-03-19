@@ -79,7 +79,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         this.pathLikelihood = pathLikelihood;
         pathLikelihood.setPathParameter(pathParameter);
 
-        mc = new MarkovChain(pathLikelihood, schedule, criterion, 0, 0, 0.0, true);
+        mc = new MarkovChain(pathLikelihood, schedule, criterion, 0, 0, 0.0, true, false);
 
         this.loggers = loggers;
     }
@@ -103,8 +103,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
 
             for (int i = 0; i < schedule.getOperatorCount(); ++i) {
                 MCMCOperator operator = schedule.getOperator(i);
-                if (operator instanceof PathDependentOperator) {
-                    ((PathDependentOperator)operator).setPathParameter(pathParameter);
+                if (operator instanceof PathDependent) {
+                    ((PathDependent)operator).setPathParameter(pathParameter);
                 }
             }
 
@@ -530,11 +530,11 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             } else {
             	throw new RuntimeException("Either a number of path steps or predefined beta values need to be provided.");
             }
-            
+
             if (xo.hasAttribute(PRINT_OPERATOR_ANALYSIS)) {
             	SHOW_OPERATOR_ANALYSIS = xo.getBooleanAttribute(PRINT_OPERATOR_ANALYSIS);
             }
-            
+
             int burninLength = -1;
             if (xo.hasAttribute(BURNIN)) {
                 burninLength = xo.getIntegerAttribute(BURNIN);
@@ -544,7 +544,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             if (xo.hasAttribute(PRERUN)) {
                 prerunLength = xo.getIntegerAttribute(PRERUN);
             }
-            
+
             // deprecated
             boolean linear = xo.getAttribute(LINEAR, true);
             // boolean lacing = xo.getAttribute(LACING,false);

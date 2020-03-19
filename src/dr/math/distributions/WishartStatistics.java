@@ -30,10 +30,9 @@ package dr.math.distributions;
  */
 public interface WishartStatistics {
 
-    public double getDF();
+    double getDF();
 
-    public double[][] getScaleMatrix();
+    double[][] getScaleMatrix();
 
-    public String getType();
-
+    String getType();
 }

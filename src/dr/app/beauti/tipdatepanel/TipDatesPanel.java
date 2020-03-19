@@ -86,6 +86,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     private JTextField originDateText = new JTextField(20);
     private JLabel originDateLabel = new JLabel("");
 
+    final JLabel unitsLabel;
+    final JLabel tipDateSamplingLabel;
+    final JLabel tipDateTaxonSetLabel;
+
     private JComboBox unitsCombo = new JComboBox(EnumSet.range(DateUnitsType.YEARS, DateUnitsType.DAYS).toArray());
     private JComboBox directionCombo = new JComboBox(EnumSet.range(DateUnitsType.FORWARDS, DateUnitsType.BACKWARDS).toArray());
 
@@ -195,7 +199,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         toolBar3.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
-        final JLabel unitsLabel = new JLabel("Dates as:");
+        unitsLabel = new JLabel("Dates as:");
         toolBar3.add(unitsLabel);
         toolBar3.add(unitsCombo);
         toolBar3.add(directionCombo);
@@ -232,11 +236,11 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 //        substitutionRateField.setToolTipText("<html>Enter the substitution rate here.</html>");
 //        substitutionRateField.setEnabled(true);
 
-        final JLabel tipDateSamplingLabel = new JLabel("Tip date sampling:");
+        tipDateSamplingLabel = new JLabel("Tip date sampling:");
         toolBar2.add(tipDateSamplingLabel);
         toolBar2.add(tipDateSamplingCombo);
 
-        final JLabel tipDateTaxonSetLabel = new JLabel("Apply to taxon set:");
+        tipDateTaxonSetLabel = new JLabel("Apply to taxon set:");
         toolBar2.add(tipDateTaxonSetLabel);
         toolBar2.add(tipDateTaxonSetCombo);
 
@@ -282,29 +286,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 boolean enabled = usingTipDates.isSelected();
-                clearDatesAction.setEnabled(enabled);
-                guessDatesAction.setEnabled(enabled);
-                importDatesAction.setEnabled(enabled);
-                setDatesAction.setEnabled(enabled);
-                setUncertaintyAction.setEnabled(enabled);
-                unitsLabel.setEnabled(enabled);
-                unitsCombo.setEnabled(enabled);
-                directionCombo.setEnabled(enabled);
-                scrollPane.setEnabled(enabled);
-                dataTable.setEnabled(enabled);
-                tipDateSamplingCombo.setEnabled(enabled);
-                tipDateSamplingLabel.setEnabled(enabled);
-                specifyOriginDate.setEnabled(enabled);
-                originDateText.setEnabled(enabled && specifyOriginDate.isSelected());
-                originDateLabel.setEnabled(enabled && specifyOriginDate.isSelected());
+
+                options.useTipDates = enabled;
+
+                setEnableComponents(enabled);
 
                 if (options.taxonList != null) timeScaleChanged();
             }
         });
 
-        // because usingTipDates is listening to itemStateChanged, this will call the above action
-        // to set everything disabled initially.
-        usingTipDates.setSelected(false);
+        setEnableComponents(false);
 
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -313,6 +304,27 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         };
         unitsCombo.addItemListener(listener);
         directionCombo.addItemListener(listener);
+    }
+
+    private void setEnableComponents(boolean enabled) {
+        clearDatesAction.setEnabled(enabled);
+        guessDatesAction.setEnabled(enabled);
+        importDatesAction.setEnabled(enabled);
+        setDatesAction.setEnabled(enabled);
+        setUncertaintyAction.setEnabled(enabled);
+        unitsLabel.setEnabled(enabled);
+        unitsCombo.setEnabled(enabled);
+        directionCombo.setEnabled(enabled);
+        scrollPane.setEnabled(enabled);
+        dataTable.setEnabled(enabled);
+        tipDateSamplingCombo.setEnabled(enabled);
+        tipDateSamplingLabel.setEnabled(enabled);
+        tipDateTaxonSetCombo.setEnabled(enabled);
+        tipDateTaxonSetLabel.setEnabled(enabled);
+
+        specifyOriginDate.setEnabled(enabled);
+        originDateText.setEnabled(enabled && specifyOriginDate.isSelected());
+        originDateLabel.setEnabled(enabled && specifyOriginDate.isSelected());
     }
 
     public final void timeScaleChanged() {
@@ -363,7 +375,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         calculateHeights();
 
-        if (options.clockModelOptions.isTipCalibrated()) { // todo correct?
+        if (options.useTipDates) {
             for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
                 treeModel.setTipCalibrations(true);
             }
@@ -388,7 +400,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         directionCombo.setSelectedItem(options.datesDirection);
 
         calculateHeights();
-        usingTipDates.setSelected(options.clockModelOptions.isTipCalibrated());
+        usingTipDates.setSelected(options.useTipDates);
 
         dataTableModel.fireTableDataChanged();
 

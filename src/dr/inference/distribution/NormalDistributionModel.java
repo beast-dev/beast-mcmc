@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
     /**
      * Constructor.
      */
@@ -199,13 +199,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     @Override
     public double[] getGradientLogDensity(Object obj) {
-        double[] x;
-        if (obj instanceof double[]) {
-            x = (double[]) obj;
-        } else {
-            x = new double[1];
-            x[0] = (Double) obj;
-        }
+        double[] x = GradientProvider.toDoubleArray(obj);
 
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; ++i) {
@@ -236,4 +230,24 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return mean;
     }
 
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = NormalDistribution.hessianLogPdf(x[i], mean(), getScale());
+        }
+        return result;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+        double[] x = getDiagonalHessianLogDensity(obj);
+        double[][] result = new double[x.length][x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i][i] = x[i];
+        }
+        return result;
+    }
 }

@@ -55,6 +55,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
     private boolean updateNodeClocks = true;
     private Map<NodeRef, LocalClock> nodeClockMap = new HashMap<NodeRef, LocalClock>();
     private final Parameter globalRateParameter;
+    private final BranchRateModel globalBranchRates;
 
     public LocalClockModel(TreeModel treeModel, Parameter globalRateParameter) {
 
@@ -64,7 +65,28 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         addModel(treeModel);
 
         this.globalRateParameter = globalRateParameter;
+        this.globalBranchRates = null;
+
         addVariable(globalRateParameter);
+
+        // add the super class' tree traits (just the rate)
+        helper.addTrait(this);
+
+        updateNodeClocks = true;
+
+    }
+
+    public LocalClockModel(TreeModel treeModel, BranchRateModel globalBranchRates) {
+
+        super(LocalClockModelParser.LOCAL_CLOCK_MODEL);
+        this.treeModel = treeModel;
+
+        addModel(treeModel);
+
+        this.globalRateParameter = null;
+        this.globalBranchRates = globalBranchRates;
+
+        addModel(globalBranchRates);
 
         // add the super class' tree traits (just the rate)
         helper.addTrait(this);
@@ -82,12 +104,29 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
         addVariable(rateParameter);
     }
 
+    public void addExternalBranchClock(TaxonList taxonList, BranchRateModel branchRates, boolean isRelativeRate) throws TreeUtils.MissingTaxonException {
+        Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
+        LocalClock clock = new LocalClock(branchRates, isRelativeRate, tips, ClockType.EXTERNAL);
+        for (int i : tips) {
+            localTipClocks.put(i, clock);
+        }
+        addModel(branchRates);
+    }
+
     public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate, double stemProportion, boolean excludeClade) throws TreeUtils.MissingTaxonException {
         Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
         BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, stemProportion, excludeClade);
         localCladeClocks.put(tipBitSet, clock);
         addVariable(rateParameter);
+    }
+
+    public void addCladeClock(TaxonList taxonList, BranchRateModel branchRates, boolean isRelativeRate, double stemProportion, boolean excludeClade) throws TreeUtils.MissingTaxonException {
+        Set<Integer> tips = TreeUtils.getTipsForTaxa(treeModel, taxonList);
+        BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
+        LocalClock clock = new LocalClock(branchRates, isRelativeRate, tips, stemProportion, excludeClade);
+        localCladeClocks.put(tipBitSet, clock);
+        addModel(branchRates);
     }
 
     public void addTrunkClock(TaxonList taxonList, Parameter rateParameter, Parameter indexParameter, boolean isRelativeRate) throws TreeUtils.MissingTaxonException {
@@ -123,6 +162,41 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             }
         });
     }
+
+    public void addTrunkClock(TaxonList taxonList, BranchRateModel branchRates, Parameter indexParameter, boolean isRelativeRate) throws TreeUtils.MissingTaxonException {
+        if (trunkClock != null) {
+            throw new RuntimeException("Trunk already defined for this LocalClockModel");
+        }
+
+        List<Integer> tipList = new ArrayList<Integer>(TreeUtils.getTipsForTaxa(treeModel, taxonList));
+        trunkClock = new LocalClock(branchRates, indexParameter, isRelativeRate, tipList, ClockType.TRUNK);
+        addModel(branchRates);
+        if (indexParameter != null) {
+            addVariable(indexParameter);
+        }
+
+        helper.addTrait("trunk", new TreeTrait.S() {
+            //            @Override
+            public String getTraitName() {
+                return "trunk";
+            }
+
+            //            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            //            @Override
+            public String getTrait(Tree tree, NodeRef node) {
+                setupNodeClocks(tree);
+                if (nodeClockMap.get(node) == trunkClock) {
+                    return "T";
+                }
+                return "B";
+            }
+        });
+    }
+
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         updateNodeClocks = true;
@@ -166,7 +240,9 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
 
         setupNodeClocks(tree);
 
-        double rate = globalRateParameter.getParameterValue(0);
+        double rate = (globalRateParameter != null ?
+                globalRateParameter.getParameterValue(0) :
+                globalBranchRates.getBranchRate(tree, node));
 
         LocalClock parentClock = nodeClockMap.get(tree.getParent(node));
         LocalClock localClock = nodeClockMap.get(node);
@@ -178,18 +254,18 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
                 // this is the branch where the rate switch occurs
                 if (parentClock != null) {
                     if (parentClock.isRelativeRate()) {
-                        parentRate *= localClock.getRateParameter().getParameterValue(0);
+                        parentRate *= localClock.getBranchRate(tree, tree.getParent(node));
                     } else {
-                        parentRate = localClock.getRateParameter().getParameterValue(0);
+                        parentRate = localClock.getBranchRate(tree, tree.getParent(node));
                     }
                 }
                 stemProportion = localClock.getStemProportion();
             }
 
             if (localClock.isRelativeRate()) {
-                rate *= localClock.getRateParameter().getParameterValue(0);
+                rate *= localClock.getBranchRate(tree, node);
             } else {
-                rate = localClock.getRateParameter().getParameterValue(0);
+                rate = localClock.getBranchRate(tree, node);
             }
 
             rate = (rate * stemProportion) + (parentRate * (1.0 - stemProportion));
@@ -307,6 +383,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
 
         LocalClock(Parameter rateParameter, boolean isRelativeRate, Set<Integer> tipSet, ClockType type) {
             this.rateParameter = rateParameter;
+            this.branchRates = null;
             this.indexParameter = null;
             this.isRelativeRate = isRelativeRate;
             this.tips = tipSet;
@@ -316,8 +393,45 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.excludeClade = true;
         }
 
+        LocalClock(BranchRateModel branchRates, boolean isRelativeRate, Set<Integer> tipSet, ClockType type) {
+            this.rateParameter = null;
+            this.branchRates = branchRates;
+            this.indexParameter = null;
+            this.isRelativeRate = isRelativeRate;
+            this.tips = tipSet;
+            this.tipList = null;
+            this.type = type;
+            this.stemProportion = 1.0;
+            this.excludeClade = true;
+        }
+
+        LocalClock(Parameter rateParameter, boolean isRelativeRate, Set<Integer> tips, double stemProportion, boolean excludeClade) {
+            this.rateParameter = rateParameter;
+            this.branchRates = null;
+            this.indexParameter = null;
+            this.isRelativeRate = isRelativeRate;
+            this.tips = tips;
+            this.tipList = null;
+            this.type = ClockType.CLADE;
+            this.stemProportion = stemProportion;
+            this.excludeClade = excludeClade;
+        }
+
+        LocalClock(BranchRateModel branchRates, boolean isRelativeRate, Set<Integer> tips, double stemProportion, boolean excludeClade) {
+            this.rateParameter = null;
+            this.branchRates = branchRates;
+            this.indexParameter = null;
+            this.isRelativeRate = isRelativeRate;
+            this.tips = tips;
+            this.tipList = null;
+            this.type = ClockType.CLADE;
+            this.stemProportion = stemProportion;
+            this.excludeClade = excludeClade;
+        }
+
         LocalClock(Parameter rateParameter, Parameter indexParameter, boolean isRelativeRate, List<Integer> tipList, ClockType type) {
             this.rateParameter = rateParameter;
+            this.branchRates = null;
             this.indexParameter = indexParameter;
             this.isRelativeRate = isRelativeRate;
             this.tips = null;
@@ -327,15 +441,16 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             this.excludeClade = true;
         }
 
-        LocalClock(Parameter rateParameter, boolean isRelativeRate, Set<Integer> tips, double stemProportion, boolean excludeClade) {
-            this.rateParameter = rateParameter;
-            this.indexParameter = null;
+        LocalClock(BranchRateModel branchRates, Parameter indexParameter, boolean isRelativeRate, List<Integer> tipList, ClockType type) {
+            this.rateParameter = null;
+            this.branchRates = branchRates;
+            this.indexParameter = indexParameter;
             this.isRelativeRate = isRelativeRate;
-            this.tips = tips;
-            this.tipList = null;
-            this.type = ClockType.CLADE;
-            this.stemProportion = stemProportion;
-            this.excludeClade = excludeClade;
+            this.tips = null;
+            this.tipList = tipList;
+            this.type = type;
+            this.stemProportion = 1.0;
+            this.excludeClade = true;
         }
 
         double getStemProportion() {
@@ -354,11 +469,16 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
             return isRelativeRate;
         }
 
-        Parameter getRateParameter() {
-            return this.rateParameter;
+        double getBranchRate(Tree tree, NodeRef node) {
+            if (rateParameter != null) {
+                return this.rateParameter.getParameterValue(0);
+            } else {
+                return this.branchRates.getBranchRate(tree, node);
+            }
         }
 
         private final Parameter rateParameter;
+        private final BranchRateModel branchRates;
         private final Parameter indexParameter;
         private final boolean isRelativeRate;
         private final Set<Integer> tips;

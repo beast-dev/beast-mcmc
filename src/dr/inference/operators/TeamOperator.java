@@ -36,7 +36,7 @@ import dr.math.MathUtils;
  * @author  Joseph Heled
  */
 
-public class TeamOperator extends SimpleMCMCOperator /*implements CoercableMCMCOperator*/ {
+public class TeamOperator extends SimpleMCMCOperator /*implements AdaptableMCMCOperator*/ {
 
     private final MCMCOperator[] operators;
     //private final ArrayList<Integer> operatorToOptimizeList;
@@ -96,9 +96,9 @@ public class TeamOperator extends SimpleMCMCOperator /*implements CoercableMCMCO
 //    public void addOperator(SimpleMCMCOperator operation) {
 //
 //        operatorList.add(operation);
-//        if (operation instanceof CoercableMCMCOperator) {
+//        if (operation instanceof AdaptableMCMCOperator) {
 //
-//            if (((CoercableMCMCOperator) operation).getMode() == CoercionMode.COERCION_ON)
+//            if (((AdaptableMCMCOperator) operation).getMode() == AdaptationMode.ADAPTATION_ON)
 //
 //                operatorToOptimizeList.add(operatorList.size() - 1);
 //

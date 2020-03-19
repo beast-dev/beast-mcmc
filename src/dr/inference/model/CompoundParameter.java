@@ -132,7 +132,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public void setDimension(int dim) {
-        throw new RuntimeException();
+        throw new UnsupportedOperationException();
     }
 
     public void addBounds(Bounds<Double> boundary) {
@@ -143,9 +143,11 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         } //else {
         IntersectionBounds newBounds = new IntersectionBounds(getDimension());
         newBounds.addBounds(bounds);
+        newBounds.addBounds(boundary);
 
 //        }
-        ((IntersectionBounds) bounds).addBounds(boundary);
+//        ((IntersectionBounds) bounds).addBounds(boundary);
+        bounds = newBounds;
     }
 
     public Bounds<Double> getBounds() {
@@ -248,12 +250,16 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public String toString() {
+        return toStringCompoundParameter(getDimension());
+    }
+
+    protected String toStringCompoundParameter(int dim) {
         StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
         final Bounds bounds = getBounds();
         buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
         buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
 
-        for (int i = 1; i < getDimension(); i++) {
+        for (int i = 1; i < dim; i++) {
             buffer.append(", ").append(String.valueOf(getParameterValue(i)));
             buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
             buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");

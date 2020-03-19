@@ -7,8 +7,8 @@ import dr.evomodel.antigenic.phyloclustering.TreeClusteringSharedRoutines;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
@@ -20,7 +20,7 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-public class RandomWalkOnActiveMu extends AbstractCoercableOperator {
+public class RandomWalkOnActiveMu extends AbstractAdaptableOperator {
 
 	
     private MatrixParameter mu = null;
@@ -38,7 +38,7 @@ public class RandomWalkOnActiveMu extends AbstractCoercableOperator {
 	
 	public RandomWalkOnActiveMu(double weight, MatrixParameter virusLocations, MatrixParameter mu, Parameter indicators,  TreeModel treeModel_in, double windowSize, MatrixParameter virusLocationsTreeNode_in){
     
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 		
 		setWeight(weight);
         this.windowSize = windowSize;
@@ -95,11 +95,12 @@ public class RandomWalkOnActiveMu extends AbstractCoercableOperator {
 	
 	
 	 //MCMCOperator INTERFACE
-    public double getCoercableParameter() {
+     @Override
+     protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         windowSize = Math.exp(value);
     }
 
@@ -107,43 +108,10 @@ public class RandomWalkOnActiveMu extends AbstractCoercableOperator {
         return windowSize;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
-    }
-
-    
-    
-    
     public final static String RANDOMWALKACTIVEMU = "randomWalkOnActiveMu";
 
     public final String getOperatorName() {

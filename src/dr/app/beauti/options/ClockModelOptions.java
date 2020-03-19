@@ -78,10 +78,5 @@ public class ClockModelOptions extends ModelOptions {
     public String getPrefix() {
         return null;
     }
-
-
-    public boolean isTipCalibrated() {
-        return options.maximumTipHeight > 0;
-    }
-
+    
 }

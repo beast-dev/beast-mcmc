@@ -114,8 +114,8 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.SUBTREE_LEAP, 1.0, weight);
 
         weight = Math.max(weight / 10, 3);
-        createOperator("subtreeJump", "Tree", "Performs the subtree-jump rearrangement of the tree", "tree",
-                OperatorType.SUBTREE_JUMP, 1.0, weight);
+        createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
+                OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
 
     }
 
@@ -137,12 +137,9 @@ public class PartitionTreeModel extends PartitionOptions {
             rootHeightParameter.isTruncated = true;
         }
 
-        if (options.useStarBEAST) {
-            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION;
-        } else {
-            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
-            parameters.add(rootHeightParameter);
-        }
+        rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
+        parameters.add(rootHeightParameter);
+
         return parameters;
     }
 
@@ -168,7 +165,7 @@ public class PartitionTreeModel extends PartitionOptions {
         operators.add(getOperator("uniformHeights"));
 
         operators.add(getOperator("subtreeLeap"));
-        operators.add(getOperator("subtreeJump"));
+        operators.add(getOperator("FHSPR"));
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {
             // do nothing
@@ -201,7 +198,7 @@ public class PartitionTreeModel extends PartitionOptions {
             getOperator("uniformHeights").setUsed(branchesInUse);
 
             getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
-            getOperator("subtreeJump").setUsed(newTreeOperatorsInUse);
+            getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
         }
         return operators;
     }

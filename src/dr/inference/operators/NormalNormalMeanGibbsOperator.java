@@ -28,9 +28,11 @@ package dr.inference.operators;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
+import dr.math.distributions.LogNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Attribute;
 import dr.xml.*;
@@ -54,6 +56,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             throw new RuntimeException("Mean prior must be Normal");
 
         this.likelihood = inLikelihood.getDistribution();
+        this.likelihoodType = LikelihoodType.factory(likelihood);
         this.dataList = inLikelihood.getDataList();
         if (likelihood instanceof NormalDistributionModel)
             this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
@@ -63,7 +66,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             } else {
                 this.meanParameter = ((LogNormalDistributionModel) likelihood).getMuParameter();
             }
-            isLog = true;
+//            isLog = true;
         } else
             throw new RuntimeException("Likelihood must be Normal or log Normal");
 
@@ -92,18 +95,17 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
         double priorPrecision = 1.0 / prior.variance();
         double priorMean = prior.mean();
-        double likelihoodPrecision = (likelihood instanceof LogNormalDistributionModel) ?
-                ((LogNormalDistributionModel)likelihood).getPrecision() :
-                1.0 / likelihood.variance();
+        double likelihoodPrecision = likelihoodType.getPrecision(likelihood);
 
         double total = 0;
         int n = 0;
         for ( Attribute<double[]> statistic : dataList ) {
             for (double x : statistic.getAttributeValue()) {
-                if (isLog)
-                    total += Math.log(x);
-                else
-                    total += x;
+//                if (isLog)
+//                    total += Math.log(x);
+//                else
+//                    total += x;
+                total += likelihoodType.getData(x);
                 n++;
             }
         }
@@ -113,6 +115,47 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
         meanParameter.setParameterValue(0,
                 MathUtils.nextGaussian() / Math.sqrt(precision) + mu);  // N(\mu, \precision)
         return 0;
+    }
+
+    private enum LikelihoodType {
+        NORMAL {
+            @Override
+            double getPrecision(Distribution likelihood) {
+                return 1.0 / likelihood.variance();
+            }
+
+            @Override
+            double getData(double x) {
+                return x;
+            }
+        },
+        LOGNORMAL {
+            @Override
+            double getPrecision(Distribution likelihood) {
+                if (likelihood instanceof LogNormalDistributionModel) {
+                    return ((LogNormalDistributionModel) likelihood).getPrecision();
+                } else {
+                    throw new RuntimeException("Not yet implemented!");
+                }
+            }
+
+            @Override
+            double getData(double x) {
+                return Math.log(x);
+            }
+        };
+
+        abstract double getPrecision(Distribution likelihood);
+
+        abstract double getData(double x);
+
+        public static LikelihoodType factory(Distribution likelihood) {
+            if (likelihood instanceof LogNormalDistributionModel) {
+                return LikelihoodType.LOGNORMAL;
+            } else {
+                return LikelihoodType.NORMAL;
+            }
+        }
     }
 
     @Override
@@ -187,9 +230,10 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
     };
 
+    private final LikelihoodType likelihoodType;
     private final Distribution likelihood;
     private final Distribution prior;
-    private boolean isLog = false;
+//    private boolean isLog = false;
 
     private final List<Attribute<double[]>> dataList;
     private final Parameter meanParameter;

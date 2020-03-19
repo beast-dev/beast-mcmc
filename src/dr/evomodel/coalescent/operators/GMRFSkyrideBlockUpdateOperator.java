@@ -40,7 +40,9 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
+public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
+
+    private static boolean FAIL_SILENTLY = true;
 
     private double scaleFactor;
     private double lambdaScaleFactor;
@@ -58,7 +60,7 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
     private double[] zeros;
 
     public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
-                                          double weight, CoercionMode mode, double scaleFactor,
+                                          double weight, AdaptationMode mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super(mode);
         gmrfField = gmrfLikelihood;
@@ -190,19 +192,25 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
             try {
                 jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
             } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
+                if (FAIL_SILENTLY) {
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-//                throw new OperatorFailedException("");
-                return null;
+                throw new RuntimeException("Newton-Raphson F.");
             } catch (no.uib.cipr.matrix.MatrixSingularException e) {
+                if (FAIL_SILENTLY) {
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-
-//                throw new OperatorFailedException("");
-                return null;
+                throw new RuntimeException("Newton-Raphson F.");
             }
             iterateGamma.add(tempValue);
             numberIterations++;
 
             if (numberIterations > maxIterations) {
+                if (FAIL_SILENTLY) {
+                    return null;
+                }
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                 throw new RuntimeException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
                         "Try starting BEAST with a more accurate initial tree.");
@@ -341,12 +349,13 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
 //        return Math.log(scaleFactor);
         return Math.sqrt(scaleFactor - 1);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 //        scaleFactor = Math.exp(value);
         scaleFactor = 1 + value * value;
     }
@@ -359,41 +368,9 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-    }
-
 
 //  public DenseVector oldNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException{
 //  return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);

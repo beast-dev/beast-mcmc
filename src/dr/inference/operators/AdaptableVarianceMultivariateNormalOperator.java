@@ -1,7 +1,7 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -50,7 +50,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Guy Baele
  * @author Marc A. Suchard
  */
-public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercableOperator {
+public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator {
 
     public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -88,7 +88,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor, double[][] inMatrix,
-                                                       double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
+                                                       double weight, double beta, int initial, int burnin, int every, AdaptationMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -141,7 +141,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     }
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor,
-                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
+                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, AdaptationMode mode, boolean isVariance, boolean skipRankCheck) {
         this(parameter, transformations, transformationSizes, transformationSums, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
     }
 
@@ -239,6 +239,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 System.err.println("  AVMVN iterations > burnin");
             }
 
+            // TODO Beginning of adaptable covariance
+
             if (iterations > (burnin+1)) {
 
                 if (iterations % every == 0) {
@@ -308,6 +310,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
 
             }
+
+            // TODO End of adaptable covariance -- move into separate class
 
         } else if (iterations == 1) {
 
@@ -567,11 +571,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return output;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 
@@ -583,38 +588,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -629,7 +604,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 System.err.println("\nParsing AdaptableVarianceMultivariateNormalOperator.");
             }
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double beta = xo.getDoubleAttribute(BETA);
@@ -643,7 +618,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 burnin = xo.getIntegerAttribute(BURNIN);
             }
             if (burnin > initial || burnin < 0) {
-                throw new XMLParseException("burnin must be smaller than the initial period");
+                throw new XMLParseException("Burn-in must be smaller than the initial period.");
             }
 
             if (xo.hasAttribute(UPDATE_EVERY)) {
@@ -651,17 +626,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
 
             if (every <= 0) {
-                throw new XMLParseException("covariance matrix needs to be updated at least every single iteration");
+                throw new XMLParseException("Covariance matrix needs to be updated at least every single iteration.");
             }
 
             if (scaleFactor <= 0.0) {
-                throw new XMLParseException("scaleFactor must be greater than 0.0");
+                throw new XMLParseException("ScaleFactor must be greater than zero.");
             }
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
             Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
-            boolean oldXML = pt.parameters == null;
+            boolean oldXML;
+            if (pt == null) {
+                throw new XMLParseException("No valid transformations have been provided in the XML file.");
+            }
+            oldXML = pt.parameters == null;
 
             Parameter parameter;
             Transform[] transformations;
@@ -768,7 +747,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
-                            transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            //transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            transformationSums[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
                                 System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }

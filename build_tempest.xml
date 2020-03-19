@@ -6,6 +6,10 @@
     <description>
         Build file for TempEst release versions.
     </description>
+
+    <property name="JDK_SOURCE_VERSION" value="1.8"/>
+    <property name="JDK_TARGET_VERSION" value="1.8"/>
+
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
     <property name="build" location="build"/>
@@ -33,7 +37,7 @@
 
     <target name="compile" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
+        <javac source="${JDK_SOURCE_VERSION}" target="${JDK_TARGET_VERSION}" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/tempest/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>
@@ -95,7 +99,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.5.1" />
+    <property name="version" value="1.5.3" />
     <property name="packaging_tools" value="packaging_tools" />
     <property name="release_dir" value="release_tempest" />
     <property name="name" value="TempEst" />
@@ -193,12 +197,14 @@
                         name="${name} v${version}"
                         mainclass="dr.app.tempest.TempEstApp"
                         stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                        useJavaXKey="true"
                         icon="${Mac_dir}/icons/TempEst.icns"
                         jvmversion="1.6+"
                         arguments=""
                         vmoptions="-Xmx1024M"
                         version="${version}"
-                        copyright="${name} v${version}, Copyright 2006-2017, Andrew Rambaut"
+                        highresolutioncapable="true"
+                        copyright="${name} v${version}, Copyright 2006-2018, Andrew Rambaut"
                         bundleid="tempest" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

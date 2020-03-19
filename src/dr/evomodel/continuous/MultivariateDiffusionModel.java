@@ -29,9 +29,13 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeAttributeProvider;
 import dr.inference.model.*;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+
+import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
 /**
  * @author Marc Suchard
@@ -44,7 +48,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     public static final String DIFFUSION_CONSTANT = "precisionMatrix";
     public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
-    public static final double LOG2PI = Math.log(2*Math.PI);
+    public static final double LOG2PI = Math.log(2 * Math.PI);
 
     /**
      * Construct a diffusion model.
@@ -85,6 +89,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return null;
     }
 
+    public double[] getPrecisionmatrixAsVector() {
+        return(flatten(getPrecisionmatrix()));
+    }
+
     public double getDeterminantPrecisionMatrix() {
         checkVariableChanged();
         return determinatePrecisionMatrix;
@@ -97,8 +105,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 
         if (time == 0) {
             boolean equal = true;
-            for(int i=0; i<start.length; i++) {
-                if( start[i] != stop[i] ) {
+            for (int i = 0; i < start.length; i++) {
+                if (start[i] != stop[i]) {
                     equal = false;
                     break;
                 }
@@ -111,10 +119,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return calculateLogDensity(start, stop, time);
     }
 
-    protected void checkVariableChanged(){
-        if(variableChanged){
+    protected void checkVariableChanged() {
+        if (variableChanged) {
             calculatePrecisionInfo();
-            variableChanged=false;
+            variableChanged = false;
         }
     }
 
@@ -153,36 +161,36 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        variableChanged=true;
+        variableChanged = true;
 //        calculatePrecisionInfo();
     }
 
     protected void storeState() {
         savedDeterminatePrecisionMatrix = determinatePrecisionMatrix;
         savedDiffusionPrecisionMatrix = diffusionPrecisionMatrix;
-        storedVariableChanged=variableChanged;
+        storedVariableChanged = variableChanged;
     }
 
     protected void restoreState() {
         determinatePrecisionMatrix = savedDeterminatePrecisionMatrix;
         diffusionPrecisionMatrix = savedDiffusionPrecisionMatrix;
-        variableChanged=storedVariableChanged;
+        variableChanged = storedVariableChanged;
     }
 
     protected void acceptState() {
     } // no additional state needs accepting
 
     public String[] getTreeAttributeLabel() {
-        return new String[] {PRECISION_TREE_ATTRIBUTE};
+        return new String[]{PRECISION_TREE_ATTRIBUTE};
     }
 
     public String[] getAttributeForTree(Tree tree) {
         if (diffusionPrecisionMatrixParameter != null) {
-            return new String[] {diffusionPrecisionMatrixParameter.toSymmetricString()};
+            return new String[]{diffusionPrecisionMatrixParameter.toSymmetricString()};
         }
 
         diffusionPrecisionMatrixParameter.toString();
-        return new String[] { "null" };
+        return new String[]{"null"};
     }
 
     // **************************************************************
@@ -208,6 +216,17 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             XMLObject cxo = xo.getChild(DIFFUSION_CONSTANT);
             MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
                     cxo.getChild(MatrixParameterInterface.class);
+
+            CholeskyDecomposition chol;
+            try {
+                chol = new CholeskyDecomposition(diffusionParam.getParameterAsMatrix());
+            } catch (IllegalDimension illegalDimension) {
+                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a square matrix.");
+            }
+
+            if (!chol.isSPD()) {
+                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a positive definite matrix.");
+            }
 
             return new MultivariateDiffusionModel(diffusionParam);
         }
@@ -244,7 +263,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     private double[][] diffusionPrecisionMatrix;
     private double[][] savedDiffusionPrecisionMatrix;
 
-    private boolean variableChanged=true;
+    private boolean variableChanged = true;
     private boolean storedVariableChanged;
 
 }

@@ -40,6 +40,7 @@ import dr.math.MathUtils;
  * @author Sebastian Hoehna
  * @version 1.0
  */
+@Deprecated
 public class FNPR extends AbstractTreeOperator {
 
     private TreeModel tree = null;

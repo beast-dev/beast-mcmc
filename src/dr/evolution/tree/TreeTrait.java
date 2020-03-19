@@ -86,6 +86,19 @@ public interface TreeTrait<T> {
      */
     boolean getLoggable();
 
+
+    interface TraitInfo<T> {
+        String getTraitName();
+
+        TreeTrait.Intent getTraitIntent();
+
+        Class getTraitClass();
+
+        T getTrait(Tree tree, NodeRef node);
+
+        boolean isTraitLoggable();
+    }
+
     /**
      * Default behavior
      */
@@ -183,6 +196,28 @@ public interface TreeTrait<T> {
             } else {
                 return Double.toString(values[0]);
             }
+        }
+
+        public static DA factory(final TraitInfo<double[]> info) {
+            
+            DA trait = new DA() {
+
+                public String getTraitName() {
+                    return info.getTraitName();
+                }
+
+                public Intent getIntent() {
+                    return info.getTraitIntent();
+                }
+
+                public Class getTraitClass() { return info.getTraitClass(); }
+
+                public double[] getTrait(Tree tree, NodeRef node) { return info.getTrait(tree, node); }
+
+                public boolean getLoggable() { return info.isTraitLoggable(); }
+            };
+
+            return trait;
         }
     }
 

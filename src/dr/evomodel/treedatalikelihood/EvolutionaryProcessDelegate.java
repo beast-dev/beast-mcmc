@@ -44,9 +44,27 @@ public interface EvolutionaryProcessDelegate {
 
     int getMatrixBufferCount();
 
+    int getInfinitesimalMatrixBufferIndex(int branchIndex);
+
+    int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex);
+
+    int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex);
+
+    int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex);
+
+    void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
+
+    void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix);
+
+    void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix);
+
+    int getCachedMatrixBufferCount(PreOrderSettings settings);  //TODO: cache them by same memory space?
+
     int getSubstitutionModelCount();
 
     SubstitutionModel getSubstitutionModel(int index);
+
+    SubstitutionModel getSubstitutionModelForBranch(int branchIndex);
 
     int getEigenIndex(int bufferIndex);
 

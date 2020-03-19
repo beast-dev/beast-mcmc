@@ -39,6 +39,11 @@ public class DifferenceParameter extends Parameter.Abstract implements VariableL
         }
     }
 
+    @Override
+    public boolean isImmutable() {
+        return true;
+    }
+
     public int getDimension() {
         return paramList.get(0).getDimension();
     }

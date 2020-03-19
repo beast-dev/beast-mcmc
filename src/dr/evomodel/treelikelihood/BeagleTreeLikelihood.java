@@ -68,6 +68,8 @@ import dr.util.CommonCitations;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
  *
@@ -80,9 +82,11 @@ import java.util.logging.Logger;
 @SuppressWarnings("serial")
 @Deprecated // Switching to TreeDataLikelihood
 public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Citable {
+
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
+    private static final String RESOURCE_AUTO_PROPERTY = "beagle.resource.auto";
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
@@ -91,6 +95,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
+    private static final String THREAD_COUNT = "beagle.thread.count";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -288,8 +293,21 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 forceVectorization = true;
             }
 
+            String tc = System.getProperty(THREAD_COUNT);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+
+            if (threadCount == 0 || threadCount == 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
+
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-                    && !forceVectorization
+                    && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
                     ) {
                 // @todo SSE doesn't seem to work for larger state spaces so for now we override the
                 // SSE option.
@@ -316,6 +334,60 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 throw new RuntimeException("Pattern state count (" + stateCount
                         + ") does not match substitution model state count (" + stateCount2 + ")");
             }
+
+            if ((resourceList == null &&
+                (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                ||
+                (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            }
+
+            // start auto resource selection
+            String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+            if (resourceAuto != null && Boolean.parseBoolean(resourceAuto)) {
+
+                long benchmarkFlags = 0;
+
+                if (this.rescalingScheme == PartialsRescalingScheme.NONE) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_NONE.getMask();
+                } else if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_ALWAYS.getMask();
+                } else {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
+                }
+
+                logger.info("\nRunning benchmarks to automatically select fastest BEAGLE resource for  analysis or partition... ");
+
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails = 
+                                                    BeagleFactory.getBenchmarkedResourceDetails(
+                                                                                tipCount,
+                                                                                compactPartialsCount,
+                                                                                stateCount,
+                                                                                patternCount,
+                                                                                categoryCount,
+                                                                                resourceList,
+                                                                                preferenceFlags,
+                                                                                requirementFlags,
+                                                                                1, // eigenModelCount,
+                                                                                1, // partitionCount,
+                                                                                0, // calculateDerivatives,
+                                                                                benchmarkFlags);
+
+
+                logger.info(" Benchmark results, from fastest to slowest:");
+
+                for (BenchmarkedResourceDetails benchmarkedResource : benchmarkedResourceDetails) {
+                    logger.info(benchmarkedResource.toString());
+                }
+
+                resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
+            }
+            // end auto resource selection
 
             instanceCount++;
 
@@ -358,6 +430,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 }
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+            }
+
+            if (IS_THREAD_COUNT_COMPATIBLE() && threadCount > 1) {
+                beagle.setCPUThreadCount(threadCount);
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
@@ -458,42 +534,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
         this.useAmbiguities = useAmbiguities;
         hasInitialized = true;
-    }
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
     }
 
     public TipStatesModel getTipStatesModel() {
@@ -1288,6 +1328,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //    private int storedRescalingCount;
 
     private int rescalingMessageCount = 0;
+
+    private int threadCount = -1;
 
     /**
      * the branch-site model for these sites

@@ -27,11 +27,13 @@ package dr.inferencexml.operators;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.RandomWalkOperator;
+import dr.inference.model.TransformedMultivariateParameter;
+import dr.inference.model.TransformedParameter;
+import dr.inference.operators.*;
+import dr.util.Transform;
 import dr.xml.*;
+
+import static dr.util.Transform.Util.parseTransform;
 
 /**
  */
@@ -45,13 +47,15 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
 
     public static final String BOUNDARY_CONDITION = "boundaryCondition";
 
+    public static final String INVERSE = "inverse";
+
         public String getParserName() {
             return RANDOM_WALK_OPERATOR;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
@@ -91,16 +95,36 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                 }
             }
 
+            RandomWalkOperator randomWalk;
+
             if (xo.hasChildNamed(UPDATE_INDEX)) {
                 XMLObject cxo = xo.getChild(UPDATE_INDEX);
                 Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
                 if (updateIndex.getDimension() != parameter.getDimension())
                     throw new RuntimeException("Parameter to update and missing indices must have the same dimension");
-                return new RandomWalkOperator(parameter, updateIndex, windowSize, condition,
+                randomWalk = new RandomWalkOperator(parameter, updateIndex, windowSize, condition,
                         weight, mode);
+            } else {
+                randomWalk = new RandomWalkOperator(parameter, null, windowSize, condition, weight, mode);
             }
 
-            return new RandomWalkOperator(parameter, null, windowSize, condition, weight, mode);
+            final Transform transform = parseTransform(xo);
+
+            if (transform == null) {
+                return randomWalk;
+            } else {
+                final boolean inverse = xo.getAttribute(INVERSE, false);
+                TransformedParameter transformedParameter;
+                if (transform.isMultivariate()) {
+                    transformedParameter
+                            = new TransformedMultivariateParameter(parameter,
+                            (Transform.MultivariableTransform) transform,
+                            inverse);
+                } else {
+                    transformedParameter = new TransformedParameter(parameter, transform, inverse);
+                }
+                return new TransformedParameterRandomWalkOperator(transformedParameter, randomWalk);
+            }
         }
 
         //************************************************************************
@@ -122,7 +146,7 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
                 new ElementRule(UPDATE_INDEX,
                         new XMLSyntaxRule[] {
                                 new ElementRule(Parameter.class),

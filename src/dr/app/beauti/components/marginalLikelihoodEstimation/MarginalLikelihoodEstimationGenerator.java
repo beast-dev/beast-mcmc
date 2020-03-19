@@ -1,7 +1,7 @@
 /*
  * MarginalLikelihoodEstimationGenerator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -42,12 +42,14 @@ import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.substmodel.GTRParser;
 import dr.inference.mcmc.MarginalLikelihoodEstimator;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.PathLikelihood;
 import dr.inference.trace.GeneralizedSteppingStoneSamplingAnalysis;
 import dr.inference.trace.PathSamplingAnalysis;
 import dr.inference.trace.SteppingStoneSamplingAnalysis;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.distribution.WorkingPriorParsers;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.util.Attribute;
@@ -56,6 +58,8 @@ import dr.xml.XMLParser;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
+import static dr.app.beauti.types.PriorType.NONE_FIXED;
 
 /**
  * @author Andrew Rambaut
@@ -110,7 +114,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("A Matching Coalescent Model cannot be constructed for\n" +
-                            "the Skyride and Skygrid models. Please check the Marginal Likelihood\n" +
+                            "the provided tree prior. Please check the Marginal Likelihood\n" +
+                            "Estimation settings via the MCMC panel.");
+                } else if (mleOptions.choiceTreeWorkingPrior.equals("None")) {
+                    throw new GeneratorException("No tree working prior provided. Please check the Marginal Likelihood\n" +
                             "Estimation settings via the MCMC panel.");
                 }
             }
@@ -205,7 +212,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             attributes.add(new Attribute.Default<String>(XMLParser.ID, "pathLikelihood"));
             writer.writeOpenTag(PathLikelihood.PATH_LIKELIHOOD, attributes);
             writer.writeOpenTag(PathLikelihood.SOURCE);
-            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, CompoundLikelihoodParser.POSTERIOR);
+            writer.writeIDref(CompoundLikelihoodParser.JOINT, CompoundLikelihoodParser.JOINT);
             writer.writeCloseTag(PathLikelihood.SOURCE);
             writer.writeOpenTag(PathLikelihood.DESTINATION);
             writer.writeIDref(CompoundLikelihoodParser.PRIOR, CompoundLikelihoodParser.PRIOR);
@@ -295,7 +302,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         );
 
                         writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
-                        writeParameter("constantReference.popSize", "constant.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("constantReference.popSize", "constant.popSize", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
                         writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
 
@@ -328,10 +335,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         );
 
                         writer.writeOpenTag(ExponentialGrowthModelParser.POPULATION_SIZE);
-                        writeParameter("exponentialReference.popSize", "exponential.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("exponentialReference.popSize", "exponential.popSize", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(ExponentialGrowthModelParser.POPULATION_SIZE);
                         writer.writeOpenTag(ExponentialGrowthModelParser.GROWTH_RATE);
-                        writeParameter("exponentialReference.growthRate", "exponential.growthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("exponentialReference.growthRate", "exponential.growthRate", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(ExponentialGrowthModelParser.GROWTH_RATE);
                         writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
 
@@ -343,7 +350,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 }
                         );
                         writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-                        writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
+                        writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "exponentialReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
@@ -364,13 +371,13 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         );
 
                         writer.writeOpenTag(LogisticGrowthModelParser.POPULATION_SIZE);
-                        writeParameter("logisticReference.popSize", "logistic.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("logisticReference.popSize", "logistic.popSize", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(LogisticGrowthModelParser.POPULATION_SIZE);
                         writer.writeOpenTag(LogisticGrowthModelParser.GROWTH_RATE);
-                        writeParameter("logisticReference.growthRate", "logistic.growthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("logisticReference.growthRate", "logistic.growthRate", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(LogisticGrowthModelParser.GROWTH_RATE);
                         writer.writeOpenTag(LogisticGrowthModelParser.TIME_50);
-                        writeParameter("logisticReference.t50", "logistic.t50", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("logisticReference.t50", "logistic.t50", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(LogisticGrowthModelParser.TIME_50);
                         writer.writeCloseTag(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL);
 
@@ -382,7 +389,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 }
                         );
                         writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-                        writer.writeIDref(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
+                        writer.writeIDref(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "logisticReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
@@ -403,13 +410,13 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         );
 
                         writer.writeOpenTag(ExpansionModelParser.POPULATION_SIZE);
-                        writeParameter("expansionReference.popSize", "expansion.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("expansionReference.popSize", "expansion.popSize", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(ExpansionModelParser.POPULATION_SIZE);
                         writer.writeOpenTag(ExpansionModelParser.GROWTH_RATE);
-                        writeParameter("expansionReference.growthRate", "expansion.growthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("expansionReference.growthRate", "expansion.growthRate", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(ExpansionModelParser.GROWTH_RATE);
                         writer.writeOpenTag(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION);
-                        writeParameter("expansionReference.ancestralProportion", "expansion.ancestralProportion", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("expansionReference.ancestralProportion", "expansion.ancestralProportion", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION);
                         writer.writeCloseTag(ExpansionModelParser.EXPANSION_MODEL);
 
@@ -421,7 +428,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 }
                         );
                         writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-                        writer.writeIDref(ExpansionModelParser.EXPANSION_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
+                        writer.writeIDref(ExpansionModelParser.EXPANSION_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "expansionReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
@@ -460,7 +467,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         );
 
                         writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
-                        writeParameter("yuleReference.birthRate", "yule.birthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writeParameter("yuleReference.birthRate", "yule.birthRate", beautiOptions.logFileName, (int) (beautiOptions.chainLength * 0.10), writer);
                         writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
                         writer.writeCloseTag(YuleModelParser.YULE_MODEL);
 
@@ -481,7 +488,34 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                         break;
 
-                    default:
+                    case BIRTH_DEATH:
+                    case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+
+
+
+
+
+
+                        break;
+
+                    case BIRTH_DEATH_SERIAL_SAMPLING:
+
+
+
+
+
+
+                        break;
+
+
+                    case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+
+
+
+
+                        //TODO complete
+
+                        break;
 
                 }
 
@@ -510,7 +544,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             attributes.add(new Attribute.Default<String>(XMLParser.ID, "pathLikelihood"));
             writer.writeOpenTag(PathLikelihood.PATH_LIKELIHOOD, attributes);
             writer.writeOpenTag(PathLikelihood.SOURCE);
-            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, CompoundLikelihoodParser.POSTERIOR);
+            writer.writeIDref(CompoundLikelihoodParser.JOINT, CompoundLikelihoodParser.JOINT);
             writer.writeCloseTag(PathLikelihood.SOURCE);
             writer.writeOpenTag(PathLikelihood.DESTINATION);
             writer.writeOpenTag(CompoundLikelihoodParser.WORKING_PRIOR);
@@ -607,27 +641,68 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             case GTR:
                                 if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                                     for (int i = 1; i <= codonPartitionCount; i++) {
+                                        if (beautiOptions.useNewGTR()) {
+                                            String customNames = model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_C;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_G;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_T;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_G;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_T;
+                                            customNames += " " + model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.G_TO_T;
+
+                                            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                    new Attribute[]{
+                                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES),
+                                                            new Attribute.Default<Integer>("dimension", 6),
+                                                            new Attribute.Default<Double>("upperLimit", 6.0),
+                                                            new Attribute.Default<String>("parameterNames", customNames),
+                                                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                    });
+                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES);
+                                            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                        } else {
+                                            for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                        new Attribute[]{
+                                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                                new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + rateName),
+                                                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                        });
+                                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if (beautiOptions.useNewGTR()) {
+                                        String customNames = model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_C;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_G;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.A_TO_T;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_G;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.C_TO_T;
+                                        customNames += " " + model.getPrefix() + PartitionSubstitutionModel.GTR_RATES + "." + GTRParser.G_TO_T;
+
+                                        writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + PartitionSubstitutionModel.GTR_RATES),
+                                                        new Attribute.Default<Integer>("dimension", 6),
+                                                        new Attribute.Default<String>("parameterNames", customNames),
+                                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + PartitionSubstitutionModel.GTR_RATES);
+                                        writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    } else {
                                         for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
                                             writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                                     new Attribute[]{
                                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + rateName),
+                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + rateName),
                                                             new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                                                     });
-                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                         }
-                                    }
-                                } else {
-                                    for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
-                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                                new Attribute[]{
-                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + rateName),
-                                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                                });
-                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
-                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                     }
                                 }
                                 if (codonPartitionCount > 1) {
@@ -734,16 +809,19 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             //Continue with providing working priors for the clock model(s)
             for (PartitionClockModel model : beautiOptions.getPartitionClockModels()) {
                 switch (model.getClockType()) {
+
                     case STRICT_CLOCK:
-                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                new Attribute[]{
-                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
-                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                });
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
-                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
-                        writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
+                                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                            writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        }
                         break;
 
                     case UNCORRELATED:
@@ -756,14 +834,16 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                         switch (model.getClockDistributionType()) {
                             case GAMMA:
-                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                        new Attribute[]{
-                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCGD_MEAN),
-                                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                        });
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_MEAN);
-                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCGD_MEAN),
+                                                    new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_MEAN);
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
                                 writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                         new Attribute[]{
                                                 new Attribute.Default<String>("fileName", beautiOptions.logFileName),
@@ -776,14 +856,16 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                             case LOGNORMAL:
                                 if (!model.getClockRateParameter().isInRealSpace()) {
-                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                            new Attribute[]{
-                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
-                                                    new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                            });
-                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
+                                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    }
                                     writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
@@ -793,14 +875,16 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                 } else {
-                                    writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
-                                            new Attribute[]{
-                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
-                                                    new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                            });
-                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                                    writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                                    if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                                        writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
+                                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                                        writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                                    }
                                     writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
@@ -813,14 +897,16 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 break;
 
                             case EXPONENTIAL:
-                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                        new Attribute[]{
-                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCED_MEAN),
-                                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                        });
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCED_MEAN),
+                                                    new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
                                 break;
                             case MODEL_AVERAGING:
                                 throw new RuntimeException("Marginal likelihood estimation cannot be performed on a clock model that performs model averaging.");
@@ -828,14 +914,16 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         break;
 
                     case FIXED_LOCAL_CLOCK:
-                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
-                                new Attribute[]{
-                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
-                                        new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
-                                });
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
-                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
+                                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
 
                         for (Taxa taxonSet : beautiOptions.taxonSets) {
                             if (beautiOptions.taxonSetsMono.get(taxonSet)) {
@@ -857,9 +945,33 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     case RANDOM_LOCAL_CLOCK:
 
-                        //TODO
+                        if (model.getClockRateParameter().priorType != NONE_FIXED) {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
+                                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
 
+                        writer.writeOpenTag(PriorParsers.POISSON_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>(PriorParsers.MEAN, "" + Math.log(2)),
+                                        new Attribute.Default<String>(PriorParsers.OFFSET, "" + 0.0)
+                                });
+                        writer.writeIDref("statistic", model.getPrefix() + ClockType.LOCAL_CLOCK + ".changes");
+                        writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
 
+                        writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>(PriorParsers.SHAPE, "" + 0.5),
+                                        new Attribute.Default<String>(PriorParsers.SCALE, "" + 2.0),
+                                        new Attribute.Default<String>(PriorParsers.OFFSET, "" + 0.0)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.LOCAL_CLOCK + ".relativeRates");
+                        writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
 
                         writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
@@ -1070,7 +1182,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             } else if (options.choiceTreeWorkingPrior.equals("Matching coalescent model")) {
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, "coalescentReference");
             } else {
-                writer.writeIDref(YuleModelParser.YULE_MODEL, "yuleReference");
+                writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, "speciationReference");
             }
 
             writer.writeCloseTag(CompoundLikelihoodParser.WORKING_PRIOR);
@@ -1102,17 +1214,40 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
     }
 
     private void writeRelativeRates(XMLWriter writer, PartitionSubstitutionModel model, int codonPartitionCount) {
-        for (int i = 1; i <= codonPartitionCount; i++) {
-            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+
+        if (beautiOptions.useNuRelativeRates()) {
+
+            String customNames = "";
+            for (int i = 1; i <= codonPartitionCount; i++) {
+                customNames += model.getPrefix(i) + "nu ";
+            }
+
+            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                     new Attribute[]{
                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
-                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10)),
-                            new Attribute.Default<String>("upperLimit", "" + (double)(codonPartitionCount))
+                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + "allNus"),
+                            new Attribute.Default<Integer>("dimension", codonPartitionCount),
+                            new Attribute.Default<String>("parameterNames", customNames),
+                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10))
                     });
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "allNus");
+            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+        } else {
+
+            for (int i = 1; i <= codonPartitionCount; i++) {
+                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
+                                new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10)),
+                                new Attribute.Default<String>("upperLimit", "" + (double) (codonPartitionCount))
+                        });
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
+                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+            }
         }
+
     }
 
     private void writeCoalescentEventsStatistic(XMLWriter writer) {

@@ -8,6 +8,7 @@ import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
+import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FACTOR_NAME;
@@ -194,8 +195,8 @@ public interface FactorAnalysisOperatorAdaptor {
 
         @Override
         public boolean isNotMissing(int trait, int taxon) {
-            // TODO
-            return true;
+            int index = taxon * getNumberOfTraits() + trait;
+            return !factorLikelihood.getMissingIndicator()[index];
         }
 
         private static final boolean DEBUG = false;

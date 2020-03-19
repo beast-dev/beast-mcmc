@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;
 import org.apache.commons.math.MathException;
@@ -44,7 +41,8 @@ import org.w3c.dom.Element;
  * @version $Id: GammaDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class GammaDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class GammaDistributionModel extends AbstractModel
+        implements ParametricDistributionModel, GradientProvider, HessianProvider {
 
     public enum GammaParameterizationType {
         ShapeScale,
@@ -190,6 +188,46 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
 
     protected void acceptState() {
     } // no additional state needs accepting
+
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        double shape = getShape();
+        double scale = getScale();
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = GammaDistribution.gradLogPdf(x[i] - offset, shape, scale);
+        }
+        return result;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        double shape = getShape();
+        double scale = getScale();
+
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = GammaDistribution.hessianLogPdf(x[i] - offset, shape, scale);
+        }
+        return result;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object obj) {
+        return HessianProvider.expandDiagonals(getDiagonalHessianLogDensity(obj));
+    }
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

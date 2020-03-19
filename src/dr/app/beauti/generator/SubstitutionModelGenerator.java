@@ -271,7 +271,7 @@ public class SubstitutionModelGenerator extends Generator {
         writeFrequencyModelDNA(writer, model, num);
         writer.writeCloseTag(GTRParser.FREQUENCIES);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+        if (options.useNewGTR()) {
             Parameter parameter = model.getParameter(model.getPrefixCodon(num) + PartitionSubstitutionModel.GTR_RATES);
             String prefix1 = model.getPrefix(num);
             writer.writeOpenTag(GTRParser.RATES);
@@ -504,7 +504,7 @@ public class SubstitutionModelGenerator extends Generator {
                     case GTR:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                             for (int i = 1; i <= codonPartitionCount; i++) {
-                                if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
+                                if (options.useNewGTR()) {
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + PartitionSubstitutionModel.GTR_RATES);
                                 } else {
                                     for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
@@ -513,8 +513,12 @@ public class SubstitutionModelGenerator extends Generator {
                                 }
                             }
                         } else {
-                            for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
+                            if (options.useNewGTR()) {
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + PartitionSubstitutionModel.GTR_RATES);
+                            } else {
+                                for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
+                                }
                             }
                         }
                         break;
@@ -672,7 +676,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             Parameter parameter;
             if (model.hasCodonPartitions()) {
                 parameter = model.getParameter(model.getPrefixCodon(num) + "nu");
@@ -728,7 +732,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
         }
 
@@ -767,7 +771,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
             if (parameter.getSubParameters().size() > 0) {
@@ -790,7 +794,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
         }
 
@@ -815,7 +819,7 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
             if (parameter.getSubParameters().size() > 0) {
@@ -840,7 +844,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SITE_MODEL);
 
-        if (!options.classicOperatorsAndPriors && options.NEW_RELATIVE_RATE_PARAMETERIZATION) {
+        if (options.useNuRelativeRates()) {
             writeMuStatistic(writer, prefix, GammaSiteModelParser.SITE_MODEL);
         }
 

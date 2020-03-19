@@ -113,9 +113,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     private JLabel includedTaxaLabel = new JLabel();
     protected JComboBox includedTaxonSetsComboBox = null;
     protected boolean includedSelectionChanging = false;
-
-    protected static int taxonSetCount = 0;
-
+    
     public TaxonSetPanel() {
     }
 
@@ -242,11 +240,11 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setLayout(new GridBagLayout());
 
         excludedTaxaSearchField.setColumns(12);
-        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+//        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
         excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
         excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
         includedTaxaSearchField.setColumns(12);
-        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+//        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
         includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
         includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
 
@@ -674,7 +672,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         private static final long serialVersionUID = 20273987098143413L;
 
         public void actionPerformed(ActionEvent ae) {
-            taxonSetCount++;
+            int taxonSetCount = options.taxonSets.size();
 
             String newTaxonSetName = "untitled" + taxonSetCount;
             Taxa newTaxonSet = new Taxa(newTaxonSetName); // cannot use currentTaxonSet

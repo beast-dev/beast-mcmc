@@ -34,19 +34,18 @@ import java.util.ArrayList;
 /**
  * @author Marc A. Suchard
  */
-public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOperator {
+public class JointOperator extends AbstractAdaptableOperator {
 
     private final ArrayList<SimpleMCMCOperator> operatorList;
     private final ArrayList<Integer> operatorToOptimizeList;
 
     private int currentOptimizedOperator;
-    private final double targetProbability;
 
-    public JointOperator(double weight, double targetProb) {
+    public JointOperator(double weight, double targetAcceptanceProbability) {
+        super(AdaptationMode.DEFAULT, targetAcceptanceProbability);
 
         operatorList = new ArrayList<SimpleMCMCOperator>();
         operatorToOptimizeList = new ArrayList<Integer>();
-        targetProbability = targetProb;
 
         setWeight(weight);
     }
@@ -54,9 +53,9 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
     public void addOperator(SimpleMCMCOperator operation) {
 
         operatorList.add(operation);
-        if (operation instanceof CoercableMCMCOperator) {
+        if (operation instanceof AdaptableMCMCOperator) {
 
-            if (((CoercableMCMCOperator) operation).getMode() == CoercionMode.COERCION_ON)
+            if (((AdaptableMCMCOperator) operation).getMode() == AdaptationMode.ADAPTATION_ON)
 
                 operatorToOptimizeList.add(operatorList.size() - 1);
 
@@ -78,17 +77,18 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
 
 //    private double old;
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         if (operatorToOptimizeList.size() > 0) {
             currentOptimizedOperator = operatorToOptimizeList.get(MathUtils.nextInt(operatorToOptimizeList.size()));
-            return ((CoercableMCMCOperator) operatorList.get(currentOptimizedOperator)).getCoercableParameter();
+            return ((AdaptableMCMCOperator) operatorList.get(currentOptimizedOperator)).getAdaptableParameter();
         }
         throw new IllegalArgumentException();
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         if (operatorToOptimizeList.size() > 0) {
-            ((CoercableMCMCOperator) operatorList.get(currentOptimizedOperator)).setCoercableParameter(value);
+            ((AdaptableMCMCOperator) operatorList.get(currentOptimizedOperator)).setAdaptableParameter(value);
             return;
         }
         throw new IllegalArgumentException();
@@ -99,34 +99,33 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         return operatorList.size();
     }
 
-    public double getRawParamter(int i) {
+    public double getRawParameter(int i) {
         if (i < 0 || i >= operatorList.size())
             throw new IllegalArgumentException();
-        return ((CoercableMCMCOperator) operatorList.get(i)).getRawParameter();
+        return ((AdaptableMCMCOperator) operatorList.get(i)).getRawParameter();
     }
 
 
     public double getRawParameter() {
-
         throw new RuntimeException("More than one raw parameter for a joint operator");
     }
 
-    public CoercionMode getMode() {
+    public AdaptationMode getMode() {
         if (operatorToOptimizeList.size() > 0)
-            return CoercionMode.COERCION_ON;
-        return CoercionMode.COERCION_OFF;
+            return AdaptationMode.ADAPTATION_ON;
+        return AdaptationMode.ADAPTATION_OFF;
     }
 
     public MCMCOperator getSubOperator(int i) {
         return operatorList.get(i);
     }
 
-    public CoercionMode getSubOperatorMode(int i) {
+    public AdaptationMode getSubOperatorMode(int i) {
         if (i < 0 || i >= operatorList.size())
             throw new IllegalArgumentException();
-        if (operatorList.get(i) instanceof CoercableMCMCOperator)
-            return ((CoercableMCMCOperator) operatorList.get(i)).getMode();
-        return CoercionMode.COERCION_OFF;
+        if (operatorList.get(i) instanceof AdaptableMCMCOperator)
+            return ((AdaptableMCMCOperator) operatorList.get(i)).getMode();
+        return AdaptationMode.ADAPTATION_OFF;
     }
 
     public String getSubOperatorName(int i) {
@@ -148,33 +147,33 @@ public class JointOperator extends SimpleMCMCOperator implements CoercableMCMCOp
         throw new RuntimeException("not implemented");
     }
 
-    public double getTargetAcceptanceProbability() {
-        return targetProbability;
+    public String getAdaptableParameterName() {
+        return "";
     }
 
     public double getMinimumAcceptanceLevel() {
-        double min = targetProbability - 0.2;
+        double min = getTargetAcceptanceProbability() - 0.2;
         if (min < 0)
             min = 0.01;
         return min;
     }
 
     public double getMaximumAcceptanceLevel() {
-        double max = targetProbability + 0.2;
+        double max = getTargetAcceptanceProbability() + 0.2;
         if (max > 1)
             max = 0.9;
         return max;
     }
 
     public double getMinimumGoodAcceptanceLevel() {
-        double min = targetProbability - 0.1;
+        double min = getTargetAcceptanceProbability() - 0.1;
         if (min < 0)
             min = 0.01;
         return min;
     }
 
     public double getMaximumGoodAcceptanceLevel() {
-        double max = targetProbability + 0.2;
+        double max = getTargetAcceptanceProbability() + 0.2;
         if (max > 1)
             max = 0.9;
         return max;

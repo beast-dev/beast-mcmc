@@ -34,7 +34,7 @@ import dr.math.matrixAlgebra.Matrix;
 /**
  * @author Marc Suchard
  */
-public class MVOUCovarianceOperator extends AbstractCoercableOperator {
+public class MVOUCovarianceOperator extends AbstractAdaptableOperator {
 
     private double mixingFactor;
     private MatrixParameter varMatrix;
@@ -50,7 +50,7 @@ public class MVOUCovarianceOperator extends AbstractCoercableOperator {
     public MVOUCovarianceOperator(double mixingFactor,
                                   MatrixParameter varMatrix,
                                   int priorDf,
-                                  double weight, CoercionMode mode) {
+                                  double weight, AdaptationMode mode) {
         super(mode);
         this.mixingFactor = mixingFactor;
         this.varMatrix = varMatrix;
@@ -159,55 +159,26 @@ public class MVOUCovarianceOperator extends AbstractCoercableOperator {
                 varMatrix.getId() + ")";
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(mixingFactor / (1.0 - mixingFactor));
 //		return Math.log((1.0 - mixingFactor) / mixingFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    @Override
+    public void setAdaptableParameterValue(double value) {
         mixingFactor = Math.exp(value) / (1.0 + Math.exp(value));
 //		mixingFactor = Math.exp(-value) / (1.0 + Math.exp(-value));
     }
 
+    @Override
     public double getRawParameter() {
         return mixingFactor;
     }
 
-    public double getMixingFactor() {
-        return mixingFactor;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(mixingFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting mixingFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting mixingFactor to about " + formatter.format(sf);
-        } else return "";
+    @Override
+    public String getAdaptableParameterName() {
+        return "mixingFactor";
     }
 
 }

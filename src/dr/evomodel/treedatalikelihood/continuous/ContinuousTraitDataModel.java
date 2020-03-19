@@ -28,7 +28,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -36,12 +37,15 @@ import java.util.*;
 public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
 
     private final CompoundParameter parameter;
+    //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
     private final List<Integer> missingIndices;
     private final List<Integer> originalMissingIndices;
 
-    private final int numTraits;
-    private final int dimTrait;
-    private final PrecisionType precisionType;
+    final int numTraits;
+    final int dimTrait;
+    final PrecisionType precisionType;
+
+    private final boolean[] missingIndicator;
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
@@ -51,12 +55,16 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         super(name);
         this.parameter = parameter;
         this.originalMissingIndices = missingIndices;
-        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<Integer>());
+        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<>());
         addVariable(parameter);
 
         this.dimTrait = dimTrait;
         this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
         this.precisionType = precisionType;
+
+
+        this.missingIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
+                this.missingIndices, parameter.getDimension());
     }
 
     public boolean bufferTips() { return true; }
@@ -74,6 +82,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     public CompoundParameter getParameter() { return parameter; }
 
     public List<Integer> getMissingIndices() { return missingIndices; }
+
+    public boolean[] getMissingIndicator() {return missingIndicator; }
 
     List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
 
@@ -167,7 +177,11 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         final Parameter p = parameter.getParameter(taxonIndex);
 
         int offset = 0;
+
         for (int i = 0; i < numTraits; ++i) {
+
+            int effDim = 0;
+
             for (int j = 0; j < dimTrait; ++j) {
 
                 final int pIndex = i * dimTrait + j;
@@ -175,11 +189,14 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
                 partial[offset + j] = p.getParameterValue(pIndex);
 
-                final boolean missing = missingIndices != null && missingIndices.contains(missingIndex);
+                final boolean missing = missingIndicator != null && missingIndicator[missingIndex];
+                if (!missing) ++effDim;
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
                 precisionType.fillPrecisionInPartials(partial, offset, j, precision, dimTrait);
             }
+
+            precisionType.fillEffDimInPartials(partial, offset, effDim, dimTrait);
 
             offset += offsetInc;
         }

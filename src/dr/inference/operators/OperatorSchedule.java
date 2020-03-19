@@ -36,6 +36,8 @@ import java.util.List;
  * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule extends Serializable {
+    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.POWER;
+
     /**
      * @return Choose the next operator.
      */
@@ -64,22 +66,35 @@ public interface OperatorSchedule extends Serializable {
     /**
      * @return the optimization schedule
      */
-    double getOptimizationTransform(double d);
+    OptimizationTransform getOptimizationTransform();
 
     /**
      * @return the minimum number of times an operator has been called
      */
     long getMinimumAcceptAndRejectCount();
 
-    public enum OptimizationTransform {
-        DEFAULT("default"),
-        LOG("log"),
-        SQRT("sqrt"),
-        LINEAR("linear");
+    enum OptimizationTransform {
+
+        LOG("log") {
+            @Override public double transform(double d) { return Math.log(d); }
+        },
+        SQRT("sqrt") {
+            @Override public double transform(double d) { return Math.sqrt(d); }
+        },
+        LINEAR("linear") {
+            @Override public double transform(double d) { return d; }
+        },
+        POWER("power") {
+            @Override public double transform(double d) {
+                return Math.pow(d, 0.55); // c = 5/9
+            }
+        };
 
         OptimizationTransform(String name) {
             this.name = name;
         }
+
+        public abstract double transform(double d);
 
         @Override
         public String toString() {

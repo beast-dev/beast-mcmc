@@ -1,7 +1,7 @@
 /*
  * BeastDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -49,7 +49,7 @@ public class BeastDialog {
 
     private final WholeNumberField seedText = new WholeNumberField((long) 1, Long.MAX_VALUE);
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
-    private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
+    private final JCheckBox beagleCheckBox = new JCheckBox("The BEAGLE library is required to run BEAST:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "GPU"});
     private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions when possible");
@@ -201,7 +201,8 @@ public class BeastDialog {
             }
         });
 
-        beagleCheckBox.setSelected(false);
+        beagleCheckBox.setSelected(true);
+        beagleCheckBox.setEnabled(false);
         beagleResourceCombo.setSelectedItem("CPU");
     }
 
@@ -240,13 +241,10 @@ public class BeastDialog {
         overwriteCheckBox.setSelected(allowOverwrite);
     }
 
-    public boolean useBeagle() {
-        return beagleCheckBox.isSelected();
-    }
-
-    public void setUseBeagle(boolean useBeagle) {
+    /*public void setUseBeagle(boolean useBeagle) {
          beagleCheckBox.setSelected(useBeagle);
-    }
+         beagleCheckBox.setEnabled(false);
+    }*/
 
     public boolean preferBeagleGPU() {
         return beagleResourceCombo.getSelectedItem().equals("GPU");
@@ -259,7 +257,6 @@ public class BeastDialog {
     public void setPreferBeagleGPU() {
         beagleResourceCombo.setSelectedItem("GPU");
     }
-
 
     public boolean preferBeagleSSE() {
         return beagleSSECheckBox.isSelected();

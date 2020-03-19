@@ -26,6 +26,7 @@
 package dr.math.matrixAlgebra;
 
 
+import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
 
 /**
@@ -80,6 +81,27 @@ public interface ReadableVector {
         }
     }
 
+    class Product implements ReadableVector {
+
+        private final ReadableVector lhs;
+        private final ReadableVector rhs;
+
+        public Product(final ReadableVector lhs, final ReadableVector rhs) {
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
+
+        @Override
+        public double get(int i) {
+            return lhs.get(i) * rhs.get(i);
+        }
+
+        @Override
+        public int getDim() {
+            return Math.min(lhs.getDim(), rhs.getDim());
+        }
+    }
+
     class Scale implements ReadableVector {
 
         private final ReadableVector vector;
@@ -98,13 +120,39 @@ public interface ReadableVector {
     }
 
     class Utils {
-        
+
+        public static void setParameter(double[] value, Parameter parameter) {
+            for (int j = 0, dim = value.length; j < dim; ++j) {
+                parameter.setParameterValueQuietly(j, value[j]);
+            }
+            parameter.fireParameterChangedEvent();
+        }
+
         public static void setParameter(ReadableVector position, Parameter parameter) {
             for (int j = 0, dim = position.getDim(); j < dim; ++j) {
                 parameter.setParameterValueQuietly(j, position.get(j));
             }
             parameter.fireParameterChangedEvent();
         }
+
+//        public static void setParameter(WrappedVector position, FastMatrixParameter parameter) {
+//            parameter.setAllParameterValuesQuietly(position.getBuffer(),
+//                    position.getOffset());
+//            parameter.fireParameterChangedEvent();
+//        }
+
+        public static void setParameter(WrappedVector position, Parameter.Default parameter) {
+
+            double[] par = parameter.inspectParameterValues();
+            double[] pos = position.getBuffer();
+            int posOffset = position.getOffset();
+
+            for (int j = 0, dim = position.getDim(); j < dim; ++j) {
+                par[j] = pos[posOffset + j];
+//                parameter.setParameterValueQuietly(j, position.get(j));
+            }
+            parameter.fireParameterChangedEvent();
+        }        
 
         public static double innerProduct(ReadableVector lhs, ReadableVector rhs) {
 
@@ -116,6 +164,27 @@ public interface ReadableVector {
             }
 
             return sum;
+        }
+
+        public static double innerProduct(WrappedVector lhs, WrappedVector rhs) {
+
+            assert (lhs.getDim() == rhs.getDim());
+            double[] l = lhs.getBuffer();
+            double[] r = rhs.getBuffer();
+            int lOffset = lhs.getOffset();
+            int rOffset = rhs.getOffset();
+
+            double sum = 0;
+            for (int i = 0, dim = l.length; i < dim; ++i) {
+                sum += l[lOffset + i] * r[rOffset + i];
+            }
+
+            return sum;
+        }
+
+        public static double norm(ReadableVector vector) {
+
+            return Math.sqrt(innerProduct(vector, vector));
         }
     }
 }

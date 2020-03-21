@@ -360,12 +360,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
     private static double findGradientRoot(double action,
                                            double gradient,
                                            double momentum) {
-
-        if (gradient == 0.0) { //for fixed dimension, gradient = 0
-            return Double.POSITIVE_INFINITY;
-        } else {
-            return minimumPositiveRoot(-0.5 * action, gradient, momentum);
-        }
+        return minimumPositiveRoot(-0.5 * action, gradient, momentum);
     }
 
     protected double findBoundaryTime(int index, double position,

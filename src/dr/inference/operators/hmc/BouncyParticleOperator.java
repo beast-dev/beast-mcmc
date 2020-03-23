@@ -216,6 +216,10 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
         for (int i = 0, len = velocity.getDim(); i < len; ++i) {
             velocity.set(i, MathUtils.nextGaussian() / Math.sqrt(mass.get(i)));
         }
+
+        if (mask != null) {
+            applyMask(velocity);
+        }
     }
 
     private WrappedVector storedVelocity;

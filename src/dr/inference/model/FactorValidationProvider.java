@@ -96,7 +96,7 @@ public class FactorValidationProvider implements CrossValidationProvider {
     public String getName(int dim) {
 
         String base = id;
-        if (base != null) {
+        if (base == null) {
             base = treeTrait.getTraitName();
         }
 

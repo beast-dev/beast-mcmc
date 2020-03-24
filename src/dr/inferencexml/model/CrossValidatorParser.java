@@ -9,7 +9,7 @@ import dr.xml.*;
 
 public class CrossValidatorParser extends AbstractXMLObjectParser {
 
-    private final static String LOG_SUM = "logSum";
+    public final static String LOG_SUM = "logSum";
     private final static String TYPE = "type";
     public final static String CROSS_VALIDATION = "crossValidation";
 

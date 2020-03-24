@@ -15,36 +15,27 @@ public interface CrossValidationProvider {
 
     class CrossValidator extends Statistic.Abstract {
         protected final CrossValidationProvider provider;
-        private final double[] squaredErrors;
+        private final double[] statValues;
         private final int[] relevantDims;
         private double[] truthValues;
         private double[] inferredValues;
         //        private Parameter truthParameter;
 //        private Parameter inferredParameter;
         private final int dimStat;
-//        boolean statKnown = false;
+        //        boolean statKnown = false;
+        private final ValidationType validationType;
 
-        public CrossValidator(CrossValidationProvider provider) {
+        public CrossValidator(CrossValidationProvider provider, ValidationType validationType) {
             this.provider = provider;
             this.relevantDims = provider.getRelevantDimensions();
 
             this.dimStat = relevantDims.length;
-            this.squaredErrors = new double[dimStat];
+            this.statValues = new double[dimStat];
+            this.validationType = validationType;
 //            this.truthParameter = provider.getTrueParameter();
 //            this.inferredParameter = provider.getInferredParameter();
 
 
-        }
-
-        private void updateSquaredErrors() {
-
-
-            for (int i = 0; i < dimStat; i++) {
-                double truth = truthValues[relevantDims[i]];
-                double inferred = inferredValues[relevantDims[i]];
-                double error = truth - inferred;
-                squaredErrors[i] = error * error;
-            }
         }
 
 
@@ -64,12 +55,10 @@ public interface CrossValidationProvider {
 
             //TODO: add variable listeners as needed
             if (dim == 0) {
-                this.truthValues = provider.getTrueValues();
-                this.inferredValues = provider.getInferredValues();
-                updateSquaredErrors();
+                validationType.updateValues(this);
             }
 
-            return squaredErrors[dim];
+            return statValues[dim];
         }
 
 
@@ -77,8 +66,8 @@ public interface CrossValidationProvider {
 
     class CrossValidatorSum extends CrossValidator {
 
-        public CrossValidatorSum(CrossValidationProvider provider) {
-            super(provider);
+        public CrossValidatorSum(CrossValidationProvider provider, ValidationType validationType) {
+            super(provider, validationType);
         }
 
         @Override
@@ -103,5 +92,58 @@ public interface CrossValidationProvider {
         }
 
 
+    }
+
+
+    public enum ValidationType {
+        SQUARED_ERROR("squaredError") {
+            @Override
+            void updateValues(CrossValidator crossValidator) {
+                BIAS.updateValues(crossValidator);
+                for (int i = 0; i < crossValidator.dimStat; i++) {
+                    double error = crossValidator.statValues[i];
+                    crossValidator.statValues[i] = error * error;
+                }
+            }
+        },
+
+        BIAS("bias") {
+            @Override
+            void updateValues(CrossValidator crossValidator) {
+                crossValidator.truthValues = crossValidator.provider.getTrueValues();
+                crossValidator.inferredValues = crossValidator.provider.getInferredValues();
+
+
+                for (int i = 0; i < crossValidator.dimStat; i++) {
+                    double truth = crossValidator.truthValues[crossValidator.relevantDims[i]];
+                    double inferred = crossValidator.inferredValues[crossValidator.relevantDims[i]];
+                    double error = truth - inferred;
+                    crossValidator.statValues[i] = error;
+                }
+            }
+        },
+
+        VALUE("value") {
+            @Override
+            void updateValues(CrossValidator crossValidator) {
+                crossValidator.inferredValues = crossValidator.provider.getInferredValues();
+                for (int i = 0; i < crossValidator.dimStat; i++) {
+                    double inferred = crossValidator.inferredValues[crossValidator.relevantDims[i]];
+                    crossValidator.statValues[i] = inferred;
+                }
+            }
+        };
+
+        private final String name;
+
+        ValidationType(String name) {
+            this.name = name;
+        }
+
+        abstract void updateValues(CrossValidator crossValidator);
+
+        public String getName() {
+            return this.name;
+        }
     }
 }

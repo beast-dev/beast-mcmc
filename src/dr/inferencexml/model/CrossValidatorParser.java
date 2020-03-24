@@ -9,8 +9,9 @@ import dr.xml.*;
 
 public class CrossValidatorParser extends AbstractXMLObjectParser {
 
-    final static String LOG_SUM = "logSum";
-    final static String CROSS_VALIDATION = "crossValidation";
+    private final static String LOG_SUM = "logSum";
+    private final static String TYPE = "type";
+    public final static String CROSS_VALIDATION = "crossValidation";
 
 
     @Override
@@ -19,14 +20,32 @@ public class CrossValidatorParser extends AbstractXMLObjectParser {
         CrossValidationProvider provider = (CrossValidationProvider) xo.getChild(CrossValidationProvider.class);
         boolean logSum = xo.getAttribute(LOG_SUM, false);
 
-        if (logSum) return new CrossValidationProvider.CrossValidatorSum(provider);
-        return new CrossValidationProvider.CrossValidator(provider);
+        CrossValidationProvider.ValidationType validationType;
+
+        String validation = xo.getAttribute(TYPE, CrossValidationProvider.ValidationType.SQUARED_ERROR.getName());
+
+        if (validation.equalsIgnoreCase(CrossValidationProvider.ValidationType.SQUARED_ERROR.getName())) {
+            validationType = CrossValidationProvider.ValidationType.SQUARED_ERROR;
+        } else if (validation.equalsIgnoreCase(CrossValidationProvider.ValidationType.BIAS.getName())) {
+            validationType = CrossValidationProvider.ValidationType.BIAS;
+        } else if (validation.equalsIgnoreCase(CrossValidationProvider.ValidationType.VALUE.getName())) {
+            validationType = CrossValidationProvider.ValidationType.VALUE;
+        } else {
+            throw new XMLParseException("The attribute '" + TYPE + "' can only take values '" +
+                    CrossValidationProvider.ValidationType.SQUARED_ERROR.getName() + "', " +
+                    CrossValidationProvider.ValidationType.BIAS.getName() + "', or" +
+                    CrossValidationProvider.ValidationType.VALUE.getName() + "'.");
+        }
+
+        if (logSum) return new CrossValidationProvider.CrossValidatorSum(provider, validationType);
+        return new CrossValidationProvider.CrossValidator(provider, validationType);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule(LOG_SUM, true),
+                AttributeRule.newStringRule(TYPE, true),
                 new ElementRule(CrossValidationProvider.class)
         };
     }

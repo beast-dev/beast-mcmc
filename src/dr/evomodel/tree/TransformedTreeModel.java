@@ -342,7 +342,13 @@ public class TransformedTreeModel extends AbstractModel implements MutableTreeMo
     }
 
     @Override
-    public Tree getOriginalTree() {
+    public MutableTreeModel getOriginalTree() {
         return treeModel;
     }
+
+    @Override
+    public Boolean isInOriginalTree(NodeRef transformedNode) {
+        return true;
+    }
+
 }

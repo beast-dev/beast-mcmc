@@ -25,6 +25,7 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -40,9 +41,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -72,7 +71,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     private final boolean normalize;
     private final double normalizeBranchRateTo;
 
-    private final TreeModel treeModel;
+    private final MutableTreeModel treeModel;
     private final double logDensityNormalizationConstant;
 
     private double scaleFactor = 1.0;
@@ -108,6 +107,29 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
             boolean keepRates,
             boolean cacheRates) {
 
+        this((MutableTreeModel) tree, rateCategoryParameter, model, overSampling, normalize, normalizeBranchRateTo, randomizeRates, keepRates, cacheRates);
+
+        // adding the key word to the tree means the keyword will be logged in the
+        // header of the tree file.
+        tree.addKeyword("discretized_branch_rates");
+
+        // adding the key word to the model means the keyword will be logged in the
+        // header of the logfile.
+        this.addKeyword("discretized_branch_rates");
+
+    }
+
+    protected DiscretizedBranchRates(
+            MutableTreeModel tree,
+            Parameter rateCategoryParameter,
+            ParametricDistributionModel model,
+            int overSampling,
+            boolean normalize,
+            double normalizeBranchRateTo,
+            boolean randomizeRates,
+            boolean keepRates,
+            boolean cacheRates) {
+
         super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
         this.cacheRates = cacheRates;
@@ -122,14 +144,6 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         this.normalize = normalize;
 
         this.treeModel = tree;
-
-        // adding the key word to the tree means the keyword will be logged in the
-        // header of the tree file.
-        treeModel.addKeyword("discretized_branch_rates");
-
-        // adding the key word to the model means the keyword will be logged in the
-        // header of the logfile.
-        this.addKeyword("discretized_branch_rates");
 
         this.distributionModel = model;
         this.normalizeBranchRateTo = normalizeBranchRateTo;
@@ -275,7 +289,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // nothing to do here
-   }
+    }
 
     protected void storeState() {
         if (cacheRates) {
@@ -296,7 +310,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     protected void acceptState() {
     }
 
-    public final double getBranchRate(final Tree tree, final NodeRef node) {
+    public double getBranchRate(final Tree tree, final NodeRef node) {
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
@@ -310,8 +324,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
     }
 
-    public final int getBranchRateCategory(final Tree tree, final NodeRef node) {
-
+    public int getBranchRateCategory(final Tree tree, final NodeRef node) {
         assert !tree.isRoot(node) : "root node doesn't have a rate category!";
 
         if (updateRateCategories) {

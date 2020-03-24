@@ -34,7 +34,9 @@ public interface TransformableTree {
 
     NodeRef getTransformedNode(NodeRef originalNode);
 
-    Tree getOriginalTree();
+    MutableTreeModel getOriginalTree();
+
+    Boolean isInOriginalTree(NodeRef transformedNode);
 
     class BasicNode implements NodeRef {
 

@@ -36,6 +36,7 @@ import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
+import dr.util.Keywordable;
 
 import java.util.*;
 
@@ -44,7 +45,7 @@ import java.util.*;
  *
  * @author Marc A. Suchard
  */
-public class AncestralTraitTreeModel extends AbstractModel implements MutableTreeModel, TransformableTree, Citable {
+public class AncestralTraitTreeModel extends AbstractModel implements MutableTreeModel, TransformableTree, Citable, Keywordable {
 
     private static final boolean DEBUG = false;
 
@@ -66,7 +67,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     @Override
     public NodeRef getOriginalNode(NodeRef transformedNode) {
-        throw new RuntimeException("Not yet implemented");
+        assert isInOriginalTree(transformedNode);
+
+        int originalNumber =  ((ShadowNode) transformedNode).getOriginalNumber();
+        return treeModel.getNode(originalNumber);
     }
 
     @Override
@@ -214,7 +218,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-    public Tree getOriginalTree() {
+    public MutableTreeModel getOriginalTree() {
         return treeModel;
     }
 
@@ -378,6 +382,14 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             }
         }
     }
+
+    @Override
+    public Boolean isInOriginalTree(NodeRef transformedNode) {
+        assert (transformedNode != null);
+        checkShadowTree();
+        return ((ShadowNode) transformedNode).getOriginalNumber() >= 0;
+    }
+
 
     private void storeNodeStructure() {
 
@@ -871,4 +883,21 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private boolean validShadowTree = false;
     private boolean savedValidShadowTree;
+
+    // ***********************************************************************
+    // Interface: Keywordable
+    // ***********************************************************************
+
+    @Override
+    public void addKeyword(String keyword) {
+        keywords.add(keyword);
+    }
+
+    @Override
+    public List<String> getKeywords() {
+        return keywords;
+    }
+
+    private final List<String> keywords = new ArrayList<String>();
+
 }

@@ -843,13 +843,31 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private void setupClamps() {
         nodeToClampMap.clear();
-        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
+        recursiveSetupMrcaClamps(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
+        setupAncestralPathClamps(treeModel, clampList, nodeToClampMap);
     }
 
-    private static void recursiveSetupClamp(Tree tree, NodeRef node,
-                                            BitSet tips,
-                                            Map<BitSet, AncestralTaxonInTree> clampList,
-                                            Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+    private static void setupAncestralPathClamps(Tree tree,
+                                                 Map<BitSet, AncestralTaxonInTree> clampList,
+                                                 Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef node = tree.getExternalNode(i);
+            BitSet tip = new BitSet();
+            tip.set(node.getNumber());
+            if (clampList.containsKey(tip)) {
+                AncestralTaxonInTree partials = clampList.get(tip);
+                NodeRef parent = tree.getParent(node);
+                partials.setNode(parent);
+                nodeToClampMap.put(parent.getNumber(), partials);
+            }
+        }
+    }
+
+    private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,
+                                                 BitSet tips,
+                                                 Map<BitSet, AncestralTaxonInTree> clampList,
+                                                 Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
 
         if (tree.isExternal(node)) {
             tips.set(node.getNumber());
@@ -858,7 +876,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 NodeRef child = tree.getChild(node, i);
 
                 BitSet childTips = new BitSet();
-                recursiveSetupClamp(tree, child, childTips, clampList, nodeToClampMap);
+                recursiveSetupMrcaClamps(tree, child, childTips, clampList, nodeToClampMap);
                 tips.or(childTips);
             }
 

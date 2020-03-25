@@ -32,7 +32,6 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

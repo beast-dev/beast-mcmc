@@ -41,27 +41,20 @@ import java.util.Set;
 /**
  * @author Marc A. Suchard
  */
-public class AncestralTaxonInTree extends AbstractModel {
+public class AncestralTaxonAlongAncestralPath extends AbstractModel {
 
-    public class Mrca extends AncestralTaxonInTree {
-
-        public Mrca(Taxon ancestor, MutableTreeModel treeModel, TaxonList descendents, Parameter priorSampleSize, NodeRef node, int index) throws TreeUtils.MissingTaxonException {
-            super(ancestor, treeModel, descendents, priorSampleSize, node, index);
-        }
-    }
-
-    public AncestralTaxonInTree(Taxon ancestor,
-                                MutableTreeModel treeModel,
-                                TaxonList taxonList,
-                                Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
+    public AncestralTaxonAlongAncestralPath(Taxon ancestor,
+                                            MutableTreeModel treeModel,
+                                            TaxonList taxonList,
+                                            Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
         this(ancestor, treeModel, taxonList, priorSampleSize, null, -1);
     }
 
-    public AncestralTaxonInTree(Taxon ancestor,
-                                MutableTreeModel treeModel,
-                                TaxonList descendents,
-                                Parameter priorSampleSize,
-                                NodeRef node, int index) throws TreeUtils.MissingTaxonException {
+    public AncestralTaxonAlongAncestralPath(Taxon ancestor,
+                                            MutableTreeModel treeModel,
+                                            TaxonList descendents,
+                                            Parameter priorSampleSize,
+                                            NodeRef node, int index) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
 

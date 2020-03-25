@@ -26,14 +26,11 @@
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.datatype.*;
+import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
@@ -63,7 +60,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 //                dataType, tag, substModel, false, true);
 //    }
 
-    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    public AncestralStateBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                               BranchModel branchModel,
                                               SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel,
@@ -383,7 +380,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         jointLogLikelihood = storedJointLogLikelihood;
     }
 
-    public void traverseSample(TreeModel tree, NodeRef node, int[] parentState, int[] rateCategory) {
+    public void traverseSample(Tree tree, NodeRef node, int[] parentState, int[] rateCategory) {
 
         int nodeNum = node.getNumber();
 

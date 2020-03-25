@@ -27,6 +27,7 @@ package dr.evomodelxml.treelikelihood;
 
 //import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -78,7 +79,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -115,7 +116,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);

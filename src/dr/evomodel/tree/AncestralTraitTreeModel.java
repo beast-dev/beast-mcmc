@@ -786,8 +786,16 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
+//    public List<Taxon> asList() {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+
     public List<Taxon> asList() {
-        throw new RuntimeException("Not yet implemented");
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
     }
 
     public Object getTaxonAttribute(int taxonIndex, String name) {

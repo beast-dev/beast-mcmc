@@ -50,6 +50,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -482,42 +483,87 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
+
+    public static class TraitSummary {
+        private int discreteCount;
+        private int continuousCount;
+        private final List<TraitData> traits;
+
+        public TraitSummary(List<TraitData> traits) {
+            this.traits = traits;
+            this.discreteCount = 0;
+            this.continuousCount = 0;
+
+            for (TraitData trait : traits) {
+
+                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                    this.discreteCount++;
+                }
+                if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                    this.continuousCount++;
+                }
+            }
+
+        }
+
+        public boolean checkIsAllowed() {
+            if (discreteCount > 0 && continuousCount > 0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        public void showMixedTraitError(Component parent) {
+            JOptionPane.showMessageDialog(parent, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+        }
+
+        public boolean createPartitions(DataPanel dataPanel, Component parent) {
+
+            boolean isAllowed = checkIsAllowed();
+            if (!isAllowed) {
+                showMixedTraitError(parent);
+                return false;
+            }
+
+            boolean success = false;
+
+
+            if (discreteCount > 0) {
+
+                // with discrete traits, create a separate partition for each
+                for (TraitData trait : traits) {
+                    List<TraitData> singleTrait = new ArrayList<TraitData>();
+                    singleTrait.add(trait);
+                    if (dataPanel.createFromTraits(singleTrait)) {
+                        success = true;
+                    }
+                }
+            } else {
+                // with continuous traits, join them in a single partition
+                success = dataPanel.createFromTraits(traits);
+            }
+
+            return success;
+
+        }
+
+
+    }
+
     public void createTraitPartition() {
         int[] selRows = traitsTable.getSelectedRows();
-        java.util.List<TraitData> traits = new ArrayList<TraitData>();
-        int discreteCount = 0;
-        int continuousCount = 0;
+        List<TraitData> traits = new ArrayList<TraitData>();
         for (int row : selRows) {
             TraitData trait = options.traits.get(row);
             traits.add(trait);
 
-            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                discreteCount++;
-            }
-            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-                continuousCount++;
-            }
         }
 
-        boolean success = false;
-        if (discreteCount > 0) {
-            if (continuousCount > 0) {
-                JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        TraitSummary summary = new TraitSummary(traits);
 
-            // with discrete traits, create a separate partition for each
-            for (TraitData trait : traits) {
-                java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
-                singleTrait.add(trait);
-                if (dataPanel.createFromTraits(singleTrait)) {
-                    success = true;
-                }
-            }
-        } else {
-            // with
-            success = dataPanel.createFromTraits(traits);
-        }
+        boolean success = summary.createPartitions(dataPanel, TraitsPanel.this);
+
         if (success) {
             frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
         }

@@ -25,7 +25,6 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.TraitData;
 import jam.panels.OptionsPanel;
 
@@ -122,7 +121,7 @@ public class SelectTraitDialog {
             }
             if (result != JOptionPane.CANCEL_OPTION) {
                 String name = getName().trim();
-                if (name.isEmpty() && getMakeCopy()) {
+                if (name.isEmpty() && (getMakeCopy() || traits == null)) {
                     isValid = false;
                     JOptionPane.showMessageDialog(parent, "Cannot have an empty partition name.", "No Partition Name", JOptionPane.ERROR_MESSAGE);
                 }

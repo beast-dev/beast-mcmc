@@ -389,7 +389,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (result == false) {
                 return false;
             }
-//            traits = options.traits; //Automatically choose all traits from input file
         }
 
 
@@ -408,26 +407,21 @@ public class DataPanel extends BeautiPanel implements Exportable {
             }
         }
 
-        String name = null;
+        String name;
 
         if (traits.size() > 1) {
             // a set of traits have been passed to the function
             int result;
-            if (selectTraitDialog.getMakeCopy()) {
+            if (selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
                 name = selectTraitDialog.getName();
-            }
-
-            if (name == null || name.isEmpty()) {
-                do {
-                    result = selectTraitDialog.showDialog(null, null, this);
-                    name = selectTraitDialog.getName().trim();
-                } while (result != JOptionPane.CANCEL_OPTION && name.isEmpty());
+            } else {
+                result = selectTraitDialog.showDialog(null, null, this);
+                name = selectTraitDialog.getName();
 
                 if (result == JOptionPane.CANCEL_OPTION) {
                     return false;
                 }
             }
-
 
         } else {
             name = traits.get(0).getName();
@@ -445,7 +439,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         int minRow = -1;
-        int maxRow = -1;
+        int maxRow;
 
         if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE) {
 

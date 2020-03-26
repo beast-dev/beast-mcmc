@@ -474,7 +474,7 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
         return tipStatesModel;
     }
 
-    public TreeModel getTreeModel() {
+    public Tree getTreeModel() {
         return treeModel;
     }
 

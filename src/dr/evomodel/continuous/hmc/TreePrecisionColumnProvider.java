@@ -57,7 +57,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
     final Tree tree;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousTraitPartialsProvider tipData;
-    private final Map<Integer, double[]> treeCache = new HashMap<Integer, double[]>();
+    private final Map<Integer, double[]> treeCache = new HashMap<>();
 
     private final int numTaxa;
     private final int dimTrait;

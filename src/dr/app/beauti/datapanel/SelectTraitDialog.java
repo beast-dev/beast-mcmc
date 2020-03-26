@@ -122,6 +122,7 @@ public class SelectTraitDialog {
             if (result != JOptionPane.CANCEL_OPTION) {
                 String name = getName().trim();
                 if (name.isEmpty()) {
+                    //TODO: set default name
                     isValid = false;
                 }
             }

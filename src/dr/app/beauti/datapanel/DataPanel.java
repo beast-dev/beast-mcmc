@@ -382,7 +382,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean createFromTraits(List<TraitData> traits, Component parent) {
-        int selRow = -1;
 
         if (options.traits.size() == 0) {
             Boolean result = frame.doImportTraits();
@@ -434,15 +433,35 @@ public class DataPanel extends BeautiPanel implements Exportable {
             return false;
         }
 
-        //TODO: if continuous bundle, if discrete separate
+        int minRow = -1;
+        int maxRow = -1;
 
-        selRow = options.createPartitionForTraits(name, traits);
+        if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE) {
+
+            for (int i = 0; i < traits.size(); i++) {
+
+                TraitData trait = traits.get(i);
+
+                int selRow = options.createPartitionForTraits(trait.getName(), trait);
+
+                if (i == 0) {
+                    minRow = selRow;
+                }
+            }
+
+            maxRow = minRow + traits.size() - 1;
+        } else {
+            minRow = options.createPartitionForTraits(name, traits);
+            maxRow = minRow;
+
+        }
+
 
         modelsChanged();
         dataTableModel.fireTableDataChanged();
 
-        if (selRow != -1) {
-            dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        if (minRow != -1) {
+            dataTable.getSelectionModel().setSelectionInterval(minRow, maxRow);
         }
         fireDataChanged();
         repaint();

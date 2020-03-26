@@ -25,10 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.MutableTreeModel;
-import dr.evomodel.branchratemodel.AncestralTraitTreeDiscretizedBranchRates;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
-import dr.evomodel.tree.AncestralTraitTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
@@ -71,7 +68,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
         //final double normalizeBranchRateTo = xo.getDoubleAttribute(NORMALIZE_BRANCH_RATE_TO);
         final double normalizeBranchRateTo = xo.getAttribute(NORMALIZE_BRANCH_RATE_TO, Double.NaN);
 
-        MutableTreeModel tree = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
 
         Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
@@ -80,7 +77,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
         Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
         Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
-        if (normalize) {
+        if(normalize) {
             Logger.getLogger("dr.evomodel").info("   mean rate is normalized to " + normalizeBranchRateTo);
         }
 
@@ -102,15 +99,8 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
         }*/
 
-        if (tree instanceof AncestralTraitTreeModel) {
-            return new AncestralTraitTreeDiscretizedBranchRates((AncestralTraitTreeModel) tree, rateCategoryParameter, distributionModel, overSampling, normalize,
-                    normalizeBranchRateTo, randomizeRates, keepRates, cachedRates);
-        } else if (tree instanceof TreeModel) {
-            return new DiscretizedBranchRates((TreeModel) tree, rateCategoryParameter, distributionModel, overSampling, normalize,
-                    normalizeBranchRateTo, randomizeRates, keepRates, cachedRates);
-        } else {
-            throw new RuntimeException("The tree must be an instance of `TreeModel` or `AncestralTraitTreeModel` for `DiscretizedBranchRates`");
-        }
+        return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling, normalize,
+                normalizeBranchRateTo, randomizeRates, keepRates, cachedRates);
     }
 
     //************************************************************************
@@ -140,7 +130,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RANDOMIZE_RATES, true, "Randomize initial categories"),
             AttributeRule.newBooleanRule(KEEP_RATES, true, "Keep current rate category specification"),
             AttributeRule.newBooleanRule(CACHED_RATES, true, "Cache rates between steps (default off)"),
-            new ElementRule(MutableTreeModel.class),
+            new ElementRule(TreeModel.class),
             new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
             new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),
     };

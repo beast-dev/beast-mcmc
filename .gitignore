@@ -11,7 +11,5 @@ out/
 *.log
 *.trees
 *.tree
-*.MLE
 *.xml
 !examples/**/*.xml
-!ci/**/*.xml

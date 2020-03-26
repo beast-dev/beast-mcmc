@@ -400,7 +400,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         String name;
 
         if (traits == null || traits.size() == 0) {
-            int result = selectTraitDialog.showDialog(options.traits, null);
+            int result = selectTraitDialog.showDialog(options.traits, null, this);
             if (result != JOptionPane.CANCEL_OPTION) {
                 traits = selectTraitDialog.getTraits();
 
@@ -415,7 +415,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         } else {
             if (traits.size() > 1) {
                 // a set of traits have been passed to the function
-                int result = selectTraitDialog.showDialog(null, null);
+                int result = selectTraitDialog.showDialog(null, null, this);
                 if (result != JOptionPane.CANCEL_OPTION) {
                     name = selectTraitDialog.getName();
                 } else {
@@ -423,6 +423,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 }
             } else {
                 name = traits.get(0).getName();
+                if (selectTraitDialog.getMakeCopy()) {
+                    name = selectTraitDialog.getName();
+                }
             }
         }
 

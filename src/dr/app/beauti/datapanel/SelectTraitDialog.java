@@ -31,6 +31,7 @@ import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -75,7 +76,7 @@ public class SelectTraitDialog {
 
     }
 
-    public int showDialog(Collection<TraitData> traits, String defaultName) {
+    public int showDialog(Collection<TraitData> traits, String defaultName, Component parent) {
         optionPanel.removeAll();
         if (traits == null) {
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
@@ -121,9 +122,14 @@ public class SelectTraitDialog {
             }
             if (result != JOptionPane.CANCEL_OPTION) {
                 String name = getName().trim();
-                if (name.isEmpty()) {
-                    //TODO: set default name
+                if (name.isEmpty() && getMakeCopy()) {
                     isValid = false;
+                    JOptionPane.showMessageDialog(parent, "Cannot have an empty partition name.", "No Partition Name", JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (getTraits().size() == 0) {
+                    isValid = false;
+                    JOptionPane.showMessageDialog(parent, "Please select a trait(s).", "No Trait(s) Selected", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } while (!isValid);

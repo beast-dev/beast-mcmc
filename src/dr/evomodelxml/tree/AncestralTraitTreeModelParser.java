@@ -49,9 +49,11 @@ import static dr.evomodelxml.tree.TreeModelParser.*;
  */
 public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
-    public static final String ANCESTRAL_TRAIT_TREE_MODEL = "ancestralTraitTreeModel";
+    private static final String ANCESTRAL_TRAIT_TREE_MODEL = "ancestralTraitTreeModel";
 //    public static final String PSEUDO_BRANCH_LENGTH_NAME = "pseudoBranchLengthName";
-    public static final String ANCESTOR = "ancestor";
+    private static final String ANCESTOR = "ancestor";
+    private static final String ANCESTRAL_PATH = "ancestralPath";
+    private static final String RELATIVE_HEIGHT = "relativeToTipHeight";
 
     public String getParserName() {
         return ANCESTRAL_TRAIT_TREE_MODEL;
@@ -170,7 +172,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
-                        null, node, index);
+                        null, node, index, false);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -180,6 +182,8 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             Taxon taxon = (Taxon) cxo.getChild(Taxon.class);
             Parameter time = (Parameter) cxo.getChild(Parameter.class);
+
+            boolean relativeHeight = cxo.getAttribute(RELATIVE_HEIGHT, false);
 
             if (time.getParameterValue(0) <= taxon.getHeight()) {
                 throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
@@ -191,7 +195,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendent, pseudoBranchLength,
-                        time, node, index);
+                        time, node, index, relativeHeight); // TODO Refactor into separate class from MRCA version
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -233,10 +237,9 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
                                     new ElementRule(ANCESTRAL_PATH, new XMLSyntaxRule[]{
                                             new ElementRule(Taxon.class),
                                             new ElementRule(Parameter.class),
+                                            AttributeRule.newBooleanRule(RELATIVE_HEIGHT, true),
                                     })),
                     }, 0, Integer.MAX_VALUE),
                     nodeTraitsRule,
             };
-
-    private static final String ANCESTRAL_PATH = "ancestralPath";
 }

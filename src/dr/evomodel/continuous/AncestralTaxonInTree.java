@@ -43,26 +43,27 @@ import java.util.Set;
  */
 public class AncestralTaxonInTree extends AbstractModel {
 
-    public class Mrca extends AncestralTaxonInTree {
+//    public class Mrca extends AncestralTaxonInTree {
+//
+//        public Mrca(Taxon ancestor, MutableTreeModel treeModel, TaxonList descendents, Parameter priorSampleSize, NodeRef node, int index) throws TreeUtils.MissingTaxonException {
+//            super(ancestor, treeModel, descendents, priorSampleSize, null, node, index);
+//        }
+//    }
 
-        public Mrca(Taxon ancestor, MutableTreeModel treeModel, TaxonList descendents, Parameter priorSampleSize, NodeRef node, int index) throws TreeUtils.MissingTaxonException {
-            super(ancestor, treeModel, descendents, priorSampleSize, null, node, index);
-        }
-    }
-
-    public AncestralTaxonInTree(Taxon ancestor,
-                                MutableTreeModel treeModel,
-                                TaxonList taxonList,
-                                Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
-        this(ancestor, treeModel, taxonList, priorSampleSize, null, null, -1);
-    }
+//    public AncestralTaxonInTree(Taxon ancestor,
+//                                MutableTreeModel treeModel,
+//                                TaxonList taxonList,
+//                                Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
+//        this(ancestor, treeModel, taxonList, priorSampleSize, null, null, -1);
+//    }
 
     public AncestralTaxonInTree(Taxon ancestor,
                                 MutableTreeModel treeModel,
                                 TaxonList descendents,
                                 Parameter priorSampleSize,
                                 Parameter height,
-                                NodeRef node, int index) throws TreeUtils.MissingTaxonException {
+                                NodeRef node, int index,
+                                boolean relativeHeight) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
 
@@ -71,6 +72,7 @@ public class AncestralTaxonInTree extends AbstractModel {
         this.descendents = descendents;
         this.pseudoBranchLength = priorSampleSize;
         this.height = height;
+        this.relativeHeight = relativeHeight;
         this.index = index;
         this.node = node;
 
@@ -86,26 +88,20 @@ public class AncestralTaxonInTree extends AbstractModel {
         return pseudoBranchLength.getParameterValue(0);
     }
 
-    final public double getHeight() { return height != null ? height.getParameterValue(0) : 0.0; }
-
-    final MutableTreeModel getTreeModel() { return treeModel; }
-
-//    final double[] getPartials() { return meanParameter.getParameterValues(); }
-
-//    final double getPartial(int i) { return meanParameter.getParameterValue(i); }
-
-//    final double getPriorSampleSize() { return pseudoBranchLength.getParameterValue(0); }
-
-    final double[] getRestrictedPartials() {
-        assert(false);
-        return null;
+    final public double getHeight() { // TODO Refactor into subclasses
+        if (height != null) {
+            double h = height.getParameterValue(0);
+            if (relativeHeight) {
+                h += ancestor.getHeight();
+            }
+            return h;
+        } else {
+            return 0.0;
+        }
     }
 
-//    final PrecisionType getPrecisionType() {
-//        assert(false);
-//        return PrecisionType.SCALAR;
-//    }
-
+    final MutableTreeModel getTreeModel() { return treeModel; }
+    
     final public int getIndex() { return index; }
 
     final public void setIndex(int index) { this.index = index; }
@@ -150,6 +146,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final private Parameter pseudoBranchLength;
     final private Parameter height;
+    final private boolean relativeHeight;
 
     private int index;
     private NodeRef node;

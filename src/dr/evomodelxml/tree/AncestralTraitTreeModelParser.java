@@ -170,7 +170,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
-                        node, index);
+                        null, node, index);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -181,12 +181,17 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
             Taxon taxon = (Taxon) cxo.getChild(Taxon.class);
             Parameter time = (Parameter) cxo.getChild(Parameter.class);
 
+            if (time.getParameterValue(0) <= taxon.getHeight()) {
+                throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
+                        taxon.getId() + "'");
+            }
+
             Taxa descendent = new Taxa();
             descendent.addTaxon(taxon);
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendent, pseudoBranchLength,
-                        node, index);
+                        time, node, index);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }

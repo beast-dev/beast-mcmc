@@ -46,7 +46,7 @@ public class AncestralTaxonInTree extends AbstractModel {
     public class Mrca extends AncestralTaxonInTree {
 
         public Mrca(Taxon ancestor, MutableTreeModel treeModel, TaxonList descendents, Parameter priorSampleSize, NodeRef node, int index) throws TreeUtils.MissingTaxonException {
-            super(ancestor, treeModel, descendents, priorSampleSize, node, index);
+            super(ancestor, treeModel, descendents, priorSampleSize, null, node, index);
         }
     }
 
@@ -54,13 +54,14 @@ public class AncestralTaxonInTree extends AbstractModel {
                                 MutableTreeModel treeModel,
                                 TaxonList taxonList,
                                 Parameter priorSampleSize) throws TreeUtils.MissingTaxonException {
-        this(ancestor, treeModel, taxonList, priorSampleSize, null, -1);
+        this(ancestor, treeModel, taxonList, priorSampleSize, null, null, -1);
     }
 
     public AncestralTaxonInTree(Taxon ancestor,
                                 MutableTreeModel treeModel,
                                 TaxonList descendents,
                                 Parameter priorSampleSize,
+                                Parameter height,
                                 NodeRef node, int index) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
@@ -69,6 +70,7 @@ public class AncestralTaxonInTree extends AbstractModel {
         this.treeModel = treeModel;
         this.descendents = descendents;
         this.pseudoBranchLength = priorSampleSize;
+        this.height = height;
         this.index = index;
         this.node = node;
 
@@ -83,6 +85,8 @@ public class AncestralTaxonInTree extends AbstractModel {
     final public double getPseudoBranchLength() {
         return pseudoBranchLength.getParameterValue(0);
     }
+
+    final public double getHeight() { return height != null ? height.getParameterValue(0) : 0.0; }
 
     final MutableTreeModel getTreeModel() { return treeModel; }
 
@@ -145,6 +149,7 @@ public class AncestralTaxonInTree extends AbstractModel {
     final private BitSet tipBitSet;
 
     final private Parameter pseudoBranchLength;
+    final private Parameter height;
 
     private int index;
     private NodeRef node;

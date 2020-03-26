@@ -857,7 +857,16 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             tip.set(node.getNumber());
             if (clampList.containsKey(tip)) {
                 AncestralTaxonInTree partials = clampList.get(tip);
+
+                double pathHeight = partials.getHeight();
+                assert (pathHeight > 0.0);
+
                 NodeRef parent = tree.getParent(node);
+                double parentHeight = tree.getNodeHeight(parent);
+                while (parentHeight < pathHeight && parent != tree.getRoot()) {
+                    parent = tree.getParent(parent);
+                    parentHeight = tree.getNodeHeight(parent);
+                }
                 partials.setNode(parent);
                 nodeToClampMap.put(parent.getNumber(), partials);
             }

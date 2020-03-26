@@ -381,7 +381,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public boolean createFromTraits(List<TraitData> traits) {
+    public boolean createFromTraits(List<TraitData> traits, Component parent) {
         int selRow = -1;
 
         if (options.traits.size() == 0) {
@@ -398,17 +398,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
             selectTraitDialog = new SelectTraitDialog(frame);
         }
 
+        String name;
+
         if (traits == null || traits.size() == 0) {
             int result = selectTraitDialog.showDialog(options.traits, null);
-            //TODO: check that the traits are continuous / discrete only
             if (result != JOptionPane.CANCEL_OPTION) {
-                List<TraitData> selectedTraits = selectTraitDialog.getTraits();
-                String name = selectedTraits.get(0).getName();
+                traits = selectTraitDialog.getTraits();
+
+                name = traits.get(0).getName();
                 if (selectTraitDialog.getMakeCopy()) {
                     name = selectTraitDialog.getName();
                 }
 
-                selRow = options.createPartitionForTraits(name, selectedTraits);
             } else {
                 return false;
             }
@@ -417,15 +418,25 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 // a set of traits have been passed to the function
                 int result = selectTraitDialog.showDialog(null, null);
                 if (result != JOptionPane.CANCEL_OPTION) {
-                    String name = selectTraitDialog.getName();
-                    selRow = options.createPartitionForTraits(name, traits);
+                    name = selectTraitDialog.getName();
                 } else {
                     return false;
                 }
             } else {
-                selRow = options.createPartitionForTraits(traits.get(0).getName(), traits);
+                name = traits.get(0).getName();
             }
         }
+
+        boolean validSelection = checkSelectedTraits(traits);
+
+        if (!validSelection) {
+            JOptionPane.showMessageDialog(parent, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //TODO: if continuous bundle, if discrete separate
+
+        selRow = options.createPartitionForTraits(name, traits);
 
         modelsChanged();
         dataTableModel.fireTableDataChanged();
@@ -435,6 +446,27 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
         fireDataChanged();
         repaint();
+
+        return true;
+    }
+
+    private boolean checkSelectedTraits(List<TraitData> traits) {
+        int discreteCount = 0;
+        int continuousCount = 0;
+
+        for (TraitData trait : traits) {
+
+            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                discreteCount++;
+            }
+            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                continuousCount++;
+            }
+        }
+
+        if (discreteCount > 0 && continuousCount > 0) {
+            return false;
+        }
 
         return true;
     }
@@ -899,7 +931,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createFromTraits(null);
+            createFromTraits(null, DataPanel.this);
 
             for (AbstractPartitionData partition : options.dataPartitions) {
 

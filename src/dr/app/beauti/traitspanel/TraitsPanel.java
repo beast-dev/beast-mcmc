@@ -535,13 +535,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 for (TraitData trait : traits) {
                     List<TraitData> singleTrait = new ArrayList<TraitData>();
                     singleTrait.add(trait);
-                    if (dataPanel.createFromTraits(singleTrait)) {
+                    if (dataPanel.createFromTraits(singleTrait, parent)) {
                         success = true;
                     }
                 }
             } else {
                 // with continuous traits, join them in a single partition
-                success = dataPanel.createFromTraits(traits);
+                success = dataPanel.createFromTraits(traits, parent);
             }
 
             return success;
@@ -557,12 +557,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         for (int row : selRows) {
             TraitData trait = options.traits.get(row);
             traits.add(trait);
-
         }
 
-        TraitSummary summary = new TraitSummary(traits);
 
-        boolean success = summary.createPartitions(dataPanel, TraitsPanel.this);
+        boolean success = dataPanel.createFromTraits(traits, TraitsPanel.this);
 
         if (success) {
             frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);

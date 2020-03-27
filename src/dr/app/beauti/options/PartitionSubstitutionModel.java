@@ -328,28 +328,28 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createOperator("CP3.frequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         // if (!options.classicOperatorsAndPriors && options.NEW_GTR_PARAMETERIZATION) {
-            createOperator("deltaGTR", "gtr.rates",
+        createOperator("deltaGTR", "gtr.rates",
+                "Change GTR transition rates relative to each other maintaining mean",
+                GTR_RATES,
+                OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        for (int j = 1; j <= 3; j++) {
+            createOperator("CP" + j + ".deltaGTR", "CP" + j + ".gtr.rates",
                     "Change GTR transition rates relative to each other maintaining mean",
-                    GTR_RATES,
+                    "CP" + j + "." + GTR_RATES,
                     OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-            for (int j = 1; j <= 3; j++) {
-                createOperator("CP" + j + ".deltaGTR", "CP" + j + ".gtr.rates",
-                        "Change GTR transition rates relative to each other maintaining mean",
-                        "CP" + j + "." + GTR_RATES,
-                        OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
-            }
-            createOperator("CP1+2.deltaGTR", "CP1+2.gtr.rates",
-                    "Change GTR transition rates relative to each other maintaining mean",
-                    "CP1+2." + GTR_RATES,
-                    OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        }
+        createOperator("CP1+2.deltaGTR", "CP1+2.gtr.rates",
+                "Change GTR transition rates relative to each other maintaining mean",
+                "CP1+2." + GTR_RATES,
+                OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
         // } else {
-            for (String rateName : GTR_RATE_NAMES) {
-                createScaleOperator(rateName, demoTuning, substWeights);
-                for (int j = 1; j <= 3; j++) {
-                    createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
-                }
-                createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
+        for (String rateName : GTR_RATE_NAMES) {
+            createScaleOperator(rateName, demoTuning, substWeights);
+            for (int j = 1; j <= 3; j++) {
+                createScaleOperator("CP" + j + "." + rateName, demoTuning, substWeights);
             }
+            createScaleOperator("CP1+2." + rateName, demoTuning, substWeights);
+        }
         // }
 
         createScaleOperator("alpha", demoTuning, substWeights);
@@ -359,18 +359,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
         // if (!options.classicOperatorsAndPriors && LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
-            createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
-            for (int i = 1; i <= 3; i++) {
-                createOperator("CP" + i + ".rwPInv", "CP" + i + ".rwPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
-            }
-            createOperator("CP1+2.rwPInv", "CP1+2.rwPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createOperator("CP" + i + ".rwPInv", "CP" + i + ".rwPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
+        }
+        createOperator("CP1+2.rwPInv", "CP1+2.rwPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
         // } else {
-            // old (and not very appropriate scale operator)
+        // old (and not very appropriate scale operator)
         createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space", "pInv", OperatorType.UNIFORM, demoTuning, substWeights);
-            for (int i = 1; i <= 3; i++) {
-                createOperator("CP" + i + ".uniformPInv", "CP" + i + ".uniformPInv", "Random walk on pInv in logit space",  "CP" + i + ".pInv", OperatorType.UNIFORM, demoTuning, substWeights);
-            }
-        createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space",  "CP1+2.pInv", OperatorType.UNIFORM, demoTuning, substWeights);
+        for (int i = 1; i <= 3; i++) {
+            createOperator("CP" + i + ".uniformPInv", "CP" + i + ".uniformPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.UNIFORM, demoTuning, substWeights);
+        }
+        createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.UNIFORM, demoTuning, substWeights);
         // }
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
@@ -384,7 +384,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 0.0, 0.0, 10.0, 0.0, true);
         createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
                 0.0, 0.0, 10.0, 0.0, true);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.1, true);
+        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution", 0.1, true);
         createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0, true);
 
         createScaleOperator("propLinear", demoTuning, substWeights);
@@ -918,7 +918,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     /**
      * @return true either if the options have more than one partition or any partition is
-     *         broken into codon positions.
+     * broken into codon positions.
      */
     public boolean hasCodonPartitions() {
         return getCodonPartitionCount() > 1;
@@ -1169,7 +1169,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
-                options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
+                options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size() > 1) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

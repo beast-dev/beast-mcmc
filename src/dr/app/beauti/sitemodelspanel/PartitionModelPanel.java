@@ -26,6 +26,7 @@
 package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
@@ -66,23 +67,23 @@ public class PartitionModelPanel extends OptionsPanel {
             NucModelType.JC, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(
-            new BinaryModelType[] { BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION });
+            new BinaryModelType[]{BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION});
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck = new JCheckBox(
             "Use ambiguities in the tree likelihood associated with this model");
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType
             .values());
 
-    private JComboBox heteroCombo = new JComboBox(new String[] { "None",
-            "Gamma", "Invariant Sites", "Gamma + Invariant Sites" });
+    private JComboBox heteroCombo = new JComboBox(new String[]{"None",
+            "Gamma", "Invariant Sites", "Gamma + Invariant Sites"});
 
-    private JComboBox gammaCatCombo = new JComboBox(new String[] { "4", "5",
-            "6", "7", "8", "9", "10" });
+    private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
+            "6", "7", "8", "9", "10"});
     private JLabel gammaCatLabel;
 
-    private JComboBox codingCombo = new JComboBox(new String[] { "Off",
+    private JComboBox codingCombo = new JComboBox(new String[]{"Off",
             "2 partitions: positions (1 + 2), 3",
-            "3 partitions: positions 1, 2, 3" });
+            "3 partitions: positions 1, 2, 3"});
 
     private JCheckBox substUnlinkCheck = new JCheckBox(
             "Unlink substitution rate parameters across codon positions");
@@ -106,6 +107,8 @@ public class PartitionModelPanel extends OptionsPanel {
     private JButton setupGLMButton;
     private GLMSettingsDialog glmSettingsDialog = null;
 
+    // =========== continuous traits =============
+
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
 
@@ -119,6 +122,9 @@ public class PartitionModelPanel extends OptionsPanel {
             "Add random jitter to tips");
     private JLabel jitterWindowLabel = new JLabel("Jitter window size:");
     private RealNumberField jitterWindowText = new RealNumberField(0, Double.POSITIVE_INFINITY);
+
+    private JCheckBox addModelExtension = new JCheckBox("Add model extension");
+    private JComboBox modelExtensionCombo = new JComboBox(ContinuousModelExtensionType.values());
 
     private JTextArea citationText;
 
@@ -385,6 +391,13 @@ public class PartitionModelPanel extends OptionsPanel {
 
             public void keyReleased(KeyEvent e) {
                 model.setJitterWindow(addJitterCheck.isSelected() ? jitterWindowText.getValue() : 0.0);
+            }
+        });
+
+        addModelExtension.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                modelExtensionCombo.setEnabled(addModelExtension.isSelected());
             }
         });
 
@@ -745,6 +758,12 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addSeparator();
                 addComponent(useLambdaCheck);
+
+                addSeparator();
+                addComponent(addModelExtension);
+                addComponentWithLabel("Model Extension:", modelExtensionCombo);
+                modelExtensionCombo.setEnabled(false);
+
                 break;
 
             case DataType.MICRO_SAT:

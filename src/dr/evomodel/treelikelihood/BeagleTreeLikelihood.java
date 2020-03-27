@@ -1191,7 +1191,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             final double branchLength = branchRate * (parentHeight - nodeHeight);
             if (branchLength < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchLength + " (parent: " + parent +
-                        "; height: " + parentHeight + " - child: " + node + "height: " + nodeHeight + ")");
+                        "; height: " + parentHeight + " - child: " + node + " height: " + nodeHeight + ")");
             }
 
             if (flip) {

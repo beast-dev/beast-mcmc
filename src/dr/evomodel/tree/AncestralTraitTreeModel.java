@@ -287,6 +287,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         storeNode(newNode);
 
         ShadowNode returnNode = newNode;
+        ShadowNode recurse0 = newNode;
+        ShadowNode recurse1 = newNode;
 
         if (nodeToClampMap.containsKey(originalNode.getNumber())) {
 
@@ -296,26 +298,28 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
             ShadowNode newTipNode = new ShadowNode(newTipNumber, null, ancestor);
 
-            newTipNode.parent = newNode;
-            newNode.child1 = newTipNode;
+            ShadowNode newInternalNode = new ShadowNode(externalCount + treeInternalCount + extraInternal,
+                    null, ancestor); // TODO Possible break here -- last entry was null
 
-            storeNode(newTipNode);
-
-            ShadowNode newInternalNode = new ShadowNode(externalCount + treeInternalCount + extraInternal, null, null);
+            newNode.child0 = newInternalNode;
+            recurse0 = newInternalNode;
 
             newInternalNode.parent = newNode;
-            newNode.child0 = newInternalNode;
+            newInternalNode.child1 = newTipNode; //newNode.child1 = newTipNode;
 
+            newTipNode.parent = newInternalNode; //newTipNode.parent = newNode;
+
+            storeNode(newTipNode);
             storeNode(newInternalNode);
 
             ++extraInternal;
 
-            newNode = newInternalNode;
+//            newNode = newInternalNode;
         }
 
         if (!treeModel.isExternal(originalNode)) {
-            newNode.child0 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 0), newNode);
-            newNode.child1 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 1), newNode);
+            recurse0.child0 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 0), newNode);
+            recurse1.child1 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 1), newNode);
         }
 
         return returnNode;
@@ -352,17 +356,37 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             return treeModel.getNodeHeight(node.getOriginalNode());
         } else {
 
-            double height = treeModel.getNodeHeight(node.parent.getOriginalNode());
-            if (node.isExternal()) {
-                double diff = node.ancestor.getPseudoBranchLength();
-                return height - diff;
-            } else {
-                return height;
+
+            final AncestralTaxonInTree ancestor = node.ancestor;
+
+            double height = 0.0;
+
+            if (ancestor.isOnAncestralPath()) { // TODO Refactor into subclasses
+                System.err.println("Parent @ " + getNodeHeight(node.parent) + " for path @ " + ancestor.getHeight() + " " + node.isExternal());
+                if (node.isExternal()) {
+                    return ancestor.getHeight() - ancestor.getPseudoBranchLength();
+                } else {
+                    return ancestor.getHeight();
+                }
+            } else { // Below is the original
+                if (node.isExternal()) {
+                    return treeModel.getNodeHeight(node.parent.parent.getOriginalNode())
+                            - ancestor.getPseudoBranchLength();
+                } else {
+                    return treeModel.getNodeHeight(node.parent.getOriginalNode());
+                }
             }
         }
     }
 
+    private static final boolean FIX_BRANCH_LENGTH = true;
+
     public double getBranchLength(NodeRef iNode) {
+
+        if (FIX_BRANCH_LENGTH) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
         assert (iNode != null);
 
         checkShadowTree();
@@ -534,6 +558,9 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         // Do nothing; no variables
+//        System.err.println("Bang!");
+//        validShadowTree = false;
+//        fireModelChanged(new TreeChangedEvent.WholeTree());
     }
 
     // Delegate the rest to treeModel

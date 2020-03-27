@@ -100,8 +100,10 @@ public class AncestralTaxonInTree extends AbstractModel {
         }
     }
 
+    final public boolean isOnAncestralPath() { return height != null; } // TODO Refactor into subclass
+
     final MutableTreeModel getTreeModel() { return treeModel; }
-    
+
     final public int getIndex() { return index; }
 
     final public void setIndex(int index) { this.index = index; }

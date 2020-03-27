@@ -123,7 +123,6 @@ public class PartitionModelPanel extends OptionsPanel {
     private JLabel jitterWindowLabel = new JLabel("Jitter window size:");
     private RealNumberField jitterWindowText = new RealNumberField(0, Double.POSITIVE_INFINITY);
 
-    private JCheckBox addModelExtension = new JCheckBox("Add model extension");
     private JComboBox modelExtensionCombo = new JComboBox(ContinuousModelExtensionType.values());
 
     private JTextArea citationText;
@@ -394,13 +393,6 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
-        addModelExtension.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                modelExtensionCombo.setEnabled(addModelExtension.isSelected());
-                //TODO: change model
-            }
-        });
 
         modelExtensionCombo.addItemListener(new ItemListener() {
             @Override
@@ -770,9 +762,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponent(useLambdaCheck);
 
                 addSeparator();
-                addComponent(addModelExtension);
                 addComponentWithLabel("Model Extension:", modelExtensionCombo);
-                modelExtensionCombo.setEnabled(false);
 
                 break;
 

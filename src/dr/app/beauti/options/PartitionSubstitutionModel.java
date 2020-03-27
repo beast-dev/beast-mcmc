@@ -25,6 +25,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
@@ -59,8 +60,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
     private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
+    private ContinuousModelExtensionType continuousExtensionType = ContinuousModelExtensionType.NONE;
 
     private final int continuousTraitCount;
+    private final int extendedTraitCount;
 
     private final TraitData traitData;
 
@@ -98,6 +101,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             continuousTraitCount = 0;
         }
 
+        extendedTraitCount = continuousTraitCount;
+
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.GENERAL) {
             traitData = partition.getTraits().get(0);
         } else {
@@ -122,8 +127,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         binarySubstitutionModel = source.binarySubstitutionModel;
         discreteSubstType = source.discreteSubstType;
         continuousSubstModelType = source.continuousSubstModelType;
+        continuousExtensionType = source.continuousExtensionType;
 
         continuousTraitCount = source.continuousTraitCount;
+        extendedTraitCount = source.extendedTraitCount;
+
 
         traitData = source.traitData;
 
@@ -153,6 +161,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
         super(options, name);
         continuousTraitCount = 0;
+        extendedTraitCount = continuousTraitCount;
+
         traitData = null;
 
         initModelParametersAndOpererators();
@@ -1019,8 +1029,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return continuousSubstModelType;
     }
 
+    public ContinuousModelExtensionType getContinuousExtensionType() {
+        return continuousExtensionType;
+    }
+
     public void setContinuousSubstModelType(final ContinuousSubstModelType continuousSubstModelType) {
         this.continuousSubstModelType = continuousSubstModelType;
+    }
+
+    public void setContinuousExtensionType(final ContinuousModelExtensionType extensionType) {
+        this.continuousExtensionType = extensionType;
     }
 
     public void setIsLatitudeLongitude(boolean latitudeLongitude) {

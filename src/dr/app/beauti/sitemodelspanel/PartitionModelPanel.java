@@ -398,6 +398,14 @@ public class PartitionModelPanel extends OptionsPanel {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 modelExtensionCombo.setEnabled(addModelExtension.isSelected());
+                //TODO: change model
+            }
+        });
+
+        modelExtensionCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                model.setContinuousExtensionType((ContinuousModelExtensionType) modelExtensionCombo.getSelectedItem());
             }
         });
 
@@ -566,6 +574,8 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.CONTINUOUS:
                 continuousTraitSiteModelCombo.setSelectedItem(model
                         .getContinuousSubstModelType());
+
+                modelExtensionCombo.setSelectedItem(model.getContinuousExtensionType());
 
                 ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
                         .getComponentOptions(ContinuousComponentOptions.class);

@@ -1061,6 +1061,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return continuousTraitCount;
     }
 
+    public int getExtendedTraitCount() {
+        return extendedTraitCount;
+    }
+
     public MicroSatModelType.RateProportionality getRatePorportion() {
         return ratePorportion;
     }

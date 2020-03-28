@@ -362,12 +362,13 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             double height = 0.0;
 
             if (ancestor.isOnAncestralPath()) { // TODO Refactor into subclasses
-                System.err.println("Parent @ " + getNodeHeight(node.parent) + " for path @ " + ancestor.getHeight() + " " + node.isExternal());
+                double ancestorHeight = ancestor.getHeight();
                 if (node.isExternal()) {
-                    return ancestor.getHeight() - ancestor.getPseudoBranchLength();
-                } else {
-                    return ancestor.getHeight();
+                    ancestorHeight -= ancestor.getPseudoBranchLength();
                 }
+                double rootHeight = treeModel.getNodeHeight(treeModel.getRoot());
+                ancestorHeight = Math.min(rootHeight, ancestorHeight);
+                return ancestorHeight;
             } else { // Below is the original
                 if (node.isExternal()) {
                     return treeModel.getNodeHeight(node.parent.parent.getOriginalNode())
@@ -517,14 +518,19 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                         }
 
                         if (!shadow.isExternal()) {
-                            if (shadow.child1.ancestor != null) {
+                            if (shadow.child0.ancestor != null) {
                                 /* If there is an ancestor (and zero-branch-length internal node),
                                  * we apparently need to hit the both the parent of the ancestor and the
                                  * zero-branch-length internal node.  MAS is unsure why we must hit the
                                  * ancestor parent.
                                  */
-                                fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow), index);
-                                shadow = shadow.child0;  // Get zero-branch-length internal node
+
+                                if (shadow.parent != null) {
+                                    fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.parent), index);
+                                }
+
+                                fireModelChanged(new RemappedTreeChangeEvent(treeChangedEvent, shadow.child0), index);
+                                shadow = shadow.child1;
                             }
                         }
 
@@ -538,7 +544,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 }
 
             } else if (object instanceof Parameter) {
-                // Do nothing
+
+                if (hasAncestralPathTaxa) {
+                    validShadowTree = false;
+                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                }
             } else {
                 throw new IllegalArgumentException("TreeModel should not generate other objects");
             }
@@ -874,9 +884,11 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         setupAncestralPathClamps(treeModel, clampList, nodeToClampMap);
     }
 
-    private static void setupAncestralPathClamps(Tree tree,
-                                                 Map<BitSet, AncestralTaxonInTree> clampList,
-                                                 Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+    private void setupAncestralPathClamps(Tree tree,
+                                          Map<BitSet, AncestralTaxonInTree> clampList,
+                                          Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+
+        hasAncestralPathTaxa = false;
 
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef node = tree.getExternalNode(i);
@@ -896,6 +908,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 }
                 partials.setNode(parent);
                 nodeToClampMap.put(parent.getNumber(), partials);
+                hasAncestralPathTaxa = true;
             }
         }
     }
@@ -935,6 +948,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
     final private Map<Integer, AncestralTaxonInTree> nodeToClampMap = new HashMap<>();
+
+    private boolean hasAncestralPathTaxa = false;
 
     private boolean validShadowTree = false;
     private boolean savedValidShadowTree;

@@ -611,7 +611,19 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             writer.writeIDref("treeModel", treeModelId);
         }
 
-        writeTraitParameter(writer, partitionData);
+        switch (model.getContinuousExtensionType()) {
+            case NONE:
+                writeTraitParameter(writer, partitionData);
+                break;
+            case RESIDUAL:
+                writer.writeIDref("repeatedMeasuresModel", model.getName() + ".residualExtension");
+                break;
+            case LATENT_FACTORS:
+                //TODO
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown model extension type");
+        }
 
 
         if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {

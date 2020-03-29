@@ -32,6 +32,8 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.TreeDataContinuousDiffusionStatistic;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
 import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.inference.model.ParameterParser;
@@ -741,24 +743,65 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                               ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
-            writePrecisionGibbsOperator(writer, component, partitionData);
+            writePrecisionGibbsOperator(writer, component, partitionData, ContinuousModelExtensionType.NONE);
+
+            switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
+                case NONE:
+                    break;
+                case RESIDUAL:
+                    writePrecisionGibbsOperator(writer, component, partitionData,
+                            ContinuousModelExtensionType.RESIDUAL);
+                    break;
+                case LATENT_FACTORS:
+                    //TODO
+                    throw new IllegalArgumentException("Not yet implemented");
+                default:
+                    throw new IllegalArgumentException("Unknown extension type");
+            }
         }
     }
 
     private void writePrecisionGibbsOperator(final XMLWriter writer,
                                              final ContinuousComponentOptions component,
-                                             AbstractPartitionData partitionData
+                                             AbstractPartitionData partitionData,
+                                             ContinuousModelExtensionType extensionType
     ) {
         writer.writeOpenTag(ContinuousComponentOptions.PRECISION_GIBBS_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<String>("weight", "" + partitionData.getTraits().size())
                 });
-        writer.writeOpenTag(WishartStatisticsWrapper.PARSER_NAME,
+
+        String wrapperName;
+
+        switch (extensionType) {
+            case NONE:
+                wrapperName = WishartStatisticsWrapper.PARSER_NAME;
+                break;
+            case RESIDUAL:
+                wrapperName = RepeatedMeasuresWishartStatistics.RM_WISHART_STATISTICS;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown or unsupported extension type");
+        }
+
+        writer.writeOpenTag(wrapperName,
                 new Attribute[]{
                         new Attribute.Default<String>("traitName", "" + partitionData.getName())
                 });
         writer.writeIDref("traitDataLikelihood", partitionData.getName() + ".traitLikelihood");
-        writer.writeCloseTag(WishartStatisticsWrapper.PARSER_NAME);
+
+        switch (extensionType) {
+            case NONE:
+                break;
+            case RESIDUAL:
+                writer.writeIDref(RepeatedMeasuresTraitDataModel.REPEATED_MEASURES_MODEL, GeneratorHelper.extensionModelName(
+                        ContinuousModelExtensionType.RESIDUAL, partitionData.getPartitionSubstitutionModel().getName()));
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown or unsupported extension type");
+        }
+
+        writer.writeCloseTag(wrapperName);
         writer.writeIDref("multivariateWishartPrior", partitionData.getPartitionSubstitutionModel().getName() + ".precisionPrior");
         writer.writeCloseTag(ContinuousComponentOptions.PRECISION_GIBBS_OPERATOR);
 

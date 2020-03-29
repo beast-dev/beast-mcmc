@@ -234,7 +234,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
-    private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
+    public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {

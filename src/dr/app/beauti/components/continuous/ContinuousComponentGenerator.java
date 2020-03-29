@@ -25,6 +25,7 @@
 
 package dr.app.beauti.components.continuous;
 
+import dr.app.beauti.components.GeneratorHelper;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
@@ -262,7 +263,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             if (extensionType != ContinuousModelExtensionType.NONE) {
 
-                String precisionId = model.getName() + ".extensionPrecision";
+                String precisionId = GeneratorHelper.extensionPrecisionName(model.getName());
                 String treeModelId = partitionData.getPartitionTreeModel().getPrefix() + "treeModel";
 
                 if (first) {
@@ -277,7 +278,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
                         writer.writeBlankLine();
 
-                        String wishartId = model.getName() + ".extensionPrecisionPrior";
+                        String wishartId = GeneratorHelper.extensionPrecisionPriorName(model.getName());
                         writeMultivariateWishartPrior(writer, wishartId, precisionId, model.getExtendedTraitCount());
 
 
@@ -303,7 +304,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("repeatedMeasuresModel",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", model.getName() + ".residualExtension"),
+                        new Attribute.Default<String>("id", GeneratorHelper.extensionModelName(
+                                ContinuousModelExtensionType.RESIDUAL, model.getName())),
                         new Attribute.Default<String>("traitName", partitionData.getName())
                 });
 
@@ -616,7 +618,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writeTraitParameter(writer, partitionData);
                 break;
             case RESIDUAL:
-                writer.writeIDref("repeatedMeasuresModel", model.getName() + ".residualExtension");
+                writer.writeIDref("repeatedMeasuresModel", GeneratorHelper.extensionModelName(
+                        ContinuousModelExtensionType.RESIDUAL, model.getName()));
                 break;
             case LATENT_FACTORS:
                 //TODO
@@ -839,9 +842,12 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".precisionPrior");
 
+            PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
+
             switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
                 case RESIDUAL:
-                    writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".extensionPrecisionPrior");
+                    writer.writeIDref("multivariateWishartPrior",
+                            GeneratorHelper.extensionPrecisionPriorName(model.getName()));
                     break;
                 case LATENT_FACTORS:
                     //TODO

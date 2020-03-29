@@ -838,6 +838,19 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         }
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".precisionPrior");
+
+            switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
+                case RESIDUAL:
+                    writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".extensionPrecisionPrior");
+                    break;
+                case LATENT_FACTORS:
+                    //TODO
+                    throw new IllegalArgumentException("Not yet implemented");
+                case NONE:
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown extension type");
+            }
         }
 
     }

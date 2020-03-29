@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.AbstractModel;
@@ -63,7 +64,7 @@ public class AncestralTaxonInTree extends AbstractModel {
                                 Parameter priorSampleSize,
                                 Parameter height,
                                 NodeRef node, int index,
-                                boolean relativeHeight) throws TreeUtils.MissingTaxonException {
+                                double offset) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
 
@@ -72,7 +73,7 @@ public class AncestralTaxonInTree extends AbstractModel {
         this.descendents = descendents;
         this.pseudoBranchLength = priorSampleSize;
         this.height = height;
-        this.relativeHeight = relativeHeight;
+        this.offset = offset;
         this.index = index;
         this.node = node;
 
@@ -90,11 +91,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final public double getHeight() { // TODO Refactor into subclasses
         if (height != null) {
-            double h = height.getParameterValue(0);
-            if (relativeHeight) {
-                h += ancestor.getHeight();
-            }
-            return h;
+            return height.getParameterValue(0) + offset;
         } else {
             return 0.0;
         }
@@ -157,7 +154,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final private Parameter pseudoBranchLength;
     final private Parameter height;
-    final private boolean relativeHeight;
+    final private double offset;
 
     private int index;
     private NodeRef node;

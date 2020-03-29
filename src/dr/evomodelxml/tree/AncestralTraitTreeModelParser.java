@@ -29,6 +29,7 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -161,7 +162,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
-                        null, node, index, false);
+                        null, node, index, 0.0);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -173,10 +174,23 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
             Parameter time = (Parameter) cxo.getChild(Parameter.class);
 
             boolean relativeHeight = cxo.getAttribute(RELATIVE_HEIGHT, false);
+            double offset = 0;
 
-            if (time.getParameterValue(0) <= taxon.getHeight()) {
-                throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
-                        taxon.getId() + "'");
+            if (relativeHeight) {
+
+                Object date = taxon.getAttribute("date");
+                if (date != null && date instanceof Date) {
+                    offset = taxon.getHeight();
+                } else {
+                    throw new XMLParseException("Taxon '" + taxon.getId() + "' has no specified date");
+                }
+
+            } else {
+
+                if (time.getParameterValue(0) <= taxon.getHeight()) {
+                    throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
+                            taxon.getId() + "'");
+                }
             }
 
             Taxa descendent = new Taxa();
@@ -184,7 +198,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendent, pseudoBranchLength,
-                        time, node, index, relativeHeight); // TODO Refactor into separate class from MRCA version
+                        time, node, index, offset); // TODO Refactor into separate class from MRCA version
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }

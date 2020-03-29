@@ -112,6 +112,15 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final public void setNode(NodeRef node) { this.node = node; }
 
+    final public void setNode(NodeRef node, int pathViaChildNumber) {
+        this.node = node;
+        this.pathViaChildNumber = pathViaChildNumber;
+    }
+
+    final public int getPathChildNumber() {
+        return pathViaChildNumber;
+    }
+
     // AbstractModel implementation
 
     @Override
@@ -152,6 +161,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     private int index;
     private NodeRef node;
+    private int pathViaChildNumber = -1;
 
     public TaxonList getTaxonList() {
         return descendents;

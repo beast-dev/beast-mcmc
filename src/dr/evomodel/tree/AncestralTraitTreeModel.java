@@ -261,6 +261,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         ShadowNode recurse0 = newNode;
 
+        boolean swapOriginalChildren = false;
+
         if (nodeToClampMap.containsKey(originalNode.getNumber())) {
 
             // Add tip
@@ -283,12 +285,18 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             storeNode(newTipNode);
             storeNode(newInternalNode);
 
+            if (ancestor.getPathChildNumber() == 1) {
+                swapOriginalChildren = true;
+            }
+
             ++extraInternal;
         }
 
         if (!treeModel.isExternal(originalNode)) {
-            recurse0.child0 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 0), newNode);
-            newNode.child1 = buildRecursivelyShadowTree(treeModel.getChild(originalNode, 1), newNode);
+            recurse0.child0 = buildRecursivelyShadowTree(treeModel.getChild(originalNode,
+                    swapOriginalChildren ? 1 : 0), newNode);
+            newNode.child1 = buildRecursivelyShadowTree(treeModel.getChild(originalNode,
+                    swapOriginalChildren ? 0 : 1), newNode);
         }
 
         return newNode;
@@ -856,6 +864,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             NodeRef node = tree.getExternalNode(i);
             BitSet tip = new BitSet();
             tip.set(node.getNumber());
+
             if (clampList.containsKey(tip)) {
                 AncestralTaxonInTree partials = clampList.get(tip);
 
@@ -864,11 +873,15 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
                 NodeRef parent = tree.getParent(node);
                 double parentHeight = tree.getNodeHeight(parent);
+                boolean isChild0 = tree.getChild(parent, 0) == node;
+
                 while (parentHeight < pathHeight && parent != tree.getRoot()) {
                     parent = tree.getParent(parent);
                     parentHeight = tree.getNodeHeight(parent);
+                    isChild0 = tree.getChild(parent, 0) == node;
                 }
-                partials.setNode(parent);
+
+                partials.setNode(parent, isChild0 ? 0 : 1);
                 nodeToClampMap.put(parent.getNumber(), partials);
                 hasAncestralPathTaxa = true;
             }

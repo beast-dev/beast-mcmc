@@ -1,5 +1,6 @@
 package test.dr.distibutions;
 
+import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
 import dr.math.functionEval.GammaFunction;
 import junit.framework.TestCase;
@@ -33,6 +34,7 @@ public class GammaDistributionTest extends TestCase{
         double qtotErr = 0;
 
         Random random = new Random(37);
+        MathUtils.setSeed(38);
 
         for(int i = 0; i < numberOfTests; i++){
             final double mean = .01 + (3-0.01) * random.nextDouble();
@@ -44,6 +46,7 @@ public class GammaDistributionTest extends TestCase{
             final GammaDistribution gamma = new GammaDistribution(shape,scale);
 
             final double value = gamma.nextGamma();
+            System.err.println(value);
 
             final double mypdf = mypdf(value, shape, scale);
             final double pdf = gamma.pdf(value);

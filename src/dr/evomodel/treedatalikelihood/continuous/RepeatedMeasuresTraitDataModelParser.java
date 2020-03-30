@@ -25,6 +25,9 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.app.beauti.components.BeautiModelIDProvider;
+import dr.app.beauti.components.BeautiParameterIDProvider;
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -37,7 +40,7 @@ import dr.xml.*;
 
 import java.util.List;
 
-public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParser {
+public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
     public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
 
@@ -128,4 +131,46 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
             }, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
     };
+
+    //********************************************************************
+    // BeautiModelIDProvider interface
+    //********************************************************************
+
+    public String getParserTag() {
+        return REPEATED_MEASURES_MODEL;
+    }
+
+    public String getDefaultId(String modelName) {
+        throw new IllegalArgumentException("Should not be called");
+    }
+
+    public String getDefaultId(ContinuousModelExtensionType extensionType, String modelName) {
+        String extendedName;
+        switch (extensionType) {
+            case RESIDUAL:
+                extendedName = "residualModel";
+                break;
+            case LATENT_FACTORS:
+                extendedName = "factorModel";
+                break;
+            case NONE:
+                throw new IllegalArgumentException("Should not be called");
+            default:
+                throw new IllegalArgumentException("Unknown extension type");
+
+        }
+
+        return modelName + "." + extendedName;
+    }
+
+    private static final String PRECISION_ID = "samplingPrecision";
+
+    private final BeautiParameterIDProvider extensionPrecisionIDProvider = new BeautiParameterIDProvider("extensionPrecision");
+
+    public BeautiParameterIDProvider getBeautiParameterIDProvider(String parameterKey) {
+        assert parameterKey.equals("extensionPrecision")
+                : "Only the 'extensionPrecision' parameter is implemented for the 'repeatedMeasuresModel'.";
+
+        return extensionPrecisionIDProvider;
+    }
 }

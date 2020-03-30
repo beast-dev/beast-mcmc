@@ -32,7 +32,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.TreeDataContinuousDiffusionStatistic;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
 import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodelxml.tree.TreeLoggerParser;
@@ -266,7 +266,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             if (extensionType != ContinuousModelExtensionType.NONE) {
 
-                String precisionId = GeneratorHelper.extensionPrecisionName(model.getName());
+                String precisionId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider("extensionPrecision").getId(model.getName());
                 String treeModelId = partitionData.getPartitionTreeModel().getPrefix() + "treeModel";
 
                 if (first) {
@@ -281,7 +281,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
                         writer.writeBlankLine();
 
-                        String wishartId = GeneratorHelper.extensionPrecisionPriorName(model.getName());
+                        String wishartId = repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider("extensionPrecision").getPriorId(model.getName());
                         writeMultivariateWishartPrior(writer, wishartId, precisionId, model.getExtendedTraitCount());
 
 
@@ -307,7 +307,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("repeatedMeasuresModel",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", GeneratorHelper.extensionModelName(
+                        new Attribute.Default<String>("id", repeatedMeasuresTraitDataModelParser.getDefaultId(
                                 ContinuousModelExtensionType.RESIDUAL, model.getName())),
                         new Attribute.Default<String>("traitName", partitionData.getName())
                 });
@@ -587,7 +587,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writeTraitParameter(writer, partitionData);
                 break;
             case RESIDUAL:
-                writer.writeIDref("repeatedMeasuresModel", GeneratorHelper.extensionModelName(
+                writer.writeIDref("repeatedMeasuresModel", repeatedMeasuresTraitDataModelParser.getDefaultId(
                         ContinuousModelExtensionType.RESIDUAL, model.getName()));
                 break;
             case LATENT_FACTORS:
@@ -795,7 +795,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             case NONE:
                 break;
             case RESIDUAL:
-                writer.writeIDref(RepeatedMeasuresTraitDataModel.REPEATED_MEASURES_MODEL, GeneratorHelper.extensionModelName(
+                writer.writeIDref(RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL, repeatedMeasuresTraitDataModelParser.getDefaultId(
                         ContinuousModelExtensionType.RESIDUAL, partitionData.getPartitionSubstitutionModel().getName()));
                 break;
             default:
@@ -857,7 +857,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             switch (partitionData.getPartitionSubstitutionModel().getContinuousExtensionType()) {
                 case RESIDUAL:
                     writer.writeIDref("multivariateWishartPrior",
-                            GeneratorHelper.extensionPrecisionPriorName(model.getName()));
+                            repeatedMeasuresTraitDataModelParser.getBeautiParameterIDProvider("extensionPrecision").getPriorId(model.getName()));
                     break;
                 case LATENT_FACTORS:
                     //TODO
@@ -904,4 +904,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     }
 
     private static final ContinuousDataLikelihoodParser continuousDataLikelihoodParser = new ContinuousDataLikelihoodParser();
+    private static final RepeatedMeasuresTraitDataModelParser repeatedMeasuresTraitDataModelParser = new RepeatedMeasuresTraitDataModelParser();
+
 }

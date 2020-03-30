@@ -1,5 +1,5 @@
 /*
- * beautiProvider.java
+ * beautiParametersIDProvider.java
  *
  * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,16 +25,21 @@
 
 package dr.app.beauti.components;
 
-import dr.app.beauti.util.XMLWriter;
+public class BeautiParameterIDProvider {
 
-public interface BeautiModelIDProvider {
+    public BeautiParameterIDProvider(String paramKey) {
+        parameterKey = paramKey;
+    }
 
     /**
-     * Returns the parser xml tag for writing.
+     * Returns the default ID for a parameter xml component.
      *
+     * @param modelName the model name
      * @return the ID
      */
-    String getParserTag();
+    public String getId(String modelName) {
+        return modelName + "." + parameterKey;
+    }
 
     /**
      * Returns the default ID for an xml component.
@@ -42,30 +47,9 @@ public interface BeautiModelIDProvider {
      * @param modelName the model name
      * @return the ID
      */
-    String getDefaultId(String modelName);
-
-    /**
-     * Write the ID ref of the ID provider from the model name.
-     *
-     * @param writer the XML writer
-     * @param modelName the model name
-     */
-    default void writeIDrefFromName(XMLWriter writer, String modelName) {
-        writer.writeIDref(this.getParserTag(), this.getDefaultId(modelName));
+    public String getPriorId(String modelName) {
+        return getId(modelName) + "Prior";
     }
 
-    /**
-     * Write the ID ref of the ID provider directly from the ID.
-     *
-     * @param writer the XML writer
-     * @param modelID the model name
-     */
-    default void writeIDrefFromID(XMLWriter writer, String modelID) {
-        writer.writeIDref(this.getParserTag(), modelID);
-    }
-
-    default BeautiParameterIDProvider getBeautiParameterIDProvider(String parameterKey) {
-        throw new IllegalArgumentException("No parameter to access.");
-    }
-
+    private static String parameterKey;
 }

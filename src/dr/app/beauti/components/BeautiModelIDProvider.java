@@ -42,7 +42,7 @@ public interface BeautiModelIDProvider {
      * @param modelName the model name
      * @return the ID
      */
-    String getDefaultId(String modelName);
+    String getId(String modelName);
 
     /**
      * Write the ID ref of the ID provider from the model name.
@@ -51,7 +51,7 @@ public interface BeautiModelIDProvider {
      * @param modelName the model name
      */
     default void writeIDrefFromName(XMLWriter writer, String modelName) {
-        writer.writeIDref(this.getParserTag(), this.getDefaultId(modelName));
+        writer.writeIDref(this.getParserTag(), this.getId(modelName));
     }
 
     /**

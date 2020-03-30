@@ -317,7 +317,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         return CONTINUOUS_DATA_LIKELIHOOD;
     }
 
-    public String getDefaultId(String modelName) {
+    public String getId(String modelName) {
         return modelName + "." + CONTINUOUS_DATA_LIKELIHOOD_DEFAULT_ID;
     }
 }

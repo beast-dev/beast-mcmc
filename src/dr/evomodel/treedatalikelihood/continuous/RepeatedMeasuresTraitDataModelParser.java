@@ -140,11 +140,11 @@ public class RepeatedMeasuresTraitDataModelParser extends AbstractXMLObjectParse
         return REPEATED_MEASURES_MODEL;
     }
 
-    public String getDefaultId(String modelName) {
+    public String getId(String modelName) {
         throw new IllegalArgumentException("Should not be called");
     }
 
-    public String getDefaultId(ContinuousModelExtensionType extensionType, String modelName) {
+    public String getId(ContinuousModelExtensionType extensionType, String modelName) {
         String extendedName;
         switch (extensionType) {
             case RESIDUAL:

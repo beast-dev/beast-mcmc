@@ -307,7 +307,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("repeatedMeasuresModel",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", repeatedMeasuresTraitDataModelParser.getDefaultId(
+                        new Attribute.Default<String>("id", repeatedMeasuresTraitDataModelParser.getId(
                                 ContinuousModelExtensionType.RESIDUAL, model.getName())),
                         new Attribute.Default<String>("traitName", partitionData.getName())
                 });
@@ -361,7 +361,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             String precisionMatrixId = model.getName() + ".precision";
 
             writeDiffusionStatistics(writer, partitionData, treeModelId, precisionMatrixId,
-                    continuousDataLikelihoodParser.getDefaultId(partitionData.getName()));
+                    continuousDataLikelihoodParser.getId(partitionData.getName()));
         }
     }
 
@@ -551,7 +551,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         int traitDimension = 1; // todo - set this to trait dimension
         writer.writeOpenTag(continuousDataLikelihoodParser.getParserTag(),
                 new Attribute[]{
-                        new Attribute.Default<String>("id", continuousDataLikelihoodParser.getDefaultId(partitionData.getName())),
+                        new Attribute.Default<String>("id", continuousDataLikelihoodParser.getId(partitionData.getName())),
                         new Attribute.Default<String>("traitName", partitionData.getName()),
                         new Attribute.Default<String>("useTreeLength", "true"),
                         new Attribute.Default<String>("scaleByTime", "true"),
@@ -587,7 +587,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writeTraitParameter(writer, partitionData);
                 break;
             case RESIDUAL:
-                writer.writeIDref("repeatedMeasuresModel", repeatedMeasuresTraitDataModelParser.getDefaultId(
+                writer.writeIDref("repeatedMeasuresModel", repeatedMeasuresTraitDataModelParser.getId(
                         ContinuousModelExtensionType.RESIDUAL, model.getName()));
                 break;
             case LATENT_FACTORS:
@@ -795,7 +795,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             case NONE:
                 break;
             case RESIDUAL:
-                writer.writeIDref(RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL, repeatedMeasuresTraitDataModelParser.getDefaultId(
+                writer.writeIDref(RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL, repeatedMeasuresTraitDataModelParser.getId(
                         ContinuousModelExtensionType.RESIDUAL, partitionData.getPartitionSubstitutionModel().getName()));
                 break;
             default:

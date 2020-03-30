@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.app.beauti.components.BeautiModelIDProvider;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -53,7 +54,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
+public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
 
     public static final String CONJUGATE_ROOT_PRIOR = AbstractMultivariateTraitLikelihood.CONJUGATE_ROOT_PRIOR;
     private static final String USE_TREE_LENGTH = AbstractMultivariateTraitLikelihood.USE_TREE_LENGTH;
@@ -130,8 +131,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                 utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
-             }
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+            }
 
 //            System.err.println("Using precisionType == " + precisionType + " for data model.");
 
@@ -202,7 +203,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
-            ((IntegratedFactorAnalysisLikelihood)dataModel).setLikelihoodDelegate(delegate);
+            ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate(delegate);
         }
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
@@ -276,7 +277,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),
             new XORRule(
-                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[] {
+                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
                     new ElementRule(ContinuousTraitPartialsProvider.class)
@@ -304,5 +305,19 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
+    }
+
+    //********************************************************************
+    // BeautiModelIDProvider interface
+    //********************************************************************
+
+    private static final String CONTINUOUS_DATA_LIKELIHOOD_DEFAULT_ID = "traitLikelihood";
+
+    public String getParserTag() {
+        return CONTINUOUS_DATA_LIKELIHOOD;
+    }
+
+    public String getDefaultId(String modelName) {
+        return modelName + "." + CONTINUOUS_DATA_LIKELIHOOD_DEFAULT_ID;
     }
 }

@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
 import dr.evomodel.treedatalikelihood.continuous.WishartStatisticsWrapper;
 import dr.evomodelxml.tree.TreeLoggerParser;
+import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
@@ -360,7 +361,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             String precisionMatrixId = model.getName() + ".precision";
 
             writeDiffusionStatistics(writer, partitionData, treeModelId, precisionMatrixId,
-                    partitionData.getName() + ".traitLikelihood");
+                    continuousDataLikelihoodParser.getDefaultId(partitionData.getName()));
         }
     }
 
@@ -548,9 +549,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                  String treeModelId) {
 
         int traitDimension = 1; // todo - set this to trait dimension
-        writer.writeOpenTag("traitDataLikelihood",
+        writer.writeOpenTag(continuousDataLikelihoodParser.getParserTag(),
                 new Attribute[]{
-                        new Attribute.Default<String>("id", partitionData.getName() + ".traitLikelihood"),
+                        new Attribute.Default<String>("id", continuousDataLikelihoodParser.getDefaultId(partitionData.getName())),
                         new Attribute.Default<String>("traitName", partitionData.getName()),
                         new Attribute.Default<String>("useTreeLength", "true"),
                         new Attribute.Default<String>("scaleByTime", "true"),
@@ -652,7 +653,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             }
         }
 
-        writer.writeCloseTag("traitDataLikelihood");
+        writer.writeCloseTag(continuousDataLikelihoodParser.getParserTag());
 
         if (traitDimension > 1) {
             writer.writeOpenTag("compoundParameter",
@@ -735,7 +736,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                         new Attribute.Default<String>("traitName", partitionData.getName())
                 }));
-        writer.writeIDref("traitDataLikelihood", traitLikelihoodId);
+        continuousDataLikelihoodParser.writeIDrefFromID(writer, traitLikelihoodId);
         writer.writeCloseTag(TreeDataContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC);
     }
 
@@ -788,7 +789,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 new Attribute[]{
                         new Attribute.Default<String>("traitName", "" + partitionData.getName())
                 });
-        writer.writeIDref("traitDataLikelihood", partitionData.getName() + ".traitLikelihood");
+        continuousDataLikelihoodParser.writeIDrefFromName(writer, partitionData.getName());
 
         switch (extensionType) {
             case NONE:
@@ -874,7 +875,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                        ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
-            writer.writeIDref("traitDataLikelihood", partitionData.getName() + ".traitLikelihood");
+            continuousDataLikelihoodParser.writeIDrefFromName(writer, partitionData.getName());
         }
     }
 
@@ -883,7 +884,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             if (partitionData.getPartitionTreeModel() == treeModel) {
                 PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
                 writer.writeIDref("multivariateDiffusionModel", model.getName() + ".diffusionModel");
-                writer.writeIDref("traitDataLikelihood", partitionData.getName() + ".traitLikelihood");
+                continuousDataLikelihoodParser.writeIDrefFromName(writer, partitionData.getName());
                 if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
                     writer.writeOpenTag(TreeLoggerParser.TREE_TRAIT,
                             new Attribute[]{
@@ -901,4 +902,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             }
         }
     }
+
+    private static final ContinuousDataLikelihoodParser continuousDataLikelihoodParser = new ContinuousDataLikelihoodParser();
 }

@@ -46,7 +46,6 @@ public class GammaDistributionTest extends TestCase{
             final GammaDistribution gamma = new GammaDistribution(shape,scale);
 
             final double value = gamma.nextGamma();
-            System.err.println(value);
 
             final double mypdf = mypdf(value, shape, scale);
             final double pdf = gamma.pdf(value);

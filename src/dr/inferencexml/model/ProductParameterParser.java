@@ -69,7 +69,16 @@ public class ProductParameterParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("The scale parameter must be one-dimensional.");
             }
 
-            return new ScaledParameter(scaleParam, prodParam);
+            Parameter vecParam;
+
+            if (paramList.size() == 1) { //Don't pass a product parameter if you don't need to
+                vecParam = paramList.get(0);
+            } else {
+                vecParam = prodParam;
+            }
+
+
+            return new ScaledParameter(scaleParam, vecParam);
         } else {
             return prodParam;
         }

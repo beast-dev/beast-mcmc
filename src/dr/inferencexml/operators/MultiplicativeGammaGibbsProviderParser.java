@@ -2,7 +2,6 @@ package dr.inferencexml.operators;
 
 import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.model.Parameter;
-import dr.inference.model.ProductParameter;
 import dr.inference.model.ScaledParameter;
 import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.inferencexml.distribution.IndependentNormalDistributionModelParser;
@@ -17,9 +16,6 @@ import dr.xml.*;
 public class MultiplicativeGammaGibbsProviderParser extends AbstractXMLObjectParser {
 
     private static final String MULTIPLICATIVE_PROVIDER = "multiplicativeGammaGibbsProvider";
-    private static final String MEAN = "mean";
-    private static final String GLOBAL_PREC = "globalPrecision";
-    private static final String LOCAL_PREC = "localPrecision";
 
     private static final String PRECISION = "precisionType";
     private static final String LOCAL = "local";

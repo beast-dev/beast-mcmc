@@ -187,4 +187,89 @@ public interface GammaGibbsProvider {
         private static final boolean DEBUG = false;
     }
 
+    class GlobalMultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
+
+        private final Parameter parameter;
+        private final Parameter mean;
+        private final Parameter globalPrecision;
+        private final Parameter localPrecision;
+
+        public GlobalMultiplicativeGammaGibbsProvider(Parameter parameter,
+                                                      Parameter mean,
+                                                      Parameter globalPrecision,
+                                                      Parameter localPrecision) {
+
+            this.parameter = parameter;
+            this.mean = mean;
+            this.globalPrecision = globalPrecision;
+            this.localPrecision = localPrecision;
+
+        }
+
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+            double sumSquaredError = 0;
+
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                double error = parameter.getParameterValue(i) - mean.getParameterValue(i);
+                sumSquaredError += error * error * localPrecision.getParameterValue(i);
+
+            }
+
+            return new SufficientStatistics(parameter.getDimension(), sumSquaredError);
+
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return globalPrecision;
+        }
+
+        @Override
+        public void drawValues() {
+
+        }
+    }
+
+    class LocalMultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
+
+        private final Parameter parameter;
+        private final Parameter mean;
+        private final Parameter globalPrecision;
+        private final Parameter localPrecision;
+
+        public LocalMultiplicativeGammaGibbsProvider(Parameter parameter,
+                                                     Parameter mean,
+                                                     Parameter globalPrecision,
+                                                     Parameter localPrecision) {
+
+            this.parameter = parameter;
+            this.mean = mean;
+            this.globalPrecision = globalPrecision;
+            this.localPrecision = localPrecision;
+
+        }
+
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+            double error = parameter.getParameterValue(dim) - mean.getParameterValue(dim);
+            double scaledSquaredError = error * error * globalPrecision.getParameterValue(0);
+
+            return new SufficientStatistics(1, scaledSquaredError);
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return localPrecision;
+        }
+
+        @Override
+        public void drawValues() {
+            //do nothing
+        }
+    }
+
+
 }

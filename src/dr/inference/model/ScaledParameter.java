@@ -32,4 +32,12 @@ public class ScaledParameter extends ProductParameter {
         return vecParam.getDimension();
     }
 
+    public Parameter getScaleParam() {
+        return scaleParam;
+    }
+
+    public Parameter getVecParam() {
+        return vecParam;
+    }
+
 }

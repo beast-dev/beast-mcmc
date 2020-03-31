@@ -1,7 +1,12 @@
 package dr.inferencexml.operators;
 
+import dr.inference.distribution.IndependentNormalDistributionModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.ProductParameter;
+import dr.inference.model.ScaledParameter;
 import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
+import dr.inferencexml.distribution.IndependentNormalDistributionModelParser;
+import dr.inferencexml.model.ProductParameterParser;
 import dr.xml.*;
 
 /**
@@ -23,27 +28,46 @@ public class MultiplicativeGammaGibbsProviderParser extends AbstractXMLObjectPar
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        XMLObject mxo = xo.getChild(MEAN);
-        Parameter mean = (Parameter) mxo.getChild(Parameter.class);
+        IndependentNormalDistributionModel normalDistribution = (IndependentNormalDistributionModel) xo.getChild(IndependentNormalDistributionModel.class);
 
-        XMLObject gxo = xo.getChild(GLOBAL_PREC);
-        Parameter globalPrecision = (Parameter) gxo.getChild(Parameter.class);
+        if (!normalDistribution.precisionUsed()) {
+            throw new XMLParseException("The " +
+                    IndependentNormalDistributionModelParser.INDEPENDENT_NORMAL_DISTRIBUTION_MODEL +
+                    " object must be constructed with a precision, not variance.");
+        }
 
-        XMLObject lxo = xo.getChild(LOCAL_PREC);
-        Parameter localPrecision = (Parameter) lxo.getChild(Parameter.class);
+        Parameter data = normalDistribution.getData();
+        Parameter mean = normalDistribution.getMean();
+
+        Parameter precision = normalDistribution.getPrecision();
+
+        if (!(precision instanceof ScaledParameter)) {
+            throw new XMLParseException("The precision parameter in the " +
+                    IndependentNormalDistributionModelParser.INDEPENDENT_NORMAL_DISTRIBUTION_MODEL +
+                    " object must be a " + ProductParameterParser.PRODUCT_PARAMETER + " with a '" +
+                    ProductParameterParser.SCALE + "' component.");
+        }
+
+        ScaledParameter scaledPrecision = (ScaledParameter) precision;
+
+        Parameter globalPrecision = scaledPrecision.getScaleParam();
+        Parameter localPrecision = scaledPrecision.getVecParam();
 
         String precisionType = xo.getStringAttribute(PRECISION);
         if (precisionType.equalsIgnoreCase(LOCAL)) {
-            return new GammaGibbsProvider.LocalMultiplicativeGammaGibbsProvider(parameter, mean,
+
+            return new GammaGibbsProvider.LocalMultiplicativeGammaGibbsProvider(data, mean,
                     globalPrecision, localPrecision);
+
         } else if (precisionType.equalsIgnoreCase(GLOBAL)) {
-            return new GammaGibbsProvider.GlobalMultiplicativeGammaGibbsProvider(parameter, mean,
+
+            return new GammaGibbsProvider.GlobalMultiplicativeGammaGibbsProvider(data, mean,
                     globalPrecision, localPrecision);
+
         } else {
-            throw new XMLParseException("Attribute '" + PRECISION + "' must be either '" + GLOBAL + "' or '" +
-                    LOCAL + "'.");
+            throw new XMLParseException("The '" + PRECISION + "' attribute must be either '" + LOCAL + "' or '" +
+                    GLOBAL + "'.");
         }
 
 
@@ -53,23 +77,7 @@ public class MultiplicativeGammaGibbsProviderParser extends AbstractXMLObjectPar
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(PRECISION),
-                new ElementRule(Parameter.class),
-                new ElementRule(MEAN,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),
-
-                new ElementRule(GLOBAL_PREC,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),
-
-                new ElementRule(LOCAL_PREC,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        })
-
-
+                new ElementRule(IndependentNormalDistributionModel.class)
         };
     }
 

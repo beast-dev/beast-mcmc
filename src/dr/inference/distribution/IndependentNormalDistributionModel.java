@@ -86,6 +86,10 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
 
     }
 
+    public boolean precisionUsed() {
+        return usePrecision;
+    }
+
     public Parameter getPrecision() {
         return precision;
     }
@@ -96,6 +100,10 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
 
     public Parameter getMean() {
         return mean;
+    }
+
+    public Parameter getData() {
+        return data;
     }
 
     @Override

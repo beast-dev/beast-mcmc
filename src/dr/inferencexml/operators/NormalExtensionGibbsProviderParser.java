@@ -5,6 +5,11 @@ import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.xml.*;
 
+/**
+ * @author Gabriel Hassler
+ * @author Marc A. Suchard
+ */
+
 public class NormalExtensionGibbsProviderParser extends AbstractXMLObjectParser {
 
     private static final String TREE_TRAIT_NAME = "treeTraitName";

@@ -30,15 +30,18 @@ import dr.evomodel.branchratemodel.shrinkage.AutoCorrelatedRatesWithBayesianBrid
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
+
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.GLOBAL_SCALE;
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.LOCAL_SCALE;
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.EXPONENT;
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.SLAB_WIDTH;
 
 @Deprecated
 public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectParser {
 
     private static final String BAYESIAN_BRIDGE = "autoCorrelatedRatesBayesianBridge";
-    private static final String GLOBAL_SCALE = "globalScale";
-    private static final String LOCAL_SCALE = "localScale";
-    private static final String EXPONENT = "exponent";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE;
@@ -66,8 +69,10 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
+
         BayesianBridgeDistributionModel distributionModel = (localScale != null) ?
-                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, 1) :
+                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth, 1) :
                 new MarginalBayesianBridgeDistributionModel(globalScale, exponent, 1);
 
         return new AutoCorrelatedRatesWithBayesianBridge(ratesDistribution,
@@ -90,6 +95,8 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+            new ElementRule(SLAB_WIDTH,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
     };
 
     public String getParserDescription() {

@@ -11,6 +11,7 @@ import static dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperato
 
 /**
  * @author Marc A. Suchard
+ * @author Akihiko Nishimura
  */
 
 public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implements GibbsOperator {

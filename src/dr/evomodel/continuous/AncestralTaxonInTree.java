@@ -28,7 +28,6 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
-import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.AbstractModel;

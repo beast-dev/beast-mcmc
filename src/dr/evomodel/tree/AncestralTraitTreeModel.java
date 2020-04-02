@@ -315,8 +315,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
 
         if (!treeModel.isExternal(originalNode)) {
-            recurse0.child0 = buildRecursivelyShadowTree(originalChild0, newNode);
-            recurse1.child1 = buildRecursivelyShadowTree(originalChild1, newNode);
+            recurse0.child0 = buildRecursivelyShadowTree(originalChild0, recurse0);
+            recurse1.child1 = buildRecursivelyShadowTree(originalChild1, recurse1);
         }
 
         return newNode;
@@ -347,10 +347,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         checkShadowTree();
 
+        double height;
+
         ShadowNode node = (ShadowNode) iNode;
         int originalNumber = node.getOriginalNumber();
         if (originalNumber >= 0) {
-            return treeModel.getNodeHeight(node.getOriginalNode());
+            height = treeModel.getNodeHeight(node.getOriginalNode());
         } else {
 
             final AncestralTaxonInTree ancestor = node.ancestor;
@@ -362,16 +364,18 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 }
                 double rootHeight = treeModel.getNodeHeight(treeModel.getRoot());
                 ancestorHeight = Math.min(rootHeight, ancestorHeight);
-                return ancestorHeight;
+                height = ancestorHeight;
             } else { // Below is the original
                 if (node.isExternal()) {
-                    return treeModel.getNodeHeight(node.parent.parent.getOriginalNode())
+                    height = treeModel.getNodeHeight(node.parent.parent.getOriginalNode())
                             - ancestor.getPseudoBranchLength();
                 } else {
-                    return treeModel.getNodeHeight(node.parent.getOriginalNode());
+                    height = treeModel.getNodeHeight(node.parent.getOriginalNode());
                 }
             }
         }
+
+        return height;
     }
 
     private static final boolean FIX_BRANCH_LENGTH = true;
@@ -381,6 +385,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         if (FIX_BRANCH_LENGTH) {
             throw new RuntimeException("Not yet implemented");
         }
+
+        System.err.println("DIE");
 
         assert (iNode != null);
 

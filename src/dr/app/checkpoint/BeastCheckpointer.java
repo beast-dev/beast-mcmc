@@ -62,6 +62,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STEM = "save.state.stem";
 
     public final static String FORCE_RESUME = "force.resume";
+    public final static String CHECKPOINT_SEED = "checkpoint.seed";
 
     private final String loadStateFileName;
     private final String saveStateFileName;
@@ -459,6 +460,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                //TODO we can no longer assume these are in the right order
+                //TODO best parse all the "operator" lines and store them so we can mix and match within this for loop
+                //TODO does not only apply to the operators but also to the parameters
+                //TODO test using additional tip-date sampling compared to previous run
                 MCMCOperator operator = operatorSchedule.getOperator(i);
                 line = in.readLine();
                 fields = line.split("\t");
@@ -646,7 +651,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 }
             }
 
-            if (rngState != null) {
+            if (System.getProperty(BeastCheckpointer.CHECKPOINT_SEED) != null) {
+                MathUtils.setSeed(Long.parseLong(System.getProperty(BeastCheckpointer.CHECKPOINT_SEED)));
+            } else if (rngState != null) {
                 MathUtils.setRandomState(rngState);
             }
 

@@ -535,12 +535,25 @@ class MersenneTwisterFast implements Serializable {
 		state[0] = mti;
 		System.arraycopy(mt, 0, state, 1, mt.length);
 
+		// Convert `nextNextGaussian` and `haveNextNextGaussian`
+		int int0 = haveNextNextGaussian ? 1 : 0;
+		long l = Double.doubleToRawLongBits(nextNextGaussian);
+		int int1 = (int)(l >> 32);
+		int int2 = (int)l;
+
 		return state;
 	}
 
 	public void setRandomState(int[] rngState) {
 		mti = rngState[0];
 		System.arraycopy(rngState, 1, mt, 0, mt.length);
+
+		// Convert back `int0`
+		int int0 = 666, int1 = 666, int2 = 666;
+		boolean b = (int0 == 1);
+		long l = (((long)int1) << 32) | (int2 & 0xffffffffL);
+		double d = Double.longBitsToDouble(l);
+
 	}
 
 }

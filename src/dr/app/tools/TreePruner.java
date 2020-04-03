@@ -29,6 +29,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.evolution.io.*;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
 import dr.util.Version;
 
 import java.io.*;
@@ -152,16 +153,88 @@ public class TreePruner {
         }
         progressStream.println();
 
-        List<Tree> processedTrees = processTrees(taxaToPrune);
+        List<Taxon> taxa = getTaxaToPrune(trees.get(0), taxaToPrune);
 
-        writeOutputFile(processedTrees, outputFileName);
+        processTrees(trees, taxa);
+
+        writeOutputFile(trees, outputFileName);
 
     }
 
-    private List<Tree> processTrees(String[] taxaToPrune) {
-        // TODO
-        List<Tree> processedTrees = trees;
-        return processedTrees;
+    private List<Taxon> getTaxaToPrune(Tree tree, String[] names) {
+
+        List<Taxon> taxa = new ArrayList<>();
+        if (names != null) {
+            for (String name : names) {
+
+                int taxonId = tree.getTaxonIndex(name);
+                if (taxonId == -1) {
+                    throw new RuntimeException("Unable to find taxon '" + name + "'.");
+                }
+
+                taxa.add(tree.getTaxon(taxonId));
+            }
+        }
+        return taxa;
+    }
+
+    private void processTrees(List<Tree> trees, List<Taxon> taxa) {
+        for (Tree tree : trees) {
+            processOneTree(tree, taxa);
+        }
+    }
+
+    private void processOneTree(Tree tree, List<Taxon> taxa) {
+        for (Taxon taxon : taxa) {
+            processOneTreeForOneTaxon((FlexibleTree)tree, taxon);
+        }
+    }
+
+    private void processOneTreeForOneTaxon(FlexibleTree tree, Taxon taxon) {
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef tip = tree.getExternalNode(i);
+            if (tree.getNodeTaxon(tip) == taxon) {
+                processOneTip(tree, tip, taxon);
+            }
+        }
+    }
+
+    private void processOneTip(FlexibleTree tree, NodeRef tip, Taxon taxon) {
+        NodeRef parent = tree.getParent(tip);
+
+        if (parent == tree.getRoot()) {
+
+            throw new RuntimeException("Still need to handle this situation");
+
+        } else {
+            
+            NodeRef grandParent = tree.getParent(parent);
+            NodeRef sibling = getSibling(tree, parent, tip);
+
+            FlexibleNode grandParentNode = (FlexibleNode)grandParent;
+            FlexibleNode parentNode = (FlexibleNode) parent;
+            FlexibleNode siblingNode = (FlexibleNode) sibling;
+            FlexibleNode tipNode = (FlexibleNode) tip;
+
+            // Remove from topology
+            siblingNode.setParent(grandParentNode);
+            grandParentNode.removeChild(parentNode);
+            grandParentNode.addChild(siblingNode);
+
+            // Adjust branch lengths
+            siblingNode.setLength(parentNode.getLength() + siblingNode.getLength());
+
+            // Combine traits
+            // TODO
+        }
+    }
+
+    private NodeRef getSibling(FlexibleTree tree, NodeRef parent, NodeRef node) {
+        NodeRef sibling = tree.getChild(parent, 0);
+        if (sibling == node) {
+            sibling = tree.getChild(parent, 1);
+        }
+        return sibling;
     }
 
     private void addTree(Tree tree) {
@@ -188,8 +261,6 @@ public class TreePruner {
         if (trees.size() > 0) {
             exporter.exportTrees(trees.toArray(new Tree[trees.size()]), true, getTreeNames(trees));
         }
-
-
 
         ps.close();
     }
@@ -305,6 +376,7 @@ public class TreePruner {
                 new Arguments.Option[]{
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.StringOption("taxaToPrune", "list","a list of taxon names to prune"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 

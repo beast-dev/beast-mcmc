@@ -152,14 +152,16 @@ public class TreePruner {
         }
         progressStream.println();
 
-        processTrees(taxaToPrune);
+        List<Tree> processedTrees = processTrees(taxaToPrune);
 
-        writeOutputFile(outputFileName);
+        writeOutputFile(processedTrees, outputFileName);
 
     }
 
-    private void processTrees(String[] taxaToPrune) {
+    private List<Tree> processTrees(String[] taxaToPrune) {
         // TODO
+        List<Tree> processedTrees = trees;
+        return processedTrees;
     }
 
     private void addTree(Tree tree) {
@@ -172,7 +174,7 @@ public class TreePruner {
     int totalTrees = 0;
     int totalTreesUsed = 0;
 
-    private void writeOutputFile(String outputFileName) {
+    private void writeOutputFile(List<Tree> trees, String outputFileName) {
 
         PrintStream ps = null;
         try {
@@ -186,6 +188,8 @@ public class TreePruner {
         if (trees.size() > 0) {
             exporter.exportTrees(trees.toArray(new Tree[trees.size()]), true, getTreeNames(trees));
         }
+
+
 
         ps.close();
     }

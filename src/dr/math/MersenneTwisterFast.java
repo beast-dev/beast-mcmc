@@ -260,7 +260,6 @@ class MersenneTwisterFast implements Serializable {
 	}
 
 	public final double nextGaussian() {
-		System.out.println("haveNextNextGaussian = " + haveNextNextGaussian);
 		if (haveNextNextGaussian) {
 			haveNextNextGaussian = false;
 			return nextNextGaussian;

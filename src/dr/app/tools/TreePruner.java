@@ -1,7 +1,7 @@
 /*
- * TreeAnnotator.java
+ * TreePruner.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,32 +27,11 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.io.Importer;
-import dr.evolution.io.NewickImporter;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.TreeImporter;
+import dr.evolution.io.*;
 import dr.evolution.tree.*;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.geo.contouring.ContourMaker;
-import dr.geo.contouring.ContourPath;
-import dr.geo.contouring.ContourWithSynder;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceType;
-import dr.stats.DiscreteStatistics;
-import dr.util.HeapSort;
-import dr.util.Pair;
 import dr.util.Version;
-import jam.console.ConsoleApplication;
-import org.rosuda.JRI.REXP;
-import org.rosuda.JRI.RVector;
-import org.rosuda.JRI.Rengine;
 
-import javax.swing.*;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -106,12 +85,14 @@ public class TreePruner {
         if (stepSize < 1) stepSize = 1;
 
         FileReader fileReader = new FileReader(inputFileName);
-        TreeImporter importer = new NexusImporter(fileReader, true);
+        TreeImporter importer = new NexusImporter(fileReader, false);
 
         try {
             totalTrees = 0;
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
+
+                addTree(tree);
 
                 long state = Long.MAX_VALUE;
 
@@ -171,11 +152,53 @@ public class TreePruner {
         }
         progressStream.println();
 
+        processTrees(taxaToPrune);
+
+        writeOutputFile(outputFileName);
+
+    }
+
+    private void processTrees(String[] taxaToPrune) {
+        // TODO
+    }
+
+    private void addTree(Tree tree) {
+        if (trees == null) {
+            trees = new ArrayList<>();
+        }
+        trees.add(tree);
     }
 
     int totalTrees = 0;
     int totalTreesUsed = 0;
 
+    private void writeOutputFile(String outputFileName) {
+
+        PrintStream ps = null;
+        try {
+            ps = new PrintStream(new File(outputFileName));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        NexusExporter exporter = new NexusExporter(ps);
+
+        if (trees.size() > 0) {
+            exporter.exportTrees(trees.toArray(new Tree[trees.size()]), true, getTreeNames(trees));
+        }
+
+        ps.close();
+    }
+
+    private List<Tree> trees;
+
+    private String[] getTreeNames(List<Tree> trees) {
+        List<String> names = new ArrayList<>();
+        for (Tree tree : trees) {
+            names.add(tree.getId());
+        }
+        return names.toArray(new String[names.size()]);
+    }
 
     public static void printTitle() {
         progressStream.println();

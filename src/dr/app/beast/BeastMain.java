@@ -613,6 +613,7 @@ public class BeastMain {
 
         if (arguments.hasOption("seed")) {
             seed = arguments.getLongOption("seed");
+            System.setProperty(BeastCheckpointer.CHECKPOINT_SEED, Long.toString(seed));
             if (seed <= 0) {
                 printTitle();
                 System.err.println("The random number seed should be > 0");

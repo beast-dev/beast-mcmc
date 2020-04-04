@@ -28,6 +28,7 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
@@ -40,15 +41,16 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  */
 
-public class ReversibleZigZagOperator extends AbstractZigZagOperator implements Reportable {
+public class ReversibleZigZagOperator extends AbstractZigZagOperator implements Reportable, ReversibleHMCProvider {
 
     public ReversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                     PrecisionColumnProvider columnProvider,
                                     double weight, Options runtimeOptions, Parameter mask,
-                                    int threadCount) {
+                                    int threadCount, int direction) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
+        super.direction = direction;
     }
 
     @Override
@@ -101,9 +103,9 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         double eventTime = firstBounce.time;
 
         final BounceState finalBounceState;
-        if (remainingTime < eventTime) { // No event during remaining time
+        if (remainingTime < Math.abs(eventTime)) { // No event during remaining time
 
-            updatePosition(position, velocity, remainingTime);
+            updatePosition(position, velocity, sign(eventTime) * remainingTime);
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
 
         } else {
@@ -181,7 +183,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 updateAction(action, velocity, eventIndex);
             }
 
-            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - Math.abs(eventTime));
         }
 
         if (TIMING) {
@@ -217,6 +219,15 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 //        }
     }
 
+    @Override
+    public void updatePositionAfterMap(WrappedVector position, WrappedVector momentum, double time) {
+       integrateTrajectory(position, 1);
+    }
+
+    @Override
+    public void updatePositionAfterMap(double[] position, WrappedVector momentum, double time) {
+
+    }
 //    private static void reflectMomentum(WrappedVector momentum,
 //                                        WrappedVector position,
 //                                        int eventIndex) {

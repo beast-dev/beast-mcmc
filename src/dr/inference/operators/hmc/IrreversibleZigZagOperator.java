@@ -74,7 +74,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return new WrappedVector.Raw(velocity);
     }
 
-    double integrateTrajectory(WrappedVector position) {
+    double integrateTrajectory(WrappedVector position, int direction) {
 
         WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
@@ -82,8 +82,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
-
-        int count = 0;
 
         if (TIMING) {
             timer.startTimer("integrateTrajectory");
@@ -110,7 +108,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
 
-            ++count;
         }
 
         if (TIMING) {
@@ -362,6 +359,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         return index;
     }
+
 
 
     private class PiecewiseLinearEndpoints {

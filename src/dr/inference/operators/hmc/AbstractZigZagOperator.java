@@ -37,8 +37,9 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
 
 
     @Override
-    double integrateTrajectory(WrappedVector position) {
+    double integrateTrajectory(WrappedVector position, int direction) {
 
+        super.direction = direction;
         String signString;
         if (DEBUG_SIGN) {
             signString = printSign(position);
@@ -119,8 +120,8 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
                             action, gradient, momentum);
 
                     firstBounce = (boundaryBounce.time < gradientBounce.time) ?
-                             new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
-                             new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+                            new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
+                            new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
                 }
 
             } else {
@@ -271,7 +272,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
 
             double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
 
-            if (boundaryTime < minimumTime) {
+            if (Math.abs(boundaryTime) < Math.abs(minimumTime)) {
                 minimumTime = boundaryTime;
                 index = i;
                 type = Type.BOUNDARY;
@@ -279,7 +280,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
 
             double gradientTime = findGradientRoot(action[i], gradient[i], momentum[i]);
 
-            if (gradientTime < minimumTime) {
+            if (Math.abs(gradientTime) < Math.abs(minimumTime)) {
                 minimumTime = gradientTime;
                 index = i;
                 type = Type.GRADIENT;
@@ -357,19 +358,20 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
         return taskPool.mapReduce(map, reduce);
     }
 
-    private static double findGradientRoot(double action,
-                                           double gradient,
-                                           double momentum) {
-        return minimumPositiveRoot(-0.5 * action, gradient, momentum);
+    private double findGradientRoot(double action,
+                                    double gradient,
+                                    double momentum) {
+        return direction > 0 ? minimumPositiveRoot(-0.5 * action, gradient, momentum) :
+                maximumNegativeRoot(-0.5 * action, gradient, momentum);
     }
 
     protected double findBoundaryTime(int index, double position,
-                                    double velocity) {
+                                      double velocity) {
 
         double time = Double.POSITIVE_INFINITY;
 
         if (headingTowardsBoundary(position, velocity, index)) { // Also ensures x != 0.0
-            time = Math.abs(position / velocity);
+            time = - position / velocity;
         }
 
         return time;
@@ -420,6 +422,30 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
             root = Double.POSITIVE_INFINITY;
         }
 
+        return root;
+    }
+
+    private static double maximumNegativeRoot(double a,
+                                              double b,
+                                              double c) {
+        double signA = sign(a);
+        b = b * signA;
+        c = c * signA;
+        a = a * signA;
+
+        double discriminant = b * b - 4 * a * c;
+        if (discriminant < 0.0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        double sqrtDiscriminant = Math.sqrt(discriminant);
+        double root = (-b + sqrtDiscriminant) / (2 * a);
+        if (root >= 0.0) {
+            root = (-b - sqrtDiscriminant) / (2 * a);
+        }
+        if (root >= 0.0) {
+            root = Double.NEGATIVE_INFINITY;
+        }
         return root;
     }
 

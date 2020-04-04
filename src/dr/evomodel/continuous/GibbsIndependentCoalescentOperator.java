@@ -61,13 +61,18 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
     private XMLObject xo;
 	
 	public GibbsIndependentCoalescentOperator(XMLObject xo, TreeModel treeModel, DemographicModel demoModel, CoalescentLikelihood coalescent, double weight) {
-		
+
 		this.xo = xo;
 		this.treeModel = treeModel;
 		this.demoModel = demoModel;
 		this.coalescent = coalescent;
 		setWeight(weight);
 		
+	}
+
+	@Override
+	public void setPathParameter(double beta) {
+		//do nothing
 	}
 	
 	public String getPerformanceSuggestion() {

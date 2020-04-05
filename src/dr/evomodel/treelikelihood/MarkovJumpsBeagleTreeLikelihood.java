@@ -25,6 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
@@ -62,7 +63,7 @@ import java.util.*;
 public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood
         implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider {
 
-    public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                            BranchModel branchModel,
                                            SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel,

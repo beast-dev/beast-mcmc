@@ -230,7 +230,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));
                 if (operator instanceof AdaptableMCMCOperator) {
-                    if (fields.length != 5) {
+                    if (fields.length != 6) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
                     ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));

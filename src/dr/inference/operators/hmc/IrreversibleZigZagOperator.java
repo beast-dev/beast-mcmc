@@ -74,7 +74,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return new WrappedVector.Raw(velocity);
     }
 
-    double integrateTrajectory(WrappedVector position, int direction) {
+    double integrateTrajectory(WrappedVector position) {
 
         WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
@@ -82,6 +82,8 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
+
+        int count = 0;
 
         if (TIMING) {
             timer.startTimer("integrateTrajectory");
@@ -108,6 +110,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
 
+            ++count;
         }
 
         if (TIMING) {
@@ -139,11 +142,11 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     // TODO Same as in super-class?
-    protected MinimumTravelInformation getNextBounce(WrappedVector position,
-                                                     WrappedVector velocity,
-                                                     WrappedVector action,
-                                                     WrappedVector gradient,
-                                                     WrappedVector momentum) {
+    private MinimumTravelInformation getNextBounce(WrappedVector position,
+                                                   WrappedVector velocity,
+                                                   WrappedVector action,
+                                                   WrappedVector gradient,
+                                                   WrappedVector momentum) {
 
         return getNextBounce(0, position.getDim(),
                 position.getBuffer(), velocity.getBuffer(),
@@ -359,7 +362,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
         return index;
     }
-
 
 
     private class PiecewiseLinearEndpoints {

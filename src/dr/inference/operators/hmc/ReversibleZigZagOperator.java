@@ -28,7 +28,6 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
-import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
@@ -41,206 +40,15 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  */
 
-public class ReversibleZigZagOperator extends AbstractZigZagOperator implements Reportable, ReversibleHMCProvider {
+public class ReversibleZigZagOperator extends AbstractZigZagOperator implements Reportable {
 
     public ReversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                     PrecisionColumnProvider columnProvider,
                                     double weight, Options runtimeOptions, Parameter mask,
-                                    int threadCount, int direction) {
+                                    int threadCount) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
-        super.direction = direction;
-    }
-    double integrateTrajectory(WrappedVector position, int direction) {
-
-        super.direction = direction;
-        String signString;
-        if (DEBUG_SIGN) {
-            signString = printSign(position);
-            System.err.println(signString);
-        }
-
-        if (TIMING) {
-            timer.startTimer("warmUp");
-        }
-
-        WrappedVector momentum = drawInitialMomentum();
-        WrappedVector velocity = drawInitialVelocity(momentum);
-        WrappedVector gradient = getInitialGradient();
-        WrappedVector action = getPrecisionProduct(velocity);
-
-        BounceState bounceState = new BounceState(drawTotalTravelTime());
-
-        if (TIMING) {
-            timer.stopTimer("warmUp");
-        }
-
-        int count = 0;
-
-        double[] p, v, a, g, m;
-        if (TEST_NATIVE_OPERATOR) {
-
-            p = position.getBuffer().clone();
-            v = velocity.getBuffer().clone();
-            a = action.getBuffer().clone();
-            g = gradient.getBuffer().clone();
-            m = momentum.getBuffer().clone();
-
-            nativeZigZag.operate(columnProvider, p, v, a, g, m,
-                    bounceState.remainingTime);
-        }
-
-        if (TEST_CRITICAL_REGION) {
-            nativeZigZag.enterCriticalRegion(position.getBuffer(), velocity.getBuffer(),
-                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-        }
-
-        if (TIMING) {
-            timer.startTimer("integrateTrajectory");
-        }
-
-        while (bounceState.isTimeRemaining()) {
-
-            if (DEBUG) {
-                debugBefore(position, count);
-            }
-
-            final MinimumTravelInformation firstBounce;
-
-            if (taskPool != null) {
-
-                if (FUSE) {
-
-                    if (TIMING) {
-                        timer.startTimer("getNext");
-                    }
-
-                    firstBounce = getNextBounceParallel(position,
-                            velocity, action, gradient, momentum);
-
-                    if (TIMING) {
-                        timer.stopTimer("getNext");
-                    }
-
-                    if (TEST_NATIVE_BOUNCE) {
-                        testNative(firstBounce, position, velocity, action, gradient, momentum);
-                    }
-
-                } else {
-
-                    MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
-                            position, velocity);
-                    MinimumTravelInformation gradientBounce = getNextGradientBounceParallel(
-                            action, gradient, momentum);
-
-                    firstBounce = (boundaryBounce.time < gradientBounce.time) ?
-                            new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
-                            new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
-                }
-
-            } else {
-
-                if (FUSE) {
-
-                    if (TIMING) {
-                        timer.startTimer("getNext");
-                    }
-
-                    firstBounce = getNextBounce(position,
-                            velocity, action, gradient, momentum);
-
-                    if (TIMING) {
-                        timer.stopTimer("getNext");
-                    }
-
-                    if (TEST_NATIVE_BOUNCE) {
-                        testNative(firstBounce, position, velocity, action, gradient, momentum);
-                    }
-
-                } else {
-
-                    if (TIMING) {
-                        timer.startTimer("getNextBoundary");
-                    }
-
-                    MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
-                            position, velocity);
-
-                    if (TIMING) {
-                        timer.stopTimer("getNextBoundary");
-                        timer.startTimer("getNextGradient");
-                    }
-                    MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum);
-
-                    if (TIMING) {
-                        timer.stopTimer("getNextGradient");
-                    }
-
-                    firstBounce = (boundaryBounce.time < gradientBounce.time) ?
-                            new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
-                            new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
-
-                }
-            }
-
-            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-
-            if (DEBUG) {
-                debugAfter(bounceState, position);
-                String newSignString = printSign(position);
-                System.err.println(newSignString);
-                if (bounceState.type != Type.BOUNDARY && signString.compareTo(newSignString) != 0) {
-                    System.err.println("Sign error");
-                }
-            }
-
-            ++count;
-        }
-
-        if (TIMING) {
-            timer.stopTimer("integrateTrajectory");
-        }
-
-        if (TEST_CRITICAL_REGION) {
-            nativeZigZag.exitCriticalRegion();
-        }
-
-        if (TEST_NATIVE_OPERATOR) {
-
-            if (!close(p, position.getBuffer())) {
-
-                System.err.println("c: " + new WrappedVector.Raw(p, 0, 10));
-                System.err.println("c: " + new WrappedVector.Raw(position.getBuffer(), 0, 10));
-            } else {
-                System.err.println("close");
-            }
-        }
-
-        if (DEBUG_SIGN) {
-            printSign(position);
-        }
-
-        return 0.0;
-    }
-    void integrateTrajectoryWithMomentum(WrappedVector position, WrappedVector momentum, int direction, double time ) {
-
-        super.direction = direction;
-        WrappedVector velocity = drawInitialVelocity(momentum);
-        WrappedVector gradient = getInitialGradient();
-        WrappedVector action = getPrecisionProduct(velocity);
-
-        BounceState bounceState = new BounceState(time);
-
-        while (bounceState.isTimeRemaining()) {
-
-            final MinimumTravelInformation firstBounce;
-
-            firstBounce = getNextBounce(position,
-                    velocity, action, gradient, momentum);
-
-            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-        }
     }
 
     @Override
@@ -293,18 +101,10 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         double eventTime = firstBounce.time;
 
         final BounceState finalBounceState;
+        if (remainingTime < eventTime) { // No event during remaining time
 
-        final Type eventType = firstBounce.type;
-        final int eventIndex = firstBounce.index;
-        WrappedVector column = getPrecisionColumn(eventIndex);
-
-        if (remainingTime < Math.abs(eventTime)) { // No event during remaining time
-
-//            updatePosition(position, velocity, sign(eventTime) * remainingTime);
-            updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                    column.getBuffer(), sign(eventTime) * remainingTime, eventIndex);
-            finalBounceState = new BounceState(Type.NONE, -1, 0.0); //todo: make sure it is necessary to update & record momentum here!
+            updatePosition(position, velocity, remainingTime);
+            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
 
         } else {
 
@@ -312,8 +112,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 timer.startTimer("notUpdateAction");
             }
 
+            final Type eventType = firstBounce.type;
+            final int eventIndex = firstBounce.index;
+
             if (TEST_FUSED_DYNAMICS) {
 
+                WrappedVector column = getPrecisionColumn(eventIndex);
 
                 if (!TEST_NATIVE_INNER_BOUNCE) {
 
@@ -331,6 +135,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
 
                     reflectMomentum(momentum, position, eventIndex);
+
                 } else { // Bounce caused by the gradient
 
                     setZeroMomentum(momentum, eventIndex);
@@ -376,7 +181,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 updateAction(action, velocity, eventIndex);
             }
 
-            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - Math.abs(eventTime));
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
         }
 
         if (TIMING) {
@@ -407,17 +212,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             a[i] = ai - twoV * c[i];
         }
 
+//        if (mask != null) { // TODO Appears unnecessary
+//            applyMask(m);
+//        }
     }
 
-    @Override
-    public void updatePositionAfterMap(WrappedVector position, WrappedVector momentum, int direction, double time) {
-        integrateTrajectoryWithMomentum(position, momentum, direction, time);
-    }
-
-    @Override
-    public WrappedVector drawMomentum() {
-        return drawInitialMomentum();
-    }
 //    private static void reflectMomentum(WrappedVector momentum,
 //                                        WrappedVector position,
 //                                        int eventIndex) {

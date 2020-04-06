@@ -49,7 +49,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String ZIG_ZAG_PARSER = "zigZagOperator";
     private final static String REVERSIBLE_FLG = "reversibleFlag";
-    private final static String MOVE_DIRECTION = "moveDirection";
 
     @Override
     public String getParserName() {
@@ -77,11 +76,9 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
 
-        int direction = xo.getAttribute(MOVE_DIRECTION,1);
-
         if (reversible){
             return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
-                    runtimeOptions, mask, threadCount, direction);
+                    runtimeOptions, mask, threadCount);
         } else {
             return new IrreversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
                     runtimeOptions, mask, threadCount);

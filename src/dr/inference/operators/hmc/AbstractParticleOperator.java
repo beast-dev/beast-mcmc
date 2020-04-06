@@ -123,7 +123,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         WrappedVector position = getInitialPosition();
 
-        double hastingsRatio = integrateTrajectory(position, direction);
+        double hastingsRatio = integrateTrajectory(position);
 
         setParameter(position, parameter);
 
@@ -134,7 +134,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return hastingsRatio;
     }
 
-    abstract double integrateTrajectory(WrappedVector position, int direction);
+    abstract double integrateTrajectory(WrappedVector position);
 
     double drawTotalTravelTime() {
         double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
@@ -262,7 +262,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         if (missingDataMask[positionIndex]) {
             return false;
         } else {
-            return direction > 0 ? position * velocity < 0.0 : position * velocity > 0.0;
+            return position * velocity < 0.0;
         }
     }
 
@@ -393,6 +393,5 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final static boolean TEST_CRITICAL_REGION = false;
     final static boolean TEST_NATIVE_INNER_BOUNCE = false;
     final static boolean TEST_FUSED_DYNAMICS = true;
-    protected int direction = 1;
     NativeZigZagWrapper nativeZigZag;
 }

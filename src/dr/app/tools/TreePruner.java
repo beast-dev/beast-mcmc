@@ -64,12 +64,7 @@ public class TreePruner {
 
     private final static Version version = new BeastVersion();
 
-    private final static boolean USE_R = false;
-
-    private static boolean forceIntegerToDiscrete = false;
-
     private double maxState = 1;
-
 
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
@@ -89,10 +84,12 @@ public class TreePruner {
                       final long burninStates,
                       String inputFileName,
                       String outputFileName,
-                      String[] taxaToPrune
+                      Set taxaToPrune
 
     ) throws IOException {
 
+        this.outputFileName = outputFileName;
+        this.taxaToPrune = taxaToPrune;
         int burnin = -1;
 
         totalTrees = 10000;
@@ -105,8 +102,8 @@ public class TreePruner {
         long stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
-        FileReader fileReader = new FileReader(inputFileName);
-        TreeImporter importer = new NexusImporter(fileReader, true);
+        FileReader fileReader1 = new FileReader(inputFileName);
+        TreeImporter importer = new NexusImporter(fileReader1, true);
 
         try {
             totalTrees = 0;
@@ -147,7 +144,7 @@ public class TreePruner {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
         }
-        fileReader.close();
+        fileReader1.close();
         progressStream.println();
         progressStream.println();
 
@@ -171,10 +168,57 @@ public class TreePruner {
         }
         progressStream.println();
 
+
+
+
+
+        progressStream.println("pruning trees...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
+
+        stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+
+        FileReader fileReader2 = new FileReader(inputFileName);
+        NexusImporter importer2 = new NexusImporter(fileReader2);
+        Tree[] prunedTrees = new Tree[totalTreesUsed];
+        totalTreesUsed = 0;
+        try {
+            int counter = 0;
+            while (importer2.hasTree()) {
+                FlexibleTree prunedTree = new FlexibleTree(importer2.importNextTree(), true);
+
+                if (counter >= burnin) {
+
+                    //TODO: prune taxa from tree
+
+                    prunedTrees[totalTreesUsed] = prunedTree;
+                    totalTreesUsed += 1;
+                }
+                if (counter > 0 && counter % stepSize == 0) {
+                    progressStream.print("*");
+                    progressStream.flush();
+                }
+                counter++;
+
+            }
+        } catch (Importer.ImportException e) {
+            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+            return;
+        }
+        progressStream.println();
+        progressStream.println();
+        fileReader2.close();
+
+        NexusExporter exporter = new NexusExporter(new PrintStream(outputFileName));
+        exporter.exportTrees(prunedTrees);
     }
+
 
     int totalTrees = 0;
     int totalTreesUsed = 0;
+    String outputFileName = null;
+    Set taxaToPrune;
 
 
     public static void printTitle() {
@@ -208,24 +252,39 @@ public class TreePruner {
         progressStream.println();
     }
 
-    private static String[] parseVariableLengthStringArray(String inString) throws Arguments.ArgumentException{
+//    private static String[] parseVariableLengthStringArray(String inString) throws Arguments.ArgumentException{
+//
+//        List<String> returnList = new ArrayList<String>();
+//        StringTokenizer st = new StringTokenizer(inString, ",");
+//        while (st.hasMoreTokens()) {
+//            try {
+//            returnList.add(st.nextToken());
+//            } catch (NumberFormatException e) {
+//                throw new Arguments.ArgumentException();
+//            }
+//        }
+//
+//        if (returnList.size() > 0) {
+//            String[] stringArray = new String[returnList.size()];
+//            stringArray = returnList.toArray(stringArray);
+//            return stringArray;
+//        }
+//        return null;
+//    }
+    private static Set parseVariableLengthStringSet(String inString) throws Arguments.ArgumentException {
 
-        List<String> returnList = new ArrayList<String>();
+        Set targetSet = new HashSet();
         StringTokenizer st = new StringTokenizer(inString, ",");
+//        System.out.println(inString);
         while (st.hasMoreTokens()) {
             try {
-            returnList.add(st.nextToken());
+                targetSet.add(st.nextToken());
             } catch (NumberFormatException e) {
                 throw new Arguments.ArgumentException();
             }
         }
 
-        if (returnList.size() > 0) {
-            String[] stringArray = new String[returnList.size()];
-            stringArray = returnList.toArray(stringArray);
-            return stringArray;
-        }
-        return null;
+        return targetSet;
     }
 
 
@@ -234,43 +293,13 @@ public class TreePruner {
 
         String inputFileName = null;
         String outputFileName = null;
-        String[] taxaToPrune = null;
+        Set taxaToPrune = null;
         long burninStates = -1;
         int burninTrees = -1;
 
-        if (args.length == 0) {
-
-            final String versionString = version.getVersionString();
-            String nameString = "TreePruner " + versionString;
-            String aboutString = "<html><center><p>" + versionString + ", " + version.getDateString() + "</p>" +
-                    "<p>by<br>" +
-                    "Philippe Lemey, Andrew Rambaut and Marc Suchard</p>" +
-//                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
-//                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-//                    "<p>Department of Computer Science, University of Auckland<br>" +
-//                    "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
-                    "<p>Part of the BEAST package:<br>" +
-                    "<a href=\"http://beast.community\">http://beast.community</a></p>" +
-                    "</center></html>";
-
-            progressStream = System.out;
-
-            printTitle();
-
-            try {
-                new TreePruner(
-                        burninTrees,
-                        burninStates,
-                        inputFileName,
-                        outputFileName,
-                        taxaToPrune
-                        );
-
-            } catch (Exception ex) {
-                System.err.println("Exception: " + ex.getMessage());
-            }
-
-        }
+//        if (args.length == 0) {
+//          // TODO Make flash GUI
+//        }
 
         printTitle();
 
@@ -278,6 +307,7 @@ public class TreePruner {
                 new Arguments.Option[]{
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.StringOption("taxaToPrune", "taxa", "the taxa to Prune"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -303,16 +333,11 @@ public class TreePruner {
 
         if (arguments.hasOption("taxaToPrune")) {
             try {
-                taxaToPrune = parseVariableLengthStringArray(arguments.getStringOption("taxaToPrune"));
+                taxaToPrune = parseVariableLengthStringSet(arguments.getStringOption("taxaToPrune"));
             } catch (Arguments.ArgumentException e) {
                 System.err.println("Error reading " + arguments.getStringOption("taxaToPrune"));
             }
         }
-
-
-
-
-
 
 
         final String[] args2 = arguments.getLeftoverArguments();
@@ -324,12 +349,16 @@ public class TreePruner {
             case 1:
                 inputFileName = args2[0];
                 break;
+            case 0:
+                printUsage(arguments);
+                System.exit(1);
             default: {
                 System.err.println("Unknown option: " + args2[2]);
                 System.err.println();
                 printUsage(arguments);
                 System.exit(1);
             }
+
         }
 
         new TreePruner(burninTrees, burninStates, inputFileName, outputFileName, taxaToPrune);

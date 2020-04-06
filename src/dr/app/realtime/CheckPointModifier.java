@@ -31,7 +31,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
@@ -59,8 +58,7 @@ public class CheckPointModifier extends BeastCheckpointer {
     private CheckPointTreeModifier modifyTree;
     private BranchRates rateModel;
     private ArrayList<TreeParameterModel> traitModels;
-    private Parameter ucldmean;
-    private Parameter ucldstdev;
+    private ParametricDistributionModel parDistMod;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -154,22 +152,6 @@ public class CheckPointModifier extends BeastCheckpointer {
                         System.err.println();
                     }
 
-                    //TODO ask MSG why this parameter deserves special treatment
-                    if (fields[1].equals("ucld.mean")) {
-                        System.out.println("saving ucld.mean");
-                        double ucldmeanval = Double.parseDouble(fields[3]);
-                        parameter.setParameterValue(0,ucldmeanval);
-                        ucldmean = parameter;
-                    }
-
-                    //TODO ask MSG why this parameter deserves special treatment
-                    if (fields[1].equals("ucld.stdev")) {
-                        System.out.println("saving ucld.stdev");
-                        double ucldstdevval = Double.parseDouble(fields[3]);
-                        parameter.setParameterValue(0,ucldstdevval);
-                        ucldstdev = parameter;
-                    }
-
                     if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
                         // System.out.println("eek");
                         double value = Double.parseDouble(fields[3]);
@@ -256,12 +238,10 @@ public class CheckPointModifier extends BeastCheckpointer {
                     this.rateModel = (BranchRates)model;
                 }
 
-                //TODO code to access PDM for MSG
                 //specific if-clause for DiscretizedBranchRates as other clock models use different underlying models
                 //e.g. MixtureModelBranchRates uses an array of ParametricDistributionModel
                 if (model instanceof DiscretizedBranchRates) {
-                    //TODO make PDM a global variable
-                    ParametricDistributionModel temp = ((DiscretizedBranchRates)model).getParametricDistributionModel();
+                    parDistMod = ((DiscretizedBranchRates)model).getParametricDistributionModel();
                 }
 
             }
@@ -337,14 +317,7 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                         //perform magic with the acquired information
                         //CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
-
-                        ParametricDistributionModel pdm;
-                        if(ucldmean!=null && ucldstdev!=null) {
-                            pdm = new LogNormalDistributionModel(ucldmean, ucldstdev, 0.0, true);
-                        }else{
-                            throw new RuntimeException("This parametric distribution model for discretized branch rates is not yet supported ");
-                        }
-                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model, pdm);
+                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model, parDistMod);
                         //this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {

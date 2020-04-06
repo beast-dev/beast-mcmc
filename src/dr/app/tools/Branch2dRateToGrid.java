@@ -1194,7 +1194,7 @@ public class Branch2dRateToGrid {
         return null;
     }
 
-    private static String[] parseVariableLengthStringArray(String inString) {
+    public static String[] parseVariableLengthStringArray(String inString) {
 
         List<String> returnList = new ArrayList<String>();
         StringTokenizer st = new StringTokenizer(inString, ",");

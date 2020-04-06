@@ -89,7 +89,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     @Override
     public String getOperatorName() {
-        return "Vanilla HMC operator";
+        return "VanillaHMC(" + parameter.getParameterName() + ")";
     }
 
     private boolean shouldUpdatePreconditioning() {

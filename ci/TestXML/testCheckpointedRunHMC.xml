@@ -926,7 +926,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000">
+		<log id="screenLog" logEvery="100">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -945,7 +945,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="rabiesskygrid_hmc.log" overwrite="false">
+		<log id="fileLog" logEvery="100" fileName="rabiesskygrid_hmc.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -979,7 +979,7 @@
 			<posterior idref="posterior"/>
 		</actual>
 		<expected>
-			-15413.91432394657
+			-12951.78928007183
 		</expected>
 	</assertEqual>
 

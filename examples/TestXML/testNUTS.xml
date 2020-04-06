@@ -1,0 +1,143 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+	<parameter id="normal.draw" value="1 2"/>
+	<parameter id="log.normal.draw" value="2 1" lower="0.0"/>
+
+	<exponentialStatistic id="exp.normal.draw">
+		<parameter idref="normal.draw"/>
+	</exponentialStatistic>
+
+
+<!-- Parameterized in terms of mean / stdev on *whole* real-line -->
+<!--
+	<normalDistributionModel id="normal">
+		<mean>
+			<parameter id="normal.mean" value="1.0"/>
+		</mean>
+		<stdev>
+			<parameter id="normal.stdev" value="0.5"/>
+		</stdev>
+	</normalDistributionModel>
+
+	<logNormalDistributionModel id="log.normal" meanInRealSpace="false" stdevInRealSpace="false">
+		<mean>
+			<parameter id="log.normal.mu" value="1.0"/>
+		</mean>
+		<stdev>
+			<parameter id="log.normal.sigma" value="0.5"/>
+		</stdev>
+	</logNormalDistributionModel>
+ -->
+
+<!-- Parameterized in terms of mean / stdev on *positive* real-line -->
+	<normalDistributionModel id="normal">
+		<mean>
+			<parameter id="normal.mean" value="-0.805"/>
+		</mean>
+		<stdev>
+			<parameter id="normal.stdev" value="1.268"/>
+		</stdev>
+	</normalDistributionModel>
+
+	<logNormalDistributionModel id="log.normal" meanInRealSpace="true">
+		<mean>
+			<parameter id="log.normal.mu" value="1.0"/>
+		</mean>
+		<stdev>
+			<parameter id="log.normal.sigma" value="2.0"/>
+		</stdev>
+	</logNormalDistributionModel>
+
+
+
+	<distributionLikelihood id="normal.distribution">
+		<distribution>
+			<normalDistributionModel idref="normal"/>
+		</distribution>
+		<data>
+			<parameter idref="normal.draw"/>
+		</data>
+	</distributionLikelihood>
+
+	<distributionLikelihood id="log.normal.distribution">
+		<distribution>
+			<logNormalDistributionModel idref="log.normal"/>
+		</distribution>
+		<data>
+			<parameter idref="log.normal.draw"/>
+		</data>
+	</distributionLikelihood>
+
+
+	<operators id="operators">
+
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="100" stepSize="1" mode="nuts"
+ 			drawVariance="1.0" autoOptimize="true">
+ 			<gradient>
+				<distributionLikelihood idref="normal.distribution"/>
+				<parameter idref="normal.draw"/>
+			</gradient>
+			<parameter idref="normal.draw"/>
+ 		</hamiltonianMonteCarloOperator>
+
+ 	<!--
+	<hamiltonianMonteCarloOperator weight="1" nSteps="100" stepSize="1" mode="vanilla"
+ 			drawVariance="1.0" autoOptimize="true">
+ 			<gradient>
+				<distributionLikelihood idref="log.normal.distribution"/>
+				<parameter idref="log.normal.draw"/>
+			</gradient>
+			<parameter idref="log.normal.draw"/>
+			<signTransform>
+		    	<parameter idref = "log.normal.draw"/>
+		    </signTransform>
+ 		</hamiltonianMonteCarloOperator>
+ -->
+
+
+	</operators>
+
+	<report>
+	normal = <parameter idref="normal.draw"/>
+	</report>
+
+	<report>
+	log.normal = <parameter idref="log.normal.draw"/>
+	</report>
+
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="false">
+        <posterior>
+	        <distributionLikelihood idref="normal.distribution"/>
+            <dummyLikelihood>
+				<distributionLikelihood idref="normal.distribution"/>
+				<parameter idref="normal.draw"/>
+	        </dummyLikelihood>
+	        <distributionLikelihood idref="log.normal.distribution"/>
+            <dummyLikelihood>
+				<distributionLikelihood idref="log.normal.distribution"/>
+				<parameter idref="log.normal.draw"/>
+	        </dummyLikelihood>
+        </posterior>
+        <operators idref="operators"/>
+		<log logEvery="100">
+			<column label="posterior" dp="4" width="12">
+				<distributionLikelihood idref="normal.distribution"/>
+				<distributionLikelihood idref="log.normal.distribution"/>
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="normal.draw"/>
+				<parameter idref="log.normal.draw"/>
+			</column>
+		</log>
+		<log logEvery="1" fileName="testNormalVsLogNormal.log">
+			<parameter idref="normal.draw"/>
+			<exponentialStatistic idref="exp.normal.draw"/>
+			<parameter idref="log.normal.draw"/>
+		</log>
+	</mcmc>
+
+	<traceAnalysis fileName="testNormalVsLogNormal.log" stdError="true"/>
+
+</beast>

@@ -26,6 +26,7 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
@@ -42,7 +43,7 @@ import java.util.Arrays;
  * @author Zhenyu Zhang
  */
 
-public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator, GibbsOperator {
+public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator, GibbsOperator { //todo: NUTS should not be subclass of HMC
 
     private final int dim = gradientProvider.getDimension();
 
@@ -57,8 +58,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, Transform transform, Parameter mask,
                            HamiltonianMonteCarloOperator.Options runtimeOptions,
-                           MassPreconditioner.Type preconditioningType) {
+                           MassPreconditioner.Type preconditioningType,
+                           ReversibleHMCProvider reversibleHMCprovider) {
         super(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions, preconditioningType);
+        this.reversibleHMCProvider = reversibleHMCprovider;
     }
 
     @Override
@@ -96,7 +99,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
 //        final double[][] mass = massProvider.getMass();
-        final WrappedVector initialMomentum = mask(preconditioning.drawInitialMomentum(), mask);
+        //final WrappedVector initialMomentum = mask(preconditioning.drawInitialMomentum(), mask);
+        final WrappedVector initialMomentum = mask(reversibleHMCProvider.drawMomentum(), mask);
 
         final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
@@ -161,25 +165,24 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
     }
 
-    private void handleInstability() {
-        throw new RuntimeException("Numerical instability; need to handle"); // TODO
-    }
 
     private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
 
         // Make deep copy of position and momentum
-        double[] position = Arrays.copyOf(inPosition, inPosition.length);
+        WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(inPosition, inPosition.length));
+        //double[] position = Arrays.copyOf(inPosition, inPosition.length);
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
 
-        leapFrogEngine.setParameter(position);
+        leapFrogEngine.setParameter(position.getBuffer());
 
-        // "one frog jump!"
-        try {
-            doLeap(position, momentum, direction * stepSize);
-        } catch (NumericInstabilityException e) {
-            handleInstability();
-        }
+        // "one reversibleHMC integral
+        reversibleHMCProvider.updatePositionAfterMap(position, momentum, direction, stepSize);
+//        try {
+//            doLeap(position, momentum, direction * stepSize);
+//        } catch (NumericInstabilityException e) {
+//            handleInstability();
+//        }
 
         double logJointProbAfter = getJointProbability(gradientProvider, momentum);
 
@@ -193,7 +196,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         leapFrogEngine.setParameter(inPosition);
 
-        return new TreeState(position, momentum.getBuffer(), numNodes, flagContinue, acceptProb, numAcceptProbStates);
+        return new TreeState(position.getBuffer(), momentum.getBuffer(), numNodes, flagContinue, acceptProb, numAcceptProbStates);
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
@@ -214,15 +217,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return subtree;
     }
 
-    private void doLeap(final double[] position,
-                        final WrappedVector momentum,
-                        final double stepSize) throws NumericInstabilityException {
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize);
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-    }
 
     private StepSize findReasonableStepSize(double[] initialPosition, double forcedInitialStepSize) {
 
@@ -234,15 +228,15 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             WrappedVector momentum = preconditioning.drawInitialMomentum();
             int count = 1;
 
-            double[] position = Arrays.copyOf(initialPosition, dim);
+            WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(initialPosition, dim));
 
             double probBefore = getJointProbability(gradientProvider, momentum);
-
-            try {
-                doLeap(position, momentum, stepSize);
-            } catch (NumericInstabilityException e) {
-                handleInstability();
-            }
+            reversibleHMCProvider.updatePositionAfterMap(position, momentum, 1, stepSize);
+//            try {
+//                doLeap(position, momentum, stepSize);
+//            } catch (NumericInstabilityException e) {
+//                handleInstability();
+//            }
 
             double probAfter = getJointProbability(gradientProvider, momentum);
 
@@ -253,12 +247,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
 
                 probBefore = probAfter;
+                reversibleHMCProvider.updatePositionAfterMap(position, momentum, 1, stepSize);
                 //"one frog jump!"
-                try {
-                    doLeap(position, momentum, stepSize);
-                } catch (NumericInstabilityException e) {
-                    handleInstability();
-                }
+//                try {
+//                    doLeap(position, momentum, stepSize);
+//                } catch (NumericInstabilityException e) {
+//                    handleInstability();
+//                }
 
                 probAfter = getJointProbability(gradientProvider, momentum);
                 probRatio = Math.exp(probAfter - probBefore);
@@ -416,6 +411,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double cumAcceptProb;
         private int numAcceptProbStates;
     }
+
+    private ReversibleHMCProvider reversibleHMCProvider;
 }
 
 

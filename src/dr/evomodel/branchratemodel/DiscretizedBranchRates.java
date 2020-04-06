@@ -347,6 +347,10 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
         return traits;
     }
 
+    public ParametricDistributionModel getParametricDistributionModel() {
+        return distributionModel;
+    }
+
     public double getLogLikelihood() {
         return logDensityNormalizationConstant;
     }

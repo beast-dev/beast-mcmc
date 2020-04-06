@@ -1,7 +1,7 @@
 /*
  * CheckPointUpdater.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,6 +28,7 @@ package dr.app.realtime;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -49,11 +50,11 @@ import java.util.Set;
 
 /**
  * @author Guy Baele
+ * @author Mandev Gill
  */
 public class CheckPointModifier extends BeastCheckpointer {
 
     private static final boolean DEBUG = false;
-    private static final boolean NEW_APPROACH = true;
 
     private CheckPointTreeModifier modifyTree;
     private BranchRates rateModel;
@@ -153,6 +154,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         System.err.println();
                     }
 
+                    //TODO ask MSG why this parameter deserves special treatment
                     if (fields[1].equals("ucld.mean")) {
                         System.out.println("saving ucld.mean");
                         double ucldmeanval = Double.parseDouble(fields[3]);
@@ -160,6 +162,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         ucldmean = parameter;
                     }
 
+                    //TODO ask MSG why this parameter deserves special treatment
                     if (fields[1].equals("ucld.stdev")) {
                         System.out.println("saving ucld.stdev");
                         double ucldstdevval = Double.parseDouble(fields[3]);
@@ -206,7 +209,10 @@ public class CheckPointModifier extends BeastCheckpointer {
                 } else {
 
                     //there will be more parameters in the connected set than there are lines in the checkpoint file
-                    //do nothing and just keep iterating over the parameters in the connected set
+                    //TODO keep track of these parameters and print a list of those parameters to screen
+
+
+
 
                 }
 
@@ -248,6 +254,14 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                 if (model instanceof BranchRates) {
                     this.rateModel = (BranchRates)model;
+                }
+
+                //TODO code to access PDM for MSG
+                //specific if-clause for DiscretizedBranchRates as other clock models use different underlying models
+                //e.g. MixtureModelBranchRates uses an array of ParametricDistributionModel
+                if (model instanceof DiscretizedBranchRates) {
+                    //TODO make PDM a global variable
+                    ParametricDistributionModel temp = ((DiscretizedBranchRates)model).getParametricDistributionModel();
                 }
 
             }
@@ -377,13 +391,7 @@ public class CheckPointModifier extends BeastCheckpointer {
         if (this.rateModel == null) {
             throw new RuntimeException("BranchRates model has not been set correctly.");
         } else {
-            if(NEW_APPROACH) {
-                ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel,this.traitModels);
-            }else {
-                //ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel);
-                //modifyTree.interpolateTraitValues(this.traitModels);
-                throw new RuntimeException("Not using correct branch rate updating method");
-            }
+            ArrayList<NodeRef> newTaxa = modifyTree.incorporateAdditionalTaxa(choice, this.rateModel, this.traitModels);
         }
     }
 

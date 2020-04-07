@@ -52,10 +52,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
     }
 
-    @Override
-    WrappedVector drawInitialMomentum() {
-        return new WrappedVector.Raw(null, 0, 0);
-    }
 
     @Override
     WrappedVector drawInitialVelocity(WrappedVector momentum) {
@@ -74,16 +70,13 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return new WrappedVector.Raw(velocity);
     }
 
-    double integrateTrajectory(WrappedVector position) {
+    double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
 
-        WrappedVector momentum = drawInitialMomentum();
         WrappedVector velocity = drawInitialVelocity(momentum);
         WrappedVector gradient = getInitialGradient();
         WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
-
-        int count = 0;
 
         if (TIMING) {
             timer.startTimer("integrateTrajectory");
@@ -110,7 +103,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
 
-            ++count;
         }
 
         if (TIMING) {
@@ -142,11 +134,11 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     // TODO Same as in super-class?
-    private MinimumTravelInformation getNextBounce(WrappedVector position,
-                                                   WrappedVector velocity,
-                                                   WrappedVector action,
-                                                   WrappedVector gradient,
-                                                   WrappedVector momentum) {
+    protected MinimumTravelInformation getNextBounce(WrappedVector position,
+                                                     WrappedVector velocity,
+                                                     WrappedVector action,
+                                                     WrappedVector gradient,
+                                                     WrappedVector momentum) {
 
         return getNextBounce(0, position.getDim(),
                 position.getBuffer(), velocity.getBuffer(),
@@ -235,9 +227,11 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return roots;
     }
 
-    private double getSwitchTimeByMergedProcesses(double[] action, double[] gradient, double[] velocity, double[] roots, double[] rootsSorted) {
+    private double getSwitchTimeByMergedProcesses(double[] action, double[] gradient, double[] velocity,
+                                                  double[] roots, double[] rootsSorted) {
 
-        // for the linear piece wise line: y = bx + a, where a = -velocity * gradient (as gradient is negated), b = velocity * action
+        // for the linear piece wise line: y = bx + a, where a = -velocity * gradient (as gradient is negated), b =
+        // velocity * action
         // root = - a / b = gradient / action
         double T = MathUtils.nextExponential(1);
         double minFirstEvent = -1;

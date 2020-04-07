@@ -177,7 +177,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         leapFrogEngine.setParameter(position.getBuffer());
 
         // "one reversibleHMC integral
-        reversibleHMCProvider.updatePositionAfterMap(position, momentum, direction, stepSize);
+        reversibleHMCProvider.reversiblePositionUpdate(position, momentum, direction, stepSize);
 //        try {
 //            doLeap(position, momentum, direction * stepSize);
 //        } catch (NumericInstabilityException e) {
@@ -231,7 +231,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(initialPosition, dim));
 
             double probBefore = getJointProbability(gradientProvider, momentum);
-            reversibleHMCProvider.updatePositionAfterMap(position, momentum, 1, stepSize);
+            reversibleHMCProvider.reversiblePositionUpdate(position, momentum, 1, stepSize);
 //            try {
 //                doLeap(position, momentum, stepSize);
 //            } catch (NumericInstabilityException e) {
@@ -247,7 +247,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
 
                 probBefore = probAfter;
-                reversibleHMCProvider.updatePositionAfterMap(position, momentum, 1, stepSize);
+                reversibleHMCProvider.reversiblePositionUpdate(position, momentum, 1, stepSize);
                 //"one frog jump!"
 //                try {
 //                    doLeap(position, momentum, stepSize);

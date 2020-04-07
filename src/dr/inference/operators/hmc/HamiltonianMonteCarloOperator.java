@@ -637,7 +637,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
-    public void updatePositionAfterMap(WrappedVector position, WrappedVector momentum, int direction, double time) {
+    public void reversiblePositionUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
         try {
             doLeap(position.getBuffer(), momentum, direction * time);
         } catch (NumericInstabilityException e) {

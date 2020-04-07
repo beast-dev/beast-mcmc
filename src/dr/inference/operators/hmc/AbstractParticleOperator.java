@@ -123,7 +123,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         WrappedVector position = getInitialPosition();
 
-        double hastingsRatio = integrateTrajectory(position);
+        WrappedVector momentum = drawInitialMomentum();
+
+        double hastingsRatio = integrateTrajectory(position, momentum);
 
         setParameter(position, parameter);
 
@@ -134,7 +136,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return hastingsRatio;
     }
 
-    abstract double integrateTrajectory(WrappedVector position);
+    abstract double integrateTrajectory(WrappedVector position, WrappedVector momentum);
+
+    WrappedVector drawInitialMomentum() {
+        return new WrappedVector.Raw(null, 0, 0);
+    }
 
     double drawTotalTravelTime() {
         double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);

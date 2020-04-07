@@ -7,7 +7,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 public interface ReversibleHMCProvider {
 
-    void updatePositionAfterMap(WrappedVector position, WrappedVector momentum, int direction, double time);
+    void reversiblePositionUpdate(WrappedVector position, WrappedVector momentum, int direction, double time);
 
     WrappedVector drawMomentum();
 }

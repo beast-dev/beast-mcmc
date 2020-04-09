@@ -31,7 +31,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.model.Model;
@@ -45,6 +44,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,13 +54,13 @@ import java.util.Set;
  */
 public class CheckPointModifier extends BeastCheckpointer {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
+    private static final boolean IN_MEMORY = true;
 
     private CheckPointTreeModifier modifyTree;
     private BranchRates rateModel;
     private ArrayList<TreeParameterModel> traitModels;
-    private Parameter ucldmean;
-    private Parameter ucldstdev;
+    private ParametricDistributionModel parDistMod;
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -154,22 +154,6 @@ public class CheckPointModifier extends BeastCheckpointer {
                         System.err.println();
                     }
 
-                    //TODO ask MSG why this parameter deserves special treatment
-                    if (fields[1].equals("ucld.mean")) {
-                        System.out.println("saving ucld.mean");
-                        double ucldmeanval = Double.parseDouble(fields[3]);
-                        parameter.setParameterValue(0,ucldmeanval);
-                        ucldmean = parameter;
-                    }
-
-                    //TODO ask MSG why this parameter deserves special treatment
-                    if (fields[1].equals("ucld.stdev")) {
-                        System.out.println("saving ucld.stdev");
-                        double ucldstdevval = Double.parseDouble(fields[3]);
-                        parameter.setParameterValue(0,ucldstdevval);
-                        ucldstdev = parameter;
-                    }
-
                     if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
                         // System.out.println("eek");
                         double value = Double.parseDouble(fields[3]);
@@ -208,35 +192,89 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                 } else {
 
+                    if (DEBUG) {
+                        System.out.println("  unable to match " + parameter.getId() + " with " + fields[1] + " (moving on ...)");
+                    }
+
                     //there will be more parameters in the connected set than there are lines in the checkpoint file
                     //TODO keep track of these parameters and print a list of those parameters to screen
-
-
-
 
                 }
 
             }
 
-            //No changes needed for loading in operators
-            for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
-                MCMCOperator operator = operatorSchedule.getOperator(i);
-                if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match operator: " + fields[1] + " vs. " + operator.getOperatorName());
+            //TODO remove else-clause (and boolean) after multiple rounds of testing
+            if (IN_MEMORY) {
+
+                //first read in all the operator lines from the checkpoint file
+                //store them in a HashMap (or other structure that allows easy look-up)
+                HashMap<String, String[]> operatorMap = new HashMap<String, String[]>();
+                while (fields[0].equals("operator")) {
+                    operatorMap.put(fields[1], fields);
+                    line = in.readLine();
+                    fields = line.split("\t");
                 }
-                if (fields.length < 4) {
-                    throw new RuntimeException("Operator missing values: " + fields[1] + ", length=" + fields.length);
-                }
-                operator.setAcceptCount(Integer.parseInt(fields[2]));
-                operator.setRejectCount(Integer.parseInt(fields[3]));
-                if (operator instanceof AdaptableMCMCOperator) {
-                    if (fields.length != 5) {
-                        throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
+
+                //then iterate over the operator schedule and look into the HashMap for the information
+                for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                    MCMCOperator operator = operatorSchedule.getOperator(i);
+                    String[] lookup = operatorMap.get(operator.getOperatorName());
+                    if (lookup == null) {
+                        //could be additional operator so not necessarily a problem that warrants an exception
+                        if (DEBUG) {
+                            System.out.println("No information found in checkpoint file for operator " + operator.getOperatorName());
+                        }
+                    } else {
+                        //entry was found in stored information
+                        if (DEBUG) {
+                            System.out.println("restoring operator " + operator.getOperatorName() + " with settings from " + lookup[1]);
+                        }
+                        if (lookup.length < 4) {
+                            throw new RuntimeException("Operator missing values: " + lookup[1] + ", length=" + lookup.length);
+                        }
+                        operator.setAcceptCount(Integer.parseInt(lookup[2]));
+                        operator.setRejectCount(Integer.parseInt(lookup[3]));
+                        if (operator instanceof AdaptableMCMCOperator) {
+                            if (lookup.length != 6) {
+                                throw new RuntimeException("Coercable operator missing parameter: " + lookup[1]);
+                            }
+                            ((AdaptableMCMCOperator) operator).setAdaptableParameter(Double.parseDouble(lookup[4]));
+                        }
                     }
-                    ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
+                    //don't forget to remove the entry from the hash map
+                    operatorMap.remove(operator.getOperatorName());
                 }
-                line = in.readLine();
-                fields = line.split("\t");
+
+                if (DEBUG) {
+                    System.out.println("Number of entries left in stored operator map: " + operatorMap.size());
+                }
+
+            } else {
+
+                //No changes needed for loading in operators
+                for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                    MCMCOperator operator = operatorSchedule.getOperator(i);
+                    if (DEBUG) {
+                        System.out.println("restoring operator " + operator.getOperatorName() + " with settings from " + fields[1]);
+                    }
+                    if (!fields[1].equals(operator.getOperatorName())) {
+                        throw new RuntimeException("Unable to match operator: " + fields[1] + " vs. " + operator.getOperatorName());
+                    }
+                    if (fields.length < 4) {
+                        throw new RuntimeException("Operator missing values: " + fields[1] + ", length=" + fields.length);
+                    }
+                    operator.setAcceptCount(Integer.parseInt(fields[2]));
+                    operator.setRejectCount(Integer.parseInt(fields[3]));
+                    if (operator instanceof AdaptableMCMCOperator) {
+                        if (fields.length != 6) {
+                            throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
+                        }
+                        ((AdaptableMCMCOperator) operator).setAdaptableParameter(Double.parseDouble(fields[4]));
+                    }
+                    line = in.readLine();
+                    fields = line.split("\t");
+                }
+
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
@@ -256,12 +294,10 @@ public class CheckPointModifier extends BeastCheckpointer {
                     this.rateModel = (BranchRates)model;
                 }
 
-                //TODO code to access PDM for MSG
                 //specific if-clause for DiscretizedBranchRates as other clock models use different underlying models
                 //e.g. MixtureModelBranchRates uses an array of ParametricDistributionModel
                 if (model instanceof DiscretizedBranchRates) {
-                    //TODO make PDM a global variable
-                    ParametricDistributionModel temp = ((DiscretizedBranchRates)model).getParametricDistributionModel();
+                    parDistMod = ((DiscretizedBranchRates)model).getParametricDistributionModel();
                 }
 
             }
@@ -337,14 +373,7 @@ public class CheckPointModifier extends BeastCheckpointer {
 
                         //perform magic with the acquired information
                         //CheckPointTreeModifier modifyTree = new CheckPointTreeModifier((TreeModel) model);
-
-                        ParametricDistributionModel pdm;
-                        if(ucldmean!=null && ucldstdev!=null) {
-                            pdm = new LogNormalDistributionModel(ucldmean, ucldstdev, 0.0, true);
-                        }else{
-                            throw new RuntimeException("This parametric distribution model for discretized branch rates is not yet supported ");
-                        }
-                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model, pdm);
+                        this.modifyTree = new CheckPointTreeModifier((TreeModel) model, parDistMod);
                         //this.modifyTree = new CheckPointTreeModifier((TreeModel) model);
                         modifyTree.adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
@@ -411,6 +440,11 @@ public class CheckPointModifier extends BeastCheckpointer {
         int i = 0;
         if (name.charAt(0) == '-') {
             return false;
+        }
+        if (length > 3) {
+            if (name.substring(0,3).equals("age")) {
+                return true;
+            }
         }
         for (; i < length; i++) {
             char c = name.charAt(i);

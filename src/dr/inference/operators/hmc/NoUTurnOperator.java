@@ -178,11 +178,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
         // "one reversibleHMC integral
         reversibleHMCProvider.reversiblePositionUpdate(position, momentum, direction, stepSize);
-//        try {
-//            doLeap(position, momentum, direction * stepSize);
-//        } catch (NumericInstabilityException e) {
-//            handleInstability();
-//        }
 
         double logJointProbAfter = getJointProbability(gradientProvider, momentum);
 

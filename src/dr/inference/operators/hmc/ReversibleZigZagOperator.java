@@ -292,7 +292,9 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         if (remainingTime < eventTime) { // No event during remaining time
 
             updatePositionMomentum(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
-                    gradient.getBuffer(), momentum.getBuffer(), remainingTime); //todo: for ZZHMC itself (without
+                    gradient.getBuffer(), momentum.getBuffer(), remainingTime);
+
+            //todo: for ZZHMC itself (without
             //todo: NUTS), updating momentum in the end is not necessary.
 
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
@@ -345,7 +347,6 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                     } else { // Bounce caused by the gradient
 
                         setZeroMomentum(momentum, eventIndex);
-
                     }
 
                     reflectVelocity(velocity, eventIndex);
@@ -419,17 +420,21 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     public void reversiblePositionUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+
+        preconditioning.totalTravelTime = time;
+
         if (direction == -1) {
             // negate momentum
             negateVector(momentum);
         }
         // integrate
-        integrateTrajectory(position, momentum);
+        integrateTrajectoryForward(position, momentum);
 
         if (direction == -1) {
-            //negate again
+            //negate momentum again
             negateVector(momentum);
         }
+        ReadableVector.Utils.setParameter(position, parameter);
     }
 
     @Override

@@ -321,7 +321,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     protected class Preconditioning {
 
         final WrappedVector mass;
-        final double totalTravelTime;
+        double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
             this.mass = mass;
@@ -383,7 +383,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
     final PrecisionColumnProvider columnProvider;
-    private final Parameter parameter;
+    protected final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
     private final double[] maskVector;

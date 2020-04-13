@@ -419,10 +419,9 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    public void reversiblePositionUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
 
         preconditioning.totalTravelTime = time;
-
         if (direction == -1) {
             // negate momentum
             negateVector(momentum);
@@ -440,6 +439,18 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public WrappedVector drawMomentum() {
         return drawInitialMomentum();
+    }
+
+    @Override
+    public double getKineticEnergy(ReadableVector momentum) {
+
+        final int dim = momentum.getDim();
+        double energy = 0.0;
+
+        for (int i = 0; i < dim; i++) {
+            energy += Math.abs(momentum.get(i)) ;
+        }
+        return energy;
     }
 
     private void negateVector(WrappedVector vector) {

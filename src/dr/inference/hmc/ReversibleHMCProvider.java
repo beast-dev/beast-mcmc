@@ -1,5 +1,6 @@
 package dr.inference.hmc;
 
+import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 /**
  * @author Zhenyu Zhang
@@ -7,7 +8,9 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 public interface ReversibleHMCProvider {
 
-    void reversiblePositionUpdate(WrappedVector position, WrappedVector momentum, int direction, double time);
+    void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time);
 
     WrappedVector drawMomentum();
+
+    double getKineticEnergy(ReadableVector momentum);
 }

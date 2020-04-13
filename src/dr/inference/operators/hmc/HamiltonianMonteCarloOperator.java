@@ -337,7 +337,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return count;
     }
 
-    double getKineticEnergy(ReadableVector momentum) {
+    public double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
 
@@ -637,7 +637,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
-    public void reversiblePositionUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
         try {
             doLeap(position.getBuffer(), momentum, direction * time);
         } catch (NumericInstabilityException e) {

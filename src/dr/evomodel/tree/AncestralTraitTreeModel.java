@@ -554,6 +554,9 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         } else if (model instanceof AncestralTaxonInTree && ancestors.contains(model)) {
 
+            if (hasAncestralPathTaxa) {
+                validShadowTree = false;
+            }
             fireModelChanged(new TreeChangedEvent.WholeTree());
 
         } else {

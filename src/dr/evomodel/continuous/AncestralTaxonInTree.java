@@ -79,7 +79,13 @@ public class AncestralTaxonInTree extends AbstractModel {
         this.tips = TreeUtils.getTipsForTaxa(treeModel, descendents);
         this.tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, descendents);
 
-        addVariable(priorSampleSize);
+        if (priorSampleSize != null) {
+            addVariable(priorSampleSize);
+        }
+
+        if (height != null) {
+            addVariable(height);
+        }
     }
 
     // Public API

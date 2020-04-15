@@ -173,6 +173,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 treeLength += tree.getBranchLength(node);
             }
         }
+        return treeLength;
     }
 
 }

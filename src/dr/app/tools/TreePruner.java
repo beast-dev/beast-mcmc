@@ -47,15 +47,20 @@ public class TreePruner {
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
 
+    private static final String[] falseTrue = {"false", "true"};
+    private static final String NAMECONTENT = "nameContent";
+
     private TreePruner(String inputFileName,
                        String outputFileName,
-                       String[] taxaToPrune) throws IOException {
+                       String[] taxaToPrune,
+                       boolean basedOnNameContent
+                       ) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
 
         readTrees(trees, inputFileName);
 
-        List<Taxon> taxa = getTaxaToPrune(trees.get(0), taxaToPrune);
+        List<Taxon> taxa = getTaxaToPrune(trees.get(0), taxaToPrune, basedOnNameContent);
 
         processTrees(trees, taxa);
 
@@ -108,18 +113,48 @@ public class TreePruner {
         progressStream.println("Total trees read: " + totalTrees);
     }
 
-    private List<Taxon> getTaxaToPrune(Tree tree, String[] names) {
+//    private List<Taxon> getTaxaToPrune(Tree tree, String[] names) {
+//
+//        List<Taxon> taxa = new ArrayList<>();
+//        if (names != null) {
+//            for (String name : names) {
+//
+//                int taxonId = tree.getTaxonIndex(name);
+//                if (taxonId == -1) {
+//                    throw new RuntimeException("Unable to find taxon '" + name + "'.");
+//                }
+//
+//                taxa.add(tree.getTaxon(taxonId));
+//            }
+//        }
+//        return taxa;
+//    }
+    private List<Taxon> getTaxaToPrune(Tree tree, String[] names, boolean basedOnContent) {
 
         List<Taxon> taxa = new ArrayList<>();
         if (names != null) {
             for (String name : names) {
 
-                int taxonId = tree.getTaxonIndex(name);
-                if (taxonId == -1) {
-                    throw new RuntimeException("Unable to find taxon '" + name + "'.");
+                if(!basedOnContent){
+                    int taxonId = tree.getTaxonIndex(name);
+                    if (taxonId == -1) {
+                        throw new RuntimeException("Unable to find taxon '" + name + "'.");
+                    }
+                    taxa.add(tree.getTaxon(taxonId));
+                } else {
+                    int counter = 0;
+                    for(int i = 0; i < tree.getTaxonCount(); i++) {
+                        Taxon taxon = tree.getTaxon(i);
+                        String taxonName = taxon.toString();
+                        if (taxonName.contains(name)) {
+                            taxa.add(taxon);
+                            counter ++;
+                        }
+                    }
+                    if (counter == 0){
+                        throw new RuntimeException("Unable to find taxon with a name containing '" + name + "'.");
+                    }
                 }
-
-                taxa.add(tree.getTaxon(taxonId));
             }
         }
         return taxa;
@@ -246,7 +281,7 @@ public class TreePruner {
 
         arguments.printUsage("treepruner", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: treepruner 1000000 test.trees taxa.txt output.trees");
+        progressStream.println("  Example: treepruner -taxaToPrune taxon1,taxon2 input.trees output.trees");
         progressStream.println();
     }
 
@@ -256,12 +291,15 @@ public class TreePruner {
         String inputFileName = null;
         String outputFileName = null;
         String[] taxaToPrune = null;
+        boolean basedOnNameContent = false;
 
         printTitle();
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("taxaToPrune", "list","a list of taxon names to prune"),
+                        new Arguments.StringOption(NAMECONTENT, falseTrue, false,
+                                "add true noise [default = true])"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -282,6 +320,10 @@ public class TreePruner {
             taxaToPrune = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("taxaToPrune"));
         }
 
+        String nameContentString = arguments.getStringOption(NAMECONTENT);
+        if (nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0)
+            basedOnNameContent = true;
+
         final String[] args2 = arguments.getLeftoverArguments();
 
         switch (args2.length) {
@@ -299,10 +341,8 @@ public class TreePruner {
             }
         }
 
-        new TreePruner(inputFileName, outputFileName, taxaToPrune);
+        new TreePruner(inputFileName, outputFileName, taxaToPrune, basedOnNameContent);
 
         System.exit(0);
     }
 }
-
-

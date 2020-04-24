@@ -160,6 +160,7 @@ public interface MassPreconditioner {
                     }
                     currentIndex += preconditioner.getDimension();
                 }
+                velocityKnown = true;
             }
         }
 
@@ -202,6 +203,7 @@ public interface MassPreconditioner {
             for (MassPreconditioner preconditioner : preconditionerList) {
                 preconditioner.updateMass();
             }
+            velocityKnown = false;
         }
 
         @Override

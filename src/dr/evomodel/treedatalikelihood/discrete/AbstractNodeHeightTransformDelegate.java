@@ -29,7 +29,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 /**
@@ -46,7 +45,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
                                                Parameter nodeHeights) {
         super(NodeHeightTransformParser.NAME);
         this.tree = treeModel;
-        this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, false);
+        this.nodeHeights = nodeHeights;
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
         addModel(treeModel);

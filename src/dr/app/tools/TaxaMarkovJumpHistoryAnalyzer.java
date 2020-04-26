@@ -27,13 +27,17 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.io.*;
-import dr.evolution.tree.*;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeImporter;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.util.Version;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Philippe Lemey
@@ -46,8 +50,10 @@ public class TaxaMarkovJumpHistoryAnalyzer {
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
 
-    public static final String HISTORY = "history";
-    public static final String BURNIN = "burnin";
+    private static final String HISTORY = "history";
+    private static final String BURNIN = "burnin";
+
+    private static final boolean NEW_OUTPUT = true;
 
     private TaxaMarkovJumpHistoryAnalyzer(String inputFileName,
                                           String outputFileName,
@@ -64,15 +70,12 @@ public class TaxaMarkovJumpHistoryAnalyzer {
 
         List<Taxon> taxa = getTaxaToProcess(trees.get(0), taxaToProcess);
 
-        historyStrings = new String[totalUsedTrees*taxa.size()];
-
         this.mrsd = mrsd;
-
         this.stateAnnotationName = stateAnnotationName;
 
+        this.ps = openOutputFile(outputFileName);
         processTrees(trees, taxa, endState, burnin);
-
-        writeOutputFile(outputFileName);
+        closeOutputFile(ps);
     }
 
     private void readTrees(List<Tree> trees, String inputFileName, int burnin) throws IOException {
@@ -101,7 +104,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
                     progressStream.flush();
                 }
                 totalTrees++;
-                if (totalTrees > burnin){
+                if (totalTrees > burnin) {
                     totalUsedTrees++;
                 }
             }
@@ -121,7 +124,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
             return;
         }
         if (totalUsedTrees < 1) {
-            System.err.println("No trees past burnin (="+burnin+")");
+            System.err.println("No trees past burnin (=" + burnin + ")");
             return;
         }
 
@@ -144,89 +147,136 @@ public class TaxaMarkovJumpHistoryAnalyzer {
     }
 
     private void processTrees(List<Tree> trees, List<Taxon> taxa, String endState, int burnin) {
-        if (burnin < 0){
+        if (burnin < 0) {
             burnin = 0;
         }
-        for (int i = burnin; i <trees.size(); ++i) {
+        for (int i = burnin; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            processOneTree(tree, taxa, endState, i-burnin);
+            processOneTree(tree, taxa, endState);
         }
     }
 
-    private void processOneTree(Tree tree, List<Taxon> taxa, String endState, int treeNumber) {
-        int counter = 0;
+    private void processOneTree(Tree tree, List<Taxon> taxa, String endState) {
+
+        String treeId = tree.getId();
+        if (treeId.startsWith("STATE_")) {
+            treeId = treeId.replaceFirst("STATE_", "");
+        }
+
         for (Taxon taxon : taxa) {
-//            System.out.println(counter);
-//            System.out.println(taxon.getId());
-            processOneTreeForOneTaxon(tree, taxon, endState, treeNumber, treeNumber+(totalUsedTrees*counter));
-            counter++;
+            processOneTreeForOneTaxon(tree, taxon, endState, treeId);
         }
     }
 
-    private void processOneTreeForOneTaxon(Tree tree, Taxon taxon, String endState, int treeNumber, int lineNumber) {
+    private void processOneTreeForOneTaxon(Tree tree, Taxon taxon, String endState, String treeId) {
+
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef tip = tree.getExternalNode(i);
             if (tree.getNodeTaxon(tip) == taxon) {
-                sb.append(taxon.getId()+",");
-                sb.append((treeNumber+1)+",");
-                processOneTip(tree, tip, endState, lineNumber);
+                processOneTip(tree, tip, endState, treeId, taxon.getId());
             }
         }
     }
 
-    private void processOneTip(Tree tree, NodeRef tip, String endState, int lineNumber) {
+    private class Row {
+        String taxonId;
+        String treeId;
+        String location;
+        double startTime;
+        double endTime;
 
-        String currentState = (String)tree.getNodeAttribute(tip,stateAnnotationName);
-        if (currentState==null){
-            System.err.println("no "+stateAnnotationName+" annotation for tip");
+        private static final String DELIMITOR = ",";
+
+        private Row(String taxonId, String treeId,
+                    String location, double startTime, double endTime) {
+            this.taxonId = taxonId; this.treeId = treeId;
+            this.location = location; this.startTime = startTime; this.endTime = endTime;
+        }
+
+        public String toString() {
+            return taxonId + DELIMITOR + treeId + DELIMITOR + location + DELIMITOR
+                    + startTime + DELIMITOR + endTime;
+        }
+    }
+
+    private boolean pathDone(Tree tree, NodeRef node, String currentState, String endState) {
+        return node == tree.getRoot() || currentState.equalsIgnoreCase(endState);
+    }
+
+    private double adjust(double time) {
+        if (mrsd < Double.MAX_VALUE) {
+            time = mrsd - time;
+        }
+        return time;
+    }
+
+    private void processOneTip(Tree tree, NodeRef tip, String endState, String treeId, String taxonId) {
+        
+        StringBuilder sb = new StringBuilder(taxonId + "," + treeId + ",");
+
+        String currentState = (String) tree.getNodeAttribute(tip, stateAnnotationName);
+        if (currentState == null) {
+            System.err.println("no " + stateAnnotationName + " annotation for tip");
             System.exit(-1);
         }
-        sb.append(currentState+",");
-        double nodeTime = tree.getNodeHeight(tip);
-        if (mrsd < Double.MAX_VALUE){
-            nodeTime = mrsd - nodeTime;
-        }
+
+        sb.append(currentState + ",");
+
+        double nodeTime = adjust(tree.getNodeHeight(tip));
         sb.append(nodeTime);
-        while (tip != tree.getRoot()){
+        double startTime = nodeTime;
+
+        while (!pathDone(tree, tip, currentState, endState)) {
+
             Object[] jumps = readCJH(tip, tree);
-            if (jumps != null){
-                for (int i = jumps.length-1; i>=0; i--) {
-                    Object[] jump = (Object[])jumps[i];
-                    if (!currentState.equalsIgnoreCase((String)jump[2])){
-                        System.err.println(jump[1]+"\t"+jump[2]);
+            if (jumps != null) {
+
+                for (int i = jumps.length - 1; i >= 0; i--) {
+                    Object[] jump = (Object[]) jumps[i];
+
+                    if (!currentState.equalsIgnoreCase((String) jump[2])) {
+                        System.err.println(jump[1] + "\t" + jump[2]);
                         System.err.println("mismatch between states in Markov Jump History");
                         System.exit(-1);
                     }
+
                     sb.append(",");
-                    currentState = ((String)jump[1]);
-                    sb.append(currentState+",");
-                    double jumpTime = (Double)jump[0];
-                    if (mrsd < Double.MAX_VALUE){
-                        jumpTime = mrsd - jumpTime;
+                    double jumpTime = adjust((Double) jump[0]);
+
+                    Row row = new Row(taxonId, treeId, currentState, startTime, jumpTime);
+                    if (NEW_OUTPUT) {
+                        ps.println(row);
                     }
+                    startTime = jumpTime;
+
+                    currentState = ((String) jump[1]);
+                    sb.append(currentState + ",");
                     sb.append(jumpTime);
                 }
             }
             tip = tree.getParent(tip);
-            if ((endState!=null) && (currentState.equalsIgnoreCase(endState))){
-                break;
-            }
         }
-//        System.out.println(sb.toString());
-        historyStrings[lineNumber] = sb.toString();
-        sb.setLength(0);
+
+        double endTime = adjust(tree.getNodeHeight(tip));
+        Row row = new Row(taxonId, treeId, currentState, startTime, endTime);
+        if (NEW_OUTPUT) {
+            ps.println(row);
+        }
+
+        if (!NEW_OUTPUT && ps != null) {
+            ps.println(sb.toString());
+        }
     }
 
-    private static Object[] readCJH(NodeRef node, Tree treeTime){
-        if(treeTime.getNodeAttribute(node, HISTORY)!=null){
-            Object[] cjh = (Object[])treeTime.getNodeAttribute(node, HISTORY);
-            return cjh;
+    private static Object[] readCJH(NodeRef node, Tree treeTime) {
+        if (treeTime.getNodeAttribute(node, HISTORY) != null) {
+            return (Object[]) treeTime.getNodeAttribute(node, HISTORY);
         } else {
             return null;
         }
     }
 
-    private void writeOutputFile(String outputFileName) {
+    private PrintStream openOutputFile(String outputFileName) {
         PrintStream ps = null;
         if (outputFileName == null) {
             ps = progressStream;
@@ -237,22 +287,28 @@ public class TaxaMarkovJumpHistoryAnalyzer {
                 e.printStackTrace();
             }
         }
-        ps.println("#each trajectory starts with the tip name, the tree number its state, its height, and then the subsequent states adopted and their transition times up to either the root state or a pre-defined state");
-        for (String historyString : historyStrings) {
-            ps.println(historyString);
+        if (NEW_OUTPUT) {
+            ps.println("taxonId,treeId,location,startTime,endTime");
+        } else {
+            ps.println("#each trajectory starts with the tip name, the tree number its state, its height, and then the subsequent states adopted and their transition times up to either the root state or a pre-defined state");
         }
+
+        return ps;
+    }
+
+    private void closeOutputFile(PrintStream ps) {
         if (ps != null) {
             ps.close();
         }
     }
 
+    private int totalTrees = 0;
+    private int totalUsedTrees = 0;
 
-    int totalTrees = 0;
-    int totalUsedTrees = 0;
-    StringBuffer sb = new StringBuffer();
-    String[] historyStrings;
-    double mrsd;
-    String stateAnnotationName;
+    private double mrsd;
+    private String stateAnnotationName;
+
+    private PrintStream ps;
 
     public static void printTitle() {
         progressStream.println();
@@ -297,9 +353,9 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption("taxaToProcess", "list","a list of taxon names to process MJHs"),
-                        new Arguments.StringOption("endState", "end_state","a state at which the MJH processing stops"),
-                        new Arguments.StringOption("stateAnnotation", "state_annotation_name","The annotation name for the discrete state string"),
+                        new Arguments.StringOption("taxaToProcess", "list", "a list of taxon names to process MJHs"),
+                        new Arguments.StringOption("endState", "end_state", "a state at which the MJH processing stops"),
+                        new Arguments.StringOption("stateAnnotation", "state_annotation_name", "The annotation name for the discrete state string"),
                         new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
                         new Arguments.Option("help", "option to print this message"),
                 });

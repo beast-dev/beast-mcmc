@@ -38,7 +38,6 @@ import java.util.*;
 /**
  * @author Philippe Lemey
  * @author Marc Suchard
- * @author Andrew Rambaut
  */
 public class TaxaMarkovJumpHistoryAnalyzer {
 
@@ -159,22 +158,23 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         for (Taxon taxon : taxa) {
 //            System.out.println(counter);
 //            System.out.println(taxon.getId());
-            processOneTreeForOneTaxon(tree, taxon, endState, treeNumber+(totalUsedTrees*counter));
+            processOneTreeForOneTaxon(tree, taxon, endState, treeNumber, treeNumber+(totalUsedTrees*counter));
             counter++;
         }
     }
 
-    private void processOneTreeForOneTaxon(Tree tree, Taxon taxon, String endState, int treeNumber) {
+    private void processOneTreeForOneTaxon(Tree tree, Taxon taxon, String endState, int treeNumber, int lineNumber) {
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef tip = tree.getExternalNode(i);
             if (tree.getNodeTaxon(tip) == taxon) {
                 sb.append(taxon.getId()+",");
-                processOneTip(tree, tip, endState, treeNumber);
+                sb.append((treeNumber+1)+",");
+                processOneTip(tree, tip, endState, lineNumber);
             }
         }
     }
 
-    private void processOneTip(Tree tree, NodeRef tip, String endState, int treeNumber) {
+    private void processOneTip(Tree tree, NodeRef tip, String endState, int lineNumber) {
 
         String currentState = (String)tree.getNodeAttribute(tip,stateAnnotationName);
         if (currentState==null){
@@ -213,7 +213,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
             }
         }
 //        System.out.println(sb.toString());
-        historyStrings[treeNumber] = sb.toString();
+        historyStrings[lineNumber] = sb.toString();
         sb.setLength(0);
     }
 
@@ -237,7 +237,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
                 e.printStackTrace();
             }
         }
-        ps.println("#each trajectory starts with the tip name, its state, its height, and then the subsequent states adopted and their transition times up to either the root state or a pre-defined state");
+        ps.println("#each trajectory starts with the tip name, the tree number its state, its height, and then the subsequent states adopted and their transition times up to either the root state or a pre-defined state");
         for (String historyString : historyStrings) {
             ps.println(historyString);
         }
@@ -277,7 +277,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
 
         arguments.printUsage("TaxonMarkovJumpHistory", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: taxonMarkovJumpHistory -taxaTorocess taxon1,taxon2 input.trees output.trees");
+        progressStream.println("  Example: taxonMarkovJumpHistory -taxaToProcess taxon1,taxon2 input.trees output.trees");
         progressStream.println();
     }
 

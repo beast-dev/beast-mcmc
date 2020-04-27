@@ -96,11 +96,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         List<Taxon> patternTaxa = patternLists.get(0).asList();
 
         if (!patternTaxa.containsAll(treeTaxa)) {
-            throw new XMLParseException("TreeModel contains more taxa than the partition pattern list.");
+            throw new XMLParseException("TreeModel "+ treeModel.getId() + " contains more taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() + ").");
         }
 
         if (!treeTaxa.containsAll(patternTaxa)) {
-            throw new XMLParseException("TreeModel contains fewer taxa than the partition pattern list.");
+            throw new XMLParseException("TreeModel " + treeModel.getId() + " contains fewer taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() +").");
         }
 
         boolean useBeagle3MultiPartition = false;

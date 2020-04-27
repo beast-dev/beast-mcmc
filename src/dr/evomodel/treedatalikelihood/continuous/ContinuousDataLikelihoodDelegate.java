@@ -783,11 +783,12 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 
-        cdi.updatePostOrderPartials(operations, operationCount, computeRemainders, computeWishartStatistics);
+        cdi.updatePostOrderPartials(operations, operationCount, getActivePrecisionIndex(0), computeRemainders, computeWishartStatistics);
 
         double[] logLikelihoods = new double[numTraits];
 
         rootProcessDelegate.calculateRootLogLikelihood(cdi, partialBufferHelper.getOffsetIndex(rootNodeNumber),
+                getActivePrecisionIndex(0),
                 logLikelihoods, computeWishartStatistics, diffusionProcessDelegate.isIntegratedProcess());
 
         if (computeWishartStatistics) {
@@ -815,6 +816,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     public final int getActiveMatrixIndex(final int index) {
         return diffusionProcessDelegate.getMatrixIndex(index);
+    }
+
+    public final int getActivePrecisionIndex(final int index) {
+        return diffusionProcessDelegate.getEigenBufferOffsetIndex(index);
     }
 
     public void getPostOrderPartial(final int nodeNumber, double[] vector) {

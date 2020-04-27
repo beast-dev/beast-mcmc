@@ -35,6 +35,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 
+import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
+
 /**
  * @author Marc Suchard
  */
@@ -88,13 +90,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     public double[] getPrecisionmatrixAsVector() {
-        double[][] precisionMatrix = getPrecisionmatrix();
-        int dim = precisionMatrix.length;
-        double[] precisionVector = new double[dim * dim];
-        for (int i = 0; i < dim; ++i) {
-            System.arraycopy(precisionMatrix[i], 0, precisionVector, i * dim, dim);
-        }
-        return precisionVector;
+        return(flatten(getPrecisionmatrix()));
     }
 
     public double getDeterminantPrecisionMatrix() {

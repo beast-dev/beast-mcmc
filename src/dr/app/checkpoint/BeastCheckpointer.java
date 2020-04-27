@@ -62,6 +62,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
     public final static String SAVE_STEM = "save.state.stem";
 
     public final static String FORCE_RESUME = "force.resume";
+    public final static String CHECKPOINT_SEED = "checkpoint.seed";
 
     private final String loadStateFileName;
     private final String saveStateFileName;
@@ -268,6 +269,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 if (operator instanceof AdaptableMCMCOperator) {
                     out.print("\t");
                     out.print(((AdaptableMCMCOperator)operator).getAdaptableParameter());
+                    out.print("\t");
+                    out.print(((AdaptableMCMCOperator)operator).getAdaptationCount());
                 }
                 out.println();
             }
@@ -457,6 +460,10 @@ public class BeastCheckpointer implements StateLoaderSaver {
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
+                //TODO we can no longer assume these are in the right order
+                //TODO best parse all the "operator" lines and store them so we can mix and match within this for loop
+                //TODO does not only apply to the operators but also to the parameters
+                //TODO test using additional tip-date sampling compared to previous run
                 MCMCOperator operator = operatorSchedule.getOperator(i);
                 line = in.readLine();
                 fields = line.split("\t");
@@ -469,10 +476,11 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 operator.setAcceptCount(Integer.parseInt(fields[2]));
                 operator.setRejectCount(Integer.parseInt(fields[3]));
                 if (operator instanceof AdaptableMCMCOperator) {
-                    if (fields.length != 5) {
+                    if (fields.length != 6) {
                         throw new RuntimeException("Coercable operator missing parameter: " + fields[1]);
                     }
                     ((AdaptableMCMCOperator)operator).setAdaptableParameter(Double.parseDouble(fields[4]));
+                    ((AdaptableMCMCOperator)operator).setAdaptationCount(Long.parseLong(fields[5]));
                 }
             }
 
@@ -603,6 +611,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         ((TreeModel) model).beginTreeEdit();
                         ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
+                            System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
                             ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
                         }
                         ((TreeModel) model).endTreeEdit();
@@ -642,7 +651,9 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 }
             }
 
-            if (rngState != null) {
+            if (System.getProperty(BeastCheckpointer.CHECKPOINT_SEED) != null) {
+                MathUtils.setSeed(Long.parseLong(System.getProperty(BeastCheckpointer.CHECKPOINT_SEED)));
+            } else if (rngState != null) {
                 MathUtils.setRandomState(rngState);
             }
 

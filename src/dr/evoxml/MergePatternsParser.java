@@ -39,6 +39,8 @@ import java.util.logging.Logger;
 public class MergePatternsParser extends AbstractXMLObjectParser {
 
     public static final String MERGE_PATTERNS = "mergePatterns";
+    public static final String UNIQUE = "unique";
+
 
     public String getParserName() { return MERGE_PATTERNS; }
 
@@ -47,12 +49,22 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-	    PatternList patternList = (PatternList)xo.getChild(0);
-	    Patterns patterns = new Patterns(patternList);
-	    for (int i = 1; i < xo.getChildCount(); i++) {
-		    patterns.addPatterns((PatternList)xo.getChild(i));
-	    }
+        boolean unique = xo.getAttribute(UNIQUE, true);
 
+        PatternList patternList = (PatternList)xo.getChild(0);
+
+	    Patterns patterns = new Patterns(patternList,unique);
+
+	    if(unique){
+            for (int i = 1; i < xo.getChildCount(); i++) {
+                patterns.addPatterns((PatternList) xo.getChild(i));
+            }
+        }else {
+            for (int i = 1; i < xo.getChildCount(); i++) {
+                patterns.appendPatterns((PatternList)xo.getChild(i));
+            }
+
+        }
         if (xo.hasAttribute(XMLParser.ID)) {
             final Logger logger = Logger.getLogger("dr.evoxml");
             logger.info("Site patterns '" + xo.getId() + "' created by merging " + xo.getChildCount() + " pattern lists");
@@ -69,7 +81,7 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
     };
 
     public String getParserDescription() {
-        return "A weighted list of the unique site patterns (unique columns) in an alignment.";
+        return "A weighted list of the site patterns (columns) in an alignment.";
     }
 
     public Class getReturnType() { return PatternList.class; }

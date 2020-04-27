@@ -29,10 +29,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A concrete implementation of PatternList. Patterns can be added and
@@ -43,8 +40,6 @@ import java.util.Set;
  * @version $Id: Patterns.java,v 1.10 2005/07/08 11:27:53 rambaut Exp $
  */
 public class Patterns implements PatternList {
-
-    public static final int COUNT_INCREMENT = 100;
 
     /**
      * number of patterns
@@ -59,20 +54,33 @@ public class Patterns implements PatternList {
     /**
      * weights of each pattern
      */
-    protected double[] weights = new double[COUNT_INCREMENT];
+    protected double[] weights;
+    /**
+     * site patterns [pattern][taxon]
+     */
+    protected int[][] patterns;
+    /**
+     * weights of each pattern
+     */
+    private ArrayList<Double> arrayListWeights = new ArrayList<Double>();
 
     /**
      * site patterns [pattern][taxon]
      */
-    protected int[][] patterns = new int[COUNT_INCREMENT][];
+    private ArrayList<int[]> arrayListPatterns = new ArrayList<int[]>() ;
+
+
 
     protected DataType dataType = null;
 
     protected TaxonList taxonList = null;
 
+    private boolean areUnique = true;
+
     /**
      * Constructor
      */
+
     public Patterns(DataType dataType) {
         this.dataType = dataType;
     }
@@ -80,6 +88,7 @@ public class Patterns implements PatternList {
     /**
      * Constructor
      */
+
     public Patterns(DataType dataType, TaxonList taxonList) {
         this.dataType = dataType;
         this.taxonList = taxonList;
@@ -90,15 +99,40 @@ public class Patterns implements PatternList {
      * Constructor
      */
     public Patterns(SiteList siteList) {
-        addPatterns(siteList, 0, 0, 1);
+        this(siteList,true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(SiteList siteList,boolean unique) {
+        if (unique) {
+            addPatterns(siteList, 0, 0, 1);
+        } else {
+            appendPatterns(siteList, 0, 0, 1);
+        }
+
     }
 
     /**
      * Constructor
      */
     public Patterns(List<SiteList> siteLists) {
-        for (SiteList siteList : siteLists) {
-            addPatterns(siteList, 0, 0, 1);
+        this(siteLists,true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(List<SiteList> siteLists,boolean unique) {
+        if (unique) {
+            for (SiteList siteList : siteLists) {
+                addPatterns(siteList, 0, 0, 1);
+            }
+        } else {
+            for (SiteList siteList : siteLists) {
+                appendPatterns(siteList, 0, 0, 1);
+            }
         }
     }
 
@@ -106,14 +140,36 @@ public class Patterns implements PatternList {
      * Constructor
      */
     public Patterns(SiteList siteList, int from, int to, int every) {
-        addPatterns(siteList, from, to, every);
+        this(siteList, from, to, every,true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(SiteList siteList, int from, int to, int every, boolean unique) {
+        if (unique) {
+            addPatterns(siteList, from, to, every);
+        } else {
+            appendPatterns(siteList, from, to, every);
+        }
     }
 
     /**
      * Constructor
      */
     public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount) {
-        addPatterns(siteList, from, to, every);
+        this(siteList,from,to,every,subSet,subSetCount,true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount, boolean unique) {
+        if (unique) {
+            addPatterns(siteList, from, to, every);
+        } else {
+            appendPatterns(siteList, from, to, every);
+        }
         subSetPatterns(subSet, subSetCount);
     }
 
@@ -121,14 +177,36 @@ public class Patterns implements PatternList {
      * Constructor
      */
     public Patterns(PatternList patternList) {
-        addPatterns(patternList);
+        this(patternList, true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList, boolean unique) {
+        if (unique) {
+            addPatterns(patternList);
+        } else {
+            appendPatterns(patternList);
+        }
     }
 
     /**
      * Constructor
      */
     public Patterns(PatternList patternList, int subSet, int subSetCount) {
-        addPatterns(patternList);
+        this(patternList,subSet,subSetCount,true);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList, int subSet, int subSetCount, boolean unique) {
+        if (unique) {
+            addPatterns(patternList);
+        } else {
+            appendPatterns(patternList);
+        }
         subSetPatterns(subSet, subSetCount);
     }
 
@@ -148,23 +226,29 @@ public class Patterns implements PatternList {
                 newPatternCount++;
             }
 
-            int[][] newPatterns = new int[newPatternCount][];
-            double[] newWeights = new double[newPatternCount];
-            for (int i = 0; i < newPatternCount; i++) {
-                newPatterns[i] = patterns[start + i];
-                newWeights[i] = weights[start + i];
-            }
-            patterns = newPatterns;
-            weights = newWeights;
+            ArrayList<Double> newArrayListWeights = new ArrayList<Double>();
 
+            ArrayList<int[]> newArrayListPatterns = new ArrayList<int[]>() ;
+
+            for (int i = 0; i < newPatternCount; i++) {
+                newArrayListPatterns.add(arrayListPatterns.get(start+i));
+                newArrayListWeights.add(arrayListWeights.get(start+i));
+            }
+
+            arrayListPatterns = newArrayListPatterns;
+            arrayListWeights = newArrayListWeights;
             patternCount = newPatternCount;
+
+            castWeightsAndPatterns();
+
+
         }
     }
 
     /**
-     * adds patterns to the list from a SiteList
+     * adds or appends patterns to the list from a SiteList
      */
-    public void addPatterns(SiteList siteList, int from, int to, int every) {
+    private void joinPatterns(SiteList siteList, int from, int to, int every, boolean compressToUniquePatterns) {
 
         if (siteList == null) {
             return;
@@ -199,16 +283,33 @@ public class Patterns implements PatternList {
                             !isAmbiguous(pattern) &&
                             !isUnknown(pattern)))) {
 
-                addPattern(pattern, 1.0);
+                addPattern(pattern, 1.0,compressToUniquePatterns);
             }
         }
-        areUnique = siteList.areUnique();
-    }
+        areUnique = areUnique && compressToUniquePatterns;
+        castWeightsAndPatterns();
 
+    }
     /**
      * adds patterns to the list from a SiteList
      */
-    public void addPatterns(PatternList patternList) {
+    public void addPatterns(SiteList siteList, int from, int to, int every){
+        joinPatterns(siteList,from,to,every,true);
+    }
+
+    /**
+     * appends patterns to the list from the site list. These patterns are appended as they are. They are not
+     * processed so that the resulting combined patterns are unique.
+     */
+    public void appendPatterns(SiteList siteList, int from, int to, int every){
+        joinPatterns(siteList,from,to,every,false);
+
+    }
+
+    /**
+     * adds or appends patterns to the list from a PatternList
+     */
+    private void joinPatterns(PatternList patternList, boolean compressToUniquePatterns) {
 
         if (patternList == null) {
             return;
@@ -234,10 +335,24 @@ public class Patterns implements PatternList {
                             !isAmbiguous(pattern) &&
                             !isUnknown(pattern))) {
 
-                addPattern(pattern, patternList.getPatternWeight(i));
+                addPattern(pattern, patternList.getPatternWeight(i),compressToUniquePatterns);
             }
         }
-        areUnique = patternList.areUnique();
+        areUnique = areUnique && compressToUniquePatterns;
+        castWeightsAndPatterns();
+    }
+    /**
+     * adds patterns to the list from a SiteList
+     */
+    public void addPatterns(PatternList patternList){
+        joinPatterns(patternList,true);
+    }
+    /**
+     * appends patterns to the list from the site list. These patterns are appended as they are. They are not
+     * processed so that the resulting combined patterns are unique.
+     */
+    public void appendPatterns(PatternList patternList){
+        joinPatterns(patternList,false);
     }
 
     /**
@@ -247,10 +362,13 @@ public class Patterns implements PatternList {
         addPattern(pattern, 1.0);
     }
 
+    public void addPattern(int[] pattern, double weight){
+        addPattern(pattern,weight,true);
+    }
     /**
      * adds a pattern to the pattern list
      */
-    public void addPattern(int[] pattern, double weight) {
+    public void addPattern(int[] pattern, double weight, boolean compressToUniquePatterns) {
 
         if (patternLength == 0) {
             patternLength = pattern.length;
@@ -260,55 +378,63 @@ public class Patterns implements PatternList {
             throw new IllegalArgumentException("Added pattern's length (" + pattern.length + ") does not match those of existing patterns (" + patternLength + ")");
         }
 
-        for (int i = 0; i < patternCount; i++) {
-
-            if (comparePatterns(patterns[i], pattern)) {
-
-                weights[i] += weight;
-                return;
-            }
-        }
-
-        if (patternCount == patterns.length) {
-            int[][] newPatterns = new int[patternCount + COUNT_INCREMENT][];
-            double[] newWeights = new double[patternCount + COUNT_INCREMENT];
+        if(compressToUniquePatterns) {
             for (int i = 0; i < patternCount; i++) {
-                newPatterns[i] = patterns[i];
-                newWeights[i] = weights[i];
+
+                if (comparePatterns(patterns[i], pattern)) {
+
+                    weights[i] += weight;
+                    return;
+                }
             }
-            patterns = newPatterns;
-            weights = newWeights;
         }
 
-        patterns[patternCount] = pattern;
-        weights[patternCount] = weight;
+        arrayListPatterns.add(pattern);
+        arrayListWeights.add(weight);
+
+        castWeightsAndPatterns();
+
         patternCount++;
     }
 
     /**
      * removes a pattern from the pattern list
      */
+
     public void removePattern(int[] pattern) {
 
-        int index = -1;
-        for (int i = 0; i < patternCount; i++) {
 
-            if (comparePatterns(patterns[i], pattern)) {
-                index = i;
-                break;
+
+        ArrayList<Integer> indexes = new ArrayList<>();
+        for (int i = 0; i < patternCount; i++) {
+            if (comparePatterns(arrayListPatterns.get(i), pattern)) {
+                indexes.add(i);
             }
         }
 
-        if (index == -1) throw new IllegalArgumentException("Pattern not found");
+        if (indexes.size() == 0) throw new IllegalArgumentException("Pattern not found");
 
-        weights[index] -= 1;
-        if (weights[index] == 0 && patternCount > 1) {
-            patterns[index] = patterns[patternCount - 1];
-            patterns[patternCount - 1] = null;
-            weights[index] = weights[patternCount - 1];
-            patternCount--;
+        for(int i=0; i<indexes.size(); i++){
+            int index = indexes.get(i);
+            arrayListWeights.set(index,arrayListWeights.get(index)-1);
+
+            if (arrayListWeights.get(index) == 0 && patternCount > 1) {
+                arrayListPatterns.remove(index);
+                arrayListWeights.remove(index);
+                patternCount--;
+            }
+
         }
+        castWeightsAndPatterns();
 
+    }
+
+    /**
+     * casts weights and pattern array lists to arrays
+     */
+    private void castWeightsAndPatterns(){
+        weights = arrayListWeights.stream().mapToDouble(Double::doubleValue).toArray();
+        patterns = arrayListPatterns.toArray(new int[patternCount][]);
     }
 
     /**
@@ -316,7 +442,9 @@ public class Patterns implements PatternList {
      */
     public void removeAllPatterns() {
         patternCount = 0;
-        for (int i = 0; i < patterns.length; i++) patterns[i] = null;
+        arrayListPatterns.clear();
+        arrayListWeights.clear();
+        castWeightsAndPatterns();
     }
 
     /**
@@ -609,5 +737,4 @@ public class Patterns implements PatternList {
         return taxonList.getTaxon(taxonIndex);
     }
 
-    private boolean areUnique = true;
 }

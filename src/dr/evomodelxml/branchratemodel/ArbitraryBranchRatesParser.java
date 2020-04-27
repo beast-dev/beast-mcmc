@@ -67,7 +67,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
 
-        if(centerAtOne && randomizeRates == true) {
+        if(centerAtOne && randomizeRates) {
             throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
         }
 
@@ -82,7 +82,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
-        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
+        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on "
+                + rateCategoryParameter.getId());
 
 
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);

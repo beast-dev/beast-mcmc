@@ -94,6 +94,11 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     }
 
     @Override
+    public boolean isInInteriorDomain(double[] values) {
+        return true; //TODO Is it necessary to check entry values ?
+    }
+
+    @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
         throw new RuntimeException("Not yet implemented!");
     }

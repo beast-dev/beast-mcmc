@@ -920,7 +920,14 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
-            substitutionModelDelegate.updateSubstitutionModels(beagle);
+
+            try {
+                substitutionModelDelegate.updateSubstitutionModels(beagle);
+            } catch (ArithmeticException ae) {
+                // if the Eigen decomposition failed then post a warning and return -Inf (rejecting move)
+                Logger.getLogger("dr.evomodel").warning("Arithmetic exception: " + ae.getMessage());
+                return Double.NEGATIVE_INFINITY;
+            }
 
             // we are currently assuming a no-category model...
         }

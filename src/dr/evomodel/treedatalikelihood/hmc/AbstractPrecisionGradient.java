@@ -26,11 +26,8 @@
 
 package dr.evomodel.treedatalikelihood.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.CachedMatrixInverse;
-import dr.inference.model.CompoundSymmetricMatrix;
-import dr.inference.model.Likelihood;
-import dr.inference.model.MatrixParameterInterface;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
@@ -39,10 +36,10 @@ import dr.xml.Reportable;
  * @author Marc A. Suchard
  */
 
-public abstract class AbstractPrecisionGradient implements GradientWrtParameterProvider, Reportable {
+public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradient implements Reportable {
 
     private final GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
-    final Likelihood likelihood;
+    //    final Likelihood likelihood;
     final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
     private Parametrization parametrization;
@@ -52,7 +49,10 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     AbstractPrecisionGradient(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
                               Likelihood likelihood,
-                              MatrixParameterInterface parameter) {
+                              MatrixParameterInterface parameter,
+                              double upperBound, double lowerBound) {
+
+        super(likelihood, upperBound, lowerBound);
 
         this.precision = parameter;
 
@@ -77,16 +77,21 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 : "PrecisionGradient can only be applied to a CompoundSymmetricMatrix with off-diagonal as correlation.";
 
         this.gradientWrtPrecisionProvider = gradientWrtPrecisionProvider;
-        this.likelihood = likelihood;
+//        this.likelihood = likelihood;
         this.dim = parameter.getColumnDimension();
 
     }
 
     enum Parametrization {
         AS_PRECISION {
+//            @Override
+//            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+//                return x; // Do nothing
+//            }
+
             @Override
-            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
-                return x; // Do nothing
+            public double[] getGradientWrtParameter(double[] gradient, double[] vecP, double[] vecV, GradientWrtPrecisionProvider gradientWrtPrecisionProvider) {
+                return gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV, gradient);
             }
 
             @Override
@@ -95,10 +100,15 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
             }
         },
         AS_VARIANCE {
+//            @Override
+//            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
+//                MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
+//                return ruleI.chainGradient(x);
+//            }
+
             @Override
-            public double[] chainRule(double[] x, double[] vecP, double[] vecV) {
-                MultivariateChainRule ruleI = new MultivariateChainRule.InverseGeneral(vecP);
-                return ruleI.chainGradient(x);
+            public double[] getGradientWrtParameter(double[] gradient, double[] vecP, double[] vecV, GradientWrtPrecisionProvider gradientWrtPrecisionProvider) {
+                return gradientWrtPrecisionProvider.getGradientWrtVariance(vecP, vecV, gradient);
             }
 
             @Override
@@ -114,14 +124,26 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 //            }
         };
 
-        abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
+//        abstract double[] chainRule(double[] x, double[] vecP, double[] vecV);
+
+        abstract double[] getGradientWrtParameter(double[] gradient, double[] vecP, double[] vecV, GradientWrtPrecisionProvider gradientWrtPrecisionProvider);
 
         abstract void updateParameters(MatrixParameterInterface variance);
     }
 
+//    @Override
+//    public Likelihood getLikelihood() {
+//        return likelihood;
+//    }
+
     @Override
-    public Likelihood getLikelihood() {
-        return likelihood;
+    public Parameter getRawParameter() {
+        return precision;
+    }
+
+    @Override
+    public ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter() {
+        return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE;
     }
 
     int getDimensionCorrelation() {
@@ -134,6 +156,14 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
 
     @Override
     public double[] getGradientLogDensity() {
+        double[] gradient = (gradientWrtPrecisionProvider.getBranchSpecificGradient() == null) ? null : gradientWrtPrecisionProvider.getBranchSpecificGradient().getGradientLogDensity(); // Get gradient wrt variance
+        return getGradientLogDensity(gradient);
+    }
+
+    public double[] getGradientLogDensity(double[] grad) {
+
+        double[] gradient = new double[dim * dim];
+        if (grad != null) System.arraycopy(grad, offset, gradient, 0, dim * dim);
 
         // parameters
         parametrization.updateParameters(variance);
@@ -146,14 +176,15 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
         }
 
         // Gradient w.r.t. precision
-        double[] gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV);
+//        gradient = gradientWrtPrecisionProvider.getGradientWrtPrecision(vecV, gradient);
+        gradient = parametrization.getGradientWrtParameter(gradient, vecP, vecV, gradientWrtPrecisionProvider);
 
         if (DEBUG) {
             System.err.println("Gradient Precision: " + new dr.math.matrixAlgebra.Vector(gradient));
         }
 
         // Handle inverse
-        gradient = parametrization.chainRule(gradient, vecP, vecV);
+//        gradient = parametrization.chainRule(gradient, vecP, vecV);
 
         if (CHECK_GRADIENT) {
             System.err.println("Analytic at: \n" + new Vector(compoundSymmetricMatrix.getOffDiagonalParameter().getParameterValues())
@@ -193,13 +224,13 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
                 "\n";
     }
 
-    abstract String checkNumeric(double[] analytic);
+//    abstract String checkNumeric(double[] analytic);
 
-    @Override
-    public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this,
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TOLERANCE);
-    }
+//    @Override
+//    public String getReport() {
+//        return GradientWrtParameterProvider.getReportAndCheckForError(this,
+//                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TOLERANCE);
+//    }
 
     abstract double[] getGradientParameter(double[] gradient);
 
@@ -214,7 +245,7 @@ public abstract class AbstractPrecisionGradient implements GradientWrtParameterP
     double[] getGradientDiagonal(double[] gradient) {
 
         return compoundSymmetricMatrix.updateGradientDiagonal(gradient);
-        
+
     }
 
     public static double[] flatten(double[][] matrix) {

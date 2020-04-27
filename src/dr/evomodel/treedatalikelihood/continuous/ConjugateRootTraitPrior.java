@@ -27,7 +27,10 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.*;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -46,7 +49,7 @@ public class ConjugateRootTraitPrior extends AbstractModel {
     private final Parameter pseudoObservations;
 
     public ConjugateRootTraitPrior(Parameter mean,
-                                    Parameter pseudoObservations) {
+                                   Parameter pseudoObservations) {
         super("ConjugateRootTraitPrior");
         this.mean = mean;
         this.pseudoObservations = pseudoObservations;
@@ -57,6 +60,10 @@ public class ConjugateRootTraitPrior extends AbstractModel {
 
     public double[] getMean() {
         return mean.getParameterValues();
+    }
+
+    public Parameter getMeanParameter() {
+        return mean;
     }
 
     public double getPseudoObservations() {

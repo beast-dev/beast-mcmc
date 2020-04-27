@@ -78,6 +78,11 @@ public class CorrelationToCholesky extends Transform.MultivariateTransform {
         throw new RuntimeException("Not relevant for the correlation to Cholesky transform.");
     }
 
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     public String getTransformName() {
         return "CorrelationToCholeskyTransform";
     }

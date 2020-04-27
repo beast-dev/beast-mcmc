@@ -35,6 +35,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.ops.EigenOps;
 
+import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
+
 /**
  * @author Marc Suchard
  * @author Paul Bastide
@@ -100,13 +102,7 @@ public class MultivariateElasticModel extends AbstractModel implements TreeAttri
     }
 
     public double[] getStrengthOfSelectionMatrixAsVector() {
-        double[][] strengthOfSelectionMatrix = getStrengthOfSelectionMatrix();
-        int dim = strengthOfSelectionMatrix.length;
-        double[] strengthOfSelectionVector = new double[dim * dim];
-        for (int i = 0; i < dim; ++i) {
-            System.arraycopy(strengthOfSelectionMatrix[i], 0, strengthOfSelectionVector, i * dim, dim);
-        }
-        return strengthOfSelectionVector;
+        return flatten(getStrengthOfSelectionMatrix());
     }
 
     public double[] getEigenValuesStrengthOfSelection() {

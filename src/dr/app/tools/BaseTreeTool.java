@@ -20,7 +20,7 @@ class BaseTreeTool {
     int totalTrees = 0;
     private int totalUsedTrees = 0;
 
-    void readTrees(List<Tree> trees, String inputFileName, int burnin) throws IOException {
+    void readTrees(List<Tree> trees, String inputFileName, int burnIn) throws IOException {
 
         progressStream.println("Reading trees (bar assumes 10,000 trees)...");
         progressStream.println("0              25             50             75            100");
@@ -46,7 +46,7 @@ class BaseTreeTool {
                     progressStream.flush();
                 }
                 totalTrees++;
-                if (totalTrees > burnin) {
+                if (totalTrees > burnIn) {
                     totalUsedTrees++;
                 }
             }
@@ -66,7 +66,7 @@ class BaseTreeTool {
             return;
         }
         if (totalUsedTrees < 1) {
-            System.err.println("No trees past burnin (=" + burnin + ")");
+            System.err.println("No trees past burn-in (=" + burnIn + ")");
             return;
         }
 
@@ -74,7 +74,7 @@ class BaseTreeTool {
         progressStream.println("Total trees used: " + totalUsedTrees);
     }
 
-    PrintStream openOutputFile(String outputFileName) {
+    protected PrintStream openOutputFile(String outputFileName) {
         PrintStream ps = null;
 
         if (outputFileName == null) {
@@ -114,16 +114,20 @@ class BaseTreeTool {
         }
     }
 
-    static void centreLine(String line, int pageWidth) {
+    protected static void centreLine(String line, int pageWidth) {
+        centreLine(line, pageWidth, progressStream);
+    }
+
+    public static void centreLine(String line, int pageWidth, PrintStream ps) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
         for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
+            ps.print(" ");
         }
-        progressStream.println(line);
+        ps.println(line);
     }
 
-    static String[] getInputOutputFileNames(Arguments arguments, String[] args, Consumer<Arguments> usage) {
+    static String[] getInputOutputFileNames(Arguments arguments, Consumer<Arguments> usage) {
 
         String[] result = new String[2];
 

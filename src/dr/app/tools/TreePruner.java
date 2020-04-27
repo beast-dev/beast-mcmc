@@ -217,7 +217,7 @@ public class TreePruner extends BaseTreeTool {
         if (nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0)
             basedOnNameContent = true;
 
-        String[] fileNames = getInputOutputFileNames(arguments, args, TreePruner::printUsage);
+        String[] fileNames = getInputOutputFileNames(arguments, TreePruner::printUsage);
 
         new TreePruner(fileNames[0], fileNames[1], taxaToPrune, basedOnNameContent);
 

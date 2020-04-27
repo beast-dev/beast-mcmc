@@ -196,7 +196,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         }
     }
 
-    PrintStream openOutputFile(String outputFileName) {
+    protected PrintStream openOutputFile(String outputFileName) {
 
         PrintStream ps = super.openOutputFile(outputFileName);
         ps.println("taxonId,treeId,location,startTime,endTime");
@@ -277,7 +277,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
-        String[] fileNames = getInputOutputFileNames(arguments, args, TaxaMarkovJumpHistoryAnalyzer::printUsage);
+        String[] fileNames = getInputOutputFileNames(arguments, TaxaMarkovJumpHistoryAnalyzer::printUsage);
 
         new TaxaMarkovJumpHistoryAnalyzer(fileNames[0], fileNames[1], taxaToProcess, endState, stateAnnotationName,
                 mrsd, burnIn);

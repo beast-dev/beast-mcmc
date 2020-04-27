@@ -25,15 +25,10 @@
 
 package dr.math.distributions;
 
-import dr.math.ComplexArray;
-import dr.math.FastFourierTransform;
-import dr.stats.DiscreteStatistics;
-import dr.util.HeapSort;
-
 /**
  * @author Guy Baele
  */
-public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimatorDistribution {
+public class LogitTransformedNormalKDEDistribution extends NormalKDEDistribution {
 
     public static final int MINIMUM_GRID_SIZE = 2048;
     public static final boolean DEBUG = false;
@@ -66,7 +61,7 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
 
     public LogitTransformedNormalKDEDistribution(Double[] sample, Double upperLimit, Double lowerBound, Double upperBound, Double bandWidth, double cut, int n) {
 
-        super(sample, lowerBound, upperBound, bandWidth);
+        super(getLogit(sample, upperLimit), lowerBound, upperBound, bandWidth);
         //transform the data to the logit scale and store in logSample
         this.upperLimit = upperLimit;
         if (DEBUG) {
@@ -76,44 +71,34 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
             System.out.println("upperlimit = " + upperLimit);
         }
 
-        this.logitSample = new double[sample.length];
-        for (int i = 0; i < logitSample.length; i++) {
-            //this.logitSample[i] = Math.log(sample[i] / (1.0 - sample[i]));
-            this.logitSample[i] = Math.log(sample[i] / (upperLimit - sample[i]));
-        }
+        this.logitSample = this.sample;
+//        this.logitSample = new double[sample.length];
+//        for (int i = 0; i < logitSample.length; i++) {
+//            //this.logitSample[i] = Math.log(sample[i] / (1.0 - sample[i]));
+//            this.logitSample[i] = Math.log(sample[i] / (upperLimit - sample[i]));
+//        }
         //keep a backup copy of the samples in normal space
         this.backupSample = new double[sample.length];
         for (int i = 0; i < sample.length; i++) {
             this.backupSample[i] = sample[i];
         }
         //overwrite the stored samples, sample.length stays the same
-        this.sample = logitSample;
-        processBounds(lowerBound, upperBound);
-        setBandWidth(bandWidth);
+//        this.sample = logitSample;
+//        processBounds(lowerBound, upperBound);
+//        setBandWidth(bandWidth);
 
-        this.gridSize = Math.max(n, MINIMUM_GRID_SIZE);
-        if (this.gridSize > MINIMUM_GRID_SIZE) {
-            this.gridSize = (int) Math.pow(2, Math.ceil(Math.log(this.gridSize) / Math.log(2.0)));
-        }
-        this.cut = cut;
+//        this.gridSize = Math.max(n, MINIMUM_GRID_SIZE);
+//        if (this.gridSize > MINIMUM_GRID_SIZE) {
+//            this.gridSize = (int) Math.pow(2, Math.ceil(Math.log(this.gridSize) / Math.log(2.0)));
+//        }
+//        this.cut = cut;
+//
+//        setBounds();
 
-        from = DiscreteStatistics.min(this.sample) - this.cut * this.bandWidth;
-        to = DiscreteStatistics.max(this.sample) + this.cut * this.bandWidth;
-
-        if (DEBUG) {
-            System.out.println("bandWidth = " + this.bandWidth);
-            System.out.println("cut = " + this.cut);
-            System.out.println("from = " + from);
-            System.out.println("to = " + to);
-        }
-
-        lo = from - 4.0 * this.bandWidth;
-        up = to + 4.0 * this.bandWidth;
-
-        if (DEBUG) {
-            System.out.println("lo = " + lo);
-            System.out.println("up = " + up);
-        }
+//        if (DEBUG) {
+//            System.out.println("lo = " + lo);
+//            System.out.println("up = " + up);
+//        }
 
         densityKnown = false;
 
@@ -122,7 +107,15 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
         computeDensity();
         
     }
-    
+
+    private static Double[] getLogit(Double [] x, double upperLimit) {
+        Double[] logX = new Double[x.length];
+        for (int i = 0; i < logX.length; i++) {
+            logX[i] = Math.log(x[i] / (upperLimit - x[i]));
+        }
+        return logX;
+    }
+
     public double getFromPoint() {
         return from;
     }
@@ -131,110 +124,111 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
         return to;
     }
 
-    /**
-     * Returns a linear approximation evaluated at pt
-     * @param x data (assumed sorted increasingly
-     * @param y data
-     * @param pt evaluation point
-     * @param low return value if pt < x
-     * @param high return value if pt > x
-     * @return  evaluated coordinate
-     */
-    private double linearApproximate(double[] x, double[] y, double pt, double low, double high) {
+//    /**
+//     * Returns a linear approximation evaluated at pt
+//     * @param x data (assumed sorted increasingly
+//     * @param y data
+//     * @param pt evaluation point
+//     * @param low return value if pt < x
+//     * @param high return value if pt > x
+//     * @return  evaluated coordinate
+//     */
+//    private double linearApproximate(double[] x, double[] y, double pt, double low, double high) {
+//
+//        int i = 0;
+//        int j = x.length - 1;
+//
+//        if (pt < x[i]) {
+//            return low;
+//        }
+//        if (pt > x[j]) {
+//            return high;
+//        }
+//
+//        // Bisection search
+//        while (i < j - 1) {
+//            int ij = (i + j) / 2;
+//            if (pt < x[ij]) {
+//                j = ij;
+//            } else {
+//                i = ij;
+//            }
+//        }
+//
+//        if (pt == x[j]) {
+//            return y[j];
+//        }
+//        if (pt == x[i]) {
+//            return y[i];
+//        }
+//        //System.out.println("return value: "+ (y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]))));
+//        return y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]));
+//    }
+//
+//    private double[] rescaleAndTrim(double[] x) {
+//        final int length = x.length / 2;
+//        final double scale = 1.0 / x.length;
+//        double[] out = new double[length];
+//        for (int i = 0; i < length; ++i) {
+//            out[i] = x[i] * scale;
+//            if (out[i] < 0) {
+//                out[i] = 0;
+//            }
+//        }
+//        return out;
+//    }
+//
+//    private double[] massdist(double[] x, double xlow, double xhigh, int ny) {
+//
+//        int nx = x.length;
+//        double[] y = new double[ny * 2];
+//
+//        final int ixmin = 0;
+//        final int ixmax = ny - 2;
+//        final double xdelta = (xhigh - xlow) / (ny - 1);
+//
+//        for (int i = 0; i < ny; ++i) {
+//            y[i] = 0.0;
+//        }
+//
+//        final double xmi = 1.0 / nx;
+//        for (int i = 0; i < nx; ++i) {
+//            final double xpos = (x[i] - xlow) /  xdelta;
+//            final int ix = (int) Math.floor(xpos);
+//            final double fx = xpos - ix;
+////            final double xmi = xmass[i];
+//
+//            if (ixmin <= ix && ix <= ixmax) {
+//                y[ix] += (1 - fx) * xmi;
+//                y[ix + 1] += fx * xmi;
+//            } else if (ix == -1) {
+//                y[0] += fx * xmi;
+//            } else if (ix == ixmax + 1) {
+//                y[ix] += (1 - fx) * xmi;
+//            }
+//        }
+//        return y;
+//    }
 
-        int i = 0;
-        int j = x.length - 1;
-
-        if (pt < x[i]) {
-            return low;
-        }
-        if (pt > x[j]) {
-            return high;
-        }
-
-        // Bisection search
-        while (i < j - 1) {
-            int ij = (i + j) / 2;
-            if (pt < x[ij]) {
-                j = ij;
-            } else {
-                i = ij;
-            }
-        }
-
-        if (pt == x[j]) {
-            return y[j];
-        }
-        if (pt == x[i]) {
-            return y[i];
-        }
-        //System.out.println("return value: "+ (y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]))));
-        return y[i] + (y[j] - y[i]) * ((pt - x[i]) / (x[j] - x[i]));
-    }
-
-    private double[] rescaleAndTrim(double[] x) {
-        final int length = x.length / 2;
-        final double scale = 1.0 / x.length;
-        double[] out = new double[length];
-        for (int i = 0; i < length; ++i) {
-            out[i] = x[i] * scale;
-            if (out[i] < 0) {
-                out[i] = 0;
-            }
-        }
-        return out;
-    }
-
-    private double[] massdist(double[] x, double xlow, double xhigh, int ny) {
-
-        int nx = x.length;
-        double[] y = new double[ny * 2];
-
-        final int ixmin = 0;
-        final int ixmax = ny - 2;
-        final double xdelta = (xhigh - xlow) / (ny - 1);
-
-        for (int i = 0; i < ny; ++i) {
-            y[i] = 0.0;
-        }
-
-        final double xmi = 1.0 / nx;
-        for (int i = 0; i < nx; ++i) {
-            final double xpos = (x[i] - xlow) /  xdelta;
-            final int ix = (int) Math.floor(xpos);
-            final double fx = xpos - ix;
-//            final double xmi = xmass[i];
-
-            if (ixmin <= ix && ix <= ixmax) {
-                y[ix] += (1 - fx) * xmi;
-                y[ix + 1] += fx * xmi;
-            } else if (ix == -1) {
-                y[0] += fx * xmi;
-            } else if (ix == ixmax + 1) {
-                y[ix] += (1 - fx) * xmi;
-            }
-        }
-        return y;
-    }
-
-    /**
-     * Override for different kernels
-     * @param ordinates the points in complex space
-     * @param bandWidth predetermined bandwidth
-     */
-    protected void fillKernelOrdinates(ComplexArray ordinates, double bandWidth) {
-        final int length = ordinates.length;
-        final double a = 1.0 / (Math.sqrt(2.0 * Math.PI) * bandWidth);
-        final double precision = -0.5 / (bandWidth * bandWidth);
-        for (int i = 0; i < length; i++) {
-            final double x = ordinates.real[i];
-            ordinates.real[i] = a * Math.exp(x * x * precision);
-        }
-    }
+//    /**
+//     * Override for different kernels
+//     * @param ordinates the points in complex space
+//     * @param bandWidth predetermined bandwidth
+//     */
+//    protected void fillKernelOrdinates(ComplexArray ordinates, double bandWidth) {
+//        final int length = ordinates.length;
+//        final double a = 1.0 / (Math.sqrt(2.0 * Math.PI) * bandWidth);
+//        final double precision = -0.5 / (bandWidth * bandWidth);
+//        for (int i = 0; i < length; i++) {
+//            final double x = ordinates.real[i];
+//            ordinates.real[i] = a * Math.exp(x * x * precision);
+//        }
+//    }
 
     protected void computeDensity() {
     	//transformData calls massdist and rescaleAndTrim
         makeOrdinates();
+        makeXGrid();
         //makeOrdinates calls fillKernelOrdinates
         transformData();
         //we're still in logit space and need to return to normal space
@@ -257,18 +251,7 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
         //processBounds(lowerBound, upperBound);
         setBandWidth(null);
 
-        from = DiscreteStatistics.min(this.sample) - this.cut * this.bandWidth;
-        to = DiscreteStatistics.max(this.sample) + this.cut * this.bandWidth;
-
-        if (DEBUG) {
-            System.out.println("bandWidth = " + this.bandWidth);
-            System.out.println("cut = " + this.cut);
-            System.out.println("from = " + from);
-            System.out.println("to = " + to);
-        }
-
-        lo = from - 4.0 * this.bandWidth;
-        up = to + 4.0 * this.bandWidth;
+        setBounds();
 
         if (DEBUG) {
             System.out.println("lo = " + lo);
@@ -286,7 +269,7 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
         //need a backup of the xPoints for the logit scale KDE
         this.backupXPoints = new double[xPoints.length];
         System.arraycopy(xPoints, 0, backupXPoints, 0, xPoints.length);
-        makeOrdinates();
+        makeXGrid();
 
         int numberOfNegatives = 0;
         if (DEBUG) {
@@ -326,65 +309,65 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
     	
     }
 
-    private void transformData() {
-        ComplexArray Y  = new ComplexArray(massdist(this.logitSample, lo, up, this.gridSize));
-        FastFourierTransform.fft(Y, false);
+//    private void transformData() {
+//        ComplexArray Y  = new ComplexArray(massdist(this.logitSample, lo, up, this.gridSize));
+//        FastFourierTransform.fft(Y, false);
+//
+//        ComplexArray product = Y.product(kOrdinates);
+//        FastFourierTransform.fft(product, true);
+//
+//        densityPoints = rescaleAndTrim(product.real);
+//        /*System.out.println("Y");
+//        for (int i = 0; i < gridSize; i++) {
+//        	System.out.println(densityPoints[i]);
+//        }*/
+//    }
 
-        ComplexArray product = Y.product(kOrdinates);
-        FastFourierTransform.fft(product, true);
-
-        densityPoints = rescaleAndTrim(product.real); 
-        /*System.out.println("Y");
-        for (int i = 0; i < gridSize; i++) {
-        	System.out.println(densityPoints[i]);
-        }*/
-    }
-
-    private void makeOrdinates() {
-
-        final int length = 2 * gridSize;
-        if (kOrdinates == null) {
-            kOrdinates = new ComplexArray(new double[length]);
-        }
-
-        // Fill with grid values
-        final double max = 2.0 * (up - lo);
-        double value = 0;
-        final double inc = max / (length - 1);
-        for (int i = 0; i <= gridSize; i++) {
-            kOrdinates.real[i] = value;
-            value += inc;
-        }
-        for (int i = gridSize + 1; i < length; i++) {
-            kOrdinates.real[i] = -kOrdinates.real[length - i];
-        }
-        fillKernelOrdinates(kOrdinates, bandWidth);
-
-        FastFourierTransform.fft(kOrdinates, false);
-        kOrdinates.conjugate();
-
-        // Make x grid
-        xPoints = new double[gridSize];
-        double x = lo;
-        double delta = (up - lo) / (gridSize - 1);
-        //System.out.println("X");
-        for (int i = 0; i < gridSize; i++) {
-            xPoints[i] = x;
-            x += delta;
-            //System.out.println(xPoints[i]);
-        }
-        //System.out.println();
-    }
-
-    @Override
-    protected double evaluateKernel(double x) {        
-        if (!densityKnown) {
-        	//computeDensity() calls makeOrdinates and transformData
-        	computeDensity();
-        }
-        //xPoints and densityPoints are now back in normal space
-        return linearApproximate(finalXPoints, finalDensityPoints, x, 0.0, 0.0);
-    }
+//    private void makeOrdinates() {
+//
+//        final int length = 2 * gridSize;
+//        if (kOrdinates == null) {
+//            kOrdinates = new ComplexArray(new double[length]);
+//        }
+//
+//        // Fill with grid values
+//        final double max = 2.0 * (up - lo);
+//        double value = 0;
+//        final double inc = max / (length - 1);
+//        for (int i = 0; i <= gridSize; i++) {
+//            kOrdinates.real[i] = value;
+//            value += inc;
+//        }
+//        for (int i = gridSize + 1; i < length; i++) {
+//            kOrdinates.real[i] = -kOrdinates.real[length - i];
+//        }
+//        fillKernelOrdinates(kOrdinates, bandWidth);
+//
+//        FastFourierTransform.fft(kOrdinates, false);
+//        kOrdinates.conjugate();
+//
+//        // Make x grid
+//        xPoints = new double[gridSize];
+//        double x = lo;
+//        double delta = (up - lo) / (gridSize - 1);
+//        //System.out.println("X");
+//        for (int i = 0; i < gridSize; i++) {
+//            xPoints[i] = x;
+//            x += delta;
+//            //System.out.println(xPoints[i]);
+//        }
+//        //System.out.println();
+//    }
+//
+//    @Override
+//    protected double evaluateKernel(double x) {
+//        if (!densityKnown) {
+//        	//computeDensity() calls makeOrdinates and transformData
+//        	computeDensity();
+//        }
+//        //xPoints and densityPoints are now back in normal space
+//        return linearApproximate(finalXPoints, finalDensityPoints, x, 0.0, 0.0);
+//    }
 
     @Override
     protected void processBounds(Double lowerBound, Double upperBound) {
@@ -396,41 +379,52 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
 
     @Override
     protected void setBandWidth(Double bandWidth) {
-        if (bandWidth == null) {
-            // Default bandwidth
-            this.bandWidth = bandwidthNRD(sample);
-        } else
-            this.bandWidth = bandWidth;
-                    
-        densityKnown = false;
+        resetIndices(transformIncreasing);
+        super.setBandWidth(bandWidth);
     }
 
-    public double bandwidthNRD(double[] x) {
-        int[] indices = new int[x.length];
-        HeapSort.sort(x, indices);
+//    @Override
+//    protected void setBandWidth(Double bandWidth) {
+//        if (bandWidth == null) {
+//            // Default bandwidth
+//            this.bandWidth = bandwidthNRD(sample);
+//        } else
+//            this.bandWidth = bandWidth;
+//
+//        densityKnown = false;
+//    }
+//
+//    public double bandwidthNRD(double[] x) {
+//        int[] indices = new int[x.length];
+//        HeapSort.sort(x, indices);
+//
+//        final double h =
+//                (DiscreteStatistics.quantile(0.75, x, indices) - DiscreteStatistics.quantile(0.25, x, indices)) / 1.34;
+//        return 1.06 *
+//                Math.min(Math.sqrt(DiscreteStatistics.variance(x)), h) *
+//                Math.pow(x.length, -0.2);
+//    }
 
-        final double h =
-                (DiscreteStatistics.quantile(0.75, x, indices) - DiscreteStatistics.quantile(0.25, x, indices)) / 1.34;
-        return 1.06 *
-                Math.min(Math.sqrt(DiscreteStatistics.variance(x)), h) *
-                Math.pow(x.length, -0.2);
-    }
+//    private ComplexArray kOrdinates;
+//    private double[] xPoints, finalXPoints, backupXPoints;
+//    private double[] densityPoints, finalDensityPoints;
+//    private double[] backupSample, logitSample;
 
-    private ComplexArray kOrdinates;
-    private double[] xPoints, finalXPoints, backupXPoints;
-    private double[] densityPoints, finalDensityPoints;
+    private double[] finalXPoints, backupXPoints;
+    private double[] finalDensityPoints;
     private double[] backupSample, logitSample;
+    private boolean transformIncreasing = true; // log is increasing
 
-    private int gridSize;
-    private double cut;
-    private double from;
-    private double to;
-    private double lo;
-    private double up;
+//    private int gridSize;
+//    private double cut;
+//    private double from;
+//    private double to;
+//    private double lo;
+//    private double up;
 
     private double upperLimit;
 
-    private boolean densityKnown = false;
+//    private boolean densityKnown = false;
 
     public static void main(String[] args) {
 
@@ -444,33 +438,46 @@ public class LogitTransformedNormalKDEDistribution extends KernelDensityEstimato
         }
 
         //Generate R code for visualisation in [0,1]
-        System.out.print("par(mfrow=c(2,2))\n\nsamples <- c(");
+        System.out.print("par(mfrow=c(2,3))\n\nsamples <- c(");
         for (int i = 0; i < samples.length-1; i++) {
             System.out.print(samples[i] + ",");
+            if (i % 10 == 0) System.out.print("\n");
         }
         System.out.println(samples[samples.length-1] + ")\n");
         System.out.println("hist(samples,200,xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
         System.out.println("plot(density(samples),xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
-        LogitTransformedNormalKDEDistribution ltn = new LogitTransformedNormalKDEDistribution(samples, upperlimit);
+        LogitTransformedNormalKDEDistribution ltnOld = new LogitTransformedNormalKDEDistribution(samples, upperlimit);
+        TransformedNormalKDEDistribution ltnNew = TransformedNormalKDEDistribution.getLogitTransformedNormalKDEDistribution(samples, upperlimit);
         NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
 
         System.out.print("normalKDE <- c(");
         for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
             Double test = 0.0 + ((double)i)/(1000);
             System.out.print(nKDE.evaluateKernel(test) + ",");
+            if (i % 10 == 0) System.out.print("\n");
         }
         System.out.println(nKDE.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
         System.out.println("index <- seq(" + (upperlimit-1) + "," + (upperlimit+1) + ",by=0.001)");
         System.out.println("plot(index,normalKDE,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
-        System.out.print("TransKDE <- c(");
+        System.out.print("TransKDEOld <- c(");
         for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
             Double test = 0.0 + ((double)i)/(1000);
-            System.out.print(ltn.evaluateKernel(test) + ",");
+            System.out.print(ltnOld.evaluateKernel(test) + ",");
+            if (i % 10 == 0) System.out.print("\n");
         }
-        System.out.println(ltn.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
-        System.out.println("plot(index,TransKDE,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
+        System.out.println(ltnOld.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
+        System.out.println("plot(index,TransKDEOld,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
+
+        System.out.print("TransKDENew <- c(");
+        for (int i = ((int)upperlimit-1)*1000; i < ((int)upperlimit+1)*1000; i++) {
+            Double test = 0.0 + ((double)i)/(1000);
+            System.out.print(ltnNew.evaluateKernel(test) + ",");
+            if (i % 10 == 0) System.out.print("\n");
+        }
+        System.out.println(ltnNew.evaluateKernel((((int)upperlimit+1)*1000)/((upperlimit*1000))) + ")\n");
+        System.out.println("plot(index,TransKDENew,type=\"l\",xlim=c(" + (upperlimit-0.5) + "," + (upperlimit+0.5) + "))\n");
 
     }
 

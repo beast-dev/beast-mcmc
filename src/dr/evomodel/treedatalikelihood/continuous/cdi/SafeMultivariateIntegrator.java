@@ -6,6 +6,7 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
+import static dr.math.matrixAlgebra.missingData.InversionResult.mult;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
@@ -40,6 +41,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     private static final boolean TIMING = false;
 
     @Override
+    public void getBranchPrecision(int bufferIndex, int precisionIndex, double[] precision) {
+        getBranchPrecision(bufferIndex, precision);
+    }
+
     public void getBranchPrecision(int bufferIndex, double[] precision) {
 
         if (bufferIndex == -1) {
@@ -54,7 +59,29 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void getRootPrecision(int priorBufferIndex, double[] precision) {
+    public void getBranchVariance(int bufferIndex, int precisionIndex, double[] precision) {
+        getBranchVariance(bufferIndex, precision);
+    }
+
+    public void getBranchVariance(int bufferIndex, double[] variance) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        assert (variance != null);
+        assert (variance.length >= dimTrait * dimTrait);
+
+        System.arraycopy(variances, bufferIndex * dimTrait * dimTrait,
+                variance, 0, dimTrait * dimTrait);
+    }
+
+    @Override
+    public void getRootPrecision(int priorBufferIndex, int precisionIndex, double[] precision) {
+        getRootPrecision(priorBufferIndex, precision);
+    }
+
+    private void getRootPrecision(int priorBufferIndex, double[] precision) {
 
         assert (precision != null);
         assert (precision.length >= dimTrait * dimTrait);
@@ -471,20 +498,25 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Vip = matrix0;
             final DenseMatrix64F Vi = wrap(partials, ibo + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
             CommonOps.add(Vi, Vdi, Vip);
-            assert !allZeroOrInfinite(Vip) : "Zero-length branch on data is not allowed.";
+            if (allZeroOrInfinite(Vip)) {
+                throw new RuntimeException("Zero-length branch on data is not allowed.");
+            }
             ci = safeInvert2(Vip, Pip, getDeterminant);
 
         } else {
 
             final DenseMatrix64F tmp1 = matrix0;
             CommonOps.add(Pi, Pdi, tmp1);
-            final DenseMatrix64F tmp2 = new DenseMatrix64F(dimTrait, dimTrait);
+            final DenseMatrix64F tmp2 = matrix1;
             safeInvert2(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
-            if (getDeterminant && getEffectiveDimension(iBuffer) == 0) ci = safeDeterminant(tmp1, false);
+            if (getDeterminant) ci = safeDeterminant(tmp1, true);
             CommonOps.mult(Pi, tmp1, Pip);
-            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) ci = safeDeterminant(Pip, false);
+            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) {
+                InversionResult cP = safeDeterminant(Pi, true);
+                ci = mult(ci, cP);
+            }
         }
 
         if (TIMING) {
@@ -535,11 +567,14 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
+    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
+                                           final double[] logLikelihoods,
                                            boolean incrementOuterProducts, boolean isIntegratedProcess) {
         assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

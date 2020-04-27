@@ -78,6 +78,15 @@ public class PositiveOrderedTransform extends Transform.MultivariateTransform {
         throw new RuntimeException("Not relevant.");
     }
 
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        if (values[0] <= 0.0) return false;
+        for (int i = 1; i < dim; i++) {
+            if ((values[i] - values[i-1]) <= 0.0) return false;
+        }
+        return true;
+    }
+
     public String getTransformName() {
         return "PositiveOrdered";
     }

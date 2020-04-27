@@ -1,7 +1,7 @@
 /*
- * OldStructuredCoalescentLikelihood.java
+ * StructuredCoalescentLikelihood.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,9 +27,10 @@ package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.coalescent.IntervalType;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -37,10 +38,12 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
+import dr.evomodel.treelikelihood.AncestralStateTraitProvider;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 import dr.util.*;
 
 import java.util.ArrayList;
@@ -55,7 +58,7 @@ import java.util.List;
  * "New routes to phylogeography: a Bayesian structured coalescent approximation".
  * PLOS Genetics 11, e1005421; doi: 10.1371/journal.pgen.1005421
  */
-public class StructuredCoalescentLikelihood extends AbstractModelLikelihood implements Units, Citable {
+public class StructuredCoalescentLikelihood extends AbstractModelLikelihood implements Units, Citable, AncestralStateTraitProvider, TreeTraitProvider {
 
     //TODO: the likelihood class should have minimum functionality, i.e. if the likelihood needs to be recomputed
     //then compute it by calling a StructuredCoalescentModel calculateLikelihood method; if not, then simply return it
@@ -71,13 +74,15 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     private static final boolean ASSOC_MULTIPLICATION = true;
 
     public StructuredCoalescentLikelihood(Tree tree, BranchRateModel branchRateModel, Parameter popSizes, PatternList patternList,
-                                          GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
-                                          TaxonList includeSubtree, List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
+                                          DataType dataType, String tag, GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
+                                          TaxonList includeSubtree, List<TaxonList> excludeSubtrees, boolean useMAP) throws TreeUtils.MissingTaxonException {
 
         super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT);
 
         this.treeModel = (TreeModel)tree;
         this.patternList = patternList;
+        this.dataType = dataType;
+        this.useMAP = useMAP;
 
         if (tree instanceof TreeModel) {
             addModel((TreeModel) tree);
@@ -145,6 +150,31 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
         this.likelihoodKnown = false;
 
+        reconstructedStates = new int[treeModel.getNodeCount()][patternList.getPatternCount()];
+        storedReconstructedStates = new int[treeModel.getNodeCount()][patternList.getPatternCount()];
+
+        treeTraits.addTrait(new TreeTrait.IA() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public Class getTraitClass() {
+                return int[].class;
+            }
+
+            public int[] getTrait(Tree tree, NodeRef node) {
+                return getStatesForNode(tree, node);
+            }
+
+            public String getTraitString(Tree tree, NodeRef node) {
+                return formattedState(getStatesForNode(tree, node), dataType);
+            }
+        });
+
     }
 
     // **************************************************************
@@ -169,6 +199,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
      * given a demographic model.
      */
     public double calculateLogLikelihood() {
+        areStatesRedrawn = false;
 
         if (DEBUG) {
             System.out.println("\nStructuredCoalescentLikelihood.calculateLogLikelihood():");
@@ -183,6 +214,8 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
 
         logLikelihood = traverseTree(treeModel, treeModel.getRoot(), patternList);
+        redrawAncestralStates();
+
         return logLikelihood;
     }
 
@@ -794,6 +827,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             //TODO not all matrices will have to be recomputed all the time
             matricesKnown = false;
             treeModelUpdateFired = true;
+            areStatesRedrawn = false;
         } else if (model == branchRateModel) {
             matricesKnown = false;
             //the following to accommodate events stemming from the upDownOperator
@@ -804,6 +838,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             }*/
             //updateAllDensities();
             likelihoodKnown = false;
+            areStatesRedrawn = false;
         } else if (model == generalSubstitutionModel) {
             matricesKnown = false;
             //TODO is this necessary? turns out it is to avoid store/restore issues but why??
@@ -814,6 +849,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
             }*/
             //updateAllDensities();
             likelihoodKnown = false;
+            areStatesRedrawn = false;
         } else {
             throw new RuntimeException("Unknown handleModelChangedEvent source, exiting.");
         }
@@ -831,6 +867,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         //if even one of the popSizes has changed, the whole density needs to be recomputed
         //hence we should use the adaptive multivariate transition kernel on all popSizes
         likelihoodKnown = false;
+        areStatesRedrawn = false;
         //a change in one of the popSizes does not affect matrix exponentiation
         matricesKnown = true;
     }
@@ -842,6 +879,16 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
+
+        if (areStatesRedrawn) {
+            for (int i = 0; i < reconstructedStates.length; i++) {
+                System.arraycopy(reconstructedStates[i], 0, storedReconstructedStates[i], 0, reconstructedStates[i].length);
+            }
+        }
+
+        storedAreStatesRedrawn = areStatesRedrawn;
+        //TODO look into the line below
+        //storedJointLogLikelihood = jointLogLikelihood;
     }
 
     protected void restoreState() {
@@ -854,6 +901,14 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         }
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+
+        int[][] temp = reconstructedStates;
+        reconstructedStates = storedReconstructedStates;
+        storedReconstructedStates = temp;
+
+        areStatesRedrawn = storedAreStatesRedrawn;
+        //TODO look into the line below
+        //jointLogLikelihood = storedJointLogLikelihood;
     }
 
     @Override
@@ -864,6 +919,7 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
     public void makeDirty() {
         likelihoodKnown = false;
         matricesKnown = false;
+        areStatesRedrawn = false;
     }
 
     protected void updateAllDensities() {
@@ -873,10 +929,137 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
         likelihoodKnown = false;
     }
 
+    public void redrawAncestralStates() {
+        //jointLogLikelihood = 0;
+        traverseSample(treeModel, treeModel.getRoot());
+        areStatesRedrawn = true;
+    }
+
+    //TODO DTA employs the parent state for this; need this here as well?
+    public void traverseSample(TreeModel tree, NodeRef node) {
+        //System.out.println("traverseSample: " + node.toString());
+
+        //int[] state = new int[patternList.getPatternCount()];
+
+        if (!tree.isExternal(node)) {
+            //internal node including the root
+            double[] liks = nodeProbDist[node.getNumber()].startLineageProbs;
+            /*System.out.println("length: " + liks.length);
+            for (int i = 0; i < liks.length; i++) {
+                System.out.println(liks[i]);
+            }*/
+            for (int j = 0; j < patternList.getPatternCount(); j++) {
+                reconstructedStates[node.getNumber()][j] = drawChoice(liks);
+            }
+        } else {
+            //external node, currently not allowing ambiguities
+            double[] liks = nodeProbDist[node.getNumber()].endLineageProbs;
+            /*System.out.println("length: " + liks.length);
+            for (int i = 0; i < liks.length; i++) {
+                System.out.println(liks[i]);
+            }*/
+            for (int j = 0; j < patternList.getPatternCount(); j++) {
+                reconstructedStates[node.getNumber()][j] = drawChoice(liks);
+            }
+        }
+
+        //System.exit(0);
+
+        NodeRef child1 = tree.getChild(node, 0);
+        if (child1 != null) {
+            traverseSample(tree, child1);
+        }
+
+        NodeRef child2 = tree.getChild(node, 1);
+        if (child2 != null) {
+            traverseSample(tree, child2);
+        }
+
+    }
+
+    private int drawChoice(double[] measure) {
+        if (useMAP) {
+            double max = measure[0];
+            int choice = 0;
+            for (int i = 1; i < measure.length; i++) {
+                if (measure[i] > max) {
+                    max = measure[i];
+                    choice = i;
+                }
+            }
+            return choice;
+        } else {
+            return MathUtils.randomChoicePDF(measure);
+        }
+    }
+
+    @Override
+    public TreeModel getTreeModel() {
+        return this.treeModel;
+    }
+
+    protected TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
+
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
+    }
+
+    public String formattedState(int[] state) {
+        return formattedState(state, dataType);
+    }
+
+    private static String formattedState(int[] state, DataType dataType) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("\"");
+        if (dataType instanceof GeneralDataType) {
+            boolean first = true;
+            for (int i : state) {
+                if (!first) {
+                    sb.append(" ");
+                } else {
+                    first = false;
+                }
+
+                sb.append(dataType.getCode(i));
+            }
+        } else {
+            throw new RuntimeException("Only GeneralDataType currently accepted.");
+            /*for (int i : state) {
+                if (dataType instanceof Codons) {
+                    sb.append(dataType.getTriplet(i));
+                } else {
+                    sb.append(dataType.getChar(i));
+                }
+            }*/
+        }
+        sb.append("\"");
+        return sb.toString();
+    }
+
+    public int[] getStatesForNode(Tree tree, NodeRef node) {
+        if (tree != treeModel) {
+            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
+        }
+
+        if (!likelihoodKnown) {
+            calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+
+        if (!areStatesRedrawn) {
+            redrawAncestralStates();
+        }
+        return reconstructedStates[node.getNumber()];
+    }
+
+    //TreeTraitProvider interface
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
+    }
+
     /**
      * Private class that allows for objects that hold the computed probability distribution of lineages among demes
      */
-    //TODO need to implement caching mechanism for this class?
     private class ProbDist {
 
         //lineage probability distribution at start of interval
@@ -1153,6 +1336,14 @@ public class StructuredCoalescentLikelihood extends AbstractModelLikelihood impl
 
     //the discrete trait data
     private PatternList patternList;
+
+    //objects for reconstructing ancestral states
+    private final DataType dataType;
+    private boolean useMAP;
+    private int[][] reconstructedStates;
+    private int[][] storedReconstructedStates;
+    protected boolean areStatesRedrawn = false;
+    protected boolean storedAreStatesRedrawn = false;
 
     //expected starting lineage counts
     private double[] startExpected;

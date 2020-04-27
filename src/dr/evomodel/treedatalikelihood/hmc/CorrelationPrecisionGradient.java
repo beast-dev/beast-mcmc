@@ -30,7 +30,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
-import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.Vector;
 
@@ -45,7 +44,7 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
                                         Likelihood likelihood,
                                         MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, -1.0, 1.0);
     }
 
     @Override
@@ -58,37 +57,8 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
         return compoundSymmetricMatrix.getUntransformedOffDiagonalParameter();
     }
 
-    MultivariateFunction getNumeric() {
-
-        return new MultivariateFunction() {
-
-            @Override
-            public double evaluate(double[] argument) {
-
-                for (int i = 0; i < argument.length; ++i) {
-                    compoundSymmetricMatrix.getOffDiagonalParameter().setParameterValue(i, argument[i]);
-                }
-
-                likelihood.makeDirty();
-                System.err.println("likelihood in numeric:" + likelihood.getLogLikelihood());
-                return likelihood.getLogLikelihood();
-            }
-
-            @Override
-            public int getNumArguments() {
-                return compoundSymmetricMatrix.getOffDiagonalParameter().getDimension();
-            }
-
-            @Override
-            public double getLowerBound(int n) {
-                return -1.0;
-            }
-
-            @Override
-            public double getUpperBound(int n) {
-                return 1.0;
-            }
-        };
+    protected Parameter getNumericalParameter() {
+        return compoundSymmetricMatrix.getOffDiagonalParameter();
     }
 
     @Override
@@ -121,5 +91,11 @@ public class CorrelationPrecisionGradient extends AbstractPrecisionGradient impl
     @Override
     public double[][] getHessianLogDensity() {
         return new double[0][];
+    }
+
+    @Override
+    public String getReport() {
+        return "correlationGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
+                super.getReport();
     }
 }

@@ -37,6 +37,8 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     final Parameter diagonalParameter;
     final Parameter offDiagonalParameter;
 
+    final CompoundParameter untransformedCompoundParameter;
+
     protected final int dim;
 
     AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal) {
@@ -46,6 +48,9 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         offDiagonalParameter = offDiagonal;
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
+
+        untransformedCompoundParameter = new CompoundParameter(this.getParameterName());
+        setUntransformedCompoundParameter();
     }
 
     AbstractTransformedCompoundMatrix(Parameter diagonals, Parameter offDiagonal,
@@ -57,6 +62,14 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
                 (transform == null) ? offDiagonal: new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
+
+        untransformedCompoundParameter = new CompoundParameter(this.getParameterName());
+        setUntransformedCompoundParameter();
+    }
+
+    private void setUntransformedCompoundParameter() {
+        untransformedCompoundParameter.addParameter(getDiagonalParameter());
+        untransformedCompoundParameter.addParameter(getUntransformedOffDiagonalParameter());
     }
 
     @Override
@@ -137,10 +150,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     }
 
     public CompoundParameter getUntransformedCompoundParameter(){
-        CompoundParameter param = new CompoundParameter(this.getParameterName());
-        param.addParameter(getDiagonalParameter());
-        param.addParameter(getUntransformedOffDiagonalParameter());
-        return param;
+        return untransformedCompoundParameter;
     }
 
     abstract double[] updateGradientDiagonal(double[] gradient);

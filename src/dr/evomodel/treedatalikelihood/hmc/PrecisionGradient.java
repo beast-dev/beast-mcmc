@@ -41,7 +41,7 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
                              Likelihood likelihood,
                              MatrixParameterInterface parameter) {
 
-        super(gradientWrtPrecisionProvider, likelihood, parameter);
+        super(gradientWrtPrecisionProvider, likelihood, parameter, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
     }
 
     @Override
@@ -76,8 +76,9 @@ public class PrecisionGradient extends AbstractPrecisionGradient implements Hess
     }
 
     @Override
-    String checkNumeric(double[] analytic) {
-        throw new RuntimeException("Not yet implemented");
+    public String getReport() {
+        return "precisionGradient." + compoundSymmetricMatrix.getParameterName() + "\n" +
+                super.getReport();
     }
 
     @Override

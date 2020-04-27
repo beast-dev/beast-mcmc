@@ -71,7 +71,12 @@ public class GibbsIndependentGammaOperator extends SimpleMCMCOperator implements
 		setWeight(weight);
 		
 	}
-	
+
+	@Override
+	public void setPathParameter(double beta) {
+		//do nothing
+	}
+
 	public String getPerformanceSuggestion() {
 		return "";
 	}

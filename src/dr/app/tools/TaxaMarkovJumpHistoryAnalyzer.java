@@ -27,9 +27,6 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -43,17 +40,14 @@ import java.util.List;
  * @author Philippe Lemey
  * @author Marc Suchard
  */
-public class TaxaMarkovJumpHistoryAnalyzer {
+public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
     private final static Version version = new BeastVersion();
 
-    // Messages to stderr, output to stdout
-    private static PrintStream progressStream = System.err;
-
     private static final String HISTORY = "history";
-    private static final String BURNIN = "burnin";
+    private static final String BURN_IN = "burnIn";
 
-    private static final boolean NEW_OUTPUT = true;
+//    private static final boolean NEW_OUTPUT = true;
 
     private TaxaMarkovJumpHistoryAnalyzer(String inputFileName,
                                           String outputFileName,
@@ -61,12 +55,12 @@ public class TaxaMarkovJumpHistoryAnalyzer {
                                           String endState, // if no end state is provided, we will need to go to the root.
                                           String stateAnnotationName,
                                           double mrsd,
-                                          int burnin
+                                          int burnIn
     ) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
 
-        readTrees(trees, inputFileName, burnin);
+        readTrees(trees, inputFileName, burnIn);
 
         List<Taxon> taxa = getTaxaToProcess(trees.get(0), taxaToProcess);
 
@@ -74,83 +68,25 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         this.stateAnnotationName = stateAnnotationName;
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(trees, taxa, endState, burnin);
+        processTrees(trees, taxa, endState, burnIn);
         closeOutputFile(ps);
-    }
-
-    private void readTrees(List<Tree> trees, String inputFileName, int burnin) throws IOException {
-
-        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
-
-        long stepSize = 10000 / 60;
-
-        FileReader fileReader = new FileReader(inputFileName);
-        TreeImporter importer = new NexusImporter(fileReader, false);
-
-        try {
-            totalTrees = 0;
-            while (importer.hasTree()) {
-
-                Tree tree = importer.importNextTree();
-                if (trees == null) {
-                    trees = new ArrayList<>();
-                }
-                trees.add(tree);
-
-                if (totalTrees > 0 && totalTrees % stepSize == 0) {
-                    progressStream.print("*");
-                    progressStream.flush();
-                }
-                totalTrees++;
-                if (totalTrees > burnin) {
-                    totalUsedTrees++;
-                }
-            }
-
-        } catch (Importer.ImportException e) {
-            System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return;
-        }
-
-        fileReader.close();
-
-        progressStream.println();
-        progressStream.println();
-
-        if (totalTrees < 1) {
-            System.err.println("No trees");
-            return;
-        }
-        if (totalUsedTrees < 1) {
-            System.err.println("No trees past burnin (=" + burnin + ")");
-            return;
-        }
-
-        progressStream.println("Total trees read: " + totalTrees);
-        progressStream.println("Total trees used: " + totalUsedTrees);
     }
 
     private List<Taxon> getTaxaToProcess(Tree tree, String[] taxaToProcess) {
         List<Taxon> taxa = new ArrayList<>();
         if (taxaToProcess != null) {
             for (String name : taxaToProcess) {
-                int taxonId = tree.getTaxonIndex(name);
-                if (taxonId == -1) {
-                    throw new RuntimeException("Unable to find taxon '" + name + "'.");
-                }
-                taxa.add(tree.getTaxon(taxonId));
+                addTaxonByName(tree, taxa, name);
             }
         }
         return taxa;
     }
 
-    private void processTrees(List<Tree> trees, List<Taxon> taxa, String endState, int burnin) {
-        if (burnin < 0) {
-            burnin = 0;
+    private void processTrees(List<Tree> trees, List<Taxon> taxa, String endState, int burnIn) {
+        if (burnIn < 0) {
+            burnIn = 0;
         }
-        for (int i = burnin; i < trees.size(); ++i) {
+        for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
             processOneTree(tree, taxa, endState);
         }
@@ -185,7 +121,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         double startTime;
         double endTime;
 
-        private static final String DELIMITOR = ",";
+        private static final String DELIMITER = ",";
 
         private Row(String taxonId, String treeId,
                     String location, double startTime, double endTime) {
@@ -194,8 +130,8 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         }
 
         public String toString() {
-            return taxonId + DELIMITOR + treeId + DELIMITOR + location + DELIMITOR
-                    + startTime + DELIMITOR + endTime;
+            return taxonId + DELIMITER + treeId + DELIMITER + location + DELIMITER
+                    + startTime + DELIMITER + endTime;
         }
     }
 
@@ -211,8 +147,6 @@ public class TaxaMarkovJumpHistoryAnalyzer {
     }
 
     private void processOneTip(Tree tree, NodeRef tip, String endState, String treeId, String taxonId) {
-        
-        StringBuilder sb = new StringBuilder(taxonId + "," + treeId + ",");
 
         String currentState = (String) tree.getNodeAttribute(tip, stateAnnotationName);
         if (currentState == null) {
@@ -220,11 +154,7 @@ public class TaxaMarkovJumpHistoryAnalyzer {
             System.exit(-1);
         }
 
-        sb.append(currentState + ",");
-
-        double nodeTime = adjust(tree.getNodeHeight(tip));
-        sb.append(nodeTime);
-        double startTime = nodeTime;
+        double startTime = adjust(tree.getNodeHeight(tip));
 
         while (!pathDone(tree, tip, currentState, endState)) {
 
@@ -240,18 +170,13 @@ public class TaxaMarkovJumpHistoryAnalyzer {
                         System.exit(-1);
                     }
 
-                    sb.append(",");
                     double jumpTime = adjust((Double) jump[0]);
 
                     Row row = new Row(taxonId, treeId, currentState, startTime, jumpTime);
-                    if (NEW_OUTPUT) {
-                        ps.println(row);
-                    }
-                    startTime = jumpTime;
+                    ps.println(row);
 
+                    startTime = jumpTime;
                     currentState = ((String) jump[1]);
-                    sb.append(currentState + ",");
-                    sb.append(jumpTime);
                 }
             }
             tip = tree.getParent(tip);
@@ -259,13 +184,8 @@ public class TaxaMarkovJumpHistoryAnalyzer {
 
         double endTime = adjust(tree.getNodeHeight(tip));
         Row row = new Row(taxonId, treeId, currentState, startTime, endTime);
-        if (NEW_OUTPUT) {
-            ps.println(row);
-        }
 
-        if (!NEW_OUTPUT && ps != null) {
-            ps.println(sb.toString());
-        }
+        ps.println(row);
     }
 
     private static Object[] readCJH(NodeRef node, Tree treeTime) {
@@ -276,23 +196,10 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         }
     }
 
-    private PrintStream openOutputFile(String outputFileName) {
-        PrintStream ps = null;
-        if (outputFileName == null) {
-            ps = progressStream;
-        } else {
-            try {
-                ps = new PrintStream(new File(outputFileName));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        if (NEW_OUTPUT) {
-            ps.println("taxonId,treeId,location,startTime,endTime");
-        } else {
-            ps.println("#each trajectory starts with the tip name, the tree number its state, its height, and then the subsequent states adopted and their transition times up to either the root state or a pre-defined state");
-        }
+    PrintStream openOutputFile(String outputFileName) {
 
+        PrintStream ps = super.openOutputFile(outputFileName);
+        ps.println("taxonId,treeId,location,startTime,endTime");
         return ps;
     }
 
@@ -301,9 +208,6 @@ public class TaxaMarkovJumpHistoryAnalyzer {
             ps.close();
         }
     }
-
-    private int totalTrees = 0;
-    private int totalUsedTrees = 0;
 
     private double mrsd;
     private String stateAnnotationName;
@@ -320,15 +224,6 @@ public class TaxaMarkovJumpHistoryAnalyzer {
         progressStream.println();
     }
 
-    public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
-    }
-
     public static void printUsage(Arguments arguments) {
 
         arguments.printUsage("TaxonMarkovJumpHistory", "<input-file-name> [<output-file-name>]");
@@ -340,19 +235,17 @@ public class TaxaMarkovJumpHistoryAnalyzer {
     //Main method
     public static void main(String[] args) throws IOException {
 
-        String inputFileName = null;
-        String outputFileName = null;
         String[] taxaToProcess = null;
         String endState = null;
         String stateAnnotationName = "location";
         double mrsd = Double.MAX_VALUE;
-        int burnin = -1;
+        int burnIn = -1;
 
         printTitle();
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption("taxaToProcess", "list", "a list of taxon names to process MJHs"),
                         new Arguments.StringOption("endState", "end_state", "a state at which the MJH processing stops"),
                         new Arguments.StringOption("stateAnnotation", "state_annotation_name", "The annotation name for the discrete state string"),
@@ -360,18 +253,8 @@ public class TaxaMarkovJumpHistoryAnalyzer {
                         new Arguments.Option("help", "option to print this message"),
                 });
 
-        try {
-            arguments.parseArguments(args);
-        } catch (Arguments.ArgumentException ae) {
-            progressStream.println(ae);
-            printUsage(arguments);
-            System.exit(1);
-        }
 
-        if (arguments.hasOption("help")) {
-            printUsage(arguments);
-            System.exit(0);
-        }
+        handleHelp(arguments, args, TaxaMarkovJumpHistoryAnalyzer::printUsage);
 
         if (arguments.hasOption("taxaToProcess")) {
             taxaToProcess = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("taxaToProcess"));
@@ -389,29 +272,15 @@ public class TaxaMarkovJumpHistoryAnalyzer {
             mrsd = arguments.getRealOption("mrsd");
         }
 
-        if (arguments.hasOption(BURNIN)) {
-            burnin = arguments.getIntegerOption(BURNIN);
-            System.err.println("Ignoring a burnin of " + burnin + " trees.");
+        if (arguments.hasOption(BURN_IN)) {
+            burnIn = arguments.getIntegerOption(BURN_IN);
+            System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
-        final String[] args2 = arguments.getLeftoverArguments();
+        String[] fileNames = getInputOutputFileNames(arguments, args, TaxaMarkovJumpHistoryAnalyzer::printUsage);
 
-        switch (args2.length) {
-            case 2:
-                outputFileName = args2[1];
-                // fall to
-            case 1:
-                inputFileName = args2[0];
-                break;
-            default: {
-                System.err.println("Unknown option: " + args2[2]);
-                System.err.println();
-                printUsage(arguments);
-                System.exit(1);
-            }
-        }
-
-        new TaxaMarkovJumpHistoryAnalyzer(inputFileName, outputFileName, taxaToProcess, endState, stateAnnotationName, mrsd, burnin);
+        new TaxaMarkovJumpHistoryAnalyzer(fileNames[0], fileNames[1], taxaToProcess, endState, stateAnnotationName,
+                mrsd, burnIn);
 
         System.exit(0);
     }

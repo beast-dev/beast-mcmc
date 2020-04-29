@@ -27,7 +27,6 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evolution.io.*;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.util.Version;
@@ -40,15 +39,12 @@ import java.util.*;
  * @author Marc Suchard
  * @author Andrew Rambaut
  */
-public class TreePruner {
+public class TreePruner extends BaseTreeTool {
 
     private final static Version version = new BeastVersion();
 
-    // Messages to stderr, output to stdout
-    private static PrintStream progressStream = System.err;
-
     private static final String[] falseTrue = {"false", "true"};
-    private static final String NAMECONTENT = "nameContent";
+    private static final String NAME_CONTENT = "nameContent";
 
     private TreePruner(String inputFileName,
                        String outputFileName,
@@ -58,7 +54,7 @@ public class TreePruner {
 
         List<Tree> trees = new ArrayList<>();
 
-        readTrees(trees, inputFileName);
+        readTrees(trees, inputFileName, 0);
 
         List<Taxon> taxa = getTaxaToPrune(trees.get(0), taxaToPrune, basedOnNameContent);
 
@@ -67,68 +63,6 @@ public class TreePruner {
         writeOutputFile(trees, outputFileName);
     }
 
-    private void readTrees(List<Tree> trees, String inputFileName) throws IOException {
-
-        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
-
-        long stepSize = 10000 / 60;
-
-        FileReader fileReader = new FileReader(inputFileName);
-        TreeImporter importer = new NexusImporter(fileReader, false);
-
-        try {
-            totalTrees = 0;
-            while (importer.hasTree()) {
-
-                Tree tree = importer.importNextTree();
-                if (trees == null) {
-                    trees = new ArrayList<>();
-                }
-                trees.add(tree);
-
-                if (totalTrees > 0 && totalTrees % stepSize == 0) {
-                    progressStream.print("*");
-                    progressStream.flush();
-                }
-                totalTrees++;
-            }
-
-        } catch (Importer.ImportException e) {
-            System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return;
-        }
-
-        fileReader.close();
-
-        progressStream.println();
-        progressStream.println();
-
-        if (totalTrees < 1) {
-            System.err.println("No trees");
-            return;
-        }
-
-        progressStream.println("Total trees read: " + totalTrees);
-    }
-
-//    private List<Taxon> getTaxaToPrune(Tree tree, String[] names) {
-//
-//        List<Taxon> taxa = new ArrayList<>();
-//        if (names != null) {
-//            for (String name : names) {
-//
-//                int taxonId = tree.getTaxonIndex(name);
-//                if (taxonId == -1) {
-//                    throw new RuntimeException("Unable to find taxon '" + name + "'.");
-//                }
-//
-//                taxa.add(tree.getTaxon(taxonId));
-//            }
-//        }
-//        return taxa;
-//    }
     private List<Taxon> getTaxaToPrune(Tree tree, String[] names, boolean basedOnContent) {
 
         List<Taxon> taxa = new ArrayList<>();
@@ -136,11 +70,7 @@ public class TreePruner {
             for (String name : names) {
 
                 if(!basedOnContent){
-                    int taxonId = tree.getTaxonIndex(name);
-                    if (taxonId == -1) {
-                        throw new RuntimeException("Unable to find taxon '" + name + "'.");
-                    }
-                    taxa.add(tree.getTaxon(taxonId));
+                    addTaxonByName(tree, taxa, name);
                 } else {
                     int counter = 0;
                     for(int i = 0; i < tree.getTaxonCount(); i++) {
@@ -219,21 +149,10 @@ public class TreePruner {
         return sibling;
     }
 
-    int totalTrees = 0;
-
     private void writeOutputFile(List<Tree> trees, String outputFileName) {
 
-        PrintStream ps = null;
 
-        if (outputFileName == null) {
-            ps = progressStream;
-        } else {
-            try {
-                ps = new PrintStream(new File(outputFileName));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
+        PrintStream ps = openOutputFile(outputFileName);
 
         NexusExporter exporter = new NexusExporter(ps);
 
@@ -260,21 +179,8 @@ public class TreePruner {
         centreLine("Tree pruning tool", 60);
         centreLine("by", 60);
         centreLine("Philippe Lemey, Andrew Rambaut and Marc Suchard", 60);
-//        progressStream.println();
-//        centreLine("Institute of Evolutionary Biology", 60);
-//        centreLine("University of Edinburgh", 60);
-//        centreLine("a.rambaut@ed.ac.uk", 60);
         progressStream.println();
         progressStream.println();
-    }
-
-    public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
     }
 
     public static void printUsage(Arguments arguments) {
@@ -288,8 +194,6 @@ public class TreePruner {
     //Main method
     public static void main(String[] args) throws IOException {
 
-        String inputFileName = null;
-        String outputFileName = null;
         String[] taxaToPrune = null;
         boolean basedOnNameContent = false;
 
@@ -298,50 +202,24 @@ public class TreePruner {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("taxaToPrune", "list","a list of taxon names to prune"),
-                        new Arguments.StringOption(NAMECONTENT, falseTrue, false,
+                        new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
                                 "add true noise [default = true])"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
-        try {
-            arguments.parseArguments(args);
-        } catch (Arguments.ArgumentException ae) {
-            progressStream.println(ae);
-            printUsage(arguments);
-            System.exit(1);
-        }
-
-        if (arguments.hasOption("help")) {
-            printUsage(arguments);
-            System.exit(0);
-        }
+        handleHelp(arguments, args, TreePruner::printUsage);
 
         if (arguments.hasOption("taxaToPrune")) {
             taxaToPrune = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("taxaToPrune"));
         }
 
-        String nameContentString = arguments.getStringOption(NAMECONTENT);
+        String nameContentString = arguments.getStringOption(NAME_CONTENT);
         if (nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0)
             basedOnNameContent = true;
 
-        final String[] args2 = arguments.getLeftoverArguments();
+        String[] fileNames = getInputOutputFileNames(arguments, TreePruner::printUsage);
 
-        switch (args2.length) {
-            case 2:
-                outputFileName = args2[1];
-                // fall to
-            case 1:
-                inputFileName = args2[0];
-                break;
-            default: {
-                System.err.println("Unknown option: " + args2[2]);
-                System.err.println();
-                printUsage(arguments);
-                System.exit(1);
-            }
-        }
-
-        new TreePruner(inputFileName, outputFileName, taxaToPrune, basedOnNameContent);
+        new TreePruner(fileNames[0], fileNames[1], taxaToPrune, basedOnNameContent);
 
         System.exit(0);
     }

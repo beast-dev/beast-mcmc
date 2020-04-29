@@ -1,7 +1,7 @@
 /*
  * StructuredCoalescentParser.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,12 +26,14 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -48,6 +50,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
     public static final String SUBINTERVALS = "subIntervals";
+
+    public static final String MAP_RECONSTRUCTION = "useMAP";
 
     public static final Boolean USE_OLD_CODE = false;
 
@@ -80,8 +84,13 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
+        boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
+
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+        DataType dataType = patternList.getDataType();
+        String tag = xo.getAttribute(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) xo.getChild(GeneralSubstitutionModel.class);
         Parameter popSizes = (Parameter) xo.getChild(Parameter.class);
@@ -97,7 +106,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 if (USE_OLD_CODE) {
                     return new OldStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
                 } else {
-                    return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees);
+                    return new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList, dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees, useMAP);
                 }
             } catch (TreeUtils.MissingTaxonException mte) {
                 throw new XMLParseException("treeModel missing a taxon from taxon list in " + getParserName() + " element");

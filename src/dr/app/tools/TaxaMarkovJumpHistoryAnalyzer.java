@@ -53,6 +53,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                                           String outputFileName,
                                           String[] taxaToProcess,
                                           String endState, // if no end state is provided, we will need to go to the root.
+                                          double endTime,
                                           String stateAnnotationName,
                                           double mrsd,
                                           int burnIn
@@ -68,7 +69,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         this.stateAnnotationName = stateAnnotationName;
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(trees, taxa, endState, burnIn);
+        processTrees(trees, taxa, endState, endTime, burnIn);
         closeOutputFile(ps);
     }
 
@@ -82,17 +83,17 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         return taxa;
     }
 
-    private void processTrees(List<Tree> trees, List<Taxon> taxa, String endState, int burnIn) {
+    private void processTrees(List<Tree> trees, List<Taxon> taxa, String endState, double endTime, int burnIn) {
         if (burnIn < 0) {
             burnIn = 0;
         }
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            processOneTree(tree, taxa, endState);
+            processOneTree(tree, taxa, endState, endTime);
         }
     }
 
-    private void processOneTree(Tree tree, List<Taxon> taxa, String endState) {
+    private void processOneTree(Tree tree, List<Taxon> taxa, String endState, double endTime) {
 
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
@@ -100,16 +101,16 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         }
 
         for (Taxon taxon : taxa) {
-            processOneTreeForOneTaxon(tree, taxon, endState, treeId);
+            processOneTreeForOneTaxon(tree, taxon, endState, endTime, treeId);
         }
     }
 
-    private void processOneTreeForOneTaxon(Tree tree, Taxon taxon, String endState, String treeId) {
+    private void processOneTreeForOneTaxon(Tree tree, Taxon taxon, String endState, double endTime, String treeId) {
 
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef tip = tree.getExternalNode(i);
             if (tree.getNodeTaxon(tip) == taxon) {
-                processOneTip(tree, tip, endState, treeId, taxon.getId());
+                processOneTip(tree, tip, endState, endTime, treeId, taxon.getId());
             }
         }
     }
@@ -135,9 +136,18 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         }
     }
 
-    private boolean pathDone(Tree tree, NodeRef node, String currentState, String endState) {
-        return node == tree.getRoot() || currentState.equalsIgnoreCase(endState);
-    }
+    private boolean pathDone(Tree tree, NodeRef node, String currentState, String endState, double endTime, double startTime) {
+        if (endTime < Double.MAX_VALUE){
+            if (mrsd < Double.MAX_VALUE) {
+                return node == tree.getRoot() || currentState.equalsIgnoreCase(endState) || startTime<endTime;
+            } else {
+                System.err.println("end time "+endTime+" (assumed in absolute time) is ignored because no most recent sampling date (mrsd) provided");
+                return node == tree.getRoot() || currentState.equalsIgnoreCase(endState);
+            }
+        } else {
+            return node == tree.getRoot() || currentState.equalsIgnoreCase(endState);
+        }
+     }
 
     private double adjust(double time) {
         if (mrsd < Double.MAX_VALUE) {
@@ -146,7 +156,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         return time;
     }
 
-    private void processOneTip(Tree tree, NodeRef tip, String endState, String treeId, String taxonId) {
+    private void processOneTip(Tree tree, NodeRef tip, String endState, double endTime, String treeId, String taxonId) {
 
         String currentState = (String) tree.getNodeAttribute(tip, stateAnnotationName);
         if (currentState == null) {
@@ -156,7 +166,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         double startTime = adjust(tree.getNodeHeight(tip));
 
-        while (!pathDone(tree, tip, currentState, endState)) {
+        while (!pathDone(tree, tip, currentState, endState, endTime, startTime)) {
 
             Object[] jumps = readCJH(tip, tree);
             if (jumps != null) {
@@ -182,8 +192,8 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             tip = tree.getParent(tip);
         }
 
-        double endTime = adjust(tree.getNodeHeight(tip));
-        Row row = new Row(taxonId, treeId, currentState, startTime, endTime);
+        double tipTime = adjust(tree.getNodeHeight(tip));
+        Row row = new Row(taxonId, treeId, currentState, startTime, tipTime);
 
         ps.println(row);
     }
@@ -237,6 +247,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         String[] taxaToProcess = null;
         String endState = null;
+        double endTime = Double.MAX_VALUE;
         String stateAnnotationName = "location";
         double mrsd = Double.MAX_VALUE;
         int burnIn = -1;
@@ -248,6 +259,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption("taxaToProcess", "list", "a list of taxon names to process MJHs"),
                         new Arguments.StringOption("endState", "end_state", "a state at which the MJH processing stops"),
+                        new Arguments.RealOption("endTime", "a time at which the MJH processing stops"),
                         new Arguments.StringOption("stateAnnotation", "state_annotation_name", "The annotation name for the discrete state string"),
                         new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
                         new Arguments.Option("help", "option to print this message"),
@@ -272,6 +284,10 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             mrsd = arguments.getRealOption("mrsd");
         }
 
+        if (arguments.hasOption("endTime")) {
+            endTime = arguments.getRealOption("endTime");
+        }
+
         if (arguments.hasOption(BURN_IN)) {
             burnIn = arguments.getIntegerOption(BURN_IN);
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
@@ -279,7 +295,8 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         String[] fileNames = getInputOutputFileNames(arguments, TaxaMarkovJumpHistoryAnalyzer::printUsage);
 
-        new TaxaMarkovJumpHistoryAnalyzer(fileNames[0], fileNames[1], taxaToProcess, endState, stateAnnotationName,
+        new TaxaMarkovJumpHistoryAnalyzer(fileNames[0], fileNames[1], taxaToProcess, endState, endTime,
+                stateAnnotationName,
                 mrsd, burnIn);
 
         System.exit(0);

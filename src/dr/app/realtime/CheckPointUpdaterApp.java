@@ -38,7 +38,7 @@ import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.mcmc.MCMC;
 import dr.inference.model.Likelihood;
-import dr.util.Transform;
+import dr.math.MathUtils;
 import dr.xml.XMLParseException;
 import dr.xml.XMLParser;
 import org.xml.sax.SAXException;
@@ -233,6 +233,7 @@ public class CheckPointUpdaterApp {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
+                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
                         new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a state from"),
                         new Arguments.StringOption("output_file", "FILENAME", "Specify a filename for the output file"),
                         new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
@@ -250,6 +251,16 @@ public class CheckPointUpdaterApp {
         }
 
         String inputFile = null;
+        long seed = MathUtils.getSeed();
+
+        if (arguments.hasOption("seed")) {
+            seed = arguments.getLongOption("seed");
+            if (seed <= 0) {
+                System.err.println("The random number seed should be > 0");
+                System.exit(1);
+            }
+            MathUtils.setSeed(seed);
+        }
 
         if (arguments.hasOption("BEAST_XML")) {
             inputFile = arguments.getStringOption("BEAST_XML");

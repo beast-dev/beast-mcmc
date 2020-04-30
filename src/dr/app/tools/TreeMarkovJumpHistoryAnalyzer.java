@@ -30,7 +30,6 @@ import dr.app.util.Arguments;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
-import dr.evolution.util.Taxon;
 import dr.util.Version;
 
 import java.io.*;
@@ -50,7 +49,6 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
     private static final String HISTORY = "history";
     private static final String BURN_IN = "burnIn";
     private static final String[] falseTrue = {"false", "true"};
-    private static final String NAME_CONTENT = "nameContent";
 
 //    private static final boolean NEW_OUTPUT = true;
 
@@ -77,30 +75,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
     private Set getTaxaToIgnore(Tree tree, String[] taxaToProcess, boolean basedOnContent) {
         Set taxa = new HashSet();
-        if (taxaToProcess != null) {
-            for (String name : taxaToProcess) {
-                if(!basedOnContent) {
-                    int taxonId = tree.getTaxonIndex(name);
-                    if (taxonId == -1) {
-                        throw new RuntimeException("Unable to find taxon '" + name + "'.");
-                    }
-                    taxa.add(name);
-                }else {
-                    int counter = 0;
-                    for(int i = 0; i < tree.getTaxonCount(); i++) {
-                        Taxon taxon = tree.getTaxon(i);
-                        String taxonName = taxon.toString();
-                        if (taxonName.contains(name)) {
-                            taxa.add(taxon);
-                            counter ++;
-                        }
-                    }
-                    if (counter == 0){
-                        throw new RuntimeException("Unable to find taxon with a name containing '" + name + "'.");
-                    }
-                }
-            }
-        }
+        getTaxaToFromName(tree, taxa, taxaToProcess, basedOnContent);
         return taxa;
     }
 
@@ -206,8 +181,8 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
     public static void printTitle() {
         progressStream.println();
-        centreLine("TaxonMarkovJumpHistory " + version.getVersionString() + ", " + version.getDateString(), 60);
-        centreLine("tool to get a Markov Jump History for a Taxon", 60);
+        centreLine("TreeMarkovJumpHistory " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("tool to get a Markov Jump History for a tree", 60);
         centreLine("by", 60);
         centreLine("Philippe Lemey and Marc Suchard", 60);
         progressStream.println();
@@ -228,7 +203,6 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         String[] taxaToIgnore = null;
         double mrsd = Double.MAX_VALUE;
         int burnIn = -1;
-        boolean basedOnNameContent = false;
 
         printTitle();
 
@@ -259,9 +233,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
-        String nameContentString = arguments.getStringOption(NAME_CONTENT);
-        if (nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0)
-            basedOnNameContent = true;
+        boolean basedOnNameContent = parseBasedOnNameContent(arguments);
 
         String[] fileNames = getInputOutputFileNames(arguments, TaxaMarkovJumpHistoryAnalyzer::printUsage);
 

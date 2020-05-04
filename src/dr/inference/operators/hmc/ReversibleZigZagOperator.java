@@ -355,7 +355,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 } else {
 
                     if (TEST_CRITICAL_REGION) {
-                        nativeZigZag.innerBounceCriticalRegion(eventIndex, eventIndex, eventType.ordinal());
+                        nativeZigZag.innerBounceCriticalRegion(eventTime, eventIndex, eventType.ordinal());
                     } else {
                         nativeZigZag.innerBounce(position.getBuffer(), velocity.getBuffer(),
                                 action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),

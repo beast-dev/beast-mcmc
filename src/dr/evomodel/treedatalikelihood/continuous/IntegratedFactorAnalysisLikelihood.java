@@ -28,7 +28,6 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
-
 import dr.evolution.tree.TreeTrait;
 import dr.util.TaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -38,9 +37,10 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
-import dr.math.matrixAlgebra.missingData.InversionResult;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
@@ -49,9 +49,7 @@ import java.util.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert2;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeSolve;
-import static dr.math.matrixAlgebra.missingData.MissingOps.unwrap;
+import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * @author Marc A. Suchard
@@ -119,6 +117,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return 1;
     }
 
+    @Override
     public int getDataDimension() {
         return dimTrait;
     }
@@ -450,8 +449,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
 
-    private InversionResult fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision,
-                                               final int taxon) {
+    private void fillInMeanForTaxon(final WrappedVector output, final DenseMatrix64F precision,
+                                    final int taxon) {
 
         final double[] observed = observedIndicators[taxon];
 //        final Parameter Y = traitParameter.getParameter(taxon);
@@ -475,13 +474,13 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         DenseMatrix64F B = DenseMatrix64F.wrap(numFactors, 1, tmp);
         DenseMatrix64F X = DenseMatrix64F.wrap(numFactors, 1, tmp2);
 
-        InversionResult ci = safeSolve(precision, B, X, true);
+        safeSolve(precision, B, X, false);
 
         for (int row = 0; row < numFactors; ++row) {
             output.set(row, X.unsafe_get(row, 0));
         }
 
-        return ci;
+//        return ci;
     }
 
     private double computeTraitInnerProduct(final int taxon) {
@@ -557,7 +556,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         final WrappedVector mean = new WrappedVector.Raw(partials, partialsOffset, numFactors);
 
         computePrecisionForTaxon(precision, taxon, numFactors);
-        InversionResult ci = fillInMeanForTaxon(mean, precision, taxon);
+        fillInMeanForTaxon(mean, precision, taxon);
 
         if (DEBUG) {
             System.err.println("taxon " + taxon);
@@ -581,34 +580,38 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 //System.err.println("\n");
             }
 
-            final double factorLogDeterminant = ci.getLogDeterminant();
+//            final double factorLogDeterminant = ci.getLogDeterminant();
             double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
-            final double logDetChange = traitLogDeterminant - factorLogDeterminant;
+//            final double logDetChange = traitLogDeterminant - factorLogDeterminant;
 
             final double factorInnerProduct = computeFactorInnerProduct(mean, precision);
             final double traitInnerProduct = USE_INNER_PRODUCT_CACHE ?
                     traitInnerProducts[taxon] : computeTraitInnerProduct(taxon);
             final double innerProductChange = traitInnerProduct - factorInnerProduct;
 
-            int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension(); //TODO: use this effective dimension in safeMultivariateIntegrator
+//            int dimensionChange = observedDimensions[taxon] - ci.getEffectiveDimension(); //TODO: use this effective dimension in safeMultivariateIntegrator
 
             if (DEBUG) {
                 System.err.println("fIP: " + factorInnerProduct);
                 System.err.println("tIP: " + traitInnerProduct);
-                System.err.println("fDet: " + factorLogDeterminant);
+//                System.err.println("fDet: " + factorLogDeterminant);
                 System.err.println("tDet: " + traitLogDeterminant);
-                System.err.println("deltaDim: " + dimensionChange + " deltaIP: " + innerProductChange + "\n\n");
+//                System.err.println("deltaDim: " + dimensionChange)
+                System.err.println(" deltaIP: " + innerProductChange + "\n\n");
             }
 
-            constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
+//            constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
+//                    nuggetDensity;
+
+            constant = 0.5 * (traitLogDeterminant - innerProductChange) - LOG_SQRT_2_PI * (observedDimensions[taxon]) -
                     nuggetDensity;
 
         }
 
         // store in precision, variance and normalization constant
         unwrap(precision, partials, partialsOffset + numFactors);
-        PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, ci.getEffectiveDimension(), numFactors);
+        PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, 0, numFactors);
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);

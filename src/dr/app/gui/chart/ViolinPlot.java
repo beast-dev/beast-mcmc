@@ -25,18 +25,11 @@
 
 package dr.app.gui.chart;
 
-import dr.inference.trace.TraceDistribution;
-import dr.math.distributions.GammaKDEDistribution;
-import dr.math.distributions.KernelDensityEstimatorDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
-import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
-import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.util.Collections;
 
 /**
  * @author Andrew Rambaut

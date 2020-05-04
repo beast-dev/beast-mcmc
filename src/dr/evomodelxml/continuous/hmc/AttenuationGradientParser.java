@@ -28,14 +28,19 @@ package dr.evomodelxml.continuous.hmc;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.*;
-import dr.evomodel.treedatalikelihood.hmc.DiagonalAttenuationGradient;
-import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
+import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
@@ -91,7 +96,7 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             public Object factory(BranchSpecificGradient branchSpecificGradient,
                                   TreeDataLikelihood treeDataLikelihood,
                                   MatrixParameterInterface parameter) {
-                return new DiagonalAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
+                return createDiagonalAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
             }
         };
 
@@ -117,7 +122,9 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, tree, continuousData,
-                        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH);
+                        new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
+                                Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
+                        ));
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
@@ -131,8 +138,6 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(WishartStatisticsWrapper.class, true),
-            new ElementRule(BranchRateGradient.class, true),
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
     };
@@ -144,6 +149,6 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return PrecisionGradient.class;
+        return AbstractDiffusionGradient.ParameterDiffusionGradient.class;
     }
 }

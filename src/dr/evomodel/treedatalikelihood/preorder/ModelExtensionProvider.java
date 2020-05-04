@@ -20,6 +20,8 @@ public interface ModelExtensionProvider {
         MatrixParameterInterface getExtensionPrecision();
 
         double[] transformTreeTraits(double[] treeTraits);
+
+        int getDataDimension();
     }
 }
 

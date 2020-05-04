@@ -87,6 +87,11 @@ public class GibbsIndependentNormalDistributionOperator extends SimpleMCMCOperat
         }
 		
 	}
+
+	@Override
+	public void setPathParameter(double beta) {
+		//do nothing
+	}
 	
 	public String getPerformanceSuggestion() {
 		return "";

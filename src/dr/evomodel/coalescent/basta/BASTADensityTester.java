@@ -1,7 +1,7 @@
 /*
  * BASTADensityTester.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -200,7 +200,7 @@ public class BASTADensityTester {
         StructuredCoalescentLikelihood structured = null;
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns,null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
@@ -234,7 +234,7 @@ public class BASTADensityTester {
         patterns.addPattern(pattern);
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
@@ -304,7 +304,7 @@ public class BASTADensityTester {
         migrationModel = new SVSComplexSubstitutionModel("migrationModel", dataType, freqModel, ratesParameter, null);
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
@@ -324,7 +324,7 @@ public class BASTADensityTester {
         }
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
@@ -339,7 +339,7 @@ public class BASTADensityTester {
         }
 
         try {
-            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, migrationModel, subIntervals, includeSubtree, excludeSubtrees);
+            structured = new StructuredCoalescentLikelihood(treeModel, branchRateModel, popSizesParameter, patterns, null, "", migrationModel, subIntervals, includeSubtree, excludeSubtrees, false);
         } catch (TreeUtils.MissingTaxonException missing) {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }

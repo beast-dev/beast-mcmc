@@ -42,6 +42,19 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
     }
 
     @Override
+    public void getBranch1mActualization(int bufferIndex, double[] actualization) {
+
+        getBranchActualization(bufferIndex, actualization);
+
+        for (int i = 0; i < dimTrait; i++) {
+            for (int j = 0; j < dimTrait; j++) {
+                actualization[i * dimTrait + j] = -actualization[i * dimTrait + j];
+            }
+            actualization[i * dimTrait + i] = 1 + actualization[i * dimTrait + i];
+        }
+    }
+
+    @Override
     public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
                                      double[] expectation) {
 
@@ -188,8 +201,9 @@ public class SafeMultivariateActualizedWithDriftIntegrator extends SafeMultivari
                                 final int scaledOffsetDiagonal,
                                 final int scaledOffset) {
         double[] diagonalActualizations = new double[dimTrait];
-        computeOUDiagonalActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimProcess,
+        computeOUDiagonal1mActualization(diagonalStrengthOfSelectionMatrix, edgeLength, dimProcess,
                 diagonalActualizations, 0);
+        oneMinus(diagonalActualizations);
         transformDiagonalMatrixBack(diagonalActualizations, actualizations, scaledOffset, rotation, 0);
     }
 

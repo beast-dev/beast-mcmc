@@ -26,6 +26,7 @@
 package dr.inference.operators;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
@@ -37,6 +38,9 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Transform;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -50,7 +54,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Guy Baele
  * @author Marc A. Suchard
  */
-public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator {
+public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator implements Citable {
 
     public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -421,6 +425,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
             }
             if (MULTI) {
                 if (transformationSizes[i] > 1) {
+                    if (DEBUG) {
+                        System.err.println("Current transformation sum = " + transformationSums[i]);
+                    }
                     double[] temp = transformations[i].inverse(transformedX, currentIndex, currentIndex + transformationSizes[i] - 1, transformationSums[i]);
                     for (int k = 0; k < temp.length; k++) {
                         parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
@@ -876,4 +883,34 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
         };
 
     };
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Adaptive MCMC estimation method of continuous parameters";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(
+                new Citation(
+                        new Author[]{
+                                new Author("G", "Baele"),
+                                new Author("P", "Lemey"),
+                                new Author("A", "Rambaut"),
+                                new Author("MA", "Suchard")
+                        },
+                        "Adaptive MCMC in Bayesian phylogenetics: an application to analyzing partitioned data in BEAST",
+                        2017,
+                        "Bioinformatics",
+                        33,
+                        1798,
+                        1805,
+                        Citation.Status.PUBLISHED
+                ));
+    }
 }

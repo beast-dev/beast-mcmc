@@ -32,7 +32,7 @@ public class MissingOpsTest {
         }
 
         public double getLogDet() {
-            return 42.160726233513714;
+            return -42.160726233513714;
         }
 
         public DenseMatrix64F getMatrix() {
@@ -48,7 +48,7 @@ public class MissingOpsTest {
         }
 
         public double getLogDet() {
-            return 3.4267272543138203;
+            return -3.4267272543138203;
         }
 
         public DenseMatrix64F getMatrix() {

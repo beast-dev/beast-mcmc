@@ -25,10 +25,10 @@
 
 package dr.math;
 
+import dr.util.NumberFormatter;
+
 import java.text.NumberFormat;
 import java.text.ParseException;
-
-import dr.util.NumberFormatter;
 
 /**
  * Handy utility functions which have some Mathematical relavance.

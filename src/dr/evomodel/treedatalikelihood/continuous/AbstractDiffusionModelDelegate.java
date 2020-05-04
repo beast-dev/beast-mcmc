@@ -205,21 +205,28 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
     }
 
     @Override
-    public void getGradientVarianceWrtVariance(NodeRef node,
-                                               ContinuousDiffusionIntegrator cdi,
-                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                               DenseMatrix64F gradient) {
-        getGradientVarianceWrtVariance(getScalarNode(node, cdi, likelihoodDelegate), gradient);
+    public DenseMatrix64F getGradientVarianceWrtVariance(NodeRef node,
+                                                         ContinuousDiffusionIntegrator cdi,
+                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                         DenseMatrix64F gradient) {
+        return scaleGradient(node, cdi, likelihoodDelegate, gradient);
     }
 
-    private void getGradientVarianceWrtVariance(double scalar, DenseMatrix64F gradient) {
+    DenseMatrix64F scaleGradient(NodeRef node,
+                                 ContinuousDiffusionIntegrator cdi,
+                                 ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                 DenseMatrix64F gradient) {
+        return scaleGradient(getScalarNode(node, cdi, likelihoodDelegate), gradient);
+    }
+
+    private DenseMatrix64F scaleGradient(double scalar, DenseMatrix64F gradient) {
+        DenseMatrix64F result = gradient.copy();
         if (scalar == 0.0) {
-            for (int i = 0; i < gradient.getNumElements(); i++) {
-                gradient.set(i, 0.0);
-            }
+            CommonOps.fill(result, 0.0);
         } else {
-            CommonOps.scale(scalar, gradient);
+            CommonOps.scale(scalar, result);
         }
+        return result;
     }
 
     private double getScalarNode(NodeRef node,
@@ -230,5 +237,19 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         } else {
             return cdi.getBranchLength(getMatrixIndex(node.getNumber()));
         }
+    }
+
+    public double[] getGradientDisplacementWrtRoot(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        boolean fixedRoot = likelihoodDelegate.getRootProcessDelegate().getPseudoObservations() == Double.POSITIVE_INFINITY;
+        if (fixedRoot && tree.isRoot(tree.getParent(node))) {
+            return gradient.getData();
+        }
+        if (!fixedRoot && tree.isRoot(node)) {
+            return gradient.getData();
+        }
+        return new double[gradient.getNumRows()];
     }
 }

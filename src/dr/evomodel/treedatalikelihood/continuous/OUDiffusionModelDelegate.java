@@ -33,17 +33,15 @@ import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateDiagonalActualizedWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.Model;
-import dr.math.KroneckerOperation;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
 import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
-import static dr.math.matrixAlgebra.missingData.MissingOps.wrapDiagonal;
 
 /**
  * A simple OU diffusion model delegate with branch-specific drift and constant diffusion
@@ -151,20 +149,21 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     ///////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void getGradientVarianceWrtVariance(NodeRef node,
-                                               ContinuousDiffusionIntegrator cdi,
-                                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                               DenseMatrix64F gradient) {
+    public DenseMatrix64F getGradientVarianceWrtVariance(NodeRef node,
+                                                         ContinuousDiffusionIntegrator cdi,
+                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                         DenseMatrix64F gradient) {
         if (tree.isRoot(node)) {
-            super.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradient);
+            return super.getGradientVarianceWrtVariance(node, cdi, likelihoodDelegate, gradient);
         } else {
+            DenseMatrix64F result = gradient.copy();
             if (hasDiagonalActualization()) {
-                actualizeGradientDiagonal(cdi, node.getNumber(), gradient);
+                actualizeGradientDiagonal(cdi, node.getNumber(), result);
             } else {
-                actualizeGradient(cdi, node.getNumber(), gradient);
+                actualizeGradient(cdi, node.getNumber(), result);
             }
+            return result;
         }
-
     }
 
     private void actualizeGradient(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
@@ -192,27 +191,27 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     private static double factorFunction(double x, double l) {
         if (x == 0) return l;
-        return (1 - Math.exp(-x * l)) / x;
+        return - Math.expm1(-x * l) / x;
     }
 
-    private void actualizeGradientOld(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
-        double[] actualization = new double[dim * dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
-        double[] attenuation = elasticModel.getStrengthOfSelectionMatrixAsVector();
-        // Actualization
-        DenseMatrix64F A = DenseMatrix64F.wrap(dim, dim, actualization);
-        DenseMatrix64F temp = new DenseMatrix64F(dim, dim);
-        CommonOps.multTransB(gradient, A, temp);
-        CommonOps.multAdd(-1.0, A, temp, gradient);
-        // Derivation of stationary variance wrt variance
-        DenseMatrix64F factor = DenseMatrix64F.wrap(dim * dim, dim * dim,
-                KroneckerOperation.sum(attenuation, dim, attenuation, dim));
-        CommonOps.invert(factor);
-        DenseMatrix64F temp1 = DenseMatrix64F.wrap(dim * dim, 1, gradient.getData());
-        DenseMatrix64F temp2 = new DenseMatrix64F(dim * dim, 1);
-        CommonOps.mult(factor, temp1, temp2);
-        gradient.setData(temp2.getData());
-    }
+//    private void actualizeGradientOld(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
+//        double[] actualization = new double[dim * dim];
+//        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
+//        double[] attenuation = elasticModel.getStrengthOfSelectionMatrixAsVector();
+//        // Actualization
+//        DenseMatrix64F A = DenseMatrix64F.wrap(dim, dim, actualization);
+//        DenseMatrix64F temp = new DenseMatrix64F(dim, dim);
+//        CommonOps.multTransB(gradient, A, temp);
+//        CommonOps.multAdd(-1.0, A, temp, gradient);
+//        // Derivation of stationary variance wrt variance
+//        DenseMatrix64F factor = DenseMatrix64F.wrap(dim * dim, dim * dim,
+//                KroneckerOperation.sum(attenuation, dim, attenuation, dim));
+//        CommonOps.invert(factor);
+//        DenseMatrix64F temp1 = DenseMatrix64F.wrap(dim * dim, 1, gradient.getData());
+//        DenseMatrix64F temp2 = new DenseMatrix64F(dim * dim, 1);
+//        CommonOps.mult(factor, temp1, temp2);
+//        gradient.setData(temp2.getData());
+//    }
 
     DenseMatrix64F getGradientVarianceWrtAttenuation(NodeRef node,
                                                      ContinuousDiffusionIntegrator cdi,
@@ -233,109 +232,90 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         DenseMatrix64F gradActualization = getGradientVarianceWrtActualizationDiagonal(cdi, statistics, nodeIndex, gradient);
 
         // wrt to Gamma stationary variance
-        DenseMatrix64F gradStationary = getGradientVarianceWrtStationaryDiagonal(cdi, nodeIndex, gradient);
+        DenseMatrix64F gradStationary = getGradientBranchVarianceWrtAttenuationDiagonal(cdi, nodeIndex, gradient);
 
-        DenseMatrix64F res = new DenseMatrix64F(dim, 1);
-        CommonOps.add(gradActualization, gradStationary, res);
-        return (res);
+        CommonOps.addEquals(gradActualization, gradStationary);
+        return gradActualization;
 
     }
 
     private DenseMatrix64F getGradientVarianceWrtActualizationDiagonal(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics,
                                                                        int nodeIndex, DenseMatrix64F gradient) {
         // q_i
-        double[] actualization = new double[dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
-        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
+//        double[] qi = new double[dim];
+//        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+//        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
         // q_i^-1
-        double[] actualizationInv = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            actualizationInv[i] = 1.0 / actualization[i];
-        }
-        DenseMatrix64F qiInv = wrapDiagonal(actualizationInv, 0, dim);
+//        DenseMatrix64F qiInv = wrapDiagonalInverse(actualization, 0, dim);
         // Q_i^-
-        DenseMatrix64F Wi = statistics.getAbove().getRawVariance();
+        DenseMatrix64F Wi = statistics.getAbove().getRawVarianceCopy();
         // Gamma
-        DenseMatrix64F Gamma = wrap(
-                ((SafeMultivariateDiagonalActualizedWithDriftIntegrator) cdi).getStationaryVariance(getEigenBufferOffsetIndex(0)),
-                0, dim, dim);
+//        DenseMatrix64F Gamma = wrap(
+//                ((SafeMultivariateDiagonalActualizedWithDriftIntegrator) cdi).getStationaryVariance(getEigenBufferOffsetIndex(0)),
+//                0, dim, dim);
+        // Branch variance
+        double[] branchVariance = new double[dim * dim];
+        cdi.getBranchVariance(getMatrixBufferOffsetIndex(nodeIndex), getEigenBufferOffsetIndex(0) , branchVariance);
+        DenseMatrix64F Sigma_i = wrap(branchVariance, 0, dim, dim);
 
         // factor
-        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
         DenseMatrix64F res = new DenseMatrix64F(dim, dim);
-        CommonOps.add(Wi, -1, Gamma, tmp);
-        CommonOps.multTransA(qiInv, tmp, res);
-        CommonOps.multTransB(res, gradient, tmp);
+        CommonOps.addEquals(Wi, -1, Sigma_i);
+//        MissingOps.diagDiv(qi, Wi);
+//        CommonOps.multTransA(qiInv, tmp, res);
+        CommonOps.multTransB(Wi, gradient, res);
 
         // temp + temp^T
-        for (int i = 0; i < gradient.getNumCols(); i++) {
-            for (int j = 0; j < gradient.getNumCols(); j++) {
-                res.unsafe_set(i, j, tmp.unsafe_get(i, j) + tmp.unsafe_get(j, i));
-            }
-        }
+//        MissingOps.addTransEquals(res); No need for diagonal case
+        CommonOps.scale(2.0, res);
 
         // Get diagonal
         DenseMatrix64F resDiag = new DenseMatrix64F(dim, 1);
-        for (int i = 0; i < dim; ++i) {
-            resDiag.unsafe_set(i, 0, res.unsafe_get(i, i));
-        }
+        CommonOps.extractDiag(res, resDiag);
 
         // Wrt attenuation
         double ti = cdi.getBranchLength(getMatrixBufferOffsetIndex(nodeIndex));
-        chainRuleActualizationWrtAttenuationDiagonal(qi, ti, resDiag);
+        chainRuleActualizationWrtAttenuationDiagonal(ti, resDiag);
 
         return resDiag;
 
     }
 
-    private void chainRuleActualizationWrtAttenuationDiagonal(DenseMatrix64F qi, double ti,
-                                                              DenseMatrix64F grad) {
-        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
-        CommonOps.mult(qi, grad, tmp);
-        CommonOps.scale(-ti, tmp, grad);
+    private void chainRuleActualizationWrtAttenuationDiagonal(double ti, DenseMatrix64F grad) {
+//        MissingOps.diagMult(actualization, grad);
+        CommonOps.scale(-ti, grad);
     }
 
-    private DenseMatrix64F getGradientVarianceWrtStationaryDiagonal(ContinuousDiffusionIntegrator cdi,
-                                                                    int nodeIndex, DenseMatrix64F gradient) {
-        double[] actualization = new double[dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
-        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
-
-        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
-        DenseMatrix64F res = new DenseMatrix64F(dim, dim);
-        CommonOps.mult(qi, gradient, tmp);
-        CommonOps.multTransB(-1, tmp, qi, res);
-
-        CommonOps.addEquals(res, gradient);
+    private DenseMatrix64F getGradientBranchVarianceWrtAttenuationDiagonal(ContinuousDiffusionIntegrator cdi,
+                                                                        int nodeIndex, DenseMatrix64F gradient) {
 
         double[] attenuation = elasticModel.getEigenValuesStrengthOfSelection();
         DenseMatrix64F variance = wrap(
                 ((MultivariateIntegrator) cdi).getVariance(getEigenBufferOffsetIndex(0)),
                 0, dim, dim);
 
-        return chainRuleStationaryWrtAttenuationDiagonal(attenuation, variance, tmp, res);
-    }
-
-    private DenseMatrix64F chainRuleStationaryWrtAttenuationDiagonal(double[] attenuation, DenseMatrix64F variance,
-                                                                     DenseMatrix64F tmp, DenseMatrix64F grad) {
+        double ti = cdi.getBranchLength(getMatrixBufferOffsetIndex(nodeIndex));
 
         DenseMatrix64F res = new DenseMatrix64F(dim, 1);
 
-        CommonOps.elementMult(variance, grad, tmp);
+        CommonOps.elementMult(variance, gradient);
 
-        for (int i = 0; i < dim; i++) {
+        for (int k = 0; k < dim; k++) {
             double sum = 0.0;
-            for (int j = 0; j < dim; j++) {
-                sum -= tmp.unsafe_get(i, j) * computeAttenuationFactor(attenuation, i, j);
+            for (int l = 0; l < dim; l++) {
+                sum -= variance.unsafe_get(k, l) * computeAttenuationFactorActualized(attenuation[k] + attenuation[l], ti);
             }
-            res.unsafe_set(i, 0, sum);
+            res.unsafe_set(k, 0, sum);
         }
 
         return res;
     }
 
-    private double computeAttenuationFactor(double[] attenuation, int i, int j) {
-        return 2.0 / Math.pow(attenuation[i] + attenuation[j], 2);
+    private double computeAttenuationFactorActualized(double lambda, double ti) {
+        if (lambda == 0) return ti * ti;
+        double em1 = Math.expm1(- lambda * ti);
+        return 2.0 * (em1 * em1 - (em1 + lambda * ti) * Math.exp(- lambda * ti)) / lambda / lambda;
+//        return 2.0 * (1 - (1 + lambda * ti) * Math.exp( - lambda * ti)) / (lambda * lambda);
     }
 
     DenseMatrix64F getGradientDisplacementWrtAttenuation(NodeRef node,
@@ -344,58 +324,125 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                                                          DenseMatrix64F gradient) {
         assert !tree.isRoot(node) : "Gradient wrt actualization is not available for the root.";
         if (hasDiagonalActualization()) {
-            return getGradientDisplacementWrtAttenuationDiagonal(cdi, statistics, node.getNumber(), gradient);
+            return getGradientDisplacementWrtAttenuationDiagonal(cdi, statistics, node, gradient);
         } else {
             throw new RuntimeException("not yet implemented");
         }
     }
 
     private DenseMatrix64F getGradientDisplacementWrtAttenuationDiagonal(ContinuousDiffusionIntegrator cdi, BranchSufficientStatistics statistics,
-                                                                         int nodeIndex, DenseMatrix64F gradient) {
+                                                                         NodeRef node, DenseMatrix64F gradient) {
+        int nodeIndex = node.getNumber();
         // q_i
-        double[] actualization = new double[dim];
-        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), actualization);
-        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
+//        double[] qi = new double[dim];
+//        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+//        DenseMatrix64F qi = wrapDiagonal(actualization, 0, dim);
         // q_i^-1
-        double[] actualizationInv = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            actualizationInv[i] = 1.0 / actualization[i];
-        }
-        DenseMatrix64F qiInv = wrapDiagonal(actualizationInv, 0, dim);
-        // (I - q_i)^-1
-        double[] actualizationIminusQInv = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            actualizationIminusQInv[i] = 1.0 / (1.0 - actualization[i]);
-        }
-        DenseMatrix64F IminusqiInv = wrapDiagonal(actualizationIminusQInv, 0, dim);
+//        DenseMatrix64F qiInv = wrapDiagonalInverse(actualization, 0, dim);
         // ni
         DenseMatrix64F ni = statistics.getAbove().getRawMean();
         // beta_i
-        double[] displacement = new double[dim];
-        cdi.getBranchDisplacement(getMatrixBufferOffsetIndex(nodeIndex), displacement);
-        DenseMatrix64F ri = wrap(displacement, 0, dim, 1);
-        DenseMatrix64F betai = new DenseMatrix64F(dim, 1);
-        CommonOps.mult(IminusqiInv, ri, betai);
+        DenseMatrix64F betai = wrap(getDriftRate(node), 0, dim, 1);
 
         // factor
-        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+//        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
         DenseMatrix64F resFull = new DenseMatrix64F(dim, dim);
         DenseMatrix64F resDiag = new DenseMatrix64F(dim, 1);
         CommonOps.add(ni, -1, betai, resDiag);
-        CommonOps.mult(qiInv, resDiag, tmp);
-        CommonOps.multTransB(gradient, tmp, resFull);
+//        MissingOps.diagDiv(qi, resDiag);
+        CommonOps.multTransB(gradient, resDiag, resFull);
 
         // Extract diag
-        for (int i = 0; i < dim; ++i) {
-            resDiag.unsafe_set(i, 0, resFull.unsafe_get(i, i));
-        }
+        CommonOps.extractDiag(resFull, resDiag);
 
         // Wrt attenuation
         double ti = cdi.getBranchLength(getMatrixBufferOffsetIndex(nodeIndex));
-        chainRuleActualizationWrtAttenuationDiagonal(qi, ti, resDiag);
+        chainRuleActualizationWrtAttenuationDiagonal(ti, resDiag);
 
         return resDiag;
 
+    }
+
+    @Override
+    DenseMatrix64F getGradientDisplacementWrtDrift(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        DenseMatrix64F result = gradient.copy();
+        if (hasDiagonalActualization()) {
+            actualizeDisplacementGradientDiagonal(cdi, node.getNumber(), result);
+        } else {
+            actualizeDisplacementGradient(cdi, node.getNumber(), result);
+        }
+        return result;
+    }
+
+    private void actualizeDisplacementGradientDiagonal(ContinuousDiffusionIntegrator cdi,
+                                                       int nodeIndex, DenseMatrix64F gradient) {
+        // q_i
+        double[] qi = new double[dim];
+        cdi.getBranch1mActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        MissingOps.diagMult(qi, gradient);
+    }
+
+    private void actualizeDisplacementGradient(ContinuousDiffusionIntegrator cdi,
+                                               int nodeIndex, DenseMatrix64F gradient) {
+        // q_i
+        double[] qi = new double[dim * dim];
+        cdi.getBranch1mActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
+        CommonOps.scale(-1.0, Actu);
+//        for (int i = 0; i < dim; i++) {
+//            Actu.unsafe_set(i, i, Actu.unsafe_get(i, i) - 1.0);
+//        }
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+        CommonOps.mult(Actu, gradient, tmp);
+        CommonOps.scale(-1.0, tmp, gradient);
+    }
+
+    @Override
+    public double[] getGradientDisplacementWrtRoot(NodeRef node,
+                                                   ContinuousDiffusionIntegrator cdi,
+                                                   ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                   DenseMatrix64F gradient) {
+        boolean fixedRoot = likelihoodDelegate.getRootProcessDelegate().getPseudoObservations() == Double.POSITIVE_INFINITY;
+        if (fixedRoot && tree.isRoot(tree.getParent(node))) {
+            return actualizeRootGradient(cdi, node.getNumber(), gradient);
+        }
+        if (!fixedRoot && tree.isRoot(node)) {
+            return gradient.getData();
+        }
+        return new double[gradient.getNumRows()];
+    }
+
+    private double[] actualizeRootGradient(ContinuousDiffusionIntegrator cdi,
+                                           int nodeIndex,
+                                           DenseMatrix64F gradient) {
+        if (hasDiagonalActualization()) {
+            return actualizeRootGradientDiagonal(cdi, nodeIndex, gradient);
+        } else {
+            return actualizeRootGradientFull(cdi, nodeIndex, gradient);
+        }
+    }
+
+    private double[] actualizeRootGradientDiagonal(ContinuousDiffusionIntegrator cdi,
+                                                   int nodeIndex, DenseMatrix64F gradient) {
+        double[] qi = new double[dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+        MissingOps.diagMult(qi, gradient, tmp);
+        return tmp.getData();
+    }
+
+    private double[] actualizeRootGradientFull(ContinuousDiffusionIntegrator cdi,
+                                               int nodeIndex, DenseMatrix64F gradient) {
+        // q_i
+        double[] qi = new double[dim * dim];
+        cdi.getBranchActualization(getMatrixBufferOffsetIndex(nodeIndex), qi);
+        DenseMatrix64F Actu = wrap(qi, 0, dim, dim);
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, 1);
+        CommonOps.mult(Actu, gradient, tmp);
+        return tmp.getData();
     }
 
 
@@ -496,7 +543,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
                         if (ep + eq == 0.0) {
                             var = (tij + 1 / priorSampleSize) * traitVariance[p][q];
                         } else {
-                            var = Math.exp(-ep * ti) * Math.exp(-eq * tj) * ((Math.exp((ep + eq) * tij) - 1) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q];
+                            var = Math.exp(-ep * ti) * Math.exp(-eq * tj) * (Math.expm1((ep + eq) * tij) / (ep + eq) + 1 / priorSampleSize) * traitVariance[p][q];
                         }
                         varTemp.set(p, q, var);
                     }

@@ -66,27 +66,7 @@ public class TreePruner extends BaseTreeTool {
     private List<Taxon> getTaxaToPrune(Tree tree, String[] names, boolean basedOnContent) {
 
         List<Taxon> taxa = new ArrayList<>();
-        if (names != null) {
-            for (String name : names) {
-
-                if(!basedOnContent){
-                    addTaxonByName(tree, taxa, name);
-                } else {
-                    int counter = 0;
-                    for(int i = 0; i < tree.getTaxonCount(); i++) {
-                        Taxon taxon = tree.getTaxon(i);
-                        String taxonName = taxon.toString();
-                        if (taxonName.contains(name)) {
-                            taxa.add(taxon);
-                            counter ++;
-                        }
-                    }
-                    if (counter == 0){
-                        throw new RuntimeException("Unable to find taxon with a name containing '" + name + "'.");
-                    }
-                }
-            }
-        }
+        getTaxaToFromName(tree, taxa, names, basedOnContent);
         return taxa;
     }
 
@@ -195,7 +175,6 @@ public class TreePruner extends BaseTreeTool {
     public static void main(String[] args) throws IOException {
 
         String[] taxaToPrune = null;
-        boolean basedOnNameContent = false;
 
         printTitle();
 
@@ -213,9 +192,7 @@ public class TreePruner extends BaseTreeTool {
             taxaToPrune = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("taxaToPrune"));
         }
 
-        String nameContentString = arguments.getStringOption(NAME_CONTENT);
-        if (nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0)
-            basedOnNameContent = true;
+        boolean basedOnNameContent = parseBasedOnNameContent(arguments);
 
         String[] fileNames = getInputOutputFileNames(arguments, TreePruner::printUsage);
 

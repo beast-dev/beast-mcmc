@@ -548,7 +548,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                  String diffusionModelId,
                                                  String treeModelId) {
 
-        int traitDimension = 1; // todo - set this to trait dimension
+        int traitDimension = partitionData.getTraits().size();
         writer.writeOpenTag(continuousDataLikelihoodParser.getParserTag(),
                 new Attribute[]{
                         new Attribute.Default<String>("id", continuousDataLikelihoodParser.getId(partitionData.getName())),
@@ -602,11 +602,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag("driftModels");
             for (int i = 0; i < traitDimension; i++) {
                 writer.writeOpenTag("strictClockBranchRates");
+                writer.writeOpenTag("rate");
                 writer.writeTag("parameter", new Attribute[]{
                         new Attribute.Default<String>("id", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE +
                                 (traitDimension > 1 ? "." + i : "")),
                         new Attribute.Default<String>("value", "0.0"),
                 }, true);
+                writer.writeCloseTag("rate");
                 writer.writeCloseTag("strictClockBranchRates");
             }
             writer.writeCloseTag("driftModels");
@@ -645,7 +647,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeCloseTag("conjugateRootPrior");
 
-        if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+        if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS &&
+                partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() != ContinuousSubstModelType.DRIFT) {
             if (ContinuousComponentOptions.USE_ARBITRARY_BRANCH_RATE_MODEL) {
                 writer.writeIDref("arbitraryBranchRates", partitionData.getName() + "." + "diffusion.branchRates");
             } else {
@@ -661,7 +664,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             for (int i = 0; i < traitDimension; i++) { // todo iterate over dimension of trait
                 writer.writeTag("parameter", new Attribute.Default<String>("idref", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE + "." + i), true);
             }
-            writer.writeCloseTag("priorSampleSize");
+            writer.writeCloseTag("compoundParameter");
         }
 
     }
@@ -885,7 +888,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
                 writer.writeIDref("multivariateDiffusionModel", model.getName() + ".diffusionModel");
                 continuousDataLikelihoodParser.writeIDrefFromName(writer, partitionData.getName());
-                if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+                if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS &&
+                        model.getContinuousSubstModelType() != ContinuousSubstModelType.DRIFT) {
                     writer.writeOpenTag(TreeLoggerParser.TREE_TRAIT,
                             new Attribute[]{
                                     new Attribute.Default<String>(TreeLoggerParser.NAME, "rate"),

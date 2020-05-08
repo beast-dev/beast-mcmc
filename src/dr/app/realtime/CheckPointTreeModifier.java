@@ -1,7 +1,7 @@
 /*
  * CheckPointUpdater.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,17 +46,18 @@ import java.util.List;
 
 /**
  * @author Guy Baele
+ * @author Mandev Gill
  */
 public class CheckPointTreeModifier {
 
-    public final static String TREE_UPDATE_OPTION = "JC69Distance";
+    //public final static String TREE_UPDATE_OPTION = "JC69Distance";
     public final static Double EPSILON = 0.10;
     public final static Double MIN_DIST = 0.0000000001;
 
-    public final static boolean CURRENT_APPROACH = false;
+    //public final static boolean CURRENT_APPROACH = false;
     public final static boolean NEW_APPROACH = true;
 
-    private final static boolean DEBUG = false;
+    private final static boolean DEBUG = true;
 
     private TreeModel treeModel;
     private ParametricDistributionModel pdm;
@@ -64,6 +65,7 @@ public class CheckPointTreeModifier {
     private int[] nodeMap;
     private int additionalTaxa;
 
+    //TODO change the constructor, as this is very clock model specific
     public CheckPointTreeModifier(TreeModel treeModel, ParametricDistributionModel pdm) {
         this.treeModel = treeModel;
         this.pdm = pdm;
@@ -194,7 +196,6 @@ public class CheckPointTreeModifier {
      * @param traitModels List of TreeParameterModel object that contain trait information
      * @param traitValues Values to be copied into the List of TreeParameterModel objects
      */
-    //TODO Small difference in reconstructed log likelihood, probably due to increased number of rate categories
     public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues) {
         int index = 0;
         for (TreeParameterModel tpm : traitModels) {
@@ -202,8 +203,8 @@ public class CheckPointTreeModifier {
             for (int i = 0; i < edges.length; i++) {
                 System.out.println(i + "   " + edges[i]);
                 if (edges[i] != -1) {
-                    //TODO Seems like I messed up here
-                    if (i < (treeModel.getExternalNodeCount()-additionalTaxa)) {
+                    //is this next bit still a problem?
+                    if (i < (treeModel.getExternalNodeCount() - additionalTaxa)) {
                         tpm.setNodeValue(this.treeModel, this.treeModel.getExternalNode(nodeMap[i]), traitValues[index][k]);
                         System.out.println("Setting external node " + this.treeModel.getExternalNode(nodeMap[i]) + " to " + traitValues[index][k]);
                     } else {
@@ -439,11 +440,16 @@ public class CheckPointTreeModifier {
 
             for (NodeRef newTaxon : newTaxaNodes) {
 
-                //TODO check for zero-length branches
+                //check for zero-length branches and internal nodes that don't have 2 child nodes
                 if (DEBUG) {
                     for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
                         NodeRef startingTip = treeModel.getExternalNode(i);
                         while (treeModel.getParent(startingTip) != null) {
+                            if (treeModel.getChildCount(treeModel.getParent(startingTip)) != 2) {
+                                System.out.println(treeModel.getChildCount(treeModel.getParent(startingTip)) + " children for node " + treeModel.getParent(startingTip));
+                                System.out.println("Exiting ...");
+                                System.exit(0);
+                            }
                             double branchLength = treeModel.getNodeHeight(treeModel.getParent(startingTip)) - treeModel.getNodeHeight(startingTip);
                             if (branchLength == 0.0) {
                                 System.out.println("zero-length branch detected:");
@@ -495,9 +501,11 @@ public class CheckPointTreeModifier {
                 for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
                     if (treeModel.getNodeTaxon(treeModel.getExternalNode(i)) == closest) {
                         closestRef = treeModel.getExternalNode(i);
+                        System.out.println("  closest external nodeRef: " + closestRef);
                     }
                 }
-                System.out.println(closestRef + " with height " + treeModel.getNodeHeight(closestRef));
+                System.out.println("closest node : " + closestRef + " with height " + treeModel.getNodeHeight(closestRef));
+                System.out.println("parent node: " + treeModel.getParent(closestRef));
 
                 //begin change
                 //TODO: only for Sam, revert back to the line below !!!
@@ -556,25 +564,39 @@ public class CheckPointTreeModifier {
                                     // Otherwise, move up tree
                                     insertHeight = treeModel.getNodeHeight(splitBranchChild) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(splitBranchChild));
                                     break;
-                                }else {
-                                    splitBranchChild = parent;
-                                    parent = treeModel.getParent(splitBranchChild);
+                                } else {
+                                    if ((insertHeight - treeModel.getNodeHeight(parent)) < MIN_DIST) {
+                                        boolean suitableBranch = false;
+                                        while (!suitableBranch) {
+                                            double parentBranchLength = treeModel.getNodeHeight(treeModel.getParent(parent)) - treeModel.getNodeHeight(parent);
+                                            if (parentBranchLength < MIN_DIST) {
+                                                //find another branch by moving upwards in the tree
+                                                splitBranchChild = parent;
+                                                parent = treeModel.getParent(splitBranchChild);
+                                            } else {
+                                                insertHeight = treeModel.getNodeHeight(parent) + MIN_DIST * MathUtils.nextDouble();
+                                                suitableBranch = true;
+                                            }
+                                        }
+                                        break;
+                                    } else {
+                                        splitBranchChild = parent;
+                                        parent = treeModel.getParent(splitBranchChild);
+                                    }
                                 }
                             }
                         }
                     } else {
                         // Come up with better way to handle this?
-                        //TODO fix here the problem that Sam has been having?
                         insertHeight = EPSILON * (treeModel.getNodeHeight(parent) - Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)));
                         System.out.println("insertHeight after EPSILON: " + insertHeight);
                         insertHeight += Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon));
                         System.out.println("remainder <= 0: " + insertHeight);
                         System.out.println("difference = " + (treeModel.getNodeHeight(parent) - insertHeight));
-                        //TODO be very careful here! in the case of very short branches, the code below will jump over the MRCA of newTaxon and closestRef
-                        //TODO this needs to be checked
                         splitBranchChild = closestRef;
 
                         if ((treeModel.getNodeHeight(parent) - insertHeight) < MIN_DIST) {
+                            System.out.println("branch too short ...");
                             boolean suitableBranch = false;
                             while (!suitableBranch) {
                                 double parentBranchLength = treeModel.getNodeHeight(treeModel.getParent(parent)) - treeModel.getNodeHeight(parent);
@@ -598,6 +620,12 @@ public class CheckPointTreeModifier {
 
                 System.out.println("insert at height: " + insertHeight);
                 System.out.printf("parent height: %.25f \n", treeModel.getNodeHeight(parent));
+                if (treeModel.getParent(parent) != null) {
+                    System.out.printf("grandparent height: %.25f \n", treeModel.getNodeHeight(treeModel.getParent(parent)));
+                } else {
+                    System.out.println("parent == root");
+                }
+                System.out.printf("child height: %.25f \n", treeModel.getNodeHeight(splitBranchChild));
                 System.out.printf("insert at height: %.25f \n", insertHeight);
                 //pass on all the necessary variables to a method that adds the new taxon to the tree
                 addTaxonAlongBranch(newTaxon, parent, splitBranchChild, insertHeight);
@@ -613,7 +641,7 @@ public class CheckPointTreeModifier {
             }
         }
 
-        if (CURRENT_APPROACH) {
+        /*if (CURRENT_APPROACH) {
             for (NodeRef newTaxon : newTaxaNodes) {
                 treeModel.setNodeHeight(newTaxon, treeModel.getNodeTaxon(newTaxon).getHeight());
                 System.out.println("\nadding Taxon: " + newTaxon + " (height = " + treeModel.getNodeHeight(newTaxon) + ")");
@@ -724,7 +752,7 @@ public class CheckPointTreeModifier {
             //test section for Ebola problem
             throw new RuntimeException("Not yet implemented ...");
 
-        }
+        }*/
 
         //System.out.println(treeModel.toString());
 
@@ -773,16 +801,36 @@ public class CheckPointTreeModifier {
      * @param insertHeight The height of the new internal node that will be created
      */
     private void addTaxonAlongBranch(NodeRef newTaxon, NodeRef parentNode, NodeRef childNode, double insertHeight) {
+
+        if (DEBUG) {
+            System.out.println("\n-- addTaxonAlongBranch");
+            System.out.println("current parent: " + parentNode);
+            System.out.println("number of children: " + treeModel.getChildCount(parentNode));
+            for (int i = 0; i < treeModel.getChildCount(parentNode); i++) {
+                System.out.println("  " + treeModel.getChild(parentNode, i));
+            }
+            /*System.out.println("grandparent node: " + treeModel.getParent(parentNode));
+            System.out.println("  grandparent children:");
+            for (int i = 0; i < treeModel.getChildCount(treeModel.getParent(parentNode)); i++) {
+                System.out.println("    " + treeModel.getChild(treeModel.getParent(parentNode),i));
+            }*/
+            System.out.println("current child: " + childNode);
+            System.out.println("number of children: " + treeModel.getChildCount(childNode));
+            System.out.println("current parent of child node: " + treeModel.getParent(childNode));
+        }
+
         treeModel.beginTreeEdit();
 
         //remove child node that corresponds to childNode argument
         treeModel.removeChild(parentNode, childNode);
+
         //add a currently unused internal node as the new child node
         NodeRef internalNode = null;
         for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
             if (treeModel.getChildCount(treeModel.getInternalNode(i)) == 0 && treeModel.getParent(treeModel.getInternalNode(i)) == null) {
                 internalNode = treeModel.getInternalNode(i);
                 System.out.println("\ninternal node found: " + internalNode.getNumber());
+                System.out.println(internalNode);
                 break;
             }
         }
@@ -797,6 +845,24 @@ public class CheckPointTreeModifier {
         treeModel.addChild(internalNode, newTaxon);
         //still need to set the height of the new internal node
         treeModel.setNodeHeight(internalNode, insertHeight);
+
+        if (DEBUG) {
+            System.out.println("\ncurrent parent: " + parentNode);
+            System.out.println("number of children: " + treeModel.getChildCount(parentNode));
+            for (int i = 0; i < treeModel.getChildCount(parentNode); i++) {
+                System.out.println("  " + treeModel.getChild(parentNode, i));
+            }
+            /*System.out.println("grandparent node: " + treeModel.getParent(parentNode));
+            System.out.println("  grandparent children:");
+            for (int i = 0; i < treeModel.getChildCount(treeModel.getParent(parentNode)); i++) {
+                System.out.println("    " + treeModel.getChild(treeModel.getParent(parentNode),i));
+            }*/
+            System.out.println("internal node: " + internalNode);
+            System.out.println("number of children: " + treeModel.getChildCount(internalNode));
+            for (int i = 0; i < treeModel.getChildCount(internalNode); i++) {
+                System.out.println("  " + treeModel.getChild(internalNode, i));
+            }
+        }
 
         System.out.println("\nparent node (" + parentNode + ") height: " + treeModel.getNodeHeight(parentNode));
         System.out.println("child node (" + childNode + ") height: " + treeModel.getNodeHeight(childNode));
@@ -875,14 +941,12 @@ public class CheckPointTreeModifier {
 
     }
 
-    public final double getBranchRate(TreeParameterModel tpm, NodeRef node, int numTaxa) {
-
+    private final double getBranchRate(TreeParameterModel tpm, NodeRef node, int numTaxa) {
         int numCategories = 2 * numTaxa - 2;
         int rateCategory = (int) tpm.getNodeValue(treeModel, node);
         double rate = pdm.quantile((rateCategory + 0.5) / numCategories);
         return rate;
     }
-
 
     public void interpolateTraitValuesOneInsertion(ArrayList<TreeParameterModel> traitModels, NodeRef newTaxon) {
         System.out.println();

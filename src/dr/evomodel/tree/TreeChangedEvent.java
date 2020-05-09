@@ -23,7 +23,7 @@ public interface TreeChangedEvent {
 
     boolean isHeightChanged();
 
-    public class WholeTree implements TreeChangedEvent {
+    class WholeTree implements TreeChangedEvent {
 
         @Override public int getIndex() { return -1; }
 
@@ -38,5 +38,35 @@ public interface TreeChangedEvent {
         @Override public boolean isNodeParameterChanged() { return false; }
 
         @Override public boolean isHeightChanged() { return false; }
+    }
+
+    class NodeOnTree implements TreeChangedEvent {
+
+        private final NodeRef node;
+
+        NodeOnTree(NodeRef node) {
+            this.node = node;
+        }
+
+        @Override
+        public int getIndex() { return -1; }
+
+        @Override
+        public NodeRef getNode() { return node; }
+
+        @Override
+        public Parameter getParameter() { return null; }
+
+        @Override
+        public boolean isNodeChanged() { return true; }
+
+        @Override
+        public boolean isTreeChanged() { return false; }
+
+        @Override
+        public boolean isNodeParameterChanged() { return false; }
+
+        @Override
+        public boolean isHeightChanged() { return false; }
     }
 }

@@ -1480,6 +1480,10 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
             return heightParameter.getParameterValue(0);
         }
 
+        public final Parameter getHeightParameter() {
+            return heightParameter;
+        }
+
         public final double getRate() {
             return rateParameter.getParameterValue(0);
         }

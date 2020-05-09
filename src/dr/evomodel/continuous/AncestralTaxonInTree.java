@@ -104,6 +104,10 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final public boolean isOnAncestralPath() { return height != null; } // TODO Refactor into subclass
 
+    final public NodeRef getTipNode() { return tipNode; } // TODO Refactor into subclass
+
+    final public void setTipNode(NodeRef tipNode) { this.tipNode = tipNode; }
+
     final MutableTreeModel getTreeModel() { return treeModel; }
 
     final public int getIndex() { return index; }
@@ -163,6 +167,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     private int index;
     private NodeRef node;
+    private NodeRef tipNode;
     private int pathViaChildNumber = -1;
 
     public TaxonList getTaxonList() {

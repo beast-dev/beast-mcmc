@@ -598,13 +598,23 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                     if (NEW_APPROACH) {
 
                         validShadowTree = false;
+                        ShadowNode top = nodes[mapOriginalToShadowNumber(ancestor.getNode().getNumber())];
+                        if (height > getNodeHeight(top)) {
 
-                        ShadowNode node = nodes[mapOriginalToShadowNumber(ancestor.getTipNode().getNumber())];
-                        while (node.parent != null && getNodeHeight(node) < height) {
-                            safeFireNodeChanged(node);
-                            node = node.parent;
+                            while (top.parent != null && getNodeHeight(top) < height) {
+                                top = top.parent;
+                            }
+                            safeFireNodeChangedRecursion(top);
+
+                        } else {
+
+                            ShadowNode bottom = nodes[mapOriginalToShadowNumber(ancestor.getTipNode().getNumber())];
+                            while (bottom.parent != null && getNodeHeight(bottom) < height) {
+                                safeFireNodeChanged(bottom);
+                                bottom = bottom.parent;
+                            }
+                            safeFireNodeChanged(bottom.parent);
                         }
-                        safeFireNodeChanged(node.parent);
 
                     } else {
 
@@ -1027,7 +1037,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-    private static final boolean NEW_APPROACH = false;
+    private static final boolean NEW_APPROACH = true;
     private static final boolean NEW_APPROACH2 = true;
     private static final boolean TRACK_HEIGHT_PARAMETERS = true;
 

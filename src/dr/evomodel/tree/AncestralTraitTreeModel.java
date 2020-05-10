@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.continuous.AncestralTaxonInTree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -55,8 +56,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private final int externalCount;
     private final int internalCount;
-
-//    private int extraInternal;
     
     private ShadowNode[] nodes;
     private ShadowNode[] storedNodes;
@@ -238,11 +237,10 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         setupClamps();
 
-        for (ShadowNode node : nodes) { // TODO Only need to set extra nodes
+        for (ShadowNode node : nodes) {
             node.setUnused();
         }
-
-//        extraInternal = 0;
+        
         root = buildRecursivelyShadowTree(treeModel.getRoot(), null);
     }
 
@@ -283,10 +281,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
                 ShadowNode newTipNode = new ShadowNode(newTipNumber, null, ancestor);
 
-                ShadowNode newInternalNode = new ShadowNode(externalCount + treeInternalCount +
-                        ancestor.getIndex(),
-//                        extraInternal,
-                        null, ancestor);
+                ShadowNode newInternalNode = new ShadowNode(externalCount +
+                        treeInternalCount + ancestor.getIndex(), null, ancestor);
 
                 if (ancestor.getPathChildNumber() == 0) {
 
@@ -311,8 +307,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
                 storeNode(newTipNode);
                 storeNode(newInternalNode);
-
-//                ++extraInternal;
             }
         }
 
@@ -570,7 +564,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                                         (isExtraNode(node.child1) && height < getNodeHeight(node.child1))) {
 
                                     validShadowTree = false;
-                                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                                    fireModelChanged(new TreeChangedEvent.WholeTree());  // TODO Just subtree below max(here, height)?
                                 }
 
                             } else {
@@ -578,14 +572,14 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                                 if (isExtraNode(node.parent) ||
                                         isExtraNode(node.child0) || isExtraNode(node.child1)) {
                                     validShadowTree = false;
-                                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                                    fireModelChanged(new TreeChangedEvent.WholeTree()); // Not used
                                 }
                             }
                         }
 
                     } else {
                         validShadowTree = false;
-                        fireModelChanged(new TreeChangedEvent.WholeTree());
+                        fireModelChanged(new TreeChangedEvent.WholeTree());  // Not used
                     }
                 }
             } else {
@@ -625,7 +619,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
                 } else {
                     validShadowTree = false;
-                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                    fireModelChanged(new TreeChangedEvent.WholeTree());  // Not used
                 }
             } else {
                 fireModelChanged(new TreeChangedEvent.WholeTree()); // TODO Only update relevant part of tree
@@ -898,10 +892,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public int getTaxonIndex(String id) {
-        for (int i = 0, n = getTaxonCount(); i < n; i++) {
-            if (getTaxonId(i).equals(id)) return i;
-        }
-        return -1;
+        return TaxonList.Utils.getTaxonIndex(this, id);
     }
 
     public int getTaxonIndex(Taxon taxon) {
@@ -915,11 +906,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     public List<Taxon> asList() {
-        List<Taxon> taxa = new ArrayList<>();
-        for (int i = 0, n = getTaxonCount(); i < n; i++) {
-            taxa.add(getTaxon(i));
-        }
-        return taxa;
+        return TaxonList.Utils.asList(this);
     }
 
     public Object getTaxonAttribute(int taxonIndex, String name) {
@@ -1040,7 +1027,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-    private static final boolean NEW_APPROACH = true;
+    private static final boolean NEW_APPROACH = false;
     private static final boolean NEW_APPROACH2 = true;
     private static final boolean TRACK_HEIGHT_PARAMETERS = true;
 

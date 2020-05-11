@@ -1048,7 +1048,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     private static final boolean NEW_APPROACH = false;
-    private static final boolean NEW_APPROACH2 = true;
+    private static final boolean NEW_APPROACH2 = false;
     private static final boolean TRACK_HEIGHT_PARAMETERS = true;
 
     private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,

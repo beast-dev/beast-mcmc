@@ -559,15 +559,16 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
                             if (NEW_APPROACH2) {
 
-                                double height = getNodeHeight(node);
+                                if (isExtraNode(node.parent) ||
+                                        isExtraNode(node.child0) || isExtraNode(node.child1)) {
+                                    validShadowTree = false;
+                                    double height = parameter.getParameterValue(0);
+                                    if ((node.parent != null && height > getNodeHeight(node.parent))
+                                            || (node.child0 != null && height < getNodeHeight(node.child0))
+                                            || (node.child1 != null && height < getNodeHeight(node.child1))) {
 
-                                validShadowTree = false;
-
-                                if ((isExtraNode(node.parent) && height > getNodeHeight(node.parent)) ||
-                                        (isExtraNode(node.child0) && height < getNodeHeight(node.child0)) ||
-                                        (isExtraNode(node.child1) && height < getNodeHeight(node.child1))) {
-
-                                    fireModelChanged(new TreeChangedEvent.WholeTree());  // TODO Just subtree below max(here, height)?
+                                        fireModelChanged(new TreeChangedEvent.WholeTree()); // This appears to work
+                                    }
                                 }
 
                             } else {
@@ -1048,7 +1049,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     private static final boolean NEW_APPROACH = false;
-    private static final boolean NEW_APPROACH2 = false;
+    private static final boolean NEW_APPROACH2 = true;
     private static final boolean TRACK_HEIGHT_PARAMETERS = true;
 
     private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,

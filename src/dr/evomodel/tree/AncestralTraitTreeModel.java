@@ -549,6 +549,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
                     if (TRACK_HEIGHT_PARAMETERS) {
 
+                        validShadowTree = false; // TODO -- appears necessary from MW example -- but why?
+
                         Parameter parameter = (Parameter) object;
                         if (ancestralPathNodeHeightParameters.containsKey(parameter)) {
 
@@ -565,7 +567,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                                         (isExtraNode(node.child0) && height < getNodeHeight(node.child0)) ||
                                         (isExtraNode(node.child1) && height < getNodeHeight(node.child1))) {
 
-//                                    validShadowTree = false;
                                     fireModelChanged(new TreeChangedEvent.WholeTree());  // TODO Just subtree below max(here, height)?
                                 }
 
@@ -597,7 +598,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                     AncestralTaxonInTree ancestor = (AncestralTaxonInTree) model;
                     double height = ancestor.getHeight();
 
-                    if (NEW_APPROACH) {
+                    if (NEW_APPROACH) { // TODO -- does not work with MW example
 
                         validShadowTree = false;
                         ShadowNode top = nodes[mapOriginalToShadowNumber(ancestor.getNode().getNumber())];
@@ -986,6 +987,13 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
+//    private void addAllAncestralNodeHeightParameterBelow(NodeRef node) {
+//        addAncestralNodeHeightParameter(node);
+//        for (int i = 0; i < treeModel.getChildCount(node); ++i) {
+//            addAllAncestralNodeHeightParameterBelow(treeModel.getChild(node, i));
+//        }
+//    }
+
     private void setupAncestralPathClamps(Tree tree,
                                           Map<BitSet, AncestralTaxonInTree> clampList,
                                           Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap) {
@@ -1040,7 +1048,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
     }
 
     private static final boolean NEW_APPROACH = false;
-    private static final boolean NEW_APPROACH2 = false;
+    private static final boolean NEW_APPROACH2 = true;
     private static final boolean TRACK_HEIGHT_PARAMETERS = true;
 
     private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,

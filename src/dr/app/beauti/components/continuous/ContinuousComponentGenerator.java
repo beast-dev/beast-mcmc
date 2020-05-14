@@ -733,11 +733,16 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                         new Attribute.Default<String>("traitName", partitionData.getName()),
-                        new Attribute.Default<String>("greatCircleDistance", "true")
+                        new Attribute.Default<String>("displacementScheme", "greatCircleDistance"),
+                        new Attribute.Default<String>("scalingScheme", "dependent"),
+                        new Attribute.Default<String>("weightingScheme", "weighted")
                 } :
                 new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
-                        new Attribute.Default<String>("traitName", partitionData.getName())
+                        new Attribute.Default<String>("traitName", partitionData.getName()),
+                        new Attribute.Default<String>("displacementScheme", "linear"),
+                        new Attribute.Default<String>("scalingScheme", "dependent"),
+                        new Attribute.Default<String>("weightingScheme", "weighted")
                 }));
         continuousDataLikelihoodParser.writeIDrefFromID(writer, traitLikelihoodId);
         writer.writeCloseTag(TreeDataContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC);

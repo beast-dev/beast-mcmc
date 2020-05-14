@@ -34,6 +34,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.xml.*;
 
+import static dr.evomodel.continuous.ContinuousDiffusionStatistic.getGreatCircleDistance;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 /**
@@ -151,6 +152,21 @@ public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {
             @Override
             String getName() {
                 return "quadratic";
+            }
+        },
+        GREAT_CIRCLE_DISTANCE {
+            @Override
+            double displace(double[] x, double[] y) {
+                if (x.length == 2 && y.length == 2) {
+                    return getGreatCircleDistance(x, y);
+                } else {
+                    return LINEAR.displace(x, y);
+                }
+            }
+
+            @Override
+            String getName() {
+                return "greatCircleDistance";
             }
         };
 

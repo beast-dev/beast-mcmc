@@ -474,7 +474,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return Math.sqrt(sum);
     }
 
-    public double getGreatCircleDistance(double[] loc1, double[] loc2){
+    public static double getGreatCircleDistance(double[] loc1, double[] loc2){
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(loc1[0], loc1[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(loc2[0], loc2[1]);
         return coord1.distance(coord2);

@@ -30,8 +30,6 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -48,7 +46,8 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -350,7 +349,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (driftModels != null) {
             final int dim = driftModels.size();
             double[] drift = new double[dim];
-            double realTimeBranchLength = treeModel.getBranchLength(node);
+            double realTimeBranchLength = getRescaledBranchLengthForPrecision(node); // Drift should be normalized as the precision.
             for (int i = 0; i < dim; ++i) {
                 drift[i] = driftModels.get(i).getBranchRate(treeModel, node) * realTimeBranchLength;
             }

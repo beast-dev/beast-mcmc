@@ -349,7 +349,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (driftModels != null) {
             final int dim = driftModels.size();
             double[] drift = new double[dim];
-            double realTimeBranchLength = getRescaledBranchLengthForPrecision(node); // Drift should be normalized as the precision.
+            double realTimeBranchLength = treeModel.getBranchLength(node);
+            realTimeBranchLength = rescaleLength(realTimeBranchLength); // Drift should be normalized if tree is normalized
             for (int i = 0; i < dim; ++i) {
                 drift[i] = driftModels.get(i).getBranchRate(treeModel, node) * realTimeBranchLength;
             }

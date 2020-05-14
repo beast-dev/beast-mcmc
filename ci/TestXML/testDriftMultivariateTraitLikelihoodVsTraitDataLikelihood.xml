@@ -92,6 +92,9 @@
 	<continuousDiffusionStatistic id="oldDiffusionRate">
 		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
 	</continuousDiffusionStatistic>
+	<continuousDiffusionStatistic id="oldDiffusionRateGCD" greatCircleDistance="true">
+		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
+	</continuousDiffusionStatistic>
 
 	<report>
 		Old likelihood =
@@ -101,6 +104,11 @@
 	<report>
 		Old ContinuousDiffusionStatistic =
 		<continuousDiffusionStatistic idref="oldDiffusionRate"/>
+	</report>
+	
+	<report>
+		Old ContinuousDiffusionStatistic greatCircleDistance=
+		<continuousDiffusionStatistic idref="oldDiffusionRateGCD"/>
 	</report>
 
     <!-- ***************************************************************************** -->
@@ -137,6 +145,9 @@
 	<traitDataContinuousDiffusionStatistic id="newDiffusionRate" traitName="X" displacementScheme="linear" scalingScheme="dependent" weightingScheme="weighted">
 		<traitDataLikelihood idref="newVanillaLikelihood"/>
 	</traitDataContinuousDiffusionStatistic>
+	<traitDataContinuousDiffusionStatistic id="newDiffusionRateGCD" traitName="X" displacementScheme="greatCircleDistance" scalingScheme="dependent" weightingScheme="weighted">
+		<traitDataLikelihood idref="newVanillaLikelihood"/>
+	</traitDataContinuousDiffusionStatistic>
 	
 	<operators id="newOperators" optimizationSchedule="log">
 		<randomWalkOperator windowSize="0.3" weight="5" boundaryCondition="absorbing">
@@ -158,6 +169,11 @@
 	<report>
 		New ContinuousDiffusionStatistic =
 		<traitDataContinuousDiffusionStatistic idref="newDiffusionRate"/>
+	</report>
+	
+	<report>
+		New ContinuousDiffusionStatistic greatCircleDistance =
+		<traitDataContinuousDiffusionStatistic idref="newDiffusionRateGCD"/>
 	</report>
 	
 	<!-- ***************************************************************************** -->
@@ -221,6 +237,12 @@
 			<column label="oldDiffusionRate" dp="4" width="12">
 				<parameter idref="oldDiffusionRate"/>
 			</column>
+			<column label="newDiffusionRateGCD" dp="4" width="12">
+				<parameter idref="newDiffusionRateGCD"/>
+			</column>
+			<column label="oldDiffusionRateGCD" dp="4" width="12">
+				<parameter idref="oldDiffusionRateGCD"/>
+			</column>
 			<column label="drift" dp="4" width="12">
 				<parameter idref="driftRate"/>
 			</column>
@@ -228,6 +250,8 @@
 		<log id="fileLog" logEvery="1" fileName="testContinuousDiffusionStatistic.log" overwrite="false">
 			<parameter idref="newDiffusionRate"/>
 			<parameter idref="oldDiffusionRate"/>
+			<parameter idref="newDiffusionRateGCD"/>
+			<parameter idref="oldDiffusionRateGCD"/>
 		</log>
 	</mcmc>
    			
@@ -237,7 +261,7 @@
         <message>
            ContinuousDiffusionStatistics:
         </message>
-        <actual regex="newDiffusionRate\t([^\t]*)\t">
+        <actual>
         	<report>
 				<property name="mean">
         			<property name="correlationStatistics" index="0">
@@ -246,10 +270,34 @@
         		</property>
    			</report>
         </actual>
-        <expected regex="oldDiffusionRate\t([^\t]*)\t">
+        <expected>
 			<report>
 				<property name="mean">
         			<property name="correlationStatistics" index="1">
+            			<object idref="traceAnalysis"/>
+        			</property>
+        		</property>
+   			</report>
+        </expected>
+    </assertEqual>
+    
+    <assertEqual tolerance="1e-1" verbose="true" toleranceType="relative">
+        <message>
+           ContinuousDiffusionStatistics greatCircleDistance:
+        </message>
+        <actual>
+        	<report>
+				<property name="mean">
+        			<property name="correlationStatistics" index="2">
+            			<object idref="traceAnalysis"/>
+        			</property>
+        		</property>
+   			</report>
+        </actual>
+        <expected>
+			<report>
+				<property name="mean">
+        			<property name="correlationStatistics" index="3">
             			<object idref="traceAnalysis"/>
         			</property>
         		</property>
@@ -346,6 +394,12 @@
 			<column label="oldDiffusionRate" dp="4" width="12">
 				<parameter idref="oldDiffusionRate"/>
 			</column>
+			<column label="newDiffusionRateGCD" dp="4" width="12">
+				<parameter idref="newDiffusionRateGCD"/>
+			</column>
+			<column label="oldDiffusionRateGCD" dp="4" width="12">
+				<parameter idref="oldDiffusionRateGCD"/>
+			</column>
 			<column label="drift" dp="4" width="12">
 				<parameter idref="driftRate"/>
 			</column>
@@ -353,6 +407,8 @@
 		<log id="fileLog2" logEvery="1" fileName="testContinuousDiffusionStatistic2.log" overwrite="false">
 			<parameter idref="newDiffusionRate"/>
 			<parameter idref="oldDiffusionRate"/>
+			<parameter idref="newDiffusionRateGCD"/>
+			<parameter idref="oldDiffusionRateGCD"/>
 		</log>
 	</mcmc>
    			
@@ -360,9 +416,9 @@
 	
     <assertEqual tolerance="1e-1" verbose="true">
         <message>
-           ContinuousDiffusionStatistics:
+           ContinuousDiffusionStatistics (post-MCMC):
         </message>
-        <actual regex="newDiffusionRate\t([^\t]*)\t">
+        <actual>
         	<report>
 				<property name="mean">
         			<property name="correlationStatistics" index="0">
@@ -371,10 +427,34 @@
         		</property>
    			</report>
         </actual>
-        <expected regex="oldDiffusionRate\t([^\t]*)\t">
+        <expected>
 			<report>
 				<property name="mean">
         			<property name="correlationStatistics" index="1">
+            			<object idref="traceAnalysis2"/>
+        			</property>
+        		</property>
+   			</report>
+        </expected>
+    </assertEqual>
+    
+    <assertEqual tolerance="1e-1" verbose="true" toleranceType="relative">
+        <message>
+           ContinuousDiffusionStatistics greatCircleDistance (post MCMC):
+        </message>
+        <actual>
+        	<report>
+				<property name="mean">
+        			<property name="correlationStatistics" index="2">
+            			<object idref="traceAnalysis2"/>
+        			</property>
+        		</property>
+   			</report>
+        </actual>
+        <expected>
+			<report>
+				<property name="mean">
+        			<property name="correlationStatistics" index="3">
             			<object idref="traceAnalysis2"/>
         			</property>
         		</property>

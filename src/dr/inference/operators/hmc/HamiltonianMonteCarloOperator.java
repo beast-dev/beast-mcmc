@@ -688,6 +688,17 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
+    public double[] getInitialPosition() {
+
+        return leapFrogEngine.getInitialPosition();
+    }
+
+    @Override
+    public double getParameterLogJacobian() {
+        return leapFrogEngine.getParameterLogJacobian();
+    }
+
+    @Override
     public WrappedVector drawMomentum() {
         return preconditioning.drawInitialMomentum();
     }

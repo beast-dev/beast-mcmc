@@ -438,6 +438,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public double[] getInitialPosition() {
+        return parameter.getParameterValues();
+    }
+
+    @Override
+    public double getParameterLogJacobian() {
+        return 0;
+    }
+
+    @Override
     public WrappedVector drawMomentum() {
         return drawInitialMomentum();
     }

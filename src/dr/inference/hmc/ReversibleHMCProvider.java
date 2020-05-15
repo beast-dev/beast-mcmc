@@ -10,6 +10,10 @@ public interface ReversibleHMCProvider {
 
     void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time);
 
+    double[] getInitialPosition();
+
+    double getParameterLogJacobian();
+
     WrappedVector drawMomentum();
 
     double getKineticEnergy(ReadableVector momentum);

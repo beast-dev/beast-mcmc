@@ -83,8 +83,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             checkGradient(likelihood);
         }
 
-        final double[] initialPosition = leapFrogEngine.getInitialPosition();
-
+        final double[] initialPosition = reversibleHMCProvider.getInitialPosition();
         if (stepSizeInformation == null) {
             stepSizeInformation = findReasonableStepSize(initialPosition, super.stepSize);
         }
@@ -314,7 +313,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         assert (momentum != null);
 
         return gradientProvider.getLikelihood().getLogLikelihood() - reversibleHMCProvider.getKineticEnergy(momentum)
-                - leapFrogEngine.getParameterLogJacobian();
+                - reversibleHMCProvider.getParameterLogJacobian();
     }
 
     private class TreeState {

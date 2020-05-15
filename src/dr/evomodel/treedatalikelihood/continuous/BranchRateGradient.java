@@ -67,6 +67,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
     private final Parameter rateParameter;
     private final ArbitraryBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
+    private final boolean scaleDriftWithBranchRates;
 
 //    private final DenseMatrix64F matrix0;
 //    private final DenseMatrix64F matrix1;
@@ -82,6 +83,8 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.rateParameter = rateParameter;
+
+        this.scaleDriftWithBranchRates = likelihoodDelegate.getDiffusionProcessDelegate().scaleDriftWithBranchRates();
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
         this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
@@ -156,7 +159,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
                 double gradient = 0.0;
                 for (int trait = 0; trait < nTraits; ++trait) {
-                    gradient += branchProvider.getGradientForBranch(statisticsForNode.get(trait), scaling);
+                    gradient += branchProvider.getGradientForBranch(statisticsForNode.get(trait), scaling, scaleDriftWithBranchRates);
                 }
 
                 final int destinationIndex = getParameterIndexFromNode(node);
@@ -322,7 +325,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
     interface ContinuousTraitGradientForBranch {
 
-        double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling);
+        double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling, boolean scaleDriftWithBranchRates);
 
         class Default implements ContinuousTraitGradientForBranch {
 
@@ -341,7 +344,8 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
             }
 
             @Override
-            public double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
+            public double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling,
+                                               boolean scaleDriftWithBranchRates) {
 
                 final NormalSufficientStatistics below = statistics.getBelow();
                 final NormalSufficientStatistics branch = statistics.getBranch();
@@ -415,23 +419,26 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 }
 
                 // W.r.t. drift
-                // TODO: Fix delegate to (possibly) un-link drift from arbitrary rate
-                DenseMatrix64F Di = new DenseMatrix64F(dim, 1);
-                CommonOps.scale(differentialScaling, branch.getRawMean(), Di);
-
                 double grad3 = 0.0;
-                for (int row = 0; row < dim; ++row) {
-                    for (int col = 0; col < dim; ++col) {
+                if (scaleDriftWithBranchRates) {
+                    DenseMatrix64F Di = new DenseMatrix64F(dim, 1);
+                    CommonOps.scale(differentialScaling, branch.getRawMean(), Di);
 
-                        grad3 += delta.unsafe_get(row, 0)
-                                * Qi.unsafe_get(row, col)
-                                * Di.unsafe_get(col, 0);
+                    for (int row = 0; row < dim; ++row) {
+                        for (int col = 0; col < dim; ++col) {
 
+                            grad3 += delta.unsafe_get(row, 0)
+                                    * Qi.unsafe_get(row, col)
+                                    * Di.unsafe_get(col, 0);
+
+                        }
+                    }
+
+                    if (DEBUG) {
+                        System.err.println("\tDi     = " + NormalSufficientStatistics.toVectorizedString(branch.getRawMean()));
                     }
                 }
-
                 if (DEBUG) {
-                    System.err.println("\tDi     = " + NormalSufficientStatistics.toVectorizedString(branch.getRawMean()));
                     System.err.println("grad3 = " + grad3);
                 }
 

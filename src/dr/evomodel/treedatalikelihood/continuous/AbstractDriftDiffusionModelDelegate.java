@@ -143,6 +143,22 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     }
 
     @Override
+    public void updateGradientDisplacementWrtRate(double[] gradient,
+                                                  double scaling,
+                                                  DenseMatrix64F displacement,
+                                                  DenseMatrix64F gradMatN,
+                                                  DenseMatrix64F gradN) {
+        if (!scaleDriftWithBranchRates) {
+            super.updateGradientDisplacementWrtRate(gradient, scaling, displacement, gradMatN, gradN);
+        } else {
+            CommonOps.scale(scaling, displacement, gradMatN);
+            for (int i = 0; i < gradMatN.numRows; i++) {
+                gradient[0] += gradMatN.get(i) * gradN.get(i);
+            }
+        }
+    }
+
+    @Override
     public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
         final double[] drift = new double[dim];
         System.arraycopy(priorMean, 0, drift, 0, priorMean.length);
@@ -183,5 +199,10 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
                                        final double[][] treeSharedLengths, final double[][] traitVariance) {
         return KroneckerOperation.product(treeVariance, traitVariance);
+    }
+
+    @Override
+    public boolean scaleDriftWithBranchRates() {
+        return scaleDriftWithBranchRates;
     }
 }

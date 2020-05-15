@@ -254,4 +254,18 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         }
         return new double[gradient.getNumRows()];
     }
+
+    @Override
+    public void updateGradientDisplacementWrtRate(double[] gradient,
+                                                  double scaling,
+                                                  DenseMatrix64F displacement,
+                                                  DenseMatrix64F gradMatN,
+                                                  DenseMatrix64F gradN) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean scaleDriftWithBranchRates() {
+        return false;
+    }
 }

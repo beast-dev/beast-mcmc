@@ -53,6 +53,23 @@
 		</data>
 	</multivariateWishartPrior>
 	
+	<discretizedBranchRates id="diffusionRates">
+		<treeModel idref="treeModel"/>
+		<distribution>
+			<logNormalDistributionModel meanInRealSpace="true">
+				<mean>
+					<parameter value="1.0"/>
+				</mean>
+				<stdev>
+					<parameter id="stdev" value="1.0" lower="0.0"/>
+				</stdev>
+			</logNormalDistributionModel>
+		</distribution>
+		<rateCategories>
+			<parameter id="rrwCategories"/>
+		</rateCategories>
+	</discretizedBranchRates>
+	
 	<compoundParameter id="driftRate">
 		<parameter id="driftRate.0" value="-50.0"/>
 		<parameter id="driftRate.1" value="100.0"/>
@@ -88,6 +105,7 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
+		<discretizedBranchRates idref="diffusionRates"/>
 	</multivariateTraitLikelihood>
 	<continuousDiffusionStatistic id="oldDiffusionRate">
 		<multivariateTraitLikelihood idref="oldVanillaLikelihood"/>
@@ -141,6 +159,7 @@
 				</rate>
 			</strictClockBranchRates>
 		</driftModels>
+		<discretizedBranchRates idref="diffusionRates"/>
 	</traitDataLikelihood>
 	<traitDataContinuousDiffusionStatistic id="newDiffusionRate" traitName="X" displacementScheme="linear" scalingScheme="dependent" weightingScheme="weighted">
 		<traitDataLikelihood idref="newVanillaLikelihood"/>
@@ -158,7 +177,16 @@
 				<traitDataLikelihood idref="newVanillaLikelihood"/>
 			</wishartStatistics>	
 			<multivariateWishartPrior idref="precisionPrior"/>
-		</precisionGibbsOperator>                                  
+		</precisionGibbsOperator> 
+		<scaleOperator scaleFactor="0.75" weight="5">
+				<parameter idref="stdev"/>
+			</scaleOperator>
+		<swapOperator size="1" weight="5" autoOptimize="false">
+			<parameter idref="rrwCategories"/>
+		</swapOperator>
+		<uniformIntegerOperator weight="5">
+			<parameter idref="rrwCategories"/>
+		</uniformIntegerOperator>                                
 	</operators>
 
 	<report>
@@ -316,6 +344,9 @@
 			<normalPrior mean="0.0" stdev="10.0">
 				<parameter idref="driftRate"/>
 			</normalPrior>
+			<exponentialPrior mean="0.3333333333333333" offset="0.0">
+				<parameter idref="stdev"/>
+			</exponentialPrior>
 		</posterior>
 		<operators idref="newOperators"/>
 		<log id="screenLog" logEvery="500">
@@ -336,6 +367,9 @@
 			</column>
 			<column label="drift" dp="4" width="12">
 				<parameter idref="driftRate"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+				<parameter idref="precisionMatrix"/>
 			</column>
 		</log>
 	</mcmc>

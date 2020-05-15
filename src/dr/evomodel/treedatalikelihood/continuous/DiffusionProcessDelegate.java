@@ -59,7 +59,8 @@ public interface DiffusionProcessDelegate extends Model {
 
     void setDiffusionModels(ContinuousDiffusionIntegrator cdi, boolean flipBuffers);
 
-    void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices, double[] edgeLengths,
+    void updateDiffusionMatrices(ContinuousDiffusionIntegrator cdi, int[] branchIndices,
+                                 double[] edgeLengths, double[] realTimeEdgeLengths,
                                  int updateCount, boolean flipBuffers);
 
     boolean hasDrift();
@@ -74,6 +75,8 @@ public interface DiffusionProcessDelegate extends Model {
 
     double[] getGradientDisplacementWrtRoot(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
 
+    void updateGradientDisplacementWrtRate(double[] gradient, double scaling, DenseMatrix64F displacement, DenseMatrix64F gradMatN, DenseMatrix64F gradN);
+
     void storeState();
 
     void restoreState();
@@ -81,4 +84,6 @@ public interface DiffusionProcessDelegate extends Model {
     double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim);
 
     double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
+
+    boolean scaleDriftWithBranchRates();
 }

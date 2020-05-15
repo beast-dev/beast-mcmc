@@ -42,12 +42,20 @@ public final class DriftDiffusionModelDelegate extends AbstractDriftDiffusionMod
     public DriftDiffusionModelDelegate(Tree tree,
                                        MultivariateDiffusionModel diffusionModel,
                                        List<BranchRateModel> branchRateModels) {
-        this(tree, diffusionModel, branchRateModels, 0);
+        this(tree, diffusionModel, branchRateModels, false, 0);
+    }
+
+    public DriftDiffusionModelDelegate(Tree tree,
+                                       MultivariateDiffusionModel diffusionModel,
+                                       List<BranchRateModel> branchRateModels,
+                                       boolean scaleDriftWithBranchRates) {
+        this(tree, diffusionModel, branchRateModels, scaleDriftWithBranchRates, 0);
     }
 
     private DriftDiffusionModelDelegate(Tree tree,
                                         MultivariateDiffusionModel diffusionModel,
                                         List<BranchRateModel> branchRateModels,
+                                        boolean scaleDriftWithBranchRates,
                                         int partitionNumber) {
         super(tree, diffusionModel, branchRateModels, partitionNumber);
     }

@@ -73,6 +73,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String INTEGRATED_PROCESS = "integratedProcess";
 
+    private static final String SCALE_DRIFT_WITH_BRANCH_RATE = "scaleDriftWithBranchRates";
+
     private static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
     public static final String FACTOR_NAME = "factors";
@@ -113,6 +115,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         ContinuousTraitPartialsProvider dataModel;
         boolean useMissingIndices = true;
         boolean integratedProcess = xo.getAttribute(INTEGRATED_PROCESS, false);
+        boolean scaleDriftWithBranchRates = xo.getAttribute(SCALE_DRIFT_WITH_BRANCH_RATE, false);
+
         // End Parse Parameters
 
         // Begin Parse Evolution Model
@@ -138,7 +142,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
         } else {
             if (driftModels != null || xo.getAttribute(FORCE_DRIFT, false)) {
-                diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels);
+                diffusionProcessDelegate = new DriftDiffusionModelDelegate(treeModel, diffusionModel, driftModels, scaleDriftWithBranchRates);
             } else {
                 diffusionProcessDelegate = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
             }

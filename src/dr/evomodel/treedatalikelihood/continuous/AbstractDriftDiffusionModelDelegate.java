@@ -34,6 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrat
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -47,13 +48,23 @@ import java.util.List;
 public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
     private final List<BranchRateModel> branchRateModels;
+    private final boolean scaleDriftWithBranchRates;
 
     AbstractDriftDiffusionModelDelegate(Tree tree,
                                         MultivariateDiffusionModel diffusionModel,
                                         List<BranchRateModel> branchRateModels,
                                         int partitionNumber) {
+        this(tree, diffusionModel, branchRateModels, false, partitionNumber);
+    }
+
+    AbstractDriftDiffusionModelDelegate(Tree tree,
+                                        MultivariateDiffusionModel diffusionModel,
+                                        List<BranchRateModel> branchRateModels,
+                                        boolean scaleDriftWithBranchRates,
+                                        int partitionNumber) {
         super(tree, diffusionModel, partitionNumber);
         this.branchRateModels = branchRateModels;
+        this.scaleDriftWithBranchRates = scaleDriftWithBranchRates;
 
         if (branchRateModels != null) {
 

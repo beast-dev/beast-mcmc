@@ -186,7 +186,10 @@ public class TreePruner {
 
         if (parent == tree.getRoot()) {
 
-            throw new RuntimeException("Still need to handle this situation");
+            FlexibleNode sibling = (FlexibleNode) getSibling(tree, parent, tip);
+            sibling.setParent(null);
+
+            tree.setRoot(sibling);
 
         } else {
 

@@ -30,13 +30,11 @@ import dr.app.util.Arguments;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
 import dr.util.Version;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Philippe Lemey
@@ -57,6 +55,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                                           int burnIn,
                                           String[] taxaToIgnore,
                                           boolean basedOnNameContent,
+                                          String[] mrcaTaxa,
                                           double mrsd
      ) throws IOException {
 
@@ -64,32 +63,33 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         readTrees(trees, inputFileName, burnIn);
 
-        Set taxa = getTaxaToIgnore(trees.get(0), taxaToIgnore, basedOnNameContent);
+        Set ignoredTaxa = getTaxaSet(trees.get(0), taxaToIgnore, basedOnNameContent);
+        Set commonAncestorTaxa = getTaxaSet(trees.get(0), mrcaTaxa, false);
 
         this.mrsd = mrsd;
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(trees, burnIn, taxa);
+        processTrees(trees, burnIn, ignoredTaxa, commonAncestorTaxa);
         closeOutputFile(ps);
     }
 
-    private Set getTaxaToIgnore(Tree tree, String[] taxaToProcess, boolean basedOnContent) {
+    private Set getTaxaSet(Tree tree, String[] taxaToProcess, boolean basedOnContent) {
         Set taxa = new HashSet();
         getTaxaToFromName(tree, taxa, taxaToProcess, basedOnContent);
         return taxa;
     }
 
-    private void processTrees(List<Tree> trees, int burnIn, Set taxa) {
+    private void processTrees(List<Tree> trees, int burnIn, Set ignoredTaxa, Set commonAncestorTaxa) {
         if (burnIn < 0) {
             burnIn = 0;
         }
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            processOneTree(tree, taxa);
+            processOneTree(tree, ignoredTaxa, commonAncestorTaxa);
         }
     }
 
-    private void processOneTree(Tree tree, Set taxa) {
+    private void processOneTree(Tree tree, Set ignoredTaxa, Set commonAncestorTaxa) {
 
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
@@ -99,13 +99,16 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
-            if (nodeToConsider(tree, node, taxa)){
-                Object[] jumps = readCJH(node, tree);
-                if (jumps != null) {
-                    for (int j = jumps.length - 1; j >= 0; j--) {
-                        Object[] jump = (Object[]) jumps[j];
-                        Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
-                        ps.println(row);
+            if (inClade(tree, node, commonAncestorTaxa, ignoredTaxa)){
+//                System.out.println("inclade");
+                if (nodeToConsider(tree, node, ignoredTaxa)){
+                    Object[] jumps = readCJH(node, tree);
+                    if (jumps != null) {
+                        for (int j = jumps.length - 1; j >= 0; j--) {
+                            Object[] jump = (Object[]) jumps[j];
+                            Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
+                            ps.println(row);
+                        }
                     }
                 }
             }
@@ -114,12 +117,45 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
     private boolean nodeToConsider(Tree tree, NodeRef node, Set taxa){
         boolean consider = true;
-        Set descendants = TreeUtils.getDescendantLeaves(tree,node);
-        descendants.removeAll(taxa);
-        if (descendants.isEmpty()){
-            consider = false;
+        if (taxa==null){
+            return consider;
+        } else {
+            Set descendants = TreeUtils.getDescendantLeaves(tree,node);
+            Set taxaDescendants = stringToTaxaSet(tree, descendants);
+            taxaDescendants.removeAll(taxa);
+            if (taxaDescendants.isEmpty()){
+                consider = false;
+            }
+            return consider;
         }
-        return consider;
+    }
+
+    private boolean inClade(Tree tree, NodeRef node, Set commonAncestorTaxa, Set ignoredTaxa){
+        boolean inClade = false;
+        if (commonAncestorTaxa==null){
+            inClade = true;
+        } else {
+            Set descendants = TreeUtils.getDescendantLeaves(tree,node);
+            Set taxaDescendants = stringToTaxaSet(tree, descendants);
+            taxaDescendants.removeAll(ignoredTaxa);
+            taxaDescendants.removeAll(commonAncestorTaxa);
+            if (taxaDescendants.isEmpty()){
+                inClade = true;
+//                System.out.println("in clade!");
+            }
+        }
+        return inClade;
+    }
+
+    private Set stringToTaxaSet(Tree tree, Set taxa){
+        Set taxaStrings = new HashSet();
+        Iterator<String> itr = taxa.iterator();
+        while(itr.hasNext()){
+            String descendant = itr.next();
+            Taxon taxon = tree.getTaxon(tree.getTaxonIndex(descendant));
+            taxaStrings.add(taxon);
+        }
+        return taxaStrings;
     }
 
     private class Row {
@@ -203,6 +239,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         String[] taxaToIgnore = null;
         double mrsd = Double.MAX_VALUE;
         int burnIn = -1;
+        String[] mrcaTaxa = null;
 
         printTitle();
 
@@ -213,6 +250,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                         new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
                         new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
                                 "add true noise [default = true])"),
+                        new Arguments.StringOption("mrcaTaxa", "list", "a list of taxon names that defines a clade to focus on for MJH processing"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -223,7 +261,6 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             taxaToIgnore = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("taxaToIgnore"));
         }
 
-
         if (arguments.hasOption("mrsd")) {
             mrsd = arguments.getRealOption("mrsd");
         }
@@ -233,6 +270,10 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
+        if (arguments.hasOption("mrcaTaxa")) {
+            mrcaTaxa = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("mrcaTaxa"));
+        }
+
         boolean basedOnNameContent = parseBasedOnNameContent(arguments);
 
         String[] fileNames = getInputOutputFileNames(arguments, TaxaMarkovJumpHistoryAnalyzer::printUsage);
@@ -240,6 +281,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         new TreeMarkovJumpHistoryAnalyzer(fileNames[0], fileNames[1], burnIn,
                 taxaToIgnore,
                 basedOnNameContent,
+                mrcaTaxa,
                 mrsd
         );
 

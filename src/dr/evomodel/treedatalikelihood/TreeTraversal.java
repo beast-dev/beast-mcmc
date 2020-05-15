@@ -108,11 +108,22 @@ public abstract class TreeTraversal {
         synchronized (branchRateModel) {
             branchRate = branchRateModel.getBranchRate(tree, node);
         }
+        // Get the operational time of the branch
+        final double branchLength = branchRate * computeRealTimeBranchLength(tree, node);
+
+        assert branchLength >= 0.0 : "Negative branch length: " + branchLength + " for node " +
+                node.getNumber() + (tree.isExternal(node) ?
+                " (" + tree.getNodeTaxon(node).getId() + ")" : "");
+
+        return branchLength;
+    }
+
+    protected final double computeRealTimeBranchLength(final Tree tree, final NodeRef node) {
         final double parentHeight = tree.getNodeHeight(tree.getParent(node));
         final double nodeHeight = tree.getNodeHeight(node);
 
         // Get the operational time of the branch
-        final double branchLength = branchRate * (parentHeight - nodeHeight);
+        final double branchLength =  parentHeight - nodeHeight;
 
         assert branchLength >= 0.0 : "Negative branch length: " + branchLength + " for node " +
                 node.getNumber() + (tree.isExternal(node) ?

@@ -185,12 +185,12 @@ public class TreePruner {
         NodeRef parent = tree.getParent(tip);
 
         if (parent == tree.getRoot()) {
-
+            tree.beginTreeEdit();
             FlexibleNode sibling = (FlexibleNode) getSibling(tree, parent, tip);
             sibling.setParent(null);
 
             tree.setRoot(sibling);
-
+            tree.endTreeEdit();
         } else {
 
             NodeRef grandParent = tree.getParent(parent);

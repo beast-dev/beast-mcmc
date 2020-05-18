@@ -14,6 +14,8 @@ public interface ReversibleHMCProvider {
 
     double getParameterLogJacobian();
 
+    void setParameter(double[] position);
+
     WrappedVector drawMomentum();
 
     double getKineticEnergy(ReadableVector momentum);

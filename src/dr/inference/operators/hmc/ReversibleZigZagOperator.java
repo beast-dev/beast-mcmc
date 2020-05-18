@@ -448,6 +448,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public void setParameter(double[] position) {
+
+    }
+
+    @Override
     public WrappedVector drawMomentum() {
         return drawInitialMomentum();
     }

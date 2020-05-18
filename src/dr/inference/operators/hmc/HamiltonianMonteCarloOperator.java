@@ -699,10 +699,14 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
+    public void setParameter(double[] position) {
+        leapFrogEngine.setParameter(position);
+    }
+
+    @Override
     public WrappedVector drawMomentum() {
         return preconditioning.drawInitialMomentum();
     }
-
 
     protected void handleInstability() {
         throw new RuntimeException("Numerical instability; need to handle"); // TODO

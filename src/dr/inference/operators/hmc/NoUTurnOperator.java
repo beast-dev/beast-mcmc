@@ -89,7 +89,8 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);
-        leapFrogEngine.setParameter(position);
+
+        reversibleHMCProvider.setParameter(position);
 
         return 0.0;
     }
@@ -109,7 +110,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         int height = 0;
 
         while (trajectoryTree.flagContinue) {
-
             double[] tmp = updateTrajectoryTree(trajectoryTree, height, logSliceU, initialJointDensity);
             if (tmp != null) {
                 endPosition = tmp;
@@ -125,7 +125,6 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         if (autoStepsize) {
             stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
         }
-
         return endPosition;
     }
 
@@ -173,7 +172,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         //double[] position = Arrays.copyOf(inPosition, inPosition.length);
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
 
-        leapFrogEngine.setParameter(position.getBuffer());
+        reversibleHMCProvider.setParameter(position.getBuffer());
 
         // "one reversibleHMC integral
         reversibleHMCProvider.reversiblePositionMomentumUpdate(position, momentum, direction, stepSize);
@@ -408,7 +407,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
 
     private ReversibleHMCProvider reversibleHMCProvider;
 
-    private boolean autoStepsize = false; //todo: temp use.
+    private boolean autoStepsize = true; //todo: make a xml choice.
 }
 
 

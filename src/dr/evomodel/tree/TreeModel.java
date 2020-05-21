@@ -836,7 +836,10 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
 
     /**
      * Recursive algorithm to copy a proposed tree structure into the current treeModel.
+     *
+     * @todo - is this used anywhere?
      */
+    @Deprecated
     private void addNodeStructure(Tree donorTree, NodeRef donorNode) {
 
         NodeRef acceptorNode = null;

@@ -102,6 +102,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             if (inClade(tree, node, commonAncestorTaxa, ignoredTaxa)){
 //                System.out.println("inclade");
                 if (nodeToConsider(tree, node, ignoredTaxa)){
+//                    System.out.println("considering node");
                     Object[] jumps = readCJH(node, tree);
                     if (jumps != null) {
                         for (int j = jumps.length - 1; j >= 0; j--) {
@@ -117,7 +118,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
     private boolean nodeToConsider(Tree tree, NodeRef node, Set taxa){
         boolean consider = true;
-        if (taxa==null){
+        if (taxa.isEmpty()){
             return consider;
         } else {
             Set descendants = TreeUtils.getDescendantLeaves(tree,node);
@@ -132,7 +133,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
     private boolean inClade(Tree tree, NodeRef node, Set commonAncestorTaxa, Set ignoredTaxa){
         boolean inClade = false;
-        if (commonAncestorTaxa==null){
+        if (commonAncestorTaxa.isEmpty()){
             inClade = true;
         } else {
             Set descendants = TreeUtils.getDescendantLeaves(tree,node);

@@ -49,6 +49,7 @@ public class TreePruner {
 
     private static final String[] falseTrue = {"false", "true"};
     private static final String NAMECONTENT = "nameContent";
+    private static final String PRUNEDNODES = "prunedNodes";
 
     private TreePruner(String inputFileName,
                        String outputFileName,
@@ -114,7 +115,7 @@ public class TreePruner {
     }
 
     private List<Taxon> getTaxaToPrune(Tree tree, String[] names, boolean basedOnContent) {
-
+        System.out.println("pruning taxa:");
         List<Taxon> taxa = new ArrayList<>();
         if (names != null) {
             for (String name : names) {
@@ -124,6 +125,7 @@ public class TreePruner {
                     if (taxonId == -1) {
                         throw new RuntimeException("Unable to find taxon '" + name + "'.");
                     }
+                    System.out.println(name);
                     taxa.add(tree.getTaxon(taxonId));
                 } else {
                     int counter = 0;
@@ -132,6 +134,7 @@ public class TreePruner {
                         String taxonName = taxon.toString();
                         if (taxonName.contains(name)) {
                             taxa.add(taxon);
+                            System.out.println(taxonName);
                             counter ++;
                         }
                     }
@@ -146,7 +149,15 @@ public class TreePruner {
 
     private void processTrees(List<Tree> trees, List<Taxon> taxa) {
         for (Tree tree : trees) {
+            setPrunedNodeAnnotation(tree);
             processOneTree(tree, taxa);
+        }
+    }
+
+    private void setPrunedNodeAnnotation(Tree tree) {
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            FlexibleNode node = (FlexibleNode) tree.getNode(i);
+            node.setAttribute(PRUNEDNODES, "0");
         }
     }
 
@@ -161,6 +172,7 @@ public class TreePruner {
             NodeRef tip = tree.getExternalNode(i);
             if (tree.getNodeTaxon(tip) == taxon) {
                 processOneTip(tree, tip);
+//                tree.removeTaxon(taxon);
             }
         }
     }
@@ -169,12 +181,14 @@ public class TreePruner {
         NodeRef parent = tree.getParent(tip);
 
         if (parent == tree.getRoot()) {
-
+            tree.beginTreeEdit();
             FlexibleNode sibling = (FlexibleNode) getSibling(tree, parent, tip);
             sibling.setParent(null);
 
             tree.setRoot(sibling);
-
+            // Annotate pruned nodes
+            sibling.setAttribute(PRUNEDNODES, Integer.toString(((Integer.valueOf((String) sibling.getAttribute(PRUNEDNODES)) + 1))));
+            tree.endTreeEdit();
         } else {
 
             NodeRef grandParent = tree.getParent(parent);
@@ -192,6 +206,9 @@ public class TreePruner {
 
             // Adjust branch lengths
             siblingNode.setLength(parentNode.getLength() + siblingNode.getLength());
+
+            // Annotate pruned nodes
+            siblingNode.setAttribute(PRUNEDNODES, Integer.toString(((Integer.valueOf((String) siblingNode.getAttribute(PRUNEDNODES)) + 1))));
 
             // Combine traits
             // TODO

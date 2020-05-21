@@ -64,7 +64,7 @@ public class TreePruner {
 
         processTrees(trees, taxa);
 
-        writeOutputFile(trees, outputFileName);
+        writeOutputFile(trees, outputFileName, taxa);
     }
 
     private void readTrees(List<Tree> trees, String inputFileName) throws IOException {
@@ -113,22 +113,6 @@ public class TreePruner {
         progressStream.println("Total trees read: " + totalTrees);
     }
 
-//    private List<Taxon> getTaxaToPrune(Tree tree, String[] names) {
-//
-//        List<Taxon> taxa = new ArrayList<>();
-//        if (names != null) {
-//            for (String name : names) {
-//
-//                int taxonId = tree.getTaxonIndex(name);
-//                if (taxonId == -1) {
-//                    throw new RuntimeException("Unable to find taxon '" + name + "'.");
-//                }
-//
-//                taxa.add(tree.getTaxon(taxonId));
-//            }
-//        }
-//        return taxa;
-//    }
     private List<Taxon> getTaxaToPrune(Tree tree, String[] names, boolean basedOnContent) {
 
         List<Taxon> taxa = new ArrayList<>();
@@ -224,7 +208,7 @@ public class TreePruner {
 
     int totalTrees = 0;
 
-    private void writeOutputFile(List<Tree> trees, String outputFileName) {
+    private void writeOutputFile(List<Tree> trees, String outputFileName, List<Taxon> taxa) {
 
         PrintStream ps = null;
 
@@ -238,7 +222,25 @@ public class TreePruner {
             }
         }
 
-        NexusExporter exporter = new NexusExporter(ps);
+        NexusExporter exporter = new NexusExporter(ps) {
+
+            protected int getTaxonCount(Tree tree) {
+                return tree.getTaxonCount() - taxa.size();
+            }
+
+            @Override
+            protected List<String> getTaxonNames(Tree tree) {
+                List<String> names = new ArrayList<String>();
+
+                for (int i = 0; i < tree.getTaxonCount(); i++) {
+                    Taxon taxon = tree.getTaxon(i);
+                    if (!taxa.contains(taxon)) {
+                        names.add(tree.getTaxonId(i));
+                    }
+                }
+                return names;
+            }
+        };
 
         if (trees.size() > 0) {
             exporter.exportTrees(trees.toArray(new Tree[0]), true, getTreeNames(trees));

@@ -996,7 +996,7 @@ public class TreeModel extends AbstractModel implements MutableTreeModel, Keywor
     }
 
     public boolean removeTaxon(Taxon taxon) {
-        throw new IllegalArgumentException("Cannot add taxon to a TreeModel");
+        throw new IllegalArgumentException("Cannot remove taxon to a TreeModel");
     }
 
     public void setTaxonId(int taxonIndex, String id) {

@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class GhostTreeModelParser extends AbstractXMLObjectParser {
 
-    public static final String CORPOREAL_TAXA = "corporealTaxa";
+    public static final String GHOST_TAXA = "ghostTaxa";
     public static final String ROOT_HEIGHT = "rootHeight";
     public static final String LEAF_HEIGHT = "leafHeight";
     public static final String LEAF_TRAIT = "leafTrait";
@@ -60,7 +60,7 @@ public class GhostTreeModelParser extends AbstractXMLObjectParser {
     public static final String NAME = "name";
 
     public String getParserName() {
-        return TreeModel.TREE_MODEL;
+        return GhostTreeModel.GHOST_TREE_MODEL;
     }
 
     /**
@@ -70,13 +70,14 @@ public class GhostTreeModelParser extends AbstractXMLObjectParser {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
 
-        TaxonList corporealTaxa = (TaxonList) xo.getElementFirstChild(CORPOREAL_TAXA);
+        TaxonList ghostTaxa = (TaxonList) xo.getElementFirstChild(GHOST_TAXA);
 
         TreeModel subTreeModel = new TreeModel(TreeModel.TREE_MODEL);
 
-        GhostTreeModel treeModel = new GhostTreeModel(xo.getId(), tree, subTreeModel);
+        GhostTreeModel treeModel = new GhostTreeModel(xo.getId(), tree, subTreeModel, ghostTaxa);
 
-        Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
+        Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'" +
+                "\n\nwith " + ghostTaxa.getTaxonCount() + " ghost lineages.");
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {
@@ -212,7 +213,7 @@ public class GhostTreeModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(Tree.class),
-            new ElementRule(CORPOREAL_TAXA, TaxonList.class, "A list of taxa which are the non-ghost tips", false),
+            new ElementRule(GHOST_TAXA, TaxonList.class, "A list of taxa which are the ghost lineages", false),
             new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
             new ElementRule(NODE_HEIGHTS,
                     new XMLSyntaxRule[]{

@@ -705,7 +705,17 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     @Override
     public WrappedVector drawMomentum() {
-        return preconditioning.drawInitialMomentum();
+        return mask(preconditioning.drawInitialMomentum(), mask);
+    }
+
+    @Override
+    public double getJointProbability(WrappedVector momentum) {
+        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getStepsize() {
+        return stepSize;
     }
 
     protected void handleInstability() {

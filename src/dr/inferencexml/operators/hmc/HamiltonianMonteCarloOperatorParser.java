@@ -34,7 +34,7 @@ import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
-import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inference.operators.hmc.OldNoUTurnOperator;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -173,7 +173,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     parameter, transform, mask,
                     runtimeOptions, preconditioningType);
         } else {
-            return new NoUTurnOperator(adaptationMode, weight, derivative,
+            return new OldNoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
                     runtimeOptions, preconditioningType, reversibleHMCprovider);
         }

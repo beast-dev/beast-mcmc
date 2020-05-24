@@ -443,7 +443,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    public double getParameterLogJacobian() {
+    public double getParameterLogJacobian() { // transform is not allowed yet.
         return 0;
     }
 
@@ -458,6 +458,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public double getJointProbability(WrappedVector momentum) {
+        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
     public double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
@@ -467,6 +472,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             energy += Math.abs(momentum.get(i));
         }
         return energy;
+    }
+
+    @Override
+    public double getStepsize() {
+        return preconditioning.totalTravelTime;
     }
 
     private void negateVector(WrappedVector vector) {

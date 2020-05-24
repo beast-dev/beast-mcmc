@@ -380,7 +380,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return TIMING ? timer.toString() : "";
     }
 
-    private final GradientWrtParameterProvider gradientProvider;
+    protected final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
     final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;

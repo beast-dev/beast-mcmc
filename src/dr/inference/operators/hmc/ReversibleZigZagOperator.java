@@ -449,7 +449,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     public void setParameter(double[] position) {
-
+        ReadableVector.Utils.setParameter(position, parameter);
     }
 
     @Override

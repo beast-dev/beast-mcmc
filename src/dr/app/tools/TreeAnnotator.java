@@ -905,6 +905,7 @@ public class TreeAnnotator {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                                    annotateSignAttribute(tree, node, attributeName + "_signDistribution", values);
                                     if (computeESS == true) {
                                         annotateESSAttribute(tree, node, attributeName + "_ESS", values);
                                     }
@@ -1016,6 +1017,12 @@ public class TreeAnnotator {
 
             tree.setNodeAttribute(node, label + ".set", name);
             tree.setNodeAttribute(node, label + ".set.prob", freq);
+        }
+
+        private void annotateSignAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            double negativePortion = DiscreteStatistics.negativeProbability(values);
+            double positivePortion = 1 - negativePortion;
+            tree.setNodeAttribute(node, label, new Object[]{negativePortion, positivePortion});
         }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {

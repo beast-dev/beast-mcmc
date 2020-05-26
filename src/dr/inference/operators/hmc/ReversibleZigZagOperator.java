@@ -92,7 +92,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
 
         int count = 0;
-
+        initializeNumEvent();
         double[] p, v, a, g, m;
         if (TEST_NATIVE_OPERATOR) {
 
@@ -199,7 +199,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 }
 
                 bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-
+                recordOneMoreEvent();
                 if (DEBUG) {
                     debugAfter(bounceState, position);
                     String newSignString = printSign(position);

@@ -307,6 +307,14 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
+    void initializeNumEvent(){
+        numEvents = 0;
+    }
+
+    void recordOneMoreEvent(){
+        numEvents++;
+    }
+
     public static class Options {
 
         final double randomTimeWidth;
@@ -387,7 +395,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final Options runtimeOptions;
     final Parameter mask;
     private final double[] maskVector;
-
+    protected int numEvents;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
 

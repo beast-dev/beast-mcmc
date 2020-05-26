@@ -3,6 +3,9 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -14,7 +17,7 @@ import java.util.function.BinaryOperator;
  * @author Zhenyu Zhang
  * @author Marc A. Suchard
  */
-abstract class AbstractZigZagOperator extends AbstractParticleOperator {
+abstract class AbstractZigZagOperator extends AbstractParticleOperator implements Loggable {
 
     AbstractZigZagOperator(GradientWrtParameterProvider gradientProvider,
                            PrecisionMatrixVectorProductProvider multiplicationProvider,
@@ -347,6 +350,17 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator {
             sign = -1;
         }
         return sign;
+    }
+
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[1];
+        columns[0] = new NumberColumn("number of event") {
+            @Override
+            public double getDoubleValue() {
+                return numEvents;
+            }
+        };
+        return columns;
     }
 
     protected final TaskPool taskPool;

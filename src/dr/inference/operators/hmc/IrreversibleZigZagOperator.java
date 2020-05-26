@@ -81,7 +81,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         if (TIMING) {
             timer.startTimer("integrateTrajectory");
         }
-
+        initializeNumEvent();
         while (bounceState.isTimeRemaining()) {
 
             final MinimumTravelInformation firstBounce;
@@ -102,7 +102,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             }
 
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-
+            recordOneMoreEvent();
         }
 
         if (TIMING) {

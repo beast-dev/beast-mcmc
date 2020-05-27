@@ -61,6 +61,7 @@ public class GhostTreeModel extends TreeModel {
         super(name, tree, false, false, false);
 
         this.corporealTreeModel = corporealTreeModel;
+        this.ghostLineages = ghostLineages.asList();
 
         createCorporealTree(corporealTreeModel, ghostLineages);
     }
@@ -200,10 +201,26 @@ public class GhostTreeModel extends TreeModel {
         this.setRoot(nodes[newRootIndex]);
     }
 
+    NodeRef createCorporealNodes(NodeRef node) {
+        if (isExternal(node)) {
+            Taxon taxon = getNodeTaxon(node);
+            if (ghostLineages.contains(taxon)) {
+                return null;
+            } else {
+                corporealTreeModel.addTaxon(taxon);
+            }
+        } else {
+            for (int i = 0; i < getChildCount(node); i++) {
+                createCorporealNodes(getChild(node, i));
+            }
+        }
+    }
+
     public TreeModel getCorporealTreeModel() {
         return corporealTreeModel;
     }
 
+    private final List<Taxon> ghostLineages;
     private final TreeModel corporealTreeModel;
     private final Map<NodeRef, NodeRef> corporealNodeMap = new HashMap<>();
 

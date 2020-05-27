@@ -159,10 +159,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 	 * returns the index of the given taxon.
 	 */
 	public int getTaxonIndex(Taxon taxon) {
-		for (int i = 0; i < taxa.size(); i++) {
-			if (getTaxon(i) == taxon) return i;
-		}
-		return -1;
+		return taxa.indexOf(taxon);
 	}
 
     public List<Taxon> asList() {

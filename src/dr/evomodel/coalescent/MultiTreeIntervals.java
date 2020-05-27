@@ -48,13 +48,13 @@ import java.util.List;
  */
 public class MultiTreeIntervals extends AbstractModel implements IntervalList {
 
-    public MultiTreeIntervals(Tree tree, double cutoffTime) {
+    public MultiTreeIntervals(Tree tree, boolean includeStems, double cutoffTime) {
         super("MultiTreeIntervals");
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
 
-    public MultiTreeIntervals(Collection<Tree> trees, Taxa singletonTaxa, double cuttoffTime) {
+    public MultiTreeIntervals(Collection<Tree> trees, Taxa singletonTaxa, boolean includeStems, double cuttoffTime) {
         super("MultiTreeIntervals");
 
         int maxEventCount = 0;
@@ -73,6 +73,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
 
         this.trees = new ArrayList<Tree>(trees);
         this.singletonTaxa = singletonTaxa;
+        this.includeStems = includeStems;
         this.cutoffTime = cuttoffTime;
         this.units = this.trees.get(0).getUnits();
 
@@ -216,10 +217,16 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
                 NodeRef node = tree.getInternalNode(i);
                 intervals.addCoalescentEvent(tree.getNodeHeight(node));
             }
-            // add the nothing event at the top of the stem of the root of each subtree.
-            intervals.addNothingEvent(cutoffTime);
+            if (includeStems) {
+                // add the nothing event at the top of the stem of the root of each subtree.
+                intervals.addNothingEvent(cutoffTime);
+            } else {
+                // add nothing event at the root of the subtree
+                NodeRef node = tree.getInternalNode(tree.getInternalNodeCount() - 1);
+                intervals.addNothingEvent(tree.getNodeHeight(node));
+            }
         }
-        if(singletonTaxa!=null){
+        if(includeStems && singletonTaxa != null){
             for (Taxon taxon : singletonTaxa) {
                 intervals.addSampleEvent(taxon.getHeight());
                 intervals.addNothingEvent(cutoffTime);
@@ -292,6 +299,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
      */
     private final List<Tree> trees;
     private final Taxa singletonTaxa;
+    private final boolean includeStems;
     private final double cutoffTime;
     private final Type units;
 

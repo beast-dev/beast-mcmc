@@ -30,8 +30,8 @@
         $Id$
     </description>
 
-    <property name="JDK_SOURCE_VERSION" value="1.6"/>
-    <property name="JDK_TARGET_VERSION" value="1.6"/>
+    <property name="JDK_SOURCE_VERSION" value="1.8"/>
+    <property name="JDK_TARGET_VERSION" value="1.8"/>
 
     <!-- set global properties for this build -->
     <property name="src" location="src"/>

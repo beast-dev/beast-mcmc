@@ -1,8 +1,8 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
-import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
@@ -20,9 +20,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
     private static boolean DEBUG = false;
 
-    public MultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int bufferCount,
-                                  int diffusionCount) {
-        super(precisionType, numTraits, dimTrait, bufferCount, diffusionCount);
+    public MultivariateIntegrator(PrecisionType precisionType, int numTraits, int dimTrait, int dimProcess,
+                                  int bufferCount, int diffusionCount) {
+        super(precisionType, numTraits, dimTrait, dimProcess, bufferCount, diffusionCount);
 
         assert precisionType == PrecisionType.FULL;
 
@@ -66,7 +66,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     double[] vector0;
 
     private void allocateStorage() {
-        inverseDiffusions = new double[dimTrait * dimTrait * diffusionCount];
+        inverseDiffusions = new double[dimProcess * dimProcess * diffusionCount];
 
         vector0 = new double[dimTrait];
         matrix0 = new DenseMatrix64F(dimTrait, dimTrait);
@@ -84,9 +84,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         assert (inverseDiffusions != null);
 
-        final int offset = dimTrait * dimTrait * precisionIndex;
-        DenseMatrix64F precision = wrap(diffusions, offset, dimTrait, dimTrait);
-        DenseMatrix64F variance = new DenseMatrix64F(dimTrait, dimTrait);
+        final int offset = dimProcess * dimProcess * precisionIndex;
+        DenseMatrix64F precision = wrap(diffusions, offset, dimProcess, dimProcess);
+        DenseMatrix64F variance = new DenseMatrix64F(dimProcess, dimProcess);
         CommonOps.invert(precision, variance);
         unwrap(variance, inverseDiffusions, offset);
 
@@ -101,6 +101,42 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //    public boolean requireDataAugmentationForOuterProducts() {
 //        return true;
 //    }
+
+    public double[] getVariance(int precisionIndex) {
+
+        assert (inverseDiffusions != null);
+
+        return getMatrixProcess(precisionIndex, inverseDiffusions);
+    }
+
+    double[] getMatrixProcess(int precisionIndex, double[] matrixProcess) {
+
+        final int offset = dimTrait * dimTrait * precisionIndex;
+
+        double[] buffer = new double[dimTrait * dimTrait];
+
+        System.arraycopy(matrixProcess, offset, buffer, 0, dimTrait * dimTrait);
+
+        return buffer;
+    }
+
+    @Override
+    public void getBranchVariance(int bufferIndex, int precisionIndex, double[] variance) {
+
+        if (bufferIndex == -1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        assert (variance != null);
+        assert (variance.length >= dimTrait * dimTrait);
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
+
+        double scalar = getBranchLength(bufferIndex);
+        for (int i = 0; i < dimTrait * dimTrait; ++i) {
+            variance[i] = scalar * inverseDiffusions[precisionOffset + i];
+        }
+    }
 
     @Override
     public void updatePreOrderPartial(
@@ -148,7 +184,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
                 assert (!allZeroDiagonals(Pj));
 
-                safeInvert(Pj, Vj, false);
+                safeInvert2(Pj, Vj, false);
             }
 
             // B. Inflate variance along sibling branch using matrix inversion
@@ -158,7 +194,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Pjp = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pjp = matrixPjp;
-            safeInvert(Vjp, Pjp, false);
+            safeInvert2(Vjp, Pjp, false);
 
 //                final DenseMatrix64F Pip = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pip = matrixPip;
@@ -166,7 +202,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Vip = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vip = matrix0;
-            safeInvert(Pip, Vip, false);
+            safeInvert2(Pip, Vip, false);
 
             // C. Compute prePartial mean
 //                final double[] tmp = new double[dimTrait];
@@ -195,7 +231,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
 //                final DenseMatrix64F Pi = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Pi = matrixPk;
-            safeInvert(Vi, Pi, false);
+            safeInvert2(Vi, Pi, false);
 
             // X. Store precision results for node
             unwrap(Pi, preOrderPartials, ibo + dimTrait);
@@ -229,6 +265,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             final int iMatrix,
             final int jBuffer,
             final int jMatrix,
+            final boolean computeRemainders,
             final boolean incrementOuterProducts
     ) {
         //TODO: MAKE SURE CHANGES DON'T BREAK OTHER THINGS!!!!
@@ -471,7 +508,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
                 remainder += -dimensionChange * LOG_SQRT_2_PI - 0.5 *
 //                            (Math.log(CommonOps.det(Vip)) + Math.log(CommonOps.det(Vjp)) - Math.log(CommonOps.det(Vk)))
-                        (Math.log(ci.getDeterminant()) + Math.log(cj.getDeterminant()) + Math.log(ck.getDeterminant()))
+                        (ci.getLogDeterminant() + cj.getLogDeterminant() + ck.getLogDeterminant())
                         - 0.5 * SS;
 
                 // TODO Can get SSi + SSj - SSk from inner product w.r.t Pt (see outer-products below)?
@@ -481,9 +518,9 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                    System.err.println("\t\t\tSSj = " + (SSj));
 //                    System.err.println("\t\t\tSSk = " + (SSk));
                     System.err.println("\t\t\tSS = " + (SS));
-                    System.err.println("\t\t\tdetI = " + Math.log(ci.getDeterminant()));
-                    System.err.println("\t\t\tdetJ = " + Math.log(cj.getDeterminant()));
-                    System.err.println("\t\t\tdetK = " + Math.log(ck.getDeterminant()));
+                    System.err.println("\t\t\tdetI = " + ci.getLogDeterminant());
+                    System.err.println("\t\t\tdetJ = " + cj.getLogDeterminant());
+                    System.err.println("\t\t\tdetK = " + ck.getLogDeterminant());
                     System.err.println("\t\tremainder: " + remainder);
                 }
 
@@ -623,9 +660,11 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
-    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex) {
+    public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex) {
 
-        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex);
+        super.calculatePreOrderRoot(priorBufferIndex, rootNodeIndex, precisionIndex);
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         final DenseMatrix64F Pd = wrap(diffusions, precisionOffset, dimTrait, dimTrait);
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
@@ -642,7 +681,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
             {
                 final DenseMatrix64F tmp = matrix0;
 
-                CommonOps.mult(Pd, Proot, tmp);
+                MissingOps.safeMult(Pd, Proot, tmp);
                 unwrap(tmp, preOrderPartials, rootOffset + dimTrait);
 
                 CommonOps.mult(Vd, Vroot, tmp);
@@ -653,11 +692,13 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
-    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                           boolean incrementOuterProducts) {
-        assert (logLikelihoods.length == numTraits);
+    public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
+                                           final double[] logLikelihoods,
+                                           boolean incrementOuterProducts, boolean isIntegratedProcess) {
+        assert(logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
+        assert(!isIntegratedProcess);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);
@@ -666,6 +707,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 
         int rootOffset = dimPartial * rootBufferIndex;
         int priorOffset = dimPartial * priorBufferIndex;
+
+        updatePrecisionOffsetAndDeterminant(precisionIndex);
 
         final DenseMatrix64F Vd = wrap(inverseDiffusions, precisionOffset, dimTrait, dimTrait);
 
@@ -771,18 +814,28 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     /// Derivation Functions
     ///////////////////////////////////////////////////////////////////////////
 
-    public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//    public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//
+//        final DenseMatrix64F Pi = statistics.getAbove().getRawPrecision();
+//        final DenseMatrix64F Vdi = statistics.getBranch().getRawVariance();
+//
+//        DenseMatrix64F VdPi = matrix0;
+//        DenseMatrix64F temp = matrix1;
+//
+//        CommonOps.mult(Vdi, Pi, VdPi);
+//        CommonOps.mult(gradient, VdPi, temp);
+//        CommonOps.multTransA(VdPi, temp, gradient);
+//    }
 
-        final DenseMatrix64F Pi = statistics.getParent().getRawPrecision();
-        final DenseMatrix64F Vdi = statistics.getBranch().getRawVariance();
-
-        DenseMatrix64F VdPi = matrix0;
-        DenseMatrix64F temp = matrix1;
-
-        CommonOps.mult(Vdi, Pi, VdPi);
-        CommonOps.mult(gradient, VdPi, temp);
-        CommonOps.multTransA(VdPi, temp, gradient);
-    }
+//    public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//
+//        final DenseMatrix64F Pi = statistics.getAbove().getRawPrecision();
+//
+//        DenseMatrix64F temp = matrix1;
+//
+//        CommonOps.mult(gradient, Pi, temp);
+//        CommonOps.multTransA(-1.0, Pi, temp, gradient);
+//    }
 
     double[] inverseDiffusions;
 }

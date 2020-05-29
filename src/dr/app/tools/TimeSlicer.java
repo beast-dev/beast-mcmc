@@ -60,7 +60,7 @@ import java.util.*;
  *         example for location slices through time:
  *         -burnin500 -trait location -sliceFileHeights sliceTimes -summary true -mrsd 2007.63 -format KML -progress true -impute true -noise true -HPD 95 WNV_relaxed_gamma_geo.trees output.kml
  *         <p/>
- *         example for Markov reward o backbone summary (note we cannot imput here):
+ *         example for Markov reward on backbone summary (note we cannot imput here):
  *         -burnin 50 -trait AC1_R,AC2_R,AC3_R,AC4_R,AC5_R,AC6_R,AC7_R,AC8_R,AC9_R,AC10_R,AC11_R,AC12_R,AC13_R,AC14_R -sliceTimes 2002,2002.25,2002.5,2002.75,2003,2003.25,2003.5,2003.75,2004,2004.25,2004.5,2004.75,2005,2005.25,2005.5,2005.75,2006 -summary true -mrsd 2007 -branchNorm true -format TAB -progress true -backbonetaxa december2006taxa.txt -branchset backbone airCommunitiesMM_rewards.sub.trees TSRewardOutput.txt
  *         example of 1D antigenic summary
  *         -burnin0 -trait antigenic -sliceFileTimes timeInterval -summary true -mrsd 2007 -format TAB -progress true -impute true -noise false -HPD 95 H3N2_antigenic_sub.trees antigenic.txt
@@ -974,6 +974,7 @@ public class TimeSlicer {
             for (int i = 0; i < count; i++) {
                 Trait trait = thisTrait.get(i);
                 double[] value = trait.getValue();
+
                 for (int j = 0; j < dim; j++) {
                     y[j][i] = value[j];
                 }
@@ -1940,8 +1941,10 @@ public class TimeSlicer {
                                         System.exit(-1);
                                     }
 //                                    if (slices[i] > nodeHeight) {
-                                    trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
-                                            slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                    //if (!treeTime.isRoot(treeTime.getParent(node))){
+                                        trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
+                                                slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                    //}
 //                                    System.out.println(slices[i]+"\t"+nodeHeight+"\t"+parentHeight+"\t"+precision[0][0]+"\t"+precision[0][1]+"\t"+precision[1][0]+"\t"+precision[1][1]+"\t"+rate+"\t"+trait);
 ////
 //  }
@@ -2263,12 +2266,7 @@ public class TimeSlicer {
     }
 
     public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
+        BaseTreeTool.centreLine(line, 60, progressStream);
     }
 
     public static void printTitle() {

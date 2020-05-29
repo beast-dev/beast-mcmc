@@ -56,6 +56,16 @@ public class MarginalizedAlphaStableDistribution implements Distribution {
     }
 
     public static double gradLogPdf(double x, double scale, double alpha) {
-        throw new RuntimeException("Not yet implemented");
+        return -alpha * Math.pow(Math.abs(x) / scale, alpha - 1.0) * gradAbsX(x) / scale;
+    }
+
+    private static double gradAbsX(double x) {
+        if (x < 0) {
+            return -1;
+        } else if (x > 0) {
+            return 1;
+        } else {
+            return Double.NaN;
+        }
     }
 }

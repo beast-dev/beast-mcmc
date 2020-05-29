@@ -32,12 +32,16 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.geo.contouring.ContourMaker;
 import dr.geo.contouring.ContourPath;
 import dr.geo.contouring.ContourWithSynder;
+import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceType;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
+import dr.util.Pair;
 import dr.util.Version;
 import jam.console.ConsoleApplication;
 import org.rosuda.JRI.REXP;
@@ -62,10 +66,13 @@ public class TreeAnnotator {
     private final static boolean USE_R = false;
 
     private static boolean forceIntegerToDiscrete = false;
+    private boolean computeESS = false;
+
+    private double maxState = 1;
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
-        //MAX_SUM_CLADE_CREDIBILITY("Maximum sum of clade credibilities"),
+        MAX_MARGINAL_CLADE_CREDIBILITY("Maximum marginal clade credibilities"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
@@ -112,6 +119,7 @@ public class TreeAnnotator {
      * @param heightsOption
      * @param posteriorLimit
      * @param hpd2D
+     * @param computeESS
      * @param targetOption
      * @param targetTreeFileName
      * @param inputFileName
@@ -123,6 +131,7 @@ public class TreeAnnotator {
                          HeightsSummary heightsOption,
                          double posteriorLimit,
                          double[] hpd2D,
+                         boolean computeESS,
                          Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
@@ -131,6 +140,7 @@ public class TreeAnnotator {
 
         this.posteriorLimit = posteriorLimit;
         this.hpd2D = hpd2D;
+        this.computeESS = computeESS;
 
         attributeNames.add("height");
         attributeNames.add("length");
@@ -166,6 +176,7 @@ public class TreeAnnotator {
 
                         if (name != null && name.length() > 0 && name.startsWith("STATE_")) {
                             state = Long.parseLong(name.split("_")[1]);
+                            maxState = state;
                         }
                     }
 
@@ -178,7 +189,7 @@ public class TreeAnnotator {
                             burnin = totalTrees;
                         }
 
-                        cladeSystem.add(tree, false);
+                        cladeSystem.add(tree, true);
 
                         totalTreesUsed += 1;
                     }
@@ -253,16 +264,17 @@ public class TreeAnnotator {
             }
             case MAX_CLADE_CREDIBILITY: {
                 progressStream.println("Finding maximum credibility tree...");
-                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
+                targetTree = new FlexibleTree(getMCCTree(burnin, cladeSystem, inputFileName));
                 break;
             }
-//            case MAX_SUM_CLADE_CREDIBILITY: {
-//                progressStream.println("Finding maximum sum clade credibility tree...");
-//                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
-//                break;
-//            }
+            case MAX_MARGINAL_CLADE_CREDIBILITY: {
+                progressStream.println("Finding maximum marginal credibility tree...");
+                targetTree = new FlexibleTree(getMMCCTree(cladeSystem));
+                break;
+            }
             default: throw new IllegalArgumentException("Unknown targetOption");
         }
+
 
         progressStream.println("Collecting node information...");
         progressStream.println("0              25             50             75            100");
@@ -357,7 +369,7 @@ public class TreeAnnotator {
         }
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName /*, boolean useSumCladeCredibility */)
+    private Tree getMCCTree(int burnin, CladeSystem cladeSystem, String inputFileName)
             throws IOException {
 
         Tree bestTree = null;
@@ -378,7 +390,7 @@ public class TreeAnnotator {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
-                    double score = scoreTree(tree, cladeSystem /*, useSumCladeCredibility*/);
+                    double score = scoreTree(tree, cladeSystem);
 //                    progressStream.println(score);
                     if (score > bestScore) {
                         bestTree = tree;
@@ -399,21 +411,87 @@ public class TreeAnnotator {
         progressStream.println();
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
-//        if (useSumCladeCredibility) {
-//            progressStream.println("Highest Sum Clade Credibility: " + bestScore);
-//        } else {
-            progressStream.println("Highest Log Clade Credibility: " + bestScore);
-//        }
+        progressStream.println("Highest Log Clade Credibility: " + bestScore);
 
         return bestTree;
     }
 
-    private double scoreTree(Tree tree, CladeSystem cladeSystem /*, boolean useSumCladeCredibility*/) {
-//        if (useSumCladeCredibility) {
-//            return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
-//        } else {
-            return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
-//        }
+    private Tree getMMCCTree(CladeSystem cladeSystem) {
+
+        CladeSystem.Clade rootClade = cladeSystem.getRootClade();
+
+        credibilityCache.clear();
+
+        double score = findMMCCTree(cladeSystem, rootClade);
+
+        SimpleTree tree = new SimpleTree(buildMCCTree(cladeSystem, rootClade));
+
+        progressStream.println();
+        progressStream.println("Highest Log Marginal Clade Credibility: " + score);
+        progressStream.println();
+
+        return tree;
+    }
+
+    private Map<CladeSystem.Clade, Double> credibilityCache = new HashMap<>();
+
+    private double findMMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+
+        double logCredibility = Math.log(clade.credibility);
+
+        if (clade.size > 1) {
+            double bestLogCredibility = Double.NEGATIVE_INFINITY;
+
+            for (Pair<BitSet, BitSet> subClade : clade.subClades) {
+
+                CladeSystem.Clade left = cladeSystem.getCladeMap().get(subClade.fst);
+                if (left == null) {
+                    throw new IllegalArgumentException("no clade found");
+                }
+
+                double leftLogCredibility = credibilityCache.getOrDefault(left, Double.NaN);
+                if (Double.isNaN(leftLogCredibility)) {
+                    leftLogCredibility = findMMCCTree(cladeSystem, left);
+                    credibilityCache.put(left, leftLogCredibility);
+                }
+                CladeSystem.Clade right = cladeSystem.getCladeMap().get(subClade.snd);
+                if (right == null) {
+                    throw new IllegalArgumentException("no clade found");
+                }
+                double rightLogCredibility = credibilityCache.getOrDefault(right, Double.NaN);
+                if (Double.isNaN(rightLogCredibility)) {
+                    rightLogCredibility = findMMCCTree(cladeSystem, right);
+                    credibilityCache.put(right, rightLogCredibility);
+                }
+
+                if (leftLogCredibility + rightLogCredibility > bestLogCredibility) {
+                    bestLogCredibility = leftLogCredibility + rightLogCredibility;
+                    clade.bestLeft = left;
+                    clade.bestRight = right;
+                }
+            }
+
+            logCredibility += bestLogCredibility;
+            clade.bestSubTreeCredibility = logCredibility;
+
+        }
+
+        return logCredibility;
+    }
+
+    private SimpleNode buildMCCTree(CladeSystem cladeSystem, CladeSystem.Clade clade) {
+        SimpleNode newNode = new SimpleNode();
+        if (clade.size == 1) {
+            newNode.setTaxon(clade.taxon);
+        } else {
+            newNode.addChild(buildMCCTree(cladeSystem, clade.bestLeft));
+            newNode.addChild(buildMCCTree(cladeSystem, clade.bestRight));
+        }
+        return newNode;
+    }
+
+    private double scoreTree(Tree tree, CladeSystem cladeSystem) {
+        return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
     }
 
     private class CladeSystem {
@@ -444,12 +522,13 @@ public class TreeAnnotator {
             // Recurse over the tree and add all the clades (or increment their
             // frequency if already present). The root clade is added too (for
             // annotation purposes).
-            addClades(tree, tree.getRoot(), includeTips);
+            BitSet rootBits = addClades(tree, tree.getRoot(), includeTips);
+            rootClade = cladeMap.get(rootBits);
         }
-//
-//        public Clade getClade(NodeRef node) {
-//            return null;
-//        }
+
+        public Clade getRootClade() {
+            return rootClade;
+        }
 
         private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
 
@@ -461,31 +540,42 @@ public class TreeAnnotator {
                 bits.set(index);
 
                 if (includeTips) {
-                    addClade(bits);
+                    Clade clade = addClade(bits);
+                    clade.taxon = tree.getNodeTaxon(node);
                 }
 
             } else {
 
+                List<BitSet> subClades = new ArrayList<BitSet>();
+
                 for (int i = 0; i < tree.getChildCount(node); i++) {
 
                     NodeRef node1 = tree.getChild(node, i);
-
-                    bits.or(addClades(tree, node1, includeTips));
+                    BitSet subClade = addClades(tree, node1, includeTips);
+                    bits.or(subClade);
+                    subClades.add(subClade);
                 }
 
-                addClade(bits);
+                Clade clade = addClade(bits);
+
+                if (subClades.size() != 2) {
+                    throw new IllegalArgumentException("TreeAnnotator requires strictly bifurcating trees");
+                }
+                clade.addSubclades(subClades.get(0), subClades.get(1));
             }
 
             return bits;
         }
 
-        private void addClade(BitSet bits) {
+        private Clade addClade(BitSet bits) {
             Clade clade = cladeMap.get(bits);
             if (clade == null) {
                 clade = new Clade(bits);
                 cladeMap.put(bits, clade);
             }
             clade.setCount(clade.getCount() + 1);
+
+            return clade;
         }
 
         public void collectAttributes(Tree tree) {
@@ -571,8 +661,12 @@ public class TreeAnnotator {
             }
         }
 
-        public Map getCladeMap() {
+        public Map<BitSet, Clade> getCladeMap() {
             return cladeMap;
+        }
+
+        public Clade getClade(BitSet bitSet) {
+            return cladeMap.get(bitSet);
         }
 
         public void calculateCladeCredibilities(int totalTreesUsed) {
@@ -811,6 +905,9 @@ public class TreeAnnotator {
                                     annotateMedianAttribute(tree, node, attributeName + "_median", values);
                                     annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
                                     annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                                    if (computeESS == true) {
+                                        annotateESSAttribute(tree, node, attributeName + "_ESS", values);
+                                    }
                                 }
 
                                 if (isDoubleArray) {
@@ -855,7 +952,7 @@ public class TreeAnnotator {
                                                     annotate2DHPDAttribute(tree, node, name, "_" + (int) (100 * hpd2D[l]) + "%HPD", hpd2D[l], valuesArray);
                                                 }
 
-                                           }
+                                            }
                                         }
                                     }
                                 }
@@ -875,7 +972,6 @@ public class TreeAnnotator {
         private void annotateMedianAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
             double median = DiscreteStatistics.median(values);
             tree.setNodeAttribute(node, label, median);
-
         }
 
         private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<Object, Integer> values) {
@@ -948,6 +1044,22 @@ public class TreeAnnotator {
             double lower = values[indices[hpdIndex]];
             double upper = values[indices[hpdIndex + diff - 1]];
             tree.setNodeAttribute(node, label, new Object[]{lower, upper});
+        }
+
+        private void annotateESSAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
+            // array --> list (to construct traceCorrelation obj)
+            List<Double> values2 = new ArrayList<Double>(0);
+            for (int i = 0; i < values.length; i++) {
+                values2.add(values[i]);
+            }
+
+            TraceType traceType = TraceType.REAL;
+            // maxState / totalTrees = stepSize for ESS
+            int logStep = (int) (maxState / totalTrees);
+            TraceCorrelation traceCorrelation = new TraceCorrelation(values2, traceType, logStep);
+
+            double ESS = traceCorrelation.getESS();
+            tree.setNodeAttribute(node, label, ESS);
         }
 
         // todo Move rEngine to outer class; create once.
@@ -1161,6 +1273,7 @@ public class TreeAnnotator {
                 this.bits = bits;
                 count = 0;
                 credibility = 0.0;
+                size = bits.cardinality();
             }
 
             public int getCount() {
@@ -1177,6 +1290,19 @@ public class TreeAnnotator {
 
             public void setCredibility(double credibility) {
                 this.credibility = credibility;
+            }
+
+            public void addSubclades(BitSet subClade1, BitSet subClade2) {
+                if (this.subClades == null) {
+                    this.subClades = new HashSet<>();
+                }
+                // Store the subclade with lowest first set bit index as the first of the pair to make
+                // sure the order is the same if the pair is the same.
+                if (subClade1.nextSetBit(0) < subClade2.nextSetBit(0)) {
+                    this.subClades.add(new Pair<>(subClade1, subClade2));
+                } else {
+                    this.subClades.add(new Pair<>(subClade2, subClade1));
+                }
             }
 
             public boolean equals(Object o) {
@@ -1199,15 +1325,23 @@ public class TreeAnnotator {
 
             int count;
             double credibility;
-            BitSet bits;
+            final int size;
+            final BitSet bits;
+            Taxon taxon = null;
             List<Object[]> attributeValues = null;
+            Set<Pair<BitSet, BitSet>> subClades = null;
+            Clade bestLeft = null;
+            Clade bestRight = null;
+            double bestSubTreeCredibility;
         }
 
         //
         // Private stuff
         //
         TaxonList taxonList = null;
-        Map<BitSet, Clade> cladeMap = new HashMap<BitSet, Clade>();
+        Map<BitSet, Clade> cladeMap = new HashMap<>();
+
+        Clade rootClade;
 
         Tree targetTree;
     }
@@ -1215,9 +1349,8 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-//PL:    double hpd2D = 0.80;
+    //PL:    double hpd2D = 0.80;
     double[] hpd2D = {0.80};
-
     private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();
 
     Set<String> attributeNames = new HashSet<String>();
@@ -1260,12 +1393,7 @@ public class TreeAnnotator {
     }
 
     public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
+        BaseTreeTool.centreLine(line, 60, progressStream);
     }
 
 
@@ -1311,6 +1439,8 @@ public class TreeAnnotator {
         String targetTreeFileName = null;
         String inputFileName = null;
         String outputFileName = null;
+
+        boolean computeESS = false;
 
         if (args.length == 0) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -1383,6 +1513,7 @@ public class TreeAnnotator {
                         heightsOption,
                         posteriorLimit,
                         hpd2D,
+                        computeESS,
                         targetOption,
                         targetTreeFileName,
                         inputFileName,
@@ -1406,16 +1537,17 @@ public class TreeAnnotator {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
+                        new Arguments.StringOption("type", new String[] { "mcc", "mmcc" }, false, "an option of 'mcc' or 'mmcc'"),
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
-                                "an option of 'keep' (default), 'median', 'mean' or 'ca'"),
+                                "an option of 'keep', 'median', 'mean' or 'ca' (default)"),
                         new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
                         new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma seperated) HPD proportion(s)")
+                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
+                        new Arguments.Option("ess", "compute ess for branch parameters")
                 });
 
         try {
@@ -1436,7 +1568,7 @@ public class TreeAnnotator {
             System.exit(0);
         }
 
-        HeightsSummary heights = HeightsSummary.KEEP_HEIGHTS;
+        HeightsSummary heights = HeightsSummary.CA_HEIGHTS;
         if (arguments.hasOption("heights")) {
             String value = arguments.getStringOption("heights");
             if (value.equalsIgnoreCase("mean")) {
@@ -1459,6 +1591,16 @@ public class TreeAnnotator {
             burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
+        if (arguments.hasOption("ess")) {
+            if(burninStates != -1) {
+                System.out.println(" Calculating ESS for branch parameters.");
+                computeESS = true;
+            }
+            else {
+                throw new RuntimeException("Specify burnin as states to use 'ess' option.");
+            }
+        }
+
         double posteriorLimit = 0.0;
         if (arguments.hasOption("limit")) {
             posteriorLimit = arguments.getRealOption("limit");
@@ -1474,6 +1616,10 @@ public class TreeAnnotator {
         }
 
         Target target = Target.MAX_CLADE_CREDIBILITY;
+        if (arguments.hasOption("type") && arguments.getStringOption("type").equalsIgnoreCase("MMCC")) {
+            target = Target.MAX_MARGINAL_CLADE_CREDIBILITY;
+        }
+
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
@@ -1496,7 +1642,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, computeESS, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
     }

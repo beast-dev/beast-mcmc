@@ -50,7 +50,7 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     }
 
     @Override
-    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi) {
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
         return priorMean;
     }
 

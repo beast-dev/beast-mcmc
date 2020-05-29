@@ -43,7 +43,7 @@ public class SphericalBetaDistribution implements MultivariateDistribution, Grad
 
     public SphericalBetaDistribution(int dim, double shape) {
 
-        assert (shape > 0);
+        assert (shape > 0) : "Shape parameter of the spherical beta distribution must be positive.";
 
         this.shape = shape;
         this.dim = dim;

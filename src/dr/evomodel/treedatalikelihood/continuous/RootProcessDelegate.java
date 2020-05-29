@@ -43,8 +43,8 @@ public interface RootProcessDelegate extends Model {
 
     int getExtraMatrixBufferCount();
 
-    void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, final double[] logLike,
-                                    boolean incrementOuterProducts);
+    void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootIndex, int precisionIndex,
+                                    final double[] logLike, boolean incrementOuterProducts, boolean isIntegratedProcess);
 
     double getPseudoObservations();
 
@@ -76,7 +76,9 @@ public interface RootProcessDelegate extends Model {
             this.priorBufferIndexOffset = partialBufferCount;
             priorBufferIndex = new BufferIndexHelper(1, 0);
 
-            addModel(prior);
+            if (prior != null) {
+                addModel(prior);
+            }
 
             updatePrior = true;
         }
@@ -93,15 +95,17 @@ public interface RootProcessDelegate extends Model {
         public int getPriorBufferIndex() { return priorBufferIndexOffset + priorBufferIndex.getOffsetIndex(0); }
 
         @Override
-        public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex,
-                                               final double[] logLike, boolean incrementOuterProducts) {
+        public void calculateRootLogLikelihood(ContinuousDiffusionIntegrator cdi, int rootBufferIndex, int precisionIndex,
+                                               final double[] logLike, boolean incrementOuterProducts,
+                                               boolean isIntegratedProcess) {
 
             if (updatePrior) {
                 setRootPartial(cdi);
                 updatePrior = false;
             }
 
-            cdi.calculateRootLogLikelihood(rootBufferIndex, getPriorBufferIndex(), logLike, incrementOuterProducts);
+            cdi.calculateRootLogLikelihood(rootBufferIndex, getPriorBufferIndex(), precisionIndex, logLike,
+                    incrementOuterProducts, isIntegratedProcess);
         }
 
         private void setRootPartial(ContinuousDiffusionIntegrator cdi) {
@@ -118,6 +122,10 @@ public interface RootProcessDelegate extends Model {
                 final double precision = getPseudoObservations();
                 for (int i = 0; i < dimTrait; ++i) {
                     precisionType.fillPrecisionInPartials(partial, offset, i, precision, dimTrait);
+                }
+
+                if (precision != 0.0){
+                    precisionType.fillEffDimInPartials(partial, offset, dimTrait, dimTrait);
                 }
 
                 offset += length;

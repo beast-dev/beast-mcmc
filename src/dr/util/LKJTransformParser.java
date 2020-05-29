@@ -28,7 +28,7 @@ package dr.util;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Paul Bastide
@@ -48,12 +48,7 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
         int length = dim * (dim - 1) / 2;
 
         // Fisher Z  (constrained CPCs to unconstrained)
-        List<Transform> transforms = new ArrayList<Transform>();
-//        Transform fisherZ = new Transform.Inverse(Transform.FISHER_Z);
-        for (int i = 0; i < length; i++) {
-            transforms.add(Transform.FISHER_Z);
-        }
-        Transform.Array fisherZTransforms = new Transform.Array(transforms, null);
+        Transform.Array fisherZTransforms = new Transform.Array(Transform.FISHER_Z, length, null);
 
         // LKJ (constrained CPCs to (cholesky of) correlation matrix)
         Transform.MultivariableTransform LKJTransform;
@@ -83,11 +78,11 @@ public class LKJTransformParser extends AbstractXMLObjectParser {
                 throw new RuntimeException("Not yet implemented");
             }
 
-            for (int i = 0; i < dim; i++) {
-                transforms.add(Transform.LOG);
-            }
+            Transform.Array logTransforms = new Transform.Array(Transform.LOG, dim, null);
 
-            Transform.Array fisherZTransformsWithLOG = new Transform.Array(transforms, null);
+            Transform.MultivariateArray fisherZTransformsWithLOG
+                    = new Transform.MultivariateArray(new ArrayList<Transform.MultivariableTransform>(
+                            Arrays.asList(fisherZTransforms, logTransforms)));
             Transform jointTrans = new Transform.ComposeMultivariable(fisherZTransformsWithLOG, LKJwithNULL);
 
             return jointTrans;

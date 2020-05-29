@@ -52,14 +52,13 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private int maxHeight = 10;
     }
 
-    // TODO Magic numbers; pass as options
     private final Options options = new Options();
-
+    
     public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
                            Parameter parameter, Transform transform, Parameter mask,
-                           double stepSize, int nSteps) {
-        super(mode, weight, gradientProvider, parameter, transform, mask,
-                stepSize, nSteps, 0.0,1E-3);
+                           HamiltonianMonteCarloOperator.Options runtimeOptions,
+                           MassPreconditioner.Type preconditioningType) {
+        super(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions, preconditioningType);
     }
 
     @Override
@@ -77,15 +76,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     @Override
     public double doOperation(Likelihood likelihood) {
 
+        if (shouldCheckGradient()) {
+            checkGradient(likelihood);
+        }
+
         final double[] initialPosition = leapFrogEngine.getInitialPosition();
-        final double initialLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
 
         if (stepSizeInformation == null) {
-            stepSizeInformation = findReasonableStepSize(initialPosition);
-
-            final double testLogLikelihood = gradientProvider.getLikelihood().getLogLikelihood();
-            assert (testLogLikelihood == initialLogLikelihood);
-            assert (Arrays.equals(leapFrogEngine.getInitialPosition(), initialPosition));
+            stepSizeInformation = findReasonableStepSize(initialPosition, super.stepSize);
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);
@@ -226,55 +224,56 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                 mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
     }
 
-    private StepSize findReasonableStepSize(double[] initialPosition) {
+    private StepSize findReasonableStepSize(double[] initialPosition, double forcedInitialStepSize) {
 
-        double stepSize = 1;
+        if (forcedInitialStepSize != 0) {
+            return new StepSize(forcedInitialStepSize);
+        } else {
+            double stepSize = 0.1;
 //        final double[] mass = massProvider.getMass();
-        WrappedVector momentum = preconditioning.drawInitialMomentum();
-        int count = 1;
+            WrappedVector momentum = preconditioning.drawInitialMomentum();
+            int count = 1;
 
-        double[] position = Arrays.copyOf(initialPosition, dim);
+            double[] position = Arrays.copyOf(initialPosition, dim);
 
-        double probBefore = getJointProbability(gradientProvider, momentum);
+            double probBefore = getJointProbability(gradientProvider, momentum);
 
-        try {
-            doLeap(position, momentum,  stepSize);
-        } catch (NumericInstabilityException e) {
-            handleInstability();
-        }
-
-        double probAfter = getJointProbability(gradientProvider, momentum);
-
-        double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
-
-        double probRatio = Math.exp(probAfter - probBefore);
-
-        while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
-
-            probBefore = probAfter;
-
-            //"one frog jump!"
             try {
                 doLeap(position, momentum, stepSize);
             } catch (NumericInstabilityException e) {
                 handleInstability();
             }
 
-            probAfter = getJointProbability(gradientProvider, momentum);
-            probRatio = Math.exp(probAfter - probBefore);
+            double probAfter = getJointProbability(gradientProvider, momentum);
 
-            stepSize = Math.pow(2, a) * stepSize;
-            count++;
+            double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
 
+            double probRatio = Math.exp(probAfter - probBefore);
 
-            if (count > options.findMax) {
-                throw new RuntimeException("Cannot find a reasonable step-size in " + options.findMax + " iterations");
+            while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
+
+                probBefore = probAfter;
+                //"one frog jump!"
+                try {
+                    doLeap(position, momentum, stepSize);
+                } catch (NumericInstabilityException e) {
+                    handleInstability();
+                }
+
+                probAfter = getJointProbability(gradientProvider, momentum);
+                probRatio = Math.exp(probAfter - probBefore);
+
+                stepSize = Math.pow(2, a) * stepSize;
+                count++;
+
+                if (count > options.findMax) {
+                    throw new RuntimeException("Cannot find a reasonable step-size in " + options.findMax + " " +
+                            "iterations");
+                }
             }
+            leapFrogEngine.setParameter(initialPosition);
+            return new StepSize(stepSize);
         }
-
-        leapFrogEngine.setParameter(initialPosition);
-
-        return new StepSize(stepSize);
     }
 
     private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {
@@ -311,7 +310,7 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         assert (a.length == b.length);
         final int dim = a.length;
 
-        double result[] = new double[dim];
+        double[] result = new double[dim];
         for (int i = 0; i < dim; i++) {
             result[i] = a[i] - b[i];
         }

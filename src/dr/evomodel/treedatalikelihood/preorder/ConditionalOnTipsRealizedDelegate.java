@@ -8,6 +8,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
 
@@ -142,7 +143,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
         cdi.getPostOrderPartial(nodePartial, partialNodeBuffer);
 //        final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
-        final double branchPrecision = cdi.getInverseBranchLength(nodeMatrix);
+        final double branchPrecision = 1.0 / cdi.getBranchLength(nodeMatrix);
 //        cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
 
         int offsetPartial = 0;
@@ -158,7 +159,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 //        }
 
         if (hasDrift) {
-            cdi.getBranchPrecision(nodeMatrix, precisionBuffer);
+            ((SafeMultivariateIntegrator) cdi).getBranchPrecision(nodeMatrix, precisionBuffer);
             cdi.getBranchDisplacement(nodeMatrix, displacementBuffer);
         }
 

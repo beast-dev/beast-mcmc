@@ -25,15 +25,15 @@
 
 package dr.inference.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.xml.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Parses a multi-dimensional continuous parameter.
@@ -223,10 +223,10 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
             }
         }
 
-        Parameter param = new Parameter.Default(values.length);
-        for(int i = 0; i < values.length; i++) {
-            param.setParameterValue(i, values[i]);
-        }
+        Parameter param = new Parameter.Default(values);
+//        for(int i = 0; i < values.length; i++) {
+//            param.setParameterValue(i, values[i]);
+//        }
         param.addBounds(new Parameter.DefaultBounds(uppers, lowers));
         return param;
     }

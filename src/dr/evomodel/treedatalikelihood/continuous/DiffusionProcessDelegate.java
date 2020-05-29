@@ -68,13 +68,17 @@ public interface DiffusionProcessDelegate extends Model {
 
     boolean hasDiagonalActualization();
 
-    void getGradientPrecision(double scalar, DenseMatrix64F gradient);
+    boolean isIntegratedProcess();
+
+    DenseMatrix64F getGradientVarianceWrtVariance(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
+
+    double[] getGradientDisplacementWrtRoot(NodeRef node, ContinuousDiffusionIntegrator cdi, ContinuousDataLikelihoodDelegate likelihoodDelegate, DenseMatrix64F gradient);
 
     void storeState();
 
     void restoreState();
 
-    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi);
+    double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim);
 
     double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance, final double[][] treeSharedLengths, final double[][] traitVariance);
 }

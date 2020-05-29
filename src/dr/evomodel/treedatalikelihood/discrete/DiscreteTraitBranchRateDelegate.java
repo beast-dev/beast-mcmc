@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractDiscreteTraitDelegate;
@@ -48,7 +49,21 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
             double[] infinitesimalMatrix = new double[stateCount * stateCount];
             SubstitutionModel substitutionModel = evolutionaryProcessDelegate.getSubstitutionModel(i);
             substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, infinitesimalMatrix);
+
+//            if (stateCount > 4) {
+//                double[] transpose = new double[stateCount * stateCount];
+//                for (int row = 0; row < stateCount; ++row) {
+//                    for (int col = 0; col < stateCount; ++col) {
+//                        transpose[col * stateCount + row] = infinitesimalMatrix[row * stateCount + col];
+//                    }
+//                }
+//
+//                infinitesimalMatrix = transpose;
+//            }
+
+
+            double[] scaledInfinitesimalMatrix = scaleInfinitesimalMatrixByRates(infinitesimalMatrix, DifferentialChoice.GRADIENT, siteRateModel);
+            evolutionaryProcessDelegate.cacheInfinitesimalMatrix(beagle, i, scaledInfinitesimalMatrix);
             if (cacheSquaredMatrix) {
                 double[] infinitesimalMatrixSquared = new double[stateCount * stateCount];
                 for (int l = 0; l < stateCount; l++) {
@@ -60,9 +75,52 @@ public class DiscreteTraitBranchRateDelegate extends AbstractDiscreteTraitDelega
                         infinitesimalMatrixSquared[l * stateCount + j] = sumOverState;
                     }
                 }
-                evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, infinitesimalMatrixSquared);
+                double[] scaledInfinitesimalMatrixSquared = scaleInfinitesimalMatrixByRates(infinitesimalMatrixSquared, DifferentialChoice.HESSIAN, siteRateModel);
+                evolutionaryProcessDelegate.cacheInfinitesimalSquaredMatrix(beagle, i, scaledInfinitesimalMatrixSquared);
             }
         }
+    }
+
+    public static double[] scaleInfinitesimalMatrixByRates(double[] infinitesimalMatrix, DifferentialChoice differentialChoice,
+                                                           SiteRateModel siteRateModel) {
+
+        final int matrixSize = infinitesimalMatrix.length;
+
+        if (infinitesimalMatrix.length != matrixSize) {
+            throw new RuntimeException("Dimension mismatch when preparing scaled differential matrix for branchRateGradient calculations.");
+        }
+
+        double[] scaledInfinitesimalMatrix = new double[matrixSize * siteRateModel.getCategoryCount()];
+
+        for (int i = 0; i < siteRateModel.getCategoryCount(); i++) {
+
+            final double rate = siteRateModel.getRateForCategory(i);
+
+            for (int j = 0; j < matrixSize; j++) {
+
+                scaledInfinitesimalMatrix[matrixSize * i + j] = infinitesimalMatrix[j] * differentialChoice.getRateScale(rate);
+
+            }
+        }
+
+        return scaledInfinitesimalMatrix;
+    }
+
+    enum DifferentialChoice {
+        GRADIENT {
+            @Override
+            double getRateScale(double rate) {
+                return rate;
+            }
+        },
+        HESSIAN {
+            @Override
+            double getRateScale(double rate) {
+                return rate * rate;
+            }
+        };
+
+        abstract double getRateScale(double rate);
     }
 
     public static String getName(String name) {

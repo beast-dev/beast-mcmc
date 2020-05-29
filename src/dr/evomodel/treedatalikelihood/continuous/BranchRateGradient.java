@@ -30,32 +30,29 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.BranchConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.ConditionalPrecisionAndTransform2;
 import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
-import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.missingData.PermutationIndices;
 import dr.xml.Reportable;
-import no.uib.cipr.matrix.DenseMatrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeInvert;
-import static dr.math.matrixAlgebra.missingData.MissingOps.safeWeightedAverage;
+import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
 /**
  * @author Marc A. Suchard
@@ -80,7 +77,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                               ContinuousDataLikelihoodDelegate likelihoodDelegate,
                               Parameter rateParameter) {
 
-        assert(treeDataLikelihood != null);
+        assert (treeDataLikelihood != null);
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
@@ -212,7 +209,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
     private double getDiagonalHessianLogDensity(BranchSufficientStatistics statistics,
                                                 double differentialScaling,
-                                                double secondDifferentialScaling){
+                                                double secondDifferentialScaling) {
         final DenseMatrix64F matrix0;
         final DenseMatrix64F matrix1;
         final DenseMatrix64F matrix2;
@@ -227,16 +224,16 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
         vector0 = new DenseMatrix64F(dim, dim);
 
-        final NormalSufficientStatistics child = statistics.getChild();
+        final NormalSufficientStatistics below = statistics.getBelow();
         final NormalSufficientStatistics branch = statistics.getBranch();
-        final NormalSufficientStatistics parent = statistics.getParent();
+        final NormalSufficientStatistics above = statistics.getAbove();
 
-        NormalSufficientStatistics jointStatistics = ((ContinuousTraitGradientForBranch.Default) branchProvider).computeJointStatistics(child, parent);
+        NormalSufficientStatistics jointStatistics = ((ContinuousTraitGradientForBranch.Default) branchProvider).computeJointStatistics(below, above, dim);
 
-        ((ContinuousTraitGradientForBranch.Default) branchProvider).makeDeltaVector(vector0, jointStatistics, parent);
-        DenseMatrix64F delta =vector0; // delta is expectation vector M_i - n_i
+        ((ContinuousTraitGradientForBranch.Default) branchProvider).makeDeltaVector(vector0, jointStatistics, above);
+        DenseMatrix64F delta = vector0; // delta is expectation vector M_i - n_i
 
-        DenseMatrix64F Qi = parent.getRawPrecision();
+        DenseMatrix64F Qi = above.getRawPrecision();
         DenseMatrix64F Vi = jointStatistics.getRawVariance();
 
         ((ContinuousTraitGradientForBranch.Default) branchProvider).makeGradientMatrices0(matrix1, matrix0, statistics, differentialScaling);
@@ -244,7 +241,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         DenseMatrix64F quadraticComponent = matrix1;
 
         DenseMatrix64F squareLogDetComponent = matrix2;
-        CommonOps.multInner(logDetComponent, squareLogDetComponent);
+        CommonOps.mult(logDetComponent, logDetComponent, squareLogDetComponent);
 
         //The diagonal hessian for observed data only requires hess0 and
         double hess0 = 0.0;
@@ -283,7 +280,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         for (int row = 0; row < dim; ++row) {
             for (int col = 0; col < dim; ++col) {
 
-                hess2 +=  delta.unsafe_get(row, 0)
+                hess2 += delta.unsafe_get(row, 0)
                         * quadrupleComponent.unsafe_get(row, col)
                         * delta.unsafe_get(col, 0);
 
@@ -292,7 +289,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         }
 
         DenseMatrix64F Si2 = matrix0;
-        CommonOps.scale(secondDifferentialScaling ,branch.getRawVariance(), Si2);
+        CommonOps.scale(secondDifferentialScaling, branch.getRawVariance(), Si2);
 
         DenseMatrix64F secondLogDetComponent = matrix2;
         CommonOps.mult(Qi, Si2, secondLogDetComponent);
@@ -312,7 +309,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                         * delta.unsafe_get(col, 0);
             }
             hess3 -= 0.5 * secondLogDetComponent.unsafe_get(row, row);
-            hess3 += 0.5 * VsecondQuadraticComponent.unsafe_get(row,row);
+            hess3 += 0.5 * VsecondQuadraticComponent.unsafe_get(row, row);
         }
 
         return hess0 + hess1 + hess2 + hess3;
@@ -346,9 +343,9 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
             @Override
             public double getGradientForBranch(BranchSufficientStatistics statistics, double differentialScaling) {
 
-                final NormalSufficientStatistics child = statistics.getChild();
+                final NormalSufficientStatistics below = statistics.getBelow();
                 final NormalSufficientStatistics branch = statistics.getBranch();
-                final NormalSufficientStatistics parent = statistics.getParent();
+                final NormalSufficientStatistics above = statistics.getAbove();
 
                 if (DEBUG) {
                     System.err.println("B = " + statistics.toVectorizedString());
@@ -359,7 +356,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 //                    System.err.println("\tSi = " + NormalSufficientStatistics.toVectorizedString(Si));
 //                }
 
-                DenseMatrix64F Qi = parent.getRawPrecision();
+                DenseMatrix64F Qi = above.getRawPrecision();
 
                 DenseMatrix64F logDetComponent = matrix0;
                 DenseMatrix64F quadraticComponent = matrix1;
@@ -380,7 +377,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 //                    System.err.println("\tQQ = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
 //                }
 
-                NormalSufficientStatistics jointStatistics = computeJointStatistics(child, parent);
+                NormalSufficientStatistics jointStatistics = computeJointStatistics(below, above, dim);
 
                 DenseMatrix64F additionalVariance = matrix0; //new DenseMatrix64F(dim, dim);
                 makeGradientMatrices1(additionalVariance, quadraticComponent,
@@ -388,7 +385,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
 
                 DenseMatrix64F delta = vector0;
-                makeDeltaVector(delta, jointStatistics, parent);
+                makeDeltaVector(delta, jointStatistics, above);
 
                 double grad2 = 0.0;
                 for (int row = 0; row < dim; ++row) {
@@ -404,11 +401,13 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 }
 
                 if (DEBUG) {
-                    System.err.println("\tjoint mean = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawMean()));
-                    System.err.println("\tparent mean = " + NormalSufficientStatistics.toVectorizedString(parent.getRawMean()));
-                    System.err.println("\tchild mean = " + NormalSufficientStatistics.toVectorizedString(child.getRawMean()));
-                    System.err.println("\tjoint variance = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawVariance()));
-                    System.err.println("\tchild variance = " + NormalSufficientStatistics.toVectorizedString(child.getRawVariance()));
+                    System.err.println("\tjoint mean  = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawMean()));
+                    System.err.println("\tabove mean = " + NormalSufficientStatistics.toVectorizedString(above.getRawMean()));
+                    System.err.println("\tbelow mean  = " + NormalSufficientStatistics.toVectorizedString(below.getRawMean()));
+                    System.err.println("\tjoint precision  = " + NormalSufficientStatistics.toVectorizedString(jointStatistics.getRawPrecision()));
+                    System.err.println("\tabove precision = " + NormalSufficientStatistics.toVectorizedString(above.getRawPrecision()));
+                    System.err.println("\tbelow precision  = " + NormalSufficientStatistics.toVectorizedString(below.getRawPrecision()));
+                    System.err.println("\tbelow variance   = " + NormalSufficientStatistics.toVectorizedString(below.getRawVariance()));
                     System.err.println("\tquadratic      = " + NormalSufficientStatistics.toVectorizedString(quadraticComponent));
                     System.err.println("\tadditional     = " + NormalSufficientStatistics.toVectorizedString(additionalVariance));
                     System.err.println("delta: " + NormalSufficientStatistics.toVectorizedString(delta));
@@ -440,41 +439,122 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
             }
 
-            public NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics child,
-                                                                      NormalSufficientStatistics parent) {
+            public static NormalSufficientStatistics computeJointStatistics(NormalSufficientStatistics below,
+                                                                            NormalSufficientStatistics above,
+                                                                            int dim) {
 
-                DenseMatrix64F totalP = new DenseMatrix64F(dim, dim);
-                CommonOps.add(child.getRawPrecision(), parent.getRawPrecision(), totalP);
+                PermutationIndices indices = new PermutationIndices(below.getRawPrecision());
 
-                DenseMatrix64F totalV = new DenseMatrix64F(dim, dim);
-                safeInvert(totalP, totalV, false);
+                if (indices.getNumberOfInfiniteDiagonals() == dim) {
 
-                DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
-                safeWeightedAverage(
-                        new WrappedVector.Raw(child.getRawMean().getData(), 0, dim),
-                        child.getRawPrecision(),
-                        new WrappedVector.Raw(parent.getRawMean().getData(), 0, dim),
-                        parent.getRawPrecision(),
-                        new WrappedVector.Raw(mean.getData(), 0, dim),
-                        totalV,
-                        dim);
+                    return computeJointFullyObserved(below, dim);
 
-                return new NormalSufficientStatistics(mean, totalP, totalV);
+                } else if (indices.getNumberOfZeroDiagonals() == dim) {
+
+                    return computeJointFullyMissing(above, dim);
+
+                } else if (indices.getNumberOfZeroDiagonals() == 0 || indices.getNumberOfInfiniteDiagonals() == 0) {
+
+                    return computeJointLatent(below, above, dim);
+
+                } else {
+
+                    return computeJointPartiallyMissing(below, above, indices, dim);
+                }
             }
 
+            private static NormalSufficientStatistics computeJointFullyObserved(NormalSufficientStatistics below,
+                                                                                int dim) {
+
+                return new NormalSufficientStatistics(
+                        below.getRawMean(), below.getRawPrecision(), new DenseMatrix64F(dim, dim));
+            }
+
+            private static NormalSufficientStatistics computeJointFullyMissing(NormalSufficientStatistics above,
+                                                                               int dim) {
+
+                return new NormalSufficientStatistics(
+                        above.getRawMean(), above.getRawPrecision(), above.getRawVariance());
+            }
+
+            private static NormalSufficientStatistics computeJointLatent(NormalSufficientStatistics below,
+                                                                         NormalSufficientStatistics above,
+                                                                         int dim) {
+
+                DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
+                DenseMatrix64F precision = new DenseMatrix64F(dim, dim);
+                DenseMatrix64F variance = new DenseMatrix64F(dim, dim);
+
+                CommonOps.add(below.getRawPrecision(), above.getRawPrecision(), precision);
+                safeInvert2(precision, variance, false);
+
+                safeWeightedAverage(
+                        new WrappedVector.Raw(below.getRawMean().getData(), 0, dim),
+                        below.getRawPrecision(),
+                        new WrappedVector.Raw(above.getRawMean().getData(), 0, dim),
+                        above.getRawPrecision(),
+                        new WrappedVector.Raw(mean.getData(), 0, dim),
+                        variance,
+                        dim);
+
+                return new NormalSufficientStatistics(mean, precision, variance);
+            }
+
+            private static NormalSufficientStatistics computeJointPartiallyMissing(NormalSufficientStatistics below,
+                                                                                   NormalSufficientStatistics above,
+                                                                                   PermutationIndices indices,
+                                                                                   int dim) {
+
+                DenseMatrix64F mean = new DenseMatrix64F(dim, 1);
+                DenseMatrix64F precision = new DenseMatrix64F(dim, dim);
+                DenseMatrix64F variance = new DenseMatrix64F(dim, dim);
+
+                if (indices.getNumberOfNonZeroFiniteDiagonals() != 0) {
+                    throw new RuntimeException("Unsure if this works for latent trait below");
+                    // TODO Probably need to add in below.precision somewhere below
+                }
+
+                ConditionalPrecisionAndTransform2 transform = new ConditionalPrecisionAndTransform2(
+                        above.getRawPrecision(),
+                        indices.getZeroIndices(),
+                        indices.getInfiniteIndices()
+                );
+
+                double[] result = transform.getConditionalMean(below.getRawMean().getData(), 0,
+                        above.getRawMean().getData(), 0);
+
+                copyRowsAndColumns(above.getRawPrecision(), precision,
+                        indices.getZeroIndices(), indices.getZeroIndices(), false);
+
+                scatterRowsAndColumns(transform.getConditionalVariance(), variance,
+                        indices.getZeroIndices(), indices.getZeroIndices(), false);
+
+                int index = 0;
+                for (int zero : indices.getZeroIndices()) {
+                    mean.unsafe_set(zero, 0, result[index++]);
+                }
+
+                for (int infinite : indices.getInfiniteIndices()) {
+                    mean.unsafe_set(infinite, 0, below.getMean(infinite));
+                    precision.unsafe_set(infinite, infinite, Double.POSITIVE_INFINITY);
+                }
+
+                return new NormalSufficientStatistics(mean, precision, variance);
+            }
 
             public void makeGradientMatrices0(DenseMatrix64F matrix1, DenseMatrix64F logDetComponent,
-                                             BranchSufficientStatistics statistics, double differentialScaling) {
+                                              BranchSufficientStatistics statistics, double differentialScaling) {
 
-                final NormalSufficientStatistics parent = statistics.getParent();
+                final NormalSufficientStatistics above = statistics.getAbove();
                 final NormalSufficientStatistics branch = statistics.getBranch();
 
-                DenseMatrix64F Qi = parent.getRawPrecision();
+                DenseMatrix64F Qi = above.getRawPrecision();
                 CommonOps.scale(differentialScaling, branch.getRawVariance(), matrix1); //matrix1 = Si
                 CommonOps.mult(Qi, matrix1, logDetComponent); //matrix0 = logDetComponent
                 CommonOps.mult(logDetComponent, Qi, matrix1); //matrix1 = QuadraticComponent
 
             }
+
             public void makeGradientMatrices1(DenseMatrix64F additionalVariance, DenseMatrix64F quadraticComponent,
                                               NormalSufficientStatistics jointStatistics) {
 
@@ -482,10 +562,10 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
             }
 
             public void makeDeltaVector(DenseMatrix64F delta, NormalSufficientStatistics jointStatistics,
-                                        NormalSufficientStatistics parent){
+                                        NormalSufficientStatistics above) {
                 for (int row = 0; row < dim; ++row) {
                     delta.unsafe_set(row, 0,
-                            jointStatistics.getRawMean().unsafe_get(row, 0) - parent.getMean(row)
+                            jointStatistics.getRawMean().unsafe_get(row, 0) - above.getMean(row)
                     );
                 }
             }
@@ -521,14 +601,20 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         }
     };
 
-    @Override
-    public String getReport() {
-
+    public double[] getNumericalGradient() {
         double[] savedValues = rateParameter.getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
         for (int i = 0; i < savedValues.length; ++i) {
             rateParameter.setParameterValue(i, savedValues[i]);
         }
+
+        return testGradient;
+    }
+
+    @Override
+    public String getReport() {
+
+        double[] testGradient = getNumericalGradient();
 
         NumericalHessianFromGradient numericalHessianFromGradient = new NumericalHessianFromGradient(this);
 
@@ -544,7 +630,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         sb.append("\n");
         sb.append("Another numeric diagonal hessian: ").append(new dr.math.matrixAlgebra.Vector(numericalHessianFromGradient.getDiagonalHessianLogDensity()));
         sb.append("\n");
-
 
         return sb.toString();
     }

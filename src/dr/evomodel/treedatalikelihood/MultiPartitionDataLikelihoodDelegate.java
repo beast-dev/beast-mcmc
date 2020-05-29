@@ -25,17 +25,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-/**
- * MultiPartitionDataLikelihoodDelegate
- *
- * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
- *
- * @author Andrew Rambaut
- * @author Marc Suchard
- * @author Guy Baele
- * @version $Id$
- */
-
 import beagle.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -57,26 +46,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+
+/**
+ * MultiPartitionDataLikelihoodDelegate
+ *
+ * A DataLikelihoodDelegate that uses BEAGLE 3 to allow for parallelization across multiple data partitions
+ *
+ * @author Andrew Rambaut
+ * @author Marc Suchard
+ * @author Guy Baele
+ * @version $Id$
+ */
+
 public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+
+    private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
     private static final boolean RESCALING_OFF = false; // a debugging switch
     private static final boolean DEBUG = false;
-
-    public static boolean IS_MULTI_PARTITION_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3;
-    }
-
-    public static boolean IS_THREAD_COUNT_COMPATIBLE() {
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1;
-    }
-
-    public static boolean IS_ODD_STATE_SSE_FIXED() {
-        // SSE for odd state counts fixed in BEAGLE 3.1.3
-        int[] versionNumbers = BeagleInfo.getVersionNumbers();
-        return versionNumbers.length != 0 && versionNumbers[0] >= 3 && versionNumbers[1] >= 1 && versionNumbers[2] >= 3;
-    }
 
     public static boolean IS_MULTI_PARTITION_RECOMMENDED() {
         if (!IS_MULTI_PARTITION_COMPATIBLE()) {
@@ -159,6 +147,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
+
+    // count the number of partial likelihood and matrix updates
+    private long totalMatrixUpdateCount = 0;
+    private long totalPartialsUpdateCount = 0;
+    private long totalEvaluationCount = 0;
 
     /**
      * Construct an instance using a list of PatternLists, one for each partition. The
@@ -651,43 +644,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
     }
 
-
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
     private int getScaleBufferCount() {
         return internalNodeCount + 1;
     }
@@ -899,7 +855,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             int   [] probabilityIndices        = new int   [branchUpdateCount * partitionCount];
             double[] edgeLengths               = new double[branchUpdateCount * partitionCount];
 
-            int op = 0;
+            int operationCount = 0;
             int partition = 0;
             for (EvolutionaryProcessDelegate evolutionaryProcessDelegate : evolutionaryProcessDelegates) {
                 if (updatePartition[partition] || updateAllPartitions) {
@@ -909,11 +865,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     }
 
                     for (int i = 0; i < branchUpdateCount; i++) {
-                        eigenDecompositionIndices[op] = evolutionaryProcessDelegate.getEigenIndex(0);
-                        categoryRateIndices[op] = categoryRateBufferHelper[partition].getOffsetIndex(0);
-                        probabilityIndices[op] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
-                        edgeLengths[op] = branchLengths[i];
-                        op++;
+                        eigenDecompositionIndices[operationCount] = evolutionaryProcessDelegate.getEigenIndex(0);
+                        categoryRateIndices[operationCount] = categoryRateBufferHelper[partition].getOffsetIndex(0);
+                        probabilityIndices[operationCount] = evolutionaryProcessDelegate.getMatrixIndex(branchUpdateIndices[i]);
+                        edgeLengths[operationCount] = branchLengths[i];
+                        operationCount++;
                     }
                 }
                 partition++;
@@ -926,7 +882,12 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     null, // firstDerivativeIndices
                     null, // secondDerivativeIndices
                     edgeLengths,
-                    op);
+                    operationCount);
+
+            if (COUNT_CALCULATIONS) {
+                totalMatrixUpdateCount += operationCount;
+            }
+
         }
 
         for (int i = 0; i < partitionCount; i++) {
@@ -1031,8 +992,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
         }
 
-
         beagle.updatePartialsByPartition(operations, operationCount);
+
+        if (COUNT_CALCULATIONS) {
+            totalEvaluationCount += 1;
+            totalPartialsUpdateCount += operationCount;
+        }
+
 
         //double[] rootPartials = new double[totalPatternCount * stateCount];
         //beagle.getPartials(rootIndex, 0, rootPartials);
@@ -1325,8 +1291,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
-        // Callback not necessary
+        // Do nothing
     }
+
+    @Override
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
@@ -1335,6 +1309,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     protected void acceptState() {
+    }
+
+    // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        // Can only return one count at the moment so return the number of partials updated
+        return totalPartialsUpdateCount;
     }
 
     // **************************************************************
@@ -1348,7 +1332,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     @Override
     public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
+        return "BEAGLE likelihood calculation library";
     }
 
     @Override
@@ -1482,5 +1466,4 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
      */
     private boolean initialEvaluation = true;
-
 }

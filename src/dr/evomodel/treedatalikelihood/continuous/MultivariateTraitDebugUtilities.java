@@ -153,11 +153,11 @@ public class MultivariateTraitDebugUtilities {
 
     public static double[][] getTreeDrift(Tree tree, double[] priorMean, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
-        final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
+        final int dim = cdi.getDimTrait();
         final double[][] drift = new double[tree.getExternalNodeCount()][dim];
 
         for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
-            drift[tip] = diffusion.getAccumulativeDrift(tree.getExternalNode(tip), priorMean, cdi);
+            drift[tip] = diffusion.getAccumulativeDrift(tree.getExternalNode(tip), priorMean, cdi, dim);
         }
 
         return drift;
@@ -165,13 +165,13 @@ public class MultivariateTraitDebugUtilities {
 
     public static double[][] getGraphDrift(Tree tree, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
-        final int dim = diffusion.getDiffusionModel(0).getPrecisionParameter().getColumnDimension();
+        final int dim = cdi.getDimTrait();
         final double[][] drift = new double[tree.getNodeCount()][dim];
 
         final double[] temp = new double[dim];
 
         for (int node = 0; node < tree.getNodeCount(); ++node) {
-            drift[node] = diffusion.getAccumulativeDrift(tree.getNode(node), temp, cdi);
+            drift[node] = diffusion.getAccumulativeDrift(tree.getNode(node), temp, cdi, dim);
         }
 
         return drift;

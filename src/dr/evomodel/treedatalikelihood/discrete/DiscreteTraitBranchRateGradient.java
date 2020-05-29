@@ -43,7 +43,6 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
-import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
@@ -230,59 +229,23 @@ public class DiscreteTraitBranchRateGradient
     @Override
     public String getReport() {
 
-//        treeDataLikelihood.makeDirty();
-
-        double[] savedValues = rateParameter.getParameterValues();
-        double[] testGradient = null;
-        double[] testHessian = null;
-
-        boolean largeEnoughValues = valuesAreSufficientlyLarge(rateParameter.getParameterValues());
-
-        if (DEBUG && largeEnoughValues) {
-            testGradient = NumericalDerivative.gradient(numeric1, rateParameter.getParameterValues());
-        }
-
-        if (DEBUG && useHessian && largeEnoughValues) {
-            testHessian = NumericalDerivative.diagonalHessian(numeric1, rateParameter.getParameterValues());
-        }
-
-
-        for (int i = 0; i < savedValues.length; ++i) {
-            rateParameter.setParameterValue(i, savedValues[i]);
-        }
-
         StringBuilder sb = new StringBuilder();
-        sb.append("Gradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
-        sb.append("\n");
-
-        if (testGradient != null && largeEnoughValues) {
-            sb.append("Gradient numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
-        } else {
-            sb.append("Gradient mumeric: too close to 0");
-        }
-        sb.append("\n");
-
-        if (useHessian) {
-            if (largeEnoughValues) {
-                sb.append("Hessian Peeling: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
-                sb.append("\n");
-            }
-
-            if (testHessian != null && largeEnoughValues) {
-                sb.append("Hessian numeric: ").append(new dr.math.matrixAlgebra.Vector(testHessian));
-            } else {
-                sb.append("Hessian mumeric: too close to 0");
-            }
-            sb.append("\n");
-        }
-
         if (COUNT_TOTAL_OPERATIONS) {
             sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount).append("\n");
             sb.append(treeTraitProvider.toString()).append("\n");
             sb.append(treeDataLikelihood.getReport());
         }
 
-        return sb.toString();
+        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+
+        if (useHessian) {
+            message += "Hessian\n";
+            message += HessianWrtParameterProvider.getReportAndCheckForError(this, null);
+        }
+
+        message += sb.toString();
+
+        return  message;
     }
 
     private static final boolean DEBUG = true;

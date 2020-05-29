@@ -1,7 +1,7 @@
 /*
  * ContinuousTraitPartialsProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,13 +46,27 @@ public interface ContinuousTraitPartialsProvider {
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);
 
-//    double[] getTipPartial(int taxonIndex);
-
-//    double[] getTipObservation(int taxonIndex, final PrecisionType precisionType);
-
     List<Integer> getMissingIndices();
+
+    boolean[] getMissingIndicator();
 
     CompoundParameter getParameter();
 
     String getModelName();
+
+    static boolean[] indicesToIndicator(List<Integer> indices, int n) {
+
+        if (indices == null) {
+            return null;
+        }
+
+        boolean[] indicator = new boolean[n];
+
+        for (int i : indices) {
+            indicator[i] = true;
+        }
+
+        return indicator;
+
+    }
 }

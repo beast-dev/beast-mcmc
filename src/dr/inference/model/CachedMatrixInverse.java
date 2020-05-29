@@ -120,6 +120,11 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
         }
     }
 
+    public void forceComputeInverse() {
+        computeInverse();
+        inverseKnown = true;
+    }
+
     @Override
     public int getColumnDimension() { return dim; }
 
@@ -139,7 +144,7 @@ public class CachedMatrixInverse extends CompoundParameter implements MatrixPara
 
     @Override
     public String toSymmetricString() {
-        throw new RuntimeException("Not yet implemented");
+        return MatrixParameter.toSymmetricString(this);
     }
 
     @Override

@@ -25,8 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalType;
-
 /**
  * @author Guy Baele
  * @author Marc A. Suchard

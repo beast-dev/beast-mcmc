@@ -94,8 +94,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
 
-        long fullEvaluationCount = 1000;
-        fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, fullEvaluationCount);
+        long fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, DEFAULT_FULL_EVALUATION_COUNT);
         if (System.getProperty("mcmc.evaluation.count") != null) {
             fullEvaluationCount = Long.parseLong(System.getProperty("mcmc.evaluation.count"));
         }
@@ -314,6 +313,8 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public static final String TEMPERATURE = "temperature";
     public static final String SPAWN = "spawn";
     public static final String OPERATOR_ANALYSIS = "operatorAnalysis";
+
+    public static final long DEFAULT_FULL_EVALUATION_COUNT = 1000;
 
 
 }

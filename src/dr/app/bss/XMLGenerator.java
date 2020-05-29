@@ -1055,7 +1055,7 @@ public class XMLGenerator {
 					data.substitutionModelIdref);
 			break;
 			
-		case 4: // MG94CodonModel
+		case 4: // MG94HKYCodonModel
 
 			writer.writeIDref(MG94CodonModelParser.MUSE_CODON_MODEL,
 					data.substitutionModelIdref);

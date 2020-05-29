@@ -36,9 +36,12 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
     public static final String TIP_STATE_OPERATOR = "tipStateSwapOperator";
 
-    public TipStateSwapOperator(AncestralStateBeagleTreeLikelihood treeLikelihood, double weight) {
+    public TipStateSwapOperator(AncestralStateBeagleTreeLikelihood treeLikelihood,
+                                double weight, boolean uniformRandomization) {
         this.treeLikelihood = treeLikelihood;
         setWeight(weight);
+        this.uniformRandomization = uniformRandomization;
+
         int patternCount = treeLikelihood.getPatternCount();
         states1 = new int[patternCount];
         states2 = new int[patternCount];
@@ -63,7 +66,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
         treeLikelihood.makeDirty();
 
-        return 0;
+        return uniformRandomization ? Double.POSITIVE_INFINITY : 0.0;
     }
 
     private void swap(int i, int j) {
@@ -86,4 +89,6 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
     }
 
     private final AncestralStateBeagleTreeLikelihood treeLikelihood;
+
+    private final boolean uniformRandomization;
 }

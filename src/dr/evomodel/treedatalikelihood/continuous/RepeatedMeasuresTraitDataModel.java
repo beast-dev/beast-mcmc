@@ -26,15 +26,24 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
-import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.*;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
-import dr.math.matrixAlgebra.Matrix;
 
 import java.util.List;
 
@@ -42,32 +51,43 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Gabriel Hassler
  */
-public class RepeatedMeasuresTraitDataModel extends
-        ContinuousTraitDataModel implements ContinuousTraitPartialsProvider {
+public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel implements ContinuousTraitPartialsProvider,
+        ModelExtensionProvider.NormalExtensionProvider {
 
     private final String traitName;
-    private final MatrixParameterInterface samplingPrecision;
+    private final MatrixParameterInterface samplingPrecisionParameter;
     private boolean diagonalOnly = false;
-    private Matrix samplingVariance;
+//    private DenseMatrix64F samplingVariance;
+    private boolean variableChanged = true;
     private boolean varianceKnown = false;
+
+    private Matrix samplingPrecision;
+    private Matrix samplingVariance;
+    private Matrix storedSamplingPrecision;
+    private Matrix storedSamplingVariance;
+    private boolean storedVarianceKnown = false;
+    private boolean storedVariableChanged = true;
+
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
                                           List<Integer> missingIndices,
-                                          boolean[] missindIndicators,
+//                                          boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.traitName = name;
-        this.samplingPrecision = samplingPrecision;
+        this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);
+
+        calculatePrecisionInfo();
 
 //        this.samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
         this.samplingVariance = null;
 
 
-        samplingPrecision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+        samplingPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 samplingPrecision.getDimension()));
 
     }
@@ -76,7 +96,7 @@ public class RepeatedMeasuresTraitDataModel extends
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
         assert (numTraits == 1);
-        assert (samplingPrecision.getRowDimension() == dimTrait && samplingPrecision.getColumnDimension() == dimTrait);
+        assert (samplingPrecision.rows() == dimTrait && samplingPrecision.columns() == dimTrait);
 
         recomputeVariance();
 
@@ -90,7 +110,7 @@ public class RepeatedMeasuresTraitDataModel extends
         //TODO: remove diagonalOnly part
         if (diagonalOnly) {
             for (int index = 0; index < dimTrait; index++) {
-                V.set(index, index, V.get(index, index) + 1 / samplingPrecision.getParameterValue(index));
+                V.set(index, index, V.get(index, index) + 1 / samplingPrecision.component(index, index));
             }
         } else {
             for (int i = 0; i < dimTrait; i++) {
@@ -102,26 +122,25 @@ public class RepeatedMeasuresTraitDataModel extends
 
 
         DenseMatrix64F P = new DenseMatrix64F(dimTrait, dimTrait);
-        MissingOps.safeInvert(V, P, false);
+        MissingOps.safeInvert2(V, P, false); //TODO this isn't necessary when this is fully observed
 
         MissingOps.unwrap(P, partial, dimTrait);
         MissingOps.unwrap(V, partial, dimTrait + dimTrait * dimTrait);
 
+        if (DEBUG) {
+            System.err.println("taxon " + taxonIndex);
+            System.err.println("\tprecision: " + P);
+            System.err.println("\tmean: " + new WrappedVector.Raw(partial, 0, dimTrait));
+        }
+
         return partial;
     }
 
-    public MatrixParameterInterface getPrecisionMatrix() {
-        return samplingPrecision;
-    }
 
-
-    public Parameter getSamplingPrecision() {
-        return samplingPrecision;
-    }
-
-    private void recomputeVariance(){
-        if (!varianceKnown){
-            samplingVariance = new Matrix(samplingPrecision.getParameterAsMatrix()).inverse();
+    private void recomputeVariance() {
+        checkVariableChanged();
+        if (!varianceKnown) {
+            samplingVariance = samplingPrecision.inverse();
             varianceKnown = true;
         }
     }
@@ -139,12 +158,80 @@ public class RepeatedMeasuresTraitDataModel extends
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         super.handleVariableChangedEvent(variable, index, type);
 
-        if (variable == samplingPrecision) {
+        if (variable == samplingPrecisionParameter) {
 
+            variableChanged = true;
             varianceKnown = false;
             fireModelChanged();
         }
     }
+
+    private void calculatePrecisionInfo() {
+        samplingPrecision = new Matrix(samplingPrecisionParameter.getParameterAsMatrix());
+    }
+
+    private void checkVariableChanged() {
+        if (variableChanged) {
+            calculatePrecisionInfo();
+            variableChanged = false;
+            varianceKnown = false;
+        }
+    }
+
+    @Override
+    protected void storeState() {
+        storedSamplingPrecision = samplingPrecision.clone();
+        storedSamplingVariance = samplingVariance.clone();
+        storedVarianceKnown = varianceKnown;
+        storedVariableChanged = variableChanged;
+    }
+
+    @Override
+    protected void restoreState() {
+        Matrix tmp = samplingPrecision;
+        samplingPrecision = storedSamplingPrecision;
+        storedSamplingPrecision = tmp;
+
+        tmp = samplingVariance;
+        samplingVariance = storedSamplingVariance;
+        storedSamplingVariance = tmp;
+
+        varianceKnown = storedVarianceKnown;
+        variableChanged = storedVariableChanged;
+    }
+
+    @Override
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
+                                                            TreeTrait treeTrait, Tree tree) {
+        checkVariableChanged();
+        return new ContinuousExtensionDelegate.MultivariateNormalExtensionDelegate(delegate, treeTrait,
+                this, tree);
+    }
+
+    @Override
+    public DenseMatrix64F getExtensionVariance() {
+        recomputeVariance();
+        double[] buffer = samplingVariance.toArrayComponents();
+        return DenseMatrix64F.wrap(dimTrait, dimTrait, buffer);
+    }
+
+    @Override
+    public MatrixParameterInterface getExtensionPrecision() {
+        checkVariableChanged();
+        return samplingPrecisionParameter;
+    }
+
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        return treeTraits;
+    }
+
+    @Override
+    public int getDataDimension() {
+        return dimTrait;
+    }
+
+    private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
@@ -167,23 +254,38 @@ public class RepeatedMeasuresTraitDataModel extends
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
                     cxo.getChild(MatrixParameterInterface.class);
 
-            String traitName = returnValue.traitName;
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                    xo.getChild(MultivariateDiffusionModel.class);
-
-            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
-            for (int i : missingIndices) {
-                missingIndicators[i] = true;
+            CholeskyDecomposition chol;
+            try {
+                chol = new CholeskyDecomposition(samplingPrecision.getParameterAsMatrix());
+            } catch (IllegalDimension illegalDimension) {
+                throw new XMLParseException(PRECISION + " must be a square matrix.");
             }
 
+            if (!chol.isSPD()) {
+                throw new XMLParseException(PRECISION + " must be a positive definite matrix.");
+            }
+
+
+            String traitName = returnValue.traitName;
+            //TODO diffusionModel was only used for the dimension.
+            // But this should be the same as the samplingPrecision dimension ?
+//            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
+//                    xo.getChild(MultivariateDiffusionModel.class);
+
+            //TODO: This was never used.
+//            final boolean[] missingIndicators = new boolean[returnValue.traitParameter.getDimension()];
+//            for (int i : missingIndices) {
+//                missingIndicators[i] = true;
+//            }
 
             return new RepeatedMeasuresTraitDataModel(
                     traitName,
                     traitParameter,
                     missingIndices,
-                    missingIndicators,
+//                    missingIndicators,
                     true,
-                    diffusionModel.getPrecisionParameter().getRowDimension(),
+                    samplingPrecision.getColumnDimension(),
+//                    diffusionModel.getPrecisionParameter().getRowDimension(),
                     samplingPrecision
             );
         }
@@ -222,6 +324,8 @@ public class RepeatedMeasuresTraitDataModel extends
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
-            new ElementRule(MultivariateDiffusionModel.class),
+//            new ElementRule(MultivariateDiffusionModel.class),
     };
+
+
 }

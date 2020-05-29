@@ -94,6 +94,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
     private final TreeModel tree;
     private final DistanceKernelType distanceKernel;
+    private final boolean slideOnly;
 
     private final List<NodeRef> tips;
 
@@ -104,16 +105,32 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
      * @param weight the weight
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param targetAcceptance the desired acceptance probability
-     * @param distanceKernel the distribution from which to draw the patristic distance 
+     * @param distanceKernel the distribution from which to draw the patristic distance
      * @param mode   coercion mode
      */
     public SubtreeLeapOperator(TreeModel tree, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        this(tree, weight, size, distanceKernel, false, mode, targetAcceptance);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param tree   the tree
+     * @param weight the weight
+     * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param targetAcceptance the desired acceptance probability
+     * @param distanceKernel the distribution from which to draw the patristic distance
+     * @param slideOnly if true, only slide up and down the tree, never across (mimics SubtreeSlide)
+     * @param mode   coercion mode
+     */
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, DistanceKernelType distanceKernel, boolean slideOnly, AdaptationMode mode, double targetAcceptance) {
         super(mode, targetAcceptance);
 
         this.tree = tree;
         setWeight(weight);
         this.size = size;
         this.distanceKernel = distanceKernel;
+        this.slideOnly = slideOnly;
         this.tips = null;
     }
 
@@ -133,6 +150,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         setWeight(weight);
         this.size = size;
         this.distanceKernel = distanceKernel;
+        this.slideOnly = false;
         this.tips = new ArrayList<NodeRef>();
 
         for (Taxon taxon : taxa) {
@@ -188,7 +206,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         // and its grand parent
         final NodeRef grandParent = tree.getParent(parent);
 
-        final Map<NodeRef, Double> destinations = getDestinations(node, parent, sibling, delta);
+        final Map<NodeRef, Double> destinations = getDestinations(node, parent, sibling, delta, slideOnly);
         final List<NodeRef> destinationNodes = new ArrayList<NodeRef>(destinations.keySet());
 
         // pick uniformly from this list
@@ -258,7 +276,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             throw new IllegalArgumentException("height error");
         }
 
-        final Map<NodeRef, Double> reverseDestinations = getDestinations(node, parent, getOtherChild(tree, parent, node), delta);
+        final Map<NodeRef, Double> reverseDestinations = getDestinations(node, parent, getOtherChild(tree, parent, node), delta, slideOnly);
         double reverseProbability = 1.0 / reverseDestinations.size();
 
         // hastings ratio = reverse Prob / forward Prob
@@ -266,7 +284,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         return logq;
     }
 
-    private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta) {
+    private Map<NodeRef, Double> getDestinations(NodeRef node, NodeRef parent, NodeRef sibling, double delta, boolean slideOnly) {
 
         final Map<NodeRef, Double> destinations = new LinkedHashMap<NodeRef, Double>();
 
@@ -300,21 +318,24 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             if (parent1 != null) {
                 final double height1 = tree.getNodeHeight(parent1);
                 if (height1 < heightAbove) {
-                    // haven't reached the height above the original height so go down
-                    // the sibling subtree
-                    NodeRef sibling1 = getOtherChild(tree, parent1, node1);
+                    if (!slideOnly) { // if we are not just sliding up or down...
+                        
+                        // We haven't reached the height above the original height so go down
+                        // the sibling subtree to look for other possible destinations
+                        NodeRef sibling1 = getOtherChild(tree, parent1, node1);
 
-                    double heightBelow1 = height1 - (heightAbove - height1);
+                        double heightBelow1 = height1 - (heightAbove - height1);
 
-                    if (heightBelow1 > tree.getNodeHeight(node)) {
+                        if (heightBelow1 > tree.getNodeHeight(node)) {
 
-                        final List<NodeRef> edges = new ArrayList<NodeRef>();
+                            final List<NodeRef> edges = new ArrayList<NodeRef>();
 
-                        getIntersectingEdges(tree, sibling1, heightBelow1, edges);
+                            getIntersectingEdges(tree, sibling1, heightBelow1, edges);
 
-                        // add the intersecting edges and the height
-                        for (NodeRef n : edges) {
-                            destinations.put(n, heightBelow1);
+                            // add the intersecting edges and the height
+                            for (NodeRef n : edges) {
+                                destinations.put(n, heightBelow1);
+                            }
                         }
                     }
                 } else {

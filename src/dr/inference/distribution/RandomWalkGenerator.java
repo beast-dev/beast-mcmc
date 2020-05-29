@@ -8,6 +8,7 @@ import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.coalescent.demographicmodel.PiecewisePopulationModel;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.inference.model.*;
+import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.inferencexml.distribution.RandomWalkGeneratorParser;
 import dr.math.MathUtils;
 import dr.math.distributions.GaussianProcessRandomGenerator;
@@ -17,7 +18,8 @@ import dr.util.Transform;
 /**
  * Created by mkarcher on 4/3/17.
  */
-public class RandomWalkGenerator extends AbstractModelLikelihood implements GaussianProcessRandomGenerator {
+public class RandomWalkGenerator extends AbstractModelLikelihood
+        implements GaussianProcessRandomGenerator, GammaGibbsProvider {
 
     public RandomWalkGenerator(Parameter data, Parameter firstElementPrecision, Parameter precision) {
         super(RandomWalkGeneratorParser.RANDOM_WALK_GENERATOR);
@@ -167,5 +169,28 @@ public class RandomWalkGenerator extends AbstractModelLikelihood implements Gaus
     private int dimension;
     private Parameter firstElementPrecision;
     private Parameter precision;
+
+    @Override
+    public SufficientStatistics getSufficientStatistics(int dim) {
+
+        double SSE = 0;
+        int n = data.getDimension();
+        for (int i = 1; i < n; i++) {
+            double x = data.getParameterValue(i) - data.getParameterValue(i-1);
+            SSE += x * x;
+        }
+
+        return new SufficientStatistics(n - 1, SSE);
+    }
+
+    @Override
+    public Parameter getPrecisionParameter() {
+        return precision;
+    }
+
+    @Override
+    public void drawValues() {
+        // Do nothing
+    }
 //    private final boolean logScale;
 }

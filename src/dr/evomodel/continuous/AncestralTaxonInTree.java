@@ -151,7 +151,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        fireModelChanged(variable, index);
+        // Do nothing (handled in AbstractModel
     }
 
     final private Taxon ancestor;

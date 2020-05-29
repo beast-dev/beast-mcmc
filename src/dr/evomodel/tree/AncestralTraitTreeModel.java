@@ -437,6 +437,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         if (validShadowTree) {
             storeNodeStructure();
             storedRootNumber = root.getNumber();
+
+            if (hasAncestralPathTaxa) {
+                // swallow copy
+                savedAncestralPathNodeHeightParameters = (HashMap<Parameter, NodeRef>)
+                        ancestralPathNodeHeightParameters.clone();
+            }
         }
     }
 
@@ -455,6 +461,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             storedNodes = tmp;
 
             root = nodes[storedRootNumber];
+
+            if (hasAncestralPathTaxa) {
+                HashMap<Parameter, NodeRef> tmpMap = ancestralPathNodeHeightParameters;
+                ancestralPathNodeHeightParameters = savedAncestralPathNodeHeightParameters;
+                savedAncestralPathNodeHeightParameters = tmpMap;
+            }
         }
     }
 
@@ -1036,7 +1048,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
     final private Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap = new HashMap<>();
-    final private Map<Parameter, NodeRef> ancestralPathNodeHeightParameters = new HashMap<>();
+    private HashMap<Parameter, NodeRef> ancestralPathNodeHeightParameters = new HashMap<>();
+    private HashMap<Parameter, NodeRef> savedAncestralPathNodeHeightParameters = new HashMap<>();
 
     private boolean hasAncestralPathTaxa = false;
     private boolean validShadowTree = false;

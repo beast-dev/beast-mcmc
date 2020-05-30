@@ -427,7 +427,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             storedNodes[i].adoptValues(nodes[i], storedNodes);
         }
     }
-    
+
+    @SuppressWarnings("unchecked")
     protected void storeState() {
 
         assert (nodes != null);
@@ -558,8 +559,6 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
             } else if (object instanceof Parameter) {
 
                 if (hasAncestralPathTaxa) {
-
-                    validShadowTree = false; // TODO -- appears necessary from MW example -- but why?
 
                     Parameter parameter = (Parameter) object;
                     if (ancestralPathNodeHeightParameters.containsKey(parameter)) {
@@ -1013,7 +1012,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-    private static final boolean NEW_APPROACH2 = true;
+    private static final boolean NEW_APPROACH2 = false;
 
     private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,
                                                  BitSet tips,
@@ -1048,6 +1047,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
     final private Map<Integer, List<AncestralTaxonInTree>> nodeToClampMap = new HashMap<>();
+
     private HashMap<Parameter, NodeRef> ancestralPathNodeHeightParameters = new HashMap<>();
     private HashMap<Parameter, NodeRef> savedAncestralPathNodeHeightParameters = new HashMap<>();
 

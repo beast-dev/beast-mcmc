@@ -136,12 +136,18 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void storeState() {
-
+        storedIndex = index;
+        storedPathViaChildNumber = pathViaChildNumber;
+        storedNode = node;
+        storedTipNodel = tipNode;
     }
 
     @Override
     protected void restoreState() {
-
+        index = storedIndex;
+        pathViaChildNumber = storedPathViaChildNumber;
+        node = storedNode;
+        tipNode = storedTipNodel;
     }
 
     @Override
@@ -151,7 +157,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // Do nothing (handled in AbstractModel
+        // Do nothing (handled in AbstractModel)
     }
 
     final private Taxon ancestor;
@@ -169,6 +175,11 @@ public class AncestralTaxonInTree extends AbstractModel {
     private NodeRef node;
     private NodeRef tipNode;
     private int pathViaChildNumber = -1;
+
+    private int storedIndex;
+    private NodeRef storedNode;
+    private NodeRef storedTipNodel;
+    private int storedPathViaChildNumber;
 
     public TaxonList getTaxonList() {
         return descendents;

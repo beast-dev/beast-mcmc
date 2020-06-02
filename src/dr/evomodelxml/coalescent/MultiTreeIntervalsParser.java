@@ -95,7 +95,7 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newDoubleRule(INCLUDE_STEMS, false),
+            AttributeRule.newBooleanRule(INCLUDE_STEMS, false),
             AttributeRule.newDoubleRule(CUTOFF, true),
 
             new ElementRule(TREES, new XMLSyntaxRule[] {

@@ -2,10 +2,10 @@ package test.dr.evomodel.branchratemodel;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.RandomLocalClockModel;
 import dr.evomodel.coalescent.CoalescentLikelihood;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
@@ -16,7 +16,7 @@ import dr.evomodel.tree.RateCovarianceStatistic;
 import dr.evomodel.tree.RateStatistic;
 import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.tree.RateStatisticParser;
@@ -68,7 +68,8 @@ public class RandomLocalClockTestProblem extends TraceCorrelationAssert {
         Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 0.077, 0, Double.POSITIVE_INFINITY);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
-        CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
+        TreeIntervals intervalList = new TreeIntervals(treeModel, null, null);
+        CoalescentLikelihood coalescent = new CoalescentLikelihood(intervalList, constantModel);
         coalescent.setId("coalescent");
 
         // clock model

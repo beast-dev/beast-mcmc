@@ -33,6 +33,7 @@ import dr.xml.*;
 /**
  *
  */
+/*
 public class GMRFTestLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String SKYLINE_TEST_LIKELIHOOD = "gmrfTestLikelihood";
@@ -99,4 +100,4 @@ public class GMRFTestLikelihoodParser extends AbstractXMLObjectParser {
             }),
     };
     
-}
+}*/

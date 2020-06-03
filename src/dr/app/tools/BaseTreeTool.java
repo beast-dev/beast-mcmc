@@ -9,10 +9,13 @@ import dr.evolution.util.Taxon;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
 class BaseTreeTool {
+
+    static final String NAME_CONTENT = "nameContent";
 
     // Messages to stderr, output to stdout
     static PrintStream progressStream = System.err;
@@ -90,12 +93,39 @@ class BaseTreeTool {
         return ps;
     }
 
-    void addTaxonByName(Tree tree, List<Taxon> taxa, String name) {
+    void addTaxonByName(Tree tree, Collection<Taxon> taxa, String name) {
         int taxonId = tree.getTaxonIndex(name);
         if (taxonId == -1) {
             throw new RuntimeException("Unable to find taxon '" + name + "'.");
         }
         taxa.add(tree.getTaxon(taxonId));
+    }
+
+    private void addTaxaByNameContent(Tree tree, Collection<Taxon> taxa, String content) {
+        int counter = 0;
+        for (int i = 0; i < tree.getTaxonCount(); i++) {
+            Taxon taxon = tree.getTaxon(i);
+            String taxonName = taxon.toString();
+            if (taxonName.contains(content)) {
+                taxa.add(taxon);
+                counter++;
+            }
+        }
+        if (counter == 0) {
+            throw new RuntimeException("Unable to find taxon with a name containing '" + content + "'.");
+        }
+    }
+
+    void getTaxaToFromName(Tree tree, Collection<Taxon> taxa, String[] names, boolean basedOnContent) {
+        if (names != null) {
+            for (String name : names) {
+                if (!basedOnContent) {
+                    addTaxonByName(tree, taxa, name);
+                } else {
+                    addTaxaByNameContent(tree, taxa, name);
+                }
+            }
+        }
     }
 
     static void handleHelp(Arguments arguments, String[] args, Consumer<Arguments> printUsage) {
@@ -112,6 +142,11 @@ class BaseTreeTool {
             printUsage.accept(arguments);
             System.exit(0);
         }
+    }
+
+    static boolean parseBasedOnNameContent(Arguments arguments) {
+        String nameContentString = arguments.getStringOption(NAME_CONTENT);
+        return nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0;
     }
 
     protected static void centreLine(String line, int pageWidth) {

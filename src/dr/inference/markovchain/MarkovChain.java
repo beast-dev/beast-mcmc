@@ -196,7 +196,7 @@ public final class MarkovChain implements Serializable {
             double oldScore = currentScore;
             if (usingFullEvaluation) {
                 diagnosticDensities = new HashMap<String, Double>();
-                ((CompoundLikelihood) likelihood).getDensities(diagnosticDensities);
+                fillDensities(likelihood, diagnosticDensities);
             }
 
             // assert Profiler.startProfile("Store");
@@ -276,7 +276,7 @@ public final class MarkovChain implements Serializable {
                 Map<String, Double> diagnosticOperatorDensities = null;
                 if (usingFullEvaluation) {
                     diagnosticOperatorDensities = new HashMap<String, Double>();
-                    ((CompoundLikelihood) likelihood).getDensities(diagnosticOperatorDensities);
+                    fillDensities(likelihood, diagnosticOperatorDensities);
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
@@ -343,8 +343,8 @@ public final class MarkovChain implements Serializable {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood);
 
-                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();;
-                    ((CompoundLikelihood) likelihood).getDensities(densitiesAfter);
+                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();
+                    fillDensities(likelihood, densitiesAfter);
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();
@@ -411,7 +411,7 @@ public final class MarkovChain implements Serializable {
                     final double testScore = evaluate(likelihood);
 
                     Map<String, Double> densitiesAfter = new HashMap<String, Double>();
-                    ((CompoundLikelihood) likelihood).getDensities(densitiesAfter);
+                    fillDensities(likelihood, densitiesAfter);
 
                     if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();
@@ -618,6 +618,17 @@ public final class MarkovChain implements Serializable {
     }
 
     private void fireEndCurrentIteration(long state) {
+    }
+
+    private void fillDensities(Likelihood like, Map<String, Double> densities) {
+        if (like instanceof CompoundLikelihood) {
+            for (Likelihood subLike : ((CompoundLikelihood) like).getLikelihoods()) {
+                fillDensities(subLike, densities);
+            }
+        } else {
+            final double logLikelihood = like.getLogLikelihood();
+            densities.put(like.prettyName(), logLikelihood);
+        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();

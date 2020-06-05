@@ -371,6 +371,41 @@ public class TreeUtils {
     }
 
     /**
+     * Gets a HashMap of clade bitsets to nodes in tree. This is useful for comparing the topology of trees
+     * @param tree a tree
+     * @return A HashMap with a BitSet of descendent taxa as the key and a node as value
+     */
+    public static HashMap<BitSet, NodeRef> getBitSetNodeMap(Tree tree) {
+        HashMap<BitSet, NodeRef> map = new HashMap<>();
+        addBits(tree,tree.getRoot(),null,map);
+        return map;
+    }
+
+    /**
+     * A private recursive function used by getBitSetNodeMap
+     * This is modeled after the addClades in CladeSet
+     * @param tree the tree
+     * @param node the node
+     * @param incomingBits A Bitset passed in from parent call or null
+     * @param map a HashMap <BitSet,NodeRef> that will be added to
+     */
+    private static void addBits(Tree tree, NodeRef node, BitSet incomingBits, HashMap map) {
+        BitSet bits = new BitSet();
+        if (tree.isExternal(node)) {
+            bits.set(node.getNumber());
+        } else {
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                NodeRef node1 = tree.getChild(node, i);
+                addBits(tree, node1, bits, map);
+            }
+        }
+        if (incomingBits != null) {
+            incomingBits.or(bits);
+        }
+        map.put(bits, node);
+    }
+
+    /**
      * @param tree the tree
      * @param taxa the taxa
      * @return A HashSet of node numbers.
@@ -720,7 +755,6 @@ public class TreeUtils {
 
     /**
      * determine a postorder traversal list of nodes in a tree
-     *
      */
     public static void postOrderTraversalList(Tree tree, int[] postOrderList) {
 

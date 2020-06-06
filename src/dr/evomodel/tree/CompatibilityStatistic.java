@@ -91,7 +91,7 @@ public class CompatibilityStatistic extends TreeStatistic implements BooleanStat
             return true;
         } else {
 
-            BitSet ls = new BitSet(tree.getExternalNodeCount());
+            BitSet ls = new BitSet();
 
             for (int i = 0; i < tree.getChildCount(node); i++) {
 

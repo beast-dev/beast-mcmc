@@ -86,15 +86,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             final MinimumTravelInformation firstBounce;
 
-            if (TIMING) {
-                timer.startTimer("getNext");
-            }
-
             firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
-
-            if (TIMING) {
-                timer.stopTimer("getNext");
-            }
 
             if (CPP_NEXT_BOUNCE) {
                 MinimumTravelInformation test = testNative(position, velocity, action, gradient);
@@ -133,25 +125,13 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return mti;
     }
 
-    // TODO Same as in super-class?
-//    protected MinimumTravelInformation getNextBounce(WrappedVector position,
-//                                                     WrappedVector velocity,
-//                                                     WrappedVector action,
-//                                                     WrappedVector gradient,
-//                                                     WrappedVector momentum) {
-//
-//        return getNextBounce(0, position.getDim(),
-//                position.getBuffer(), velocity.getBuffer(),
-//                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-//
-//    }
-
-    private MinimumTravelInformation getNextBounce(final int begin, final int end,
-                                                   final double[] position,
-                                                   final double[] velocity,
-                                                   final double[] action,
-                                                   final double[] gradient,
-                                                   final double[] momentum) {
+    @Override
+    MinimumTravelInformation getNextBounceImpl(final int begin, final int end,
+                                               final double[] position,
+                                               final double[] velocity,
+                                               final double[] action,
+                                               final double[] gradient,
+                                               final double[] momentum) {
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
@@ -357,7 +337,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return index;
     }
 
-
     private class PiecewiseLinearEndpoints {
 
         final double c0;
@@ -448,7 +427,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return finalBounceState;
     }
 
-    @SuppressWarnings("Duplicates")
     private void updateDynamics(double[] p,
                                 double[] v,
                                 double[] a,

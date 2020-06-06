@@ -145,16 +145,8 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
                     if (FUSE) {
 
-                        if (TIMING) {
-                            timer.startTimer("getNext");
-                        }
-
                         firstBounce = getNextBounce(position,
                                 velocity, action, gradient, momentum);
-
-                        if (TIMING) {
-                            timer.stopTimer("getNext");
-                        }
 
                         if (TEST_NATIVE_BOUNCE) {
                             testNative(firstBounce, position, velocity, action, gradient, momentum);
@@ -225,6 +217,40 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
 
         return 0.0;
+    }
+
+    @Override
+    MinimumTravelInformation getNextBounceImpl(final int begin, final int end,
+                                               final double[] position,
+                                               final double[] velocity,
+                                               final double[] action,
+                                               final double[] gradient,
+                                               final double[] momentum) {
+
+        double minimumTime = Double.POSITIVE_INFINITY;
+        int index = -1;
+        Type type = Type.NONE;
+
+        for (int i = begin; i < end; ++i) {
+
+            double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
+
+            if (boundaryTime < minimumTime) {
+                minimumTime = boundaryTime;
+                index = i;
+                type = Type.BOUNDARY;
+            }
+
+            double gradientTime = findGradientRoot(action[i], gradient[i], momentum[i]);
+
+            if (gradientTime < minimumTime) {
+                minimumTime = gradientTime;
+                index = i;
+                type = Type.GRADIENT;
+            }
+        }
+
+        return new MinimumTravelInformation(minimumTime, index, type);
     }
 
     @Override

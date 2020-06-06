@@ -38,7 +38,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         final double[] initialPosition = hmcProvider.getInitialPosition();
 
         if (stepSizeInformation == null) {
-            stepSizeInformation = findReasonableStepSize(initialPosition, hmcProvider.getStepsize());
+            stepSizeInformation = findReasonableStepSize(initialPosition, hmcProvider.getStepSize());
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);

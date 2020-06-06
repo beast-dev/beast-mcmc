@@ -37,7 +37,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                  WrappedVector action, WrappedVector gradient, WrappedVector momentum);
 
 
-    protected void testNative(MinimumTravelInformation firstBounce,
+    void testNative(MinimumTravelInformation firstBounce,
                               WrappedVector position,
                               WrappedVector velocity,
                               WrappedVector action,
@@ -118,9 +118,9 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return new MinimumTravelInformation(minimumTime, index, type);
     }
 
-    protected MinimumTravelInformation getNextGradientBounce(WrappedVector action,
-                                                             WrappedVector gradient,
-                                                             WrappedVector momentum) {
+    MinimumTravelInformation getNextGradientBounce(WrappedVector action,
+                                                   WrappedVector gradient,
+                                                   WrappedVector momentum) {
 
         return getNextGradientBounce(0, action.getDim(),
                 action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
@@ -147,9 +147,9 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return new MinimumTravelInformation(minimumRoot, index);
     }
 
-    protected MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
-                                                                     WrappedVector inGradient,
-                                                                     WrappedVector inMomentum) {
+    MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
+                                                           WrappedVector inGradient,
+                                                           WrappedVector inMomentum) {
 
         final double[] action = inAction.getBuffer();
         final double[] gradient = inGradient.getBuffer();
@@ -164,11 +164,11 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return taskPool.mapReduce(map, reduce);
     }
 
-    protected MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
-                                                             WrappedVector inVelocity,
-                                                             WrappedVector inAction,
-                                                             WrappedVector inGradient,
-                                                             WrappedVector inMomentum) {
+    MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
+                                                   WrappedVector inVelocity,
+                                                   WrappedVector inAction,
+                                                   WrappedVector inGradient,
+                                                   WrappedVector inMomentum) {
 
         final double[] position = inPosition.getBuffer();
         final double[] velocity = inVelocity.getBuffer();
@@ -192,7 +192,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return minimumPositiveRoot(-0.5 * action, gradient, momentum);
     }
 
-    protected double findBoundaryTime(int index, double position,
+    double findBoundaryTime(int index, double position,
                                     double velocity) {
 
         double time = Double.POSITIVE_INFINITY;
@@ -311,7 +311,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 //        return (root1 < root2) ? root1 : root2;
 //    }
 
-    protected String printSign(ReadableVector position) {
+    String printSign(ReadableVector position) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < position.getDim(); ++i) {
             double p = position.get(i);
@@ -322,13 +322,13 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return sb.toString();
     }
 
-    protected void debugAfter(BounceState bounceState, ReadableVector position) {
+    void debugAfter(BounceState bounceState, ReadableVector position) {
         System.err.println("post position: " + position);
         System.err.println(bounceState);
         System.err.println();
     }
 
-    protected void debugBefore(ReadableVector position, int count) {
+    void debugBefore(ReadableVector position, int count) {
         System.err.println("before number: " + count);
         System.err.println("init position: " + position);
     }
@@ -363,9 +363,9 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return columns;
     }
 
-    protected final TaskPool taskPool;
+    final TaskPool taskPool;
 
     protected final static boolean DEBUG = false;
-    protected final static boolean DEBUG_SIGN = false;
-    protected final static boolean FUSE = true;
+    final static boolean DEBUG_SIGN = false;
+    final static boolean FUSE = true;
 }

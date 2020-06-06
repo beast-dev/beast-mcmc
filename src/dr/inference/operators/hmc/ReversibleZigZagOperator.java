@@ -59,18 +59,6 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
 
-        if (direction == 1) {
-            integrateTrajectoryForward(position, momentum);
-        } else {
-            negateVector(momentum);
-            integrateTrajectoryForward(position, momentum);
-            negateVector(momentum);
-        }
-        return 0.0;
-    }
-
-    double integrateTrajectoryForward(WrappedVector position, WrappedVector momentum) {
-
         String signString;
         if (DEBUG_SIGN) {
             signString = printSign(position);
@@ -419,8 +407,8 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction,
-                                                 double time) {
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+                                                 int direction, double time) {
 
         preconditioning.totalTravelTime = time;
         if (direction == -1) {
@@ -428,7 +416,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             negateVector(momentum);
         }
         // integrate
-        integrateTrajectoryForward(position, momentum);
+        integrateTrajectory(position, momentum);
 
         if (direction == -1) {
             //negate momentum again
@@ -475,7 +463,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    public double getStepsize() {
+    public double getStepSize() {
         return preconditioning.totalTravelTime;
     }
 
@@ -484,6 +472,4 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             vector.set(i, -vector.get(i));
         }
     }
-
-    private int direction = 1; //todo: for temporary use.
 }

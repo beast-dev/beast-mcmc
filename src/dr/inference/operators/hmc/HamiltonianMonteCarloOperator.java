@@ -714,7 +714,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
-    public double getStepsize() {
+    public double getStepSize() {
         return stepSize;
     }
 

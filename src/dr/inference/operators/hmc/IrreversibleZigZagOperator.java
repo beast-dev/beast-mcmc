@@ -134,17 +134,17 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     // TODO Same as in super-class?
-    protected MinimumTravelInformation getNextBounce(WrappedVector position,
-                                                     WrappedVector velocity,
-                                                     WrappedVector action,
-                                                     WrappedVector gradient,
-                                                     WrappedVector momentum) {
-
-        return getNextBounce(0, position.getDim(),
-                position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-
-    }
+//    protected MinimumTravelInformation getNextBounce(WrappedVector position,
+//                                                     WrappedVector velocity,
+//                                                     WrappedVector action,
+//                                                     WrappedVector gradient,
+//                                                     WrappedVector momentum) {
+//
+//        return getNextBounce(0, position.getDim(),
+//                position.getBuffer(), velocity.getBuffer(),
+//                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+//
+//    }
 
     private MinimumTravelInformation getNextBounce(final int begin, final int end,
                                                    final double[] position,

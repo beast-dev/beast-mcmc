@@ -100,57 +100,60 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                                         final double[] gradient,
                                                         final double[] momentum);
 
-    MinimumTravelInformation getNextGradientBounce(WrappedVector action,
-                                                   WrappedVector gradient,
-                                                   WrappedVector momentum) {
+//    MinimumTravelInformation getNextGradientBounce(WrappedVector action,
+//                                                   WrappedVector gradient,
+//                                                   WrappedVector momentum) {
+//
+//        return getNextGradientBounce(0, action.getDim(),
+//                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+//    }
 
-        return getNextGradientBounce(0, action.getDim(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-    }
+//    private MinimumTravelInformation getNextGradientBounce(final int begin, final int end,
+//                                                           final double[] action,
+//                                                           final double[] gradient,
+//                                                           final double[] momentum) {
+//
+//        double minimumRoot = Double.POSITIVE_INFINITY;
+//        int index = -1;
+//
+//        for (int i = begin; i < end; ++i) {
+//
+//            double root = findGradientRoot(action[i], gradient[i], momentum[i]);
+//
+//            if (root < minimumRoot) {
+//                minimumRoot = root;
+//                index = i;
+//            }
+//        }
+//
+//        return new MinimumTravelInformation(minimumRoot, index);
+//    }
 
-    private MinimumTravelInformation getNextGradientBounce(final int begin, final int end,
-                                                           final double[] action,
-                                                           final double[] gradient,
-                                                           final double[] momentum) {
-
-        double minimumRoot = Double.POSITIVE_INFINITY;
-        int index = -1;
-
-        for (int i = begin; i < end; ++i) {
-
-            double root = findGradientRoot(action[i], gradient[i], momentum[i]);
-
-            if (root < minimumRoot) {
-                minimumRoot = root;
-                index = i;
-            }
-        }
-
-        return new MinimumTravelInformation(minimumRoot, index);
-    }
-
-    MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
-                                                           WrappedVector inGradient,
-                                                           WrappedVector inMomentum) {
-
-        final double[] action = inAction.getBuffer();
-        final double[] gradient = inGradient.getBuffer();
-        final double[] momentum = inMomentum.getBuffer();
-
-        TaskPool.RangeCallable<MinimumTravelInformation> map =
-                (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum);
-
-        BinaryOperator<MinimumTravelInformation> reduce =
-                (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
-
-        return taskPool.mapReduce(map, reduce);
-    }
+//    MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
+//                                                           WrappedVector inGradient,
+//                                                           WrappedVector inMomentum) {
+//
+//        final double[] action = inAction.getBuffer();
+//        final double[] gradient = inGradient.getBuffer();
+//        final double[] momentum = inMomentum.getBuffer();
+//
+//        TaskPool.RangeCallable<MinimumTravelInformation> map =
+//                (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum);
+//
+//        BinaryOperator<MinimumTravelInformation> reduce =
+//                (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
+//
+//        return taskPool.mapReduce(map, reduce);
+//    }
 
     MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
                                                    WrappedVector inVelocity,
                                                    WrappedVector inAction,
                                                    WrappedVector inGradient,
                                                    WrappedVector inMomentum) {
+        if (TIMING) {
+            timer.startTimer("getNextParallel");
+        }
 
         final double[] position = inPosition.getBuffer();
         final double[] velocity = inVelocity.getBuffer();
@@ -165,7 +168,13 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         BinaryOperator<MinimumTravelInformation> reduce =
                 (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
 
-        return taskPool.mapReduce(map, reduce);
+        MinimumTravelInformation result = taskPool.mapReduce(map, reduce);
+
+        if (TIMING) {
+            timer.stopTimer("getNextParallel");
+        }
+
+        return result;
     }
 
     static double findGradientRoot(double action,
@@ -186,28 +195,28 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return time;
     }
 
-    MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
-                                                   WrappedVector inVelocity) {
-
-        @SuppressWarnings("duplicate")
-        final double[] position = inPosition.getBuffer();
-        final double[] velocity = inVelocity.getBuffer();
-
-        double minimumTime = Double.POSITIVE_INFINITY;
-        int index = -1;
-
-        for (int i = 0, len = position.length; i < len; ++i) {
-
-            double time = findBoundaryTime(i, position[i], velocity[i]);
-
-            if (time < minimumTime) {
-                minimumTime = time;
-                index = i;
-            }
-        }
-
-        return new MinimumTravelInformation(minimumTime, index);
-    }
+//    MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
+//                                                   WrappedVector inVelocity) {
+//
+//        @SuppressWarnings("duplicate")
+//        final double[] position = inPosition.getBuffer();
+//        final double[] velocity = inVelocity.getBuffer();
+//
+//        double minimumTime = Double.POSITIVE_INFINITY;
+//        int index = -1;
+//
+//        for (int i = 0, len = position.length; i < len; ++i) {
+//
+//            double time = findBoundaryTime(i, position[i], velocity[i]);
+//
+//            if (time < minimumTime) {
+//                minimumTime = time;
+//                index = i;
+//            }
+//        }
+//
+//        return new MinimumTravelInformation(minimumTime, index);
+//    }
 
     private static double minimumPositiveRoot(double a,
                                               double b,
@@ -349,5 +358,4 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
     protected final static boolean DEBUG = false;
     final static boolean DEBUG_SIGN = false;
-    final static boolean FUSE = true;
 }

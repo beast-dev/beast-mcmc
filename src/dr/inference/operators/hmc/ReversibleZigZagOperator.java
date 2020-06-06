@@ -112,70 +112,23 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                 final MinimumTravelInformation firstBounce;
 
                 if (taskPool != null) {
-                    if (FUSE) {
 
-                        if (TIMING) {
-                            timer.startTimer("getNext");
-                        }
+                    firstBounce = getNextBounceParallel(position,
+                            velocity, action, gradient, momentum);
 
-                        firstBounce = getNextBounceParallel(position,
-                                velocity, action, gradient, momentum);
-
-                        if (TIMING) {
-                            timer.stopTimer("getNext");
-                        }
-
-                        if (TEST_NATIVE_BOUNCE) {
-                            testNative(firstBounce, position, velocity, action, gradient, momentum);
-                        }
-
-                    } else {
-
-                        MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
-                                position, velocity);
-                        MinimumTravelInformation gradientBounce = getNextGradientBounceParallel(
-                                action, gradient, momentum);
-
-                        firstBounce = (boundaryBounce.time < gradientBounce.time) ?
-                                new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
-                                new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
+                    if (TEST_NATIVE_BOUNCE) {
+                        testNative(firstBounce, position, velocity, action, gradient, momentum);
                     }
 
                 } else {
 
-                    if (FUSE) {
+                    firstBounce = getNextBounce(position,
+                            velocity, action, gradient, momentum);
 
-                        firstBounce = getNextBounce(position,
-                                velocity, action, gradient, momentum);
-
-                        if (TEST_NATIVE_BOUNCE) {
-                            testNative(firstBounce, position, velocity, action, gradient, momentum);
-                        }
-
-                    } else {
-
-                        if (TIMING) {
-                            timer.startTimer("getNextBoundary");
-                        }
-
-                        MinimumTravelInformation boundaryBounce = getNextBoundaryBounce(
-                                position, velocity);
-
-                        if (TIMING) {
-                            timer.stopTimer("getNextBoundary");
-                            timer.startTimer("getNextGradient");
-                        }
-                        MinimumTravelInformation gradientBounce = getNextGradientBounce(action, gradient, momentum);
-
-                        if (TIMING) {
-                            timer.stopTimer("getNextGradient");
-                        }
-
-                        firstBounce = (boundaryBounce.time < gradientBounce.time) ?
-                                new MinimumTravelInformation(boundaryBounce.time, boundaryBounce.index, Type.BOUNDARY) :
-                                new MinimumTravelInformation(gradientBounce.time, gradientBounce.index, Type.GRADIENT);
-
+                    if (TEST_NATIVE_BOUNCE) {
+                        testNative(firstBounce, position, velocity, action, gradient, momentum);
                     }
+
                 }
 
                 bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);

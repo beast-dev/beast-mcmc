@@ -244,7 +244,6 @@ public interface ContinuousTraitGradientForBranch {
             }
 
             // n_i w.r.t. rate
-            // TODO: Fix delegate to (possibly) un-link drift from arbitrary rate
             DenseMatrix64F gradMatN = matrixJacobianN;
             diffusionProcessDelegate.updateGradientDisplacementWrtRate(gradient, scaling,
                     statistics.getBranch().getRawDisplacement(),

@@ -44,7 +44,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
     public static final String SKYRIDE_LIKELIHOOD = "skyrideLikelihood";
-    public static final String SKYGRID_LIKELIHOOD = "gmrfSkyGridLikelihood";
+    public static final String SKYGRID_LIKELIHOOD = "gmrfSkygridLikelihood";
 
     public static final String POPULATION_PARAMETER = "populationSizes";
     public static final String GROUP_SIZES = "groupSizes";
@@ -82,7 +82,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), SKYRIDE_LIKELIHOOD, SKYGRID_LIKELIHOOD}; // cannot duplicate
+        return new String[]{getParserName(), SKYRIDE_LIKELIHOOD, SKYGRID_LIKELIHOOD, "gmrfSkyGridLikelihood"}; // cannot duplicate
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -95,7 +95,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean buildIntervalNodeMapping = xo.getAttribute(BUILD_MAPPING, false);
 
-        List<IntervalList> intervalsList = new ArrayList<IntervalList>();
+        List<IntervalList> intervalsList = null;
 
         List<Tree> treeList = new ArrayList<Tree>();
         if(xo.getChild(POPULATION_TREE) != null) {
@@ -347,12 +347,12 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " +
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
-        if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
+        if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareToIgnoreCase(SKYGRID_LIKELIHOOD) != 0) {
             return new OldGMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                     lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, buildIntervalNodeMapping);
 
         } else {
-            if (intervalsList.size() > 0) {
+            if (intervalsList != null) {
                 if (xo.getChild(GRID_POINTS) != null) {
                     return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,

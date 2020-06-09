@@ -60,9 +60,9 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
         List<Tree> trees = new ArrayList<Tree>(cxo.getAllChildren(Tree.class));
 
         Taxa singletonTaxa = null;
-                if(xo.hasChildNamed(SINGLETONS)){
-                    singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
-                }
+        if(xo.hasChildNamed(SINGLETONS)){
+            singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
+        }
 
 
         boolean includeStems = xo.getBooleanAttribute(INCLUDE_STEMS);
@@ -74,7 +74,7 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
             }
             cutoffTime = xo.getDoubleAttribute(CUTOFF);
         }
-        
+
         return new MultiTreeIntervals(trees, singletonTaxa, includeStems, cutoffTime);
     }
 
@@ -99,7 +99,7 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(CUTOFF, true),
 
             new ElementRule(TREES, new XMLSyntaxRule[] {
-                    new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
+                    new ElementRule(Tree.class, 1, Integer.MAX_VALUE)
             }, "Tree(s) to compute intervals for for", false),
 
             new ElementRule(SINGLETONS, new XMLSyntaxRule[]{

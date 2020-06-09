@@ -26,11 +26,8 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.tree.TreeUtils;
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.*;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
@@ -54,6 +51,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PRECISION_PARAMETER = "precisionParameter";
     public static final String POPULATION_TREE = "populationTree";
     public static final String INTERVALS = "intervals";
+    public static final String BUILD_MAPPING = "intervalNodeMapping";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
     public static final String BETA_PARAMETER = "betaParameter";
     public static final String SINGLE_BETA = "singleBeta";
@@ -95,20 +93,25 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
+        boolean buildIntervalNodeMapping = xo.getAttribute(BUILD_MAPPING, false);
+
         List<IntervalList> intervalsList = new ArrayList<IntervalList>();
 
-        if(xo.getChild(POPULATION_TREE) != null){
+        List<Tree> treeList = new ArrayList<Tree>();
+        if(xo.getChild(POPULATION_TREE) != null) {
             cxo = xo.getChild(POPULATION_TREE);
             for (int i = 0; i < cxo.getChildCount(); i++){
                 Object testObject = cxo.getChild(i);
-                if(testObject instanceof Tree){
-                    TreeIntervals treeIntervals;
-                    try {
-                        treeIntervals = new TreeIntervals((Tree) testObject, null, null);
-                    } catch (TreeUtils.MissingTaxonException mte) {
-                        throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
-                    }
-                    intervalsList.add(treeIntervals);
+                if (testObject instanceof Tree) {
+                    treeList.add((TreeModel) testObject);
+
+//                    TreeIntervals treeIntervals;
+//                    try {
+//                        treeIntervals = new TreeIntervals((Tree) testObject, null, null);
+//                    } catch (TreeUtils.MissingTaxonException mte) {
+//                        throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
+//                    }
+//                    intervalsList.add(treeIntervals);
                 }
             }
         }
@@ -201,9 +204,16 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             cxo = xo.getChild(PLOIDY);
             ploidyFactors = (Parameter) cxo.getChild(Parameter.class);
         } else {
-            ploidyFactors = new Parameter.Default(PLOIDY, intervalsList.size());
-            for(int i = 0; i < intervalsList.size(); i++){
-                ploidyFactors.setParameterValue(i, 1.0);
+            if (intervalsList.size() != 0) {
+                ploidyFactors = new Parameter.Default(PLOIDY, intervalsList.size());
+                for(int i = 0; i < intervalsList.size(); i++){
+                    ploidyFactors.setParameterValue(i, 1.0);
+                }
+            } else {
+                ploidyFactors = new Parameter.Default(PLOIDY, treeList.size());
+                for (int i = 0; i < treeList.size(); i++) {
+                    ploidyFactors.setParameterValue(i, 1.0);
+                }
             }
         }
 
@@ -338,17 +348,29 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
-            return new GMRFSkyrideLikelihood(intervalsList, popParameter, groupParameter, precParameter,
-                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
+            return new OldGMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, buildIntervalNodeMapping);
 
         } else {
-            if (xo.getChild(GRID_POINTS) != null) {
-                return new GMRFMultilocusSkyrideLikelihood(intervalsList, popParameter, groupParameter, precParameter,
-                        lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                        firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
+            if (intervalsList.size() > 0) {
+                if (xo.getChild(GRID_POINTS) != null) {
+                    return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
+                            lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
+                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
+                } else {
+                    return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
+                            lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+                }
+
             } else {
-                return new GMRFMultilocusSkyrideLikelihood(intervalsList, popParameter, groupParameter, precParameter,
-                        lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+                if (xo.getChild(GRID_POINTS) != null) {
+                    return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                            lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
+                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
+                } else {
+                    return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                            lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+                }
             }
         }
     }
@@ -396,7 +418,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
-            AttributeRule.newBooleanRule(OLD_SKYRIDE, true)
+            AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
+            AttributeRule.newBooleanRule(BUILD_MAPPING, true)
     };
 
 }

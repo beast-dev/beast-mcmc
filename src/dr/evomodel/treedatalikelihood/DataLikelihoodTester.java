@@ -133,7 +133,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -158,7 +160,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -458,7 +462,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -484,7 +490,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 morePatterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());

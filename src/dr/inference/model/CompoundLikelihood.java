@@ -333,19 +333,7 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         return message;
     }
 
-    public void getDensities(Map<String, Double> densities) {
 
-        for( Likelihood lik : likelihoods ) {
-
-            if( lik instanceof CompoundLikelihood ) {
-                ((CompoundLikelihood) lik).getDensities(densities);
-            } else {
-
-                final double logLikelihood = lik.getLogLikelihood();
-                densities.put(lik.prettyName(), logLikelihood);
-            }
-        }
-    }
 
     public String toString() {
         return getId();

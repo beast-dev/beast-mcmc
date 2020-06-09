@@ -54,7 +54,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
     }
 
 
-    public MultiTreeIntervals(Collection<Tree> trees, Taxa singletonTaxa, boolean includeStems, double cuttoffTime) {
+    public MultiTreeIntervals(Collection<Tree> trees, Taxa singletonTaxa, boolean includeStems, double cutoffTime) {
         super("MultiTreeIntervals");
 
         int maxEventCount = 0;
@@ -65,7 +65,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
             // one event for each tip, internal node and one extra for the top of the stem.
             maxEventCount += tree.getNodeCount() + 1;
         }
-        if(singletonTaxa!=null){
+        if (includeStems && singletonTaxa != null) {
             // two events each for the singletons (one at the top and bottom).
             maxEventCount += singletonTaxa.getTaxonCount() * 2;
         }
@@ -74,7 +74,7 @@ public class MultiTreeIntervals extends AbstractModel implements IntervalList {
         this.trees = new ArrayList<Tree>(trees);
         this.singletonTaxa = singletonTaxa;
         this.includeStems = includeStems;
-        this.cutoffTime = cuttoffTime;
+        this.cutoffTime = cutoffTime;
         this.units = this.trees.get(0).getUnits();
 
         this.intervals = new Intervals(maxEventCount);

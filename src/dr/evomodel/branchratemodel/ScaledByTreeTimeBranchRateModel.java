@@ -32,7 +32,6 @@ import dr.evomodelxml.branchratemodel.ScaledByTreeTimeBranchRateModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
@@ -112,7 +111,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     }
 
     private double calculateScaleFactor() {
-        
+
         double timeTotal = 0.0;
         double branchTotal = 0.0;
 
@@ -150,7 +149,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
                         ((Citable) branchRateModel).getDescription() :
                         "Unknown clock model";
 
-        description += " with scaling-by-time";
+        description += " with scaling-by-tree-time";
         return description;
     }
 
@@ -160,19 +159,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
                 (branchRateModel instanceof Citable) ?
                         ((Citable) branchRateModel).getCitations() :
                         new ArrayList<>();
-        list.add(CITATION);
+        list.add(RandomLocalClockModel.CITATION);
         return list;
     }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("AJ", "Drummond"),
-                    new Author("MA", "Suchard")
-            },
-            "Bayesian random local clocks, or one rate to rule them all",
-            2010,
-            "BMC Biology",
-            "8: 114",
-            "10.1186/1741-7007-8-114"
-    );
 }

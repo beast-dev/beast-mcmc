@@ -30,6 +30,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.model.VarianceProportionStatistic;
+import dr.inference.model.VarianceProportionStatisticEmpirical;
 import dr.xml.*;
 
 /**
@@ -76,8 +77,11 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         boolean empirical = xo.getAttribute(EMPIRICAL, false);
         boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
 
-        return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
-                ratio, empirical, forceSampling);
+        if (empirical) {
+            return new VarianceProportionStatisticEmpirical(tree, treeLikelihood, dataModel, diffusionModel,
+                    ratio, forceSampling);
+        }
+        return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel, ratio);
     }
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{

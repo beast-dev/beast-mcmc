@@ -41,14 +41,13 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.missingData.MissingOps;
-import dr.xml.*;
+import dr.xml.Reportable;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
 import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-import static java.lang.Math.negateExact;
 import static java.lang.Math.sqrt;
 
 /**
@@ -60,15 +59,6 @@ import static java.lang.Math.sqrt;
 
 public class VarianceProportionStatistic extends Statistic.Abstract implements VariableListener, ModelListener,
         Reportable {
-
-
-    public static final String PARSER_NAME = "varianceProportionStatistic";
-    private static final String MATRIX_RATIO = "matrixRatio";
-    private static final String ELEMENTWISE = "elementWise";
-    private static final String SYMMETRIC_DIVISION = "symmetricDivision";
-    private static final String CO_HERITABILITY = "coheritability";
-    private static final String EMPIRICAL = "useEmpiricalVariance";
-    private static final String FORCE_SAMPLING = "forceSampling";
 
     private final TreeModel tree;
     private final MultivariateDiffusionModel diffusionModel;
@@ -175,7 +165,7 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
     }
 
-    private enum MatrixRatios {
+    public enum MatrixRatios {
         ELEMENT_WISE {
             @Override
             void setMatrixRatio(DenseMatrix64F numeratorMatrix, DenseMatrix64F otherMatrix,
@@ -473,76 +463,6 @@ public class VarianceProportionStatistic extends Statistic.Abstract implements V
 
         treeKnown = false;
     }
-
-    //TODO: make its own class in evomodelxml
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-            RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
-                    xo.getChild(RepeatedMeasuresTraitDataModel.class);
-
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                    xo.getChild(MultivariateDiffusionModel.class);
-
-            TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-
-            String ratioString = xo.getStringAttribute(MATRIX_RATIO);
-
-            MatrixRatios ratio = null;
-
-            if (ratioString.equalsIgnoreCase(ELEMENTWISE)) {
-                ratio = MatrixRatios.ELEMENT_WISE;
-            } else if (ratioString.equalsIgnoreCase(SYMMETRIC_DIVISION)) {
-                ratio = MatrixRatios.SYMMETRIC_DIVISION;
-            } else if (ratioString.equalsIgnoreCase(CO_HERITABILITY)) {
-                ratio = MatrixRatios.CO_HERITABILITY;
-            } else {
-                throw new RuntimeException(PARSER_NAME + " must have attibute " + MATRIX_RATIO +
-                        " with one of the following values: " + MatrixRatios.values());
-            }
-
-            boolean empirical = xo.getAttribute(EMPIRICAL, false);
-            boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
-
-            return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel,
-                    ratio, empirical, forceSampling);
-        }
-
-        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                AttributeRule.newStringRule(MATRIX_RATIO, false),
-                AttributeRule.newStringRule(FORCE_SAMPLING, true),
-                AttributeRule.newStringRule(EMPIRICAL, true),
-                new ElementRule(TreeModel.class),
-                new ElementRule(TreeDataLikelihood.class),
-                new ElementRule(RepeatedMeasuresTraitDataModel.class),
-                new ElementRule(MultivariateDiffusionModel.class)
-        };
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        @Override
-        public String getParserDescription() {
-            return "This element returns a statistic that computes proportion of variance due to diffusion on the tree";
-        }
-
-        @Override
-        public Class getReturnType() {
-            return VarianceProportionStatistic.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return PARSER_NAME;
-        }
-    };
-
 
     @Override
     public void modelRestored(Model model) {

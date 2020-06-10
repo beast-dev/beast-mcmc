@@ -167,6 +167,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
+    static void updatePosition(double[] p, double[] v, double time) {
+        for (int i = 0, len = p.length; i < len; ++i) {
+            p[i] += time * v[i];
+        }
+    }
+
+
+    static void updateMomentum(double[] a, double[] g, double[] m, double time) {
+
+        final double halfTimeSquared = time * time / 2;
+
+        for (int i = 0, len = m.length; i < len; ++i) {
+            m[i] = m[i] + time * g[i] - halfTimeSquared * a[i];
+        }
+    }
+
+
     WrappedVector getInitialGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();

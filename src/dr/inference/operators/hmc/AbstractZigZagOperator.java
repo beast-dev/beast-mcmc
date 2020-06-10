@@ -31,11 +31,81 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
     abstract WrappedVector drawInitialVelocity(WrappedVector momentum);
 
-    abstract BounceState doBounce(BounceState initialBounceState,
-                                 MinimumTravelInformation firstBounce,
-                                 WrappedVector position, WrappedVector velocity,
-                                 WrappedVector action, WrappedVector gradient, WrappedVector momentum);
+    abstract void updatePositionAndPossiblyMomentum(WrappedVector position,
+                                                    WrappedVector velocity,
+                                                    WrappedVector action,
+                                                    WrappedVector gradient,
+                                                    WrappedVector momentum,
+                                                    double time);
 
+
+    abstract void updateDynamics(double[] p,
+                                 double[] v,
+                                 double[] a,
+                                 double[] g,
+                                 double[] m,
+                                 double[] c,
+                                 double time,
+                                 int index);
+
+    abstract void reflectPossiblyMomentum(WrappedVector position,
+                                          WrappedVector momentum,
+                                          Type eventType,
+                                          int eventIndex);
+
+    BounceState doBounce(BounceState initialBounceState,
+                               MinimumTravelInformation firstBounce,
+                               WrappedVector position, WrappedVector velocity,
+                               WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
+
+        if (TIMING) {
+            timer.startTimer("doBounce");
+        }
+
+        double remainingTime = initialBounceState.remainingTime;
+        double eventTime = firstBounce.time;
+
+        final BounceState finalBounceState;
+        if (remainingTime < eventTime) { // No event during remaining time
+
+            updatePositionAndPossiblyMomentum(position, velocity,
+                    action, gradient, momentum, remainingTime);
+
+            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
+
+        } else {
+
+            final Type eventType = firstBounce.type;
+            final int eventIndex = firstBounce.index;
+
+            WrappedVector column = getPrecisionColumn(eventIndex);
+
+            if (!TEST_NATIVE_INNER_BOUNCE) {
+
+                updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                        column.getBuffer(), eventTime, eventIndex);
+
+            } else {
+
+                nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                        column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
+            }
+
+            reflectPossiblyMomentum(position, momentum, eventType, eventIndex);
+
+            reflectVelocity(velocity, eventIndex);
+
+            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+        }
+
+        if (TIMING) {
+            timer.stopTimer("doBounce");
+        }
+
+        return finalBounceState;
+    }
 
     void testNative(MinimumTravelInformation firstBounce,
                               WrappedVector position,
@@ -100,52 +170,6 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                                         final double[] gradient,
                                                         final double[] momentum);
 
-//    MinimumTravelInformation getNextGradientBounce(WrappedVector action,
-//                                                   WrappedVector gradient,
-//                                                   WrappedVector momentum) {
-//
-//        return getNextGradientBounce(0, action.getDim(),
-//                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-//    }
-
-//    private MinimumTravelInformation getNextGradientBounce(final int begin, final int end,
-//                                                           final double[] action,
-//                                                           final double[] gradient,
-//                                                           final double[] momentum) {
-//
-//        double minimumRoot = Double.POSITIVE_INFINITY;
-//        int index = -1;
-//
-//        for (int i = begin; i < end; ++i) {
-//
-//            double root = findGradientRoot(action[i], gradient[i], momentum[i]);
-//
-//            if (root < minimumRoot) {
-//                minimumRoot = root;
-//                index = i;
-//            }
-//        }
-//
-//        return new MinimumTravelInformation(minimumRoot, index);
-//    }
-
-//    MinimumTravelInformation getNextGradientBounceParallel(WrappedVector inAction,
-//                                                           WrappedVector inGradient,
-//                                                           WrappedVector inMomentum) {
-//
-//        final double[] action = inAction.getBuffer();
-//        final double[] gradient = inGradient.getBuffer();
-//        final double[] momentum = inMomentum.getBuffer();
-//
-//        TaskPool.RangeCallable<MinimumTravelInformation> map =
-//                (start, end, thread) -> getNextGradientBounce(start, end, action, gradient, momentum);
-//
-//        BinaryOperator<MinimumTravelInformation> reduce =
-//                (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
-//
-//        return taskPool.mapReduce(map, reduce);
-//    }
-
     MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
                                                    WrappedVector inVelocity,
                                                    WrappedVector inAction,
@@ -195,29 +219,6 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return time;
     }
 
-//    MinimumTravelInformation getNextBoundaryBounce(WrappedVector inPosition,
-//                                                   WrappedVector inVelocity) {
-//
-//        @SuppressWarnings("duplicate")
-//        final double[] position = inPosition.getBuffer();
-//        final double[] velocity = inVelocity.getBuffer();
-//
-//        double minimumTime = Double.POSITIVE_INFINITY;
-//        int index = -1;
-//
-//        for (int i = 0, len = position.length; i < len; ++i) {
-//
-//            double time = findBoundaryTime(i, position[i], velocity[i]);
-//
-//            if (time < minimumTime) {
-//                minimumTime = time;
-//                index = i;
-//            }
-//        }
-//
-//        return new MinimumTravelInformation(minimumTime, index);
-//    }
-
     private static double minimumPositiveRoot(double a,
                                               double b,
                                               double c) {
@@ -257,30 +258,10 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         momentum.set(gradientEventIndex, 0.0); // Exactly zero on gradient event to avoid potential round-off error
     }
 
-    static void reflectVelocity(WrappedVector velocity,
+    private static void reflectVelocity(WrappedVector velocity,
                                 int eventIndex) {
 
         velocity.set(eventIndex, -velocity.get(eventIndex));
-    }
-
-    final void updateMomentum(WrappedVector momentum,
-                              WrappedVector gradient,
-                              WrappedVector action,
-                              double eventTime) {
-
-        final double[] m = momentum.getBuffer();
-        final double[] g = gradient.getBuffer();
-        final double[] a = action.getBuffer();
-
-        final double halfEventTimeSquared = eventTime * eventTime / 2;
-
-        for (int i = 0, len = m.length; i < len; ++i) {
-            m[i] += eventTime * g[i] - halfEventTimeSquared * a[i];
-        }
-
-        if (mask != null) {
-            applyMask(m);
-        }
     }
 
 //    private static double minimumPositiveRoot(double a,

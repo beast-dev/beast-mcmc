@@ -70,6 +70,17 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         return new WrappedVector.Raw(velocity);
     }
 
+    @Override
+    void updatePositionAndPossiblyMomentum(WrappedVector position,
+                                           WrappedVector velocity,
+                                           WrappedVector action,
+                                           WrappedVector gradient,
+                                           WrappedVector momentum,
+                                           double time) {
+        updatePosition(position.getBuffer(), velocity.getBuffer(), time);
+    }
+
+
     double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
 
         WrappedVector velocity = drawInitialVelocity(momentum);
@@ -382,55 +393,19 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         }
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
-    BounceState doBounce(BounceState initialBounceState, MinimumTravelInformation firstBounce,
-                         WrappedVector position, WrappedVector velocity,
-                         WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
-
-        // TODO Probably shares almost all code with doBounce() in ReversibleZigZagOperator, so move shared
-        // TODO code into AbstractZigZagOperator
-
-
-        if (TIMING) {
-            timer.startTimer("doBounce");
-        }
-
-        double remainingTime = initialBounceState.remainingTime;
-        double eventTime = firstBounce.time;
-
-        final BounceState finalBounceState;
-        if (remainingTime < eventTime) { // No event during remaining time
-
-            updatePosition(position, velocity, remainingTime);
-            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
-
-        } else {
-
-            final Type eventType = firstBounce.type;
-            final int eventIndex = firstBounce.index;
-
-            WrappedVector column = getPrecisionColumn(eventIndex);
-
-            updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                    action.getBuffer(), gradient.getBuffer(),
-                    column.getBuffer(), eventTime, eventIndex);
-
-            reflectVelocity(velocity, eventIndex);
-            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
-        }
-
-        if (TIMING) {
-            timer.stopTimer("doBounce");
-        }
-
-        return finalBounceState;
+    protected void reflectPossiblyMomentum(WrappedVector position,
+                                           WrappedVector momentum,
+                                           Type eventType, int eventIndex) {
+        // Do nothing
     }
 
-    private void updateDynamics(double[] p,
+    @Override
+    void updateDynamics(double[] p,
                                 double[] v,
                                 double[] a,
                                 double[] g,
+                                double[] m,
                                 double[] c,
                                 double time,
                                 int index) {

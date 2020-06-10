@@ -237,124 +237,125 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         return new WrappedVector.Raw(velocity);
     }
 
+//    @Override
+//    final BounceState doBounce(BounceState initialBounceState,
+//                               MinimumTravelInformation firstBounce,
+//                               WrappedVector position, WrappedVector velocity,
+//                               WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
+//
+//        if (TIMING) {
+//            timer.startTimer("doBounce");
+//        }
+//
+//        double remainingTime = initialBounceState.remainingTime;
+//        double eventTime = firstBounce.time;
+//
+//        final Type eventType = firstBounce.type;
+//        final int eventIndex = firstBounce.index;
+//
+//        WrappedVector column = getPrecisionColumn(eventIndex);
+//
+//        final BounceState finalBounceState;
+//        if (remainingTime < eventTime) { // No event during remaining time
+//
+//            updatePositionMomentum(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
+//                    gradient.getBuffer(), momentum.getBuffer(), remainingTime);
+//
+//            //todo: for ZZHMC itself (without
+//            //todo: NUTS), updating momentum in the end is not necessary.
+//
+//            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
+//
+//        } else {
+//
+//            if (TIMING) {
+//                timer.startTimer("notUpdateAction");
+//            }
+//
+//
+//            if (TEST_FUSED_DYNAMICS) {
+//
+//
+//                if (!TEST_NATIVE_INNER_BOUNCE) {
+//
+//                    updateDynamics(position.getBuffer(), velocity.getBuffer(),
+//                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+//                            column.getBuffer(), eventTime, eventIndex);
+//
+//                } else {
+//
+//                    nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
+//                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+//                            column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
+//                }
+//
+//                if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+//
+//                    reflectMomentum(momentum, position, eventIndex);
+//
+//                } else { // Bounce caused by the gradient
+//
+//                    setZeroMomentum(momentum, eventIndex);
+//
+//                }
+//
+//                reflectVelocity(velocity, eventIndex);
+//
+//            } else {
+//
+//                if (!TEST_NATIVE_INNER_BOUNCE) {
+//                    updatePosition(position, velocity, eventTime);
+//                    updateMomentum(momentum, gradient, action, eventTime);
+//
+//                    if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
+//
+//                        reflectMomentum(momentum, position, eventIndex);
+//
+//                    } else { // Bounce caused by the gradient
+//
+//                        setZeroMomentum(momentum, eventIndex);
+//                    }
+//
+//                    reflectVelocity(velocity, eventIndex);
+//                    updateGradient(gradient, eventTime, action);
+//
+//                } else {
+//
+//                    if (TEST_CRITICAL_REGION) {
+//                        nativeZigZag.innerBounceCriticalRegion(eventTime, eventIndex, eventType.ordinal());
+//                    } else {
+//                        nativeZigZag.innerBounce(position.getBuffer(), velocity.getBuffer(),
+//                                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+//                                eventTime, eventIndex, eventType.ordinal());
+//                    }
+//                }
+//
+//                if (TIMING) {
+//                    timer.stopTimer("notUpdateAction");
+//                }
+//
+//                updateAction(action, velocity, eventIndex);
+//            }
+//
+//            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+//        }
+//
+//        if (TIMING) {
+//            timer.stopTimer("doBounce");
+//        }
+//
+//        return finalBounceState;
+//    }
+
     @Override
-    final BounceState doBounce(BounceState initialBounceState,
-                               MinimumTravelInformation firstBounce,
-                               WrappedVector position, WrappedVector velocity,
-                               WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
-
-        if (TIMING) {
-            timer.startTimer("doBounce");
-        }
-
-        double remainingTime = initialBounceState.remainingTime;
-        double eventTime = firstBounce.time;
-
-        final Type eventType = firstBounce.type;
-        final int eventIndex = firstBounce.index;
-
-        WrappedVector column = getPrecisionColumn(eventIndex);
-
-        final BounceState finalBounceState;
-        if (remainingTime < eventTime) { // No event during remaining time
-
-            updatePositionMomentum(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
-                    gradient.getBuffer(), momentum.getBuffer(), remainingTime);
-
-            //todo: for ZZHMC itself (without
-            //todo: NUTS), updating momentum in the end is not necessary.
-
-            finalBounceState = new BounceState(Type.NONE, -1, 0.0);
-
-        } else {
-
-            if (TIMING) {
-                timer.startTimer("notUpdateAction");
-            }
-
-
-            if (TEST_FUSED_DYNAMICS) {
-
-
-                if (!TEST_NATIVE_INNER_BOUNCE) {
-
-                    updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                            column.getBuffer(), eventTime, eventIndex);
-
-                } else {
-
-                    nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                            column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
-                }
-
-                if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
-
-                    reflectMomentum(momentum, position, eventIndex);
-
-                } else { // Bounce caused by the gradient
-
-                    setZeroMomentum(momentum, eventIndex);
-
-                }
-
-                reflectVelocity(velocity, eventIndex);
-
-            } else {
-
-                if (!TEST_NATIVE_INNER_BOUNCE) {
-                    updatePosition(position, velocity, eventTime);
-                    updateMomentum(momentum, gradient, action, eventTime);
-
-                    if (firstBounce.type == Type.BOUNDARY) { // Reflect against boundary
-
-                        reflectMomentum(momentum, position, eventIndex);
-
-                    } else { // Bounce caused by the gradient
-
-                        setZeroMomentum(momentum, eventIndex);
-                    }
-
-                    reflectVelocity(velocity, eventIndex);
-                    updateGradient(gradient, eventTime, action);
-
-                } else {
-
-                    if (TEST_CRITICAL_REGION) {
-                        nativeZigZag.innerBounceCriticalRegion(eventTime, eventIndex, eventType.ordinal());
-                    } else {
-                        nativeZigZag.innerBounce(position.getBuffer(), velocity.getBuffer(),
-                                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                                eventTime, eventIndex, eventType.ordinal());
-                    }
-                }
-
-                if (TIMING) {
-                    timer.stopTimer("notUpdateAction");
-                }
-
-                updateAction(action, velocity, eventIndex);
-            }
-
-            finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
-        }
-
-        if (TIMING) {
-            timer.stopTimer("doBounce");
-        }
-
-        return finalBounceState;
-    }
-
-    private void updateDynamics(double[] p,
-                                double[] v,
-                                double[] a,
-                                double[] g,
-                                double[] m,
-                                double[] c,
-                                double time,
-                                int index) {
+    void updateDynamics(double[] p,
+                        double[] v,
+                        double[] a,
+                        double[] g,
+                        double[] m,
+                        double[] c,
+                        double time,
+                        int index) {
 
         final double halfTimeSquared = time * time / 2;
         final double twoV = 2 * v[index];
@@ -370,19 +371,32 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
     }
 
-    private void updatePositionMomentum(double[] p,
-                                        double[] v,
-                                        double[] a,
-                                        double[] g,
-                                        double[] m,
-                                        double time) {
+    @Override
+    protected void reflectPossiblyMomentum(WrappedVector position,
+                                           WrappedVector momentum,
+                                           Type eventType, int eventIndex) {
 
-        final double halfTimeSquared = time * time / 2;
+        if (eventType == Type.BOUNDARY) { // Reflect against boundary
 
-        for (int i = 0, len = p.length; i < len; ++i) {
-            p[i] = p[i] + time * v[i];
-            m[i] = m[i] + time * g[i] - halfTimeSquared * a[i];
+            reflectMomentum(momentum, position, eventIndex);
+
+        } else { // Bounce caused by the gradient
+
+            setZeroMomentum(momentum, eventIndex);
+
         }
+    }
+
+    @Override
+    void updatePositionAndPossiblyMomentum(WrappedVector position,
+                                           WrappedVector velocity,
+                                           WrappedVector action,
+                                           WrappedVector gradient,
+                                           WrappedVector momentum,
+                                           double time) {
+
+        updatePosition(position.getBuffer(), velocity.getBuffer(), time);
+        updateMomentum(action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(), time); // TODO This step is only necessary with NUTS
     }
 
     @Override

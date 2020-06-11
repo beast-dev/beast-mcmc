@@ -38,25 +38,20 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                                     WrappedVector momentum,
                                                     double time);
 
-
-    abstract void updateDynamics(double[] p,
-                                 double[] v,
-                                 double[] a,
-                                 double[] g,
-                                 double[] m,
-                                 double[] c,
-                                 double time,
-                                 int index);
-
-    abstract void reflectPossiblyMomentum(WrappedVector position,
-                                          WrappedVector momentum,
-                                          Type eventType,
-                                          int eventIndex);
+    abstract void updateDynamics(WrappedVector position,
+                        WrappedVector velocity,
+                        WrappedVector action,
+                        WrappedVector gradient,
+                        WrappedVector momentum,
+                        WrappedVector column,
+                        double eventTime,
+                        int eventIndex,
+                        Type eventType);
 
     BounceState doBounce(BounceState initialBounceState,
-                               MinimumTravelInformation firstBounce,
-                               WrappedVector position, WrappedVector velocity,
-                               WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
+                         MinimumTravelInformation firstBounce,
+                         WrappedVector position, WrappedVector velocity,
+                         WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
 
         if (TIMING) {
             timer.startTimer("doBounce");
@@ -68,8 +63,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         final BounceState finalBounceState;
         if (remainingTime < eventTime) { // No event during remaining time
 
-            updatePositionAndPossiblyMomentum(position, velocity,
-                    action, gradient, momentum, remainingTime);
+            updatePositionAndPossiblyMomentum(position, velocity, action, gradient, momentum, remainingTime);
 
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
 
@@ -80,20 +74,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
             WrappedVector column = getPrecisionColumn(eventIndex);
 
-            if (!TEST_NATIVE_INNER_BOUNCE) {
-
-                updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                        column.getBuffer(), eventTime, eventIndex);
-
-            } else {
-
-                nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
-                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                        column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
-            }
-
-            reflectPossiblyMomentum(position, momentum, eventType, eventIndex);
+            updateDynamics(position, velocity, action, gradient, momentum, column, eventTime, eventIndex, eventType);
 
             reflectVelocity(velocity, eventIndex);
 
@@ -170,6 +151,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                                         final double[] gradient,
                                                         final double[] momentum);
 
+    @SuppressWarnings("Duplicates")
     MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
                                                    WrappedVector inVelocity,
                                                    WrappedVector inAction,

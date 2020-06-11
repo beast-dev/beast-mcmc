@@ -393,22 +393,23 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         }
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
-    protected void reflectPossiblyMomentum(WrappedVector position,
-                                           WrappedVector momentum,
-                                           Type eventType, int eventIndex) {
-        // Do nothing
-    }
+    void updateDynamics(WrappedVector position,
+                        WrappedVector velocity,
+                        WrappedVector action,
+                        WrappedVector gradient,
+                        WrappedVector momentum,
+                        WrappedVector column,
+                        double time,
+                        int index,
+                        Type eventType) {
 
-    @Override
-    void updateDynamics(double[] p,
-                                double[] v,
-                                double[] a,
-                                double[] g,
-                                double[] m,
-                                double[] c,
-                                double time,
-                                int index) {
+        final double[] p = position.getBuffer();
+        final double[] v = velocity.getBuffer();
+        final double[] a = action.getBuffer();
+        final double[] g = gradient.getBuffer();
+        final double[] c = column.getBuffer();
 
         final double twoV = 2 * v[index];
 

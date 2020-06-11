@@ -347,15 +347,15 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 //        return finalBounceState;
 //    }
 
-    @Override
-    void updateDynamics(double[] p,
-                        double[] v,
-                        double[] a,
-                        double[] g,
-                        double[] m,
-                        double[] c,
-                        double time,
-                        int index) {
+
+    private void updateDynamics(double[] p,
+                                double[] v,
+                                double[] a,
+                                double[] g,
+                                double[] m,
+                                double[] c,
+                                double time,
+                                int index) {
 
         final double halfTimeSquared = time * time / 2;
         final double twoV = 2 * v[index];
@@ -372,9 +372,28 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    protected void reflectPossiblyMomentum(WrappedVector position,
-                                           WrappedVector momentum,
-                                           Type eventType, int eventIndex) {
+    void updateDynamics(WrappedVector position,
+                        WrappedVector velocity,
+                        WrappedVector action,
+                        WrappedVector gradient,
+                        WrappedVector momentum,
+                        WrappedVector column,
+                        double eventTime,
+                        int eventIndex,
+                        Type eventType) {
+
+        if (!TEST_NATIVE_INNER_BOUNCE) {
+
+            updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                    column.getBuffer(), eventTime, eventIndex);
+
+        } else {
+
+            nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
+                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
+                    column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
+        }
 
         if (eventType == Type.BOUNDARY) { // Reflect against boundary
 

@@ -1,5 +1,5 @@
 /*
- * GMRFMultilocusSkyrideLikelihood.java
+ * GMRFSkygridLikelihood.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -49,7 +49,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
+public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         implements MultiLociTreeSet, CoalescentIntervalProvider, Citable {
 
     public static final boolean DEBUG = false;
@@ -435,10 +435,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 intervalsKnown = false;
                 likelihoodKnown = false;
             } else {
-                throw new RuntimeException("Unknown tree modified in GMRFMultilocusSkyrideLikelihood");
+                throw new RuntimeException("Unknown tree modified in GMRFSkygridLikelihood");
             }
         } else {
-            throw new RuntimeException("Unknown object modified in GMRFMultilocusSkyrideLikelihood");
+            throw new RuntimeException("Unknown object modified in GMRFSkygridLikelihood");
         }
     }
 
@@ -821,7 +821,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
 
     }
-    
+
     private SymmTridiagMatrix getScaledWeightMatrixForMissingCovRecent(double precision, int covIndex, int firstObs) {
         SymmTridiagMatrix a = weightMatricesForMissingCovRecent.get(covIndex).copy();
         for (int i = 0; i < a.numRows() - 1; i++) {
@@ -944,7 +944,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         double currentPrec = precisionParameter.getParameterValue(0);
         double hessian = -numGridPoints / (2 * currentPrec * currentPrec);
-        
+
         return new double[] { hessian };
     }
 
@@ -966,7 +966,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         double[] gradLogDens = new double [beta.getDimension()];
         double[] gamma = getMeanAdjustedGamma();
-        
+
         double currentPrec = precisionParameter.getParameterValue(0);
 
         for (int k = 0; k < beta.getDimension(); k++) {
@@ -1308,7 +1308,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     @Override
     public String getDescription() {
-        return "Skygrid coalescent";
+        return "Skyride coalescent";
     }
 
     @Override

@@ -26,7 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
@@ -59,7 +59,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
-                               GMRFSkyrideLikelihood skyrideLikelihood) {
+                               OldGMRFSkyrideLikelihood skyrideLikelihood) {
         super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);

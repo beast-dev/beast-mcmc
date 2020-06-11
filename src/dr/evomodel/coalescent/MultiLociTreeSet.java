@@ -38,6 +38,7 @@ import java.util.List;
  * @author Joseph Heled
  *         Date: 19/11/2007
  */
+@Deprecated
 public interface MultiLociTreeSet {
     /**
      *

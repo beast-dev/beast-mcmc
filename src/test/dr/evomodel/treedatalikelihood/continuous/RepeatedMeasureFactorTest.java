@@ -26,7 +26,6 @@
 package test.dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
@@ -166,11 +165,6 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
 
-        // Rates
-        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
-                treeModel, false, false);
-        BranchRateModel rateModel = new DefaultBranchRateModel();
-
         //// Factor Model //// *****************************************************************************************
         // CDL
         ContinuousDataLikelihoodDelegate likelihoodDelegateFactors = new ContinuousDataLikelihoodDelegate(treeModel,
@@ -279,11 +273,6 @@ public class RepeatedMeasureFactorTest extends ContinuousTraitTest {
         DiffusionProcessDelegate diffusionProcessDelegate
                 = new OUDiffusionModelDelegate(treeModel, diffusionModel,
                 optimalTraitsModels, new MultivariateElasticModel(strengthOfSelectionMatrixParam));
-
-        // Rates
-        ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(
-                treeModel, false, false);
-        BranchRateModel rateModel = new DefaultBranchRateModel();
 
         //// Factor Model //// *****************************************************************************************
         // CDL

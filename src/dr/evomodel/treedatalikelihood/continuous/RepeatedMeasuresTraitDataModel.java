@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
@@ -216,6 +217,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     }
 
     @Override
+    public DenseMatrix64F getExtensionVariance(NodeRef node) {
+        return getExtensionVariance();
+    }
+
+    @Override
     public MatrixParameterInterface getExtensionPrecision() {
         checkVariableChanged();
         return samplingPrecisionParameter;
@@ -231,11 +237,21 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         return dimTrait;
     }
 
+    @Override
+    public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
+        // Do nothing
+    }
+
+    public void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        // Do nothing
+    }
+
     private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
     private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
+    private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         @Override
@@ -278,16 +294,29 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 //                missingIndicators[i] = true;
 //            }
 
-            return new RepeatedMeasuresTraitDataModel(
-                    traitName,
-                    traitParameter,
-                    missingIndices,
+            boolean scaleByTipHeight = xo.getAttribute(SCALE_BY_TIP_HEIGHT, false);
+
+            if (!scaleByTipHeight) {
+                return new RepeatedMeasuresTraitDataModel(
+                        traitName,
+                        traitParameter,
+                        missingIndices,
 //                    missingIndicators,
-                    true,
-                    samplingPrecision.getColumnDimension(),
+                        true,
+                        samplingPrecision.getColumnDimension(),
 //                    diffusionModel.getPrecisionParameter().getRowDimension(),
-                    samplingPrecision
-            );
+                        samplingPrecision
+                );
+            } else {
+                return new TreeScaledRepeatedMeasuresTraitDataModel(
+                        traitName,
+                        traitParameter,
+                        missingIndices,
+                        true,
+                        samplingPrecision.getColumnDimension(),
+                        samplingPrecision
+                );
+            }
         }
 
         @Override
@@ -324,6 +353,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
+            AttributeRule.newBooleanRule(SCALE_BY_TIP_HEIGHT, true),
 //            new ElementRule(MultivariateDiffusionModel.class),
     };
 

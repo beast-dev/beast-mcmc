@@ -29,6 +29,7 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.TreeScaledRepeatedMeasuresTraitDataModel;
 import dr.inference.model.VarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatisticEmpirical;
 import dr.inference.model.VarianceProportionStatisticPopulation;
@@ -55,6 +56,11 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
                 xo.getChild(RepeatedMeasuresTraitDataModel.class);
+        if (dataModel instanceof TreeScaledRepeatedMeasuresTraitDataModel) {
+            throw new RuntimeException(
+                    "varianceProportionStatistic not yet implemented for " +
+                            "repeatedMeasuresModel argument scaleByTreeHeight='true'.");
+        }
 
         MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
                 xo.getChild(MultivariateDiffusionModel.class);

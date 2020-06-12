@@ -25,11 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.BranchRates;
-import dr.evolution.tree.MutableTreeModel;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.util.TaskPool;
+import dr.evolution.tree.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
@@ -42,6 +38,7 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
+import dr.util.TaskPool;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
@@ -341,6 +338,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public DenseMatrix64F getExtensionVariance(NodeRef node) {
+        return getExtensionVariance();
+    }
+
+    @Override
     public MatrixParameterInterface getExtensionPrecision() {
         //TODO: check that this does what it's supposed to.
         return new DiagonalMatrix(traitPrecision);
@@ -367,6 +369,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         return traitMatrix.data;
     }
 
+    @Override
+    public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
+        throw new RuntimeException("not yet implemented");
+    }
 
     private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
                                           final int numFactors) {

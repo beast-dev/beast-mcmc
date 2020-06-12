@@ -56,9 +56,15 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
                 xo.getChild(RepeatedMeasuresTraitDataModel.class);
-        if (dataModel instanceof TreeScaledRepeatedMeasuresTraitDataModel) {
+
+        boolean empirical = xo.getAttribute(EMPIRICAL, false);
+        boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
+        boolean population = xo.getAttribute(POPULATION, false);
+
+        if (dataModel instanceof TreeScaledRepeatedMeasuresTraitDataModel && !population) {
             throw new RuntimeException(
-                    "varianceProportionStatistic not yet implemented for " +
+                    "varianceProportionStatistic with " +
+                            POPULATION + "=false" + " is not yet implemented for " +
                             "repeatedMeasuresModel argument scaleByTreeHeight='true'.");
         }
 
@@ -81,11 +87,6 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
             throw new RuntimeException(PARSER_NAME + " must have attibute " + MATRIX_RATIO +
                     " with one of the following values: " + VarianceProportionStatistic.MatrixRatios.values());
         }
-
-        boolean empirical = xo.getAttribute(EMPIRICAL, false);
-        boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
-
-        boolean population = xo.getAttribute(POPULATION, false);
 
         if (empirical && population) {
             throw new RuntimeException(PARSER_NAME + "cannot use both empirical and population variances. Please set one to false.");

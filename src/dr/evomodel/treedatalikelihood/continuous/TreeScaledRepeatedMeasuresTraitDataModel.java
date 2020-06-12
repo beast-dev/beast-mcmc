@@ -104,6 +104,16 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
         return var;
     }
 
+    @Override
+    public void getMeanTipVariances(DenseMatrix64F samplingVariance, DenseMatrix64F samplingComponent) {
+        double meanDepth = 0;
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            meanDepth += getTipHeight(treeModel.getExternalNode(i).getNumber());
+        }
+        meanDepth /= treeModel.getExternalNodeCount();
+        CommonOps.scale(meanDepth, samplingVariance, samplingComponent);
+    }
+
     private static final boolean DEBUG = false;
 
 }

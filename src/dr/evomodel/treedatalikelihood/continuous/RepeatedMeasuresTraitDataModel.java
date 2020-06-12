@@ -45,6 +45,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 import java.util.List;
 
@@ -219,6 +220,10 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     @Override
     public DenseMatrix64F getExtensionVariance(NodeRef node) {
         return getExtensionVariance();
+    }
+
+    public void getMeanTipVariances(DenseMatrix64F samplingVariance, DenseMatrix64F samplingComponent) {
+        CommonOps.scale(1.0, samplingVariance, samplingComponent);
     }
 
     @Override

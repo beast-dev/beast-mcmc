@@ -88,7 +88,7 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
         diffusionProcessDelegate.getMeanTipVariances(
                 likelihoodDelegate.getRootProcessDelegate().getPseudoObservations(), treeDepths, diffusionVariance, diffusionComponent);
 
-        CommonOps.scale(1.0, samplingVariance, samplingComponent);
+        dataModel.getMeanTipVariances(samplingVariance, samplingComponent);
     }
 
     @Override

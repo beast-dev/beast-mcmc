@@ -39,42 +39,46 @@
         </nodeTraits>
     </treeModel>
 
-    <multivariateDiffusionModel id="diffusionModel">
+    <multivariateDiffusionModel id="X.diffusionModel">
         <precisionMatrix>
-            <matrixParameter id="precisionMatrix">
-                <parameter id="prec.col1" value="1.0 0.1 -0.5 -0.1"/>
-                <parameter id="prec.col2" value="0.1 2.0 -0.6 -0.1"/>
-                <parameter id="prec.col3" value="-0.5 -0.6 3.0 0.4"/>
-                <parameter id="prec.col4" value="-0.1 -0.1 0.4 4.0"/>
-            </matrixParameter>
+            <cachedMatrixInverse id="X.precision.matrix">
+                <compoundSymmetricMatrix id="X.variance.matrix" asCorrelation="true" isCholesky="true">
+                    <diagonal>
+                        <parameter id="X.variance.diagonal" value="1.0912443 0.5319436 0.3888826 0.2534699" lower="0"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="X.variance.offDiagonal" value="0.0001286981 0.2773340  0.017525463 0.2331223  0.007341235 -0.115449208"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+            </cachedMatrixInverse>
         </precisionMatrix>
     </multivariateDiffusionModel>
 
-    <repeatedMeasuresModel id="repeatedMeasures" traitName="X" scaleByTipHeight="true">
+    <repeatedMeasuresModel id="X.repeatedMeasures" traitName="X" scaleByTipHeight="true">
         <treeModel idref="treeModel"/>
         <traitParameter>
             <parameter idref="leafTraits"/>
         </traitParameter>
         <samplingPrecision>
-            <cachedMatrixInverse id="sampling.precision.matrix">
-                <compoundSymmetricMatrix id="sampling.variance.matrix" asCorrelation="true" isCholesky="true">
+            <cachedMatrixInverse id="X.sampling.precision.matrix">
+                <compoundSymmetricMatrix id="X.sampling.variance.matrix" asCorrelation="true" isCholesky="true">
                     <diagonal>
-                        <parameter id="sampling.variance.diagonal" value="1 0.01 10 0.1" lower="0"/>
+                        <parameter id="X.sampling.variance.diagonal" value="1 0.01 10 0.1" lower="0"/>
                     </diagonal>
                     <offDiagonal>
-                        <parameter id="sampling.variance.offDiagonal" value="0.1 0.2 0.3 -0.1 -0.2 -0.3"/>
+                        <parameter id="X.sampling.variance.offDiagonal" value="0.1 0.2 0.3 -0.1 -0.2 -0.3"/>
                     </offDiagonal>
                 </compoundSymmetricMatrix>
             </cachedMatrixInverse>
         </samplingPrecision>
-        <multivariateDiffusionModel idref="diffusionModel"/>
+        <multivariateDiffusionModel idref="X.diffusionModel"/>
     </repeatedMeasuresModel>
 
-    <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true"
+    <traitDataLikelihood id="X.traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true"
                          useTreeLength="false">
-        <multivariateDiffusionModel idref="diffusionModel"/>
+        <multivariateDiffusionModel idref="X.diffusionModel"/>
         <treeModel idref="treeModel"/>
-        <repeatedMeasuresModel idref="repeatedMeasures"/>
+        <repeatedMeasuresModel idref="X.repeatedMeasures"/>
         <conjugateRootPrior>
             <meanParameter>
                 <parameter id="mean" value="0.0 0.0 0 0"/>
@@ -84,11 +88,33 @@
             </priorSampleSize>
         </conjugateRootPrior>
     </traitDataLikelihood>
+    
+    <varianceProportionStatistic id="varianceLog" matrixRatio="coheritability" usePopulationVariance="true">
+        <traitDataLikelihood idref="X.traitLikelihood"/>
+        <treeModel idref = "treeModel"/>
+        <repeatedMeasuresModel idref = "X.repeatedMeasures"/>
+        <multivariateDiffusionModel idref = "X.diffusionModel"/>
+    </varianceProportionStatistic>
+    
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="{}">
+        <message>
+            Check trait variance
+        </message>
+        <actual regex="(?s)stat value = \s*(.*?)\n\n">
+            <varianceProportionStatistic idref="varianceLog"/>
+        </actual>
+        <expected>
+			0.5218158 9.21057e-05 0.03876025 0.0107205 
+			9.21057e-05 0.9815479 0.04469211 0.006160916 
+			0.03876025 0.04469211 0.03743257 -0.0165531 
+			0.0107205 0.006160916 -0.0165531 0.7170905 
+        </expected>
+    </assertEqual>
 
     <precisionGradient id="errorModel.gradient" parameter="diagonal" traitName="trait2">
-        <repeatedMeasuresModel idref="repeatedMeasures"/>
-        <traitDataLikelihood idref="traitLikelihood"/>
-        <compoundSymmetricMatrix idref="sampling.precision.matrix"/>
+        <repeatedMeasuresModel idref="X.repeatedMeasures"/>
+        <traitDataLikelihood idref="X.traitLikelihood"/>
+        <compoundSymmetricMatrix idref="X.sampling.precision.matrix"/>
     </precisionGradient>
 
     <report>
@@ -100,7 +126,7 @@
             Check log likelihood of observed data
         </message>
         <actual regex="logDatumLikelihood:\s+(.*)\n">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <traitDataLikelihood idref="X.traitLikelihood"/>
         </actual>
         <expected>
             -57.937925254099724
@@ -109,19 +135,141 @@
 
     <operators id="Operators">
         <dirtyLikelihood weight="1">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <traitDataLikelihood idref="X.traitLikelihood"/>
         </dirtyLikelihood>
     </operators>
 
-    <mcmc id="iouMcmc" chainLength="10">
+    <mcmc id="mcmc" chainLength="10">
         <posterior id="traitPosterior">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <traitDataLikelihood idref="X.traitLikelihood"/>
         </posterior>
         <operators idref="Operators"/>
         <log logEvery="10">
             <posterior idref="traitPosterior"/>
         </log>
+        <log id="fileLog" logEvery="10" fileName="testRepeatedMeasuresTreeScaled.log">
+			<traitDataLikelihood idref="X.traitLikelihood"/>
+			<matrixParameter idref="X.variance.matrix"/>
+			<parameter idref="X.sampling.variance.matrix"/>
+			<variancePorportionStatistic idref="varianceLog"/>
+		</log>
+		<logTree id="treeFileLog" logEvery="10" nexusFormat="true" fileName="testRepeatedMeasuresTreeScaled.trees">
+			<treeModel idref="treeModel"/>
+		</logTree>
     </mcmc>
 
 </beast>
+
+<!--
+## R script to compute heritability
+rm(list = ls())
+
+library(here)
+library(tidyverse)
+library(PhylogeneticEM)
+
+###############################################################################
+## Utility functions
+
+read_log <- function(file, burning){
+  ## Read in file
+  dat <- read_tsv(file, skip = 3)
+  
+  ## Burning
+  length_chain <- max(dat$state)
+  burning_length <- floor(length_chain * burning)
+  
+  ## data
+  return(dat %>% filter(state >= burning_length))
+}
+
+cor_extended <- function(A, B) {
+  C <- A
+  for (i in 1:nrow(A)) {
+    for (j in 1:ncol(A)) {
+      C[i, j] <- C[i, j] / sqrt((A[i, i] + B[i, i]) * (A[j, j] + B[j, j]))
+    }
+  }
+  return(C)
+}
+
+get_sampling_variance <- function(vv, dimTrait, ntaxa, times_shared, treeScaled){
+  # samplingVar <- as.vector(solve(matrix(as.numeric(vv[grep("sampling.precision.matrix", names(vv))]), ncol = dimTrait)))
+  samplingVar <- as.vector(matrix(as.numeric(vv[grep("sampling.variance.matrix", names(vv))]), ncol = dimTrait))
+  if (treeScaled) samplingVar <- mean(diag(times_shared)[1:ntaxa]) * samplingVar
+  return(samplingVar)
+}
+
+compute_heritability_multi_ou_model <- function(dimTrait, variance, selectionStrength, sampleSizeRoot, samplingVar, times_shared, ntaxa) {
+  get_ou_variance <- function(dimTrait, variance, selectionStrength, sampleSizeRoot) {
+    if (anyNA(selectionStrength)) selectionStrength <- matrix(0, dimTrait, dimTrait)
+    if (is.finite(sampleSizeRoot)){
+      paramsBEAST <- params_OU(p = dimTrait, variance = variance,
+                               selection.strength = selectionStrength,
+                               optimal.value = rep(0, dimTrait),
+                               random = TRUE, stationary.root = FALSE,
+                               exp.root = rep(0, dimTrait), var.root = variance / sampleSizeRoot)
+    } else {
+      paramsBEAST <- params_OU(p = dimTrait, variance = variance,
+                               selection.strength = selectionStrength,
+                               optimal.value = rep(0, dimTrait),
+                               random = FALSE, stationary.root = FALSE,
+                               value.root = rep(0, dimTrait))
+    }
+    V <- PhylogeneticEM:::compute_variance_block_diagonal.OU(times_shared, paramsBEAST, ntaxa)
+  }
+  vv <- get_ou_variance(dimTrait, variance, selectionStrength, sampleSizeRoot)
+  treeVar <- apply(vv, c(1, 2), mean)
+  # return(treeVar %*% solve(treeVar + samplingVar))
+  cor_extended(treeVar, samplingVar)
+}
+
+compute_heritability_multi_ou_varying_trees <- function(dat_log, dat_tree, traitName, dimTrait, sampleSizeRoot, treeScaled = FALSE) {
+  if (nrow(dat_log) != length(dat_tree)) stop("Parameter log and tree log must be of the same length.")
+  sum_vars <- function(i) {
+    var <- matrix(as.numeric(dat_log[i, colPrecMat]), dimTrait, dimTrait)
+    att <- matrix(as.numeric(dat_log[i, colAttMat]), dimTrait, dimTrait)
+    tree <- dat_tree[[i]]
+    ntaxa <- length(tree$tip.label)
+    tree$edge.length <- tree$edge.length / max(ape::node.depth.edgelength(dat_tree[[i]])[1:ntaxa]) # Normalize tree
+    times_shared <- PhylogeneticEM::compute_times_ca(tree)
+    samplingVar <- matrix(get_sampling_variance(dat_log[i, ], dimTrait, ntaxa, times_shared = times_shared, treeScaled = treeScaled), dimTrait, dimTrait)
+    compute_heritability_multi_ou_model(dimTrait, var, att, sampleSizeRoot, samplingVar, times_shared, ntaxa)
+  }
+  ## Trait tree variance
+  colPrecMat <- grep(paste0(traitName, ".variance.matrix"), colnames(dat_log))
+  colAttMat <- grep(paste0(traitName,".attenuation.matrix"), colnames(dat_log))
+  hh <- sapply(1:length(dat_tree), sum_vars)
+  if (is.vector(hh)) return(t(t(hh)))
+  return(t(hh))
+}
+
+###############################################################################
+## House keeping
+
+## Directory
+directory <- "."
+results_folder <- ""
+file_results <- file.path(results_folder, "testRepeatedMeasuresTreeScaled.log")
+
+## Parameters
+dimTrait <- 4
+sampleSizeRoot <- Inf
+traitName <- "X"
+tree_scaled = TRUE
+
+###############################################################################
+## Heritability
+
+dat_log <- read_log(file = file.path(directory, results_folder, file_results), burning = 0)
+
+dat_tree <- ape::read.nexus(file = file.path(directory, results_folder, sub("\\.log", "\\.trees", file_results)))
+
+herr <- compute_heritability_multi_ou_varying_trees(dat_log, dat_tree, traitName, dimTrait, sampleSizeRoot, treeScaled = tree_scaled)
+
+colnames(herr) <- paste0(traitName, ".h", outer(1:dimTrait, 1:dimTrait, paste0))
+herr <- data.frame(herr)
+herr$state <- dat_log$state
+herr
+-->
 

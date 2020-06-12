@@ -33,7 +33,10 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.TaskPool;
 import dr.xml.Reportable;
+
+import java.util.function.BinaryOperator;
 
 /**
  * @author Aki Nishimura
@@ -57,128 +60,198 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         return "Zig-zag particle operator";
     }
 
-    double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
+//    double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
+//
+//        String signString;
+//        if (DEBUG_SIGN) {
+//            signString = printSign(position);
+//            System.err.println(signString);
+//        }
+//
+//        if (TIMING) {
+//            timer.startTimer("warmUp");
+//        }
+//
+//        WrappedVector velocity = drawInitialVelocity(momentum);
+//        WrappedVector gradient = getInitialGradient();
+//        WrappedVector action = getPrecisionProduct(velocity);
+//
+//        BounceState bounceState = new BounceState(drawTotalTravelTime());
+//
+//        if (TIMING) {
+//            timer.stopTimer("warmUp");
+//        }
+//
+//        int count = 0;
+//        initializeNumEvent();
+//        double[] p, v, a, g, m;
+//        if (TEST_NATIVE_OPERATOR) {
+//
+//            p = position.getBuffer();
+//            v = velocity.getBuffer();
+//            a = action.getBuffer();
+//            g = gradient.getBuffer();
+//            m = momentum.getBuffer();
+//
+//            nativeZigZag.operate(columnProvider, p, v, a, g, m,
+//                    bounceState.remainingTime);
+//        } else {
+//
+//            if (TEST_CRITICAL_REGION) {
+//                nativeZigZag.enterCriticalRegion(position.getBuffer(), velocity.getBuffer(),
+//                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+//            }
+//
+//            if (TIMING) {
+//                timer.startTimer("integrateTrajectory");
+//            }
+//
+//            while (bounceState.isTimeRemaining()) {
+//
+//                if (DEBUG) {
+//                    debugBefore(position, count);
+//                }
+//
+//                final MinimumTravelInformation firstBounce;
+//
+//                if (taskPool != null) {
+//
+//                    firstBounce = getNextBounceParallel(position,
+//                            velocity, action, gradient, momentum);
+//
+//                    if (TEST_NATIVE_BOUNCE) {
+//                        testNative(firstBounce, position, velocity, action, gradient, momentum);
+//                    }
+//
+//                } else {
+//
+//                    firstBounce = getNextBounceSerial(position,
+//                            velocity, action, gradient, momentum);
+//
+//                    if (TEST_NATIVE_BOUNCE) {
+//                        testNative(firstBounce, position, velocity, action, gradient, momentum);
+//                    }
+//
+//                }
+//
+//                bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
+//                recordOneMoreEvent();
+//                if (DEBUG) {
+//                    debugAfter(bounceState, position);
+//                    String newSignString = printSign(position);
+//                    System.err.println(newSignString);
+//                    if (bounceState.type != Type.BOUNDARY && signString.compareTo(newSignString) != 0) {
+//                        System.err.println("Sign error");
+//                    }
+//                }
+//
+//                ++count;
+//            }
+//
+//            if (TIMING) {
+//                timer.stopTimer("integrateTrajectory");
+//            }
+//
+//            if (TEST_CRITICAL_REGION) {
+//                nativeZigZag.exitCriticalRegion();
+//            }
+//
+//            if (TEST_NATIVE_OPERATOR) {
+//
+//                if (!close(p, position.getBuffer())) {
+//
+//                    System.err.println("c: " + new WrappedVector.Raw(p, 0, 10));
+//                    System.err.println("c: " + new WrappedVector.Raw(position.getBuffer(), 0, 10));
+//                } else {
+//                    System.err.println("close");
+//                }
+//            }
+//
+//            if (DEBUG_SIGN) {
+//                printSign(position);
+//            }
+//        }
+//
+//        return 0.0;
+//    }
 
-        String signString;
-        if (DEBUG_SIGN) {
-            signString = printSign(position);
-            System.err.println(signString);
-        }
-
-        if (TIMING) {
-            timer.startTimer("warmUp");
-        }
-
-        WrappedVector velocity = drawInitialVelocity(momentum);
-        WrappedVector gradient = getInitialGradient();
-        WrappedVector action = getPrecisionProduct(velocity);
-
-        BounceState bounceState = new BounceState(drawTotalTravelTime());
-
-        if (TIMING) {
-            timer.stopTimer("warmUp");
-        }
-
-        int count = 0;
-        initializeNumEvent();
-        double[] p, v, a, g, m;
-        if (TEST_NATIVE_OPERATOR) {
-
-            p = position.getBuffer();
-            v = velocity.getBuffer();
-            a = action.getBuffer();
-            g = gradient.getBuffer();
-            m = momentum.getBuffer();
-
-            nativeZigZag.operate(columnProvider, p, v, a, g, m,
-                    bounceState.remainingTime);
-        } else {
-
-            if (TEST_CRITICAL_REGION) {
-                nativeZigZag.enterCriticalRegion(position.getBuffer(), velocity.getBuffer(),
-                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-            }
-
-            if (TIMING) {
-                timer.startTimer("integrateTrajectory");
-            }
-
-            while (bounceState.isTimeRemaining()) {
-
-                if (DEBUG) {
-                    debugBefore(position, count);
-                }
-
-                final MinimumTravelInformation firstBounce;
-
-                if (taskPool != null) {
-
-                    firstBounce = getNextBounceParallel(position,
-                            velocity, action, gradient, momentum);
-
-                    if (TEST_NATIVE_BOUNCE) {
-                        testNative(firstBounce, position, velocity, action, gradient, momentum);
-                    }
-
-                } else {
-
-                    firstBounce = getNextBounce(position,
-                            velocity, action, gradient, momentum);
-
-                    if (TEST_NATIVE_BOUNCE) {
-                        testNative(firstBounce, position, velocity, action, gradient, momentum);
-                    }
-
-                }
-
-                bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-                recordOneMoreEvent();
-                if (DEBUG) {
-                    debugAfter(bounceState, position);
-                    String newSignString = printSign(position);
-                    System.err.println(newSignString);
-                    if (bounceState.type != Type.BOUNDARY && signString.compareTo(newSignString) != 0) {
-                        System.err.println("Sign error");
-                    }
-                }
-
-                ++count;
-            }
-
-            if (TIMING) {
-                timer.stopTimer("integrateTrajectory");
-            }
-
-            if (TEST_CRITICAL_REGION) {
-                nativeZigZag.exitCriticalRegion();
-            }
-
-            if (TEST_NATIVE_OPERATOR) {
-
-                if (!close(p, position.getBuffer())) {
-
-                    System.err.println("c: " + new WrappedVector.Raw(p, 0, 10));
-                    System.err.println("c: " + new WrappedVector.Raw(position.getBuffer(), 0, 10));
-                } else {
-                    System.err.println("close");
-                }
-            }
-
-            if (DEBUG_SIGN) {
-                printSign(position);
-            }
-        }
-
-        return 0.0;
-    }
 
     @Override
-    MinimumTravelInformation getNextBounceImpl(final int begin, final int end,
-                                               final double[] position,
-                                               final double[] velocity,
-                                               final double[] action,
-                                               final double[] gradient,
-                                               final double[] momentum) {
+    MinimumTravelInformation getNextBounce(WrappedVector position,
+                                           WrappedVector velocity,
+                                           WrappedVector action,
+                                           WrappedVector gradient,
+                                           WrappedVector momentum) {
+
+        final MinimumTravelInformation firstBounce;
+
+        if (TIMING) {
+            timer.startTimer("getNext");
+        }
+
+        if (taskPool != null) {
+
+            firstBounce = getNextBounceParallel(position, velocity, action, gradient, momentum);
+
+        } else {
+
+            firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
+
+        }
+
+        if (TIMING) {
+            timer.stopTimer("getNext");
+        }
+
+        if (TEST_NATIVE_BOUNCE) {
+            testNative(firstBounce, position, velocity, action, gradient, momentum);
+        }
+
+        return firstBounce;
+    }
+
+    private MinimumTravelInformation getNextBounceSerial(WrappedVector position,
+                                                         WrappedVector velocity,
+                                                         WrappedVector action,
+                                                         WrappedVector gradient,
+                                                         WrappedVector momentum) {
+
+        return getNextBounceImpl(0, position.getDim(),
+                position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+    }
+
+    @SuppressWarnings("Duplicates")
+    private MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
+                                                           WrappedVector inVelocity,
+                                                           WrappedVector inAction,
+                                                           WrappedVector inGradient,
+                                                           WrappedVector inMomentum) {
+
+        final double[] position = inPosition.getBuffer();
+        final double[] velocity = inVelocity.getBuffer();
+        final double[] action = inAction.getBuffer();
+        final double[] gradient = inGradient.getBuffer();
+        final double[] momentum = inMomentum.getBuffer();
+
+        TaskPool.RangeCallable<MinimumTravelInformation> map =
+                (start, end, thread) -> getNextBounceImpl(start, end,
+                        position, velocity, action, gradient, momentum);
+
+        BinaryOperator<MinimumTravelInformation> reduce =
+                (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
+
+        return taskPool.mapReduce(map, reduce);
+    }
+
+
+    @SuppressWarnings("Duplicates")
+    private MinimumTravelInformation getNextBounceImpl(final int begin, final int end,
+                                                       final double[] position,
+                                                       final double[] velocity,
+                                                       final double[] action,
+                                                       final double[] gradient,
+                                                       final double[] momentum) {
 
         double minimumTime = Double.POSITIVE_INFINITY;
         int index = -1;
@@ -235,6 +308,30 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         }
 
         return new WrappedVector.Raw(velocity);
+    }
+
+    private void testNative(MinimumTravelInformation firstBounce,
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient,
+                            WrappedVector momentum) {
+
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
+
+        final MinimumTravelInformation mti = nativeZigZag.getNextEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        if (!firstBounce.equals(mti)) {
+            System.err.println(mti + " ?= " + firstBounce + "\n");
+            System.exit(-1);
+        }
     }
 
 //    @Override
@@ -407,12 +504,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    void updatePositionAndPossiblyMomentum(WrappedVector position,
-                                           WrappedVector velocity,
-                                           WrappedVector action,
-                                           WrappedVector gradient,
-                                           WrappedVector momentum,
-                                           double time) {
+    void updatePositionAndMomentum(WrappedVector position,
+                                   WrappedVector velocity,
+                                   WrappedVector action,
+                                   WrappedVector gradient,
+                                   WrappedVector momentum,
+                                   double time) {
 
         updatePosition(position.getBuffer(), velocity.getBuffer(), time);
         updateMomentum(action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(), time); // TODO This step is only necessary with NUTS

@@ -65,8 +65,11 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
         WrappedVector action = getPrecisionProduct(velocity);
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
+
         initializeNumEvent();
+
         while (bounceState.remainingTime > 0) {
+
             if (bounceState.type == Type.BOUNDARY) {
                 updateAction(action, velocity, bounceState.index);
             } else {

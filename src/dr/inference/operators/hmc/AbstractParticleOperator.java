@@ -250,12 +250,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
 
-        if (TEST_CRITICAL_REGION) {
-            if (nativeZigZag.inCriticalRegion()) {
-                nativeZigZag.exitCriticalRegion();
-            }
-        }
-
         WrappedVector column = getPrecisionColumn(eventIndex);
 
         if (TIMING) {
@@ -407,22 +401,22 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     protected final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    final PrecisionColumnProvider columnProvider;
+    private final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
     private final double[] maskVector;
-    protected int numEvents;
+    int numEvents;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 
-    final static boolean TEST_NATIVE_OPERATOR = false;
+    private final static boolean TEST_NATIVE_OPERATOR = false;
     final static boolean TEST_NATIVE_BOUNCE = false;
-    final static boolean TEST_CRITICAL_REGION = false;
+//    final static boolean TEST_CRITICAL_REGION = false;
     final static boolean TEST_NATIVE_INNER_BOUNCE = false;
-    final static boolean TEST_FUSED_DYNAMICS = true;
+
     NativeZigZagWrapper nativeZigZag;
 }

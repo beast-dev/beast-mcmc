@@ -7,11 +7,8 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.TaskPool;
-
-import java.util.function.BinaryOperator;
 
 /**
  * @author Zhenyu Zhang
@@ -29,29 +26,47 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
     }
 
-    abstract WrappedVector drawInitialVelocity(WrappedVector momentum);
+    final double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
 
-    abstract void updatePositionAndPossiblyMomentum(WrappedVector position,
-                                                    WrappedVector velocity,
-                                                    WrappedVector action,
-                                                    WrappedVector gradient,
-                                                    WrappedVector momentum,
-                                                    double time);
+        if (TIMING) {
+            timer.startTimer("warmUp");
+        }
 
-    abstract void updateDynamics(WrappedVector position,
-                        WrappedVector velocity,
-                        WrappedVector action,
-                        WrappedVector gradient,
-                        WrappedVector momentum,
-                        WrappedVector column,
-                        double eventTime,
-                        int eventIndex,
-                        Type eventType);
+        WrappedVector velocity = drawInitialVelocity(momentum);
+        WrappedVector gradient = getInitialGradient();
+        WrappedVector action = getPrecisionProduct(velocity);
 
-    BounceState doBounce(BounceState initialBounceState,
-                         MinimumTravelInformation firstBounce,
-                         WrappedVector position, WrappedVector velocity,
-                         WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
+        BounceState bounceState = new BounceState(drawTotalTravelTime());
+
+        initializeNumEvent();
+
+        if (TIMING) {
+            timer.stopTimer("warmUp");
+        }
+
+        if (TIMING) {
+            timer.startTimer("integrateTrajectory");
+        }
+
+        while (bounceState.isTimeRemaining()) {
+
+            MinimumTravelInformation firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
+            bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
+
+            recordOneMoreEvent();
+        }
+
+        if (TIMING) {
+            timer.stopTimer("integrateTrajectory");
+        }
+
+        return 0.0;
+    }
+
+    private BounceState doBounce(BounceState initialBounceState,
+                                 MinimumTravelInformation firstBounce,
+                                 WrappedVector position, WrappedVector velocity,
+                                 WrappedVector action, WrappedVector gradient, WrappedVector momentum) {
 
         if (TIMING) {
             timer.startTimer("doBounce");
@@ -63,7 +78,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         final BounceState finalBounceState;
         if (remainingTime < eventTime) { // No event during remaining time
 
-            updatePositionAndPossiblyMomentum(position, velocity, action, gradient, momentum, remainingTime);
+            updatePositionAndMomentum(position, velocity, action, gradient, momentum, remainingTime);
 
             finalBounceState = new BounceState(Type.NONE, -1, 0.0);
 
@@ -88,100 +103,30 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return finalBounceState;
     }
 
-    void testNative(MinimumTravelInformation firstBounce,
-                              WrappedVector position,
-                              WrappedVector velocity,
-                              WrappedVector action,
-                              WrappedVector gradient,
-                              WrappedVector momentum) {
+    abstract WrappedVector drawInitialVelocity(WrappedVector momentum);
 
-        if (TIMING) {
-            timer.startTimer("getNextC++");
-        }
+    abstract MinimumTravelInformation getNextBounce(WrappedVector position,
+                                                    WrappedVector velocity,
+                                                    WrappedVector action,
+                                                    WrappedVector gradient,
+                                                    WrappedVector momentum);
 
-        final MinimumTravelInformation mti;
-        if (TEST_CRITICAL_REGION) {
+    abstract void updatePositionAndMomentum(WrappedVector position,
+                                            WrappedVector velocity,
+                                            WrappedVector action,
+                                            WrappedVector gradient,
+                                            WrappedVector momentum,
+                                            double time);
 
-            if (!nativeZigZag.inCriticalRegion()) {
-                nativeZigZag.enterCriticalRegion(position.getBuffer(), velocity.getBuffer(),
-                        action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-            }
-
-            mti = nativeZigZag.getNextEventInCriticalRegion();
-        } else {
-            mti = nativeZigZag.getNextEvent(position.getBuffer(), velocity.getBuffer(),
-                    action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-        }
-
-        if (TIMING) {
-            timer.stopTimer("getNextC++");
-        }
-
-        if (!firstBounce.equals(mti)) {
-            System.err.println(mti + " ?= " + firstBounce + "\n");
-            System.exit(-1);
-        }
-
-    }
-
-    MinimumTravelInformation getNextBounce(WrappedVector position,
-                                           WrappedVector velocity,
-                                           WrappedVector action,
-                                           WrappedVector gradient,
-                                           WrappedVector momentum) {
-        if (TIMING) {
-            timer.startTimer("getNext");
-        }
-
-        MinimumTravelInformation result =  getNextBounceImpl(0, position.getDim(),
-                position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
-
-        if (TIMING) {
-            timer.stopTimer("getNext");
-        }
-
-        return result;
-    }
-
-    abstract MinimumTravelInformation getNextBounceImpl(final int begin, final int end,
-                                                        final double[] position,
-                                                        final double[] velocity,
-                                                        final double[] action,
-                                                        final double[] gradient,
-                                                        final double[] momentum);
-
-    @SuppressWarnings("Duplicates")
-    MinimumTravelInformation getNextBounceParallel(WrappedVector inPosition,
-                                                   WrappedVector inVelocity,
-                                                   WrappedVector inAction,
-                                                   WrappedVector inGradient,
-                                                   WrappedVector inMomentum) {
-        if (TIMING) {
-            timer.startTimer("getNextParallel");
-        }
-
-        final double[] position = inPosition.getBuffer();
-        final double[] velocity = inVelocity.getBuffer();
-        final double[] action = inAction.getBuffer();
-        final double[] gradient = inGradient.getBuffer();
-        final double[] momentum = inMomentum.getBuffer();
-
-        TaskPool.RangeCallable<MinimumTravelInformation> map =
-                (start, end, thread) -> getNextBounceImpl(start, end,
-                        position, velocity, action, gradient, momentum);
-
-        BinaryOperator<MinimumTravelInformation> reduce =
-                (lhs, rhs) -> (lhs.time < rhs.time) ? lhs : rhs;
-
-        MinimumTravelInformation result = taskPool.mapReduce(map, reduce);
-
-        if (TIMING) {
-            timer.stopTimer("getNextParallel");
-        }
-
-        return result;
-    }
+    abstract void updateDynamics(WrappedVector position,
+                                 WrappedVector velocity,
+                                 WrappedVector action,
+                                 WrappedVector gradient,
+                                 WrappedVector momentum,
+                                 WrappedVector column,
+                                 double eventTime,
+                                 int eventIndex,
+                                 Type eventType);
 
     static double findGradientRoot(double action,
                                    double gradient,
@@ -265,27 +210,27 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 //        return (root1 < root2) ? root1 : root2;
 //    }
 
-    String printSign(ReadableVector position) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < position.getDim(); ++i) {
-            double p = position.get(i);
-            if (p < 0.0) sb.append("- ");
-            else if (p > 0.0) sb.append("+ ");
-            else sb.append("0 ");
-        }
-        return sb.toString();
-    }
-
-    void debugAfter(BounceState bounceState, ReadableVector position) {
-        System.err.println("post position: " + position);
-        System.err.println(bounceState);
-        System.err.println();
-    }
-
-    void debugBefore(ReadableVector position, int count) {
-        System.err.println("before number: " + count);
-        System.err.println("init position: " + position);
-    }
+//    String printSign(ReadableVector position) {
+//        StringBuilder sb = new StringBuilder();
+//        for (int i = 0; i < position.getDim(); ++i) {
+//            double p = position.get(i);
+//            if (p < 0.0) sb.append("- ");
+//            else if (p > 0.0) sb.append("+ ");
+//            else sb.append("0 ");
+//        }
+//        return sb.toString();
+//    }
+//
+//    void debugAfter(BounceState bounceState, ReadableVector position) {
+//        System.err.println("post position: " + position);
+//        System.err.println(bounceState);
+//        System.err.println();
+//    }
+//
+//    void debugBefore(ReadableVector position, int count) {
+//        System.err.println("before number: " + count);
+//        System.err.println("init position: " + position);
+//    }
 
     protected boolean close(double[] lhs, double[] rhs) {
         for (int i = 0; i < lhs.length; ++i) {
@@ -320,5 +265,5 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     final TaskPool taskPool;
 
     protected final static boolean DEBUG = false;
-    final static boolean DEBUG_SIGN = false;
+//    final static boolean DEBUG_SIGN = false;
 }

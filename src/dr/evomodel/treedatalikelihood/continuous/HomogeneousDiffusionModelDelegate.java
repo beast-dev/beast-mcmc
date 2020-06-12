@@ -30,6 +30,8 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.math.KroneckerOperation;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 /**
  * A simple diffusion model delegate with the same diffusion model over the whole tree
@@ -58,5 +60,18 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
                                        final double[][] treeSharedLengths, final double[][] traitVariance) {
         return KroneckerOperation.product(treeVariance, traitVariance);
+    }
+
+    @Override
+    public void getMeanTipVariances(final double priorSampleSize,
+                                    final double[] treeLengths,
+                                    final DenseMatrix64F traitVariance,
+                                    final DenseMatrix64F varSum) {
+        double sumLengths = 0;
+        for (double treeLength : treeLengths) {
+            sumLengths += treeLength;
+        }
+        sumLengths /= treeLengths.length;
+        CommonOps.scale(sumLengths, traitVariance, varSum);
     }
 }

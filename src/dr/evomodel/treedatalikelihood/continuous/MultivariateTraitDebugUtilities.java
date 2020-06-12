@@ -34,7 +34,6 @@ import dr.math.KroneckerOperation;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -368,5 +367,52 @@ public class MultivariateTraitDebugUtilities {
         Accumulator.BranchCumulant cumulant = Accumulator.DIAGONAL.postOrderAccumulation(
                 tree, tree.getRoot(), branchRates);
         return cumulant.sharedLength * normalization;
+    }
+
+    public static double[] getTreeDepths(final Tree tree, final BranchRates branchRates, final double normalization) {
+
+        final int tipCount = tree.getExternalNodeCount();
+
+        double[] depths = new double[tipCount];
+
+        NodeRef rootNode = tree.getRoot();
+
+        recursiveTreeDepth(depths, rootNode, tree, branchRates, normalization);
+
+        return depths;
+
+    }
+
+
+    public static PostOrderBranchStats recursiveTreeDepth(double[] depths, NodeRef node, final Tree tree, final BranchRates branchRates, final double normalization) {
+        if (tree.isExternal(node)) {
+            return new PostOrderBranchStats(new int[]{node.getNumber()}, getScaledBranchLength(node, tree, branchRates, normalization));
+        }
+
+        PostOrderBranchStats pobsL = recursiveTreeDepth(depths, tree.getChild(node, 0), tree, branchRates, normalization);
+        PostOrderBranchStats pobsR = recursiveTreeDepth(depths, tree.getChild(node, 1), tree, branchRates, normalization);
+
+        accumulateBranchLengths(depths, pobsL);
+        accumulateBranchLengths(depths, pobsR);
+
+
+        int nL = pobsL.dims.length;
+        int nR = pobsR.dims.length;
+        int n = nL + nR;
+
+        int[] dims = new int[n];
+        System.arraycopy(pobsL.dims, 0, dims, 0, nL);
+        System.arraycopy(pobsR.dims, 0, dims, nL, nR);
+
+        double scaledBranchLength = getScaledBranchLength(node, tree, branchRates, normalization);
+
+        return new PostOrderBranchStats(dims, scaledBranchLength);
+
+    }
+
+    private static void accumulateBranchLengths(double[] depths, PostOrderBranchStats pobs) {
+        for (int i : pobs.dims) {
+            depths[i] += pobs.branchLength;
+        }
     }
 }

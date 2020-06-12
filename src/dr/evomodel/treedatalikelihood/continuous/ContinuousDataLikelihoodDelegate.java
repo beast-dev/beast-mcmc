@@ -58,7 +58,10 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate,
@@ -624,6 +627,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     final ContinuousRateTransformation getRateTransformation() {
         return rateTransformation;
+    }
+
+    public final double getRateTransformationNormalization() {
+        return rateTransformation.getNormalization();
     }
 
     @Override

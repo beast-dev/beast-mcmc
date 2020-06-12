@@ -31,6 +31,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.inference.model.VarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatisticEmpirical;
+import dr.inference.model.VarianceProportionStatisticPopulation;
 import dr.xml.*;
 
 /**
@@ -45,6 +46,7 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
     private static final String SYMMETRIC_DIVISION = "symmetricDivision";
     private static final String CO_HERITABILITY = "coheritability";
     private static final String EMPIRICAL = "useEmpiricalVariance";
+    private static final String POPULATION = "usePopulationVariance";
     private static final String FORCE_SAMPLING = "forceSampling";
 
     @Override
@@ -77,9 +79,17 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         boolean empirical = xo.getAttribute(EMPIRICAL, false);
         boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
 
+        boolean population = xo.getAttribute(POPULATION, false);
+
+        if (empirical && population) {
+            throw new RuntimeException(PARSER_NAME + "cannot use both empirical and population variances. Please set one to false.");
+        }
+
         if (empirical) {
             return new VarianceProportionStatisticEmpirical(tree, treeLikelihood, dataModel, diffusionModel,
                     ratio, forceSampling);
+        } else if (population) {
+            return new VarianceProportionStatisticPopulation(tree, treeLikelihood, dataModel, diffusionModel, ratio);
         }
         return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel, ratio);
     }

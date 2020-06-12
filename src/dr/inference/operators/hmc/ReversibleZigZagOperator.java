@@ -321,7 +321,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             timer.startTimer("getNextC++");
         }
 
-        final MinimumTravelInformation mti = nativeZigZag.getNextEvent(position.getBuffer(), velocity.getBuffer(),
+        final MinimumTravelInformation mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
                 action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
 
         if (TIMING) {
@@ -375,13 +375,13 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 //
 //                if (!TEST_NATIVE_INNER_BOUNCE) {
 //
-//                    updateDynamics(position.getBuffer(), velocity.getBuffer(),
+//                    updateReversibleDynamics(position.getBuffer(), velocity.getBuffer(),
 //                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
 //                            column.getBuffer(), eventTime, eventIndex);
 //
 //                } else {
 //
-//                    nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
+//                    nativeZigZag.updateReversibleDynamics(position.getBuffer(), velocity.getBuffer(),
 //                            action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
 //                            column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
 //                }
@@ -487,7 +487,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         } else {
 
-            nativeZigZag.updateDynamics(position.getBuffer(), velocity.getBuffer(),
+            nativeZigZag.updateReversibleDynamics(position.getBuffer(), velocity.getBuffer(),
                     action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
                     column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
         }

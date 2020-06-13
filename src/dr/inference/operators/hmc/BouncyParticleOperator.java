@@ -192,7 +192,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     }
 
     private double getRefreshTime() {
-        return MathUtils.nextExponential(1) / refreshmentRate;
+        return refreshmentRate > 0 ? MathUtils.nextExponential(1) / refreshmentRate : Double.POSITIVE_INFINITY;
     }
 
     @SuppressWarnings("all")

@@ -204,9 +204,16 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             cxo = xo.getChild(PLOIDY);
             ploidyFactors = (Parameter) cxo.getChild(Parameter.class);
         } else {
-            ploidyFactors = new Parameter.Default(PLOIDY, intervalsList.size());
-            for(int i = 0; i < intervalsList.size(); i++){
-                ploidyFactors.setParameterValue(i, 1.0);
+            if (intervalsList.size() != 0) {
+                ploidyFactors = new Parameter.Default(PLOIDY, intervalsList.size());
+                for(int i = 0; i < intervalsList.size(); i++){
+                    ploidyFactors.setParameterValue(i, 1.0);
+                }
+            } else {
+                ploidyFactors = new Parameter.Default(PLOIDY, treeList.size());
+                for (int i = 0; i < treeList.size(); i++) {
+                    ploidyFactors.setParameterValue(i, 1.0);
+                }
             }
         }
 

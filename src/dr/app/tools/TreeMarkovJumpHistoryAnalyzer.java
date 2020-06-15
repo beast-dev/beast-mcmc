@@ -56,7 +56,8 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                                           String[] taxaToIgnore,
                                           boolean basedOnNameContent,
                                           String[] mrcaTaxa,
-                                          double mrsd
+                                          double mrsd,
+                                          String nodeStatAnnotation
      ) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
@@ -69,7 +70,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         this.mrsd = mrsd;
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(trees, burnIn, ignoredTaxa, commonAncestorTaxa);
+        processTrees(trees, burnIn, ignoredTaxa, commonAncestorTaxa, nodeStatAnnotation);
         closeOutputFile(ps);
     }
 
@@ -79,34 +80,39 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         return taxa;
     }
 
-    private void processTrees(List<Tree> trees, int burnIn, Set ignoredTaxa, Set commonAncestorTaxa) {
+    private void processTrees(List<Tree> trees, int burnIn, Set ignoredTaxa, Set commonAncestorTaxa, String nodeStatAnnotation) {
         if (burnIn < 0) {
             burnIn = 0;
         }
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            processOneTree(tree, ignoredTaxa, commonAncestorTaxa);
+            processOneTree(tree, ignoredTaxa, commonAncestorTaxa, nodeStatAnnotation);
         }
     }
 
-    private void processOneTree(Tree tree, Set ignoredTaxa, Set commonAncestorTaxa) {
+    private void processOneTree(Tree tree, Set ignoredTaxa, Set commonAncestorTaxa, String nodeStatAnnotation) {
 
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
             treeId = treeId.replaceFirst("STATE_", "");
         }
-//        System.out.println(treeId);
 
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (inClade(tree, node, commonAncestorTaxa, ignoredTaxa)){
-//                System.out.println("inclade");
                 if (nodeToConsider(tree, node, ignoredTaxa)){
-//                    System.out.println("considering node");
-                    Object[] jumps = readCJH(node, tree);
-                    if (jumps != null) {
-                        for (int j = jumps.length - 1; j >= 0; j--) {
-                            Object[] jump = (Object[]) jumps[j];
+                    if (nodeStatAnnotation==null) {
+                        Object[] jumps = readCJH(node, tree);
+                        if (jumps != null) {
+                            for (int j = jumps.length - 1; j >= 0; j--) {
+                                Object[] jump = (Object[]) jumps[j];
+                                Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
+                                ps.println(row);
+                            }
+                        }
+                    } else {
+                        Object[] jump = getMJApproximation(node, tree, nodeStatAnnotation);
+                        if (jump != null) {
                             Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
                             ps.println(row);
                         }
@@ -199,6 +205,19 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         }
     }
 
+    private static Object[] getMJApproximation(NodeRef node, Tree treeTime, String nodeStateAnnotation) {
+        String nodeState = (String) treeTime.getNodeAttribute(node, nodeStateAnnotation);
+        String parentNodeString = (String) treeTime.getNodeAttribute(treeTime.getParent(node), nodeStateAnnotation);
+        if (nodeState.equalsIgnoreCase(parentNodeString)) {
+            return null;
+        } else {
+            double nodeHeight = treeTime.getNodeHeight(node);
+            double parentNodeHeight = treeTime.getNodeHeight(treeTime.getParent(node));
+            double x = (Math.random() * (parentNodeHeight - nodeHeight)) + nodeHeight;
+            return new Object[] {x,parentNodeString,nodeState};
+        }
+    }
+
     protected PrintStream openOutputFile(String outputFileName) {
 
         PrintStream ps = super.openOutputFile(outputFileName);
@@ -241,6 +260,7 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         double mrsd = Double.MAX_VALUE;
         int burnIn = -1;
         String[] mrcaTaxa = null;
+        String nodeStateAnnotation = null;
 
         printTitle();
 
@@ -250,8 +270,9 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                         new Arguments.StringOption("taxaToIgnore", "list", "a list of taxon names that defines parts of trees to ignore in MJH processing"),
                         new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
                         new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
-                                "add true noise [default = true])"),
+                                "taxa names contain string [default = false])"),
                         new Arguments.StringOption("mrcaTaxa", "list", "a list of taxon names that defines a clade to focus on for MJH processing"),
+                        new Arguments.StringOption("nodeStateAnnotation", "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -271,9 +292,14 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
+        if (arguments.hasOption("nodeStateAnnotation")) {
+            nodeStateAnnotation = arguments.getStringOption("nodeStateAnnotation");
+        }
+
         if (arguments.hasOption("mrcaTaxa")) {
             mrcaTaxa = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("mrcaTaxa"));
         }
+
 
         boolean basedOnNameContent = parseBasedOnNameContent(arguments);
 
@@ -283,7 +309,8 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                 taxaToIgnore,
                 basedOnNameContent,
                 mrcaTaxa,
-                mrsd
+                mrsd,
+                nodeStateAnnotation
         );
 
         System.exit(0);

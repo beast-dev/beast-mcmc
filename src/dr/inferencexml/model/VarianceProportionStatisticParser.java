@@ -25,6 +25,7 @@
 
 package dr.inferencexml.model;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -53,7 +54,7 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        Tree tree = (Tree) xo.getChild(TreeModel.class);
         RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
                 xo.getChild(RepeatedMeasuresTraitDataModel.class);
 

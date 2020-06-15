@@ -25,9 +25,9 @@
 
 package dr.inference.model;
 
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
@@ -54,7 +54,7 @@ public class VarianceProportionStatisticEmpirical extends AbstractVariancePropor
 
     private final boolean forceResample;
 
-    public VarianceProportionStatisticEmpirical(TreeModel tree, TreeDataLikelihood treeLikelihood,
+    public VarianceProportionStatisticEmpirical(Tree tree, TreeDataLikelihood treeLikelihood,
                                                 RepeatedMeasuresTraitDataModel dataModel,
                                                 MultivariateDiffusionModel diffusionModel,
                                                 MatrixRatios ratio,

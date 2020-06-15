@@ -25,8 +25,8 @@
 
 package dr.inference.model;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
@@ -51,7 +51,7 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
     private boolean treeKnown = false;
     private boolean varianceKnown = false;
 
-    public VarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
+    public VarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
                                        RepeatedMeasuresTraitDataModel dataModel,
                                        MultivariateDiffusionModel diffusionModel,
                                        MatrixRatios ratio) {
@@ -64,7 +64,9 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
         this.diffusionVariance = null;
         this.samplingVariance = null;
 
-        tree.addModelListener(this);
+        if (isTreeRandom) {
+            ((AbstractModel) tree).addModelListener(this);
+        }
         diffusionModel.getPrecisionParameter().addParameterListener(this);
         dataModel.getExtensionPrecision().addParameterListener(this);
     }
@@ -191,6 +193,8 @@ public class VarianceProportionStatistic extends AbstractVarianceProportionStati
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
         assert (model == tree);
+
+        if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
 
         treeKnown = false;
     }

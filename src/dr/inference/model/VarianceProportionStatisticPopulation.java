@@ -25,8 +25,8 @@
 
 package dr.inference.model;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.DiffusionProcessDelegate;
@@ -59,7 +59,7 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
 
     private double[] treeDepths;
 
-    public VarianceProportionStatisticPopulation(TreeModel tree, TreeDataLikelihood treeLikelihood,
+    public VarianceProportionStatisticPopulation(Tree tree, TreeDataLikelihood treeLikelihood,
                                                  RepeatedMeasuresTraitDataModel dataModel,
                                                  MultivariateDiffusionModel diffusionModel,
                                                  MatrixRatios ratio) {
@@ -76,7 +76,9 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
         this.diffusionVariance = null;
         this.samplingVariance = null;
 
-        this.tree.addModelListener(this);
+        if (isTreeRandom) {
+            ((AbstractModel) tree).addModelListener(this);
+        }
         this.diffusionModel.getPrecisionParameter().addParameterListener(this);
         this.dataModel.getExtensionPrecision().addParameterListener(this);
         diffusionProcessDelegate.addModelListener(this);
@@ -135,6 +137,7 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
         assert (model == tree || model == diffusionProcessDelegate);
 
         if (model == tree) {
+            if (!isTreeRandom) throw new IllegalStateException("Attempting to change a fixed tree");
             treeKnown = false;
         }
         if (model == diffusionProcessDelegate) {

@@ -28,7 +28,7 @@ package dr.inference.model;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import dr.evomodel.tree.TreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.math.matrixAlgebra.IllegalDimension;
@@ -48,7 +48,8 @@ import static java.lang.Math.sqrt;
 
 public abstract class AbstractVarianceProportionStatistic extends Statistic.Abstract implements Reportable {
 
-    protected final TreeModel tree;
+    protected final Tree tree;
+    protected final Boolean isTreeRandom;
     protected final RepeatedMeasuresTraitDataModel dataModel;
     protected final TreeDataLikelihood treeLikelihood;
 
@@ -61,7 +62,7 @@ public abstract class AbstractVarianceProportionStatistic extends Statistic.Abst
 
     protected final int dimTrait;
 
-    public AbstractVarianceProportionStatistic(TreeModel tree, TreeDataLikelihood treeLikelihood,
+    public AbstractVarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
                                                RepeatedMeasuresTraitDataModel dataModel,
                                                MatrixRatios ratio) {
         this.tree = tree;
@@ -73,6 +74,8 @@ public abstract class AbstractVarianceProportionStatistic extends Statistic.Abst
         this.samplingComponent = new DenseMatrix64F(dimTrait, dimTrait);
 
         this.ratio = ratio;
+
+        isTreeRandom = (tree instanceof AbstractModel) && ((AbstractModel) tree).isVariable();
     }
 
     @Override

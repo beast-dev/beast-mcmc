@@ -64,7 +64,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         }
 
         if (mask != null) {
-            applyMask(velocity); // TODO Is this necessary?
+            applyMask(velocity);
         }
 
         return new WrappedVector.Raw(velocity);
@@ -286,24 +286,26 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                                                      double[] action,
                                                      double[] roots) {
 
-        double[] c0coeff = new double[2];
-        double[] c1coeff = new double[2];
+        double[] c0Coefficients = new double[2];
+        double[] c1Coefficients = new double[2];
 
         for (int i = 0; i < roots.length; i++) {
 
-            accumulateCoef(c0, velocity, gradient, action, roots, c0coeff, i);
-            accumulateCoef(c1, velocity, gradient, action, roots, c1coeff, i);
+            accumulateCoefficients(c0, velocity, gradient, action, roots, c0Coefficients, i);
+            accumulateCoefficients(c1, velocity, gradient, action, roots, c1Coefficients, i);
         }
 
-        return new PiecewiseLinearEndpoints(c0, c1, c0coeff[0] * c0 + c0coeff[1], c1coeff[0] * c1 + c1coeff[1],
-                c0coeff[0], c1coeff[0]);
+        return new PiecewiseLinearEndpoints(c0, c1,
+                c0Coefficients[0] * c0 + c0Coefficients[1],
+                c1Coefficients[0] * c1 + c1Coefficients[1],
+                c0Coefficients[0], c1Coefficients[0]);
     }
 
-    private void accumulateCoef(double c, double[] velocity, double[] gradient, double[] action, double[] roots,
-                                double[] coef, int i) {
+    private void accumulateCoefficients(double c, double[] velocity, double[] gradient, double[] action, double[] roots,
+                                        double[] coefficients, int i) {
         if ((roots[i] >= c && velocity[i] * action[i] <= 0) || (roots[i] <= c && velocity[i] * action[i] >= 0)) {
-            coef[0] += velocity[i] * action[i];
-            coef[1] += -velocity[i] * gradient[i];
+            coefficients[0] += velocity[i] * action[i];
+            coefficients[1] += -velocity[i] * gradient[i];
         }
     }
 
@@ -377,7 +379,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 // a > 0
                 double t1 = -a / b;
                 if (u <= a * t1 + b * t1 * t1 / 2)
-                    return -a / b - Math.sqrt(a * a / (b * b) + 2 * u / b);
+                    return t1 - Math.sqrt(t1 * t1 + 2 * u / b);
                 else
                     return Double.POSITIVE_INFINITY;
             }

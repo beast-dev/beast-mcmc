@@ -164,9 +164,6 @@
 	
 	<varianceProportionStatistic id="varianceLog" matrixRatio="coheritability" usePopulationVariance="true">
         <traitDataLikelihood idref="simTrait.traitLikelihood"/>
-        <treeModel idref = "treeModel"/>
-        <repeatedMeasuresModel idref = "simTrait.repeatedMeasures"/>
-        <multivariateDiffusionModel idref = "simTrait.diffusionModel"/>
     </varianceProportionStatistic>
     
      <assertEqual tolerance="1e-1" verbose="true" charactersToStrip="{}">

@@ -73,7 +73,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String INTEGRATED_PROCESS = "integratedProcess";
 
-    private static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
+    public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
     public static final String FACTOR_NAME = "factors";
 

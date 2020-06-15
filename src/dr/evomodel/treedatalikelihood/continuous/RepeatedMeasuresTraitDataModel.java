@@ -254,7 +254,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private static final boolean DEBUG = false;
 
     // TODO Move remainder into separate class file
-    private static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
+    public static final String REPEATED_MEASURES_MODEL = "repeatedMeasuresModel";
     private static final String PRECISION = "samplingPrecision";
     private static final String SCALE_BY_TIP_HEIGHT = "scaleByTipHeight";
 

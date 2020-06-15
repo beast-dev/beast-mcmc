@@ -29,8 +29,11 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.TreeScaledRepeatedMeasuresTraitDataModel;
+import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.inference.model.VarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatisticEmpirical;
 import dr.inference.model.VarianceProportionStatisticPopulation;
@@ -54,9 +57,17 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Tree tree = (Tree) xo.getChild(TreeModel.class);
-        RepeatedMeasuresTraitDataModel dataModel = (RepeatedMeasuresTraitDataModel)
-                xo.getChild(RepeatedMeasuresTraitDataModel.class);
+        TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        Tree tree = treeLikelihood.getTree();
+
+        ContinuousTraitPartialsProvider dataModel = ((ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate()).getDataModel();
+        if (!(dataModel instanceof RepeatedMeasuresTraitDataModel)) {
+            throw new RuntimeException(
+                    "In " + PARSER_NAME + ": " +
+                            "The provided likelihood does not have a " + RepeatedMeasuresTraitDataModel.REPEATED_MEASURES_MODEL + " element." +
+                            "VarianceProportionStatistic is only implemented for repeated measures.");
+        }
 
         boolean empirical = xo.getAttribute(EMPIRICAL, false);
         boolean forceSampling = xo.getAttribute(FORCE_SAMPLING, true);
@@ -69,10 +80,29 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
                             "repeatedMeasuresModel argument scaleByTreeHeight='true'.");
         }
 
-        MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
-                xo.getChild(MultivariateDiffusionModel.class);
+        MultivariateDiffusionModel diffusionModel = ((ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate()).getDiffusionModel();
 
-        TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        // If provided, check that the tree, data model and diffusion are consistent (backward compatibility)
+        Tree treeXML = (Tree) xo.getChild(TreeModel.class);
+        if ((treeXML != null) && (tree != treeXML)) {
+            throw new RuntimeException(
+                    "In " + PARSER_NAME + ": " +
+                            "The provided tree is different from the tree in object " + ContinuousDataLikelihoodParser.CONTINUOUS_DATA_LIKELIHOOD + ".");
+        }
+        RepeatedMeasuresTraitDataModel dataModelXMl = (RepeatedMeasuresTraitDataModel)
+                xo.getChild(RepeatedMeasuresTraitDataModel.class);
+        if ((dataModelXMl != null) && (dataModel != dataModelXMl)) {
+            throw new RuntimeException(
+                    "In " + PARSER_NAME + ": " +
+                            "The provided data model is different from the data model in object " + ContinuousDataLikelihoodParser.CONTINUOUS_DATA_LIKELIHOOD + ".");
+        }
+        MultivariateDiffusionModel diffusionModelXML = (MultivariateDiffusionModel)
+                xo.getChild(MultivariateDiffusionModel.class);
+        if ((diffusionModelXML != null) && (diffusionModel != diffusionModelXML)) {
+            throw new RuntimeException(
+                    "In " + PARSER_NAME + ": " +
+                            "The provided diffusion model is different from the diffusion model in object " + ContinuousDataLikelihoodParser.CONTINUOUS_DATA_LIKELIHOOD + ".");
+        }
 
         String ratioString = xo.getStringAttribute(MATRIX_RATIO);
 
@@ -94,22 +124,25 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         }
 
         if (empirical) {
-            return new VarianceProportionStatisticEmpirical(tree, treeLikelihood, dataModel, diffusionModel,
+            return new VarianceProportionStatisticEmpirical(tree, treeLikelihood,
+                    (RepeatedMeasuresTraitDataModel) dataModel, diffusionModel,
                     ratio, forceSampling);
         } else if (population) {
-            return new VarianceProportionStatisticPopulation(tree, treeLikelihood, dataModel, diffusionModel, ratio);
+            return new VarianceProportionStatisticPopulation(tree, treeLikelihood,
+                    (RepeatedMeasuresTraitDataModel) dataModel, diffusionModel, ratio);
         }
-        return new VarianceProportionStatistic(tree, treeLikelihood, dataModel, diffusionModel, ratio);
+        return new VarianceProportionStatistic(tree, treeLikelihood,
+                (RepeatedMeasuresTraitDataModel) dataModel, diffusionModel, ratio);
     }
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newStringRule(MATRIX_RATIO, false),
             AttributeRule.newStringRule(FORCE_SAMPLING, true),
             AttributeRule.newStringRule(EMPIRICAL, true),
-            new ElementRule(TreeModel.class),
+            new ElementRule(TreeModel.class, true),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(RepeatedMeasuresTraitDataModel.class),
-            new ElementRule(MultivariateDiffusionModel.class)
+            new ElementRule(RepeatedMeasuresTraitDataModel.class, true),
+            new ElementRule(MultivariateDiffusionModel.class, true)
     };
 
     @Override

@@ -33,7 +33,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.evomodelxml.operators.TipLeapOperatorParser;
 import dr.inference.distribution.CauchyDistribution;
-import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
@@ -96,7 +95,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
     private final DistanceKernelType distanceKernel;
     private final boolean slideOnly;
 
-    private final List<NodeRef> tips;
+    private final  List<NodeRef> nodeRefs;
 
     /**
      * Constructor
@@ -131,7 +130,27 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         this.size = size;
         this.distanceKernel = distanceKernel;
         this.slideOnly = slideOnly;
-        this.tips = null;
+        this.nodeRefs = null;
+    }
+
+    /**
+     * Constructor that takes a list of nodes to pick from for the move.
+     *
+     * @param tree   the tree
+     * @param nodes   An list of nodeRefs to choose from and operate on
+     * @param weight the weight
+     * @param size   scaling on a unit Gaussian to draw the patristic distance from
+     * @param mode   coercion mode
+     */
+    public SubtreeLeapOperator(TreeModel tree,  List<NodeRef> nodes, double weight, double size, DistanceKernelType distanceKernel, AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
+        this.tree = tree;
+        setWeight(weight);
+        this.size = size;
+        this.distanceKernel = distanceKernel;
+        this.slideOnly = false;
+        this.nodeRefs = nodes;
     }
 
     /**
@@ -151,19 +170,17 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         this.size = size;
         this.distanceKernel = distanceKernel;
         this.slideOnly = false;
-        this.tips = new ArrayList<NodeRef>();
-
+        this.nodeRefs = new  ArrayList<NodeRef>();
         for (Taxon taxon : taxa) {
             boolean found = false;
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
                 NodeRef tip = tree.getExternalNode(i);
                 if (tree.getNodeTaxon(tip).equals(taxon)) {
-                    tips.add(tip);
+                    nodeRefs.add(tip);
                     found = true;
                     break;
                 }
             }
-
             if (!found) {
                 throw new IllegalArgumentException("Taxon, " + taxon.getId() + ", not found in tree with id " + tree.getId());
             }
@@ -185,7 +202,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
         NodeRef node;
 
-        if (tips == null) {
+        if (nodeRefs == null) {
             // Pick a node (but not the root)
             do {
                 // choose a random node avoiding root
@@ -194,7 +211,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             } while (node == root);
         } else {
             // Pick a tip from the specified set of tips.
-            node = tips.get(MathUtils.nextInt(tips.size()));
+            node = nodeRefs.get(MathUtils.nextInt(nodeRefs.size()));
         }
 
         // get its parent - this is the node we will prune/graft
@@ -401,7 +418,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
     }
 
     public String getOperatorName() {
-        if (tips == null) {
+        if (nodeRefs == null) {
             return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
         } else {
             return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";

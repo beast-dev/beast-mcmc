@@ -145,9 +145,11 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
             if (referenceTree != null) {
                 String taxonId = tree.getNodeTaxon(node).getId();
                 clade.set(referenceTree.getTaxonIndex(taxonId));
+            }else{
+                clade.set(node.getNumber());
             }
 
-            clade.set(node.getNumber());
+
         } else {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef child = tree.getChild(node, i);

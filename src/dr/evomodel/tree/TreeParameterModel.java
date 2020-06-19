@@ -111,9 +111,15 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            handleRootMove();
+            if (!inHandleRootMove) {
+                inHandleRootMove = true;
+                handleRootMove();
+                inHandleRootMove = false;
+            }
         }
     }
+
+    private boolean inHandleRootMove = false;
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 

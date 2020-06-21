@@ -1,7 +1,7 @@
 /*
  * Utils.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -54,7 +54,6 @@ import javax.swing.SwingUtilities;
 
 import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.tree.TreeUtils;
-import org.apache.commons.math.random.MersenneTwister;
 
 import dr.app.bss.test.AncestralSequenceTrait;
 import dr.evolution.datatype.Codons;
@@ -95,13 +94,10 @@ public class Utils {
 	// ////////////////////////////////
 	// ---RANDOM NUMB3R GENERATION---//
 	// ////////////////////////////////
-	
-	private static MersenneTwister random = new MersenneTwister(
-			MathUtils.nextLong());
 
     public static double rLogNormal(double stdev, double mean) {
     	
-    	double rNorm = random.nextGaussian() * stdev + mean;
+    	double rNorm = MathUtils.nextGaussian() * stdev + mean;
     	double rLognormal = Math.exp(rNorm);
     	
     	return rLognormal;
@@ -127,7 +123,7 @@ public class Utils {
 
 		distribution[range - 1] = 1.0;
 
-		double key = random.nextDouble();
+		double key = MathUtils.nextDouble();
 
 		int mindex = 1;
 		int maxdex = range - 1;
@@ -165,7 +161,7 @@ public class Utils {
 
 		int samplePos = -Integer.MAX_VALUE;
 		double cumProb = 0.0;
-		double u = random.nextDouble();
+		double u = MathUtils.nextDouble();
 
 		for (int i = 0; i < probabilities.length; i++) {
 

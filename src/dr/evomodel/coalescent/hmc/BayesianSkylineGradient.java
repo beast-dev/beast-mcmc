@@ -26,6 +26,8 @@
 package dr.evomodel.coalescent.hmc;
 
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
@@ -85,9 +87,16 @@ public class BayesianSkylineGradient implements
 
     public enum WrtParameter {
         NODE_HEIGHT("nodeHeight") {
+
+            Parameter parameter;
+
             @Override
             Parameter getParameter(BayesianSkylineLikelihood likelihood) {
-                return null;
+                if (parameter == null) {
+                    TreeModel treeModel = (TreeModel) likelihood.getTree();
+                    parameter = new NodeHeightProxyParameter("allInternalNode", treeModel, true);
+                }
+                return parameter;
             }
 
             @Override

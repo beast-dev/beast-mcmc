@@ -322,6 +322,10 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
         return groupEnds;
     }
 
+    public Tree getTree() {
+        return tree;
+    }
+
     private double getGroupHeight(int groupIndex) {
         return getGroupHeights()[groupIndex];
     }

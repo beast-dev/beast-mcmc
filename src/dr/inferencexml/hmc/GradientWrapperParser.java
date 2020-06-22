@@ -26,9 +26,11 @@
 package dr.inferencexml.hmc;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.GradientProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -57,6 +59,9 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             final Parameter parameter = mdl.getDataParameter();
 
             return new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
+        } else if (obj instanceof EmpiricalDistributionLikelihood) {
+            final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+            return new GradientWrtParameterProvider.ParameterWrapper((GradientProvider)obj, parameter, (Likelihood)obj);
         } else {
             DistributionLikelihood dl = (DistributionLikelihood) obj;
             if (!(dl.getDistribution() instanceof GradientProvider)) {
@@ -76,11 +81,14 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new XORRule(
-                        new ElementRule(MultivariateDistributionLikelihood.class),
-                        new AndRule(
-                                new ElementRule(DistributionLikelihood.class),
-                                new ElementRule(Parameter.class)
-                        )
+                        new XMLSyntaxRule[]{
+                                new ElementRule(MultivariateDistributionLikelihood.class),
+                                new ElementRule(EmpiricalDistributionLikelihood.class),
+                                new AndRule(
+                                        new ElementRule(DistributionLikelihood.class),
+                                        new ElementRule(Parameter.class)
+                                ),
+                        }
                 )
         };
     }

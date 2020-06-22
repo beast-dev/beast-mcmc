@@ -25,7 +25,11 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evomodel.operators.NativeZigZag;
+import dr.evomodel.operators.NativeZigZagOptions;
+import dr.evomodel.operators.NativeZigZagWrapper;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -33,9 +37,12 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.BenchmarkTimer;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 
+import static dr.inference.operators.hmc.IrreversibleZigZagOperator.CPP_NEXT_BOUNCE;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -44,39 +51,67 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
  * @author Marc A. Suchard
  */
 
-public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator {
+public abstract class AbstractParticleOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
     private static final boolean CHECK_MATRIX_ILL_CONDITIONED = false;
 
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
+                             PrecisionColumnProvider columnProvider,
                              double weight, Options runtimeOptions, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
+        this.columnProvider = columnProvider;
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
-        this.maskVector = mask.getParameterValues();
+        this.maskVector = mask != null ? mask.getParameterValues() : null;
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
 
         setWeight(weight);
-        setMissingDataMask();
+        this.missingDataMask = getMissingDataMask();
         checkParameterBounds(parameter);
+
+        long flags = NativeZigZag.Flag.PRECISION_DOUBLE.getMask() |
+                NativeZigZag.Flag.FRAMEWORK_TBB.getMask();
+        long nativeSeed = MathUtils.nextLong();
+        int nThreads = 4;
+        
+        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || CPP_NEXT_BOUNCE) {
+
+            NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
+
+            nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), options,
+                    maskVector, getObservedDataMask());
+        }
     }
 
-    private void setMissingDataMask() {
+    private boolean[] getMissingDataMask() {
 
         int dim = parameter.getDimension();
-        missingDataMask = new boolean[dim];
+        boolean[] missing = new boolean[dim];
         assert (dim == parameter.getBounds().getBoundsDimension());
 
         for (int i = 0; i < dim; ++i) {
 
-            missingDataMask[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
+            missing[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
                     parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY);
         }
+        return missing;
+    }
+
+    private double[] getObservedDataMask() {
+        int dim = parameter.getDimension();
+        double[] observed = new double[dim];
+        assert (dim == parameter.getBounds().getBoundsDimension());
+
+        for (int i = 0; i < dim; ++i) {
+            observed[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
+                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 0.0 : 1.0;
+        }
+        return observed;
     }
 
     @Override
@@ -88,23 +123,24 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         WrappedVector position = getInitialPosition();
 
-        double hastingsRatio = integrateTrajectory(position);
+        WrappedVector momentum = drawInitialMomentum();
+
+        double hastingsRatio = integrateTrajectory(position, momentum);
 
         setParameter(position, parameter);
 
-        if (CHECK_MATRIX_ILL_CONDITIONED & getCount() % 100 == 0){
+        if (CHECK_MATRIX_ILL_CONDITIONED & getCount() % 100 == 0) {
             productProvider.getTimeScaleEigen();
         }
 
         return hastingsRatio;
     }
 
-//    @Override
-//    public String getPerformanceSuggestion() {
-//        return null;
-//    }
+    abstract double integrateTrajectory(WrappedVector position, WrappedVector momentum);
 
-    abstract double integrateTrajectory(WrappedVector position);
+    WrappedVector drawInitialMomentum() {
+        return new WrappedVector.Raw(null, 0, 0);
+    }
 
     double drawTotalTravelTime() {
         double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
@@ -131,6 +167,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
+    static void updatePosition(double[] p, double[] v, double time) {
+        for (int i = 0, len = p.length; i < len; ++i) {
+            p[i] += time * v[i];
+        }
+    }
+
+
+    static void updateMomentum(double[] a, double[] g, double[] m, double time) {
+
+        final double halfTimeSquared = time * time / 2;
+
+        for (int i = 0, len = m.length; i < len; ++i) {
+            m[i] = m[i] + time * g[i] - halfTimeSquared * a[i];
+        }
+    }
+
+
     WrappedVector getInitialGradient() {
 
         double[] gradient = gradientProvider.getGradientLogDensity();
@@ -142,16 +195,24 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return new WrappedVector.Raw(gradient);
     }
 
+    @SuppressWarnings("unused")
     void applyMask(WrappedVector vector) {
         applyMask(vector.getBuffer());
     }
 
     void applyMask(double[] vector) {
 
+        if (TIMING) {
+            timer.startTimer("applyMask");
+        }
         assert (vector.length == mask.getDimension());
 
         for (int i = 0, len = vector.length; i < len; ++i) {
             vector[i] *= maskVector[i];
+        }
+
+        if (TIMING) {
+            timer.stopTimer("applyMask");
         }
     }
 
@@ -166,6 +227,51 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
 
         return new WrappedVector.Raw(product);
+    }
+
+    WrappedVector getPrecisionColumn(int index) {
+
+        if (TIMING) {
+            timer.startTimer("getColumn");
+        }
+
+        double[] precisionColumn = columnProvider.getColumn(index);
+
+        if (TIMING) {
+            timer.stopTimer("getColumn");
+        }
+
+        if (mask != null) {
+            applyMask(precisionColumn);
+        }
+
+        return new WrappedVector.Raw(precisionColumn);
+    }
+
+    void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
+
+        WrappedVector column = getPrecisionColumn(eventIndex);
+
+        if (TIMING) {
+            timer.startTimer("updateAction");
+        }
+
+        final double[] a = action.getBuffer();
+        final double[] c = column.getBuffer();
+
+        final double twoV = 2 * velocity.get(eventIndex);
+
+        for (int i = 0, len = a.length; i < len; ++i) {
+            a[i] += twoV * c[i];
+        }
+
+        if (TIMING) {
+            timer.stopTimer("updateAction");
+        }
+
+        if (mask != null) {
+            applyMask(a);
+        }
     }
 
     boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
@@ -212,28 +318,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
-    protected class MinimumTravelInformation {
+    void initializeNumEvent(){
+        numEvents = 0;
+    }
 
-        final double time;
-        final int index;
-
-        MinimumTravelInformation(double minTime, int minIndex) {
-            this.time = minTime;
-            this.index = minIndex;
-        }
-
-        public boolean equals(Object obj) {
-
-            if (obj instanceof MinimumTravelInformation) {
-                MinimumTravelInformation rhs = (MinimumTravelInformation) obj;
-                return this.time == rhs.time && this.index == rhs.index;
-            }
-            return false;
-        }
-
-        public String toString() {
-            return "time = " + time + " @ " + index;
-        }
+    void recordOneMoreEvent(){
+        numEvents++;
     }
 
     public static class Options {
@@ -250,7 +340,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     protected class Preconditioning {
 
         final WrappedVector mass;
-        final double totalTravelTime;
+        double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
             this.mass = mass;
@@ -258,13 +348,75 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    private final GradientWrtParameterProvider gradientProvider;
+    class BounceState {
+        final Type type;
+        final int index;
+        final double remainingTime;
+
+        BounceState(Type type, int index, double remainingTime) {
+            this.type = type;
+            this.index = index;
+            this.remainingTime = remainingTime;
+        }
+
+        BounceState(double remainingTime) {
+            this.type = Type.NONE;
+            this.index = -1;
+            this.remainingTime = remainingTime;
+        }
+
+        boolean isTimeRemaining() {
+            return remainingTime > 0.0;
+        }
+
+        public String toString() {
+            return "remainingTime : " + remainingTime +
+                    " lastBounceType: " + type + " in dim: " + index;
+        }
+    }
+
+    enum Type {
+        NONE,
+        BOUNDARY,
+        GRADIENT,
+        REFRESHMENT;
+
+        public static Type castFromInt(int i) {
+            if (i == 0) {
+                return NONE;
+            } else if (i == 1) {
+                return BOUNDARY;
+            } else if (i == 2) {
+                return GRADIENT;
+            } else {
+                throw new RuntimeException("Unknown type");
+            }
+        }
+    }
+
+    @Override
+    public String getReport() {
+        return TIMING ? timer.toString() : "";
+    }
+
+    protected final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    private final Parameter parameter;
+    private final PrecisionColumnProvider columnProvider;
+    protected final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
-    final double[] maskVector;
-
+    private final double[] maskVector;
+    int numEvents;
     Preconditioning preconditioning;
-    private boolean[] missingDataMask;
+    final private boolean[] missingDataMask;
+
+    final static boolean TIMING = true;
+    BenchmarkTimer timer = new BenchmarkTimer();
+
+    private final static boolean TEST_NATIVE_OPERATOR = false;
+    final static boolean TEST_NATIVE_BOUNCE = false;
+//    final static boolean TEST_CRITICAL_REGION = false;
+    final static boolean TEST_NATIVE_INNER_BOUNCE = false;
+
+    NativeZigZagWrapper nativeZigZag;
 }

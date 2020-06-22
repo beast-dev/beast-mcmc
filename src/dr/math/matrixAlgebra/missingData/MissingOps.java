@@ -403,6 +403,7 @@ public class MissingOps {
             }
             double[] values = svd.getSingularValues();
             double tol = SingularOps.singularThreshold(svd);
+//            double tol = 0.0;
 
             int dim = 0;
             double logDet = 0;
@@ -414,7 +415,7 @@ public class MissingOps {
                 }
             }
 
-            if (!invert) {
+            if (invert) {
                 logDet = -logDet;
             }
 
@@ -463,28 +464,30 @@ public class MissingOps {
             int dim = 0;
             double logDet = 0;
 
-            if (getLogDeterminant) {
-//                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+            //TODO: getLogDeterminant should never be used any more
+            assert !getLogDeterminant;
+//            if (getLogDeterminant) {
+////                SingularValueDecomposition<DenseMatrix64F> svd = solver.getDecomposition();
+////                double[] values = svd.getSingularValues();
+//
+//                SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
+//                if (!svd.decompose(A)) {
+//                    if (SingularOps.rank(svd) == 0)
+//                        return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
+//                    throw new RuntimeException("SVD decomposition failed");
+//                }
 //                double[] values = svd.getSingularValues();
-
-                SingularValueDecomposition<DenseMatrix64F> svd = DecompositionFactory.svd(A.getNumRows(), A.getNumCols(), false, false, false);
-                if (!svd.decompose(A)) {
-                    if (SingularOps.rank(svd) == 0)
-                        return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
-                    throw new RuntimeException("SVD decomposition failed");
-                }
-                double[] values = svd.getSingularValues();
-
-                double tol = SingularOps.singularThreshold(svd);
-
-                for (int i = 0; i < values.length; ++i) {
-                    final double lambda = values[i];
-                    if (lambda > tol) {
-                        logDet += Math.log(lambda);
-                        ++dim;
-                    }
-                }
-            }
+//
+//                double tol = SingularOps.singularThreshold(svd);
+//
+//                for (int i = 0; i < values.length; ++i) {
+//                    final double lambda = values[i];
+//                    if (lambda > tol) {
+//                        logDet += Math.log(lambda);
+//                        ++dim;
+//                    }
+//                }
+//            }
 
             result = new InversionResult(dim == A.getNumCols() ? FULLY_OBSERVED : PARTIALLY_OBSERVED, dim, logDet, true);
         }
@@ -1005,6 +1008,63 @@ public class MissingOps {
                 }
                 QtPQ.unsafe_set(i, j, val);
                 QtPQ.unsafe_set(j, i, val);
+            }
+        }
+    }
+
+    public static void diagMult(double[] d, DenseMatrix64F M) {
+        diagMult(d, M, M);
+    }
+
+    public static void diagMult(double[] d, DenseMatrix64F source, DenseMatrix64F dest) {
+        assert d.length == source.getNumRows();
+        assert source.getNumRows() == dest.getNumRows() && source.getNumCols() == dest.getNumCols();
+        for (int i = 0; i < source.getNumRows(); i++) {
+            for (int j = 0; j < source.getNumCols(); j++) {
+                dest.unsafe_set(i, j, d[i] * source.unsafe_get(i, j));
+            }
+        }
+    }
+
+    public static void diagMult(DenseMatrix64F M, double[] d) {
+        diagMult(M, d, M);
+    }
+
+    public static void diagMult(DenseMatrix64F source, double[] d, DenseMatrix64F dest) {
+        assert d.length == source.getNumCols();
+        assert source.getNumRows() == dest.getNumRows() && source.getNumCols() == dest.getNumCols();
+        for (int i = 0; i < source.getNumRows(); i++) {
+            for (int j = 0; j < source.getNumCols(); j++) {
+                dest.unsafe_set(i, j, d[j] * source.unsafe_get(i, j));
+            }
+        }
+    }
+
+    public static void diagDiv(double[] d, DenseMatrix64F M) {
+        assert d.length == M.getNumRows();
+        for (int i = 0; i < M.getNumRows(); i++) {
+            for (int j = 0; j < M.getNumCols(); j++) {
+                M.unsafe_set(i, j, M.unsafe_get(i, j) / d[i]);
+            }
+        }
+    }
+
+    public static void diagDiv(DenseMatrix64F M, double[] d) {
+        assert d.length == M.getNumCols();
+        for (int i = 0; i < M.getNumRows(); i++) {
+            for (int j = 0; j < M.getNumCols(); j++) {
+                M.unsafe_set(i, j, M.unsafe_get(i, j) / d[j]);
+            }
+        }
+    }
+
+    public static void addTransEquals(DenseMatrix64F M) {
+        assert M.getNumCols() == M.getNumRows();
+        for (int i = 0; i < M.getNumCols(); i++) {
+            M.unsafe_set(i, i, 2 * M.unsafe_get(i, i));
+            for (int j = 0; j < i; j++) {
+                M.unsafe_set(i, j, M.unsafe_get(i, j) + M.unsafe_get(j, i));
+                M.unsafe_set(j, i, M.unsafe_get(i, j));
             }
         }
     }

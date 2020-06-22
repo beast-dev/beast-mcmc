@@ -66,7 +66,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     @Override
     public NodeRef getOriginalNode(NodeRef transformedNode) {
-        throw new RuntimeException("Not yet implemented");
+
+        assert (transformedNode != null);
+
+        checkShadowTree();
+        ShadowNode node = (ShadowNode) transformedNode;
+        return node.getOriginalNode();
     }
 
     @Override
@@ -336,12 +341,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         return treeModel instanceof AbstractModel && ((AbstractModel) treeModel).isVariable();
     }
 
-    public double getNodeHeight(NodeRef inode) {
-        assert (inode != null);
+    public double getNodeHeight(NodeRef iNode) {
+        assert (iNode != null);
 
         checkShadowTree();
 
-        ShadowNode node = (ShadowNode) inode;
+        ShadowNode node = (ShadowNode) iNode;
         int originalNumber = node.getOriginalNumber();
         if (originalNumber >= 0) {
             return treeModel.getNodeHeight(node.getOriginalNode());
@@ -357,12 +362,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
-    public double getBranchLength(NodeRef inode) {
-        assert (inode != null);
+    public double getBranchLength(NodeRef iNode) {
+        assert (iNode != null);
 
         checkShadowTree();
 
-        ShadowNode node = (ShadowNode) inode;
+        ShadowNode node = (ShadowNode) iNode;
         if (!node.isUsed()) {
             return 0.0;
         }
@@ -781,8 +786,16 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
         }
     }
 
+//    public List<Taxon> asList() {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+
     public List<Taxon> asList() {
-        throw new RuntimeException("Not yet implemented");
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (int i = 0, n = getTaxonCount(); i < n; i++) {
+            taxa.add(getTaxon(i));
+        }
+        return taxa;
     }
 
     public Object getTaxonAttribute(int taxonIndex, String name) {
@@ -830,13 +843,40 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private void setupClamps() {
         nodeToClampMap.clear();
-        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
+        recursiveSetupMrcaClamps(treeModel, treeModel.getRoot(), new BitSet(), clampList, nodeToClampMap);
+        setupAncestralPathClamps(treeModel, clampList, nodeToClampMap);
     }
 
-    private static void recursiveSetupClamp(Tree tree, NodeRef node,
-                                            BitSet tips,
-                                            Map<BitSet, AncestralTaxonInTree> clampList,
-                                            Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+    private static void setupAncestralPathClamps(Tree tree,
+                                                 Map<BitSet, AncestralTaxonInTree> clampList,
+                                                 Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
+
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef node = tree.getExternalNode(i);
+            BitSet tip = new BitSet();
+            tip.set(node.getNumber());
+            if (clampList.containsKey(tip)) {
+                AncestralTaxonInTree partials = clampList.get(tip);
+
+                double pathHeight = partials.getHeight();
+                assert (pathHeight > 0.0);
+
+                NodeRef parent = tree.getParent(node);
+                double parentHeight = tree.getNodeHeight(parent);
+                while (parentHeight < pathHeight && parent != tree.getRoot()) {
+                    parent = tree.getParent(parent);
+                    parentHeight = tree.getNodeHeight(parent);
+                }
+                partials.setNode(parent);
+                nodeToClampMap.put(parent.getNumber(), partials);
+            }
+        }
+    }
+
+    private static void recursiveSetupMrcaClamps(Tree tree, NodeRef node,
+                                                 BitSet tips,
+                                                 Map<BitSet, AncestralTaxonInTree> clampList,
+                                                 Map<Integer, AncestralTaxonInTree> nodeToClampMap) {
 
         if (tree.isExternal(node)) {
             tips.set(node.getNumber());
@@ -845,7 +885,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                 NodeRef child = tree.getChild(node, i);
 
                 BitSet childTips = new BitSet();
-                recursiveSetupClamp(tree, child, childTips, clampList, nodeToClampMap);
+                recursiveSetupMrcaClamps(tree, child, childTips, clampList, nodeToClampMap);
                 tips.or(childTips);
             }
 
@@ -866,8 +906,8 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 //        System.err.println("Added a CLAMP #" + nodeClamp.getIndex() + " for " + nodeClamp.getTaxon().getId());
     }
 
-    final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<BitSet, AncestralTaxonInTree>();
-    final private Map<Integer, AncestralTaxonInTree> nodeToClampMap = new HashMap<Integer, AncestralTaxonInTree>();
+    final private Map<BitSet, AncestralTaxonInTree> clampList = new HashMap<>();
+    final private Map<Integer, AncestralTaxonInTree> nodeToClampMap = new HashMap<>();
 
     private boolean validShadowTree = false;
     private boolean savedValidShadowTree;

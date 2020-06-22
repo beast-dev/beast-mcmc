@@ -36,8 +36,8 @@ import dr.inference.model.Model;
  * @version $Id: BranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
 public interface BranchRateModel extends Model, BranchRates, TreeTraitProvider, TreeTrait<Double> {
-    public static final String BRANCH_RATES = "branchRates";
-    public static final String RATE = "rate";
+    String BRANCH_RATES = "branchRates";
+    String RATE = "rate";
 
     // This is inherited from BranchRates:
     // double getBranchRate(Tree tree, NodeRef node);

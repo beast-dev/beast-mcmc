@@ -1471,6 +1471,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         // return the trimmed string
+        if (value.charAt(0) == '\"') {
+            value = value.substring(1, value.length() - 1);
+        }
         return value;
     }
 

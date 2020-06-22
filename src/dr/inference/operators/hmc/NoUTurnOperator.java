@@ -1,50 +1,14 @@
-/*
- * NoUTurnOperator.java
- *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.inference.operators.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
-import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.GeneralOperator;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
-import dr.util.Transform;
 
 import java.util.Arrays;
 
-/**
- * @author Marc A. Suchard
- * @author Zhenyu Zhang
- */
-
-public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator, GibbsOperator {
-
-    private final int dim = gradientProvider.getDimension();
+public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     class Options {
         private double logProbErrorTol = 100.0;
@@ -53,62 +17,50 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
     }
 
     private final Options options = new Options();
-    
-    public NoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
-                           Parameter parameter, Transform transform, Parameter mask,
-                           HamiltonianMonteCarloOperator.Options runtimeOptions,
-                           MassPreconditioner.Type preconditioningType) {
-        super(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions, preconditioningType);
-    }
 
-    @Override
-    protected InstabilityHandler getDefaultInstabilityHandler() {
-        return InstabilityHandler.IGNORE;
-    }
+    public NoUTurnOperator(ReversibleHMCProvider hmcProvider,
+                           boolean adaptiveStepsize,
+                           double weight) {
 
-    private StepSize stepSizeInformation;
+        this.hmcProvider = hmcProvider;
+        this.adaptiveStepsize = adaptiveStepsize;
+        setWeight(weight);
+    }
 
     @Override
     public String getOperatorName() {
-        return "No-UTurn-Sampler operator";
+        return "No-U-Turn Operator";
     }
 
     @Override
-    public double doOperation(Likelihood likelihood) {
+    public double doOperation() {
 
-        if (shouldCheckGradient()) {
-            checkGradient(likelihood);
-        }
-
-        final double[] initialPosition = leapFrogEngine.getInitialPosition();
+        final double[] initialPosition = hmcProvider.getInitialPosition();
 
         if (stepSizeInformation == null) {
-            stepSizeInformation = findReasonableStepSize(initialPosition, super.stepSize);
+            stepSizeInformation = findReasonableStepSize(initialPosition, hmcProvider.getStepSize());
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);
-        leapFrogEngine.setParameter(position);
 
-        return 0.0;
+        hmcProvider.setParameter(position);
+        return 0;
     }
 
     private double[] takeOneStep(long m, double[] initialPosition) {
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
-//        final double[][] mass = massProvider.getMass();
-        final WrappedVector initialMomentum = mask(preconditioning.drawInitialMomentum(), mask);
+        final WrappedVector initialMomentum = hmcProvider.drawMomentum();
 
-        final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
+        final double initialJointDensity = hmcProvider.getJointProbability(initialMomentum);
 
         double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
 
         TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum.getBuffer(), 1, true);
-            // Trajectory of Hamiltonian dynamics endowed with a binary tree structure.
 
         int height = 0;
 
         while (trajectoryTree.flagContinue) {
-
             double[] tmp = updateTrajectoryTree(trajectoryTree, height, logSliceU, initialJointDensity);
             if (tmp != null) {
                 endPosition = tmp;
@@ -121,12 +73,14 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             }
         }
 
-        stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
-
+        if (adaptiveStepsize) {
+            stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
+        }
         return endPosition;
     }
 
-    private double[] updateTrajectoryTree(TreeState trajectoryTree, int depth, double logSliceU, double initialJointDensity) {
+    private double[] updateTrajectoryTree(TreeState trajectoryTree, int depth, double logSliceU,
+                                          double initialJointDensity) {
 
         double[] endPosition = null;
 
@@ -161,27 +115,21 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         }
     }
 
-    private void handleInstability() {
-        throw new RuntimeException("Numerical instability; need to handle"); // TODO
-    }
 
     private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
 
         // Make deep copy of position and momentum
-        double[] position = Arrays.copyOf(inPosition, inPosition.length);
+        WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(inPosition, inPosition.length));
+        //double[] position = Arrays.copyOf(inPosition, inPosition.length);
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
 
-        leapFrogEngine.setParameter(position);
+        hmcProvider.setParameter(position.getBuffer());
 
-        // "one frog jump!"
-        try {
-            doLeap(position, momentum, direction * stepSize);
-        } catch (NumericInstabilityException e) {
-            handleInstability();
-        }
+        // "one reversibleHMC integral
+        hmcProvider.reversiblePositionMomentumUpdate(position, momentum, direction, stepSize);
 
-        double logJointProbAfter = getJointProbability(gradientProvider, momentum);
+        double logJointProbAfter = hmcProvider.getJointProbability(momentum);
 
         final int numNodes = (logSliceU <= logJointProbAfter ? 1 : 0);
 
@@ -191,9 +139,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         final double acceptProb = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
         final int numAcceptProbStates = 1;
 
-        leapFrogEngine.setParameter(inPosition);
+        hmcProvider.setParameter(inPosition);
 
-        return new TreeState(position, momentum.getBuffer(), numNodes, flagContinue, acceptProb, numAcceptProbStates);
+        return new TreeState(position.getBuffer(), momentum.getBuffer(), numNodes, flagContinue, acceptProb,
+                numAcceptProbStates);
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
@@ -214,14 +163,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return subtree;
     }
 
-    private void doLeap(final double[] position,
-                        final WrappedVector momentum,
-                        final double stepSize) throws NumericInstabilityException {
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize);
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
+    private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {
+        return computeStopCriterion(flagContinue,
+                state.getPosition(1), state.getPosition(-1),
+                state.getMomentum(1), state.getMomentum(-1));
     }
 
     private StepSize findReasonableStepSize(double[] initialPosition, double forcedInitialStepSize) {
@@ -230,21 +175,17 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             return new StepSize(forcedInitialStepSize);
         } else {
             double stepSize = 0.1;
-//        final double[] mass = massProvider.getMass();
-            WrappedVector momentum = preconditioning.drawInitialMomentum();
+
+            WrappedVector momentum = hmcProvider.drawMomentum();
             int count = 1;
+            int dim = initialPosition.length;
+            WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(initialPosition, dim));
 
-            double[] position = Arrays.copyOf(initialPosition, dim);
+            double probBefore = hmcProvider.getJointProbability(momentum);
 
-            double probBefore = getJointProbability(gradientProvider, momentum);
+            hmcProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
 
-            try {
-                doLeap(position, momentum, stepSize);
-            } catch (NumericInstabilityException e) {
-                handleInstability();
-            }
-
-            double probAfter = getJointProbability(gradientProvider, momentum);
+            double probAfter = hmcProvider.getJointProbability(momentum);
 
             double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
 
@@ -253,14 +194,9 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
             while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
 
                 probBefore = probAfter;
-                //"one frog jump!"
-                try {
-                    doLeap(position, momentum, stepSize);
-                } catch (NumericInstabilityException e) {
-                    handleInstability();
-                }
+                hmcProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
 
-                probAfter = getJointProbability(gradientProvider, momentum);
+                probAfter = hmcProvider.getJointProbability(momentum);
                 probRatio = Math.exp(probAfter - probBefore);
 
                 stepSize = Math.pow(2, a) * stepSize;
@@ -271,16 +207,11 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
                             "iterations");
                 }
             }
-            leapFrogEngine.setParameter(initialPosition);
+            hmcProvider.setParameter(initialPosition);
             return new StepSize(stepSize);
         }
     }
 
-    private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {
-        return computeStopCriterion(flagContinue,
-                state.getPosition(1), state.getPosition(-1),
-                state.getMomentum(1), state.getMomentum(-1));
-    }
 
     private static boolean computeStopCriterion(boolean flagContinue,
                                                 double[] positionPlus, double[] positionMinus,
@@ -318,25 +249,16 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         return result;
     }
 
-    private  double getJointProbability(GradientWrtParameterProvider gradientProvider, WrappedVector momentum) {
-
-        assert (gradientProvider != null);
-        assert (momentum != null);
-
-        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum)
-                - leapFrogEngine.getParameterLogJacobian();
-    }
-
     private class TreeState {
 
         private TreeState(double[] position, double[] moment,
-                         int numNodes, boolean flagContinue) {
+                          int numNodes, boolean flagContinue) {
             this(position, moment, numNodes, flagContinue, 0.0, 0);
         }
 
         private TreeState(double[] position, double[] moment,
-                         int numNodes, boolean flagContinue,
-                         double cumAcceptProb, int numAcceptProbStates) {
+                          int numNodes, boolean flagContinue,
+                          double cumAcceptProb, int numAcceptProbStates) {
             this.position = new double[3][];
             this.momentum = new double[3][];
 
@@ -416,6 +338,10 @@ public class NoUTurnOperator extends HamiltonianMonteCarloOperator implements Ge
         private double cumAcceptProb;
         private int numAcceptProbStates;
     }
-}
 
+
+    private ReversibleHMCProvider hmcProvider;
+    private StepSize stepSizeInformation;
+    private boolean adaptiveStepsize;
+}
 

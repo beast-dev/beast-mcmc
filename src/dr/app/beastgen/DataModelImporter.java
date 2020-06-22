@@ -50,6 +50,7 @@ import org.jdom.JDOMException;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 /**
@@ -321,48 +322,35 @@ public class DataModelImporter {
     /**
      * Reads a tsv or csv file and adds the attributes to the taxon in the taxonList
      *
-     * Note: Any taxon in the tsv but not in the taxon list will be added.
      * @param fileName - The name of a tsv file with headers where the first column is taxon and the second is the set name
      * @param taxonList - A taxonList with name's matching the those in the first column of the tsv.
      * @throws IOException
      */
     public void addTraitsFromFile(String fileName, TaxonList taxonList) throws IOException{
 
-                // JT- Currently this needs to be called after the taxa are made but before the data model is constructed.
-                // In the current implementation this function needs to be called within setData and so the trait tsv is
-                // passed as a parameter to all the importers.
-        Map traits = new HashMap();
+        // JT- Currently this needs to be called after the taxa are made but before the data model is constructed.
         //  For each attribute get the unique entries and store in an attribute entry
-         ArrayList<Map> attributes = new ArrayList<>();
         try {
             DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(fileName));
             String[] taxonNames = dataTable.getRowLabels();
             String[] traitNames = dataTable.getColumnLabels();
 
-
-            // For each taxon get the attribute and assign them in the taxa list
-            // if the taxon is not in the list add it
+            // For each taxon get the attribute and assign them in the taxon list
+            // if the taxon is not in the list thow a warning
             Set<String> taxonSet = TaxonList.Utils.getTaxonListIdSet(taxonList);
             // a work around since we can't add taxon directly to a taxonList
-            Taxa taxa =new Taxa(taxonList);
             for (int i = 0; i <dataTable.getRowCount() ; i++) {
                 String taxonName = taxonNames[i];
                 String[] taxonData = dataTable.getRow(i);
 
-                Taxon t;
-
-                if(taxonSet.contains(taxonName)){
-                    t = taxonList.getTaxon(taxonList.getTaxonIndex(taxonName));
-                }else{
-                    t = new Taxon(taxonName);
-                    taxa.addTaxon(t);
+                if(!taxonSet.contains(taxonName)){
+                    Logger.getLogger("dr.app.beastgen").warning("Taxon "+taxonName+ " from " +fileName+" was not found in input file. It will be ignored.");
+                }else {
+                    Taxon t = taxonList.getTaxon(taxonList.getTaxonIndex(taxonName));
+                    for (int j = 0; j < traitNames.length; j++) {
+                        t.setAttribute(traitNames[j], taxonData[j]);
+                    }
                 }
-
-                for (int j = 0; j <traitNames.length ; j++) {
-                    t.setAttribute(traitNames[j],taxonData[j]);
-                }
-                //recasting as TaxonList
-                taxonList = (TaxonList) taxa;
             }
 
         }catch (IOException e){

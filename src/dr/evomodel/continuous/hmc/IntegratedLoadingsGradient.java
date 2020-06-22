@@ -14,6 +14,7 @@ import dr.inference.model.*;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.util.StopWatch;
+import dr.util.TaskPool;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
@@ -38,12 +39,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final Likelihood likelihood;
     private final double[] data;
     private final boolean[] missing;
-    private final TaxonTaskPool taxonTaskPool;
+    private final TaskPool taxonTaskPool;
 
     private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                        ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                        IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                       TaxonTaskPool taxonTaskPool) {
+                                       TaskPool taskPool) {
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
 
@@ -71,11 +72,11 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         likelihoodList.add(factorAnalysisLikelihood);
         this.likelihood = new CompoundLikelihood(likelihoodList);
 
-        this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool :
-                new TaxonTaskPool(tree.getExternalNodeCount(), 1);
+        this.taxonTaskPool = (taskPool != null) ? taskPool :
+                new TaskPool(tree.getExternalNodeCount(), 1);
 
         if (this.taxonTaskPool.getNumTaxon() != tree.getExternalNodeCount()) {
-            throw new IllegalArgumentException("Incorrectly specified TaxonTaskPool");
+            throw new IllegalArgumentException("Incorrectly specified TaskPool");
         }
 
         if (TIMING) {
@@ -400,7 +401,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate =
                     (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
 
-            TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
+            TaskPool taskPool = (TaskPool) xo.getChild(TaskPool.class);
 
             // TODO Check dimensions, parameters, etc.
 
@@ -408,7 +409,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
                     treeDataLikelihood,
                     continuousDataLikelihoodDelegate,
                     factorAnalysis,
-                    taxonTaskPool);
+                    taskPool);
         }
 
         @Override
@@ -434,7 +435,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 new ElementRule(IntegratedFactorAnalysisLikelihood.class),
                 new ElementRule(TreeDataLikelihood.class),
-                new ElementRule(TaxonTaskPool.class, true),
+                new ElementRule(TaskPool.class, true),
         };
     };
 

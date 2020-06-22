@@ -1,0 +1,78 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<parameter id="data" value="1 2 3 4"/>
+
+	<multivariateDistributionLikelihood id="normal">
+		<distribution>
+			<multivariateNormalDistributionModel>
+				<meanParameter>
+					<parameter value="0 0 0 0"/>
+				</meanParameter>
+				<precisionParameter>
+					<matrixParameter>
+						<parameter value=" 1.0 -0.90  0.00  0.0"/>
+						<parameter value="-0.9  1.81 -0.90  0.0"/>
+						<parameter value=" 0.0 -0.90  1.81 -0.9"/>
+						<parameter value=" 0.0  0.00 -0.90  1.0"/>
+					</matrixParameter>
+				</precisionParameter>
+			</multivariateNormalDistributionModel>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<multivariateDistributionLikelihood id="ar">
+		<distribution>
+			<autoRegressiveNormalDistributionModel dim="4">
+				<scale>
+					<parameter value="1.0"/>
+				</scale>
+				<rho>
+					<parameter value="0.9"/>
+				</rho>
+			</autoRegressiveNormalDistributionModel>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<assertEqual tolerance="1e-10" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check log-likelihood
+        </message>
+        <actual regex="MultivariateDistributionLikelihood\((.*?)\)">
+        	<report>
+	            <multivariateDistributionLikelihood idref="ar"/>
+	        </report>
+        </actual>
+        <expected regex="MultivariateDistributionLikelihood\((.*?)\)">
+        	<report>
+	            <multivariateDistributionLikelihood idref="normal"/>
+	        </report>
+        </expected>
+    </assertEqual>
+
+	<assertEqual tolerance="1e-10" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check gradient
+        </message>
+        <actual regex="analytic: (.*?)\n">
+        	<report>
+        		<gradient>
+		            <multivariateDistributionLikelihood idref="ar"/>
+				</gradient>
+	        </report>
+        </actual>
+        <expected regex="analytic: (.*?)\n">
+        	<report>
+        		<gradient>
+		            <multivariateDistributionLikelihood idref="normal"/>
+				</gradient>
+	        </report>
+        </expected>
+    </assertEqual>
+</beast>

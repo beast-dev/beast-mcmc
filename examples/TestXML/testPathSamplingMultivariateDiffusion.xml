@@ -148,37 +148,39 @@
 			<prior idref="prior.randomWalk"/>
 			<likelihood idref="likelihood.randomWalk"/>
 			<matrixParameter idref="X.precisionMatrix"/>
+            <parameter idref="X.precision.diagonal"/>
+            <parameter idref="X.precision.offDiagonal"/>
 		</log>
 	</mcmc>
 
 	<traceAnalysis fileName="testSimplePathSamplingPrecision.randomWalk.log" stdError="true"/>
 
-    <marginalLikelihoodEstimator chainLength="50000" pathSteps="21" pathScheme="betaquantile" alpha="0.3">
-		<samplers>
-			<mcmc idref="mcmc.randomWalk"/>
-		</samplers>
-		<pathLikelihood id="pathLikelihood.randomWalk">
-			<source>
-				<posterior idref="posterior.randomWalk"/>
-			</source>
-			<destination>
-				<prior idref="prior.randomWalk"/>
-			</destination>
-		</pathLikelihood>
-		<log id="MLE.randomWalk" logEvery="100" fileName="testSimplePathSamplingPrecision.randomWalk.MLE.log">
-			<pathLikelihood idref="pathLikelihood.randomWalk"/>
-		</log>
-	</marginalLikelihoodEstimator>
+    <!-- <marginalLikelihoodEstimator chainLength="50000" pathSteps="21" pathScheme="betaquantile" alpha="0.3"> -->
+	<!-- 	<samplers> -->
+	<!-- 		<mcmc idref="mcmc.randomWalk"/> -->
+	<!-- 	</samplers> -->
+	<!-- 	<pathLikelihood id="pathLikelihood.randomWalk"> -->
+	<!-- 		<source> -->
+	<!-- 			<posterior idref="posterior.randomWalk"/> -->
+	<!-- 		</source> -->
+	<!-- 		<destination> -->
+	<!-- 			<prior idref="prior.randomWalk"/> -->
+	<!-- 		</destination> -->
+	<!-- 	</pathLikelihood> -->
+	<!-- 	<log id="MLE.randomWalk" logEvery="100" fileName="testSimplePathSamplingPrecision.randomWalk.MLE.log"> -->
+	<!-- 		<pathLikelihood idref="pathLikelihood.randomWalk"/> -->
+	<!-- 	</log> -->
+	<!-- </marginalLikelihoodEstimator> -->
 
-    <pathSamplingAnalysis fileName="testSimplePathSamplingPrecision.randomWalk.MLE.log">
-        <likelihoodColumn name="pathLikelihood.randomWalk.delta"/>
-        <thetaColumn name="pathLikelihood.randomWalk.theta"/>
-    </pathSamplingAnalysis>
+    <!-- <pathSamplingAnalysis fileName="testSimplePathSamplingPrecision.randomWalk.MLE.log"> -->
+        <!-- <likelihoodColumn name="pathLikelihood.randomWalk.delta"/> -->
+        <!-- <thetaColumn name="pathLikelihood.randomWalk.theta"/> -->
+    <!-- </pathSamplingAnalysis> -->
 
-	<steppingStoneSamplingAnalysis fileName="testSimplePathSamplingPrecision.randomWalk.MLE.log">
-		<likelihoodColumn name="pathLikelihood.randomWalk.delta"/>
-		<thetaColumn name="pathLikelihood.randomWalk.theta"/>
-	</steppingStoneSamplingAnalysis>
+	<!-- <steppingStoneSamplingAnalysis fileName="testSimplePathSamplingPrecision.randomWalk.MLE.log"> -->
+	<!-- 	<likelihoodColumn name="pathLikelihood.randomWalk.delta"/> -->
+	<!-- 	<thetaColumn name="pathLikelihood.randomWalk.theta"/> -->
+	<!-- </steppingStoneSamplingAnalysis> -->
 
     <!--
 burnIn   <= 10000,   maxState  = 100000
@@ -196,6 +198,40 @@ log marginal likelihood (using path sampling) from pathLikelihood.randomWalk.del
 Inner area for path parameter in (3.9138e-05,0.84990) = -32.598
 
 log marginal likelihood (using stepping stone sampling) from pathLikelihood.randomWalk.delta = -32.5762650252833
+    -->
+
+    <marginalLikelihoodEstimator chainLength="100000" pathSteps="21" pathScheme="betaquantile" alpha="0.3">
+		<samplers>
+			<mcmc idref="mcmc.randomWalk"/>
+		</samplers>
+		<pathLikelihood id="pathLikelihood.randomWalk">
+			<source>
+				<posterior idref="posterior.randomWalk"/>
+			</source>
+			<destination>
+				<workingPrior>
+                    <logTransformedNormalReferencePrior id="X.precision.diagonal.workingPrior" fileName="testSimplePathSamplingPrecision.randomWalk.log" parameterColumn="X.precision.diagonal" dimension="2" burnin="10000">
+                        <parameter idref="X.precision.diagonal"/>
+                    </logTransformedNormalReferencePrior>
+                    <normalReferencePrior id="X.precision.offDiagonal.workingPrior" fileName="testSimplePathSamplingPrecision.randomWalk.log" parameterColumn="X.precision.offDiagonal" dimension="1" burnin="10000">
+                        <parameter idref="X.precision.offDiagonal"/>
+                    </normalReferencePrior>
+				</workingPrior>
+			</destination>
+		</pathLikelihood>
+		<log id="MLE.randomWalk" logEvery="100" fileName="testSimplePathSamplingPreision.randomWalk.MLE.log">
+			<pathLikelihood idref="pathLikelihood.randomWalk"/>
+		</log>
+	</marginalLikelihoodEstimator>
+
+    <generalizedSteppingStoneSamplingAnalysis fileName="testSimplePathSamplingPreision.randomWalk.MLE.log">
+        <sourceColumn name="pathLikelihood.randomWalk.source"/>
+        <destinationColumn name="pathLikelihood.randomWalk.destination"/>
+        <thetaColumn name="pathLikelihood.randomWalk.theta"/>      
+    </generalizedSteppingStoneSamplingAnalysis> 
+
+    <!--
+log marginal likelihood (using generalized stepping stone sampling) from (pathLikelihood.randomWalk.source - pathLikelihood.randomWalk.destination) = -32.563480705272184
     -->
 
     <report>

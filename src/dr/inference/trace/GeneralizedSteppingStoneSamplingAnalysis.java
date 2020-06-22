@@ -40,7 +40,7 @@ import java.util.*;
  * @author Guy Baele
  */
 
-public class GeneralizedSteppingStoneSamplingAnalysis {
+public class GeneralizedSteppingStoneSamplingAnalysis implements Reportable {
 	
     public static final String GENERALIZED_STEPPING_STONE_SAMPLING_ANALYSIS = "generalizedSteppingStoneSamplingAnalysis";
     public static final String RESULT_FILE_NAME = "resultsFileName";
@@ -151,7 +151,12 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
         sb.append("\nlog marginal likelihood (using generalized stepping stone sampling) from (" + sourceName + " - " + destinationName + ") = " + bf + "\n");
         return sb.toString();
     }
-    
+
+    @Override
+    public String getReport() {
+        return this.toString();
+    }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
     	
     	public String getParserName() {

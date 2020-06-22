@@ -27,6 +27,7 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PathGradient;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
@@ -47,7 +48,7 @@ import dr.util.Transform;
  */
 
 public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
-        implements GeneralOperator, PathDependent {
+        implements GeneralOperator, PathDependent, ReversibleHMCProvider {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -89,7 +90,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
     @Override
     public String getOperatorName() {
-        return "Vanilla HMC operator";
+        return "VanillaHMC(" + parameter.getParameterName() + ")";
     }
 
     private boolean shouldUpdatePreconditioning() {
@@ -258,7 +259,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             if (!MathUtils.isClose(analyticalGradientTransformed, numericGradientTransformed, runtimeOptions.gradientCheckTolerance)) {
                 String sb = "Transformed Gradients do not match:\n" +
                         "\tAnalytic: " + new WrappedVector.Raw(analyticalGradientTransformed) + "\n" +
-                        "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n";
+                        "\tNumeric : " + new WrappedVector.Raw(numericGradientTransformed) + "\n" +
+                        "\tParameter : " + new WrappedVector.Raw(parameter.getParameterValues()) + "\n" +
+                        "\tTransformed Parameter : " + new WrappedVector.Raw(transformedParameter) + "\n";
                 throw new RuntimeException(sb);
             }
         }
@@ -340,7 +343,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return count;
     }
 
-    double getKineticEnergy(ReadableVector momentum) {
+    public double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
 
@@ -424,11 +427,21 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
-            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
-                if (Math.abs(x - y) > eps) {
+            void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException {
+                if (!transform.isInInteriorDomain(unTransformedPosition, 0, unTransformedPosition.length)) {
                     throw new NumericInstabilityException();
                 }
             }
+
+//            @Override
+//            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
+//                if (Math.abs(x - y) > eps) {
+//                    throw new NumericInstabilityException();
+//                }
+//            }
+
+            @Override
+            boolean checkPositionTransform() { return true; }
         },
 
         DEBUG("debug") {
@@ -439,13 +452,25 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                     throw new NumericInstabilityException();
                 }
             }
+
             @Override
-            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
-                if (Math.abs(x - y) > eps) {
+            void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException {
+                if (!transform.isInInteriorDomain(unTransformedPosition, 0, unTransformedPosition.length)) {
                     System.err.println("Numerical instability in HMC momentum; throwing exception");
                     throw new NumericInstabilityException();
                 }
             }
+
+//            @Override
+//            void checkEqual(double x, double y, double eps) throws NumericInstabilityException {
+//                if (Math.abs(x - y) > eps) {
+//                    System.err.println("Numerical instability in HMC momentum; throwing exception");
+//                    throw new NumericInstabilityException();
+//                }
+//            }
+
+            @Override
+            boolean checkPositionTransform() { return true; }
         },
 
         IGNORE("ignore") {
@@ -454,9 +479,18 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                 // Do nothing
             }
 
-            void checkEqual(double x, double y, double eps) {
+            @Override
+            void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException {
                 // Do nothing
             }
+
+//            @Override
+//            void checkEqual(double x, double y, double eps) {
+//                // Do nothing
+//            }
+
+            @Override
+            boolean checkPositionTransform() { return false; }
         };
 
         private final String name;
@@ -475,7 +509,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
 
         abstract void checkValue(double x) throws NumericInstabilityException;
-        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+//        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+        abstract void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException;
+        abstract boolean checkPositionTransform();
     }
 
     protected InstabilityHandler getDefaultInstabilityHandler() {
@@ -507,9 +543,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                             final double functionalStepSize) throws NumericInstabilityException;
 
         void setParameter(double[] position);
-
-        @SuppressWarnings("unused")
-        void checkPosition(double[] position) throws NumericInstabilityException;
 
         double[] getLastGradient();
 
@@ -578,13 +611,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
                     position[i] += functionalStepSize * preconditioning.getVelocity(i, momentum);
                     instabilityHandler.checkValue(position[i]);
                 }
-                checkPosition(position);
-                setParameter(position);
-            }
 
-            @Override
-            public void checkPosition(double[] position) throws NumericInstabilityException {
-                // Do nothing
+                setParameter(position);
             }
 
             public void setParameter(double[] position) {
@@ -627,20 +655,89 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
+            public void updatePosition(double[] position, WrappedVector momentum,
+                                       double functionalStepSize) throws NumericInstabilityException {
+
+                super.updatePosition(position, momentum, functionalStepSize);
+
+                if (instabilityHandler.checkPositionTransform()) {
+                    checkPosition(unTransformedPosition);
+                }
+            }
+
+            @Override
             public void setParameter(double[] position) {
                 unTransformedPosition = transform.inverse(position, 0, position.length);
                 super.setParameter(unTransformedPosition);
             }
 
-            @Override
-            public void checkPosition(double[] position) throws NumericInstabilityException {
-                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length), 0, position.length);
-                for (int i = 0; i < position.length; i++) {
-                    instabilityHandler.checkEqual(position[i], newPosition[i], EPS);
-                }
+            private void checkPosition(double[] unTransformedPosition) throws NumericInstabilityException {
+                instabilityHandler.checkPosition(transform, unTransformedPosition);
             }
 
-            private double EPS = 10e-10;
+//            private void checkPosition(double[] position) throws NumericInstabilityException {
+//                double[] newPosition = transform.transform(transform.inverse(position, 0, position.length),
+//                        0, position.length);
+//                for (int i = 0; i < position.length; i++) {
+//                    instabilityHandler.checkEqual(position[i], newPosition[i], EPS);
+//                }
+//            }
+//
+//            private double EPS = 10e-10;
         }
+    }
+
+    protected void doLeap(final double[] position,
+                          final WrappedVector momentum,
+                          final double stepSize) throws NumericInstabilityException {
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, stepSize);
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
+    }
+
+    @Override
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+        try {
+            doLeap(position.getBuffer(), momentum, direction * time);
+        } catch (NumericInstabilityException e) {
+            handleInstability();
+        }
+    }
+
+    @Override
+    public double[] getInitialPosition() {
+
+        return leapFrogEngine.getInitialPosition();
+    }
+
+    @Override
+    public double getParameterLogJacobian() {
+        return leapFrogEngine.getParameterLogJacobian();
+    }
+
+    @Override
+    public void setParameter(double[] position) {
+        leapFrogEngine.setParameter(position);
+    }
+
+    @Override
+    public WrappedVector drawMomentum() {
+        return mask(preconditioning.drawInitialMomentum(), mask);
+    }
+
+    @Override
+    public double getJointProbability(WrappedVector momentum) {
+        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getStepSize() {
+        return stepSize;
+    }
+
+    protected void handleInstability() {
+        throw new RuntimeException("Numerical instability; need to handle"); // TODO
     }
 }

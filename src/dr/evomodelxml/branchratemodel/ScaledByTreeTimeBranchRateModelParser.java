@@ -1,7 +1,7 @@
 /*
- * NormalPotentialDerivativeParser.java
+ * ArbitraryBranchRatesParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,56 +23,49 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.hmc;
+package dr.evomodelxml.branchratemodel;
 
-import dr.inference.hmc.NormalPotentialDerivative;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.ScaledByTreeTimeBranchRateModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * @author Max Tolkoff
+ * @author Marc A. Suchard
  */
-@Deprecated
-public class NormalPotentialDerivativeParser extends AbstractXMLObjectParser{
-    public static final String NORMAL_POTENTIAL_DERIVATIVE = "normalPotentialDerivative";
+public class ScaledByTreeTimeBranchRateModelParser extends AbstractXMLObjectParser {
 
-    public static final String MEAN = "mean";
-    public static final String STDEV = "stdev";
+    public static final String TREE_TIME_BRANCH_RATES = "scaledByTreeTimeBranchRates";
 
-    @Override
     public String getParserName() {
-        return NORMAL_POTENTIAL_DERIVATIVE;
+        return TREE_TIME_BRANCH_RATES;
     }
 
-    @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        double mean = xo.getDoubleAttribute(MEAN);
-        double stdev = xo.getDoubleAttribute(STDEV);
 
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        BranchRateModel model = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        Parameter mean = (Parameter) xo.getChild(Parameter.class);
 
-        return new NormalPotentialDerivative(mean, stdev, parameter);
+        return new ScaledByTreeTimeBranchRateModel(tree, model, mean);
     }
 
-    @Override
+    public String getParserDescription() {
+        return "This element returns a rate model that is scaled by tree time.";
+    }
+
+    public Class getReturnType() {
+        return ScaledByTreeTimeBranchRateModel.class;
+    }
+
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newDoubleRule(MEAN),
-            AttributeRule.newDoubleRule(STDEV),
-            new ElementRule(Parameter.class),
+            new ElementRule(TreeModel.class),
+            new ElementRule(BranchRateModel.class),
+            new ElementRule(Parameter.class, true),
     };
-
-
-    @Override
-    public String getParserDescription() {
-        return null;
-    }
-
-    @Override
-    public Class getReturnType() {
-        return NormalPotentialDerivative.class;
-    }
 }

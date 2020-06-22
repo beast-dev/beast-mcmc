@@ -3,6 +3,11 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
 
+/**
+ * @author Marc A. Suchard
+ * @author Akihiko Nishimura
+ */
+
 public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel {
 
     public JointBayesianBridgeDistributionModel(Parameter globalScale,

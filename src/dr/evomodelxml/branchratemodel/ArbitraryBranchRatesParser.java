@@ -47,6 +47,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String MULTIPLIER = "multiplier";
     private static final String CENTER_AT_ONE = "centerAtOne";
     private static final String RANDOMIZE_RATES = "randomizeRates";
+    private static final String RANDOM_SCALE = "randomScale";
     static final String LOCATION = "location";
     static final String SCALE = "scale";
 
@@ -66,7 +67,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
 
-        if(centerAtOne && randomizeRates == true) {
+        if(centerAtOne && randomizeRates) {
             throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
         }
 
@@ -81,14 +82,16 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
-        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
+        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on "
+                + rateCategoryParameter.getId());
 
 
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
 
+        double scale = xo.getAttribute(RANDOM_SCALE, 1.0);
         if (randomizeRates) {
             for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-                rateCategoryParameter.setValue(i, MathUtils.uniform(0,10));
+                rateCategoryParameter.setValue(i, Math.exp(MathUtils.nextGaussian() * scale));
             }
         }
 
@@ -146,6 +149,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(CENTER_AT_ONE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_RATES, true),
             AttributeRule.newBooleanRule(EXP, true),
+            AttributeRule.newDoubleRule(RANDOM_SCALE, true),
             new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
             new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),
     };

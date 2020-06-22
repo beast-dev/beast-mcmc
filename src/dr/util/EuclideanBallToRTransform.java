@@ -77,6 +77,15 @@ public class EuclideanBallToRTransform extends Transform.MultivariateTransform {
         return (squaredNorm(x) <= 1.0);
     }
 
+    private boolean isInStrictEuclideanUnitBall(double[] x) {
+        return (squaredNorm(x) <= 1.0);
+    }
+
+    @Override
+    public boolean isInInteriorDomain(double[] values) {
+        return isInStrictEuclideanUnitBall(values);
+    }
+
     @Override
     public double[] inverse(double[] values, int from, int to, double sum) {
         throw new RuntimeException("Not relevant.");

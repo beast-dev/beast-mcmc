@@ -49,9 +49,11 @@ import static dr.evomodelxml.tree.TreeModelParser.*;
  */
 public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
-    public static final String ANCESTRAL_TRAIT_TREE_MODEL = "ancestralTraitTreeModel";
+    private static final String ANCESTRAL_TRAIT_TREE_MODEL = "ancestralTraitTreeModel";
 //    public static final String PSEUDO_BRANCH_LENGTH_NAME = "pseudoBranchLengthName";
-    public static final String ANCESTOR = "ancestor";
+    private static final String ANCESTOR = "ancestor";
+    private static final String ANCESTRAL_PATH = "ancestralPath";
+    private static final String RELATIVE_HEIGHT = "relativeToTipHeight";
 
     public String getParserName() {
         return ANCESTRAL_TRAIT_TREE_MODEL;
@@ -148,31 +150,55 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
     private static AncestralTaxonInTree parseAncestor(MutableTreeModel tree, XMLObject xo, final int index) throws XMLParseException {
 
         Taxon ancestor = (Taxon) xo.getChild(Taxon.class);
-
-        TaxonList descendants = MonophylyStatisticParser.parseTaxonListOrTaxa(
-                xo.getChild(MonophylyStatisticParser.MRCA));
-
         Parameter pseudoBranchLength = (Parameter) xo.getChild(Parameter.class);
 
         AncestralTaxonInTree ancestorInTree;
-        try {
 
-            NodeRef node = new NodeRef() {
-                @Override
-                public int getNumber() {
-                    return index;
-                }
+        NodeRef node = new NodeRef() {
+            @Override
+            public int getNumber() {
+                return index;
+            }
 
-                @Override
-                public void setNumber(int n) {
-                    throw new RuntimeException("Do not set");
-                }
-            };
+            @Override
+            public void setNumber(int n) {
+                throw new RuntimeException("Do not set");
+            }
+        };
 
-            ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
-                    node, index);
-        } catch (TreeUtils.MissingTaxonException e) {
-            throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
+        if (xo.hasChildNamed(MonophylyStatisticParser.MRCA)) {
+            TaxonList descendants = MonophylyStatisticParser.parseTaxonListOrTaxa(
+                    xo.getChild(MonophylyStatisticParser.MRCA));
+
+            try {
+                ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
+                        null, node, index, false);
+            } catch (TreeUtils.MissingTaxonException e) {
+                throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
+            }
+        } else {
+
+            XMLObject cxo = xo.getChild(ANCESTRAL_PATH);
+
+            Taxon taxon = (Taxon) cxo.getChild(Taxon.class);
+            Parameter time = (Parameter) cxo.getChild(Parameter.class);
+
+            boolean relativeHeight = cxo.getAttribute(RELATIVE_HEIGHT, false);
+
+            if (time.getParameterValue(0) <= taxon.getHeight()) {
+                throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
+                        taxon.getId() + "'");
+            }
+
+            Taxa descendent = new Taxa();
+            descendent.addTaxon(taxon);
+
+            try {
+                ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendent, pseudoBranchLength,
+                        time, node, index, relativeHeight); // TODO Refactor into separate class from MRCA version
+            } catch (TreeUtils.MissingTaxonException e) {
+                throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
+            }
         }
 
         return ancestorInTree;
@@ -201,12 +227,18 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
                     new ElementRule(ANCESTOR, new XMLSyntaxRule[] {
                             new ElementRule(Taxon.class),
                             new ElementRule(Parameter.class),
-                            new ElementRule(MonophylyStatisticParser.MRCA, new XMLSyntaxRule[]{
-                                    new XORRule(
-                                            new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
-                                            new ElementRule(Taxa.class)
-                                    )
-                            }),
+                            new XORRule(
+                                    new ElementRule(MonophylyStatisticParser.MRCA, new XMLSyntaxRule[]{
+                                            new XORRule(
+                                                    new ElementRule(Taxon.class, 1, Integer.MAX_VALUE),
+                                                    new ElementRule(Taxa.class)
+                                            )
+                                    }),
+                                    new ElementRule(ANCESTRAL_PATH, new XMLSyntaxRule[]{
+                                            new ElementRule(Taxon.class),
+                                            new ElementRule(Parameter.class),
+                                            AttributeRule.newBooleanRule(RELATIVE_HEIGHT, true),
+                                    })),
                     }, 0, Integer.MAX_VALUE),
                     nodeTraitsRule,
             };

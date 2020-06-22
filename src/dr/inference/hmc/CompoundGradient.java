@@ -154,4 +154,8 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
                 GradientWrtParameterProvider.TOLERANCE);
     }
+
+    public List<GradientWrtParameterProvider> getDerivativeList() {
+        return derivativeList;
+    }
 }

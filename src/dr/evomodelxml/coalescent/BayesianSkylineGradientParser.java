@@ -27,10 +27,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.hmc.BayesianSkylineGradient;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  * @author Marc A. Suchard
@@ -53,8 +50,13 @@ public class BayesianSkylineGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
+        return rules;
     }
+
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(WRT_PARAMETER),
+            new ElementRule(BayesianSkylineLikelihood.class),
+    };
 
     @Override
     public String getParserDescription() {

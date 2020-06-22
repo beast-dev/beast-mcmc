@@ -34,6 +34,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -155,10 +156,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
     @Override
     public List<Citation> getCitations() {
-        List<Citation> list =
+        List<Citation> list = 
                 (branchRateModel instanceof Citable) ?
-                        ((Citable) branchRateModel).getCitations() :
-                        new ArrayList<>();
+                        new ArrayList<Citation>(((Citable) branchRateModel).getCitations()) :
+                        new ArrayList<Citation>();
         list.add(RandomLocalClockModel.CITATION);
         return list;
     }

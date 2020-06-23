@@ -44,6 +44,7 @@ public class BayesianSkylineLikelihoodParser extends AbstractXMLObjectParser {
     public static final String STEPWISE = "stepwise";
     public static final String LINEAR = "linear";
     public static final String EXPONENTIAL = "exponential";
+    public static final String BUILD_MAPPING = "intervalNodeMapping";
 
     public String getParserName() {
         return SKYLINE_LIKELIHOOD;
@@ -59,6 +60,8 @@ public class BayesianSkylineLikelihoodParser extends AbstractXMLObjectParser {
 
         cxo = xo.getChild(CoalescentLikelihoodParser.POPULATION_TREE);
         TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
+
+        boolean buildIntervalNodeMapping = xo.getAttribute(BUILD_MAPPING, false);
 
         int type = BayesianSkylineLikelihood.LINEAR_TYPE;
         String typeName = LINEAR;
@@ -87,7 +90,7 @@ public class BayesianSkylineLikelihoodParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Bayesian skyline plot: " + param.getDimension() + " " + typeName + " control points");
 
-        return new BayesianSkylineLikelihood(treeModel, param, param2, type);
+        return new BayesianSkylineLikelihood(treeModel, param, param2, type, buildIntervalNodeMapping);
     }
 
     //************************************************************************

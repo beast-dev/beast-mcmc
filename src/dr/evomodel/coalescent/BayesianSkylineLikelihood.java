@@ -61,6 +61,14 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                                      Parameter popSizeParameter,
                                      Parameter groupSizeParameter,
                                      int type) {
+        this(tree, popSizeParameter, groupSizeParameter, type, false);
+    }
+
+    public BayesianSkylineLikelihood(Tree tree,
+                                     Parameter popSizeParameter,
+                                     Parameter groupSizeParameter,
+                                     int type,
+                                     boolean buildIntervalMapping) {
         super(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
 
         // adding the key word to the the model means the keyword will be logged in the
@@ -138,6 +146,8 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
         addVariable(popSizeParameter);
 
         addVariable(groupSizeParameter);
+
+        this.buildIntervalNodeMapping = buildIntervalMapping;
 
         setupIntervals();
 

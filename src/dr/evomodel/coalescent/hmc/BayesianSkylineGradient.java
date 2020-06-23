@@ -25,13 +25,18 @@
 
 package dr.evomodel.coalescent.hmc;
 
+import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.util.Units;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.Binomial;
 import dr.xml.Reportable;
 
 /**
@@ -43,11 +48,13 @@ public class BayesianSkylineGradient implements
 
     private final BayesianSkylineLikelihood likelihood;
     private final WrtParameter wrtParameter;
+    private final OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
     public BayesianSkylineGradient(BayesianSkylineLikelihood likelihood,
                                    WrtParameter wrtParameter) {
         this.likelihood = likelihood;
         this.wrtParameter = wrtParameter;
+        this.intervalNodeMapping = likelihood.getIntervalNodeMapping();
     }
 
     @Override
@@ -101,12 +108,88 @@ public class BayesianSkylineGradient implements
 
             @Override
             double[] getGradientLogDensity(BayesianSkylineLikelihood likelihood) {
-                return new double[0];
+                return getGradientWrtNodeHeights(likelihood);
             }
+
+            private double[] getGradientWrtNodeHeights(BayesianSkylineLikelihood likelihood) {
+                getWarning(likelihood);
+
+                double[] unsortedGradients = new double[likelihood.getTree().getInternalNodeCount()];
+                double[] sortedHeights = new double[likelihood.getTree().getInternalNodeCount()];
+                int internalNodeIndex = 0;
+
+                likelihood.setupIntervals();
+
+                double currentTime = 0.0;
+
+                int groupIndex=0;
+                int[] groupSizes = likelihood.getGroupSizes();
+                double[] groupEnds = likelihood.getGroupHeights();
+
+                int subIndex = 0;
+
+                ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
+
+                for (int j = 0; j < likelihood.getIntervalCount(); j++) {
+
+                    // set the population size to the size of the middle of the current interval
+                    final double ps = likelihood.getPopSize(groupIndex, currentTime + (likelihood.getInterval(j)/2.0), groupEnds);
+                    cp.setN0(ps);
+                    if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                        subIndex += 1;
+                        if (subIndex >= groupSizes[groupIndex]) {
+                            groupIndex += 1;
+                            subIndex = 0;
+                        }
+                    }
+                    // insert zero-length coalescent intervals
+//                    int diff = likelihood.getCoalescentEvents(j)-1;
+//                    for (int k = 0; k < diff; k++) {
+//                        cp.setN0(likelihood.getPopSize(groupIndex, currentTime, groupEnds));
+//                        logL += likelihood.calculateIntervalLikelihood(cp, 0.0, currentTime, likelihood.getLineageCount(j)-k-1,
+//                                OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT);
+//                        subIndex += 1;
+//                        if (subIndex >= groupSizes[groupIndex]) {
+//                            groupIndex += 1;
+//                            subIndex = 0;
+//                        }
+//                    }
+                    currentTime += likelihood.getInterval(j);
+
+                    if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                        final double intervalGradient = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
+                        unsortedGradients[internalNodeIndex] = intervalGradient;
+                        sortedHeights[internalNodeIndex] = currentTime;
+                        if (internalNodeIndex > 0) {
+                            unsortedGradients[internalNodeIndex - 1] -= getIntervalGradient(cp, currentTime - likelihood.getInterval(j),
+                                    likelihood.getLineageCount(j), likelihood.getIntervalType(j));
+                        }
+                        internalNodeIndex++;
+                    }
+
+
+
+                }
+
+                double[] gradient = likelihood.getIntervalNodeMapping().sortByNodeNumbers(unsortedGradients);
+
+                return gradient;
+            }
+
+            private double getIntervalGradient(DemographicFunction demogFunction,
+                                               double timeOfThisCoal, int lineageCount,
+                                               OldAbstractCoalescentLikelihood.CoalescentEventType type) {
+                final double intensityDeriv = demogFunction.getIntensityGradient(timeOfThisCoal);
+                final double kchoose2 = Binomial.choose2(lineageCount);
+                final double gradient = -kchoose2 * intensityDeriv;
+
+                return gradient;
+            }
+
 
             @Override
             double[] getDiagonalHessianLogDensity(BayesianSkylineLikelihood likelihood) {
-                return new double[0];
+                throw new RuntimeException("Not yet implemented!");
             }
 
             @Override
@@ -116,6 +199,9 @@ public class BayesianSkylineGradient implements
 
             @Override
             public void getWarning(BayesianSkylineLikelihood likelihood) {
+                if (likelihood.getType() != BayesianSkylineLikelihood.STEPWISE_TYPE) {
+                    throw new RuntimeException("Only implemented for stepwise type of Skyline model.");
+                }
 
             }
         };

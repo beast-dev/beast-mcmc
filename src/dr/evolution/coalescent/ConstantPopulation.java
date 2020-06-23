@@ -71,6 +71,9 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 	public double getDemographic(double t) { return getN0(); }
 	public double getIntensity(double t) { return t/getN0(); }
 	public double getInverseIntensity(double x) { return getN0()*x; }
+	public double getIntensityGradient(double finishTime) {
+		return 1.0/getN0();
+	}
 
     // same as abstract
 //	/**

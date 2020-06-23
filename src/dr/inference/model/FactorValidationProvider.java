@@ -33,8 +33,11 @@ public class FactorValidationProvider implements CrossValidationProvider {
         this.nTaxa = factorModel.getNumberOfTaxa();
         this.treeTrait = treeDataLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
         this.tree = treeDataLikelihood.getTree();
-        this.id = id;
-
+        if (id == null) {
+            this.id = FACTOR_VALIDATION;
+        } else {
+            this.id = id;
+        }
 
     }
 
@@ -108,7 +111,7 @@ public class FactorValidationProvider implements CrossValidationProvider {
 
     @Override
     public String getNameSum(int dim) {
-        return null;
+        return id + ".sum";
     }
 
 

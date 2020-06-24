@@ -116,6 +116,7 @@ public class BayesianSkylineGradient implements
 
                 double[] unsortedGradients = new double[likelihood.getTree().getInternalNodeCount()];
                 double[] sortedHeights = new double[likelihood.getTree().getInternalNodeCount()];
+                int[] intervalIndices = new int[likelihood.getTree().getInternalNodeCount()];
                 int internalNodeIndex = 0;
 
                 likelihood.setupIntervals();
@@ -132,7 +133,6 @@ public class BayesianSkylineGradient implements
 
                 for (int j = 0; j < likelihood.getIntervalCount(); j++) {
 
-                    // set the population size to the size of the middle of the current interval
                     final double ps = likelihood.getPopSize(groupIndex, currentTime + (likelihood.getInterval(j)/2.0), groupEnds);
                     cp.setN0(ps);
                     if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
@@ -142,38 +142,22 @@ public class BayesianSkylineGradient implements
                             subIndex = 0;
                         }
                     }
-                    // insert zero-length coalescent intervals
-//                    int diff = likelihood.getCoalescentEvents(j)-1;
-//                    for (int k = 0; k < diff; k++) {
-//                        cp.setN0(likelihood.getPopSize(groupIndex, currentTime, groupEnds));
-//                        logL += likelihood.calculateIntervalLikelihood(cp, 0.0, currentTime, likelihood.getLineageCount(j)-k-1,
-//                                OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT);
-//                        subIndex += 1;
-//                        if (subIndex >= groupSizes[groupIndex]) {
-//                            groupIndex += 1;
-//                            subIndex = 0;
-//                        }
-//                    }
                     currentTime += likelihood.getInterval(j);
 
                     if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
                         final double intervalGradient = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
                         unsortedGradients[internalNodeIndex] = intervalGradient;
                         sortedHeights[internalNodeIndex] = currentTime;
-                        if (internalNodeIndex > 0) {
-                            unsortedGradients[internalNodeIndex - 1] -= getIntervalGradient(cp, currentTime - likelihood.getInterval(j),
-                                    likelihood.getLineageCount(j), likelihood.getIntervalType(j));
-                        }
+                        intervalIndices[internalNodeIndex] = j + 1;
                         internalNodeIndex++;
                     }
-
-
-
+                }
+                for (int i = 0; i < likelihood.getTree().getInternalNodeCount() - 1; i++) {
+                    unsortedGradients[i] -= getIntervalGradient(cp, sortedHeights[i],
+                            likelihood.getLineageCount(intervalIndices[i]), likelihood.getIntervalType(intervalIndices[i]));
                 }
 
-                double[] gradient = likelihood.getIntervalNodeMapping().sortByNodeNumbers(unsortedGradients);
-
-                return gradient;
+                return likelihood.getIntervalNodeMapping().sortByNodeNumbers(unsortedGradients);
             }
 
             private double getIntervalGradient(DemographicFunction demogFunction,

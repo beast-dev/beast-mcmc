@@ -31,6 +31,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -65,7 +66,7 @@ public class DiscreteTraitBranchRateGradient
     protected final Tree tree;
     protected final boolean useHessian;
     protected final Parameter rateParameter;
-    protected final ArbitraryBranchRates branchRateModel;
+    protected final DifferentiableBranchRates branchRateModel;
 
     // TODO Refactor / remove code duplication with BranchRateGradient
     // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradient

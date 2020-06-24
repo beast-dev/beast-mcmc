@@ -25,6 +25,7 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
@@ -32,7 +33,13 @@ import dr.evolution.tree.Tree;
  * @author Marc A. Suchard
  * @author Alexander Fisher
  */
-public interface DifferentiableBranchRates {
+public interface DifferentiableBranchRates  extends BranchRates {
 
     double getBranchRateDifferential(Tree tree, NodeRef node);
+
+    double getBranchRateSecondDifferential(Tree tree, NodeRef node);
+
+    int getParameterIndexFromNode(NodeRef node);
+
+    ArbitraryBranchRates.BranchRateTransform getTransform();
 }

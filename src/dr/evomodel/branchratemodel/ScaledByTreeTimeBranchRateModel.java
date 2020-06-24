@@ -112,6 +112,21 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     }
 
     @Override
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getParameterIndexFromNode(NodeRef node) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public ArbitraryBranchRates.BranchRateTransform getTransform() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
         assert tree == treeModel;

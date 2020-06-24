@@ -34,7 +34,6 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.CommonCitations;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +44,7 @@ import java.util.List;
  * @author Alexander Fisher
  */
 
-public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel implements Citable {
+public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
     private final TreeModel treeModel;
     private final BranchRateModel branchRateModel;
@@ -98,6 +97,19 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     }
 
     protected void acceptState() { }
+
+    @Override
+    public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
+        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        double differential = ((DifferentiableBranchRates)branchRateModel).getBranchRateDifferential(tree, node);
+
+        differential *= 1.0; // TODO Update differential by this transformation
+
+        return differential;
+    }
 
     @Override
     public double getBranchRate(final Tree tree, final NodeRef node) {
@@ -158,8 +170,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     public List<Citation> getCitations() {
         List<Citation> list = 
                 (branchRateModel instanceof Citable) ?
-                        new ArrayList<Citation>(((Citable) branchRateModel).getCitations()) :
-                        new ArrayList<Citation>();
+                        ((Citable) branchRateModel).getCitations() :
+                        new ArrayList<>();
         list.add(RandomLocalClockModel.CITATION);
         return list;
     }

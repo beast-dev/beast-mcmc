@@ -48,7 +48,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends AbstractBranchRateModel implements Citable {
+public class ArbitraryBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
     // The rates of each branch
     private final TreeParameterModel rates;
@@ -95,6 +95,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         rates.setNodeValue(tree, node, value);
     }
 
+    @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
         double raw = rates.getNodeValue(tree, node);
         return transform.differential(raw, tree, node);

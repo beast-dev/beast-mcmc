@@ -181,7 +181,12 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     public final void calculateIntervals() {
 
         intervals.resetEvents();
-        collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
+        if (includedLeafSet != null || excludedLeafSets != null) {
+            collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
+        } else {
+            collectTimes(tree, intervals);
+        }
+
         // force a calculation of the intervals...
         intervals.getIntervalCount();
 
@@ -217,6 +222,22 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
             }
         }
 
+    }
+
+    /**
+     * An alternative non-recursive version (doesn't exclude nodes).
+     *
+     * @param tree      the tree
+     * @param intervals the intervals object to store the events
+     */
+    private void collectTimes(Tree tree, Intervals intervals) {
+
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)));
+        }
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)));
+        }
     }
 
     @Override

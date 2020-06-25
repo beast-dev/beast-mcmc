@@ -84,7 +84,7 @@ public class DiscreteTraitBranchRateGradient
         this.useHessian = useHessian;
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
+        this.branchRateModel = (brm instanceof DifferentiableBranchRates) ? (DifferentiableBranchRates) brm : null;
 
         String name = DiscreteTraitBranchRateDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);

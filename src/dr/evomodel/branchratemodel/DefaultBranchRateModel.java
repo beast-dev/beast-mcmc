@@ -28,13 +28,14 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.*;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
+import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
  * @author Andrew Rambaut
  * @version $Id: DefaultBranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
-public final class DefaultBranchRateModel implements BranchRateModel {
+public final class DefaultBranchRateModel implements BranchRateModel, DifferentiableBranchRates {
     public double getBranchRate(Tree tree, NodeRef node) {
         return 1.0;
     }
@@ -129,5 +130,30 @@ public final class DefaultBranchRateModel implements BranchRateModel {
 
     public String getTraitString(final Tree tree, final NodeRef node) {
         return Double.toString(getBranchRate(tree, node));
+    }
+
+    @Override
+    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+        return 0;
+    }
+
+    @Override
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        return 0;
+    }
+
+    @Override
+    public Parameter getRateParameter() {
+        return null;
+    }
+
+    @Override
+    public int getParameterIndexFromNode(NodeRef node) {
+        return -1;
+    }
+
+    @Override
+    public ArbitraryBranchRates.BranchRateTransform getTransform() {
+        return null;
     }
 }

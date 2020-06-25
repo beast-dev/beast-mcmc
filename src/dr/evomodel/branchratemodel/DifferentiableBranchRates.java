@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.inference.model.Parameter;
 
 /**
  * @author Marc A. Suchard
@@ -39,7 +40,9 @@ public interface DifferentiableBranchRates  extends BranchRates {
 
     double getBranchRateSecondDifferential(Tree tree, NodeRef node);
 
+    Parameter getRateParameter();
+
     int getParameterIndexFromNode(NodeRef node);
 
-    ArbitraryBranchRates.BranchRateTransform getTransform();
+    ArbitraryBranchRates.BranchRateTransform getTransform(); // TODO Should remove
 }

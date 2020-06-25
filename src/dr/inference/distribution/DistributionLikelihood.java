@@ -51,25 +51,30 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     private final boolean evaluateEarly;
 
     public DistributionLikelihood(Distribution distribution) {
-        this(distribution, 0.0, false, 1.0);
+        this(distribution, 0.0, false, false, 1.0);
     }
 
     public DistributionLikelihood(Distribution distribution, double offset) {
-        this(distribution, offset, offset > 0.0, 1.0);
+        this(distribution, offset, false, offset > 0.0, 1.0);
+    }
+
+    public DistributionLikelihood(Distribution distribution, double offset, boolean reflect) {
+        this(distribution, offset, reflect, offset > 0.0, 1.0);
     }
 
     public DistributionLikelihood(Distribution distribution, double offset, double scale){
-        this(distribution, offset, offset>0.0, scale);
+        this(distribution, offset, false,offset>0.0, scale);
     }
 
     public DistributionLikelihood(Distribution distribution, boolean evaluateEarly) {
-        this(distribution, 0.0, evaluateEarly, 1.0);
+        this(distribution, 0.0, false, evaluateEarly, 1.0);
     }
 
-    public DistributionLikelihood(Distribution distribution, double offset, boolean evaluateEarly, double scale) {
+    public DistributionLikelihood(Distribution distribution, double offset, boolean reflect, boolean evaluateEarly, double scale) {
         super(null);
         this.distribution = distribution;
         this.offset = offset;
+        this.reflect = reflect;
         this.evaluateEarly = evaluateEarly;
         this.scale=scale;
     }
@@ -78,6 +83,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         super(distributionModel);
         this.distribution = distributionModel;
         this.offset = 0.0;
+        this.reflect = false;
         this.evaluateEarly = false;
         this.scale=1.0;
     }
@@ -122,16 +128,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 
-                final double value = attributeValue[j] - offset;
-
-                if (offset > 0.0 && value < 0.0) {
-                    // fixes a problem with the offset on exponential distributions not
-                    // actually bounding the distribution. This only performs this check
-                    // if a non-zero offset is actually given otherwise it assumes the
-                    // parameter is either legitimately allowed to go negative or is bounded
-                    // at zero anyway.
-                    return Double.NEGATIVE_INFINITY;
-                }
+                final double value = (attributeValue[j] - offset) * (reflect ? -1.0 : 1.0);
                 logL += getLogPDF(value, count);
                 count += 1;
             }
@@ -180,6 +177,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
     protected Distribution distribution;
     private final double offset;
+    private final boolean reflect;
     private final double scale;
 }
 

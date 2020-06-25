@@ -185,7 +185,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     public List<Citation> getCitations() {
         List<Citation> list = 
                 (branchRateModel instanceof Citable) ?
-                        ((Citable) branchRateModel).getCitations() :
+                        new ArrayList<>(((Citable) branchRateModel).getCitations()) :
                         new ArrayList<>();
         list.add(RandomLocalClockModel.CITATION);
         return list;

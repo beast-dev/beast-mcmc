@@ -192,6 +192,7 @@ public interface GradientWrtParameterProvider {
         sb.append("analytic: ").append(new dr.math.matrixAlgebra.Vector(analytic));
         sb.append("\n");
         sb.append("numeric : ").append(new dr.math.matrixAlgebra.Vector(numeric));
+        sb.append("\n");
 
         if (checkValues) {
             for (int i = 0; i < analytic.length; ++i) {

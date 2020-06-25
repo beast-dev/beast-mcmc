@@ -241,14 +241,19 @@ public class DiscreteTraitBranchRateGradient
         StringBuilder sb = new StringBuilder();
         if (COUNT_TOTAL_OPERATIONS) {
             sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount);
-            sb.append("\n\taverageGradientTime = ").append(totalGradientTime / getGradientLogDensityCount).append("\n");
+            sb.append("\n\taverageGradientTime = ");
+            if (getGradientLogDensityCount > 0) {
+                sb.append(totalGradientTime / getGradientLogDensityCount);
+            } else {
+                sb.append("NA");
+            }
+            sb.append("\n");
         }
 
         if (CHECK_GRADIENT_IN_REPORT) {
             String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
 
             if (useHessian) {
-                message += "Hessian\n";
                 message += HessianWrtParameterProvider.getReportAndCheckForError(this, null);
             }
 

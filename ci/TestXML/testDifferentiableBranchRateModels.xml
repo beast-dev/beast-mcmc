@@ -295,20 +295,18 @@
     	</expected>
     </assertEqual>
 
-
-<!--
     <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
     	<message>
     		Check scaled Hessian
     	</message>
-    	<actual regex=".|\n*Hessian.|\n*analytic:(.*?)\n">
+    	<actual regex="Hessian\nanalytic:(.*?)\n">
 	    	<report idref="scaledGradientReport"/>
     	</actual>
-    	<expected regex=".|\n*Hessian.|\n*numeric :(.*?)\n">
+    	<expected regex="Hessian\nanalytic:.*?\nnumeric :(.*?)\n">
 			<report idref="scaledGradientReport"/>
     	</expected>
     </assertEqual>
- -->
+
 
 <!--
     <distributionLikelihood id="ratesPrior">

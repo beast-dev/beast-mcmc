@@ -1,10 +1,8 @@
 package dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.continuous.MatrixShrinkageLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -16,7 +14,6 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -187,88 +184,71 @@ public interface GammaGibbsProvider {
         private static final boolean DEBUG = false;
     }
 
-    class GlobalMultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
+    class MultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
+        // TODO: add citation to "Sparse Bayesian infinite factor models BY A. BHATTACHARYA AND D. B. DUNSON, Biometrika (2011)"
 
-        private final Parameter parameter;
-        private final Parameter mean;
-        private final Parameter globalPrecision;
-        private final Parameter localPrecision;
+        private final CompoundParameter rowMultipliers;
+        private final MatrixShrinkageLikelihood shrinkageLikelihood; // TODO: change to NormalStatisticsProvider
+        private final MatrixParameterInterface matParam;
+        private final int index;
 
-        public GlobalMultiplicativeGammaGibbsProvider(Parameter parameter,
-                                                      Parameter mean,
-                                                      Parameter globalPrecision,
-                                                      Parameter localPrecision) {
+        public MultiplicativeGammaGibbsProvider(CompoundParameter rowMultipliers,
+                                                MatrixShrinkageLikelihood shrinkageLikelihood,
+                                                MatrixParameterInterface matParam,
+                                                int index) {
+            this.rowMultipliers = rowMultipliers;
+            this.shrinkageLikelihood = shrinkageLikelihood;
+            this.matParam = matParam;
+            this.index = index;
 
-            this.parameter = parameter;
-            this.mean = mean;
-            this.globalPrecision = globalPrecision;
-            this.localPrecision = localPrecision;
 
         }
 
 
         @Override
         public SufficientStatistics getSufficientStatistics(int dim) {
-            double sumSquaredError = 0;
 
-            for (int i = 0; i < parameter.getDimension(); i++) {
-                double error = parameter.getParameterValue(i) - mean.getParameterValue(i);
-                sumSquaredError += error * error * localPrecision.getParameterValue(i);
 
+            double rateSum = 0;
+
+            int k = matParam.getColumnDimension();
+            int p = matParam.getRowDimension();
+            for (int i = index; i < k; i++) {
+                double globalConst = gpMult(i, index);
+                double sum = 0;
+                for (int j = 0; j < p; j++) {
+                    double localSD = shrinkageLikelihood.getLikelihood(i).getLocalScale().getParameterValue(j);
+                    double loadEl = matParam.getParameterValue(j, i);
+                    double x = loadEl / localSD;
+                    sum += x * x;
+                }
+                rateSum += globalConst * sum;
             }
 
-            return new SufficientStatistics(parameter.getDimension(), sumSquaredError);
+            return new SufficientStatistics((k - index), rateSum);
 
         }
 
         @Override
         public Parameter getPrecisionParameter() {
-            return globalPrecision;
+            return rowMultipliers.getParameter(index);
         }
 
         @Override
         public void drawValues() {
-
-        }
-    }
-
-    class LocalMultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
-
-        private final Parameter parameter;
-        private final Parameter mean;
-        private final Parameter globalPrecision;
-        private final Parameter localPrecision;
-
-        public LocalMultiplicativeGammaGibbsProvider(Parameter parameter,
-                                                     Parameter mean,
-                                                     Parameter globalPrecision,
-                                                     Parameter localPrecision) {
-
-            this.parameter = parameter;
-            this.mean = mean;
-            this.globalPrecision = globalPrecision;
-            this.localPrecision = localPrecision;
-
+            // do nothing
         }
 
-
-        @Override
-        public SufficientStatistics getSufficientStatistics(int dim) {
-            double error = parameter.getParameterValue(dim) - mean.getParameterValue(dim);
-            double scaledSquaredError = error * error * globalPrecision.getParameterValue(0);
-
-            return new SufficientStatistics(1, scaledSquaredError);
+        private double gpMult(int multTo, int skip) { // TODO: probably could be more efficient
+            double value = 1.0;
+            for (int i = 0; i < multTo; i++) {
+                if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
+                    value *= rowMultipliers.getParameter(i).getParameterValue(0);
+                }
+            }
+            return value;
         }
 
-        @Override
-        public Parameter getPrecisionParameter() {
-            return localPrecision;
-        }
-
-        @Override
-        public void drawValues() {
-            //do nothing
-        }
     }
 
 

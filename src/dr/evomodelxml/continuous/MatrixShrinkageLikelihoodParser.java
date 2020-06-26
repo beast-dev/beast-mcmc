@@ -13,7 +13,7 @@ import dr.xml.*;
 
 
 public class MatrixShrinkageLikelihoodParser extends AbstractXMLObjectParser {
-    private static final String MATRIX_SHRINKAGE = "matrixShrinkageLikelihood";
+    public static final String MATRIX_SHRINKAGE = "matrixShrinkageLikelihood";
     private static final String ROW_PRIORS = "rowPriors";
 
 

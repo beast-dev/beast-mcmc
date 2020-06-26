@@ -47,6 +47,10 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
         return this;
     }
 
+    public BayesianBridgeLikelihood getLikelihood(int i) {
+        return rowPriors[i];
+    }
+
     @Override
     public Parameter getParameter() {
         return loadings;

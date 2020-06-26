@@ -104,16 +104,16 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
             throw new RuntimeException("Not yet implemented");
         }
 
-        double differential = ((DifferentiableBranchRates)branchRateModel).getBranchRateDifferential(tree, node);
-
-        differential *= 1.0; // TODO Update differential by this transformation
-
-        return differential;
+        return ((DifferentiableBranchRates)branchRateModel).getBranchRateDifferential(tree, node);
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
-        return 0.0; // TODO
+        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return ((DifferentiableBranchRates)branchRateModel).getBranchRateSecondDifferential(tree, node);
     }
 
     @Override
@@ -138,12 +138,51 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     }
 
     @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+
+        if (!scaleFactorKnown) {
+            scaleFactor = calculateScaleFactor();
+            scaleFactorKnown = true;
+        }
+
+//        double[] result = new double[treeModel.getNodeCount() - 1];
+//
+//        int v = 0;
+//        for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+//            final NodeRef nodeI = treeModel.getNode(i);
+//            if (!treeModel.isRoot(nodeI)) {
+//                final int indexOne = getParameterIndexFromNode(nodeI);
+//
+//                result[indexOne] = 0.0;
+//
+//                for (int j = 0; j < treeModel.getNodeCount(); ++j) {
+//                    final NodeRef nodeJ = treeModel.getNode(j);
+//                    if (!treeModel.isRoot(nodeJ)) {
+//                        final int indexTwo = getParameterIndexFromNode(nodeJ);
+//
+//                        result[indexOne] += 0;
+//
+//
+//                    }
+//                }
+//
+//
+//            }
+//        }
+
+
+
+        return gradient;
+    }
+
+    @Override
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
         assert tree == treeModel;
 
         if (!scaleFactorKnown) {
             scaleFactor = calculateScaleFactor();
+            scaleFactorKnown = true;
         }
 
         return scaleFactor * branchRateModel.getBranchRate(tree, node);

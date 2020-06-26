@@ -156,4 +156,9 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
     public ArbitraryBranchRates.BranchRateTransform getTransform() {
         return null;
     }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        return gradient;
+    }
 }

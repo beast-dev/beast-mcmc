@@ -36,13 +36,15 @@ import dr.inference.model.Parameter;
  */
 public interface DifferentiableBranchRates  extends BranchRates {
 
-    double getBranchRateDifferential(Tree tree, NodeRef node);
+    double getBranchRateDifferential(Tree tree, NodeRef node); // TODO Deprecate
 
-    double getBranchRateSecondDifferential(Tree tree, NodeRef node);
+    double getBranchRateSecondDifferential(Tree tree, NodeRef node); // TODO Deprecate
 
     Parameter getRateParameter();
 
-    int getParameterIndexFromNode(NodeRef node);
+    int getParameterIndexFromNode(NodeRef node); // TODO deprecate
 
     ArbitraryBranchRates.BranchRateTransform getTransform(); // TODO Should remove
+
+    double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to);
 }

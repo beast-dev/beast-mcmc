@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -168,13 +167,13 @@ public class DiscreteTraitBranchRateGradient
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double nodeResult = gradient[v] * getChainGradient(tree, node);
-//                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-//                    System.err.println("Check Gradient calculation please.");
-//                }
                 result[destinationIndex] = nodeResult;
                 v++;
             }
         }
+
+        // TODO Ideally move all chain-ruling into branchRateModel (except branchLengths?)
+        result = branchRateModel.updateGradientLogDensity(result, null, 0, gradient.length);
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++getGradientLogDensityCount;

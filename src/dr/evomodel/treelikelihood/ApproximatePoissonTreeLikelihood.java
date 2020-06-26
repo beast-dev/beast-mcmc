@@ -34,7 +34,6 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.distributions.PoissonDistribution;
 import dr.xml.Reportable;
 import org.apache.commons.math.special.Gamma;
 import org.apache.commons.math.util.FastMath;
@@ -82,6 +81,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         // Nodes that result from resolving a polytomy in the data tree will point to the polytomy node.
         this.nodeInDataTree = new int[this.treeModel.getNodeCount()];
 
+        //TODO make this more efficient
         for (int j = 0; j <this.treeModel.getNodeCount() ; j++) {
             NodeRef node = this.treeModel.getNode(j);
             NodeRef currentNode= node;
@@ -110,11 +110,8 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         branchLengths = new double[dataTree.getNodeCount()];
 
         for (int i = 0; i < dataTree.getNodeCount(); i++) {
-//            if (!dataTree.isRoot(dataTree.getNode(i))) {
-                // Adding a small epsilon to avoid zeros.
                 double x = dataTree.getBranchLength(dataTree.getNode(i)) * sequenceLength;
                 branchLengths[i] = Math.round(x);
-//            }
         }
         for (int i = 0; i <this.treeModel.getNodeCount() ; i++) {
             updateNode[i] = true;
@@ -131,12 +128,11 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         branchLogL = new double[treeModel.getNodeCount()];
         storedBranchLogL = new double[treeModel.getNodeCount()];
         likelihoodKnown = false;
-        poisson = new PoissonDistribution(1.0);
     }
 
     private double getNumberOfMutations(int i) {
         int dataNode = nodeInDataTree[i];
-        int dataParentNode = nodeInDataTree[treeModel.getParent(this.treeModel.getNode(i)).getNumber()];
+        int dataParentNode = nodeInDataTree[treeModel.getParent(treeModel.getNode(i)).getNumber()];
         if(dataNode==dataParentNode){
             return 0d;
         }else{
@@ -202,7 +198,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
      */
     protected void updateNodeAndChildren(NodeRef node) {
         updateNode[node.getNumber()] = true;
-
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
             NodeRef child = treeModel.getChild(node, i);
             updateNode[child.getNumber()] = true;
@@ -262,7 +257,16 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+                    NodeRef node= ((TreeChangedEvent) object).getNode();
+                    updateNodeAndChildren(node);
+                    if(treeModel.getRoot()== node){
+                        // If the root is changed then the old root's children must be updated so that they are
+                        // no longer counted as 1 branch in the likelihood
+                        // This currently updates more often than needed.
+                        if(treeModel.getOldRoot() !=null) {
+                            updateNodeAndChildren(treeModel.getOldRoot());
+                        }
+                    }
 
                 } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
@@ -295,7 +299,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     protected void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
-
         System.arraycopy(branchLogL, 0, storedBranchLogL, 0, branchLogL.length);
     }
 
@@ -326,7 +329,10 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
 
         //
-        updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2];
+        updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2] ;
+
+        branchLogL[root]=0.0;
+        branchLogL[rootChild2]=0.0;
 
         double logL = 0.0;
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
@@ -409,8 +415,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
 
     private final double[] branchLengths;
     //private final double[][] distanceMatrix;
-
-    private PoissonDistribution poisson;
 
     /**
      * Flags to specify which nodes are to be updated

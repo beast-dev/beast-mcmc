@@ -72,6 +72,8 @@ public class PriorParsers {
     public static final String SCALE = "scale";
     public static final String DF = "df";
     public static final String OFFSET = "offset";
+//    public static final String TRANSLATE = "translate";
+    public static final String REFLECT = "reflect";
     public static final String UNINFORMATIVE = "uninformative";
     public static final String HALF_T_PRIOR = "halfTPrior";
     public static final String DIRICHLET_PRIOR = "dirichletPrior";
@@ -217,9 +219,10 @@ public class PriorParsers {
             } else {
                 scale = xo.getDoubleAttribute(MEAN);
             }
-            final double offset = xo.hasAttribute(OFFSET) ? xo.getDoubleAttribute(OFFSET) : 0.0;
+            final double offset = xo.getAttribute(OFFSET, 0.0);
+            final boolean reflect = xo.getAttribute(REFLECT, false);
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset);
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset, reflect);
             if (DEBUG) {
                 System.out.println("Exponential prior: " + xo.getChildCount());
             }
@@ -263,6 +266,7 @@ public class PriorParsers {
                         AttributeRule.newDoubleRule(MEAN)
                 ),
                 AttributeRule.newDoubleRule(OFFSET, true),
+                AttributeRule.newBooleanRule(REFLECT, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 
@@ -510,8 +514,8 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double mean = xo.getDoubleAttribute(MEAN);
-            double stdev = xo.getDoubleAttribute(STDEV);
+            final double mean = xo.getDoubleAttribute(MEAN);
+            final double stdev = xo.getDoubleAttribute(STDEV);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new HalfNormalDistribution(mean, stdev));
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -613,6 +617,7 @@ public class PriorParsers {
                 }
             }
             final double offset = xo.getAttribute(OFFSET, 0.0);
+            final boolean reflect = xo.getAttribute(REFLECT, false);
 
             final DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mu, sigma), offset);
 
@@ -641,6 +646,7 @@ public class PriorParsers {
                         AttributeRule.newDoubleRule(SIGMA)
                 ),
                 AttributeRule.newDoubleRule(OFFSET, true),
+                AttributeRule.newBooleanRule(REFLECT, true),
                 AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
@@ -669,6 +675,7 @@ public class PriorParsers {
             final double shape = xo.getDoubleAttribute(SHAPE);
             final double scale = xo.getDoubleAttribute(SCALE);
             final double offset = xo.getAttribute(OFFSET, 0.0);
+            final boolean reflect = xo.getAttribute(REFLECT, false);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new GammaDistribution(shape, scale), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
@@ -690,6 +697,7 @@ public class PriorParsers {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET, true),
+                AttributeRule.newBooleanRule(REFLECT, true),
                 // AttributeRule.newBooleanRule(UNINFORMATIVE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
@@ -721,6 +729,7 @@ public class PriorParsers {
             final double shape = xo.getDoubleAttribute(SHAPE);
             final double scale = xo.getDoubleAttribute(SCALE);
             final double offset = xo.getAttribute(OFFSET, 0.0);
+            final boolean reflect = xo.getAttribute(REFLECT, false);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new InverseGammaDistribution(shape, scale), offset);
 
@@ -743,6 +752,7 @@ public class PriorParsers {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET, true),
+                AttributeRule.newBooleanRule(REFLECT, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

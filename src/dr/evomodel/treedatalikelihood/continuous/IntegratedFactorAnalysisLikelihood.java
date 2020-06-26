@@ -56,6 +56,12 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         implements ContinuousTraitPartialsProvider, ModelExtensionProvider.NormalExtensionProvider, Reportable {
 
+    private final int[] fullyObservedTraits;
+    private final int[] partiallyMissingTraits;
+    private boolean observedInnerProductKnown = false;
+    private final DenseMatrix64F observedInnerProduct;
+    // TODO: caching observedInnerProduct
+
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
                                               List<Integer> missingIndices,
@@ -89,6 +95,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         this.observedIndicators = setupObservedIndicators(missingDataIndices, numTaxa, dimTrait);
         this.observedDimensions = setupObservedDimensions(observedIndicators);
 
+        List<Integer> observedList = new ArrayList<>();
+        List<Integer> partialList = new ArrayList<>();
+        setupObservedTraits(observedList, partialList);
+        this.fullyObservedTraits = new int[observedList.size()];
+        for (int i = 0; i < observedList.size(); i++) fullyObservedTraits[i] = observedList.get(i);
+        this.partiallyMissingTraits = new int[partialList.size()];
+        for (int i = 0; i < partialList.size(); i++) partiallyMissingTraits[i] = partialList.get(i);
+
         this.missingFactorIndices = new ArrayList<>();
         for (int i = 0; i < numTaxa * dimTrait; ++i) {
             missingFactorIndices.add(i);
@@ -106,6 +120,27 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         if (this.taskPool.getNumTaxon() != numTaxa) {
             throw new IllegalArgumentException("Incorrectly specified TaskPool");
         }
+
+        this.observedInnerProduct = new DenseMatrix64F(numFactors, numFactors);
+
+
+    }
+
+    final private void setupObservedTraits(List<Integer> observedList, List<Integer> partialList) {
+        for (int trait = 0; trait < dimTrait; trait++) {
+            int nObserved = 0;
+            for (int taxon = 0; taxon < numTaxa; taxon++) {
+                if (observedIndicators[taxon][trait] == 1) {
+                    nObserved += 1;
+                }
+            }
+            if (nObserved == numTaxa) {
+                observedList.add(trait);
+            } else if (nObserved > 0) { // TODO: maybe change to `else {...` for path sampling
+                partialList.add(trait);
+            }
+        }
+
     }
 
     @Override
@@ -184,6 +219,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         likelihoodKnown = false;
         statisticsKnown = false;
         innerProductsKnown = false;
+        observedInnerProductKnown = false;
     }
 
     @Override
@@ -193,12 +229,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        observedInnerProductKnown = false;
+
         if (variable == loadingsTransposed) {
             statisticsKnown = false;
             likelihoodKnown = false;
             fireModelChanged(this);
         } else if (variable == traitParameter || variable == traitPrecision) {
-            innerProductsKnown = false;
+            innerProductsKnown = false; // TODO: why does this not go to false when the loadings change???
             statisticsKnown = false;
             likelihoodKnown = false;
             fireModelChanged(this);
@@ -246,6 +284,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             traitInnerProducts = storedTraitInnerProducts;
             storedTraitInnerProducts = tmp3;
         }
+
+        observedInnerProductKnown = false; // TODO: proper store/restore
     }
 
     @Override
@@ -377,7 +417,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private void computePrecisionForTaxon(final DenseMatrix64F precision, final int taxon,
                                           final int numFactors) {
 
-        final double[] observed = observedIndicators[taxon];
+        final double[] observed = observedIndicators[taxon]; // TODO: only store for partiallyMissing?
 
         HashedMissingArray observedArray = null;
         DenseMatrix64F hashedPrecision = null;
@@ -387,15 +427,32 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             hashedPrecision = precisionMatrixMap.get(observedArray);
         }
 
-        // TODO Only need to compute for each unique set of observed[] << numTaxa
 
-        if (!usePrecisionCache || hashedPrecision == null) {
+        if (!usePrecisionCache || hashedPrecision == null) { // TODO: remove code duplication with below
+            if (!observedInnerProductKnown) {
+                for (int row = 0; row < numFactors; ++row) {
+                    for (int col = row; col < numFactors; ++col) {
+                        double sum = 0;
+                        for (int k : fullyObservedTraits) {
+
+                            sum += loadings[row * dimTrait + k] * //loadingsTransposed.getParameterValue(k, row) *
+                                    gamma[k] *
+                                    loadings[col * dimTrait + k]; // loadingsTransposed.getParameterValue(k, col);
+                        }
+                        observedInnerProduct.set(row, col, sum);
+                        observedInnerProduct.set(col, row, sum);
+
+                    }
+                }
+
+                observedInnerProductKnown = true;
+            }
 
             // Compute L D_i \Gamma D_i^t L^t
             for (int row = 0; row < numFactors; ++row) {
                 for (int col = row; col < numFactors; ++col) {
-                    double sum = 0;
-                    for (int k = 0; k < dimTrait; ++k) {
+                    double sum = observedInnerProduct.get(row, col);
+                    for (int k : partiallyMissingTraits) {
                         double thisPrecision = (observed[k] == 1.0) ?
                                 gamma[k] // traitPrecision.getParameterValue(k)
                                 : nuggetPrecision;

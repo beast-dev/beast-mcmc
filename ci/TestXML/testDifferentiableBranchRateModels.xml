@@ -182,7 +182,7 @@
         </populationTree>
     </coalescentLikelihood>
 
-    <arbitraryBranchRates id="branchRates" centerAtOne="false">
+    <arbitraryBranchRates id="branchRates" centerAtOne="false" randomizeRates="true">
         <rates>
             <parameter id="clock.rates" value="1E-1" lower="0"/>
         </rates>
@@ -248,6 +248,18 @@
     	</expected>
     </assertEqual>
 
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
+    	<message>
+    		Check Hessian
+    	</message>
+    	<actual regex="Hessian\nanalytic:(.*?)\n">
+	    	<report idref="gradientReport"/>
+    	</actual>
+    	<expected regex="Hessian\nanalytic:.*?\nnumeric :(.*?)\n">
+			<report idref="gradientReport"/>
+    	</expected>
+    </assertEqual>
+
 
 	<scaledByTreeTimeBranchRates id="scaledBranchRates">
 		<arbitraryBranchRates idref="branchRates"/>
@@ -270,14 +282,15 @@
             <treeDataLikelihood idref="scaledTreeLikelihood"/>
         </actual>
         <expected>
-            -34937.159041395396
+            -27295.364821906456
         </expected>
     </assertEqual>
 
-
-    <branchRateGradient id="scaledBranchRateGradientDiscrete" traitName="Sequence" useHessian="true">
-        <treeDataLikelihood idref="scaledTreeLikelihood"/>
-    </branchRateGradient>
+	<numericalHessian id="scaledBranchRateGradientDiscrete">
+	    <branchRateGradient traitName="Sequence" useHessian="false">
+    	    <treeDataLikelihood idref="scaledTreeLikelihood"/>
+	    </branchRateGradient>
+    </numericalHessian>
 
     <report id="scaledGradientReport">
         <branchRateGradient idref="scaledBranchRateGradientDiscrete"/>
@@ -295,6 +308,7 @@
     	</expected>
     </assertEqual>
 
+<!--
     <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\],">
     	<message>
     		Check scaled Hessian
@@ -306,7 +320,7 @@
 			<report idref="scaledGradientReport"/>
     	</expected>
     </assertEqual>
-
+ -->
 
 <!--
     <distributionLikelihood id="ratesPrior">
@@ -521,9 +535,3 @@
     </report>
  -->
 </beast>
-
-        <!--
-        # R script
-        library(mvtnorm)
-
-        -->

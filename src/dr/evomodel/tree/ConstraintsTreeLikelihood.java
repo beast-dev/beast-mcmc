@@ -56,9 +56,9 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
                 throw new TreeUtils.MissingTaxonException(constraintsTree.getTaxon(i));
             }
             Taxon taxon = targetTree.getTaxon(targetTree.getTaxonIndex(id));
-            for (int j = 0; j <targetTree.getExternalNodeCount() ; j++) {
+            for (int j = 0; j < targetTree.getExternalNodeCount(); j++) {
                 NodeRef tip = targetTree.getExternalNode(j);
-                if(targetTree.getNodeTaxon(tip).equals(taxon)){
+                if (targetTree.getNodeTaxon(tip).equals(taxon)) {
                     constrainedTips.add(tip.getNumber());
                     break;
                 }
@@ -76,26 +76,28 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
         }
 
         if (targetTree instanceof TreeModel) {
-            addModel((TreeModel)targetTree);
+            addModel((TreeModel) targetTree);
         }
         this.targetTree = targetTree;
     }
 
-    private void updateAllNodes(){
+    private void updateAllNodes() {
         for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = true;
-            targetClades.clear();
         }
+        lostClades = new HashSet<>(constraintsClades);
         likelihoodKnown = false;
 
     }
 
-    private void updateNodeAndAncestors(NodeRef node){
-        while(node!=null){
+    private void updateNodeAndAncestors(NodeRef node) {
+        while (node != null) {
             int nodeIndex = node.getNumber();
             updateNode[nodeIndex] = true;
-            //Sometimes this has already been removed - why?
-            targetClades.remove(targetTreeNodeCladeMap[nodeIndex]);
+            BitSet nodeClade = targetTreeNodeCladeMap[nodeIndex];
+            if(constraintsClades.contains(nodeClade)){
+                lostClades.add(nodeClade);
+            }
             node = targetTree.getParent(node);
 
             lastUpdated.add(nodeIndex);
@@ -107,33 +109,35 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 //        makeDirty();
-            if (object instanceof TreeChangedEvent) {
+        if (object instanceof TreeChangedEvent) {
 
-                if (((TreeChangedEvent) object).isNodeChanged()) {
-                    // If a node event occurs the node and its two child nodes
-                    // are flagged for updating (this will result in everything
-                    // above being updated as well. Node events occur when a node
-                    // is added to a branch, removed from a branch or its height or
-                    // rate changes.
-                    updateNodeAndAncestors(((TreeChangedEvent) object).getNode());
+            if (((TreeChangedEvent) object).isNodeChanged()) {
+                // If a node event occurs the node and its two child nodes
+                // are flagged for updating (this will result in everything
+                // above being updated as well. Node events occur when a node
+                // is added to a branch, removed from a branch or its height or
+                // rate changes.
+                updateNodeAndAncestors(((TreeChangedEvent) object).getNode());
 
-                } else if (((TreeChangedEvent) object).isTreeChanged()) {
-                    // Full tree events result in a complete updating of the tree likelihood
-                    // This event type is now used for EmpiricalTreeDistributions.
+            } else if (((TreeChangedEvent) object).isTreeChanged()) {
+                // Full tree events result in a complete updating of the tree likelihood
+                // This event type is now used for EmpiricalTreeDistributions.
 //                    System.err.println("Full tree update event - these events currently aren't used\n" +
 //                            "so either this is in error or a new feature is using them so remove this message.");
-                    updateAllNodes();
-                } else {
-                    // Other event types are ignored (probably trait changes).
-                    //System.err.println("Another tree event has occured (possibly a trait change).");
-                }
+                updateAllNodes();
+            } else {
+                // Other event types are ignored (probably trait changes).
+                //System.err.println("Another tree event has occured (possibly a trait change).");
             }
+        }
     }
 
     @Override
     protected void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
+        storedLostClades = new HashSet<>(lostClades);
+        // not sure I need this if there are lost clades we will reject
         lastUpdated = new ArrayList<>();
     }
 
@@ -141,10 +145,11 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
     protected void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+
         for (int i :lastUpdated){
             updateNode[i] = true;
-            targetClades.remove(targetTreeNodeCladeMap[i]);
         }
+        lostClades = new HashSet<>(storedLostClades);
     }
 
     @Override
@@ -180,21 +185,17 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
 
     /**
      * Returns true if all the clades in the constraints tree are present in the target tree
+     *
      * @return
      */
     private boolean isCompatible() {
         getClades(targetTree.getRoot());
-        for (BitSet clade: constraintsClades) {
-            if (!targetClades.contains(clade)) {
-                return false;
-            }
-        }
-
-        return true;
+        return lostClades.size() == 0;
     }
 
     /**
      * Compiles the set of clades from the constraints tree using the numbers from the target tree.
+     *
      * @param constraintsTree
      * @param node
      * @param targetTree
@@ -202,22 +203,23 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
      */
     private BitSet setupClades(Tree constraintsTree, NodeRef node, Tree targetTree) {
 
-            BitSet clade = new BitSet();
-            if (constraintsTree.isExternal(node)) {
-                    String taxonId = constraintsTree.getNodeTaxon(node).getId();
-                    clade.set(targetTree.getTaxonIndex(taxonId));
-            } else {
-                for (int i = 0; i < constraintsTree.getChildCount(node); i++) {
-                    NodeRef child = constraintsTree.getChild(node, i);
-                    clade.or(setupClades(constraintsTree, child, targetTree));
-                }
-                constraintsClades.add(clade);
+        BitSet clade = new BitSet();
+        if (constraintsTree.isExternal(node)) {
+            String taxonId = constraintsTree.getNodeTaxon(node).getId();
+            clade.set(targetTree.getTaxonIndex(taxonId));
+        } else {
+            for (int i = 0; i < constraintsTree.getChildCount(node); i++) {
+                NodeRef child = constraintsTree.getChild(node, i);
+                clade.or(setupClades(constraintsTree, child, targetTree));
             }
-            return clade;
+            constraintsClades.add(clade);
+        }
+        return clade;
     }
 
     /**
      * Compiles the set of clades defined by bitsets on the tip numbers of the target Tree.
+     *
      * @param node - current node in traversal
      * @return BitSet - returned for recursion.
      */
@@ -237,29 +239,72 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
                     clade.or(getClades(child));
                 }
             }
-            updateNode[nodeIndex]=false;
-            targetTreeNodeCladeMap[nodeIndex]=clade;
-            targetClades.add(clade);
-
+            updateNode[nodeIndex] = false;
+            targetTreeNodeCladeMap[nodeIndex] = clade;
+            lostClades.remove(clade);
         }
-            return targetTreeNodeCladeMap[nodeIndex];
+        return targetTreeNodeCladeMap[nodeIndex];
     }
+// Sketching out a bit so we don't recalculate clades all the way to the root. just the mrca of the updated nodes
+//
+//    private void updateClades() {
+//        for (int i = 0; i < targetTree.getNodeCount(); i++) {
+//            if (updateNode[i]) {
+//                List<NodeRef> path = getPathToUpdate(targetTree.getNode(i));
+//                boolean changed = true;
+//                int j = 0;
+//                while (j< path.size()) {
+//                    NodeRef currentNode = path.get(j);
+//
+//                    if(changed) {
+//                        BitSet oldClade = targetTreeNodeCladeMap[currentNode.getNumber()];
+//                        BitSet clade = getClades(currentNode, true);
+//                        if (clade == oldClade) {
+//                            changed = false;
+//                        } else {
+//                            targetClades.remove(oldClade);
+//                        }
+//                    }else{
+//                        updateNode[currentNode.getNumber()]=false;
+//                    }
+//                    j++;
+//                }
+//            }
+//        }
+//    }
+//     private List<NodeRef> getPathToUpdate(NodeRef node) {
+//        List<NodeRef> pathToRoot = new ArrayList<>();
+//        while (node != null) {
+//            updateNode[node.getNumber()]=true;
+//            pathToRoot.add(node);
+//            node = targetTree.getParent(node);
+//        }
+//        return pathToRoot;
+//    }
+
+
 
     private final Tree targetTree;
     private final Set<BitSet> constraintsClades = new HashSet<>();
     private final Set<Integer> constrainedTips = new HashSet<>();
     private boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown=false;
+    private boolean storedLikelihoodKnown = false;
     private double logLikelihood = 0.0;
     private double storedLogLikelihood = 0.0;
     private boolean[] updateNode;
+    private Set<BitSet> lostClades = new HashSet<>();
+    private Set<BitSet> storedLostClades = new HashSet<>();
+
+    // A list to keep track of node that were updated so that we don't have to copy a huge array of bitsets for caching
+    // the node clade map. Instead we just track the nodes that were updated and on a restore event flag those as need
+    // to be updated again.
     private List<Integer> lastUpdated;
-    private Set<BitSet> targetClades = new HashSet<>();
+
 
     // With targetClade Set (above) we are storing the clades of the target tree twice
     // I don't see a way around this. the Set makes the comparison with the constraintsClades fast and
     // the array means we can keep a map between the node and it's clade.
-    private  BitSet[] targetTreeNodeCladeMap;
+    private BitSet[] targetTreeNodeCladeMap;
 
 
 }

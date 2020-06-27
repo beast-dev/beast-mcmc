@@ -61,6 +61,8 @@ public class ConstraintsTreeLikelihoodTest extends TestCase {
 
 
         assertEquals(0.0, constraintsTreeLikelihood.getLogLikelihood());
+        constraintsTreeLikelihood.makeDirty();
+        assertEquals(0.0, constraintsTreeLikelihood.getLogLikelihood());
     }
 
 
@@ -112,6 +114,11 @@ public class ConstraintsTreeLikelihoodTest extends TestCase {
 
 
         assertEquals(Double.NEGATIVE_INFINITY, constraintsTreeLikelihood.getLogLikelihood());
+
+        constraintsTreeLikelihood.makeDirty();
+        assertEquals(Double.NEGATIVE_INFINITY, constraintsTreeLikelihood.getLogLikelihood());
+
+
     }
 
     private ConstraintsTreeLikelihood constraintsTreeLikelihood;

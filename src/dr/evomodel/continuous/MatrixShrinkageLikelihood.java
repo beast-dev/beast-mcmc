@@ -4,6 +4,7 @@ import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
+import dr.xml.Reportable;
 
 import java.util.Arrays;
 
@@ -12,7 +13,7 @@ import java.util.Arrays;
  */
 
 public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider,
-        NormalStatisticsProvider {
+        NormalStatisticsProvider, Reportable {
 
     private final MatrixParameterInterface loadings;
     private final BayesianBridgeLikelihood[] rowPriors;
@@ -138,5 +139,21 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
         double globalScale = rowPriors[row].getGlobalScale().getParameterValue(0);
         double localScale = rowPriors[row].getLocalScale().getParameterValue(col);
         return globalScale * localScale;
+    }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder("MatrixShrinkageLikelihood\n");
+        int counter = 0;
+        for (BayesianBridgeLikelihood like: rowPriors) {
+            counter += 1;
+            sb.append("\tLikelihood " + counter + ": ");
+            sb.append(like.getLogLikelihood());
+            sb.append("\n");
+        }
+        sb.append("Likelihood: ");
+        sb.append(getLogLikelihood());
+        sb.append("\n");
+        return  sb.toString();
     }
 }

@@ -225,7 +225,7 @@ public interface GammaGibbsProvider {
                 rateSum += globalConst * sum;
             }
 
-            return new SufficientStatistics((k - index), rateSum);
+            return new SufficientStatistics(p * (k - index), rateSum);
 
         }
 
@@ -241,7 +241,7 @@ public interface GammaGibbsProvider {
 
         private double gpMult(int multTo, int skip) { // TODO: probably could be more efficient
             double value = 1.0;
-            for (int i = 0; i < multTo; i++) {
+            for (int i = 0; i <= multTo; i++) {
                 if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
                     value *= rowMultipliers.getParameter(i).getParameterValue(0);
                 }

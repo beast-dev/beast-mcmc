@@ -214,7 +214,7 @@ public interface GammaGibbsProvider {
             int k = matParam.getColumnDimension();
             int p = matParam.getRowDimension();
             for (int i = index; i < k; i++) {
-                double globalConst = gpMult(i, index);
+                double globalConst = gpMult(i + 1, index);
                 double sum = 0;
                 for (int j = 0; j < p; j++) {
                     double localSD = shrinkageLikelihood.getLikelihood(i).getLocalScale().getParameterValue(j);
@@ -241,7 +241,7 @@ public interface GammaGibbsProvider {
 
         private double gpMult(int multTo, int skip) { // TODO: probably could be more efficient
             double value = 1.0;
-            for (int i = 0; i < multTo + 1; i++) {
+            for (int i = 0; i < multTo; i++) {
                 if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
                     value *= rowMultipliers.getParameter(i).getParameterValue(0);
                 }

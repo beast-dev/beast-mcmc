@@ -69,7 +69,7 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
 
         updateNode = new boolean[targetTree.getNodeCount()];
         targetTreeNodeCladeMap = new BitSet[targetTree.getNodeCount()];
-        lastUpdated = new ArrayList<>();
+        restoreCache = new HashMap<>();
 
         for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = true;
@@ -87,6 +87,7 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
         }
         lostClades = new HashSet<>(constraintsClades);
         likelihoodKnown = false;
+//        restoreCache = new HashMap<>(); not needed
 
     }
 
@@ -95,12 +96,11 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
             int nodeIndex = node.getNumber();
             updateNode[nodeIndex] = true;
             BitSet nodeClade = targetTreeNodeCladeMap[nodeIndex];
-            if(constraintsClades.contains(nodeClade)){
+            if (constraintsClades.contains(nodeClade)) {
                 lostClades.add(nodeClade);
             }
+            restoreCache.put(nodeIndex, nodeClade);
             node = targetTree.getParent(node);
-
-            lastUpdated.add(nodeIndex);
         }
         likelihoodKnown = false;
     }
@@ -138,16 +138,15 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
         storedLogLikelihood = logLikelihood;
         storedLostClades = new HashSet<>(lostClades);
         // not sure I need this if there are lost clades we will reject
-        lastUpdated = new ArrayList<>();
+        restoreCache = new HashMap<>();
     }
 
     @Override
     protected void restoreState() {
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
-
-        for (int i :lastUpdated){
-            updateNode[i] = true;
+        for (int i : restoreCache.keySet()) {
+            targetTreeNodeCladeMap[i] = restoreCache.get(i);
         }
         lostClades = new HashSet<>(storedLostClades);
     }
@@ -227,7 +226,7 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
         int nodeIndex = node.getNumber();
         boolean isExternal = targetTree.isExternal(node);
 
-        if(updateNode[nodeIndex]){
+        if (updateNode[nodeIndex]) {
             BitSet clade = new BitSet();
             if (isExternal) {
                 if (constrainedTips.contains(node.getNumber())) {
@@ -283,7 +282,6 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
 //    }
 
 
-
     private final Tree targetTree;
     private final Set<BitSet> constraintsClades = new HashSet<>();
     private final Set<Integer> constrainedTips = new HashSet<>();
@@ -298,7 +296,7 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
     // A list to keep track of node that were updated so that we don't have to copy a huge array of bitsets for caching
     // the node clade map. Instead we just track the nodes that were updated and on a restore event flag those as need
     // to be updated again.
-    private List<Integer> lastUpdated;
+    private Map<Integer, BitSet> restoreCache;
 
 
     // With targetClade Set (above) we are storing the clades of the target tree twice

@@ -323,7 +323,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     private double calculateLogLikelihood() {
 
 //        makeDirty();
-
+//Could make this faster by only adding the changed values
         int root = treeModel.getRoot().getNumber();
         int rootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
         int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();

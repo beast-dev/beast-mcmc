@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -67,6 +68,16 @@ public class NodeHeightProxyParameter extends Parameter.Proxy {
     @Override
     public void setParameterValueQuietly(int dim, double value) {
         tree.setNodeHeightQuietly(tree.getNode(getNodeNumber(dim)), value);
+    }
+
+    public String toString() {
+        StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
+        Bounds bounds = null;
+
+        for (int i = 1; i < getDimension(); i++) {
+            buffer.append("\t").append(String.valueOf(getParameterValue(i)));
+        }
+        return buffer.toString();
     }
 
     @Override

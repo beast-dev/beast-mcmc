@@ -27,6 +27,7 @@ package dr.evomodel.coalescent.hmc;
 
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
@@ -48,13 +49,11 @@ public class BayesianSkylineGradient implements
 
     private final BayesianSkylineLikelihood likelihood;
     private final WrtParameter wrtParameter;
-    private final OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
     public BayesianSkylineGradient(BayesianSkylineLikelihood likelihood,
                                    WrtParameter wrtParameter) {
         this.likelihood = likelihood;
         this.wrtParameter = wrtParameter;
-        this.intervalNodeMapping = likelihood.getIntervalNodeMapping();
     }
 
     @Override
@@ -89,7 +88,7 @@ public class BayesianSkylineGradient implements
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY, null);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY, 1e-4);
     }
 
     public enum WrtParameter {
@@ -114,12 +113,15 @@ public class BayesianSkylineGradient implements
             private double[] getGradientWrtNodeHeights(BayesianSkylineLikelihood likelihood) {
                 getWarning(likelihood);
 
-                double[] unsortedGradients = new double[likelihood.getTree().getInternalNodeCount()];
-                double[] sortedHeights = new double[likelihood.getTree().getInternalNodeCount()];
-                int[] intervalIndices = new int[likelihood.getTree().getInternalNodeCount()];
-                int internalNodeIndex = 0;
-
                 likelihood.setupIntervals();
+
+                double[] unsortedGradients = new double[likelihood.getTree().getInternalNodeCount()];
+
+                Tree tree = likelihood.getTree();
+                double[] sortedValues = new double[tree.getInternalNodeCount()];
+                double[] nodeHeights = new double[tree.getInternalNodeCount()];
+                int[] nodeIndices = new int[likelihood.getTree().getInternalNodeCount()];
+                GMRFGradient.WrtParameter.sortNodeHeights(tree, sortedValues, nodeHeights, nodeIndices);
 
                 double currentTime = 0.0;
 
@@ -130,6 +132,9 @@ public class BayesianSkylineGradient implements
                 int subIndex = 0;
 
                 ConstantPopulation cp = new ConstantPopulation(Units.Type.YEARS);
+
+                double currentHeight;
+                int nodeIndex = 0;
 
                 for (int j = 0; j < likelihood.getIntervalCount(); j++) {
 
@@ -145,19 +150,26 @@ public class BayesianSkylineGradient implements
                     currentTime += likelihood.getInterval(j);
 
                     if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
-                        final double intervalGradient = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
-                        unsortedGradients[internalNodeIndex] = intervalGradient;
-                        sortedHeights[internalNodeIndex] = currentTime;
-                        intervalIndices[internalNodeIndex] = j + 1;
-                        internalNodeIndex++;
+                        currentHeight = sortedValues[nodeIndex];
+                        while(currentHeight < currentTime) {
+//                            unsortedGradients[nodeIndex] = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j))
+//                                    - getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
+                            unsortedGradients[nodeIndex] = 0;
+                            nodeIndex++;
+                            currentHeight = sortedValues[nodeIndex];
+                        }
+                        unsortedGradients[nodeIndex] = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
+                        if (j + 1 < likelihood.getIntervalCount()) {
+                            unsortedGradients[nodeIndex] -= getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j + 1), likelihood.getIntervalType(j));
+                        }
+                        nodeIndex++;
                     }
                 }
-                for (int i = 0; i < likelihood.getTree().getInternalNodeCount() - 1; i++) {
-                    unsortedGradients[i] -= getIntervalGradient(cp, sortedHeights[i],
-                            likelihood.getLineageCount(intervalIndices[i]), likelihood.getIntervalType(intervalIndices[i]));
+                double[] sortedGradient = new double[tree.getInternalNodeCount()];
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    sortedGradient[nodeIndices[i]] = unsortedGradients[i];
                 }
-
-                return likelihood.getIntervalNodeMapping().sortByNodeNumbers(unsortedGradients);
+                return sortedGradient;
             }
 
             private double getIntervalGradient(DemographicFunction demogFunction,

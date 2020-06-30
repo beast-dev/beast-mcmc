@@ -253,16 +253,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 double[] sortedValues = new double[tree.getInternalNodeCount()];
                 double[] nodeHeights = new double[tree.getInternalNodeCount()];
                 int[] nodeIndices = new int[tree.getInternalNodeCount()];
-                ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();
-                for (int i = 0; i < nodeIndices.length; i++) {
-                    final double nodeHeight = tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i));
-                    sortedInternalNodes.add(new ComparableDouble(nodeHeight));
-                    nodeHeights[i] = nodeHeight;
-                }
-                HeapSort.sort(sortedInternalNodes, nodeIndices);
-                for (int i = 0; i < nodeIndices.length; i++) {
-                    sortedValues[i] = nodeHeights[nodeIndices[i]];
-                }
+                sortNodeHeights(tree, sortedValues, nodeHeights, nodeIndices);
 
                 int gridIndex = 0;
                 double[] gridPoints = likelihood.getGridPoints();
@@ -282,6 +273,22 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
         };
+
+        public static void sortNodeHeights(Tree tree,
+                                           double[] sortedValues,
+                                           double[] nodeHeights,
+                                           int[] nodeIndices) {
+            ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();
+            for (int i = 0; i < nodeIndices.length; i++) {
+                final double nodeHeight = tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i));
+                sortedInternalNodes.add(new ComparableDouble(nodeHeight));
+                nodeHeights[i] = nodeHeight;
+            }
+            HeapSort.sort(sortedInternalNodes, nodeIndices);
+            for (int i = 0; i < nodeIndices.length; i++) {
+                sortedValues[i] = nodeHeights[nodeIndices[i]];
+            }
+        }
 
         WrtParameter(String name) {
             this.name = name;

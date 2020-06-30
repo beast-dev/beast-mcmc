@@ -38,6 +38,9 @@ import dr.util.Citation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
+
 /**
  * @author Marc A. Suchard
  * @author Alexei J. Drummond
@@ -55,6 +58,9 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
     private double scaleFactor;
     private double storedScaleFactor;
+
+    private double branchTotal;
+    private double timeTotal;
 
     public ScaledByTreeTimeBranchRateModel(TreeModel treeModel,
                                            BranchRateModel branchRateModel,
@@ -140,10 +146,69 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
 
+        final DenseMatrix64F Jacobian;
+        final DenseMatrix64F vector0;
+        final DenseMatrix64F vector1;
+
         if (!scaleFactorKnown) {
             scaleFactor = calculateScaleFactor();
             scaleFactorKnown = true;
         }
+
+        int dim = gradient.length;
+        Jacobian = new DenseMatrix64F(dim, dim);
+        vector0 = new DenseMatrix64F(dim, 1);
+        DenseMatrix64F gradVector = vector0;
+        vector1 = new DenseMatrix64F(dim, 1);
+        DenseMatrix64F scaledGradient = vector1;
+
+        computeScaleFactorQuantities();
+
+        //TODO: remove duplication below
+        double sumR2T = 0.0; //sum (r_k^2 t_k)
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            if (!treeModel.isRoot(node)) {
+
+                double branchTime = treeModel.getBranchLength(node);
+
+                double branchLength = branchTime * branchRateModel.getBranchRate(treeModel, node);
+
+                sumR2T += (branchLength*branchRateModel.getBranchRate(treeModel, node));
+            }
+        }
+
+        // compute Jacobian matrix
+        double tempTotal;
+        for (int row = 0; row < dim; ++row) {
+            for (int col = 0; col < dim; ++col) {
+                NodeRef nodei = treeModel.getNode(col);
+                NodeRef nodej = treeModel.getNode(row);
+
+                // here "branchLength" b_k = rate * time
+                tempTotal = treeModel.getBranchLength(nodej) * sumR2T;
+                tempTotal = tempTotal - (branchTotal * 2 * branchRateModel.getBranchRate(treeModel, nodei) * treeModel.getBranchLength(nodej));
+                tempTotal = tempTotal / (Math.pow(sumR2T,2));
+                tempTotal = tempTotal * branchRateModel.getBranchRate(treeModel, nodei);
+
+                Jacobian.unsafe_set(row, col, tempTotal);
+            }
+
+            // add to diagonals & setup vector for multiplication
+            tempTotal = Jacobian.unsafe_get(row,row);
+            Jacobian.unsafe_set(row, row, tempTotal + (branchTotal / sumR2T));
+
+            gradVector.set(row,0, gradient[row]);
+
+        }
+
+        CommonOps.mult(Jacobian, gradVector, scaledGradient);
+
+        for (int i = 0; i < dim; ++i){
+            gradient[i] = scaledGradient.unsafe_get(0,i);
+        }
+
+
 
 //        double[] result = new double[treeModel.getNodeCount() - 1];
 //
@@ -188,10 +253,9 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         return scaleFactor * branchRateModel.getBranchRate(tree, node);
     }
 
-    private double calculateScaleFactor() {
-
-        double timeTotal = 0.0;
-        double branchTotal = 0.0;
+    private void computeScaleFactorQuantities() {
+        timeTotal = 0.0;
+        branchTotal = 0.0;
 
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
@@ -205,6 +269,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
                 branchTotal += branchLength;
             }
         }
+    }
+
+    private double calculateScaleFactor() {
+        computeScaleFactorQuantities();
 
         double scaleFactor = timeTotal / branchTotal;
 

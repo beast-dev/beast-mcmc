@@ -170,21 +170,6 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         vector1 = new DenseMatrix64F(dim, 1);
         DenseMatrix64F scaledGradient = vector1;
 
-
-        //TODO: remove duplication below
-        double sumR2T = 0.0; //sum (r_k^2 t_k)
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            NodeRef node = treeModel.getNode(i);
-            if (!treeModel.isRoot(node)) {
-
-                double branchTime = treeModel.getBranchLength(node);
-
-                double branchLength = branchTime * branchRateModel.getBranchRate(treeModel, node);
-
-                sumR2T += (branchLength*branchRateModel.getBranchRate(treeModel, node));
-            }
-        }
-
         // compute Jacobian matrix
         double tempTotal;
         for (int row = 0; row < dim; ++row) {
@@ -192,18 +177,15 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
                 NodeRef nodei = treeModel.getNode(col);
                 NodeRef nodej = treeModel.getNode(row);
 
-                // here "branchLength" b_k = rate * time
-                tempTotal = treeModel.getBranchLength(nodej) * sumR2T;
-                tempTotal = tempTotal - (branchTotal * 2 * branchRateModel.getBranchRate(treeModel, nodei) * treeModel.getBranchLength(nodej));
-                tempTotal = tempTotal / (Math.pow(sumR2T,2));
-                tempTotal = tempTotal * branchRateModel.getBranchRate(treeModel, nodei);
+                tempTotal = - branchRateModel.getBranchRate(treeModel, nodei) * treeModel.getBranchLength(nodej) * timeTotal;
+                tempTotal = tempTotal / Math.pow(branchTotal, 2);
 
                 Jacobian.unsafe_set(row, col, tempTotal);
             }
 
             // add to diagonals & setup vector for multiplication
             tempTotal = Jacobian.unsafe_get(row,row);
-            Jacobian.unsafe_set(row, row, tempTotal + (branchTotal / sumR2T));
+            Jacobian.unsafe_set(row, row, tempTotal + scaleFactor);
 
             gradVector.set(row,0, gradient[row]);
 

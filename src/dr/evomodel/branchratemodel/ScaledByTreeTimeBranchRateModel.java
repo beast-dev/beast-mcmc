@@ -59,10 +59,6 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     private double scaleFactor;
     private double storedScaleFactor;
 
-    private DenseMatrix64F matrix0;
-    private DenseMatrix64F vector0;
-    private DenseMatrix64F vector1;
-
     private double branchTotal;
     private double timeTotal;
 
@@ -150,18 +146,21 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
 
+        final DenseMatrix64F Jacobian;
+        final DenseMatrix64F vector0;
+        final DenseMatrix64F vector1;
+
         if (!scaleFactorKnown) {
             scaleFactor = calculateScaleFactor();
             scaleFactorKnown = true;
         }
 
         int dim = gradient.length;
-        matrix0 = new DenseMatrix64F(dim, dim);
-        DenseMatrix64F Jacobian = matrix0;
+        Jacobian = new DenseMatrix64F(dim, dim);
         vector0 = new DenseMatrix64F(dim, 1);
         DenseMatrix64F gradVector = vector0;
         vector1 = new DenseMatrix64F(dim, 1);
-        DenseMatrix64F output = vector1;
+        DenseMatrix64F scaledGradient = vector1;
 
         computeScaleFactorQuantities();
 
@@ -180,7 +179,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         }
 
         // compute Jacobian matrix
-        double tempTotal = 0.0;
+        double tempTotal;
         for (int row = 0; row < dim; ++row) {
             for (int col = 0; col < dim; ++col) {
                 NodeRef nodei = treeModel.getNode(col);
@@ -194,23 +193,19 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
                 Jacobian.unsafe_set(row, col, tempTotal);
             }
+
+            // add to diagonals & setup vector for multiplication
+            tempTotal = Jacobian.unsafe_get(row,row);
+            Jacobian.unsafe_set(row, row, tempTotal + (branchTotal / sumR2T));
+
+            gradVector.set(row,0, gradient[row]);
+
         }
 
-        // add to diagonals
-        for (int col = 0; col < dim; ++col) {
-            tempTotal = Jacobian.unsafe_get(col,col);
-            Jacobian.unsafe_set(col, col, tempTotal + (branchTotal/sumR2T));
-        }
+        CommonOps.mult(Jacobian, gradVector, scaledGradient);
 
-
-        for (int i = 0; i < gradient.length; ++i){
-            gradVector.set(i,0, gradient[i]);
-        }
-
-        CommonOps.mult(Jacobian, gradVector, output);
-
-        for (int i = 0; i < gradient.length; ++i){
-            gradient[i] = output.unsafe_get(0,i);
+        for (int i = 0; i < dim; ++i){
+            gradient[i] = scaledGradient.unsafe_get(0,i);
         }
 
 

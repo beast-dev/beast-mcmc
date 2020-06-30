@@ -110,6 +110,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
         return gradient;
     }
 
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
+        return diagonalHessian;
+    }
+
     public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance

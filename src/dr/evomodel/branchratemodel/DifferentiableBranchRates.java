@@ -46,5 +46,9 @@ public interface DifferentiableBranchRates  extends BranchRates {
 
     ArbitraryBranchRates.BranchRateTransform getTransform(); // TODO Should remove
 
-    double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to);
+    double[] updateGradientLogDensity(double[] gradient, double[] value,
+                                      int from, int to);
+
+    double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                             int from, int to);
 }

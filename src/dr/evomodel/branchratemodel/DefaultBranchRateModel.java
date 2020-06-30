@@ -161,4 +161,10 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
         return gradient;
     }
+
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
+        return diagonalHessian;
+    }
 }

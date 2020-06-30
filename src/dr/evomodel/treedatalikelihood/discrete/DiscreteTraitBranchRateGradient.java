@@ -141,6 +141,8 @@ public class DiscreteTraitBranchRateGradient
             }
         }
 
+        result = branchRateModel.updateDiagonalHessianLogDensity(result, gradient,null, 0, gradient.length);
+
         return result;
     }
 

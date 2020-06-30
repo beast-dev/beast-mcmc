@@ -60,7 +60,9 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     private double storedScaleFactor;
 
     private double branchTotal;
+    private double storedBranchTotal;
     private double timeTotal;
+    private double storedTimeTotal;
 
     public ScaledByTreeTimeBranchRateModel(TreeModel treeModel,
                                            BranchRateModel branchRateModel,
@@ -95,11 +97,17 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     protected void storeState() {
         storedScaleFactor = scaleFactor;
         storedScaleFactorKnown = scaleFactorKnown;
+
+        storedBranchTotal = branchTotal;
+        storedTimeTotal = timeTotal;
     }
 
     protected void restoreState() {
         scaleFactor = storedScaleFactor;
         scaleFactorKnown = storedScaleFactorKnown;
+
+        branchTotal = storedBranchTotal;
+        timeTotal = storedTimeTotal;
     }
 
     protected void acceptState() { }
@@ -151,7 +159,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         final DenseMatrix64F vector1;
 
         if (!scaleFactorKnown) {
-            scaleFactor = calculateScaleFactor();
+            calculateScaleFactor();
             scaleFactorKnown = true;
         }
 
@@ -162,7 +170,6 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         vector1 = new DenseMatrix64F(dim, 1);
         DenseMatrix64F scaledGradient = vector1;
 
-        computeScaleFactorQuantities();
 
         //TODO: remove duplication below
         double sumR2T = 0.0; //sum (r_k^2 t_k)
@@ -241,21 +248,27 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     }
 
     @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
         assert tree == treeModel;
 
         if (!scaleFactorKnown) {
-            scaleFactor = calculateScaleFactor();
+            calculateScaleFactor();
             scaleFactorKnown = true;
         }
 
         return scaleFactor * branchRateModel.getBranchRate(tree, node);
     }
 
-    private void computeScaleFactorQuantities() {
-        timeTotal = 0.0;
-        branchTotal = 0.0;
+    private void calculateScaleFactor() {
+
+        double timeTotal = 0.0;
+        double branchTotal = 0.0;
 
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
@@ -269,10 +282,6 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
                 branchTotal += branchLength;
             }
         }
-    }
-
-    private double calculateScaleFactor() {
-        computeScaleFactorQuantities();
 
         double scaleFactor = timeTotal / branchTotal;
 
@@ -280,7 +289,9 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
             scaleFactor *= meanRateParameter.getParameterValue(0);
         }
 
-        return scaleFactor;
+        this.scaleFactor = scaleFactor;
+        this.branchTotal = branchTotal;
+        this.timeTotal = timeTotal;
     }
 
     @Override

@@ -26,9 +26,7 @@
 package dr.evomodelxml.coalescent;
 
 
-import dr.evomodel.coalescent.GMRFSkyrideGradient;
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.*;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -51,23 +49,28 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
 //        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        OldGMRFSkyrideLikelihood skyrideLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
-
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
 
-        GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
-        if (type != null) {
-            type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
-            return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
+        if (xo.getChild(OldGMRFSkyrideLikelihood.class) != null) {
+            OldGMRFSkyrideLikelihood skyrideLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
+
+
+            GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
+            if (type != null) {
+                type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
+                return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type);
+            }
+
+            // Old behaviour
+
+            GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
+
+            NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
+
+            return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform);
+        } else {
+            throw new XMLParseException("HMC sampling not yet implemented for gmrfSkyGridLikelihood - use old gmrfSkyrideLikelihood");
         }
-
-        // Old behaviour
-
-        GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
-
-        NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
-
-        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform);
     }
 
     private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {
@@ -89,7 +92,10 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(TreeModel.class, true),
-            new ElementRule(OldGMRFSkyrideLikelihood.class),
+            new XORRule(
+                    new ElementRule(GMRFSkygridLikelihood.class),
+                    new ElementRule(OldGMRFSkyrideLikelihood.class)
+            ),
             new ElementRule(NodeHeightTransform.class, true),
     };
 

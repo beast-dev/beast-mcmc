@@ -35,6 +35,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.Binomial;
@@ -45,7 +47,7 @@ import dr.xml.Reportable;
  * @author Xiang Ji
  */
 public class BayesianSkylineGradient implements
-        GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
+        GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final BayesianSkylineLikelihood likelihood;
     private final WrtParameter wrtParameter;
@@ -89,6 +91,11 @@ public class BayesianSkylineGradient implements
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY, 1e-4);
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        return Loggable.getColumnsFromReport(this, "BayesianSkylineGradient check");
     }
 
     public enum WrtParameter {

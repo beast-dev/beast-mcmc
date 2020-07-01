@@ -172,24 +172,37 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         // compute Jacobian matrix
         double tempTotal;
-        for (int row = 0; row < dim; ++row) {
-            for (int col = 0; col < dim; ++col) {
-                NodeRef nodei = treeModel.getNode(col);
-                NodeRef nodej = treeModel.getNode(row);
+        int rootNodeIndex = treeModel.getRoot().getNumber(); // to ignore rootNode
 
-                tempTotal = - branchRateModel.getBranchRate(treeModel, nodei) * treeModel.getBranchLength(nodej) * timeTotal;
-                tempTotal = tempTotal / Math.pow(branchTotal, 2);
+        for (int row = 0; row < rootNodeIndex; ++row) {
+            NodeRef nodej = treeModel.getNode(row);
+            for (int col = 0; col < rootNodeIndex; ++col) {
+                NodeRef nodei = treeModel.getNode(col);
+                tempTotal = getTempTotal(nodei, nodej);
 
                 Jacobian.unsafe_set(row, col, tempTotal);
             }
-
-            // add to diagonals & setup vector for multiplication
-            tempTotal = Jacobian.unsafe_get(row,row);
-            Jacobian.unsafe_set(row, row, tempTotal + scaleFactor);
-
-            gradVector.set(row,0, gradient[row]);
-
         }
+
+        if(rootNodeIndex < dim) {
+            for (int row = rootNodeIndex + 1; row < dim + 1; ++row) {
+                NodeRef nodej = treeModel.getNode(row);
+                for (int col = 0; col < rootNodeIndex; ++col) {
+                    NodeRef nodei = treeModel.getNode(col);
+                    tempTotal = getTempTotal(nodei, nodej);
+
+                    Jacobian.unsafe_set(row - 1 , col - 1, tempTotal);
+                }
+            }
+        }
+
+        for(int row = 0; row<dim; row++) {
+            // add to diagonals & setup vector for multiplication
+            tempTotal = Jacobian.unsafe_get(row, row);
+            Jacobian.unsafe_set(row, row, tempTotal + scaleFactor);
+            gradVector.set(row, 0, gradient[row]);
+        }
+
 
         CommonOps.mult(Jacobian, gradVector, scaledGradient);
 
@@ -274,6 +287,12 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         this.scaleFactor = scaleFactor;
         this.branchTotal = branchTotal;
         this.timeTotal = timeTotal;
+    }
+
+    private double getTempTotal(NodeRef nodei, NodeRef nodej){
+        double total = -branchRateModel.getBranchRate(treeModel, nodei) * treeModel.getBranchLength(nodej) * scaleFactor;
+        total /= branchTotal;
+        return total;
     }
 
     @Override

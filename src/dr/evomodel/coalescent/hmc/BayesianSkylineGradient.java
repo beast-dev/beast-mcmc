@@ -152,14 +152,12 @@ public class BayesianSkylineGradient implements
                     if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
                         currentHeight = sortedValues[nodeIndex];
                         while(currentHeight < currentTime) {
-//                            unsortedGradients[nodeIndex] = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j))
-//                                    - getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
-                            unsortedGradients[nodeIndex] = 0;
                             nodeIndex++;
                             currentHeight = sortedValues[nodeIndex];
                         }
                         unsortedGradients[nodeIndex] = getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j), likelihood.getIntervalType(j));
                         if (j + 1 < likelihood.getIntervalCount()) {
+                            cp.setN0(likelihood.getPopSize(groupIndex, currentTime + (likelihood.getInterval(j + 1)/2.0), groupEnds));
                             unsortedGradients[nodeIndex] -= getIntervalGradient(cp, currentTime, likelihood.getLineageCount(j + 1), likelihood.getIntervalType(j));
                         }
                         nodeIndex++;

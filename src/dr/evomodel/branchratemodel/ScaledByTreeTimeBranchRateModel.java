@@ -154,21 +154,45 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
 
-        final DenseMatrix64F Jacobian;
-        final DenseMatrix64F vector0;
-        final DenseMatrix64F vector1;
-
         if (!scaleFactorKnown) {
             calculateScaleFactor();
             scaleFactorKnown = true;
         }
 
-        int dim = gradient.length;
-        Jacobian = new DenseMatrix64F(dim, dim);
-        vector0 = new DenseMatrix64F(dim, 1);
-        DenseMatrix64F gradVector = vector0;
-        vector1 = new DenseMatrix64F(dim, 1);
-        DenseMatrix64F scaledGradient = vector1;
+//        // TODO Profile and possibly optimize
+//        //   for example: with index -> (length, rate) map
+//
+//        double[] result = new double[treeModel.getNodeCount() - 1];
+//
+//        for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+//            final NodeRef nodeI = treeModel.getNode(i);
+//            if (!treeModel.isRoot(nodeI)) {
+//                final int indexOne = getParameterIndexFromNode(nodeI);
+//
+//                final double crossTermNodeI = scaleFactor * scaleFactor / timeTotal * treeModel.getBranchLength(nodeI);
+//
+//                for (int j = 0; j < treeModel.getNodeCount(); ++j) {
+//                    final NodeRef nodeJ = treeModel.getNode(j);
+//                    if (!treeModel.isRoot(nodeJ)) {
+//                        final int indexTwo = getParameterIndexFromNode(nodeJ);
+//
+//                        result[indexOne] -=  crossTermNodeI * branchRateModel.getBranchRate(treeModel, nodeJ) * gradient[indexTwo];
+//
+//                        if (indexOne == indexTwo) {
+//                            result[indexOne] += scaleFactor * gradient[indexTwo];
+//                        }
+//
+//                    }
+//                }
+//            }
+//        }
+//
+//        return result;
+
+        final int dim = gradient.length;
+        final DenseMatrix64F Jacobian = new DenseMatrix64F(dim, dim);
+        final DenseMatrix64F gradVector = new DenseMatrix64F(dim, 1);
+        final DenseMatrix64F scaledGradient = new DenseMatrix64F(dim, 1);
 
         // compute Jacobian matrix
         double tempTotal;
@@ -209,35 +233,6 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         for (int i = 0; i < dim; ++i){
             gradient[i] = scaledGradient.unsafe_get(0,i);
         }
-
-
-
-//        double[] result = new double[treeModel.getNodeCount() - 1];
-//
-//        int v = 0;
-//        for (int i = 0; i < treeModel.getNodeCount(); ++i) {
-//            final NodeRef nodeI = treeModel.getNode(i);
-//            if (!treeModel.isRoot(nodeI)) {
-//                final int indexOne = getParameterIndexFromNode(nodeI);
-//
-//                result[indexOne] = 0.0;
-//
-//                for (int j = 0; j < treeModel.getNodeCount(); ++j) {
-//                    final NodeRef nodeJ = treeModel.getNode(j);
-//                    if (!treeModel.isRoot(nodeJ)) {
-//                        final int indexTwo = getParameterIndexFromNode(nodeJ);
-//
-//                        result[indexOne] += 0;
-//
-//
-//                    }
-//                }
-//
-//
-//            }
-//        }
-
-
 
         return gradient;
     }

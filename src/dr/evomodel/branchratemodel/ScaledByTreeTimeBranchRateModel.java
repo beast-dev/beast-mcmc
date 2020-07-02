@@ -199,10 +199,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         int rootNodeIndex = treeModel.getRoot().getNumber(); // to ignore rootNode
 
         for (int row = 0; row < rootNodeIndex; ++row) {
-            NodeRef nodej = treeModel.getNode(row);
+            NodeRef nodeJ = treeModel.getNode(row);
             for (int col = 0; col < rootNodeIndex; ++col) {
-                NodeRef nodei = treeModel.getNode(col);
-                tempTotal = getTempTotal(nodei, nodej);
+                NodeRef nodeI = treeModel.getNode(col);
+                tempTotal = getTempTotal(nodeI, nodeJ);
 
                 Jacobian.unsafe_set(row, col, tempTotal);
             }
@@ -210,10 +210,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         if(rootNodeIndex < dim) {
             for (int row = rootNodeIndex + 1; row < dim + 1; ++row) {
-                NodeRef nodej = treeModel.getNode(row);
+                NodeRef nodeJ = treeModel.getNode(row);
                 for (int col = 0; col < rootNodeIndex; ++col) {
-                    NodeRef nodei = treeModel.getNode(col);
-                    tempTotal = getTempTotal(nodei, nodej);
+                    NodeRef nodeI = treeModel.getNode(col);
+                    tempTotal = getTempTotal(nodeI, nodeJ);
 
                     Jacobian.unsafe_set(row - 1 , col - 1, tempTotal);
                 }
@@ -284,8 +284,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         this.timeTotal = timeTotal;
     }
 
-    private double getTempTotal(NodeRef nodei, NodeRef nodej){
-        double total = -branchRateModel.getBranchRate(treeModel, nodei) * treeModel.getBranchLength(nodej) * scaleFactor;
+    private double getTempTotal(NodeRef nodeI, NodeRef nodeJ){
+        double total = -branchRateModel.getBranchRate(treeModel, nodeI) * treeModel.getBranchLength(nodeJ) * scaleFactor;
         total /= branchTotal;
         return total;
     }

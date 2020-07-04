@@ -64,12 +64,20 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
                 }
             }
         }
-
+        
         setupClades(constraintsTree, constraintsTree.getRoot(), targetTree);
+
+        if(constraintsTree.getExternalNodeCount()==targetTree.getExternalNodeCount()){
+            uniqueClades=true;
+        }else{
+            uniqueClades=false;
+        }
 
         updateNode = new boolean[targetTree.getNodeCount()];
         targetTreeNodeCladeMap = new BitSet[targetTree.getNodeCount()];
         restoreCache = new HashMap<>();
+
+        lostClades = new HashSet<>(constraintsClades);
 
         for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = true;
@@ -117,7 +125,12 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
                 // above being updated as well. Node events occur when a node
                 // is added to a branch, removed from a branch or its height or
                 // rate changes.
-                updateNodeAndAncestors(((TreeChangedEvent) object).getNode());
+                if(uniqueClades){
+                    updateNodeAndAncestors(((TreeChangedEvent) object).getNode());
+                }else{
+                    updateAllNodes();
+                }
+
 
             } else if (((TreeChangedEvent) object).isTreeChanged()) {
                 // Full tree events result in a complete updating of the tree likelihood
@@ -297,11 +310,9 @@ public class ConstraintsTreeLikelihood extends AbstractModelLikelihood {
     // the node clade map. Instead we just track the nodes that were updated and on a restore event flag those as need
     // to be updated again.
     private Map<Integer, BitSet> restoreCache;
-
-
-    // With targetClade Set (above) we are storing the clades of the target tree twice
-    // I don't see a way around this. the Set makes the comparison with the constraintsClades fast and
-    // the array means we can keep a map between the node and it's clade.
+    
+    private final boolean uniqueClades;
+    
     private BitSet[] targetTreeNodeCladeMap;
 
 

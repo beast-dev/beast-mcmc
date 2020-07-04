@@ -51,6 +51,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
     private final TreeModel treeModel;
     private final BranchRateModel branchRateModel;
+    private final DifferentiableBranchRates differentiableBranchRateModel;
     private final Parameter meanRateParameter;
 
     private boolean scaleFactorKnown;
@@ -64,6 +65,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     private double timeTotal;
     private double storedTimeTotal;
 
+    private DenseMatrix64F Jacobian;
+
     public ScaledByTreeTimeBranchRateModel(TreeModel treeModel,
                                            BranchRateModel branchRateModel,
                                            Parameter meanRateParameter) {
@@ -72,6 +75,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         this.treeModel = treeModel;
         this.branchRateModel = branchRateModel;
+        this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
+                (DifferentiableBranchRates) branchRateModel : null;
         this.meanRateParameter = meanRateParameter;
 
         addModel(treeModel);
@@ -114,36 +119,32 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
-        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
-        return ((DifferentiableBranchRates)branchRateModel).getBranchRateDifferential(tree, node);
+        checkDifferentiability();
+        return differentiableBranchRateModel.getBranchRateDifferential(tree, node);
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
-        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
-            throw new RuntimeException("Not yet implemented");
-        }
-
-        return ((DifferentiableBranchRates)branchRateModel).getBranchRateSecondDifferential(tree, node);
+        checkDifferentiability();
+        return differentiableBranchRateModel.getBranchRateSecondDifferential(tree, node);
     }
 
     @Override
     public Parameter getRateParameter() {
-        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
-            throw new RuntimeException("Not yet implemented");
-        }
-        return ((DifferentiableBranchRates)branchRateModel).getRateParameter();
+        checkDifferentiability();
+        return differentiableBranchRateModel.getRateParameter();
     }
 
     @Override
     public int getParameterIndexFromNode(NodeRef node) {
-        if (!(branchRateModel instanceof DifferentiableBranchRates)) {
-            throw new RuntimeException("Not yet implemented");
+        checkDifferentiability();
+        return differentiableBranchRateModel.getParameterIndexFromNode(node);
+    }
+
+    private void checkDifferentiability() {
+        if (differentiableBranchRateModel == null) {
+            throw new RuntimeException("Non-differentiable base BranchRateModel");
         }
-        return ((DifferentiableBranchRates)branchRateModel).getParameterIndexFromNode(node);
     }
 
     @Override
@@ -159,10 +160,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
             scaleFactorKnown = true;
         }
 
+        double[] result = new double[treeModel.getNodeCount() - 1];
+
 //        // TODO Profile and possibly optimize
 //        //   for example: with index -> (length, rate) map
-//
-//        double[] result = new double[treeModel.getNodeCount() - 1];
 //
 //        for (int i = 0; i < treeModel.getNodeCount(); ++i) {
 //            final NodeRef nodeI = treeModel.getNode(i);
@@ -187,12 +188,15 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 //            }
 //        }
 //
-//        return result;
 
         final int dim = gradient.length;
-        final DenseMatrix64F Jacobian = new DenseMatrix64F(dim, dim);
-        final DenseMatrix64F gradVector = new DenseMatrix64F(dim, 1);
-        final DenseMatrix64F scaledGradient = new DenseMatrix64F(dim, 1);
+//        final DenseMatrix64F Jacobian = new DenseMatrix64F(dim, dim);
+//        final DenseMatrix64F gradVector = new DenseMatrix64F(dim, 1);
+//        final DenseMatrix64F scaledGradient = new DenseMatrix64F(dim, 1);
+
+        if (Jacobian == null) {
+            Jacobian = new DenseMatrix64F(dim, dim);
+        }
 
         // compute Jacobian matrix
         double tempTotal;
@@ -208,7 +212,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
             }
         }
 
-        if(rootNodeIndex < dim) {
+        if (rootNodeIndex < dim) {
             for (int row = rootNodeIndex + 1; row < dim + 1; ++row) {
                 NodeRef nodeJ = treeModel.getNode(row);
                 for (int col = 0; col < rootNodeIndex; ++col) {
@@ -220,21 +224,24 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
             }
         }
 
-        for(int row = 0; row<dim; row++) {
+        for (int row = 0; row < dim; row++) {
             // add to diagonals & setup vector for multiplication
             tempTotal = Jacobian.unsafe_get(row, row);
             Jacobian.unsafe_set(row, row, tempTotal + scaleFactor);
-            gradVector.set(row, 0, gradient[row]);
+//            gradVector.set(row, 0, gradient[row]);
         }
 
+        CommonOps.mult(Jacobian,
+                DenseMatrix64F.wrap(dim, 1, gradient),
+                DenseMatrix64F.wrap(dim, 1, result));
 
-        CommonOps.mult(Jacobian, gradVector, scaledGradient);
+//        CommonOps.mult(Jacobian, gradVector, scaledGradient);
+//
+//        for (int i = 0; i < dim; ++i){
+//            gradient[i] = scaledGradient.unsafe_get(0,i);
+//        }
 
-        for (int i = 0; i < dim; ++i){
-            gradient[i] = scaledGradient.unsafe_get(0,i);
-        }
-
-        return gradient;
+        return result;
     }
 
     @Override

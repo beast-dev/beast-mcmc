@@ -60,8 +60,11 @@ public class CoalescentSimulatorParser extends AbstractXMLObjectParser {
 
         double height = xo.getAttribute(HEIGHT, Double.NaN);
 
-        XMLObject cxo = xo.getChild(CONSTRAINTS_TREE);
-        Tree constraintsTree = (Tree) cxo.getChild(Tree.class);
+        Tree constraintsTree =null;
+        if(xo.hasChildNamed((CONSTRAINTS_TREE))){
+            XMLObject cxo = xo.getChild(CONSTRAINTS_TREE);
+            constraintsTree = (Tree) cxo.getChild(Tree.class);
+        }
 
         // should have one child that is node
         for (int i = 0; i < xo.getChildCount(); i++) {

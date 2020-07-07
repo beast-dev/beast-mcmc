@@ -31,6 +31,10 @@ import dr.inference.model.ModelListener;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.DoubleBinaryOperator;
+
 /**
  * @author Andrew Rambaut
  * @version $Id: DefaultBranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
@@ -134,12 +138,12 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
 
     @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
-        return 0;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
-        return 0;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
@@ -166,5 +170,15 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
     public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
                                                     int from, int to) {
         return diagonalHessian;
+    }
+
+    @Override
+    public void forEachOverRates(NodeRateMap map) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        throw new RuntimeException("Not yet implemented");
     }
 }

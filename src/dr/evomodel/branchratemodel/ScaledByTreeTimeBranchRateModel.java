@@ -37,6 +37,8 @@ import dr.util.Citation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.DoubleBinaryOperator;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -152,6 +154,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         throw new RuntimeException("Not yet implemented");
     }
 
+    private static final boolean USE_GENERIC = true;
+
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
 
@@ -162,84 +166,61 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         double[] result = new double[treeModel.getNodeCount() - 1];
 
-//        // TODO Profile and possibly optimize
-//        //   for example: with index -> (length, rate) map
-//
-//        for (int i = 0; i < treeModel.getNodeCount(); ++i) {
-//            final NodeRef nodeI = treeModel.getNode(i);
-//            if (!treeModel.isRoot(nodeI)) {
-//                final int indexOne = getParameterIndexFromNode(nodeI);
-//
-//                final double crossTermNodeI = scaleFactor * scaleFactor / timeTotal * treeModel.getBranchLength(nodeI);
-//
-//                for (int j = 0; j < treeModel.getNodeCount(); ++j) {
-//                    final NodeRef nodeJ = treeModel.getNode(j);
-//                    if (!treeModel.isRoot(nodeJ)) {
-//                        final int indexTwo = getParameterIndexFromNode(nodeJ);
-//
-//                        result[indexOne] -=  crossTermNodeI * branchRateModel.getBranchRate(treeModel, nodeJ) * gradient[indexTwo];
-//
-//                        if (indexOne == indexTwo) {
-//                            result[indexOne] += scaleFactor * gradient[indexTwo];
-//                        }
-//
-//                    }
-//                }
-//            }
-//        }
-//
+        if (USE_GENERIC) {
 
-        final int dim = gradient.length;
-//        final DenseMatrix64F Jacobian = new DenseMatrix64F(dim, dim);
-//        final DenseMatrix64F gradVector = new DenseMatrix64F(dim, 1);
-//        final DenseMatrix64F scaledGradient = new DenseMatrix64F(dim, 1);
+            forEachOverRates(
+                    (indexI, nodeI, rateI) -> {
+                        final double crossTermNodeI = scaleFactor * scaleFactor / timeTotal * treeModel.getBranchLength(nodeI);
+                        result[indexI] = mapReduceOverRates(
+                                (indexJ, nodeJ, rateJ) -> crossTermNodeI * rateJ * gradient[indexJ],
+                                (lhs, rhs) -> lhs - rhs, scaleFactor * gradient[indexI]);
+                        return 0.0; // Ignored
+                    });
 
-        if (Jacobian == null) {
-            Jacobian = new DenseMatrix64F(dim, dim);
-        }
+        } else {
 
-        // compute Jacobian matrix
-        double tempTotal;
-        int rootNodeIndex = treeModel.getRoot().getNumber(); // to ignore rootNode
+            final int dim = gradient.length;
 
-        for (int row = 0; row < rootNodeIndex; ++row) {
-            NodeRef nodeJ = treeModel.getNode(row);
-            for (int col = 0; col < rootNodeIndex; ++col) {
-                NodeRef nodeI = treeModel.getNode(col);
-                tempTotal = getTempTotal(nodeI, nodeJ);
-
-                Jacobian.unsafe_set(row, col, tempTotal);
+            if (Jacobian == null) {
+                Jacobian = new DenseMatrix64F(dim, dim);
             }
-        }
 
-        if (rootNodeIndex < dim) {
-            for (int row = rootNodeIndex + 1; row < dim + 1; ++row) {
+            // compute Jacobian matrix
+            double tempTotal;
+            int rootNodeIndex = treeModel.getRoot().getNumber(); // to ignore rootNode
+
+            for (int row = 0; row < rootNodeIndex; ++row) {
                 NodeRef nodeJ = treeModel.getNode(row);
                 for (int col = 0; col < rootNodeIndex; ++col) {
                     NodeRef nodeI = treeModel.getNode(col);
                     tempTotal = getTempTotal(nodeI, nodeJ);
 
-                    Jacobian.unsafe_set(row - 1 , col - 1, tempTotal);
+                    Jacobian.unsafe_set(row, col, tempTotal);
                 }
             }
+
+            if (rootNodeIndex < dim) {
+                for (int row = rootNodeIndex + 1; row < dim + 1; ++row) {
+                    NodeRef nodeJ = treeModel.getNode(row);
+                    for (int col = 0; col < rootNodeIndex; ++col) {
+                        NodeRef nodeI = treeModel.getNode(col);
+                        tempTotal = getTempTotal(nodeI, nodeJ);
+
+                        Jacobian.unsafe_set(row - 1, col - 1, tempTotal);
+                    }
+                }
+            }
+
+            for (int row = 0; row < dim; row++) {
+                // add to diagonals & setup vector for multiplication
+                tempTotal = Jacobian.unsafe_get(row, row);
+                Jacobian.unsafe_set(row, row, tempTotal + scaleFactor);
+            }
+
+            CommonOps.mult(Jacobian,
+                    DenseMatrix64F.wrap(dim, 1, gradient),
+                    DenseMatrix64F.wrap(dim, 1, result));
         }
-
-        for (int row = 0; row < dim; row++) {
-            // add to diagonals & setup vector for multiplication
-            tempTotal = Jacobian.unsafe_get(row, row);
-            Jacobian.unsafe_set(row, row, tempTotal + scaleFactor);
-//            gradVector.set(row, 0, gradient[row]);
-        }
-
-        CommonOps.mult(Jacobian,
-                DenseMatrix64F.wrap(dim, 1, gradient),
-                DenseMatrix64F.wrap(dim, 1, result));
-
-//        CommonOps.mult(Jacobian, gradVector, scaledGradient);
-//
-//        for (int i = 0; i < dim; ++i){
-//            gradient[i] = scaledGradient.unsafe_get(0,i);
-//        }
 
         return result;
     }
@@ -247,6 +228,18 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     @Override
     public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
         throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        checkDifferentiability();
+        return differentiableBranchRateModel.mapReduceOverRates(map, reduce, initial);
+    }
+
+    @Override
+    public void forEachOverRates(NodeRateMap map) {
+        checkDifferentiability();
+        differentiableBranchRateModel.forEachOverRates(map);
     }
 
     @Override
@@ -279,6 +272,15 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
                 branchTotal += branchLength;
             }
         }
+
+//        // Debug transformReduce
+//        double testBranchLength = mapReduceOverRates(
+//                (i, node, rate) -> treeModel.getBranchLength(node) * rate,
+//                (lhs, rhs) -> lhs + rhs, 0.0);
+//
+//        double testTimeTotal = mapReduceOverRates(
+//                (i, node, rate) -> treeModel.getBranchLength(node),
+//                (lhs, rhs) -> lhs + rhs, 0.0);
 
         double scaleFactor = timeTotal / branchTotal;
 

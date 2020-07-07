@@ -40,6 +40,7 @@ import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * Allows branch rates to take on any double value
@@ -114,6 +115,16 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
     public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
                                                     int from, int to) {
         return diagonalHessian;
+    }
+
+    @Override
+    public void forEachOverRates(NodeRateMap map) {
+        rates.forEach(map);
+    }
+
+    @Override
+    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        return rates.mapReduce(map, reduce, initial);
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {

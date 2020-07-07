@@ -30,6 +30,10 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.DoubleBinaryOperator;
+
 /**
  * @author Marc A. Suchard
  * @author Alexander Fisher
@@ -51,4 +55,8 @@ public interface DifferentiableBranchRates  extends BranchRates {
 
     double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
                                              int from, int to);
+
+    double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial);
+
+    void forEachOverRates(NodeRateMap map);
 }

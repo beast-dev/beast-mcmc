@@ -82,28 +82,31 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         this.nodeInDataTree = new int[this.treeModel.getNodeCount()];
 
         //TODO make this more efficient
-        for (int j = 0; j <this.treeModel.getNodeCount() ; j++) {
-            NodeRef node = this.treeModel.getNode(j);
-            NodeRef currentNode= node;
-            BitSet clade = treeModelNodeMap.get(node);
-            boolean inDataTree = dataTreeMap.containsKey(clade);
 
-            if(!inDataTree){
-                while(!inDataTree){
-                    try {
-                        if (currentNode == treeModel.getRoot()) {
-                            throw new Exception("treeModel must be compatible with data tree");
-                        }
-                    } catch (Exception e) {
-                       e.printStackTrace();
-                    }
-                    currentNode = treeModel.getParent(currentNode);
-                    clade = treeModelNodeMap.get(currentNode);
-                    inDataTree = dataTreeMap.containsKey(clade);
-                }
-            }
-            nodeInDataTree[j] = dataTreeMap.get(clade).getNumber();
-        }
+        setUpNodeMap(treeModelNodeMap,dataTreeMap,treeModel.getRoot(),null);
+
+//        for (int j = 0; j <this.treeModel.getNodeCount() ; j++) {
+//            NodeRef node = this.treeModel.getNode(j);
+//            NodeRef currentNode= node;
+//            BitSet clade = treeModelNodeMap.get(node);
+//            boolean inDataTree = dataTreeMap.containsKey(clade);
+//
+//            if(!inDataTree){
+//                while(!inDataTree){
+//                    try {
+//                        if (currentNode == treeModel.getRoot()) {
+//                            throw new Exception("treeModel must be compatible with data tree");
+//                        }
+//                    } catch (Exception e) {
+//                       e.printStackTrace();
+//                    }
+//                    currentNode = treeModel.getParent(currentNode);
+//                    clade = treeModelNodeMap.get(currentNode);
+//                    inDataTree = dataTreeMap.containsKey(clade);
+//                }
+//            }
+//            nodeInDataTree[j] = dataTreeMap.get(clade).getNumber();
+//        }
 
 
         updateNode = new boolean[treeModel.getNodeCount()];
@@ -128,6 +131,28 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         branchLogL = new double[treeModel.getNodeCount()];
         storedBranchLogL = new double[treeModel.getNodeCount()];
         likelihoodKnown = false;
+    }
+
+    /**
+     * A private recursive method that sets the map from the treemodel to the data tree. If the data tree is resolved it
+     * will be a 1 to 1 map. If there are polytomies in the data tree all inserted nodes will map to the polytomy node.
+      * @param treeModelNodeMap
+     * @param dataTreeMap
+     * @param node
+     * @param parentsClade
+     */
+    private void setUpNodeMap(HashMap <NodeRef, BitSet> treeModelNodeMap, HashMap<BitSet, NodeRef> dataTreeMap,NodeRef node, BitSet parentsClade){
+        BitSet clade = treeModelNodeMap.get(node);
+        int j = node.getNumber();
+        if(!dataTreeMap.containsKey(clade)){
+           clade=parentsClade;
+        }
+        nodeInDataTree[j] = dataTreeMap.get(clade).getNumber();
+        for (int i = 0; i <treeModel.getChildCount(node) ; i++) {
+            NodeRef child = treeModel.getChild(node,i);
+            setUpNodeMap(treeModelNodeMap,dataTreeMap,child,clade);
+        }
+
     }
 
     private double getNumberOfMutations(int i) {

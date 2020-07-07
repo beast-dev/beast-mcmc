@@ -81,32 +81,8 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         // Nodes that result from resolving a polytomy in the data tree will point to the polytomy node.
         this.nodeInDataTree = new int[this.treeModel.getNodeCount()];
 
-        //TODO make this more efficient
 
         setUpNodeMap(treeModelNodeMap,dataTreeMap,treeModel.getRoot(),null);
-
-//        for (int j = 0; j <this.treeModel.getNodeCount() ; j++) {
-//            NodeRef node = this.treeModel.getNode(j);
-//            NodeRef currentNode= node;
-//            BitSet clade = treeModelNodeMap.get(node);
-//            boolean inDataTree = dataTreeMap.containsKey(clade);
-//
-//            if(!inDataTree){
-//                while(!inDataTree){
-//                    try {
-//                        if (currentNode == treeModel.getRoot()) {
-//                            throw new Exception("treeModel must be compatible with data tree");
-//                        }
-//                    } catch (Exception e) {
-//                       e.printStackTrace();
-//                    }
-//                    currentNode = treeModel.getParent(currentNode);
-//                    clade = treeModelNodeMap.get(currentNode);
-//                    inDataTree = dataTreeMap.containsKey(clade);
-//                }
-//            }
-//            nodeInDataTree[j] = dataTreeMap.get(clade).getNumber();
-//        }
 
 
         updateNode = new boolean[treeModel.getNodeCount()];
@@ -173,7 +149,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
      */
     private HashMap<BitSet, NodeRef> getBitSetNodeMap(Tree referenceTree,Tree  tree) {
         HashMap<BitSet, NodeRef> map = new HashMap<>();
-        addBits(referenceTree,tree,tree.getRoot(),null,map);
+        addBits(referenceTree,tree,tree.getRoot(),map);
         return map;
     }
 
@@ -183,32 +159,23 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
      * @param referenceTree  the tree that will be used to define taxa and tip numbers
      * @param tree the tree for which clades are being defined
      * @param node current node
-     * @param incomingBits bits passed down from children
      * @param map map that is being appended to
      */
-    private void addBits(Tree referenceTree, Tree tree, NodeRef node, BitSet incomingBits, HashMap map) {
+    private BitSet addBits(Tree referenceTree, Tree tree, NodeRef node, HashMap map) {
         BitSet bits = new BitSet();
         if (tree.isExternal(node)) {
             String taxonId = tree.getNodeTaxon(node).getId();
-
-            for (int i = 0; i < referenceTree.getExternalNodeCount(); i++) {
-                NodeRef n = referenceTree.getExternalNode(i);
-
-                if (taxonId.equals(referenceTree.getNodeTaxon(n).getId())) {
-                    bits.set(n.getNumber());
-                }
-            }
+            bits.set(referenceTree.getTaxonIndex(taxonId));
 
         } else {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef node1 = tree.getChild(node, i);
-                addBits(referenceTree,tree, node1, bits, map);
+                bits.or(addBits(referenceTree,tree, node1, map));
             }
         }
-        if (incomingBits != null) {
-            incomingBits.or(bits);
-        }
+
         map.put(bits, node);
+        return bits;
     }
     /**
      * Set update flag for a node only

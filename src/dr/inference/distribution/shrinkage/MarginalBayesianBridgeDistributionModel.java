@@ -40,6 +40,10 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
         final double scale = globalScale.getParameterValue(0);
         final double alpha = exponent.getParameterValue(0);
 
+        return logPdf(v, scale, alpha);
+    }
+
+    static double logPdf(double[] v, double scale, double alpha) {
         double sum = 0.0;
         for (double x : v) {
             sum += MarginalizedAlphaStableDistribution.logPdf(x, scale, alpha);

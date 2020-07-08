@@ -128,7 +128,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
 
         boolean dimensionMismatch = derivative.getDimension() != parameter.getDimension();
-        if (transform != null && transform instanceof Transform.MultivariableTransform) {
+        if (transform instanceof Transform.MultivariableTransform) {
             dimensionMismatch = ((Transform.MultivariableTransform) transform).getDimension() != parameter.getDimension();
         }
 
@@ -153,7 +153,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double reductionFactor = xo.getAttribute(REDUCTION_FACTOR, 0.1);
         double targetAcceptanceProbability = xo.getAttribute(TARGET_ACCEPTANCE_PROBABILITY,
                 0.8); // Stan default
-        String instabilityHandlerCase = (String) xo.getAttribute(INSTABILITY_HANDLER, "reject");
+        String instabilityHandlerCase = xo.getAttribute(INSTABILITY_HANDLER, "reject");
         HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(

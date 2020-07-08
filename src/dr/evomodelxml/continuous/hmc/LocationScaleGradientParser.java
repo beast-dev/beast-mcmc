@@ -38,7 +38,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.discrete.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+import dr.inference.hmc.JointGradient;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -89,7 +89,7 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
             checkBranchRateModels(providers);
 
-            return new SumDerivative(providers);
+            return new JointGradient(providers);
         }
     }
 

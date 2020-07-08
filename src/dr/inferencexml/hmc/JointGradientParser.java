@@ -1,5 +1,5 @@
 /*
- * SumDerivativeParser.java
+ * JointGradientParser.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,7 +26,7 @@
 package dr.inferencexml.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+import dr.inference.hmc.JointGradient;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -37,10 +37,10 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class SumDerivativeParser extends AbstractXMLObjectParser{
-    public final static String SUM_DERIVATIVE = "sumDerivative";
-    public final static String SUM_DERIVATIVE2 = "jointGradient";
+public class JointGradientParser extends AbstractXMLObjectParser {
 
+    private final static String SUM_DERIVATIVE = "sumDerivative";
+    private final static String SUM_DERIVATIVE2 = "jointGradient";
 
     @Override
     public String getParserName() {
@@ -55,14 +55,14 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<GradientWrtParameterProvider> derivativeList = new ArrayList<GradientWrtParameterProvider>();
+        List<GradientWrtParameterProvider> derivativeList = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             GradientWrtParameterProvider grad = (GradientWrtParameterProvider) xo.getChild(i);
             derivativeList.add(grad);
         }
 
-        return new SumDerivative(derivativeList);
+        return new JointGradient(derivativeList);
     }
 
     @Override
@@ -81,6 +81,6 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
 
     @Override
     public Class getReturnType() {
-        return SumDerivative.class;
+        return JointGradient.class;
     }
 }

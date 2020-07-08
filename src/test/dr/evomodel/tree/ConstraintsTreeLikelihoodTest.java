@@ -35,8 +35,8 @@ public class ConstraintsTreeLikelihoodTest extends TestCase {
     public void testConstaintsRepected() {
 
 
-        Taxon selectedTaxon1 = targetTree.getTaxon(targetTree.getTaxonIndex("5"));
-        Taxon selectedTaxon2 = targetTree.getTaxon(targetTree.getTaxonIndex("6"));
+        Taxon selectedTaxon1 = targetTree.getTaxon(targetTree.getTaxonIndex("3"));
+        Taxon selectedTaxon2 = targetTree.getTaxon(targetTree.getTaxonIndex("2"));
         NodeRef selectedNode1 = null;
         NodeRef selectedNode2 = null;
         for (int j = 0; j < targetTree.getExternalNodeCount(); j++) {
@@ -68,6 +68,7 @@ public class ConstraintsTreeLikelihoodTest extends TestCase {
 
 
 
+
     public void testShouldThrowError() throws IOException, Importer.ImportException {
         NewickImporter importer = new NewickImporter("((1,2),3);");
         NewickImporter constraintsImporter = new NewickImporter("((1,2),4)");
@@ -86,7 +87,6 @@ public class ConstraintsTreeLikelihoodTest extends TestCase {
     }
 
     public void testConstaintsViolated() {
-
 
         Taxon selectedTaxon1 = targetTree.getTaxon(targetTree.getTaxonIndex("4"));
         Taxon selectedTaxon2 = targetTree.getTaxon(targetTree.getTaxonIndex("1"));
@@ -118,8 +118,43 @@ public class ConstraintsTreeLikelihoodTest extends TestCase {
         constraintsTreeLikelihood.makeDirty();
         assertEquals(Double.NEGATIVE_INFINITY, constraintsTreeLikelihood.getLogLikelihood());
 
-
     }
+
+    //TODO add tests for all nodes tracked - the logic hasn't changed it's just not covered by the tests anymore
+
+
+    public void testConstaintsViolatedWithUnTractedtip() {
+
+        Taxon selectedTaxon1 = targetTree.getTaxon(targetTree.getTaxonIndex("5"));
+        Taxon selectedTaxon2 = targetTree.getTaxon(targetTree.getTaxonIndex("4"));
+        NodeRef selectedNode1 = null;
+        NodeRef selectedNode2 = null;
+
+        for (int j = 0; j < targetTree.getExternalNodeCount(); j++) {
+            NodeRef tip = targetTree.getExternalNode(j);
+            if (targetTree.getNodeTaxon(tip).equals(selectedTaxon1)) {
+                selectedNode1 = tip;
+            } else if (targetTree.getNodeTaxon(tip).equals(selectedTaxon2)) {
+                selectedNode2 = tip;
+            }
+        }
+
+        NodeRef parent1 = targetTree.getParent(selectedNode1);
+        NodeRef parent2 = targetTree.getParent(selectedNode2);
+
+        targetTree.beginTreeEdit();
+        targetTree.removeChild(parent1, selectedNode1);
+        targetTree.removeChild(parent2, selectedNode2);
+
+        targetTree.addChild(parent1, selectedNode2);
+        targetTree.addChild(parent2, selectedNode1);
+        targetTree.endTreeEdit();
+
+        assertEquals(Double.NEGATIVE_INFINITY, constraintsTreeLikelihood.getLogLikelihood());
+        constraintsTreeLikelihood.makeDirty();
+        assertEquals(Double.NEGATIVE_INFINITY, constraintsTreeLikelihood.getLogLikelihood());
+    }
+
 
     private ConstraintsTreeLikelihood constraintsTreeLikelihood;
     private TreeModel targetTree;

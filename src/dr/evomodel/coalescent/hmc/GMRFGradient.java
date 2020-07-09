@@ -74,7 +74,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
                 tolerance) + " \n";
 
-        if (wrtParameter != WrtParameter.NODE_HEIGHT){
+        if (wrtParameter != WrtParameter.NODE_HEIGHT) {
             header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance) + "\n";
         } 
 

@@ -28,12 +28,15 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
     private final WrtParameter wrtParameter;
     private final Parameter parameter;
+    private final Double tolerance;
 
     public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood,
-                        WrtParameter wrtParameter) {
+                        WrtParameter wrtParameter,
+                        Double tolerance) {
         this.skygridLikelihood = skygridLikelihood;
         this.wrtParameter = wrtParameter;
         parameter = wrtParameter.getParameter(skygridLikelihood);
+        this.tolerance = tolerance;
     }
 
     @Override
@@ -315,6 +318,4 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             return null;
         }
     }
-
-    private final static Double tolerance = 1E-4;
 }

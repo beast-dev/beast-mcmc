@@ -70,12 +70,15 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
     public String getReport() {
         String header = skygridLikelihood + "." + wrtParameter.name + "\n";
 
-        header += GradientWrtParameterProvider.getReportAndCheckForError(this,
-                wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
-                tolerance) + " \n";
-
         if (wrtParameter != WrtParameter.NODE_HEIGHT){
+            header += GradientWrtParameterProvider.getReportAndCheckForError(this,
+                    wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
+                    tolerance) + " \n";
             header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+        } else {
+            header += GradientWrtParameterProvider.getReportAndCheckForError(this,
+                    wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
+                    1E-2) + " \n";
         }
 
         return header;

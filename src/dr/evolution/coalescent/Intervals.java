@@ -223,6 +223,39 @@ public class Intervals implements IntervalList {
         intervalsKnown = true;
     }
 
+    public void calculateIntervals(boolean sorted) {
+
+        if (eventCount < 2) {
+            throw new IllegalArgumentException("Too few events to construct intervals");
+        }
+
+        if(!sorted) {
+            Arrays.sort(events, 0, eventCount);
+        }
+        if (events[0].type != IntervalType.SAMPLE) {
+            throw new IllegalArgumentException("First event is not a sample event");
+        }
+
+        intervalCount = eventCount - 1;
+
+        double lastTime = events[0].time;
+
+        int lineages = 1;
+        for (int i = 1; i < eventCount; i++) {
+
+            intervals[i - 1] = events[i].time - lastTime;
+            intervalTypes[i - 1] = events[i].type;
+            lineageCounts[i - 1] = lineages;
+            if (events[i].type == IntervalType.SAMPLE) {
+                lineages++;
+            } else if (events[i].type == IntervalType.COALESCENT) {
+                lineages--;
+            }
+            lastTime = events[i].time;
+        }
+        intervalsKnown = true;
+    }
+
     private Units.Type units = Units.Type.GENERATIONS;
 
     public final Units.Type getUnits() {

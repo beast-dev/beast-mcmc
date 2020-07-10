@@ -541,7 +541,8 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
             }
             currentGridIndex = minGridIndex;
 
-            lastCoalescentTime = currentTime + intervalsList.get(i).getTotalDuration();
+//            lastCoalescentTime = currentTime + intervalsList.get(i).getTotalDuration();
+              lastCoalescentTime =  intervalsList.get(i).getTotalDuration();
 
 //            theLastTime = lastCoalescentTime;
 

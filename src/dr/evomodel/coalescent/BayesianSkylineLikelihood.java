@@ -49,6 +49,10 @@ import java.util.List;
  *
  * @author Alexei Drummond
  */
+@Deprecated
+// This version is deprecated because it uses OldAbstractCoalescentLikelihood. It should be reimplemented
+// to use AbstractCoalescentLikelihood and IntervalList. It would also make sense to use log population sizes
+// and possibly distribute the group sizes equally without sampling them (Oliver Pybus, pers. comm.).
 public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF

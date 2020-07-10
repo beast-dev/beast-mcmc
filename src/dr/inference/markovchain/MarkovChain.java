@@ -31,6 +31,8 @@ import dr.inference.operators.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -60,7 +62,9 @@ public final class MarkovChain implements Serializable {
     private double bestScore, currentScore, initialScore;
     private long currentLength;
 
-    private boolean useAdaptation = true;
+    private final boolean useAdaptation;
+    private boolean isCurrentlyAdapting;
+
     private final boolean useSmoothedAcceptanceProbability;
 
 
@@ -80,6 +84,7 @@ public final class MarkovChain implements Serializable {
         this.schedule = schedule;
         this.acceptor = acceptor;
         this.useAdaptation = useAdaptation;
+        this.isCurrentlyAdapting = useAdaptation;
         this.useSmoothedAcceptanceProbability = useSmoothedAcceptanceProbability;
 
         this.fullEvaluationCount = fullEvaluationCount;
@@ -116,6 +121,8 @@ public final class MarkovChain implements Serializable {
      * @param length number of states to run the chain.
      */
     public long runChain(long length, boolean disableAdaptation) {
+
+        isCurrentlyAdapting = useAdaptation && !disableAdaptation;
 
         likelihood.makeDirty();
         currentScore = evaluate(likelihood);
@@ -170,9 +177,9 @@ public final class MarkovChain implements Serializable {
             usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
-        while (!pleaseStop && (currentState < (currentLength + length))) {
+        Map<String, Double> diagnosticDensities = null;
 
-            String diagnosticStart = "";
+        while (!pleaseStop && (currentState < (currentLength + length))) {
 
             // periodically log states
             fireCurrentModel(currentState, currentModel);
@@ -188,8 +195,8 @@ public final class MarkovChain implements Serializable {
 
             double oldScore = currentScore;
             if (usingFullEvaluation) {
-                diagnosticStart = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                diagnosticDensities = new HashMap<String, Double>();
+                fillDensities(likelihood, diagnosticDensities);
             }
 
             // assert Profiler.startProfile("Store");
@@ -210,10 +217,10 @@ public final class MarkovChain implements Serializable {
             // The new model is proposed
             // assert Profiler.startProfile("Operate");
 
-                if (DEBUG) {
-                    System.out.println("\n>> Iteration: " + currentState);
-                    System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
-                }
+            if (DEBUG) {
+                System.out.println("\n>> Iteration: " + currentState);
+                System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
+            }
 
             if (mcmcOperator instanceof GeneralOperator) {
                 hastingsRatio = ((GeneralOperator) mcmcOperator).operate(likelihood);
@@ -266,10 +273,10 @@ public final class MarkovChain implements Serializable {
                     }
                 }
 
-                String diagnosticOperator = "";
+                Map<String, Double> diagnosticOperatorDensities = null;
                 if (usingFullEvaluation) {
-                    diagnosticOperator = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                    diagnosticOperatorDensities = new HashMap<String, Double>();
+                    fillDensities(likelihood, diagnosticOperatorDensities);
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
@@ -336,18 +343,28 @@ public final class MarkovChain implements Serializable {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood);
 
-                    final String d2 = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();
+                    fillDensities(likelihood, densitiesAfter);
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
-                        Logger.getLogger("error").severe(
-                                "State "+currentState+": State was not correctly calculated after an operator move.\n"
-                                        + "Likelihood evaluation: " + score
-                                        + "\nFull Likelihood evaluation: " + testScore
-                                        + "\n" + "Operator: " + mcmcOperator
-                                        + " " + mcmcOperator.getOperatorName()
-                                        + (diagnosticOperator.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticOperator + "\nAfter: " + d2 : "")
-                                        + "\n\n");
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("State "+currentState+": State was not correctly calculated after an operator move.\n"
+                                + "Likelihood evaluation: " + score
+                                + "\nFull Likelihood evaluation: " + testScore
+                                + "\n" + "Operator: " + mcmcOperator
+                                + " " + mcmcOperator.getOperatorName()
+                                + "\n\n");
+
+                        sb.append("Discrepancies:\n");
+                        for (String key : diagnosticOperatorDensities.keySet()) {
+                            if (Math.abs(diagnosticOperatorDensities.get(key) - densitiesAfter.get(key)) > evaluationTestThreshold) {
+                                sb.append(key + ": " + diagnosticOperatorDensities.get(key) +
+                                        " -> " + densitiesAfter.get(key) + "\n");
+                            }
+                        }
+                        sb.append("\n");
+
+                        Logger.getLogger("error").severe(sb.toString());
                         fullEvaluationError = true;
                     }
                 }
@@ -393,20 +410,28 @@ public final class MarkovChain implements Serializable {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood);
 
-                    final String d2 = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                    Map<String, Double> densitiesAfter = new HashMap<String, Double>();
+                    fillDensities(likelihood, densitiesAfter);
 
                     if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
-
-
-                        final Logger logger = Logger.getLogger("error");
-                        logger.severe("State "+currentState+": State was not correctly restored after reject step.\n"
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("State "+currentState+": State was not correctly restored after reject step.\n"
                                 + "Likelihood before: " + oldScore
                                 + " Likelihood after: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
                                 + " " + mcmcOperator.getOperatorName()
-                                + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
                                 + "\n\n");
+
+                        sb.append("Discrepancies:\n");
+                        for (String key : diagnosticDensities.keySet()) {
+                            if (Math.abs(diagnosticDensities.get(key) - densitiesAfter.get(key)) > evaluationTestThreshold) {
+                                sb.append(key + ": " + diagnosticDensities.get(key) +
+                                        " -> " + densitiesAfter.get(key) + "\n");
+                            }
+                        }
+                        sb.append("\n");
+
+                        Logger.getLogger("error").severe(sb.toString());
                         fullEvaluationError = true;
                     }
                 }
@@ -414,7 +439,7 @@ public final class MarkovChain implements Serializable {
             // assert Profiler.stopProfile("Restore");
 
 
-            if (useAdaptation && !disableAdaptation && mcmcOperator instanceof AdaptableMCMCOperator) {
+            if (isAdapting(mcmcOperator)) {
                 adaptAcceptanceProbability((AdaptableMCMCOperator) mcmcOperator, logr[0]);
             }
 
@@ -516,21 +541,27 @@ public final class MarkovChain implements Serializable {
         return logPosterior;
     }
 
+    public boolean isAdapting(MCMCOperator operator) {
+        return (isCurrentlyAdapting && operator instanceof AdaptableMCMCOperator);
+    }
+
     /**
      * Updates the proposal parameter, based on the target acceptance
      * probability This method relies on the proposal parameter being a
      * decreasing function of acceptance probability.
      *
      * @param op   The operator
-     * @param logr
+     * @param logr The log likelihood ratio
      */
-    private void adaptAcceptanceProbability(AdaptableMCMCOperator op, double logr) {
+    public void adaptAcceptanceProbability(AdaptableMCMCOperator op, double logr) {
+
+        final boolean isAdaptable = op.getMode() == AdaptationMode.ADAPTATION_ON || (op.getMode() != AdaptationMode.ADAPTATION_OFF);
 
         if (DEBUG) {
-            System.out.println("adaptAcceptanceProbability " + isAdaptable(op));
+            System.out.println("adaptAcceptanceProbability " + isAdaptable);
         }
 
-        if (isAdaptable(op)) {
+        if (isAdaptable) {
             final double p = op.getAdaptableParameter();
 
             final double i = schedule.getOptimizationTransform().transform(op.getAdaptationCount() + 2);
@@ -553,12 +584,6 @@ public final class MarkovChain implements Serializable {
                 }
             }
         }
-    }
-
-    private boolean isAdaptable(AdaptableMCMCOperator op) {
-
-        return op.getMode() == AdaptationMode.ADAPTATION_ON
-                || (op.getMode() != AdaptationMode.ADAPTATION_OFF && useAdaptation);
     }
 
     public void addMarkovChainListener(MarkovChainListener listener) {
@@ -593,6 +618,17 @@ public final class MarkovChain implements Serializable {
     }
 
     private void fireEndCurrentIteration(long state) {
+    }
+
+    private void fillDensities(Likelihood like, Map<String, Double> densities) {
+        if (like instanceof CompoundLikelihood) {
+            for (Likelihood subLike : ((CompoundLikelihood) like).getLikelihoods()) {
+                fillDensities(subLike, densities);
+            }
+        } else {
+            final double logLikelihood = like.getLogLikelihood();
+            densities.put(like.prettyName(), logLikelihood);
+        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();

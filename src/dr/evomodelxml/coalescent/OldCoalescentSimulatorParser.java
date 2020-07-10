@@ -31,7 +31,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.xml.*;

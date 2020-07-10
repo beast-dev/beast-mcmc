@@ -26,9 +26,9 @@
 package dr.evomodelxml.coalescent;
 
 
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideGradient;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -51,7 +51,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
 //        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        GMRFSkyrideLikelihood skyrideLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
+        OldGMRFSkyrideLikelihood skyrideLikelihood = (OldGMRFSkyrideLikelihood) xo.getChild(OldGMRFSkyrideLikelihood.class);
 
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
 
@@ -89,7 +89,7 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(TreeModel.class, true),
-            new ElementRule(GMRFSkyrideLikelihood.class),
+            new ElementRule(OldGMRFSkyrideLikelihood.class),
             new ElementRule(NodeHeightTransform.class, true),
     };
 

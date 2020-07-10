@@ -113,18 +113,18 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 //        evaluationCounts = null;
 //        
 //    }
-    
+
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
         if (UNROLL_COMPOUND && addToPool && likelihood instanceof CompoundLikelihood) {
-        	
+
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
                 addLikelihood(l, index, addToPool);
             }
-            
+
         } else {
-        	
+
             if (!likelihoods.contains(likelihood)) {
 
                 likelihoods.add(likelihood);
@@ -133,11 +133,11 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
                 }
 
                 if (likelihood.evaluateEarly()) {
-                	
+
                     earlyLikelihoods.add(likelihood);
-                    
+
                 } else {
-                	
+
                     // late likelihood list is used to evaluate them if the thread pool is not being used...
                     lateLikelihoods.add(likelihood);
 
@@ -149,9 +149,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             } else {
                 throw new IllegalArgumentException("Attempted to add the same likelihood multiple times to CompoundLikelihood.");
             } // END: contains check
-            
+
         }//END: if unroll check
-        
+
     }//END: addLikelihood
 
     public Set<Likelihood> getLikelihoodSet() {
@@ -333,6 +333,8 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         return message;
     }
 
+
+
     public String toString() {
         return getId();
         // really bad for debugging
@@ -357,20 +359,20 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
     public int getThreadCount() {
         return threadCount;
     }
-    
+
     public long[] getEvaluationTimes() {
-    	return evaluationTimes;
+        return evaluationTimes;
     }
-    
+
     public int[] getEvaluationCounts() {
-    	return evaluationCounts;
+        return evaluationCounts;
     }
-    
+
     public void resetEvaluationTimes() {
-    	for (int i = 0; i < evaluationTimes.length; i++) {
-    		evaluationTimes[i] = 0;
-    		evaluationCounts[i] = 0;
-    	}
+        for (int i = 0; i < evaluationTimes.length; i++) {
+            evaluationTimes[i] = 0;
+            evaluationCounts[i] = 0;
+        }
     }
     
     // **************************************************************

@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.Model;
@@ -43,6 +44,7 @@ import java.util.List;
  * @author Joseph Heled
  * @version $Id$
  */
+@Deprecated
 public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet, Citable {
 
     private final Parameter popSizeParameter;

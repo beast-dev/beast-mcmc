@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Model;
@@ -39,13 +40,13 @@ import dr.inference.model.Variable;
  */
 public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightTransformDelegate {
 
-    private GMRFSkyrideLikelihood skyrideLikelihood;
+    private OldGMRFSkyrideLikelihood skyrideLikelihood;
     private Parameter coalescentIntervals;
     private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
     public NodeHeightToCoalescentIntervalsDelegate(TreeModel treeModel,
                                                    Parameter nodeHeights,
-                                                   GMRFSkyrideLikelihood skyrideLikelihood) {
+                                                   OldGMRFSkyrideLikelihood skyrideLikelihood) {
 
         super(treeModel, nodeHeights);
 

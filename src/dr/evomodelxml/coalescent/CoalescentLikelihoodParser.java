@@ -83,7 +83,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
                     popFactors.add(cxo.getAttribute(POPULATION_FACTOR, 1.0));
                 }
                 else if (cxo.getName().equals(INTERVALS)) {
-                    intervalList = (IntervalList) cxo.getChild(MultiTreeIntervals.class);
+                    intervalList = (IntervalList) cxo.getChild(IntervalList.class);
                 }
             }
 //                in the future we may have arbitrary multi-loci element

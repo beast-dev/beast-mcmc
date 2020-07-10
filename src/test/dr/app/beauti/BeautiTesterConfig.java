@@ -25,6 +25,7 @@
 
 package test.dr.app.beauti;
 
+import dr.app.beauti.util.CharSet;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.generator.BeastGenerator;
@@ -274,7 +275,7 @@ public class BeautiTesterConfig {
         Alignment alignment = null;
         Tree tree = null;
         PartitionSubstitutionModel model = null;
-        java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
+        java.util.List<CharSet> charSets = new ArrayList<CharSet>();
 
         try {
             FileReader reader = new FileReader(fileName);
@@ -440,7 +441,7 @@ public class BeautiTesterConfig {
 
             java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
-                for (NexusApplicationImporter.CharSet charSet : charSets) {
+                for (CharSet charSet : charSets) {
                     partitions.add(new PartitionData(options, charSet.getName(), fileName,
                             new CharSetAlignment(charSet, alignment)));
                 }

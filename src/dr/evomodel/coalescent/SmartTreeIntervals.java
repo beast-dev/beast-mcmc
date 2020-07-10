@@ -83,9 +83,10 @@ public class SmartTreeIntervals extends AbstractModel implements Units, Interval
         storedIntervals = new Intervals(tree.getNodeCount());
         eventsKnown = false;
         fullUpdate = true;
+        updatedNodeCount = tree.getNodeCount();
 
-        sortedNodeList = new ArrayList<>();
-        storedSortedNodeList = new ArrayList<>();
+        sortedNodeList = new LinkedList<>();
+        storedSortedNodeList = new LinkedList<>();
 
         updateNode = new boolean[tree.getNodeCount()];
         storedUpdateNode = new boolean[tree.getNodeCount()];
@@ -135,6 +136,10 @@ public class SmartTreeIntervals extends AbstractModel implements Units, Interval
     private void updateNodeEvent(NodeRef node) {
         updateNode[node.getNumber()] = true;
         eventsKnown = false;
+        updatedNodeCount++;
+        if (updatedNodeCount > 5) { // magic number not sure what to make this
+            fullUpdate=true;
+        }
     }
 
     private void updateAllNodeEvents() {
@@ -172,6 +177,8 @@ public class SmartTreeIntervals extends AbstractModel implements Units, Interval
 
         storedEventsKnown = eventsKnown;
         storedFullUpdate = fullUpdate;
+
+        storedUpdatedNodeCount = updatedNodeCount;
     }
 
     /**
@@ -191,7 +198,7 @@ public class SmartTreeIntervals extends AbstractModel implements Units, Interval
         storedSortedNodeList = sortedNodeList;
         sortedNodeList = tmp3;
 
-
+        updatedNodeCount = storedUpdatedNodeCount;
         eventsKnown = storedEventsKnown;
         fullUpdate = storedFullUpdate;
     }
@@ -255,7 +262,7 @@ public class SmartTreeIntervals extends AbstractModel implements Units, Interval
 
         // force a calculation of the intervals...
         intervals.calculateIntervals(true);
-
+        updatedNodeCount =0;
         eventsKnown = true;
     }
 
@@ -515,6 +522,8 @@ public class SmartTreeIntervals extends AbstractModel implements Units, Interval
     private boolean[] updateNode;
     private boolean[] storedUpdateNode;
 
+    private int updatedNodeCount;
+    private int storedUpdatedNodeCount;
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;
     private boolean fullUpdate = true;

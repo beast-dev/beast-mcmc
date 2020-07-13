@@ -280,6 +280,14 @@ public interface Transform {
 
         abstract public int getDimension();
 
+        public int getInputDimension() {
+            return getDimension();
+        }
+
+        public int getOutputDimension() {
+            return getDimension();
+        }
+
         public double transform(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
@@ -336,10 +344,26 @@ public interface Transform {
     abstract class MultivariateTransform extends MultivariableTransform {
         // A class for a multivariate transform
 
-        protected int dim;
+        protected int dim;  // XJ: maybe switch to use input / output dimensions
+        protected int inputDimension;
+        protected int outputDimension;
 
         public MultivariateTransform(int dim){
-            this.dim = dim;
+            this(dim, dim);
+        }
+
+        public MultivariateTransform(int inputDimension, int outputDimension) {
+            this.dim = outputDimension;
+            this.inputDimension = inputDimension;
+            this.outputDimension = outputDimension;
+        }
+
+        public int getInputDimension() {
+            return inputDimension;
+        }
+
+        public int getOutputDimension() {
+            return outputDimension;
         }
 
         @Override
@@ -1202,6 +1226,14 @@ public interface Transform {
             this.inner = inner;
         }
 
+        public int getInputDimension() {
+            return inner.getInputDimension();
+        }
+
+        public int getOutputDimension() {
+            return outer.getOutputDimension();
+        }
+
         public int getDimension() {
             return outer.getDimension();
         }
@@ -1959,15 +1991,18 @@ public interface Transform {
 
             final double[] result = values.clone();
 
-            int offset = 0;
+            int inputOffset = 0;
+            int outputOffset = 0;
             for (MultivariableTransform anArray : array) {
-                int dim = anArray.getDimension();
-                double[] tmpVal = new double[dim];
-                System.arraycopy(values, offset, tmpVal, 0, dim);
-                double[] tmpGrad = new double[dim];
-                System.arraycopy(gradient, offset, tmpGrad, 0, dim);
-                System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal, 0, dim), 0, result, offset, dim);
-                offset += dim;
+                int inputDimension = anArray.getInputDimension();
+                int outputDimension = anArray.getOutputDimension();
+                double[] tmpVal = new double[inputDimension];
+                System.arraycopy(values, inputOffset, tmpVal, 0, inputDimension);
+                double[] tmpGrad = new double[inputDimension];
+                System.arraycopy(gradient, inputOffset, tmpGrad, 0, inputDimension);
+                System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal, 0, inputDimension), 0, result, outputOffset, outputDimension);
+                inputOffset += inputDimension;
+                outputOffset += outputDimension;
             }
             return result;
         }

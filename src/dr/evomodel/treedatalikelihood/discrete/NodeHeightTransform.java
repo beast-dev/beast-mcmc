@@ -46,7 +46,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
                                Parameter ratios,
                                TreeModel tree,
                                BranchRateModel branchrateModel) {
-        super(nodeHeights.getDimension());
+        super(tree.getInternalNodeCount(), nodeHeights.getDimension());
         this.tree = tree;
         if (nodeHeights.getDimension() == tree.getInternalNodeCount()) {
             this.nodeHeightTransformDelegate = new NodeHeightToRatiosFullTransformDelegate(tree, nodeHeights, ratios, branchrateModel);

@@ -464,7 +464,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         abstract void applyConstraint(FactorAnalysisOperatorAdaptor adaptor);
     }
 
-    public enum ColumnDimProvider {
+    public enum ColumnDimProvider {//TODO: don't hard code constraints, make more generalizable
 
 
         NONE("none") {
@@ -511,8 +511,42 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
 
             }
-        };
+        },
 
+        HYBRID("hybrid") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+
+                if (colIndex == 0) {
+                    return 1;
+                }
+                return nRows;
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                if (colIndex == 0) {
+                    return 0;
+                }
+                return 1;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray, ArrayList<double[]> meanArray, int nRows) {
+
+                // first column
+                precisionArray.add(new double[1][1]);
+                midMeanArray.add(new double[1]);
+                meanArray.add(new double[1]);
+
+
+                // remaining columns
+                precisionArray.add(new double[nRows][nRows]);
+                midMeanArray.add(new double[nRows]);
+                meanArray.add(new double[nRows]);
+
+            }
+        };
 
         abstract int getColumnDim(int colIndex, int nRows);
 
@@ -542,7 +576,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             throw new IllegalArgumentException("Unknown dimension provider type");
         }
 
-    }
+        }
 
     @Override
     public String getReport() {

@@ -27,6 +27,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.hmc.BayesianSkylineGradient;
+import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
 /**
@@ -37,6 +38,7 @@ public class BayesianSkylineGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "skylineGradient";
     private static final String WRT_PARAMETER = "wrtParameter";
+    private static final String TOLERANCE = HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -44,8 +46,9 @@ public class BayesianSkylineGradientParser extends AbstractXMLObjectParser {
         BayesianSkylineLikelihood skylineLikelihood = (BayesianSkylineLikelihood) xo.getChild(BayesianSkylineLikelihood.class);
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
         BayesianSkylineGradient.WrtParameter type = BayesianSkylineGradient.WrtParameter.factory(wrtParameterCase);
+        double tolerance = xo.getAttribute(TOLERANCE, 1E-4);
 
-        return new BayesianSkylineGradient(skylineLikelihood, type);
+        return new BayesianSkylineGradient(skylineLikelihood, type, tolerance);
     }
 
     @Override
@@ -56,6 +59,7 @@ public class BayesianSkylineGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(WRT_PARAMETER),
             new ElementRule(BayesianSkylineLikelihood.class),
+            AttributeRule.newDoubleRule(TOLERANCE, true),
     };
 
     @Override

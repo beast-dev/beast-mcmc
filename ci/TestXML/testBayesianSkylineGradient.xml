@@ -812,7 +812,7 @@
 		</chainParameter>
 	</exponentialMarkovLikelihood>
 	
-	<skylineGradient id="skylineGradientWrtNodeHeight" wrtParameter="nodeHeight">
+	<skylineGradient id="skylineGradientWrtNodeHeight" wrtParameter="nodeHeight" gradientCheckTolerance="1e-3">
 		<generalizedSkyLineLikelihood idref="skyline"/>
 	</skylineGradient>
 
@@ -919,14 +919,9 @@
 		</nodeHeightGradient>
 	</jointGradient>
  
- 	<nodeHeightTransform id="logitRatioTransform">
+ 	<nodeHeightTransform id="logitRatioTransform" withRoot="false">
 		<tree idref="treeModel"/>
 		<arbitraryBranchRates idref="branchRates"/>
-		<nodeHeights>
-			<nodeHeightProxyParameter id="nodeHeightProxyParameter" rootNode="false">
-				<tree idref="treeModel"/>
-			</nodeHeightProxyParameter>
-		</nodeHeights>
 		<ratios realLine="true">
 			<parameter id="nodeHeight.ratios"/>
 		</ratios>
@@ -938,7 +933,9 @@
 									   drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.8"
 									   preconditioning="adaptiveDiagonal" preconditioningDelay="200" preconditioningUpdateFrequency="10">
 			<jointGradient idref="jointNodeHeightGradient"/>
-			<nodeHeightProxyParameter idref="nodeHeightProxyParameter"/>
+            <nodeHeightProxyParameter id="nodeHeightProxyParameter" rootNode="false">
+                <tree idref="treeModel"/>
+            </nodeHeightProxyParameter>
 			<nodeHeightTransform idref="logitRatioTransform"/>
 		</hamiltonianMonteCarloOperator>
 

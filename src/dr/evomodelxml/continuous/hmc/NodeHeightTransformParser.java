@@ -49,12 +49,14 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     private static final String RATIO = "ratios";
     private static final String COALESCENT_INTERVAL = "coalescentIntervals";
     private static final String REAL_LINE = "realLine";
+    private static final String WITH_ROOT = "withRoot";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         XMLObject cxo = xo.getChild(NODEHEIGHT);
-        Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
+
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         Parameter ratioParameter = null;
         if (xo.hasChildNamed(RATIO)) {
@@ -75,25 +77,26 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
             skyrideLikelihood = (GMRFSkyrideLikelihood) cxo.getChild(GMRFSkyrideLikelihood.class);
         }
 
-        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        boolean withRoot = xo.getBooleanAttribute(WITH_ROOT);
 
         Transform nodeHeightTransform;
         if (ratioParameter != null) {
-            NodeHeightTransform transform = new NodeHeightTransform(nodeHeightParameter, ratioParameter, tree, branchRateModel);
+            NodeHeightTransform transform = new NodeHeightTransform(ratioParameter, tree, branchRateModel, withRoot);
             if (xo.getChild(RATIO).getAttribute(REAL_LINE, false)) {
 
                 List<Transform> transforms = new ArrayList<Transform>();
-                if (nodeHeightParameter.getDimension() != ratioParameter.getDimension()) {
+                if (withRoot) {
                     transforms.add(new Transform.LogTransform());
                 }
                 for (int i = 0; i < ratioParameter.getDimension(); i++) {
                     transforms.add(new Transform.LogitTransform());
                 }
-                nodeHeightTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, nodeHeightParameter), transform);
+                nodeHeightTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, null), transform);
             } else {
                 nodeHeightTransform = transform;
             }
         } else {
+            Parameter nodeHeightParameter = (Parameter) cxo.getChild(Parameter.class);
             nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, tree, skyrideLikelihood);
             coalescentIntervals = ((NodeHeightTransform) nodeHeightTransform).getParameter();
             cxo = xo.getChild(COALESCENT_INTERVAL);
@@ -107,13 +110,18 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new XORRule(new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
-                        new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class, "Construct a proxy parameter for coalescent intervals from the Skyride likelihood.")
-                        ),
-                new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
+                new XORRule(
+                        new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
+                        new AndRule(
+                                new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class,
+                                        "Construct a proxy parameter for coalescent intervals from the Skyride likelihood."),
+                                new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter")
+                        )
+                ),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class),
                 AttributeRule.newBooleanRule(REAL_LINE, true),
+                AttributeRule.newBooleanRule(WITH_ROOT),
         };
     }
 

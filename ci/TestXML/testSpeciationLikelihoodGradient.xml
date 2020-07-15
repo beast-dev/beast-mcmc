@@ -299,12 +299,9 @@
 		</nodeHeightGradient>
 	</jointGradient>
 
-	<nodeHeightTransform id="ratioTransform">
+	<nodeHeightTransform id="ratioTransform" withRoot="false">
 		<tree idref="treeModel"/>
 		<arbitraryBranchRates idref="branchRates"/>
-		<nodeHeights>
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</nodeHeights>
 		<ratios>
 			<parameter id="nodeHeight.ratios"/>
 		</ratios>
@@ -314,36 +311,25 @@
 		<parameter idref="nodeHeight.ratios"/>
 	</transform>
 
-	<nodeHeightTransform id="logitRatioTransform">
+	<nodeHeightTransform id="logitRatioTransform" withRoot="false">
 		<tree idref="treeModel"/>
 		<arbitraryBranchRates idref="branchRates"/>
-		<nodeHeights>
-			<parameter idref="treeModel.internalNodeHeights"/>
-		</nodeHeights>
 		<ratios realLine="true">
 			<parameter idref="nodeHeight.ratios"/>
 		</ratios>
 	</nodeHeightTransform>
 
-	<nodeHeightTransform id="fullRatioTransform">
+	<nodeHeightTransform id="fullRatioTransform" withRoot="true">
 		<tree idref="treeModel"/>
 		<arbitraryBranchRates idref="branchRates"/>
-		<nodeHeights>
-			<nodeHeightProxyParameter id="nodeHeightProxyParameter" rootNode="true">
-				<tree idref="treeModel"/>
-			</nodeHeightProxyParameter>
-		</nodeHeights>
 		<ratios>
 			<parameter idref="nodeHeight.ratios"/>
 		</ratios>
 	</nodeHeightTransform>
 
-	<nodeHeightTransform id="fullRatioRealLineTransform">
+	<nodeHeightTransform id="fullRatioRealLineTransform" withRoot="true">
 		<tree idref="treeModel"/>
 		<arbitraryBranchRates idref="branchRates"/>
-		<nodeHeights>
-			<nodeHeightProxyParameter idref="nodeHeightProxyParameter"/>
-		</nodeHeights>
 		<ratios realLine="true">
 			<parameter idref="nodeHeight.ratios"/>
 		</ratios>

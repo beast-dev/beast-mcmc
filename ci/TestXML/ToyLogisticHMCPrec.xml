@@ -346,14 +346,9 @@
  -->
 
 
-	<nodeHeightTransform id="fullRatioRealLineTransform">
+	<nodeHeightTransform id="fullRatioRealLineTransform" withRoot="true">
 		<tree idref="treeModel"/>
 		<arbitraryBranchRates idref="branchRates"/>
-		<nodeHeights>
-			<nodeHeightProxyParameter id="nodeHeightProxyParameter" rootNode="true">
-				<tree idref="treeModel"/>
-			</nodeHeightProxyParameter>
-		</nodeHeights>
 		<ratios realLine="true">
 			<parameter id="nodeHeight.ratios"/>
 		</ratios>
@@ -367,7 +362,9 @@
 									   preconditioning="adaptiveDiagonal" preconditioningDelay="200" preconditioningUpdateFrequency="10">
 			<jointGradient idref="jointNodeHeightGradient"/>
 <!-- 			<nodeHeightGradient idref="nodeHeightGradient"/> -->
-			<nodeHeightProxyParameter idref="nodeHeightProxyParameter"/>
+			<nodeHeightProxyParameter id="nodeHeightProxyParameter" rootNode="true">
+				<tree idref="treeModel"/>
+			</nodeHeightProxyParameter>
 			<nodeHeightTransform idref="fullRatioRealLineTransform"/>
 		</hamiltonianMonteCarloOperator>
 

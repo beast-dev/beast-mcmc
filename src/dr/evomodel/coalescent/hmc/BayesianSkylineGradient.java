@@ -51,11 +51,14 @@ public class BayesianSkylineGradient implements
 
     private final BayesianSkylineLikelihood likelihood;
     private final WrtParameter wrtParameter;
+    private final Double tolerance;
 
     public BayesianSkylineGradient(BayesianSkylineLikelihood likelihood,
-                                   WrtParameter wrtParameter) {
+                                   WrtParameter wrtParameter,
+                                   Double tolerance) {
         this.likelihood = likelihood;
         this.wrtParameter = wrtParameter;
+        this.tolerance = tolerance;
     }
 
     @Override
@@ -90,7 +93,7 @@ public class BayesianSkylineGradient implements
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY, 1e-4);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY, tolerance);
     }
 
     @Override

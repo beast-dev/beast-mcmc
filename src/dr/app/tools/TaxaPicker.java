@@ -39,10 +39,7 @@ import dr.evomodel.arg.ARGModel;
 import dr.util.Version;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Philippe Lemey
@@ -63,12 +60,13 @@ public class TaxaPicker {
                        String outputFileName,
                        String[] taxaToPrune,
                        boolean basedOnNameContent,
-                       int degree
+                       int degree,
+                       double cutOff
                        ) throws IOException {
 
 
         this.degree = degree;
-        this.relatives = new HashSet<>();
+        this.relatives = new HashMap<>();
 
         List<Tree> trees = new ArrayList<>();
 
@@ -82,11 +80,18 @@ public class TaxaPicker {
             relatives.remove(remove);
         }
 
+        for (String name : relatives.keySet()) {
+            double probability = (double) relatives.get(name) / ((double) totalTrees);
+            if (probability < cutOff) {
+                relatives.remove(name);
+            }
+        }
+
         writeOutputFile(trees, outputFileName);
     }
 
     private final int degree;
-    private final Set<String> relatives;
+    private final Map<String, Integer> relatives;
 
     private void readTrees(List<Tree> trees, String inputFileName) throws IOException {
 
@@ -213,18 +218,28 @@ public class TaxaPicker {
             ++currentDegree;
         }
 
-        recursivelyAddTipsNames(tree, ancestor);
+        recursivelyAddTipsNames(tree, ancestor, 0);
     }
 
-    private void recursivelyAddTipsNames(Tree tree, NodeRef node) {
+    private void recursivelyAddTipsNames(Tree tree, NodeRef node, int currentDegree) {
 
         if (!tree.isExternal(node)) {
-            recursivelyAddTipsNames(tree, tree.getChild(node, 0));
-            recursivelyAddTipsNames(tree, tree.getChild(node, 1));
+            if (currentDegree < degree) {
+                recursivelyAddTipsNames(tree, tree.getChild(node, 0), currentDegree + 1);
+                recursivelyAddTipsNames(tree, tree.getChild(node, 1), currentDegree + 1);
+            }
         } else {
             Taxon taxon = tree.getNodeTaxon(node);
-            relatives.add(taxon.getId());
+            addName(taxon.getId());
         }
+    }
+
+    private void addName(String name) {
+        int count = 1;
+        if (relatives.containsKey(name)) {
+            count += relatives.get(name);
+        }
+        relatives.put(name, count);
     }
 
     private NodeRef getSibling(FlexibleTree tree, NodeRef parent, NodeRef node) {
@@ -251,7 +266,7 @@ public class TaxaPicker {
             }
         }
 
-        for (String name : relatives) {
+        for (String name : relatives.keySet()) {
             ps.println(name);
         }
 
@@ -335,6 +350,7 @@ public class TaxaPicker {
                 new Arguments.Option[]{
                         new Arguments.StringOption("taxaToFind", "list","a list of taxon names to find"),
                         new Arguments.IntegerOption("degree", "degree relatives"),
+                        new Arguments.RealOption("cutOff", "cut-off probability"),
                         new Arguments.Option("asFile", "Boolean if taxaToFind is a file"),
                         new Arguments.StringOption(NAMECONTENT, falseTrue, false,
                                 "add true noise [default = true])"),
@@ -362,6 +378,11 @@ public class TaxaPicker {
             }
         }
 
+        double cutOff = 0.8;
+        if (arguments.hasOption("cutOff")) {
+            cutOff = arguments.getRealOption("cutOff");
+        }
+
         String nameContentString = arguments.getStringOption(NAMECONTENT);
         if (nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0)
             basedOnNameContent = true;
@@ -385,7 +406,7 @@ public class TaxaPicker {
             }
         }
 
-        new TaxaPicker(inputFileName, outputFileName, taxaToPrune, basedOnNameContent, degree);
+        new TaxaPicker(inputFileName, outputFileName, taxaToPrune, basedOnNameContent, degree, cutOff);
 
         System.exit(0);
     }

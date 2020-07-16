@@ -40,6 +40,7 @@ import dr.util.Version;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Philippe Lemey
@@ -66,7 +67,7 @@ public class TaxaPicker {
 
 
         this.degree = degree;
-        this.relatives = new HashMap<>();
+        this.relatives = new ConcurrentHashMap<>();
 
         List<Tree> trees = new ArrayList<>();
 
@@ -76,9 +77,13 @@ public class TaxaPicker {
 
         processTrees(trees, taxa);
 
+        progressStream.println("List size before removing specified taxa: " + relatives.size());
+
         for (String remove : taxaToPrune) {
             relatives.remove(remove);
         }
+
+        progressStream.println("List size after moving specified taxa: " + relatives.size());
 
         for (String name : relatives.keySet()) {
             double probability = (double) relatives.get(name) / ((double) totalTrees);
@@ -86,6 +91,8 @@ public class TaxaPicker {
                 relatives.remove(name);
             }
         }
+
+        progressStream.println("List size after applying cutoff (" + cutOff + "): " + relatives.size());
 
         writeOutputFile(trees, outputFileName);
     }

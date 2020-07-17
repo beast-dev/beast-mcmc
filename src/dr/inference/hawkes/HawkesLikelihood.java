@@ -105,6 +105,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         super(HAWKES_LIKELIHOOD);
 
         this.hphDimension = hphDimension;
+        this.locationCount = locationsParameter.getColumnDimension();
 
 //        // construct a compact data table
 //        String[] rowLabelsOriginal = dataTable.getRowLabels();
@@ -252,18 +253,23 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         setupLocationsParameter(this.locationsParameter);
         addVariable(locationsParameter);
 
-        this.hphModelParameters[0] = sigmaXprec;
-        addVariable(sigmaXprec);
-        this.hphModelParameters[1] = tauXprec;
-        addVariable(tauXprec);
-        this.hphModelParameters[2] = tauTprec;
-        addVariable(tauTprec);
-        this.hphModelParameters[3] = omega;
-        addVariable(omega);
-        this.hphModelParameters[4] = theta;
-        addVariable(theta);
-        this.hphModelParameters[5] = mu0;
-        addVariable(mu0);
+        this.hphModelParameters = new CompoundParameter("hphModelParameter", new Parameter[]{sigmaXprec, tauXprec, tauTprec, omega, theta, mu0});
+        // XJ: this hard-coded order might cause some dimension issues.  TODO: find a safer way of handling dimensions.
+        addVariable(hphModelParameters);
+
+//
+//        this.hphModelParameters[0] = sigmaXprec;
+//        addVariable(sigmaXprec);
+//        this.hphModelParameters[1] = tauXprec;
+//        addVariable(tauXprec);
+//        this.hphModelParameters[2] = tauTprec;
+//        addVariable(tauTprec);
+//        this.hphModelParameters[3] = omega;
+//        addVariable(omega);
+//        this.hphModelParameters[4] = theta;
+//        addVariable(theta);
+//        this.hphModelParameters[5] = mu0;
+//        addVariable(mu0);
 
 
         hphCore.setParameters(hphModelParameters.getParameterValues());
@@ -329,9 +335,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 int locationIndex = index / hphDimension;
                 hphCore.updateLocation(locationIndex, locationsParameter.getColumnValues(locationIndex));
             }
-        } else if (variable == hphPrecisionParameter) {
-            hphCore.setParameters(hphPrecisionParameter.getParameterValues());
         }
+//        else if (variable == hphPrecisionParameter) {
+//            hphCore.setParameters(hphPrecisionParameter.getParameterValues());
+//        }
 
         likelihoodKnown = false;
     }
@@ -453,9 +460,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         }
     };
 
-    public double getHPHPrecision() {
-        return hphPrecisionParameter.getParameterValue(0);
-    }
+//    public Parameter getHPHPrecision() {
+//        return hphPrecisionParameter;
+//    }
 
     private final int hphDimension;
     private final int locationCount;
@@ -464,7 +471,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     private String[] locationLabels;
 
-    private Parameter[] hphModelParameters;
+    private CompoundParameter hphModelParameters;
+//    private Parameter hphPrecisionParameter;
     private MatrixParameterInterface locationsParameter;
 
     private boolean likelihoodKnown = false;

@@ -47,7 +47,7 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
                                TreeModel tree,
                                BranchRateModel branchrateModel,
                                boolean withRoot) {
-        super(withRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1);
+        super(tree.getInternalNodeCount(), withRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1);
         this.tree = tree;
         if (withRoot) {
             this.nodeHeights = new NodeHeightProxyParameter("nodeHeightToFullRatiosProxyParameter", tree, true);

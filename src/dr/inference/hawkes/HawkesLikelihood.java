@@ -25,27 +25,106 @@
 
 package dr.inference.hawkes;
 
-import dr.evomodel.antigenic.MultidimensionalScalingLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
-import dr.util.DataTable;
 import dr.xml.*;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
 /**
- * @author Andrew Rambaut
+ * @author Andrew Holbrook
+ * @author Xiang Ji
  * @author Marc Suchard
- * @version $Id$
  */
 public class HawkesLikelihood extends AbstractModelLikelihood implements Reportable,
         GradientWrtParameterProvider {
 
     private final static String REQUIRED_FLAGS_PROPERTY = "hph.required.flags";
+    private final static String HAWKES_LIKELIHOOD = "hawkesLikelihood";
+
+
+    public HawkesLikelihood(
+            int hphDimension,
+            HawkesParameters hawkesParameters) {
+
+        super(HAWKES_LIKELIHOOD);
+
+        this.hawkesParameters = hawkesParameters;
+
+        this.hphDimension = hphDimension;
+        this.locationCount = hawkesParameters.getLocationCount();
+
+        initialize(hphDimension, hawkesParameters);
+    }
+
+    public static class HawkesParameters {
+
+        final Parameter tauXprec;
+        final Parameter sigmaXprec;
+        final Parameter tauTprec;
+        final Parameter omega;
+        final Parameter theta;
+        final Parameter mu0;
+        final MatrixParameterInterface locationsParameter;
+        final CompoundParameter allParameters;
+
+        public HawkesParameters(final Parameter tauXprec,
+                                final Parameter sigmaXprec,
+                                final Parameter tauTprec,
+                                final Parameter omega,
+                                final Parameter theta,
+                                final Parameter mu0,
+                                final MatrixParameterInterface locationsParameter) {
+            this.tauXprec = tauXprec;
+            this.sigmaXprec = sigmaXprec;
+            this.tauTprec = tauTprec;
+            this.omega = omega;
+            this.theta = theta;
+            this.mu0 = mu0;
+            this.locationsParameter = locationsParameter;
+            this.allParameters = new CompoundParameter("hphModelParameter", new Parameter[]{sigmaXprec, tauXprec, tauTprec, omega, theta, mu0});
+        }
+
+        public CompoundParameter getCompoundParameter() {
+            return allParameters;
+        }
+
+        public MatrixParameterInterface getLocationsParameter() {
+            return locationsParameter;
+        }
+
+        public double[] getParameterValues() {
+            return allParameters.getParameterValues();
+        }
+
+        public int getLocationCount() {
+            return locationsParameter.getColumnDimension();
+        }
+    }
+
+    protected int initialize(
+            final int hphDimension,
+            final HawkesParameters hawkesParameters) {
+
+        this.hphCore = getCore();
+
+        System.err.println("Initializing with flags: " + flags);
+
+        this.hphCore.initialize(hphDimension, locationCount, flags);
+        this.hawkesParameters = hawkesParameters;
+        int internalDimension = hphCore.getInternalDimension();
+        setupLocationsParameter(hawkesParameters.getLocationsParameter());
+        addVariable(hawkesParameters.getCompoundParameter());
+
+
+        hphCore.setParameters(hawkesParameters.getParameterValues());
+
+        updateAllLocations(hawkesParameters.getLocationsParameter());
+
+        // make sure everything is calculated on first evaluation
+        makeDirty();
+
+        return internalDimension;
+    }
+
 
     @Override
     public String getReport() {
@@ -59,19 +138,18 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     @Override
     public Parameter getParameter() {
-        return locationsParameter;
+        return hawkesParameters.getLocationsParameter();
     }
 
     @Override
     public int getDimension() {
-        return locationsParameter.getDimension();
+        return hawkesParameters.getLocationsParameter().getDimension();
     }
-
     @Override
     public double[] getGradientLogDensity() {
         // TODO Cache !!!
         if (gradient == null) {
-            gradient = new double[locationsParameter.getDimension()];
+            gradient = new double[hawkesParameters.getLocationsParameter().getDimension()];
         }
 
         hphCore.getGradient(gradient);
@@ -84,126 +162,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         UPPER_BOUND,
         LOWER_BOUND,
         MISSING
+
     }
 
-    private final static String HAWKES_LIKELIHOOD = "HawkesLikelihood";
-
-    /**
-     * Something
-     * @param hphDimension
-     * @param hphPrecision
-     * @param locationsParameter
-     */
-    public HawkesLikelihood(
-            int hphDimension,
-            Parameter hphPrecision,
-            MatrixParameterInterface locationsParameter,
-            DataTable<double[]> dataTable,
-            boolean isLeftTruncated,
-            boolean reorderData) {
-
-        super(HAWKES_LIKELIHOOD);
-
-        this.hphDimension = hphDimension;
-        this.locationCount = locationsParameter.getColumnDimension();
-
-//        // construct a compact data table
-//        String[] rowLabelsOriginal = dataTable.getRowLabels();
-////        String[] columnLabels = dataTable.getRowLabels();
-//
-//        int rowCount = dataTable.getRowCount();
-//        locationCount = rowCount;
-//
-//        int[] permute;
-//        if (reorderData) {
-//            permute = getPermutation(rowLabelsOriginal, locationsParameter);
-//        } else {
-//            permute = new int[locationCount];
-//            for (int i = 0; i < locationCount; ++i) {
-//                permute[i] = i; // identity
-//            }
-//        }
-//
-//        String[] rowLabels = new String[locationCount];
-//
-//        int observationCount = rowCount * rowCount;
-////        double[] observations = new double[observationCount];
-//        observations = new double[observationCount];
-//        ObservationType[] observationTypes = new ObservationType[observationCount];
-//
-//        double[][] tmp = new double[rowCount][rowCount];
-//
-//        for (int i = 0; i < rowCount; i++) {
-//            rowLabels[i] = rowLabelsOriginal[permute[i]];
-//
-//            double[] dataRow = dataTable.getRow(permute[i]);
-//
-//            for (int j = i + 1; j < rowCount; j++) {
-//                tmp[i][j] = tmp[j][i] = dataRow[permute[j]];
-//            }
-//        }
-//
-//        int u = 0;
-//        for (int i = 0; i < rowCount; i++) {
-//            for (int j = 0; j < rowCount; j++) {
-//                if (i == j) {
-//                    observations[u] = 0.0;
-//                    observationTypes[u] = ObservationType.POINT;
-//                } else {
-//                    observations[u] = tmp[i][j];
-//                    if (Double.isNaN(observations[u])) {
-//                        observationTypes[u] = ObservationType.MISSING;
-//                    } else {
-//                        observationTypes[u] = ObservationType.POINT;
-//                    }
-//                }
-//                u++;
-//            }
-//        }
-//
-//        this.vectorDimension = initialize(hphDimension, hphPrecision, isLeftTruncated, locationsParameter,
-//                rowLabels, observations, observationTypes);
-    }
-
-//    private class Data {
-//        int observationCount;
-//        double[] observations;
-//        ObservationType[] observationTypes;
-//
-//        Data(int observationCount, double[] observations, ObservationType[] observationTypes) {
-//            this.observationCount = observationCount;
-//            this.observations = observations;
-//            this.observationTypes = observationTypes;
-//        }
-//    }
-
-    public MatrixParameterInterface getMatrixParameter() { return locationsParameter; }
-
-//    private int[] getPermutation(String[] source, MatrixParameterInterface destination) {
-//
-//        if (source.length != destination.getColumnDimension()) {
-//            throw new IllegalArgumentException("Dimension mismatch");
-//        }
-//
-//        final int length = source.length;
-//
-//        Map<String,Integer> map = new HashMap<String, Integer>(destination.getColumnDimension());
-//        for (int i = 0; i < length; ++i) {
-//            map.put(source[i],i);
-//        }
-//
-//        int[] permute = new int[length];
-//        for (int i = 0; i < length; ++i) {
-//            Integer p = map.get(destination.getParameter(i).getParameterName());
-//            if (p == null) {
-//                Logger.getLogger("dr.app.beagle").info("Missing label!!!");
-//            } else {
-//                permute[i] = p;
-//            }
-//        }
-//
-//        return permute;
-//    }
+    public MatrixParameterInterface getMatrixParameter() { return hawkesParameters.getLocationsParameter(); }
 
     private HawkesCore getCore() {
         long computeMode = 0;
@@ -229,59 +191,6 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     public int getLocationCount() { return locationCount; }
 
-    protected int initialize(
-            final int hphDimension,
-            final Parameter tauXprec,
-            final Parameter sigmaXprec,
-            final Parameter tauTprec,
-            final Parameter omega,
-            final Parameter theta,
-            final Parameter mu0,
-            final MatrixParameterInterface locationsParameter,
-            final String[] locationLabels,
-            final double[] timesData) {
-
-        this.hphCore = getCore();
-
-        System.err.println("Initializing with flags: " + flags);
-
-        this.hphCore.initialize(hphDimension, locationCount, flags);
-        this.locationLabels = locationLabels;
-
-        this.locationsParameter = locationsParameter;
-        int internalDimension = hphCore.getInternalDimension();
-        setupLocationsParameter(this.locationsParameter);
-        addVariable(locationsParameter);
-
-        this.hphModelParameters = new CompoundParameter("hphModelParameter", new Parameter[]{sigmaXprec, tauXprec, tauTprec, omega, theta, mu0});
-        // XJ: this hard-coded order might cause some dimension issues.  TODO: find a safer way of handling dimensions.
-        addVariable(hphModelParameters);
-
-//
-//        this.hphModelParameters[0] = sigmaXprec;
-//        addVariable(sigmaXprec);
-//        this.hphModelParameters[1] = tauXprec;
-//        addVariable(tauXprec);
-//        this.hphModelParameters[2] = tauTprec;
-//        addVariable(tauTprec);
-//        this.hphModelParameters[3] = omega;
-//        addVariable(omega);
-//        this.hphModelParameters[4] = theta;
-//        addVariable(theta);
-//        this.hphModelParameters[5] = mu0;
-//        addVariable(mu0);
-
-
-        hphCore.setParameters(hphModelParameters.getParameterValues());
-
-        updateAllLocations(locationsParameter);
-
-        // make sure everything is calculated on first evaluation
-        makeDirty();
-
-        return internalDimension;
-    }
-
     private void updateAllLocations(MatrixParameterInterface locationsParameter) {
         // TODO Can make more efficient (if necessary) using vectorDimension padding
         hphCore.updateLocation(-1, locationsParameter.getParameterValues());
@@ -301,12 +210,12 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             throw new IllegalArgumentException("Dimensions on matrix must be set");
         }
 
-        for (int i = 0; i < locationLabels.length; i++) {
-            if (locationsParameter.getParameter(i).getParameterName().compareTo(locationLabels[i]) != 0) {
-                throw new RuntimeException("Mismatched trait parameter name (" + locationsParameter.getParameter(i).getParameterName() +
-                        ") and data dimension name (" + locationLabels[i] + ")");
-            }
-        }
+//        for (int i = 0; i < locationLabels.length; i++) {
+//            if (locationsParameter.getParameter(i).getParameterName().compareTo(locationLabels[i]) != 0) {
+//                throw new RuntimeException("Mismatched trait parameter name (" + locationsParameter.getParameter(i).getParameterName() +
+//                        ") and data dimension name (" + locationLabels[i] + ")");
+//            }
+//        }
 
         for (int i = 0; i < locationsParameter.getColumnDimension(); ++i) {
             Parameter param = locationsParameter.getParameter(i);
@@ -326,16 +235,16 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         // TODO Flag which cachedDistances or hphPrecision need to be updated
 
-        if (variable == locationsParameter) {
-
-            if (index == -1) {
-                updateAllLocations(locationsParameter);
-            } else {
-
-                int locationIndex = index / hphDimension;
-                hphCore.updateLocation(locationIndex, locationsParameter.getColumnValues(locationIndex));
-            }
-        }
+//        if (variable == locationsParameter) {
+//
+//            if (index == -1) {
+//                updateAllLocations(locationsParameter);
+//            } else {
+//
+//                int locationIndex = index / hphDimension;
+//                hphCore.updateLocation(locationIndex, locationsParameter.getColumnValues(locationIndex));
+//            }
+//        }
 //        else if (variable == hphPrecisionParameter) {
 //            hphCore.setParameters(hphPrecisionParameter.getParameterValues());
 //        }
@@ -385,13 +294,14 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        final static String FILE_NAME = "fileName";
-        final static  String LOCATIONS = "locations";
+        final static String LOCATIONS = "locations";
         final static String HPH_DIMENSION = "hphDimension";
-        final static String HPH_PRECISION = "hphPrecision";
-        final static String INCLUDE_TRUNCATION = "includeTruncation";
-        final static String USE_OLD = "useOld";
-        final static String FORCE_REORDER = "forceReorder";
+        final static String SIGMA_PRECISON = "sigmaXprec";
+        final static String TAU_X_PRECISION = "tauXprec";
+        final static String TAU_T_PRECISION = "tauTprec";
+        final static String OMEGA = "omega";
+        final static String THETA = "theta";
+        final static String MU = "mu0";
 
         public String getParserName() {
             return HAWKES_LIKELIHOOD;
@@ -399,37 +309,21 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String fileName = xo.getStringAttribute(FILE_NAME);
-            DataTable<double[]> distanceTable;
-            try {
-                distanceTable = DataTable.Double.parse(new FileReader(fileName));
-            } catch (IOException e) {
-                throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
-            }
-
-            if (distanceTable.getRowCount() != distanceTable.getColumnCount()) {
-                throw new XMLParseException("Data table is not symmetrical.");
-            }
-
             int hphDimension = xo.getIntegerAttribute(HPH_DIMENSION);
 
             MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
 
-            Parameter hphPrecision = (Parameter) xo.getElementFirstChild(HPH_PRECISION);
+            Parameter sigmaXprec = (Parameter) xo.getElementFirstChild(SIGMA_PRECISON);
+            Parameter tauXprec = (Parameter) xo.getElementFirstChild(TAU_X_PRECISION);
+            Parameter tauTprec = (Parameter) xo.getElementFirstChild(TAU_T_PRECISION);
+            Parameter omega = (Parameter) xo.getElementFirstChild(OMEGA);
+            Parameter theta = (Parameter) xo.getElementFirstChild(THETA);
+            Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
-            boolean useOld = xo.getAttribute(USE_OLD, false);
+            HawkesParameters hawkesParameters = new HawkesParameters(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter);
 
-            boolean includeTruncation = xo.getAttribute(INCLUDE_TRUNCATION, false);
+            return new HawkesLikelihood(hphDimension, hawkesParameters);
 
-            boolean forceReorder = xo.getAttribute(FORCE_REORDER, false);
-
-//            if (useOld) {
-//                System.err.println("USE OLD");
-//                return new HawkesLikelihood(hphDimension, includeTruncation, hphPrecision, (MatrixParameter)locationsParameter, distanceTable);
-//            } else {
-                return new HawkesLikelihood(hphDimension, hphPrecision, locationsParameter,
-                        distanceTable, includeTruncation, forceReorder);
-//            }
         }
 
         //************************************************************************
@@ -446,13 +340,14 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(HPH_DIMENSION, false, "The dimension of the space for HPH"),
                 new ElementRule(LOCATIONS, MatrixParameterInterface.class),
-                AttributeRule.newBooleanRule(USE_OLD, true),
-                AttributeRule.newBooleanRule(INCLUDE_TRUNCATION, true),
-                AttributeRule.newBooleanRule(FORCE_REORDER, true),
-                new ElementRule(HPH_PRECISION, Parameter.class)
+                new ElementRule(SIGMA_PRECISON, Parameter.class),
+                new ElementRule(TAU_X_PRECISION, Parameter.class),
+                new ElementRule(TAU_T_PRECISION, Parameter.class),
+                new ElementRule(OMEGA, Parameter.class),
+                new ElementRule(THETA, Parameter.class),
+                new ElementRule(MU, Parameter.class)
         };
 
         public Class getReturnType() {
@@ -468,12 +363,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     private final int locationCount;
 
     private HawkesCore hphCore;
-
-    private String[] locationLabels;
-
-    private CompoundParameter hphModelParameters;
-//    private Parameter hphPrecisionParameter;
-    private MatrixParameterInterface locationsParameter;
+    private HawkesParameters hawkesParameters;
 
     private boolean likelihoodKnown = false;
     private double logLikelihood;

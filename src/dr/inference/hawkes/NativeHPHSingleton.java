@@ -134,7 +134,6 @@ public class NativeHPHSingleton {
 
     public native void makeDirty(int instance);
 
-
     public native void setParameters(int instance, double[] parameters);
 
     public native void setTimesData(int instance, double[] timesData);

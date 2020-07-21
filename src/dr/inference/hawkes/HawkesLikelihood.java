@@ -120,7 +120,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         updateAllLocations(hawkesParameters.getLocationsParameter());
 
         // make sure everything is calculated on first evaluation
-        makeDirty();
+//        makeDirty();
 
         return internalDimension;
     }

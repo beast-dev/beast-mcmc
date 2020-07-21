@@ -64,6 +64,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final Parameter theta;
         final Parameter mu0;
         final MatrixParameterInterface locationsParameter;
+        final Parameter times;
         final CompoundParameter allParameters;
 
         public HawkesParameters(final Parameter tauXprec,
@@ -72,7 +73,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                                 final Parameter omega,
                                 final Parameter theta,
                                 final Parameter mu0,
-                                final MatrixParameterInterface locationsParameter) {
+                                final MatrixParameterInterface locationsParameter,
+                                final Parameter times) {
             this.tauXprec = tauXprec;
             this.sigmaXprec = sigmaXprec;
             this.tauTprec = tauTprec;
@@ -80,7 +82,16 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             this.theta = theta;
             this.mu0 = mu0;
             this.locationsParameter = locationsParameter;
+            this.times = times;
             this.allParameters = new CompoundParameter("hphModelParameter", new Parameter[]{sigmaXprec, tauXprec, tauTprec, omega, theta, mu0});
+
+            checkDimensions();
+        }
+
+        private void checkDimensions() {
+            if (times.getDimension() != getLocationCount()) {
+                throw new RuntimeException("Times dimension doesn't match location count.");
+            }
         }
 
         public CompoundParameter getCompoundParameter() {
@@ -282,6 +293,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
+            updateAllLocations(hawkesParameters.getLocationsParameter());
             logLikelihood = hphCore.calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -295,6 +307,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         final static String LOCATIONS = "locations";
+        final static String TIMES = "times";
         final static String HPH_DIMENSION = "hphDimension";
         final static String SIGMA_PRECISON = "sigmaXprec";
         final static String TAU_X_PRECISION = "tauXprec";
@@ -312,6 +325,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             int hphDimension = xo.getIntegerAttribute(HPH_DIMENSION);
 
             MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
+            Parameter times = (Parameter) xo.getElementFirstChild(TIMES);
 
             Parameter sigmaXprec = (Parameter) xo.getElementFirstChild(SIGMA_PRECISON);
             Parameter tauXprec = (Parameter) xo.getElementFirstChild(TAU_X_PRECISION);
@@ -320,7 +334,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Parameter theta = (Parameter) xo.getElementFirstChild(THETA);
             Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
-            HawkesParameters hawkesParameters = new HawkesParameters(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter);
+            HawkesParameters hawkesParameters = new HawkesParameters(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
 
             return new HawkesLikelihood(hphDimension, hawkesParameters);
 
@@ -342,6 +356,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(HPH_DIMENSION, false, "The dimension of the space for HPH"),
                 new ElementRule(LOCATIONS, MatrixParameterInterface.class),
+                new ElementRule(TIMES, Parameter.class),
                 new ElementRule(SIGMA_PRECISON, Parameter.class),
                 new ElementRule(TAU_X_PRECISION, Parameter.class),
                 new ElementRule(TAU_T_PRECISION, Parameter.class),

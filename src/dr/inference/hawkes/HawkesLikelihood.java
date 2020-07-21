@@ -102,6 +102,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             return locationsParameter;
         }
 
+        public double[] getTimes() {
+            return times.getParameterValues();
+        }
+
         public double[] getParameterValues() {
             return allParameters.getParameterValues();
         }
@@ -294,6 +298,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
             updateAllLocations(hawkesParameters.getLocationsParameter());
+            hphCore.setTimesData(hawkesParameters.getTimes());
+            hphCore.setParameters(hawkesParameters.getParameterValues());
             logLikelihood = hphCore.calculateLogLikelihood();
             likelihoodKnown = true;
         }

@@ -132,7 +132,7 @@ public class ExponentialExponentialModel extends DemographicModel {
 
         exponentialExponential.setAncestralGrowthRate(ancestralGrowthRateParameter.getParameterValue(0));
 
-        exponentialExponential.setTransitionTime(transitionTimeParameter.getParameterValue(0));
+        exponentialExponential.setTransitionTime(transitionTimeParameter.getParameterValue(0) - getTimeOffset());
 
         if (N0Parameter != null) {
             exponentialExponential.setN0(N0Parameter.getParameterValue(0));

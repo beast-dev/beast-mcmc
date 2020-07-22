@@ -119,11 +119,11 @@ public class ExponentialLogisticModel extends DemographicModel implements Citabl
         double r1 = exponentialGrowthParameter.getParameterValue(0);
         exponentialLogistic.setR1(r1);
 
-        double t = transistionTimeParameter.getParameterValue(0);
+        double t = transistionTimeParameter.getParameterValue(0) - getTimeOffset();
         exponentialLogistic.setTime(t);
 
         // logisticGrowth.setShape(Math.exp(shapeParameter.getParameterValue(0)));
-        exponentialLogistic.setTime50(logisticShapeParameter.getParameterValue(0));
+        exponentialLogistic.setTime50(logisticShapeParameter.getParameterValue(0) - getTimeOffset());
         //exponentialLogistic.setShapeFromTimeAtAlpha(logisticShapeParameter.getParameterValue(0), alpha);
 
         return exponentialLogistic;

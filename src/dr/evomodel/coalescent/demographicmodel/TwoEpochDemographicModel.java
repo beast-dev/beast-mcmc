@@ -81,7 +81,7 @@ public class TwoEpochDemographicModel extends DemographicModel {
     public DemographicFunction getDemographicFunction() {
 
         TwoEpochDemographic twoEpoch = new TwoEpochDemographic(demo1.getDemographicFunction(), demo2.getDemographicFunction(), getUnits());
-        twoEpoch.setTransitionTime(transitionTimeParameter.getParameterValue(0));
+        twoEpoch.setTransitionTime(transitionTimeParameter.getParameterValue(0) - getTimeOffset());
 
         return twoEpoch;
     }

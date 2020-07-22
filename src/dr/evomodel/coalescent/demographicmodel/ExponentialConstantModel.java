@@ -98,7 +98,7 @@ public class ExponentialConstantModel extends DemographicModel implements Citabl
 
         exponentialConstant.setGrowthRate(growthRateParameter.getParameterValue(0));
 
-        exponentialConstant.setTransitionTime(transitionTimeParameter.getParameterValue(0));
+        exponentialConstant.setTransitionTime(transitionTimeParameter.getParameterValue(0) - getTimeOffset());
 
         return exponentialConstant;
     }

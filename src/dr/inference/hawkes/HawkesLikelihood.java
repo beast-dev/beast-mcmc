@@ -41,16 +41,15 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     private final static String HAWKES_LIKELIHOOD = "hawkesLikelihood";
 
 
-    public HawkesLikelihood(
-            int hphDimension,
-            final Parameter tauXprec,
-            final Parameter sigmaXprec,
-            final Parameter tauTprec,
-            final Parameter omega,
-            final Parameter theta,
-            final Parameter mu0,
-            final MatrixParameterInterface locationsParameter,
-            final Parameter times) {
+    public HawkesLikelihood(int hphDimension,
+                            final Parameter tauXprec,
+                            final Parameter sigmaXprec,
+                            final Parameter tauTprec,
+                            final Parameter omega,
+                            final Parameter theta,
+                            final Parameter mu0,
+                            final MatrixParameterInterface locationsParameter,
+                            final Parameter times) {
 
         super(HAWKES_LIKELIHOOD);
 

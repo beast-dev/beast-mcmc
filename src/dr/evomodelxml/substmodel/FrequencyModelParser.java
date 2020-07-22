@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.app.bss.Utils;
+//import dr.app.bss.Utils;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
@@ -176,13 +176,13 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 
         DataType nucleotideDataType = Nucleotides.INSTANCE;
         Codons codonDataType = Codons.UNIVERSAL;
-        List<String> stopCodonsList = Arrays.asList(Utils.STOP_CODONS);
+        List<String> stopCodonsList = Arrays.asList(STOP_CODONS);
 
         int cStateCount = codonDataType.getStateCount();
         int nStateCount = nucleotideDataType.getStateCount();
         int nPosition = 3;
 
-        double[] stopCodonFreqs = new double[Utils.STOP_CODONS.length];
+        double[] stopCodonFreqs = new double[STOP_CODONS.length];
         double counts[][] = new double[nStateCount][nPosition];
         int countsPos[] = new int[nPosition];
 
@@ -293,4 +293,6 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
             new ElementRule(FREQUENCIES, new XMLSyntaxRule[]{new ElementRule(
                     Parameter.class)}),
     };
+
+    public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };
 }

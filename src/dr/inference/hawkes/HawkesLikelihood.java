@@ -43,19 +43,19 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     public HawkesLikelihood(
             int hphDimension,
-            HawkesParameters hawkesParameters) {
+            HawkesModel hawkesModel) {
 
         super(HAWKES_LIKELIHOOD);
 
-        this.hawkesParameters = hawkesParameters;
+        this.hawkesModel = hawkesModel;
 
         this.hphDimension = hphDimension;
-        this.locationCount = hawkesParameters.getLocationCount();
+        this.locationCount = hawkesModel.getLocationCount();
 
-        initialize(hphDimension, hawkesParameters);
+        initialize(hphDimension, hawkesModel);
     }
 
-    public static class HawkesParameters {
+    public static class HawkesModel {
 
         final Parameter tauXprec;
         final Parameter sigmaXprec;
@@ -67,14 +67,14 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final Parameter times;
         final CompoundParameter allParameters;
 
-        public HawkesParameters(final Parameter tauXprec,
-                                final Parameter sigmaXprec,
-                                final Parameter tauTprec,
-                                final Parameter omega,
-                                final Parameter theta,
-                                final Parameter mu0,
-                                final MatrixParameterInterface locationsParameter,
-                                final Parameter times) {
+        public HawkesModel(final Parameter tauXprec,
+                           final Parameter sigmaXprec,
+                           final Parameter tauTprec,
+                           final Parameter omega,
+                           final Parameter theta,
+                           final Parameter mu0,
+                           final MatrixParameterInterface locationsParameter,
+                           final Parameter times) {
             this.tauXprec = tauXprec;
             this.sigmaXprec = sigmaXprec;
             this.tauTprec = tauTprec;
@@ -117,22 +117,22 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     protected int initialize(
             final int hphDimension,
-            final HawkesParameters hawkesParameters) {
+            final HawkesModel hawkesModel) {
 
         this.hphCore = getCore();
 
         System.err.println("Initializing with flags: " + flags);
 
         this.hphCore.initialize(hphDimension, locationCount, flags);
-        this.hawkesParameters = hawkesParameters;
+        this.hawkesModel = hawkesModel;
         int internalDimension = hphCore.getInternalDimension();
-        setupLocationsParameter(hawkesParameters.getLocationsParameter());
-        addVariable(hawkesParameters.getCompoundParameter());
+        setupLocationsParameter(hawkesModel.getLocationsParameter());
+        addVariable(hawkesModel.getCompoundParameter());
 
 
-        hphCore.setParameters(hawkesParameters.getParameterValues());
+        hphCore.setParameters(hawkesModel.getParameterValues());
 
-        updateAllLocations(hawkesParameters.getLocationsParameter());
+        updateAllLocations(hawkesModel.getLocationsParameter());
 
         // make sure everything is calculated on first evaluation
 //        makeDirty();
@@ -153,18 +153,18 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     @Override
     public Parameter getParameter() {
-        return hawkesParameters.getLocationsParameter();
+        return hawkesModel.getLocationsParameter();
     }
 
     @Override
     public int getDimension() {
-        return hawkesParameters.getLocationsParameter().getDimension();
+        return hawkesModel.getLocationsParameter().getDimension();
     }
     @Override
     public double[] getGradientLogDensity() {
         // TODO Cache !!!
         if (gradient == null) {
-            gradient = new double[hawkesParameters.getLocationsParameter().getDimension()];
+            gradient = new double[hawkesModel.getLocationsParameter().getDimension()];
         }
 
         hphCore.getGradient(gradient);
@@ -180,7 +180,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     }
 
-    public MatrixParameterInterface getMatrixParameter() { return hawkesParameters.getLocationsParameter(); }
+    public MatrixParameterInterface getMatrixParameter() { return hawkesModel.getLocationsParameter(); }
 
     private HawkesCore getCore() {
         long computeMode = 0;
@@ -297,9 +297,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
-            updateAllLocations(hawkesParameters.getLocationsParameter());
-            hphCore.setTimesData(hawkesParameters.getTimes());
-            hphCore.setParameters(hawkesParameters.getParameterValues());
+            updateAllLocations(hawkesModel.getLocationsParameter());
+            hphCore.setTimesData(hawkesModel.getTimes());
+            hphCore.setParameters(hawkesModel.getParameterValues());
             logLikelihood = hphCore.calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -340,9 +340,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Parameter theta = (Parameter) xo.getElementFirstChild(THETA);
             Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
-            HawkesParameters hawkesParameters = new HawkesParameters(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
+            HawkesModel hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
 
-            return new HawkesLikelihood(hphDimension, hawkesParameters);
+            return new HawkesLikelihood(hphDimension, hawkesModel);
 
         }
 
@@ -384,7 +384,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     private final int locationCount;
 
     private HawkesCore hphCore;
-    private HawkesParameters hawkesParameters;
+    private HawkesModel hawkesModel;
 
     private boolean likelihoodKnown = false;
     private double logLikelihood;

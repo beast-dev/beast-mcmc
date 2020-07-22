@@ -160,7 +160,7 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
 
     @Override
     public void makeDirty() {
-        singleton.makeDirty(instance);
+//        singleton.makeDirty(instance);
     }
 
     @Override

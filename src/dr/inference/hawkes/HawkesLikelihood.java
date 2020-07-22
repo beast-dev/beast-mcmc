@@ -55,7 +55,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         initialize(hphDimension, hawkesModel);
     }
 
-    public static class HawkesModel {
+    public static class HawkesModel extends AbstractModel{
 
         final Parameter tauXprec;
         final Parameter sigmaXprec;
@@ -66,6 +66,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final MatrixParameterInterface locationsParameter;
         final Parameter times;
         final CompoundParameter allParameters;
+        final static String HAWKES_MODEL = "HawkesModel";
 
         public HawkesModel(final Parameter tauXprec,
                            final Parameter sigmaXprec,
@@ -75,6 +76,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                            final Parameter mu0,
                            final MatrixParameterInterface locationsParameter,
                            final Parameter times) {
+            super(HAWKES_MODEL);
             this.tauXprec = tauXprec;
             this.sigmaXprec = sigmaXprec;
             this.tauTprec = tauTprec;
@@ -86,6 +88,14 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             this.allParameters = new CompoundParameter("hphModelParameter", new Parameter[]{sigmaXprec, tauXprec, tauTprec, omega, theta, mu0});
 
             checkDimensions();
+            addVariable(tauXprec);
+            addVariable(tauTprec);
+            addVariable(sigmaXprec);
+            addVariable(omega);
+            addVariable(theta);
+            addVariable(mu0);
+            addVariable(locationsParameter);
+            addVariable(times);
         }
 
         private void checkDimensions() {
@@ -113,6 +123,31 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         public int getLocationCount() {
             return locationsParameter.getColumnDimension();
         }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
+        }
     }
 
     protected int initialize(
@@ -133,6 +168,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         hphCore.setParameters(hawkesModel.getParameterValues());
 
         updateAllLocations(hawkesModel.getLocationsParameter());
+
+        addModel(hawkesModel);
 
         // make sure everything is calculated on first evaluation
 //        makeDirty();
@@ -244,26 +281,13 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     }
 
     @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) { }
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        likelihoodKnown = false;
+    }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         // TODO Flag which cachedDistances or hphPrecision need to be updated
-
-//        if (variable == locationsParameter) {
-//
-//            if (index == -1) {
-//                updateAllLocations(locationsParameter);
-//            } else {
-//
-//                int locationIndex = index / hphDimension;
-//                hphCore.updateLocation(locationIndex, locationsParameter.getColumnValues(locationIndex));
-//            }
-//        }
-//        else if (variable == hphPrecisionParameter) {
-//            hphCore.setParameters(hphPrecisionParameter.getParameterValues());
-//        }
-
         likelihoodKnown = false;
     }
 

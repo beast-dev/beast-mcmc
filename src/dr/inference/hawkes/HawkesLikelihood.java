@@ -43,11 +43,18 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     public HawkesLikelihood(
             int hphDimension,
-            HawkesModel hawkesModel) {
+            final Parameter tauXprec,
+            final Parameter sigmaXprec,
+            final Parameter tauTprec,
+            final Parameter omega,
+            final Parameter theta,
+            final Parameter mu0,
+            final MatrixParameterInterface locationsParameter,
+            final Parameter times) {
 
         super(HAWKES_LIKELIHOOD);
 
-        this.hawkesModel = hawkesModel;
+        this.hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
 
         this.hphDimension = hphDimension;
         this.locationCount = hawkesModel.getLocationCount();
@@ -55,7 +62,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         initialize(hphDimension, hawkesModel);
     }
 
-    public static class HawkesModel extends AbstractModel{
+    public class HawkesModel extends AbstractModel{
 
         final Parameter tauXprec;
         final Parameter sigmaXprec;
@@ -364,9 +371,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Parameter theta = (Parameter) xo.getElementFirstChild(THETA);
             Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
-            HawkesModel hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
-
-            return new HawkesLikelihood(hphDimension, hawkesModel);
+            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
 
         }
 

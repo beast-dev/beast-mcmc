@@ -336,7 +336,6 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
 
     }
 
-    
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************

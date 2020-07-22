@@ -102,7 +102,7 @@ public class ConstantLogisticModel extends DemographicModel implements Citable {
 
         // New parameterization of logistic shape to be the time at which the
         // population reached some proportion alpha:
-        double C = ((1.0 - alpha) * Math.exp(-r * shapeParameter.getParameterValue(0))) / alpha;
+        double C = ((1.0 - alpha) * Math.exp(-r * (shapeParameter.getParameterValue(0) - getTimeOffset()))) / alpha;
         constLogistic.setShape(C);
 
         return constLogistic;

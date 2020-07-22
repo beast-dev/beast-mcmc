@@ -103,7 +103,7 @@ public class ExpConstExpDemographicModel extends DemographicModel implements Cit
         expConstExp.setN0(N0Parameter.getParameterValue(0));
 
         double relTime = relTimeParameter.getParameterValue(0);
-        double time2 = timeParameter.getParameterValue(0);
+        double time2 = timeParameter.getParameterValue(0) - getTimeOffset();
 
         //System.out.println("relTime=" + relTime);
         //System.out.println("time2=" + (time2));

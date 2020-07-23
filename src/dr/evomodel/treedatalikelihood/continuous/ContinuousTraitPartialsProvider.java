@@ -40,7 +40,7 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitCount();
 
-    int getTraitDimension();
+    int getPartialDimension();
 
     PrecisionType getPrecisionType();
 

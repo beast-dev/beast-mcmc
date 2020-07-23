@@ -68,7 +68,7 @@ public abstract class AbstractVarianceProportionStatistic extends Statistic.Abst
         this.tree = tree;
         this.treeLikelihood = treeLikelihood;
         this.dataModel = dataModel;
-        this.dimTrait = dataModel.getTraitDimension();
+        this.dimTrait = dataModel.getPartialDimension();
         this.diffusionProportion = new DenseMatrix64F(dimTrait, dimTrait);
         this.diffusionComponent = new DenseMatrix64F(dimTrait, dimTrait);
         this.samplingComponent = new DenseMatrix64F(dimTrait, dimTrait);

@@ -150,7 +150,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
         }
 
-        ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());
+        ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getPartialDimension());
 
         final boolean allowSingular;
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {

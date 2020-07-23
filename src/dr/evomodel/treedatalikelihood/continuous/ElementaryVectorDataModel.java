@@ -72,7 +72,7 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     public int getTraitCount() {  return numTraits; }
 
     @Override
-    public int getTraitDimension() { return dimTrait; }
+    public int getPartialDimension() { return dimTrait; }
 
     @Override
     public PrecisionType getPrecisionType() {

@@ -83,7 +83,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
             if (dataProvider instanceof RepeatedMeasuresTraitDataModel) {
                 dataProvider = new EmptyTraitDataModel(traitName, dataProvider.getParameter(),
-                        dataProvider.getTraitDimension(), PrecisionType.SCALAR);
+                        dataProvider.getPartialDimension(), PrecisionType.SCALAR);
             }
 
             outerProductDelegate = ContinuousDataLikelihoodDelegate.createObservedDataOnly(

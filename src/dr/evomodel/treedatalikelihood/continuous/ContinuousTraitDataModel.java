@@ -71,7 +71,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public int getTraitCount() {  return numTraits; }
 
-    public int getTraitDimension() { return dimTrait; }
+    public int getPartialDimension() { return dimTrait; }
 
     public PrecisionType getPrecisionType() {
         return precisionType;

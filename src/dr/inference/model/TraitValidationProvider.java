@@ -7,7 +7,6 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inferencexml.model.TraitValidationProviderParser;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
@@ -42,7 +41,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
 
         this.trueTraits = trueTraits;
-        this.dimTrait = dataModel.getTraitDimension();
+        this.dimTrait = dataModel.getPartialDimension();
 
         this.missingInds = setupMissingInds(dataModel, missingParameter, trueMissingIndices);
         int nMissing = missingInds.length;

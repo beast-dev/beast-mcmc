@@ -24,8 +24,6 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
 
         double[] transformTreeTraits(double[] treeTraits);
 
-        int getDataDimension();
-
         void chainRuleWrtVariance(double[] gradient, NodeRef node);
     }
 }

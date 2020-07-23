@@ -75,6 +75,9 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     public int getPartialDimension() { return dimTrait; }
 
     @Override
+    public int getDataDimension() { return dimTrait; }
+
+    @Override
     public PrecisionType getPrecisionType() {
         return precisionType;
     }

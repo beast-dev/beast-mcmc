@@ -42,6 +42,8 @@ public interface ContinuousTraitPartialsProvider {
 
     int getPartialDimension();
 
+    int getDataDimension();
+
     PrecisionType getPrecisionType();
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);

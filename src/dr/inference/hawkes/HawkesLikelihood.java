@@ -25,8 +25,10 @@
 
 package dr.inference.hawkes;
 
+import dr.evolution.util.Taxa;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
+import dr.util.HeapSort;
 import dr.xml.*;
 
 /**
@@ -49,7 +51,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                             final Parameter theta,
                             final Parameter mu0,
                             final MatrixParameterInterface locationsParameter,
-                            final Parameter times) {
+                            final double[] times) {
 
         super(HAWKES_LIKELIHOOD);
 
@@ -61,7 +63,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         initialize(hphDimension, hawkesModel);
     }
 
-    public class HawkesModel extends AbstractModel{
+    private class HawkesModel extends AbstractModel{
 
         final Parameter tauXprec;
         final Parameter sigmaXprec;
@@ -70,7 +72,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final Parameter theta;
         final Parameter mu0;
         final MatrixParameterInterface locationsParameter;
-        final Parameter times;
+        final double[] times;
         final CompoundParameter allParameters;
         final static String HAWKES_MODEL = "HawkesModel";
 
@@ -81,7 +83,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                            final Parameter theta,
                            final Parameter mu0,
                            final MatrixParameterInterface locationsParameter,
-                           final Parameter times) {
+                           final double[] times) {
             super(HAWKES_MODEL);
             this.tauXprec = tauXprec;
             this.sigmaXprec = sigmaXprec;
@@ -101,11 +103,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             addVariable(theta);
             addVariable(mu0);
             addVariable(locationsParameter);
-            addVariable(times);
         }
 
         private void checkDimensions() {
-            if (times.getDimension() != getLocationCount()) {
+            if (times.length != getLocationCount()) {
                 throw new RuntimeException("Times dimension doesn't match location count.");
             }
         }
@@ -119,7 +120,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         }
 
         public double[] getTimes() {
-            return times.getParameterValues();
+            return times;
         }
 
         public double[] getParameterValues() {
@@ -344,6 +345,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         final static String LOCATIONS = "locations";
         final static String TIMES = "times";
+        final static String TIME_ATTRIBUTE_NAME = "attributeName";
         final static String HPH_DIMENSION = "hphDimension";
         final static String SIGMA_PRECISON = "sigmaXprec";
         final static String TAU_X_PRECISION = "tauXprec";
@@ -361,7 +363,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             int hphDimension = xo.getIntegerAttribute(HPH_DIMENSION);
 
             MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
-            Parameter times = (Parameter) xo.getElementFirstChild(TIMES);
+            double[] times = parseTimes((Taxa) xo.getElementFirstChild(TIMES), xo.getStringAttribute(TIME_ATTRIBUTE_NAME));
 
             Parameter sigmaXprec = (Parameter) xo.getElementFirstChild(SIGMA_PRECISON);
             Parameter tauXprec = (Parameter) xo.getElementFirstChild(TAU_X_PRECISION);
@@ -372,6 +374,19 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
             return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
 
+        }
+
+        private double[] parseTimes(Taxa taxa, String attributeName) {
+            double[] times = new double[taxa.getTaxonCount()];
+            for (int i = 0; i < times.length; i++) {
+                times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(attributeName));
+            }
+            HeapSort.sort(times);
+            final double tmp = times[0];
+            for (int i = 0; i < times.length; i++) {
+                times[i] -= tmp;
+            }
+            return times;
         }
 
         //************************************************************************
@@ -390,7 +405,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(HPH_DIMENSION, false, "The dimension of the space for HPH"),
                 new ElementRule(LOCATIONS, MatrixParameterInterface.class),
-                new ElementRule(TIMES, Parameter.class),
+                new ElementRule(TIMES, Taxa.class),
+                AttributeRule.newStringRule(TIME_ATTRIBUTE_NAME),
                 new ElementRule(SIGMA_PRECISON, Parameter.class),
                 new ElementRule(TAU_X_PRECISION, Parameter.class),
                 new ElementRule(TAU_T_PRECISION, Parameter.class),

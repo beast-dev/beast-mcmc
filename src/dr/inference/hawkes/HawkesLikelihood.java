@@ -363,7 +363,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             int hphDimension = xo.getIntegerAttribute(HPH_DIMENSION);
 
             MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
-            double[] times = parseTimes((Taxa) xo.getElementFirstChild(TIMES), xo.getStringAttribute(TIME_ATTRIBUTE_NAME));
+            double[] times = parseTimes((Taxa) xo.getElementFirstChild(TIMES), xo.getStringAttribute(TIME_ATTRIBUTE_NAME), locationsParameter);
 
             Parameter sigmaXprec = (Parameter) xo.getElementFirstChild(SIGMA_PRECISON);
             Parameter tauXprec = (Parameter) xo.getElementFirstChild(TAU_X_PRECISION);
@@ -376,15 +376,19 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         }
 
-        private double[] parseTimes(Taxa taxa, String attributeName) {
+        private double[] parseTimes(Taxa taxa, String attributeName, MatrixParameterInterface locationsParameter) {
             double[] times = new double[taxa.getTaxonCount()];
-            for (int i = 0; i < times.length; i++) {
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(attributeName));
             }
             HeapSort.sort(times);
             final double tmp = times[0];
-            for (int i = 0; i < times.length; i++) {
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 times[i] -= tmp;
+            }
+
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                locationsParameter.getParameter(i).setId(taxa.getTaxonId(i));
             }
             return times;
         }

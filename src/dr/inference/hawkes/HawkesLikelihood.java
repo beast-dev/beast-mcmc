@@ -200,7 +200,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     @Override
     public String getReport() {
-        return getId() + ": " + getLogLikelihood();
+        return getId() + ": " + getLogLikelihood() + "\n" +
+                GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-4);
     }
 
     @Override
@@ -223,6 +224,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         if (gradient == null) {
             gradient = new double[hawkesModel.getLocationsParameter().getDimension()];
         }
+
+        getLogLikelihood();
 
         hphCore.getGradient(gradient);
 

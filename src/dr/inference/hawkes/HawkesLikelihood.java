@@ -51,11 +51,12 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                             final Parameter theta,
                             final Parameter mu0,
                             final MatrixParameterInterface locationsParameter,
-                            final double[] times) {
+                            final double[] times,
+                            boolean byIncrement) {
 
         super(HAWKES_LIKELIHOOD);
 
-        this.hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
+        this.hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times, byIncrement);
 
         this.hphDimension = hphDimension;
         this.locationCount = hawkesModel.getLocationCount();
@@ -73,8 +74,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final Parameter mu0;
         final MatrixParameterInterface locationsParameter;
         final double[] times;
-        final CompoundParameter allParameters;
         final static String HAWKES_MODEL = "HawkesModel";
+        final boolean byIncrement;
 
         public HawkesModel(final Parameter tauXprec,
                            final Parameter sigmaXprec,
@@ -83,8 +84,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                            final Parameter theta,
                            final Parameter mu0,
                            final MatrixParameterInterface locationsParameter,
-                           final double[] times) {
+                           final double[] times,
+                           boolean byIncrement) {
             super(HAWKES_MODEL);
+            this.byIncrement = byIncrement;
             this.tauXprec = tauXprec;
             this.sigmaXprec = sigmaXprec;
             this.tauTprec = tauTprec;
@@ -93,7 +96,6 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             this.mu0 = mu0;
             this.locationsParameter = locationsParameter;
             this.times = times;
-            this.allParameters = new CompoundParameter("hphModelParameter", new Parameter[]{sigmaXprec, tauXprec, tauTprec, omega, theta, mu0});
 
             checkDimensions();
             addVariable(tauXprec);
@@ -109,10 +111,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             if (times.length != getLocationCount()) {
                 throw new RuntimeException("Times dimension doesn't match location count.");
             }
-        }
 
-        public CompoundParameter getCompoundParameter() {
-            return allParameters;
+            if (getTotalDimension() != 6) {
+                throw new RuntimeException("Parameter dimension is wrong.");
+            }
         }
 
         public MatrixParameterInterface getLocationsParameter() {
@@ -123,8 +125,20 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             return times;
         }
 
+        private int getTotalDimension() {
+            return sigmaXprec.getDimension() + tauXprec.getDimension() + tauTprec.getDimension() + omega.getDimension() + theta.getDimension() + mu0.getDimension();
+        }
+
         public double[] getParameterValues() {
-            return allParameters.getParameterValues();
+            double[] parameterValues = new double[]{
+                    byIncrement ? sigmaXprec.getParameterValue(0) + tauXprec.getParameterValue(0) : sigmaXprec.getParameterValue(0),
+                    tauXprec.getParameterValue(0),
+                    tauTprec.getParameterValue(0),
+                    byIncrement ? tauTprec.getParameterValue(0) + omega.getParameterValue(0) : omega.getParameterValue(0),
+                    theta.getParameterValue(0),
+                    mu0.getParameterValue(0)
+            };
+            return parameterValues;
         }
 
         public int getLocationCount() {
@@ -169,7 +183,6 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         this.hawkesModel = hawkesModel;
         int internalDimension = hphCore.getInternalDimension();
         setupLocationsParameter(hawkesModel.getLocationsParameter());
-        addVariable(hawkesModel.getCompoundParameter());
 
 
         hphCore.setParameters(hawkesModel.getParameterValues());
@@ -346,6 +359,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String LOCATIONS = "locations";
         final static String TIMES = "times";
         final static String TIME_ATTRIBUTE_NAME = "attributeName";
+        final static String BY_INCREMENT = "byIncrement";
         final static String HPH_DIMENSION = "hphDimension";
         final static String SIGMA_PRECISON = "sigmaXprec";
         final static String TAU_X_PRECISION = "tauXprec";
@@ -372,7 +386,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Parameter theta = (Parameter) xo.getElementFirstChild(THETA);
             Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
-            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times);
+            boolean byIncrement = xo.getAttribute(BY_INCREMENT, false);
+
+            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times, byIncrement);
 
         }
 
@@ -411,6 +427,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 new ElementRule(LOCATIONS, MatrixParameterInterface.class),
                 new ElementRule(TIMES, Taxa.class),
                 AttributeRule.newStringRule(TIME_ATTRIBUTE_NAME),
+                AttributeRule.newBooleanRule(BY_INCREMENT, true),
                 new ElementRule(SIGMA_PRECISON, Parameter.class),
                 new ElementRule(TAU_X_PRECISION, Parameter.class),
                 new ElementRule(TAU_T_PRECISION, Parameter.class),

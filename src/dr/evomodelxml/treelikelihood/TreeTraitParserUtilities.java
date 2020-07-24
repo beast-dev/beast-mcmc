@@ -274,10 +274,7 @@ public class TreeTraitParserUtilities {
         if (parameter instanceof MatrixParameter || parameter instanceof FastMatrixParameter) {
             traitParameter = (CompoundParameter) parameter;
             isMatrixParameter = true;
-        } else
-
-
-        if (parameter instanceof CompoundParameter) {
+        } else if (parameter instanceof CompoundParameter) {
             // if we have been passed a CompoundParameter, this will be a leaf trait
             // parameter from a tree model so use this to allow for individual sampling
             // of leaf parameters.

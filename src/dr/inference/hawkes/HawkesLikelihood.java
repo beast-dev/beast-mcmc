@@ -30,6 +30,8 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.util.HeapSort;
 import dr.xml.*;
+import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
+import java.util.StringTokenizer;
 
 /**
  * @author Andrew Holbrook
@@ -41,6 +43,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     private final static String REQUIRED_FLAGS_PROPERTY = "hph.required.flags";
     private final static String HAWKES_LIKELIHOOD = "hawkesLikelihood";
+    private final Double tolerance;
 
 
     public HawkesLikelihood(int hphDimension,
@@ -52,6 +55,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                             final Parameter mu0,
                             final MatrixParameterInterface locationsParameter,
                             final double[] times,
+                            final Double tolerance,
                             boolean byIncrement) {
 
         super(HAWKES_LIKELIHOOD);
@@ -60,6 +64,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         this.hphDimension = hphDimension;
         this.locationCount = hawkesModel.getLocationCount();
+        this.tolerance = tolerance;
 
         initialize(hphDimension, hawkesModel);
     }
@@ -201,7 +206,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     @Override
     public String getReport() {
         return getId() + ": " + getLogLikelihood() + "\n" +
-                GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, 1E-4);
+                GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
     }
 
     @Override
@@ -361,7 +366,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         final static String LOCATIONS = "locations";
         final static String TIMES = "times";
-        final static String TIME_ATTRIBUTE_NAME = "attributeName";
+        final static String TIME_ATTRIBUTE_NAME = "timeTrait";
+        final static String LOCATION_ATTRIBUTE_NAME = "locationTrait";
         final static String BY_INCREMENT = "byIncrement";
         final static String HPH_DIMENSION = "hphDimension";
         final static String SIGMA_PRECISON = "sigmaXprec";
@@ -370,6 +376,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String OMEGA = "omega";
         final static String THETA = "theta";
         final static String MU = "mu0";
+        final static String TOLERANCE = GRADIENT_CHECK_TOLERANCE;
 
         public String getParserName() {
             return HAWKES_LIKELIHOOD;
@@ -380,7 +387,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             int hphDimension = xo.getIntegerAttribute(HPH_DIMENSION);
 
             MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
-            double[] times = parseTimes((Taxa) xo.getElementFirstChild(TIMES), xo.getStringAttribute(TIME_ATTRIBUTE_NAME), locationsParameter);
+            String timeTraitName = xo.getStringAttribute(TIME_ATTRIBUTE_NAME);
+            String locationTraitName = xo.getStringAttribute(LOCATION_ATTRIBUTE_NAME);
+            Taxa taxa = (Taxa) xo.getElementFirstChild(TIMES);
+            double[] times = parseTimes(taxa, timeTraitName, locationsParameter, locationTraitName);
 
             Parameter sigmaXprec = (Parameter) xo.getElementFirstChild(SIGMA_PRECISON);
             Parameter tauXprec = (Parameter) xo.getElementFirstChild(TAU_X_PRECISION);
@@ -390,15 +400,22 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
             boolean byIncrement = xo.getAttribute(BY_INCREMENT, false);
+            Double tolerance = xo.getAttribute(TOLERANCE, 1e-4);
 
-            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times, byIncrement);
+            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times, tolerance, byIncrement);
 
         }
 
-        private double[] parseTimes(Taxa taxa, String attributeName, MatrixParameterInterface locationsParameter) {
+        private double[] parseTimes(Taxa taxa, String timeTraitName, MatrixParameterInterface locationsParameter, String locationName) {
             double[] times = new double[taxa.getTaxonCount()];
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(attributeName));
+                times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(timeTraitName));
+                locationsParameter.getParameter(i).setId(taxa.getTaxonId(i));
+                StringTokenizer st = new StringTokenizer((String) taxa.getTaxon(i).getAttribute(locationName));
+                Parameter singleLocation = locationsParameter.getParameter(i);
+                for (int j = 0; j < singleLocation.getDimension(); j++) {
+                    singleLocation.setParameterValue(j, Double.valueOf(st.nextToken()));
+                }
             }
             HeapSort.sort(times);
             final double tmp = times[0];
@@ -406,9 +423,6 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 times[i] -= tmp;
             }
 
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                locationsParameter.getParameter(i).setId(taxa.getTaxonId(i));
-            }
             return times;
         }
 
@@ -430,13 +444,15 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 new ElementRule(LOCATIONS, MatrixParameterInterface.class),
                 new ElementRule(TIMES, Taxa.class),
                 AttributeRule.newStringRule(TIME_ATTRIBUTE_NAME),
+                AttributeRule.newStringRule(LOCATION_ATTRIBUTE_NAME),
                 AttributeRule.newBooleanRule(BY_INCREMENT, true),
                 new ElementRule(SIGMA_PRECISON, Parameter.class),
                 new ElementRule(TAU_X_PRECISION, Parameter.class),
                 new ElementRule(TAU_T_PRECISION, Parameter.class),
                 new ElementRule(OMEGA, Parameter.class),
                 new ElementRule(THETA, Parameter.class),
-                new ElementRule(MU, Parameter.class)
+                new ElementRule(MU, Parameter.class),
+                AttributeRule.newDoubleRule()
         };
 
         public Class getReturnType() {

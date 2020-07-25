@@ -452,7 +452,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 new ElementRule(OMEGA, Parameter.class),
                 new ElementRule(THETA, Parameter.class),
                 new ElementRule(MU, Parameter.class),
-                AttributeRule.newDoubleRule()
+                AttributeRule.newDoubleRule(TOLERANCE)
         };
 
         public Class getReturnType() {

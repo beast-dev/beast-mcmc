@@ -125,7 +125,7 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
 
     @Override
     public void restoreState() {
-        singleton.restoreState(instance);
+//        singleton.restoreState(instance);
         sigmaXprec = storedSigmaXprec;
         tauXprec = storedTauXprec;
         tauTprec = storedTauTprec;

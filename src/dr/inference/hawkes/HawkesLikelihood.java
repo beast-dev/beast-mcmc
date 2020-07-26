@@ -164,17 +164,20 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         @Override
         protected void storeState() {
-
+            storedLogLikelihood = logLikelihood;
+            hphCore.storeState();
         }
 
         @Override
         protected void restoreState() {
-
+            logLikelihood = storedLogLikelihood;
+            likelihoodKnown = true;
+            hphCore.restoreState();
         }
 
         @Override
         protected void acceptState() {
-
+            hphCore.acceptState();
         }
     }
 

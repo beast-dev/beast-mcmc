@@ -402,13 +402,7 @@ public class TreeTraitParserUtilities {
 
             // Find missing values
             double[] allValues = traitParameter.getParameterValues();
-            missingIndices = new ArrayList<Integer>();
-            for (int i = 0; i < allValues.length; i++) {
-                if ((new Double(allValues[i])).isNaN()) {
-                    traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
-                    missingIndices.add(i);
-                }
-            }
+            missingIndices = parseMissingIndices(traitParameter, allValues);
 
             // Standardize
             if (xo.getAttribute(STANDARDIZE, false) && traitParameter instanceof MatrixParameterInterface) {
@@ -488,6 +482,18 @@ public class TreeTraitParserUtilities {
         return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName,
                 sampleMissingParameter, useMissingIndices);
     }
+
+    public static List<Integer> parseMissingIndices(Parameter traitParameter, double[] allValues) {
+        List<Integer> missingIndices = new ArrayList<Integer>();
+        for (int i = 0; i < allValues.length; i++) {
+            if ((new Double(allValues[i])).isNaN()) {
+                traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
+                missingIndices.add(i);
+            }
+        }
+        return missingIndices;
+    }
+
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
 

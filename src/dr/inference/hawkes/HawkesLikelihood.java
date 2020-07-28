@@ -29,9 +29,12 @@ import dr.evolution.util.Taxa;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
+import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 import dr.xml.*;
 import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -423,17 +426,18 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             double[] times = new double[taxa.getTaxonCount()];
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(timeTraitName));
-                locationsParameter.getParameter(i).setId(taxa.getTaxonId(i));
-                StringTokenizer st = new StringTokenizer((String) taxa.getTaxon(i).getAttribute(locationName));
+            }
+            int[] timeIndices = new int[times.length];
+            HeapSort.sort(times, timeIndices);
+            final double tmp = times[0];
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                times[i] -= tmp;
+                locationsParameter.getParameter(i).setId(taxa.getTaxonId(timeIndices[i]));
+                StringTokenizer st = new StringTokenizer((String) taxa.getTaxon(timeIndices[i]).getAttribute(locationName));
                 Parameter singleLocation = locationsParameter.getParameter(i);
                 for (int j = 0; j < singleLocation.getDimension(); j++) {
                     singleLocation.setParameterValue(j, Double.valueOf(st.nextToken()));
                 }
-            }
-            HeapSort.sort(times);
-            final double tmp = times[0];
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                times[i] -= tmp;
             }
 
             return times;

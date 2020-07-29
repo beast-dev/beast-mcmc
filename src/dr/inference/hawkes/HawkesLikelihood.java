@@ -424,14 +424,15 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         private double[] parseTimes(Taxa taxa, String timeTraitName, MatrixParameterInterface locationsParameter, String locationName) {
             double[] times = new double[taxa.getTaxonCount()];
+            double[] orderedTimes = new double[taxa.getTaxonCount()];
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 times[i] = Double.valueOf((String) taxa.getTaxon(i).getAttribute(timeTraitName));
             }
             int[] timeIndices = new int[times.length];
             HeapSort.sort(times, timeIndices);
-            final double tmp = times[0];
+            final double tmp = times[timeIndices[0]];
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                times[i] -= tmp;
+                orderedTimes[i] = times[timeIndices[i]] - tmp;
                 locationsParameter.getParameter(i).setId(taxa.getTaxonId(timeIndices[i]));
                 StringTokenizer st = new StringTokenizer((String) taxa.getTaxon(timeIndices[i]).getAttribute(locationName));
                 Parameter singleLocation = locationsParameter.getParameter(i);
@@ -440,7 +441,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 }
             }
 
-            return times;
+            return orderedTimes;
         }
 
         //************************************************************************

@@ -44,8 +44,23 @@ import dr.inference.model.Variable;
  */
 public abstract class DemographicModel extends AbstractModel implements Units {
 
+    /**
+     * abstract base class for parametric demographic models.
+     * @param name name of the XML element
+     */
     public DemographicModel(String name) {
+        this(name, 0.0);
+    }
+
+    /**
+     * abstract base class for parametric demographic models.
+     * @param name name of the XML element
+     * @param timeOffset an offset in time scale for use when multiple demographic models are being used
+     */
+    public DemographicModel(String name, double timeOffset) {
         super(name);
+
+        this.timeOffset = timeOffset;
     }
 
     // general functions
@@ -72,6 +87,16 @@ public abstract class DemographicModel extends AbstractModel implements Units {
 
     protected void acceptState() {
     } // no additional state needs accepting
+
+    public double getTimeOffset() {
+        return timeOffset;
+    }
+
+    public void setTimeOffset(double timeOffset) {
+        this.timeOffset = timeOffset;
+    }
+
+    private double timeOffset;
 
     // **************************************************************
     // Units IMPLEMENTATION

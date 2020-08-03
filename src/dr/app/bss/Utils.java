@@ -361,7 +361,6 @@ public class Utils {
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344 };
 
-	public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };
 	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//

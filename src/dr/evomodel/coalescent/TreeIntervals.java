@@ -65,13 +65,13 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
             includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
         }
 
-        if (excludeSubtrees != null) {
+        if (excludeSubtrees != null && excludeSubtrees.size() > 0) {
             excludedLeafSets = new Set[excludeSubtrees.size()];
             for (int i = 0; i < excludeSubtrees.size(); i++) {
                 excludedLeafSets[i] = TreeUtils.getLeavesForTaxa(tree, excludeSubtrees.get(i));
             }
         } else {
-            excludedLeafSets = new Set[0];
+            excludedLeafSets = null;
         }
 
         if (tree instanceof TreeModel) {
@@ -181,7 +181,12 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     public final void calculateIntervals() {
 
         intervals.resetEvents();
-        collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
+        if (includedLeafSet != null || excludedLeafSets != null) {
+            collectTimes(tree, getIncludedMRCA(tree), getExcludedMRCAs(tree), intervals);
+        } else {
+            collectTimes(tree, intervals);
+        }
+
         // force a calculation of the intervals...
         intervals.getIntervalCount();
 
@@ -219,9 +224,25 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
 
     }
 
+    /**
+     * An alternative non-recursive version (doesn't exclude nodes).
+     *
+     * @param tree      the tree
+     * @param intervals the intervals object to store the events
+     */
+    private void collectTimes(Tree tree, Intervals intervals) {
+
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            intervals.addSampleEvent(tree.getNodeHeight(tree.getExternalNode(i)));
+        }
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            intervals.addCoalescentEvent(tree.getNodeHeight(tree.getInternalNode(i)));
+        }
+    }
+
     @Override
     public double getStartTime() {
-        return startTime;
+        return intervals.getStartTime();
     }
 
     @Override
@@ -346,8 +367,6 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
     private Set[] excludedLeafSets = null;
-
-    private double startTime;
 
     /**
      * The intervals.

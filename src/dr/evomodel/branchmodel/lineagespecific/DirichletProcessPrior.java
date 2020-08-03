@@ -28,7 +28,7 @@ package dr.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.bss.Utils;
+//import dr.app.bss.Utils;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.CompoundParameter;
@@ -153,7 +153,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		int[] counts = getCounts();
 		
 		if (VERBOSE) {
-			Utils.printArray(counts);
+//			Utils.printArray(counts);
 		}
 		
 		double loglike = categoryCount * Math.log(getGamma());

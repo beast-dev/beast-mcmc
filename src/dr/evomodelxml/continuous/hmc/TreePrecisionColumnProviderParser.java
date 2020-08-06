@@ -41,7 +41,6 @@ public class TreePrecisionColumnProviderParser extends AbstractXMLObjectParser {
 
     private static final String PRODUCT_PROVIDER = "precisionColumnOnTree";
     private static final String KRONECKER_PRODUCT = "kroneckerProduct";
-    private static final String EXTEND_TIP_BRANCH = "extendTipBranchTransformed";
     private static final String MASKING = MaskedParameterParser.MASKING;
 
     @Override
@@ -65,9 +64,8 @@ public class TreePrecisionColumnProviderParser extends AbstractXMLObjectParser {
 
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel)
                     cxo.getChild(MultivariateDiffusionModel.class);
-            boolean extendTipBranchTransformed = xo.getAttribute(EXTEND_TIP_BRANCH, false);
 
-            return new TreeKroneckerPrecisionColumnProvider(productProvider, diffusionModel, extendTipBranchTransformed);
+            return new TreeKroneckerPrecisionColumnProvider(productProvider, diffusionModel);
 
         } else {
 

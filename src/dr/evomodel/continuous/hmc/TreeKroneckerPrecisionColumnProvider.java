@@ -44,16 +44,14 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
     private final MatrixParameterInterface diffusionPrecision;
     private final double[] buffer;
     private final Map<Integer, double[]> kroneckerCache = new HashMap<>();
-    private final boolean extendTipBranchTransformed;
 
     public TreeKroneckerPrecisionColumnProvider(TreePrecisionTraitProductProvider productProvider,
-                                                MultivariateDiffusionModel diffusionModel, boolean extendTipBranchTransformed) {
+                                                MultivariateDiffusionModel diffusionModel) {
 
         super(productProvider);
 
         this.diffusionPrecision = diffusionModel.getPrecisionParameter();
         this.precisionDim = diffusionPrecision.getColumnDimension();
-        this.extendTipBranchTransformed = extendTipBranchTransformed;
         addVariable(diffusionPrecision);
 
         this.buffer = new double[precisionDim];
@@ -94,10 +92,6 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == diffusionPrecision) {
             kroneckerCache.clear();
-        }
-
-        if (extendTipBranchTransformed){
-            super.clearTreeCache();
         }
     }
 

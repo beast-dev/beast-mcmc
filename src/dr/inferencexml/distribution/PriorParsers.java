@@ -45,6 +45,7 @@ public class PriorParsers {
 
     public static final String TRUNCATED = "truncated";
     public static final String UNIFORM_PRIOR = "uniformPrior";
+    public static final String PARETO_PRIOR = "paretoPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
     public static final String NEGATIVE_BINOMIAL_PRIOR = "negativeBinomialPrior";
@@ -192,6 +193,35 @@ public class PriorParsers {
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given uniform distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    public static XMLObjectParser PARETO_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return PARETO_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ParetoDistribution());
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given pareto distribution.";
         }
 
         public Class getReturnType() {

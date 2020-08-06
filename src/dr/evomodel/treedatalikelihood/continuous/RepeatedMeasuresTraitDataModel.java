@@ -76,7 +76,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+        super(name, parameter, missingIndices, useMissingIndices, dimTrait, dimTrait == 1? PrecisionType.SCALAR:PrecisionType.FULL);
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);
@@ -105,6 +105,9 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         }
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+        if (precisionType == precisionType.SCALAR){
+            return partial;
+        }
         DenseMatrix64F V = MissingOps.wrap(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         //TODO: remove diagonalOnly part

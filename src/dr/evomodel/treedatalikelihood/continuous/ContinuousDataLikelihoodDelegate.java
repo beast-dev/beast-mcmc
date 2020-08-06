@@ -378,12 +378,21 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         double[][] jointVariance = diffusionProcessDelegate.getJointVariance(priorSampleSize, treeVariance, treeSharedLengths, traitVariance.toComponents());
 
         if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
-            for (int tip = 0; tip < tipCount; ++tip) {
-                double[] partial = dataModel.getTipPartial(tip, false);
-                WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
-                for (int row = 0; row < dimTrait; ++row) {
-                    for (int col = 0; col < dimTrait; ++col) {
-                        jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+            if (dimTrait == 1 && precisionType == PrecisionType.SCALAR) {
+                double samplingVariance =
+                        ((RepeatedMeasuresTraitDataModel) dataModel).getSamplingVariance().component(0, 0);
+                for (int tip = 0; tip < tipCount; ++tip) {
+                    jointVariance[tip][tip] += samplingVariance;
+                }
+            } else {
+                for (int tip = 0; tip < tipCount; ++tip) {
+                    double[] partial = dataModel.getTipPartial(tip, false);
+                    WrappedMatrix tipVariance = new WrappedMatrix.Raw(partial, dimTrait + dimTrait * dimTrait,
+                            dimTrait, dimTrait);
+                    for (int row = 0; row < dimTrait; ++row) {
+                        for (int col = 0; col < dimTrait; ++col) {
+                            jointVariance[tip * dimTrait + row][tip * dimTrait + col] += tipVariance.get(row, col);
+                        }
                     }
                 }
             }

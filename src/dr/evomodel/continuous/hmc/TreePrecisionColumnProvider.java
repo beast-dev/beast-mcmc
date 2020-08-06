@@ -111,8 +111,12 @@ public class TreePrecisionColumnProvider extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            treeCache.clear();
+            clearTreeCache();
         }
+    }
+
+    protected void clearTreeCache() {
+        treeCache.clear();
     }
 
     @Override

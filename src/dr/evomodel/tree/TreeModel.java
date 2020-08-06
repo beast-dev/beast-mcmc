@@ -292,10 +292,6 @@ public class TreeModel extends AbstractTreeModel {
         return nodeCount;
     }
 
-    public boolean hasNodeHeights() {
-        return true;
-    }
-
     public double getNodeHeight(NodeRef node) {
         return ((Node) node).getHeight();
     }
@@ -404,19 +400,6 @@ public class TreeModel extends AbstractTreeModel {
 
     public NodeRef getParent(NodeRef node) {
         return ((Node) node).parent;
-    }
-
-    public boolean hasBranchLengths() {
-        return true;
-    }
-
-    public double getBranchLength(NodeRef node) {
-        NodeRef parent = getParent(node);
-        if (parent == null) {
-            return 0.0;
-        }
-
-        return getNodeHeight(parent) - getNodeHeight(node);
     }
 
     public NodeRef getExternalNode(int i) {
@@ -913,10 +896,6 @@ public class TreeModel extends AbstractTreeModel {
     // **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented yet");
-    }
 
     // ***********************************************************************
     // Private methods

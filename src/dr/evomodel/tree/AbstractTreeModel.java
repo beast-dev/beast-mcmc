@@ -1,13 +1,12 @@
 package dr.evomodel.tree;
 
-import dr.evolution.tree.MutableTreeListener;
-import dr.evolution.tree.MutableTreeModel;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
+import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.inference.model.AbstractModel;
 import dr.util.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.util.*;
 
@@ -160,6 +159,10 @@ public abstract class AbstractTreeModel extends AbstractModel implements Mutable
         this.id = id;
     }
 
+    public Element createElement(Document document) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
     /**
      * Sets an named attribute for this object.
      *
@@ -221,6 +224,23 @@ public abstract class AbstractTreeModel extends AbstractModel implements Mutable
         return keywords;
     }
 
+    public boolean hasNodeHeights() {
+        return true;
+    }
+
+    public boolean hasBranchLengths() {
+        return true;
+    }
+
+    public double getBranchLength(NodeRef node) {
+        NodeRef parent = getParent(node);
+        if (parent == null) {
+            return 0.0;
+        }
+
+        return getNodeHeight(parent) - getNodeHeight(node);
+    }
+
     public boolean isTipDateSampled() {
         return false;
     }
@@ -272,4 +292,5 @@ public abstract class AbstractTreeModel extends AbstractModel implements Mutable
             return Collections.emptyList();
         }
     }
+
 }

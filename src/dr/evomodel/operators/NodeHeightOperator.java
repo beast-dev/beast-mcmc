@@ -36,6 +36,8 @@ import dr.inference.distribution.CauchyDistribution;
 import dr.inference.model.Bounds;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.RandomWalkOperator;
+import dr.inference.operators.Scalable;
+import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.util.Transform;
@@ -44,6 +46,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Implements moves that changes node heights.
@@ -58,7 +61,9 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
 
     public enum OperatorType {
         UNIFORM("uniform"),
-        RANDOM_WALK("randomWalk");
+        RANDOMWALK("random walk"),
+        SCALEROOT("scale root"),
+        SCALEALL("scale all internal");
 
         OperatorType(String name) {
             this.name = name;
@@ -77,8 +82,6 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
     private final TreeModel tree;
     private final OperatorType operatorType;
 
-    private final List<NodeRef> tips;
-
     /**
      * Constructor
      *
@@ -96,44 +99,7 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
         setWeight(weight);
         this.size = size;
         this.operatorType = operatorType;
-        this.tips = null;
     }
-
-    /**
-     * Constructor that takes a taxon set to pick from for the move.
-     *
-     * @param tree   the tree
-     * @param taxa   some taxa
-     * @param weight the weight
-     * @param size   size of move for types that need it
-     * @param mode   coercion mode
-     */
-    public NodeHeightOperator(TreeModel tree, TaxonList taxa, double weight, double size, OperatorType operatorType, AdaptationMode mode, double targetAcceptance) {
-        super(mode, targetAcceptance);
-
-        this.tree = tree;
-        setWeight(weight);
-        this.size = size;
-        this.operatorType = operatorType;
-        this.tips = new ArrayList<NodeRef>();
-
-        for (Taxon taxon : taxa) {
-            boolean found = false;
-            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-                NodeRef tip = tree.getExternalNode(i);
-                if (tree.getNodeTaxon(tip).equals(taxon)) {
-                    tips.add(tip);
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                throw new IllegalArgumentException("Taxon, " + taxon.getId() + ", not found in tree with id " + tree.getId());
-            }
-        }
-    }
-
 
     /**
      * Do a subtree leap move.
@@ -142,45 +108,75 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
      */
     public double doOperation() {
         final NodeRef root = tree.getRoot();
-
-        NodeRef node;
-
-        if (tips == null) {
-            // Pick a node (but not the root)
-            do {
-                // choose a random node avoiding root
-                node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-
-            } while (node == root);
-        } else {
-            throw new UnsupportedOperationException("tip height sampling not supported yet");
-            // Pick a tip from the specified set of tips.
-//            node = tips.get(MathUtils.nextInt(tips.size()));
-        }
-
-        NodeRef parent = tree.getParent(node);
-
-        final double upperHeight = tree.getNodeHeight(tree.getParent(parent));
-        final double lowerHeight = Math.max(
-                tree.getNodeHeight(tree.getChild(parent, 0)),
-                tree.getNodeHeight(tree.getChild(parent, 1)));
-
-        final double oldHeight = tree.getNodeHeight(node);
-
         double logq;
 
-        switch (operatorType) {
-            case UNIFORM:
-                logq = doUniform(node, oldHeight, upperHeight, lowerHeight);
-                break;
-            case RANDOM_WALK:
-                RandomWalkOperator.BoundaryCondition boundaryCondition = RandomWalkOperator.BoundaryCondition.rejecting;
-                logq = doRandomWalk(node, oldHeight, upperHeight, lowerHeight, getSize(), boundaryCondition);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown operatorType");
+        if (operatorType == OperatorType.SCALEALL) {
+            logq = doScaleAll();
+        } else {
+            if (operatorType == OperatorType.SCALEROOT) {
+                final double lowerHeight = Math.max(
+                        tree.getNodeHeight(tree.getChild(root, 0)),
+                        tree.getNodeHeight(tree.getChild(root, 1)));
+
+                final double oldHeight = tree.getNodeHeight(root);
+                logq = doScaleRoot(root, oldHeight, lowerHeight);
+            } else {
+                NodeRef node;
+                // Pick a node (but not the root)
+                do {
+                    // choose a internal node avoiding root
+                    node = tree.getInternalNode(MathUtils.nextInt(tree.getInternalNodeCount()));
+                } while (node == root);
+
+                final double upperHeight = tree.getNodeHeight(tree.getParent(node));
+                final double lowerHeight = Math.max(
+                        tree.getNodeHeight(tree.getChild(node, 0)),
+                        tree.getNodeHeight(tree.getChild(node, 1)));
+
+                final double oldHeight = tree.getNodeHeight(node);
+
+
+                switch (operatorType) {
+                    case UNIFORM:
+                        logq = doUniform(node, oldHeight, upperHeight, lowerHeight);
+                        break;
+                    case RANDOMWALK:
+                        RandomWalkOperator.BoundaryCondition boundaryCondition = RandomWalkOperator.BoundaryCondition.rejecting;
+                        logq = doRandomWalk(node, oldHeight, upperHeight, lowerHeight, getSize(), boundaryCondition);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown operatorType");
+                }
+            }
+
         }
+
         return logq;
+    }
+
+    private double doScaleAll() {
+        final double scaleFactor = getSize();
+        final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
+
+        tree.beginTreeEdit();
+        for (NodeRef node : tree.getNodes()) {
+            if (!tree.isExternal(node)) {
+                double h = tree.getNodeHeight(node);
+                tree.setNodeHeightQuietly(node, h * scale);
+            }
+        }
+        tree.endTreeEdit();
+
+        return (tree.getInternalNodeCount() - 2) * Math.log(scale);
+    }
+
+    private double doScaleRoot(NodeRef node, double oldValue, double lower) {
+        final double scaleFactor = getSize();
+        final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
+
+        double h = oldValue - lower;
+        tree.setNodeHeight(node, h * scale + lower);
+        return -Math.log(scale);
     }
 
     private double doUniform(NodeRef node, double oldValue, double upper, double lower) {
@@ -336,10 +332,6 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
     }
 
     public String getOperatorName() {
-        if (tips == null) {
-            return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
-        } else {
-            return TipLeapOperatorParser.TIP_LEAP + "(" + tree.getId() + ")";
-        }
+        return "Node height operator";
     }
 }

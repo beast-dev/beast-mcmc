@@ -85,36 +85,34 @@ public class BigFastTreeModel extends TreeModel {
         heights = new double[nodeCount];
         storedHeights = new double[nodeCount];
 
-        int i = 0;
-        int j = externalNodeCount;
-
         boolean done = false;
+        NodeRef node = binaryTree.getRoot();
         do {
-            NodeRef node = TreeUtils.postorderSuccessor(binaryTree, binaryTree.getRoot());
+            node = TreeUtils.postorderSuccessor(binaryTree, node);
+
+            int number = node.getNumber();
 
             if (binaryTree.isExternal(node)) {
-                nodes[i] = new Node(i, tree.getNodeTaxon(node));
-                edges[(j * 3)] = -1; // parent
-                edges[(i * 3) + 1] = -1; // child 1
-                edges[(i * 3) + 2] = -1; // child 2
-
-                i++;
+                nodes[number] = new Node(number, binaryTree.getNodeTaxon(node));
+                edges[(number * 3)] = binaryTree.getParent(node).getNumber(); // parent
+                edges[(number * 3) + 1] = -1; // child 1
+                edges[(number * 3) + 2] = -1; // child 2
             } else {
                 if (binaryTree.isRoot(node)) {
+                    root = number;
                     done = true;
+                    edges[(number * 3)] = -1;
+                } else {
+                    edges[(number * 3)] = binaryTree.getParent(node).getNumber(); // parent
                 }
-                nodes[j] = new Node(j);
+                nodes[number] = new Node(number);
 
-                nodes[j] = node;
-                edges[(j * 3)] = -1; // parent
-                edges[(j * 3) + 1] = -1; // child 1
-                edges[(j * 3) + 2] = -1; // child 2
-
-                j++;
+                edges[(number * 3) + 1] = binaryTree.getChild(node, 0).getNumber(); // child 1
+                edges[(number * 3) + 2] = binaryTree.getChild(node, 1).getNumber(); // child 2;
             }
+            heights[number] = binaryTree.getNodeHeight(node);
+
         } while (!done);
-        
-        root = j;
     }
 
 
@@ -155,10 +153,16 @@ public class BigFastTreeModel extends TreeModel {
     }
 
     public final double getNodeHeightUpper(NodeRef node) {
+        if (isRoot(node)) {
+            return Double.POSITIVE_INFINITY;
+        }
         return getNodeHeight(getParent(node));
     }
 
     public final double getNodeHeightLower(NodeRef node) {
+        if (isExternal(node)) {
+            return 0.0;
+        }
         return Math.max(
                 getNodeHeight(getChild(node, 0)),
                 getNodeHeight(getChild(node, 1)));
@@ -196,7 +200,7 @@ public class BigFastTreeModel extends TreeModel {
 
     @Override
     public boolean isExternal(NodeRef node) {
-        return node.getNumber() >= externalNodeCount;
+        return node.getNumber() < externalNodeCount;
     }
 
     @Override
@@ -216,6 +220,9 @@ public class BigFastTreeModel extends TreeModel {
 
     @Override
     public NodeRef getParent(NodeRef node) {
+        if (isRoot(node)) {
+            return null;
+        }
         return nodes[getParent(node.getNumber())];
     }
 
@@ -269,7 +276,6 @@ public class BigFastTreeModel extends TreeModel {
     }
 
     private int getParent(int nodeNumber) {
-        assert nodeNumber != root;
         return edges[(nodeNumber * 3)];
     }
 
@@ -418,11 +424,11 @@ public class BigFastTreeModel extends TreeModel {
     @Override
     protected void restoreState() {
 
-        int[] tmp = edges;
+        int[] tmp = storedEdges;
         storedEdges = edges;
         edges = tmp;
 
-        double[] tmp2 = heights;
+        double[] tmp2 = storedHeights;
         storedHeights = heights;
         heights = tmp2;
 

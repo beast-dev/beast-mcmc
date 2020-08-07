@@ -40,6 +40,7 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
     public static final String NODE_HEIGHT_OPERATOR = "nodeHeightOperator";
 
     public static final String SIZE = "size";
+    public static final String SCALE_FACTOR = "scaleFactor";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
     public static final String OPERATOR_TYPE = "type";
 
@@ -54,8 +55,21 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        // size attribute is mandatory
-        final double size = xo.getAttribute(SIZE, Double.NaN);
+        double tuningParameter = 0.75;
+
+        if (xo.hasAttribute(SIZE)) {
+            tuningParameter = xo.getDoubleAttribute(SIZE);
+            if (tuningParameter <= 0.0) {
+                throw new XMLParseException("The NodeHeightOperator size attribute must be positive and non-zero.");
+            }
+        }
+        if (xo.hasAttribute(SCALE_FACTOR)) {
+            tuningParameter = xo.getDoubleAttribute(SCALE_FACTOR);
+            if (tuningParameter <= 0.0 || tuningParameter >= 1.0) {
+                throw new XMLParseException("The NodeHeightOperator scaleFactor attribute must be between 0 and 1.");
+            }
+        }
+
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
         NodeHeightOperator.OperatorType operatorType = NodeHeightOperator.OperatorType.UNIFORM;
@@ -67,15 +81,12 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
             }
         }
 
-        if (size <= 0.0) {
-            throw new XMLParseException("The NodeHeightOperator size attribute must be positive and non-zero.");
-        }
 
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
 
-        return new NodeHeightOperator(treeModel, weight, size, operatorType, mode, targetAcceptance);
+        return new NodeHeightOperator(treeModel, weight, tuningParameter, operatorType, mode, targetAcceptance);
     }
 
     public String getParserDescription() {
@@ -92,7 +103,8 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newDoubleRule(SIZE, false),
+            AttributeRule.newDoubleRule(SIZE, true),
+            AttributeRule.newDoubleRule(SCALE_FACTOR, true),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
             AttributeRule.newStringRule(OPERATOR_TYPE, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),

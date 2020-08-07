@@ -41,7 +41,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
 
         this.trueTraits = trueTraits;
-        this.dimTrait = dataModel.getPartialDimension();
+        this.dimTrait = dataModel.getDataDimension();
 
         this.missingInds = setupMissingInds(dataModel, missingParameter, trueMissingIndices);
         int nMissing = missingInds.length;

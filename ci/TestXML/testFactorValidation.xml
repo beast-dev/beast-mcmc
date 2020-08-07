@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon1">
+            <attr name="sparse">0.0076177742633394985 NA NA -0.8666572905938715 NA -0.5001246338040305 NA</attr>
+            <attr name="full">0.0076177742633394985 NA NA -0.8666572905938715 -0.454549337998158 -0.5001246338040305 NA</attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="sparse">0.05702524809146323 NA NA 2.3897801345872987 -1.5146279580725215 0.8960512885879615 -2.2012739127775762</attr>
+            <attr name="full">0.05702524809146323 NA NA 2.3897801345872987 -1.5146279580725215 0.8960512885879615 -2.2012739127775762</attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="sparse">NA NA NA NA NA NA -1.396413239367357</attr>
+            <attr name="full">-0.5484010117038763 NA -0.42898479922720356 -0.3440100523685048 0.6436374468251037 -0.09729958495856225 -1.396413239367357</attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="sparse">0.3515255484089337 NA NA NA -1.426378176957026 -0.7790116303715932 0.2981854605237854</attr>
+            <attr name="full">0.3515255484089337 NA NA NA -1.426378176957026 -0.7790116303715932 0.2981854605237854</attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="sparse">-0.784929798992992 NA NA 0.7619824434342454 1.5439602691637375 0.09081342420693704 NA</attr>
+            <attr name="full">-0.784929798992992 NA NA 0.7619824434342454 1.5439602691637375 0.09081342420693704 1.6135287964494376</attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="sparse">NA NA 0.4270454816694809 -0.6230781939110783 NA NA NA</attr>
+            <attr name="full">NA -0.8161262390971513 0.4270454816694809 -0.6230781939110783 NA NA NA</attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="sparse">0.30611493207760276 -1.0144436604293505 NA NA NA -0.6908795858187 -0.07712188884427165</attr>
+            <attr name="full">0.30611493207760276 -1.0144436604293505 -0.8920557774375898 1.478607059857378 NA -0.6908795858187 -0.07712188884427165</attr>
+        </taxon>
+        <taxon id="taxon8">
+            <attr name="sparse">-1.0304943902767967 NA -0.8909827170981991 NA NA 1.066150616149452 NA</attr>
+            <attr name="full">-1.0304943902767967 NA -0.8909827170981991 1.1873505039550996 NA 1.066150616149452 -1.7083839109325234</attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="sparse">NA -0.2221684856569227 NA NA 0.8655080462439241 NA NA</attr>
+            <attr name="full">NA -0.2221684856569227 NA 0.41571346596533654 0.8655080462439241 NA -0.01291823951389353</attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="sparse">NA NA -0.7122666957434696 -0.44738267923159963 NA 0.23315524522158199 -0.11815301665147325</attr>
+            <attr name="full">NA -0.17438164408909365 -0.7122666957434696 -0.44738267923159963 NA 0.23315524522158199 -0.11815301665147325</attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (((taxon1:0.5240963452876763,taxon5:7.902198392203038):0.9341302879400424,taxon7:1.432369469055692):2.584174631657951,(((taxon4:2.0031623441254434,(taxon3:2.660919437013892,taxon8:0.13626756429569198):0.5831752266184369):0.590207122838246,taxon9:3.007664416818267):0.8258936593590096,(taxon6:1.1212461843902313,(taxon10:1.3844642276921775,taxon2:0.08315175028640569):0.47248040383417067):0.27742433861548693):0.015925867863833734);    </newick>
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="7"
+                    name="sparse">
+            <parameter id="sparseTraits"/>
+        </nodeTraits>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="7"
+                    name="full">
+            <parameter id="fullTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix id="diffusion.precision">
+                <parameter dimension="3" value="1" lower="0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <matrixParameter id="L">
+        <parameter
+                value="-0.6325563176821224 -0.785751053817025 -0.23236243995649072 -1.9737902929363504 0.8084047625956468 -0.3880748220629019 -0.02338761320366489"/>
+        <parameter
+                value="-1.7337551994192786 0.4749217262040388 0.1844449916003127 -0.7623255206702356 -0.20092798377805954 -0.001551025159085228 -2.198680996374538"/>
+        <parameter
+                value="0.2962825104489853 0.6994853382044979 -0.07096521254343297 0.25009505164097723 0.43231508809394403 0.2717043320216292 1.195693054757052"/>
+    </matrixParameter>
+    <distributionLikelihood id="L.prior">
+        <data>
+            <matrixParameter idref="L"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0.0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1.0"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+    <integratedFactorModel id="factorModel" traitName="sparse" nugget="0" standardize="false">
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <precision>
+            <parameter id="traits.precision"
+                       value="4.725819373248511 2.022429801566539 2.089399492531513 3.3332699982878076 2.9375880999148065 20.189186092886473 36.995401606763494"
+                       lower="0.0"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="sparseTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <traitDataLikelihood id="traitLikelihood" traitName="factors" cacheBranches="true" allowIdentical="true"
+                         useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         integrateInternalTraits="true" standardize="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="factorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+    <gammaPrior id="gammaPrior" shape="1.0" scale="1.0">
+        <parameter idref="traits.precision"/>
+    </gammaPrior>
+    <operators id="operators">
+        <fireParameterChanged weight="1">
+            <parameter idref="L"/>
+        </fireParameterChanged>
+        <fireParameterChanged weight="1">
+            <parameter idref="traits.precision"/>
+        </fireParameterChanged>
+    </operators>
+
+
+
+    <likelihood id="likelihood">
+        <integratedFactorModel idref="factorModel"/>
+        <traitDataLikelihood idref="traitLikelihood"/>
+    </likelihood>
+
+    <report>
+        Likelihood report
+        <likelihood idref="likelihood"/>
+    </report>
+
+    <report>
+        <traitDataLikelihood idref="traitLikelihood"/>
+    </report>
+
+<!--    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">-->
+<!--        <message>-->
+<!--            Check log likelihood of observed data-->
+<!--        </message>-->
+<!--        <actual regex="likelihood:\s+(.*)\n">-->
+<!--            <likelihood idref="likelihood"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            -87.12871006098652-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
+
+    <traitValidationProvider id="traitValidationProvider" traitName="full" inferredTrait="factors">
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <traitParameter>
+            <parameter idref="fullTraits"/>
+        </traitParameter>
+    </traitValidationProvider>
+
+    <crossValidation id="traitValidation" type="squaredError" logSum="false">
+        <traitValidationProvider idref="traitValidationProvider"/>
+    </crossValidation>
+
+    <report>
+        ValidationReport
+        <crossValidation idref="traitValidation"/>
+    </report>
+
+
+    <mcmc id="mcmc" chainLength="1000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <distributionLikelihood idref="L.prior"/>
+                <gammaPrior idref="gammaPrior"/>
+            </prior>
+            <likelihood idref="likelihood"/>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1000">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+    </mcmc>
+
+    <operators id="operators2">
+        <fireParameterChanged weight="1" value="-0.194116 0.652963 1.21962 2.8186 1.97158 -1.71512 -0.13209
+                                                 1.72837 0.638895 0.930965 0.636114 -0.120818 -1.07185 0.882309
+                                                  -0.305603 0.0775645 -0.543281 0.248284 0.974631 -0.195709 0.197456">
+            <parameter idref="L"/>
+        </fireParameterChanged>
+        <fireParameterChanged weight="1" value="1.056100697048902 0.4922491345822399 0.09056340457646257 2.2406642797361727 0.05112171180614228 0.8437262784097745 0.5851036744492637">
+            <parameter idref="traits.precision"/>
+        </fireParameterChanged>
+    </operators>
+
+<!--    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">-->
+<!--        <message>-->
+<!--            Check log likelihood of observed data-->
+<!--        </message>-->
+<!--        <actual regex="likelihood:\s+(.*)\n">-->
+<!--            <likelihood idref="likelihood"/>-->
+<!--        </actual>-->
+<!--        <expected>-->
+<!--            -88.87428942127798-->
+<!--        </expected>-->
+<!--    </assertEqual>-->
+
+</beast>

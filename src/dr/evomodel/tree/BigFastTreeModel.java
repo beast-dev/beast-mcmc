@@ -32,7 +32,8 @@ import dr.inference.model.*;
 import java.util.*;
 
 /**
- * A model component for trees.
+ * A model component for trees. This version uses flat arrays for nodes and heights to maximize
+ * speed (particularly storing/restoring) on very large trees.
  *
  * @author Andrew Rambaut
  * @version $Id:$
@@ -44,8 +45,6 @@ public class BigFastTreeModel extends TreeModel {
     //
 
     public static final String BIG_FAST_TREE_MODEL = "bigFastTreeModel";
-
-    private static final boolean TEST_NODE_BOUNDS = false;
 
     public BigFastTreeModel(Tree tree) {
         this(BIG_FAST_TREE_MODEL, tree, false, false);

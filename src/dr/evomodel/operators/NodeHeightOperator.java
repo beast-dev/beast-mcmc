@@ -162,7 +162,7 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
         for (NodeRef node : tree.getNodes()) {
             if (!tree.isExternal(node)) {
                 double h = tree.getNodeHeight(node);
-                tree.setNodeHeightQuietly(node, h * scale);
+                tree.setNodeHeight(node, h * scale);
             }
         }
         tree.endTreeEdit();

@@ -188,7 +188,7 @@ public abstract class AbstractImportanceDistributionOperator extends
 
             tree.endTreeEdit();
 
-            tree.checkTreeIsValid();
+//            tree.checkTreeIsValid();
         } catch (InvalidTreeException e) {
             throw new RuntimeException(e.getMessage());
         }

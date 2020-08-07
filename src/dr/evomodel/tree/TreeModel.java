@@ -150,35 +150,28 @@ public class TreeModel extends AbstractTreeModel {
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent() {
-        pushTreeChangedEvent(new TreeChangedEvent());
+        pushTreeChangedEvent(TreeChangedEvent.create());
     }
 
     /**
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent(NodeRef nodeRef) {
-        pushTreeChangedEvent(new TreeChangedEvent((Node) nodeRef));
+        pushTreeChangedEvent(TreeChangedEvent.create(nodeRef, false));
+    }
+
+    /**
+     * Push a tree changed event into the event stack.
+     */
+    public void pushTreeChangedEvent(Node node, Parameter parameter) {
+        pushTreeChangedEvent(TreeChangedEvent.create(node, parameter, parameter == node.heightParameter));
     }
 
     /**
      * Push a tree changed event into the event stack.
      */
     public void pushTreeChangedEvent(Node node, Parameter parameter, int index) {
-        pushTreeChangedEvent(new TreeChangedEvent(node, parameter, index));
-    }
-
-    /**
-     * Push a tree changed event into the event stack.
-     */
-    public void pushTreeChangedEvent(dr.evomodel.tree.TreeChangedEvent event) {
-
-        if (!isVariable()) throw new IllegalStateException("Attempting state change in fixed tree");
-
-        if (inEdit) {
-            treeChangedEvents.add(event);
-        } else {
-            listenerHelper.fireModelChanged(this, event);
-        }
+        pushTreeChangedEvent(TreeChangedEvent.create(node, parameter, index, parameter == node.heightParameter));
     }
 
 
@@ -193,91 +186,29 @@ public class TreeModel extends AbstractTreeModel {
         final Node node = getNodeOfParameter((Parameter) variable);
         if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
             //this signals events where values in all dimensions of a parameter is changed.
-            pushTreeChangedEvent(new TreeChangedEvent(node, (Parameter) variable, TreeChangedEvent.CHANGE_IN_ALL_INTERNAL_NODES));
+            pushTreeChangedEvent(node, (Parameter) variable);
         } else {
             pushTreeChangedEvent(node, (Parameter) variable, index);
         }
     }
 
+    @Override
+    public boolean beginTreeEdit() {
+        oldRoot = root;
+        return super.beginTreeEdit();
+    }
 
-    private final List<dr.evomodel.tree.TreeChangedEvent> treeChangedEvents = new ArrayList<dr.evomodel.tree.TreeChangedEvent>();
+    @Override
+    public void endTreeEdit() {
+        super.endTreeEdit();
+        if (root != oldRoot) {
+            swapParameterObjects(oldRoot, root);
+        }
+
+    }
 
     public boolean hasRates() {
         return hasRates;
-    }
-
-    public boolean inTreeEdit() {
-        return inEdit;
-    }
-
-    public class TreeChangedEvent implements dr.evomodel.tree.TreeChangedEvent {
-        static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
-
-        final Node node;
-        final Parameter parameter;
-        final int index;
-
-        public TreeChangedEvent() {
-            this(null, null, -1);
-        }
-
-        public TreeChangedEvent(Node node) {
-            this(node, null, -1);
-        }
-
-        public TreeChangedEvent(Node node, Parameter parameter, int index) {
-            this.node = node;
-            this.parameter = parameter;
-            this.index = index;
-        }
-
-        @Override
-        public int getIndex() {
-            return index;
-        }
-
-        @Override
-        public Node getNode() {
-            return node;
-        }
-
-        public Parameter getParameter() {
-            return parameter;
-        }
-
-        public boolean isTreeChanged() {
-            return parameter == null;
-        }
-
-        @Override
-        public boolean isNodeChanged() {
-            return node != null;
-        }
-
-        @Override
-        public boolean isNodeParameterChanged() {
-            return parameter != null;
-        }
-
-        public boolean isHeightChanged() {
-            return parameter == node.heightParameter;
-        }
-
-        public boolean isRateChanged() {
-            return parameter == node.rateParameter;
-        }
-
-        public boolean isTraitChanged(String name) {
-            return parameter == node.traitParameters.get(name);
-        }
-
-        public boolean areAllInternalHeightsChanged() {
-            if (parameter != null) {
-                return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;
-            }
-            return false;
-        }
-
     }
 
     // *****************************************************************
@@ -494,45 +425,14 @@ public class TreeModel extends AbstractTreeModel {
 
     private Node oldRoot;
 
-    public boolean beginTreeEdit() {
-        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
-
-        oldRoot = root;
-
-        inEdit = true;
-
-        return false;
-    }
-
-    public void endTreeEdit() {
-        if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
-
-        inEdit = false;
-
-        if (root != oldRoot) {
-            swapParameterObjects(oldRoot, root);
-        }
-
-        if (TEST_NODE_BOUNDS) {
-            try {
-                checkTreeIsValid();
-            } catch (InvalidTreeException ite) {
-                throw new RuntimeException(ite.getMessage());
-            }
-        }
-
-        for (dr.evomodel.tree.TreeChangedEvent treeChangedEvent : treeChangedEvents) {
-            listenerHelper.fireModelChanged(this, treeChangedEvent);
-        }
-        treeChangedEvents.clear();
-    }
-
-    public void checkTreeIsValid() throws MutableTree.InvalidTreeException {
+    @Override
+    protected boolean checkTreeIsValid() {
         for (Node node : nodes) {
             if (!node.heightParameter.isWithinBounds()) {
-                throw new InvalidTreeException("height parameter out of bounds");
+                return false;
             }
         }
+        return true;
     }
 
     public void setNodeHeight(NodeRef n, double height) {
@@ -1494,8 +1394,6 @@ public class TreeModel extends AbstractTreeModel {
      * number of internal nodes (including root)
      */
     private final int internalNodeCount;
-
-    private boolean inEdit = false;
 
     private boolean hasRates = false;
     private boolean hasTraits = false;

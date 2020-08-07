@@ -211,13 +211,6 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
 
         tree.endTreeEdit();
 
-        // AR - not sure whether this check is necessary
-        try {
-            tree.checkTreeIsValid();
-        } catch (InvalidTreeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
         double forward = probabilities.get(index);
 
         // tree.pushTreeChangedEvent(jP);

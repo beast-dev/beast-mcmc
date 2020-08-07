@@ -185,7 +185,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     }
 
     public boolean isExternal(NodeRef node) {
-        return getChildCount(node) == 0;
+        return node.getNumber() >= externalNodeCount;
     }
 
     public boolean isRoot(NodeRef node) {
@@ -193,15 +193,15 @@ public class BigFastTreeModel extends AbstractTreeModel {
     }
 
     public int getChildCount(NodeRef node) {
-        return (edges[(node.getNumber() * 3) + 1] == -1 ? 0 : 2);
+        return isExternal(node) ? 0 : 2;
     }
 
     public NodeRef getChild(NodeRef node, int i) {
-        return (i == 0 ? nodes[edges[(node.getNumber() * 3) + 1]] : nodes[edges[(node.getNumber() * 3) + 2]]);
+        return nodes[getChild(node.getNumber(), i)];
     }
 
     public NodeRef getParent(NodeRef node) {
-        return nodes[edges[(node.getNumber() * 3)];
+        return nodes[getParent(node.getNumber())];
     }
 
     public NodeRef getExternalNode(int i) {
@@ -242,6 +242,24 @@ public class BigFastTreeModel extends AbstractTreeModel {
         return false;
     }
 
+    private int getParent(int nodeNumber) {
+        assert nodeNumber != root;
+        return edges[(nodeNumber * 3)];
+    }
+
+    private int getChild(int nodeNumber, int i) {
+        assert i == 0 || i == 1;
+        return edges[(nodeNumber * 3) + i + 1];
+    }
+
+    private void setParent(int nodeNumber, int parentNumber) {
+         edges[(nodeNumber * 3)] = parentNumber;
+    }
+
+    private void setChild(int nodeNumber, int i, int childNumber) {
+        assert i == 0 || i == 1;
+        edges[(nodeNumber * 3) + i + 1] = childNumber;
+    }
 
     // *****************************************************************
     // Interface MutableTree
@@ -261,66 +279,60 @@ public class BigFastTreeModel extends AbstractTreeModel {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
-        Node parent = (Node) p;
-        Node child = (Node) c;
-        if (parent.hasChild(child)) throw new IllegalArgumentException("Child already exists in parent");
+        int parent = p.getNumber();
+        int child = c.getNumber();
 
-        parent.addChild(child);
-        pushTreeChangedEvent(parent);
+        if (getChild(parent, 0) == -1) {
+            setChild(parent, 0, child);
+        } else if (getChild(parent, 1) == -1) {
+            setChild(parent, 1, child);
+        } else {
+            throw new IllegalArgumentException("Node already has two children");
+        }
+        setParent(child, parent);
+
+        pushTreeChangedEvent(TreeChangedEvent.create(p, false));
+        pushTreeChangedEvent(TreeChangedEvent.create(c, false));
     }
 
     public void removeChild(NodeRef p, NodeRef c) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
-        Node parent = (Node) p;
-        Node child = (Node) c;
+        int parent = p.getNumber();
+        int child = c.getNumber();
 
-        parent.removeChild(child);
+        if (getChild(parent, 0) == child) {
+            setChild(parent, 0, -1);
+        } else if (getChild(parent, 1) == child) {
+            setChild(parent, 1, -1);
+        } else {
+            throw new IllegalArgumentException("Child not in node");
+        }
+        setParent(child, -1);
+
+        pushTreeChangedEvent(TreeChangedEvent.create(p, false));
+        pushTreeChangedEvent(TreeChangedEvent.create(c, false));
     }
 
     public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
         throw new RuntimeException("Unimplemented");
     }
 
-    public boolean beginTreeEdit() {
-        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
 
-        inEdit = true;
-
-        return false;
-    }
-
-    public void endTreeEdit() {
-        if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
-
-        inEdit = false;
-
-        if (TEST_NODE_BOUNDS) {
-            try {
-                checkTreeIsValid();
-            } catch (InvalidTreeException ite) {
-                throw new RuntimeException(ite.getMessage());
+    protected boolean checkTreeIsValid() {
+        for (NodeRef node : nodes) {
+            double height = getNodeHeight(node);
+            if (height > getNodeHeightUpper(node) || height < getNodeHeightLower(node)) {
+                return false;
             }
         }
-
-        for (dr.evomodel.tree.TreeChangedEvent treeChangedEvent : treeChangedEvents) {
-            listenerHelper.fireModelChanged(this, treeChangedEvent);
-        }
-        treeChangedEvents.clear();
+        return true;
     }
 
-    public void checkTreeIsValid() throws InvalidTreeException {
-        for (Node node : nodes) {
-            if (!node.heightParameter.isWithinBounds()) {
-                throw new InvalidTreeException("height parameter out of bounds");
-            }
-        }
-    }
-
-    public void setNodeHeight(NodeRef n, double height) {
-        heights[n.getNumber()] = height;
-        @todo - fire a message
+    public void setNodeHeight(NodeRef node, double height) {
+        heights[node.getNumber()] = height;
+        pushTreeChangedEvent(TreeChangedEvent.create(node, true));
     }
 
     public void setNodeHeightQuietly(NodeRef n, double height) {
@@ -466,7 +478,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     private double[] heights = null;
     private double[] storedHeights = null;
 
-    private NodeRef[] nodes;
+    private final NodeRef[] nodes;
 
     /**
      * number of nodes (including root and tips)
@@ -482,8 +494,6 @@ public class BigFastTreeModel extends AbstractTreeModel {
      * number of internal nodes (including root)
      */
     private final int internalNodeCount;
-
-    private boolean inEdit = false;
 
 
 }

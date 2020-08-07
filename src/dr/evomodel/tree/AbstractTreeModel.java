@@ -17,6 +17,8 @@ import java.util.*;
 public abstract class AbstractTreeModel extends AbstractModel implements MutableTreeModel, Keywordable, Citable {
     private final boolean isVariable;
     private final List<String> keywords = new ArrayList<String>();
+    private final List<TreeChangedEvent> treeChangedEvents = new ArrayList<TreeChangedEvent>();
+    protected boolean inEdit = false;
     private String id = null;
     private AttributeHelper treeAttributes = null;
     /**
@@ -241,6 +243,24 @@ public abstract class AbstractTreeModel extends AbstractModel implements Mutable
         return getNodeHeight(parent) - getNodeHeight(node);
     }
 
+    /**
+     * Push a tree changed event into the event stack.
+     */
+    public void pushTreeChangedEvent(TreeChangedEvent event) {
+
+        if (!isVariable()) throw new IllegalStateException("Attempting state change in fixed tree");
+
+        if (inEdit) {
+            treeChangedEvents.add(event);
+        } else {
+            listenerHelper.fireModelChanged(this, event);
+        }
+    }
+
+    public boolean inTreeEdit() {
+        return inEdit;
+    }
+
     public boolean isTipDateSampled() {
         return false;
     }
@@ -293,4 +313,26 @@ public abstract class AbstractTreeModel extends AbstractModel implements Mutable
         }
     }
 
+    public boolean beginTreeEdit() {
+        if (inEdit) throw new RuntimeException("Already in edit transaction mode!");
+
+        inEdit = true;
+
+        return false;
+    }
+
+    public void endTreeEdit() {
+        if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
+
+        inEdit = false;
+
+        assert checkTreeIsValid();
+
+        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
+            listenerHelper.fireModelChanged(this, treeChangedEvent);
+        }
+        treeChangedEvents.clear();
+    }
+
+    protected abstract boolean checkTreeIsValid();
 }

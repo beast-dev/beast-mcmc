@@ -69,13 +69,6 @@ public class TreeUniform extends AbstractTreeOperator {
 
         tree.endTreeEdit();
 
-        // AR not sure whether this check is needed...
-        try {
-            tree.checkTreeIsValid();
-        } catch( MutableTree.InvalidTreeException ite ) {
-            throw new RuntimeException(ite.toString());
-        }
-
         return 0;
     }
 

@@ -284,14 +284,6 @@ public class ImportanceSubtreeSwap extends AbstractTreeOperator {
 
         tree.endTreeEdit();
 
-        // AR - not sure whether this check is necessary
-        try {
-            tree.checkTreeIsValid();
-        } catch (InvalidTreeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
-
         double forwardProb = (forward / sum) + (forward / sumForward2);
         double backwardProb = (backward / sumBackward)
                 + (backward / sumBackward2);

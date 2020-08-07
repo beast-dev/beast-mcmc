@@ -127,7 +127,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
 //        System.err.println(") new tree = " + currentTreeIndex);
 
-        fireModelChanged(new TreeChangedEvent());
+        fireModelChanged(TreeChangedEvent.create());
     }
 
     public NodeRef getRoot() {

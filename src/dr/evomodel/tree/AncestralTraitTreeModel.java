@@ -471,7 +471,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                     }
 
                     validShadowTree = false;
-                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                    fireModelChanged(TreeChangedEvent.create());
 
                 } else if (treeChangedEvent.isNodeChanged()) {
 
@@ -516,7 +516,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         } else if (model instanceof AncestralTaxonInTree && ancestors.contains(model)) {
 
-            fireModelChanged(new TreeChangedEvent.WholeTree());
+            fireModelChanged(TreeChangedEvent.create());
 
         } else {
             throw new IllegalArgumentException("Illegal model");

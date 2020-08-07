@@ -91,7 +91,7 @@ public class ContinuousExtensionDelegate {
         ) {
             super(likelihoodDelegate, treeTrait, tree);
             this.dataModel = dataModel;
-            this.dimTrait = dataModel.getPartialDimension();
+            this.dimTrait = dataModel.getDataDimension();
             this.nTaxa = tree.getExternalNodeCount();
             this.sample = new double[nTaxa * dimTrait];
 

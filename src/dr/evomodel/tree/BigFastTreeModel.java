@@ -1,5 +1,5 @@
 /*
- * TreeModel.java
+ * BigFastTreeModel.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -37,7 +37,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $Id:$
  */
-public class BigFastTreeModel extends AbstractTreeModel {
+public class BigFastTreeModel extends TreeModel {
 
     //
     // Public stuff
@@ -118,6 +118,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     }
 
 
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // no submodels so nothing to do
     }
@@ -125,10 +126,12 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * Called when a parameter changes.
      */
+    @Override
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no parameters so nothing to do
     }
 
+    @Override
     public boolean inTreeEdit() {
         return inEdit;
     }
@@ -141,10 +144,12 @@ public class BigFastTreeModel extends AbstractTreeModel {
      * @return a count of the number of nodes (internal + external) in this
      *         tree.
      */
+    @Override
     public int getNodeCount() {
         return nodeCount;
     }
 
+    @Override
     public double getNodeHeight(NodeRef node) {
         return heights[node.getNumber()];
     }
@@ -164,61 +169,80 @@ public class BigFastTreeModel extends AbstractTreeModel {
      * @param node
      * @return the rate parameter associated with this node.
      */
+    @Override
     public double getNodeRate(NodeRef node) {
         throw new UnsupportedOperationException("getNodeRate not available in BigFastTreeModel");
     }
 
+    @Override
     public Object getNodeAttribute(NodeRef node, String name) {
         throw new UnsupportedOperationException("getNodeAttribute not available in BigFastTreeModel");
     }
 
+    @Override
     public Iterator getNodeAttributeNames(NodeRef node) {
         throw new UnsupportedOperationException("getNodeAttributeNames not available in BigFastTreeModel");
     }
 
+    @Override
     public double[] getMultivariateNodeTrait(NodeRef node, String name) {
         throw new UnsupportedOperationException("getMultivariateNodeTrait not available in BigFastTreeModel");
     }
 
+    @Override
     public Taxon getNodeTaxon(NodeRef node) {
         return ((Node) node).taxon;
     }
 
+    @Override
     public boolean isExternal(NodeRef node) {
         return node.getNumber() >= externalNodeCount;
     }
 
+    @Override
     public boolean isRoot(NodeRef node) {
         return node.getNumber() == root;
     }
 
+    @Override
     public int getChildCount(NodeRef node) {
         return isExternal(node) ? 0 : 2;
     }
 
+    @Override
     public NodeRef getChild(NodeRef node, int i) {
         return nodes[getChild(node.getNumber(), i)];
     }
 
+    @Override
     public NodeRef getParent(NodeRef node) {
         return nodes[getParent(node.getNumber())];
     }
 
+    @Override
     public NodeRef getExternalNode(int i) {
         return nodes[i];
     }
 
+    @Override
     public NodeRef getInternalNode(int i) {
         return nodes[i + externalNodeCount];
     }
 
+    @Override
     public NodeRef getNode(int i) {
         return nodes[i];
+    }
+
+    @Override
+    public NodeRef[] getNodes() {
+        return nodes;
     }
 
     /**
      * Returns the number of external nodes.
      */
+    @Override
     public int getExternalNodeCount() {
         return externalNodeCount;
     }
@@ -226,6 +250,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * Returns the ith internal node.
      */
+    @Override
     public int getInternalNodeCount() {
         return internalNodeCount;
     }
@@ -233,6 +258,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * Returns the root node of this tree.
      */
+    @Override
     public NodeRef getRoot() {
         return nodes[root];
     }
@@ -268,6 +294,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * Set a new node as root node.
      */
+    @Override
     public void setRoot(NodeRef newRoot) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
@@ -275,6 +302,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
         root = newRoot.getNumber();
     }
 
+    @Override
     public void addChild(NodeRef p, NodeRef c) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
@@ -295,6 +323,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
         pushTreeChangedEvent(TreeChangedEvent.create(c, false));
     }
 
+    @Override
     public void removeChild(NodeRef p, NodeRef c) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
@@ -315,11 +344,13 @@ public class BigFastTreeModel extends AbstractTreeModel {
         pushTreeChangedEvent(TreeChangedEvent.create(c, false));
     }
 
+    @Override
     public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
         throw new RuntimeException("Unimplemented");
     }
 
 
+    @Override
     protected boolean checkTreeIsValid() {
         for (NodeRef node : nodes) {
             double height = getNodeHeight(node);
@@ -330,15 +361,18 @@ public class BigFastTreeModel extends AbstractTreeModel {
         return true;
     }
 
+    @Override
     public void setNodeHeight(NodeRef node, double height) {
         heights[node.getNumber()] = height;
         pushTreeChangedEvent(TreeChangedEvent.create(node, true));
     }
 
+    @Override
     public void setNodeHeightQuietly(NodeRef n, double height) {
         heights[n.getNumber()] = height;
     }
 
+    @Override
     public void setNodeRate(NodeRef n, double rate) {
         throw new UnsupportedOperationException("BigFastTreeModel cannot have node rates set");
     }
@@ -347,14 +381,17 @@ public class BigFastTreeModel extends AbstractTreeModel {
         throw new UnsupportedOperationException("BigFastTreeModel cannot have traits set");
     }
 
+    @Override
     public void setMultivariateTrait(NodeRef n, String name, double[] value) {
         throw new UnsupportedOperationException("BigFastTreeModel cannot have traits set");
     }
 
+    @Override
     public void setBranchLength(NodeRef node, double length) {
         throw new UnsupportedOperationException("BigFastTreeModel cannot have branch lengths set");
     }
 
+    @Override
     public void setNodeAttribute(NodeRef node, String name, Object value) {
         throw new UnsupportedOperationException("BigFastTreeModel does not use NodeAttributes");
     }
@@ -366,6 +403,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * Store current state
      */
+    @Override
     protected void storeState() {
         System.arraycopy(edges, 0, storedEdges, 0, edges.length);
         System.arraycopy(heights, 0, storedHeights, 0, heights.length);
@@ -377,6 +415,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * Restore the stored state
      */
+    @Override
     protected void restoreState() {
 
         int[] tmp = edges;
@@ -393,6 +432,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * accept the stored state
      */
+    @Override
     protected void acceptState() {
     } // nothing to do
 
@@ -403,6 +443,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
     /**
      * @return the ith taxon in the list.
      */
+    @Override
     public Taxon getTaxon(int taxonIndex) {
         return ((Node) getExternalNode(taxonIndex)).taxon;
     }

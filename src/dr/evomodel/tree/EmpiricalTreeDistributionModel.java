@@ -40,8 +40,10 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @version $Id$
+ *
+ * @todo - this should extend TreeModel rather than inheriting from DefaultTreeModel
  */
-public class EmpiricalTreeDistributionModel extends TreeModel {
+public class EmpiricalTreeDistributionModel extends DefaultTreeModel {
 
     /**
      * This constructor takes an array of trees and jumps randomly amongst them.

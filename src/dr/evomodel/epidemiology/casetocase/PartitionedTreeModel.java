@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -43,7 +44,7 @@ import java.util.*;
  *
  * todo a lot of methods should eventually move here
  */
-public class PartitionedTreeModel extends TreeModel {
+public class PartitionedTreeModel extends DefaultTreeModel {
 
     private final AbstractOutbreak outbreak;
     private BranchMapModel branchMap;
@@ -573,7 +574,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     private AbstractCase[] prepareExternalNodeMap(AbstractCase[] map){
         for(int i=0; i< getExternalNodeCount(); i++){
-            TreeModel.Node currentExternalNode = (TreeModel.Node) getExternalNode(i);
+            DefaultTreeModel.Node currentExternalNode = (DefaultTreeModel.Node) getExternalNode(i);
             Taxon currentTaxon = currentExternalNode.taxon;
             for(AbstractCase thisCase : outbreak.getCases()){
                 if(thisCase.wasEverInfected()) {

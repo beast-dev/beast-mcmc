@@ -28,6 +28,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.MRCATraitStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
@@ -50,7 +51,7 @@ public class MRCATraitStatisticParser extends AbstractXMLObjectParser {
         String name = xo.getAttribute(NAME, xo.getId());
         String trait = xo.getStringAttribute(TRAIT);
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        DefaultTreeModel tree = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
         TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
 
         try {
@@ -77,7 +78,7 @@ public class MRCATraitStatisticParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(TreeModel.class),
+            new ElementRule(DefaultTreeModel.class),
             new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
             new StringAttributeRule("trait", "The name of the trait (can be rate)"),
             AttributeRule.newBooleanRule("rate", true),

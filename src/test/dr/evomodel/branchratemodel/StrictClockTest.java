@@ -9,6 +9,7 @@ import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
@@ -100,7 +101,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter allInternalHeights = treeModel.createNodeHeightsParameter(true, true, false);
+        Parameter allInternalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(true, true, false);
         operator = new UpDownOperator(new Scalable[]{new Scalable.Default(rateParameter)},
                 new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, AdaptationMode.ADAPTATION_ON);
         schedule.addOperator(operator);
@@ -109,17 +110,17 @@ public class StrictClockTest extends TraceCorrelationAssert {
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter rootHeight = treeModel.getRootHeightParameter();
+        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
         rootHeight.setId(TREE_HEIGHT);
         operator = new ScaleOperator(rootHeight, 0.75);
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
+        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
         operator = new UniformOperator(internalHeights, 30.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 15.0, 1.0, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
+        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 15.0, 1.0, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);

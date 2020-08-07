@@ -88,7 +88,7 @@ public class BigFastTreeModelParser extends AbstractXMLObjectParser {
     }
 
     public String getParserName() {
-        return TreeModel.TREE_MODEL;
+        return BigFastTreeModel.BIG_FAST_TREE_MODEL;
     }
 
     /**

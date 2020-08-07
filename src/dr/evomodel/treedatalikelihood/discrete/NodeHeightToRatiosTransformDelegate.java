@@ -197,7 +197,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
             }
         }
-        tree.pushTreeChangedEvent();
+        tree.pushTreeChangedEvent(TreeChangedEvent.create());
     }
 
     protected int getNodeHeightIndex(NodeRef node) {

@@ -59,7 +59,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private final String traitName;
     private final MatrixParameterInterface samplingPrecisionParameter;
     private boolean diagonalOnly = false;
-//    private DenseMatrix64F samplingVariance;
+    //    private DenseMatrix64F samplingVariance;
     private boolean variableChanged = true;
     private boolean varianceKnown = false;
 
@@ -103,7 +103,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         recomputeVariance();
 
         if (fullyObserved) {
-            return new double[dimTrait + 1];
+            throw new RuntimeException("Incompatible with this model.");
         }
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);

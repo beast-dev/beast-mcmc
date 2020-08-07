@@ -115,24 +115,6 @@ public class BigFastTreeModel extends AbstractTreeModel {
         } while (!done);
         
         root = j;
-
-        setupHeightBounds();
-    }
-
-
-    boolean heightBoundsSetup = false;
-
-    public void setupHeightBounds() {
-
-        if (heightBoundsSetup) {
-            throw new IllegalArgumentException("Node height bounds set up twice");
-        }
-
-        for (int i = 0; i < nodeCount; i++) {
-            nodes[i].setupHeightBounds();
-        }
-
-        heightBoundsSetup = true;
     }
 
 
@@ -144,15 +126,8 @@ public class BigFastTreeModel extends AbstractTreeModel {
      * Called when a parameter changes.
      */
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        final Node node = getNodeOfParameter((Parameter) variable);
-//        if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
-//            //this signals events where values in all dimensions of a parameter is changed.
-//            pushTreeChangedEvent(new TreeChangedEvent(node, (Parameter) variable, TreeChangedEvent.CHANGE_IN_ALL_INTERNAL_NODES));
-//        } else {
-//            pushTreeChangedEvent(node, (Parameter) variable, index);
-//        }
+        // no parameters so nothing to do
     }
-
 
     public boolean inTreeEdit() {
         return inEdit;
@@ -171,15 +146,17 @@ public class BigFastTreeModel extends AbstractTreeModel {
     }
 
     public double getNodeHeight(NodeRef node) {
-        return ((Node) node).getHeight();
+        return heights[node.getNumber()];
     }
 
     public final double getNodeHeightUpper(NodeRef node) {
-        return ((Node) node).heightParameter.getBounds().getUpperLimit(0);
+        return getNodeHeight(getParent(node));
     }
 
     public final double getNodeHeightLower(NodeRef node) {
-        return ((Node) node).heightParameter.getBounds().getLowerLimit(0);
+        return Math.max(
+                getNodeHeight(getChild(node, 0)),
+                getNodeHeight(getChild(node, 1)));
     }
 
 
@@ -208,23 +185,23 @@ public class BigFastTreeModel extends AbstractTreeModel {
     }
 
     public boolean isExternal(NodeRef node) {
-        return ((Node) node).isExternal();
+        return getChildCount(node) == 0;
     }
 
     public boolean isRoot(NodeRef node) {
-        return ((Node) node).number == root;
+        return node.getNumber() == root;
     }
 
     public int getChildCount(NodeRef node) {
-        return ((Node) node).getChildCount();
+        return (edges[(node.getNumber() * 3) + 1] == -1 ? 0 : 2);
     }
 
     public NodeRef getChild(NodeRef node, int i) {
-        return ((Node) node).getChild(i);
+        return (i == 0 ? nodes[edges[(node.getNumber() * 3) + 1]] : nodes[edges[(node.getNumber() * 3) + 2]]);
     }
 
     public NodeRef getParent(NodeRef node) {
-        return ((Node) node).parent;
+        return nodes[edges[(node.getNumber() * 3)];
     }
 
     public NodeRef getExternalNode(int i) {
@@ -237,10 +214,6 @@ public class BigFastTreeModel extends AbstractTreeModel {
 
     public NodeRef getNode(int i) {
         return nodes[i];
-    }
-
-    public NodeRef[] getNodes() {
-        return nodes;
     }
 
     /**
@@ -281,10 +254,7 @@ public class BigFastTreeModel extends AbstractTreeModel {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
-        root = (Node) newRoot;
-
-        // We shouldn't need this because the addChild will already have fired appropriate events.
-        pushTreeChangedEvent(root);
+        root = newRoot.getNumber();
     }
 
     public void addChild(NodeRef p, NodeRef c) {
@@ -349,11 +319,12 @@ public class BigFastTreeModel extends AbstractTreeModel {
     }
 
     public void setNodeHeight(NodeRef n, double height) {
-        ((Node) n).setHeight(height);
+        heights[n.getNumber()] = height;
+        @todo - fire a message
     }
 
     public void setNodeHeightQuietly(NodeRef n, double height) {
-        ((Node) n).setHeightQuietly(height);
+        heights[n.getNumber()] = height;
     }
 
     public void setNodeRate(NodeRef n, double rate) {

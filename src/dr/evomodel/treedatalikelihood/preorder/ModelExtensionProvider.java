@@ -16,6 +16,8 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
 
     interface NormalExtensionProvider extends ModelExtensionProvider {
 
+        boolean diagonalVariance();
+
         DenseMatrix64F getExtensionVariance();
 
         DenseMatrix64F getExtensionVariance(NodeRef node);

@@ -211,6 +211,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     }
 
     @Override
+    public boolean diagonalVariance() {
+        return false; //TODO: base on precisionType
+    }
+
+    @Override
     public DenseMatrix64F getExtensionVariance() {
         recomputeVariance();
         double[] buffer = samplingVariance.toArrayComponents();

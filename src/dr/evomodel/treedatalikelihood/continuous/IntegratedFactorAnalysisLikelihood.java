@@ -370,6 +370,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public boolean diagonalVariance() {
+        return true;
+    }
+
+    @Override
     public DenseMatrix64F getExtensionVariance() { //TODO: setup buffer if needed (probably not)
         //TODO: check that this does what it's supposed to.
         double[] precisionBuffer = traitPrecision.getParameterValues();

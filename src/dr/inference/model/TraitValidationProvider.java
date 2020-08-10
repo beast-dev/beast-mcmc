@@ -12,6 +12,7 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
@@ -72,7 +73,11 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
         int[] missingInds;
         int nMissing = 0;
         if (missingParameter == null) {
-            List<Integer> missingList = dataModel.getMissingIndices();
+            List<Integer> originalMissingList = dataModel.getMissingIndices();
+            List<Integer> missingList = new ArrayList<>(originalMissingList);
+
+            // TODO: this doesn't work for the factor model
+
             missingList.removeAll(trueMissing);
             nMissing = missingList.size();
 

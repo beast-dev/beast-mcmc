@@ -79,7 +79,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
         super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
-        //TODO: should missingIndices include all the traits (see TreeTipGaussianProcess)
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);

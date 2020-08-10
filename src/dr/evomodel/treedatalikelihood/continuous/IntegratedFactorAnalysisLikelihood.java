@@ -83,7 +83,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         assert (dimTrait == loadings.getRowDimension());
 
-        this.dimPartial = numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
+        this.dimPartial = ContinuousTraitPartialsProvider.singleTraitPartialDimension(this);
 
         addVariable(traitParameter);
         addVariable(loadings);

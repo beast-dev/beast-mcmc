@@ -128,7 +128,7 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = ContinuousTraitPartialsProvider.singleTraitPartialDimension(this);
         final double[] partial = new double[numTraits * offsetInc]; // zeros all values
         final double precision = PrecisionType.getObservedPrecisionValue(false);
 

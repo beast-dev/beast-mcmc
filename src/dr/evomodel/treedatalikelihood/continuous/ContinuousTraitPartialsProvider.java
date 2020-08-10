@@ -71,4 +71,9 @@ public interface ContinuousTraitPartialsProvider {
         return indicator;
 
     }
+
+    static int singleTraitPartialDimension(ContinuousTraitPartialsProvider provider) {
+        int dimTrait = provider.getPartialDimension();
+        return dimTrait + provider.getPrecisionType().getMatrixLength(dimTrait);
+    }
 }

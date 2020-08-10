@@ -65,7 +65,7 @@ public interface CrossValidationProvider {
 
         @Override
         public String getReport() {
-            int reps = 1000000;
+            int reps = 100000;
             double[] vals = new double[dimStat];
             for (int i = 0; i < reps; i++) {
                 for (int j = 0; j < dimStat; j++) {
@@ -75,7 +75,7 @@ public interface CrossValidationProvider {
 
             StringBuilder sb = new StringBuilder();
             sb.append("Cross Validation Report:\n\n");
-            for(int j = 0; j < dimStat; j++) {
+            for (int j = 0; j < dimStat; j++) {
                 sb.append("\t" + getDimensionName(j) + ": " + vals[j] / reps + "\n");
             }
             sb.append("\n");

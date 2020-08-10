@@ -40,7 +40,7 @@ public class PartiallyMissingInformation {
     public PartiallyMissingInformation(Tree tree, ContinuousTraitPartialsProvider dataModel) {
         this.tipCount = tree.getExternalNodeCount();
         this.numTraits = dataModel.getTraitCount();
-        this.dimTrait = dataModel.getPartialDimension();
+        this.dimTrait = dataModel.getTraitDimension();
 
         this.rawMissingIndices = dataModel.getMissingIndices();
 

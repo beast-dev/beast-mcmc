@@ -64,7 +64,7 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public int getPartialDimension() {
+    public int getTraitDimension() {
         return dimTrait;
     }
 

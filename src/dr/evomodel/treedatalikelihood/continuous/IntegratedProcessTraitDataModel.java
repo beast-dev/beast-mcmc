@@ -96,7 +96,7 @@ public class IntegratedProcessTraitDataModel extends
     }
 
     @Override
-    public int getPartialDimension() {
+    public int getTraitDimension() {
         return 2 * dimTrait;
     }
 

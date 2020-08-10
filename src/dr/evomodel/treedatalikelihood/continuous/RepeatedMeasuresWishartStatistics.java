@@ -43,7 +43,7 @@ public class RepeatedMeasuresWishartStatistics implements ConjugateWishartStatis
         this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
         this.extensionDelegate = traitModel.getExtensionDelegate(likelihoodDelegate, tipTrait, tree);
 
-        this.dimTrait = traitModel.getPartialDimension();
+        this.dimTrait = traitModel.getTraitDimension();
         this.nTaxa = tree.getExternalNodeCount();
 
         this.outerProduct = new double[dimTrait * dimTrait];

@@ -122,7 +122,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
 
         this.numTraits = dataModel.getTraitCount();
-        this.dimTrait = dataModel.getPartialDimension();
+        this.dimTrait = dataModel.getTraitDimension();
 
         this.precisionType =
 //                diffusionProcessDelegate.hasDrift() ? // TODO Handle drift in Basic/SCALAR integrator

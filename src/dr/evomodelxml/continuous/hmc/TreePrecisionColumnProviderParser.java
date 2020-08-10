@@ -58,7 +58,7 @@ public class TreePrecisionColumnProviderParser extends AbstractXMLObjectParser {
             TreePrecisionTraitProductProvider productProvider = (TreePrecisionTraitProductProvider)
                     cxo.getChild(TreePrecisionTraitProductProvider.class);
 
-            if (productProvider.getDataModel().getPartialDimension() != 1) {
+            if (productProvider.getDataModel().getTraitDimension() != 1) {
                 throw new XMLParseException("Tree trait dimension should = 1 when used in a Kronecker product");
             }
 

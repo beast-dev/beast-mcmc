@@ -40,7 +40,7 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitCount();
 
-    int getPartialDimension();
+    int getTraitDimension();
 
     int getDataDimension();
 
@@ -73,7 +73,7 @@ public interface ContinuousTraitPartialsProvider {
     }
 
     static int singleTraitPartialDimension(ContinuousTraitPartialsProvider provider) {
-        int dimTrait = provider.getPartialDimension();
+        int dimTrait = provider.getTraitDimension();
         return dimTrait + provider.getPrecisionType().getMatrixLength(dimTrait);
     }
 }

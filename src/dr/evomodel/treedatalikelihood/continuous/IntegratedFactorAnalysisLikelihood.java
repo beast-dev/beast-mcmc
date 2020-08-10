@@ -159,7 +159,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
-    public int getPartialDimension() {
+    public int getTraitDimension() {
         return numFactors;
     }  // Returns dimension of latent factors
 

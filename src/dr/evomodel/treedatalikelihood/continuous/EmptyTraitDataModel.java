@@ -54,16 +54,24 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public boolean bufferTips() { return true; } // TODO maybe should be false
+    public boolean bufferTips() {
+        return true;
+    } // TODO maybe should be false
 
     @Override
-    public int getTraitCount() {  return 1; }
+    public int getTraitCount() {
+        return 1;
+    }
 
     @Override
-    public int getPartialDimension() { return dimTrait; }
+    public int getPartialDimension() {
+        return dimTrait;
+    }
 
     @Override
-    public int getDataDimension() { return  dimTrait; }
+    public int getDataDimension() {
+        return dimTrait;
+    }
 
     @Override
     public PrecisionType getPrecisionType() {
@@ -71,7 +79,9 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public CompoundParameter getParameter() { return traitParameter; }
+    public CompoundParameter getParameter() {
+        return traitParameter;
+    }
 
     @Override
     public String getModelName() {
@@ -79,7 +89,9 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public List<Integer> getMissingIndices() { return null; }
+    public List<Integer> getMissingIndices() {
+        return null;
+    }
 
     @Override
     public boolean[] getMissingIndicator() {

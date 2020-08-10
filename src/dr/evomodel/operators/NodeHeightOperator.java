@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
 import dr.evomodelxml.operators.TipLeapOperatorParser;
@@ -158,14 +159,14 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
         final double scaleFactor = getSize();
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
-        tree.beginTreeEdit();
         for (NodeRef node : tree.getNodes()) {
             if (!tree.isExternal(node)) {
                 double h = tree.getNodeHeight(node);
-                tree.setNodeHeight(node, h * scale);
+                // set quietly so a single update message is sent at the end
+                tree.setNodeHeightQuietly(node, h * scale);
             }
         }
-        tree.endTreeEdit();
+        tree.pushTreeChangedEvent(TreeChangedEvent.create(false, true));
 
         return (tree.getInternalNodeCount() - 2) * Math.log(scale);
     }

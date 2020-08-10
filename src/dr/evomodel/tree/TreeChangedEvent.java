@@ -19,6 +19,8 @@ public interface TreeChangedEvent {
 
     boolean isTreeChanged();
 
+    boolean isNodeOrderChanged();
+
     boolean isNodeParameterChanged();
 
     boolean isHeightChanged();
@@ -31,6 +33,8 @@ public interface TreeChangedEvent {
 
             @Override public Parameter getParameter() { return null; }
 
+            @Override public boolean isNodeOrderChanged() { return true; }
+
             @Override public boolean isNodeChanged() { return false; }
 
             @Override public boolean isTreeChanged() { return true; }
@@ -40,6 +44,28 @@ public interface TreeChangedEvent {
             @Override public boolean isHeightChanged() { return false; }
         };
     }
+
+    public static TreeChangedEvent create(final boolean isNodeOrderChanged, final boolean isHeightChanged) {
+        return new TreeChangedEvent() {
+            @Override public int getIndex() { return -1; }
+
+            @Override public NodeRef getNode() { return null; }
+
+            @Override public Parameter getParameter() { return null; }
+
+            @Override public boolean isNodeChanged() { return true; }
+
+            @Override public boolean isNodeOrderChanged() { return isNodeOrderChanged; }
+
+            @Override public boolean isTreeChanged() { return true; }
+
+            @Override public boolean isNodeParameterChanged() { return false; }
+
+            @Override public boolean isHeightChanged() { return isHeightChanged; }
+        };
+    }
+
+
     public static TreeChangedEvent create(final NodeRef node, final boolean isHeightChanged) {
         return new TreeChangedEvent() {
             @Override public int getIndex() { return -1; }
@@ -51,6 +77,8 @@ public interface TreeChangedEvent {
             @Override public boolean isNodeChanged() { return true; }
 
             @Override public boolean isTreeChanged() { return true; }
+
+            @Override public boolean isNodeOrderChanged() { return isHeightChanged; }
 
             @Override public boolean isNodeParameterChanged() { return false; }
 
@@ -70,9 +98,11 @@ public interface TreeChangedEvent {
 
             @Override public boolean isTreeChanged() { return true; }
 
+            @Override public boolean isNodeOrderChanged() { return isHeightChanged; }
+
             @Override public boolean isNodeParameterChanged() { return true; }
 
-            @Override public boolean isHeightChanged() { return false; }
+            @Override public boolean isHeightChanged() { return isHeightChanged; }
         };
     }
 
@@ -88,9 +118,11 @@ public interface TreeChangedEvent {
 
             @Override public boolean isTreeChanged() { return true; }
 
+            @Override public boolean isNodeOrderChanged() { return isHeightChanged; }
+
             @Override public boolean isNodeParameterChanged() { return true; }
 
-            @Override public boolean isHeightChanged() { return false; }
+            @Override public boolean isHeightChanged() { return isHeightChanged; }
         };
     }
 

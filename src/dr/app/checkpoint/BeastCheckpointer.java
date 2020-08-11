@@ -161,7 +161,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             //first perform a simple check for equality of two doubles
             //when this test fails, go over the digits
             if (forceResume) {
-                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values.");
+                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values ("  + lnL + " vs. " + savedLnL + ").");
             } else if (lnL != savedLnL) {
 
                 System.out.println("COMPARING LIKELIHOODS: " + lnL + " vs. " + savedLnL);

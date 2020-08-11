@@ -194,7 +194,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             return getScalarTipPartial(taxonIndex);
         }
 
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = precisionType.getPartialsDimension(dimTrait);
         final double[] partial = new double[numTraits * offsetInc];
         final Parameter p = parameter.getParameter(taxonIndex);
 

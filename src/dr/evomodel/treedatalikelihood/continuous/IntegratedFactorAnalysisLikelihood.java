@@ -62,6 +62,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private final DenseMatrix64F observedInnerProduct;
     // TODO: caching observedInnerProduct
 
+    private static final PrecisionType precisionType = PrecisionType.FULL;
+
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
                                               List<Integer> missingIndices,
@@ -83,7 +85,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         assert (dimTrait == loadings.getRowDimension());
 
-        this.dimPartial = numFactors + PrecisionType.FULL.getMatrixLength(numFactors);
+        this.dimPartial = precisionType.getPartialsDimension(numFactors);
 
         addVariable(traitParameter);
         addVariable(loadings);

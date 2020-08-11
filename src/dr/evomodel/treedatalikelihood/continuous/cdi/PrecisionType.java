@@ -262,6 +262,10 @@ public enum PrecisionType {
 
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 
+    public int getPartialsDimension(int dimTrait) {
+        return this.getMatrixLength(dimTrait) + dimTrait;
+    }
+
     private static double[] scale(double[] in, double scalar) {
 
         double[] out = new double[in.length];

@@ -187,6 +187,16 @@ public enum PrecisionType {
         }
 
         @Override
+        public int getPrecisionLength(int dimTrait) {
+            return super.getMatrixLength(dimTrait);
+        }
+
+        @Override
+        public int getVarianceLength(int dimTrait) {
+            return super.getMatrixLength(dimTrait);
+        }
+
+        @Override
         public int getPrecisionOffset(int dimTrait) {
             return dimTrait;
         }
@@ -210,6 +220,11 @@ public enum PrecisionType {
                     dimTrait * dimTrait);
 
             return precision;
+        }
+
+        @Override
+        public boolean hasEffectiveDimension() {
+            return true;
         }
     };
 
@@ -240,6 +255,14 @@ public enum PrecisionType {
         return length;
     }
 
+    public int getPrecisionLength(int dimTrait) {
+        return getMatrixLength(dimTrait);
+    }
+
+    public int getVarianceLength(int dimTrait) {
+        return 0;
+    }
+
     public static double getObservedPrecisionValue(final boolean missing) {
         return missing ? 0.0 : Double.POSITIVE_INFINITY;
     }
@@ -250,6 +273,10 @@ public enum PrecisionType {
     abstract public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait);
 
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
+
+    public int getMeanOffset(int dimTrait) {
+        return 0;
+    }
 
     @SuppressWarnings("unused")
     abstract public int getPrecisionOffset(int dimTrait);
@@ -264,6 +291,10 @@ public enum PrecisionType {
 
     public int getPartialsDimension(int dimTrait) {
         return this.getMatrixLength(dimTrait) + dimTrait;
+    }
+
+    public boolean hasEffectiveDimension() {
+        return false;
     }
 
     private static double[] scale(double[] in, double scalar) {

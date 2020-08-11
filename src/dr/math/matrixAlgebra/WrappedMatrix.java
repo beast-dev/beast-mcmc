@@ -282,6 +282,25 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         public void set(int i, double x) { matrix.setParameterValue(i, x); }
     }
 
+    static Indexed IndexedFactory(double[] buffer, int offset, int startMajor, int startMinor, int dimMajor, int dimMinor) {
+        int[] indicesMajor = new int[dimMajor];
+        int[] indicesMinor = new int[dimMinor];
+
+        int majorOffset = offset + startMajor;
+        for (int i = 0; i < dimMajor; i++) {
+            indicesMajor[i] = majorOffset;
+            majorOffset++;
+        }
+
+        int minorOffset = offset + startMinor;
+        for (int i = 0; i < dimMinor; i++) {
+            indicesMinor[i] = minorOffset;
+            minorOffset++;
+        }
+
+        return new Indexed(buffer, offset, indicesMajor, indicesMinor, dimMajor, dimMinor);
+    }
+
     final class Indexed extends Abstract {
 
         final private int[] indicesMajor;
@@ -289,6 +308,11 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
 
         public Indexed(double[] buffer, int offset, int[] indicesMajor, int[] indicesMinor, int dimMajor, int dimMinor) {
             super(buffer, offset, dimMajor, dimMinor);
+
+            if (indicesMajor.length != dimMajor || indicesMinor.length != dimMinor) {
+                throw new RuntimeException("Incompatible dimensions.");
+            }
+
             this.indicesMajor = indicesMajor;
             this.indicesMinor = indicesMinor;
         }

@@ -2,6 +2,8 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.xml.*;
 
 import java.util.List;
 
@@ -71,6 +73,9 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
             int subVarDim = precisionType.getVarianceLength(subDim);
             int matrixIncrement = getMatrixIncrement(traitDim, subDim);
 
+            WrappedMatrix.Indexed precWrap = WrappedMatrix.IndexedFactory(partial, precOffset, precOffset, precOffset, subDim, subDim);
+
+
             System.arraycopy(subPartial, precisionType.getMeanOffset(subDim), partial, meanOffset, subDim);
             meanOffset += subDim;
 
@@ -112,6 +117,48 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     public String getModelName() {
         return name;
     }
+
+
+    public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        private static final String PARSER_NAME = "jointPartialsProvider";
+
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            List<ContinuousTraitPartialsProvider> providersList =
+                    xo.getAllChildren(ContinuousTraitPartialsProvider.class);
+
+            ContinuousTraitPartialsProvider[] providers = new ContinuousTraitPartialsProvider[providersList.size()];
+
+            for (int i = 0; i < providersList.size(); i++) {
+                providers[i] = providersList.get(i);
+            }
+            return new JointPartialsProvider(PARSER_NAME, providers);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    new ElementRule(ContinuousTraitPartialsProvider.class, 0, Integer.MAX_VALUE)
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "Merges two Gaussian processes.";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return JointPartialsProvider.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return PARSER_NAME;
+        }
+    };
 
 
 }

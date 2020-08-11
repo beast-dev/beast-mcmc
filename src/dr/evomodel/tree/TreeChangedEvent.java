@@ -53,7 +53,7 @@ public interface TreeChangedEvent {
 
             @Override public Parameter getParameter() { return null; }
 
-            @Override public boolean isNodeChanged() { return true; }
+            @Override public boolean isNodeChanged() { return false; }
 
             @Override public boolean isNodeOrderChanged() { return isNodeOrderChanged; }
 

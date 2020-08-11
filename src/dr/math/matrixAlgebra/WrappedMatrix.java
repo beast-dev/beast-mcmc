@@ -247,16 +247,24 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public double get(final int i, final int j) { return variable.getValue(offset + i * dimMajor + j); }
+        final public double get(final int i, final int j) {
+            return variable.getValue(offset + i * dimMajor + j);
+        }
 
         @Override
-        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
+        final public void set(final int i, final double x) {
+            variable.setValue(offset + i, x);
+        }
 
         @Override
-        public void set(int i, int j, double x) { variable.setValue(offset + i * dimMajor + j, x); }
+        public void set(int i, int j, double x) {
+            variable.setValue(offset + i * dimMajor + j, x);
+        }
 
         @Override
-        public double get(int i) { return variable.getValue(i); }
+        public double get(int i) {
+            return variable.getValue(i);
+        }
     }
 
     final class MatrixParameter extends Abstract {
@@ -270,16 +278,24 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        public void set(int i, int j, double x) { matrix.setParameterValue(i, j, x); }
+        public void set(int i, int j, double x) {
+            matrix.setParameterValue(i, j, x);
+        }
 
         @Override
-        public double get(int i, int j) { return matrix.getParameterValue(i, j); }
+        public double get(int i, int j) {
+            return matrix.getParameterValue(i, j);
+        }
 
         @Override
-        public double get(int i) { return matrix.getParameterValue(i); }
+        public double get(int i) {
+            return matrix.getParameterValue(i);
+        }
 
         @Override
-        public void set(int i, double x) { matrix.setParameterValue(i, x); }
+        public void set(int i, double x) {
+            matrix.setParameterValue(i, x);
+        }
     }
 
     static Indexed IndexedFactory(double[] buffer, int offset, int startMajor, int startMinor, int dimMajor, int dimMinor) {
@@ -318,16 +334,24 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public double get(int i, int j) { return buffer[getIndex(i, j)]; }
+        final public double get(int i, int j) {
+            return buffer[getIndex(i, j)];
+        }
 
         @Override
-        final public void set(int i, int j, double x) { buffer[getIndex(i, j)] = x; }
+        final public void set(int i, int j, double x) {
+            buffer[getIndex(i, j)] = x;
+        }
 
         @Override
-        final public double get(int i) { throw new RuntimeException("Not yet implemented"); }
+        final public double get(int i) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         @Override
-        final public void set(int i, double x) { throw new RuntimeException("Not yet implemented"); }
+        final public void set(int i, double x) {
+            throw new RuntimeException("Not yet implemented");
+        }
 
         private int getIndex(final int i, final int j) {
             return offset + indicesMajor[i] * dimMajor + indicesMinor[j];
@@ -466,7 +490,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public int getDim() { return buffer.length; }
+        final public int getDim() {
+            return buffer.length;
+        }
     }
 
     final class WrappedStrictlyUpperTriangularMatrix extends Abstract {
@@ -521,7 +547,9 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
         @Override
-        final public int getDim() { return buffer.length; }
+        final public int getDim() {
+            return buffer.length;
+        }
 
         private int pos(int i, int j) {
             return i * (2 * dimMajor - i - 1) / 2 + (j - i - 1);

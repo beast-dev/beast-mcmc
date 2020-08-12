@@ -44,20 +44,21 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     }
 
 
-    private boolean[] setupMissingIndicators() { //TODO: test
+    private boolean[] setupMissingIndicators() {
         int nTaxa = providers[0].getParameter().getParameterCount();
-        boolean[] indicators = new boolean[traitDim * nTaxa];
+        boolean[] indicators = new boolean[dataDim * nTaxa];
         boolean[][] subIndicators = new boolean[providers.length][0];
         for (int i = 0; i < providers.length; i++) {
             subIndicators[i] = providers[i].getMissingIndicator();
         }
         for (int taxonI = 0; taxonI < nTaxa; taxonI++) {
-            int offset = taxonI * traitDim;
+            int offset = taxonI * dataDim;
 
             for (int providerI = 0; providerI < providers.length; providerI++) {
-                int srcDim = providers[providerI].getTraitDimension();
+                int srcDim = providers[providerI].getDataDimension();
                 int srcOffset = taxonI * srcDim; //TODO: should this be getDataDimension???
                 System.arraycopy(subIndicators[providerI], srcOffset, indicators, offset, srcDim);
+                offset += srcDim;
             }
         }
 
@@ -108,14 +109,12 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         for (ContinuousTraitPartialsProvider provider : providers) {
             double[] subPartial = provider.getTipPartial(taxonIndex, fullyObserved);
             int subDim = provider.getTraitDimension();
-            int subPrecDim = precisionType.getPrecisionLength(subDim);
-            int subVarDim = precisionType.getVarianceLength(subDim); //TODO: probably get rid of this
 
             WrappedMatrix.Raw subPrec = new WrappedMatrix.Raw(subPartial, precisionType.getPrecisionOffset(subDim), subDim, subDim); //TODO: see above
-            transferBlockDiagonal(subPrec, precWrap, currentMatrixOffset); //TODO: see above
+            transferSymmetricBlockDiagonal(subPrec, precWrap, currentMatrixOffset); //TODO: see above
 
             WrappedMatrix.Raw subVar = new WrappedMatrix.Raw(subPartial, precisionType.getVarianceOffset(subDim), subDim, subDim); //TODO: see above
-            transferBlockDiagonal(subVar, varWrap, currentMatrixOffset); //TODO: see above
+            transferSymmetricBlockDiagonal(subVar, varWrap, currentMatrixOffset); //TODO: see above
 
             currentMatrixOffset += subDim;
 
@@ -143,7 +142,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         return new WrappedMatrix.Indexed(buffer, offset, inds, inds, dimMat, dimMat);
     }
 
-    private void transferBlockDiagonal(WrappedMatrix srcMat, WrappedMatrix destMat, int destOffset) {
+    private void transferSymmetricBlockDiagonal(WrappedMatrix srcMat, WrappedMatrix destMat, int destOffset) {
         int srcDim = srcMat.getMajorDim();
         int destDim = destMat.getMajorDim();
         if (srcMat.getMinorDim() != srcDim || destMat.getMinorDim() != destDim) {
@@ -155,7 +154,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         for (int i = 0; i < srcDim; i++) {
 
             destMat.set(destI, destI, srcMat.get(i, i));
-            int destJ = destOffset;
+            int destJ = destI + 1;
 
             for (int j = i + 1; j < srcDim; j++) {
 

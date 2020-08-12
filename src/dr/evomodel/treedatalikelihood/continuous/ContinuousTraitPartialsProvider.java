@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -70,6 +71,18 @@ public interface ContinuousTraitPartialsProvider {
 
         return indicator;
 
+    }
+
+    static List<Integer> indicatorToIndices(boolean[] indicators) { //TODO: test
+        List<Integer> indices = new ArrayList<>();
+
+        for (int i = 0; i < indicators.length; i++) {
+            if (indicators[i]) {
+                indices.add(i);
+            }
+        }
+
+        return indices;
     }
 
 }

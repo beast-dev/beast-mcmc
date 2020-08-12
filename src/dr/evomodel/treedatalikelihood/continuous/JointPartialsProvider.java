@@ -3,10 +3,14 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
 import java.util.List;
+
+/**
+ * @author Gabriel Hassler
+ * @author Marc A. Suchard
+ */
 
 public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
@@ -14,7 +18,11 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     private final ContinuousTraitPartialsProvider[] providers;
     private final int traitDim;
     private final int dataDim;
-    private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes
+
+    private final List<Integer> missingIndices;
+    private final boolean[] missingIndicators;
+
+    private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes (make sure they're all the same)
 
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         this.name = name;
@@ -30,6 +38,30 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         this.traitDim = traitDim;
         this.dataDim = dataDim;
 
+        this.missingIndicators = setupMissingIndicators();
+        this.missingIndices = ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators);
+
+    }
+
+
+    private boolean[] setupMissingIndicators() { //TODO: test
+        int nTaxa = providers[0].getParameter().getParameterCount();
+        boolean[] indicators = new boolean[traitDim * nTaxa];
+        boolean[][] subIndicators = new boolean[providers.length][0];
+        for (int i = 0; i < providers.length; i++) {
+            subIndicators[i] = providers[i].getMissingIndicator();
+        }
+        for (int taxonI = 0; taxonI < nTaxa; taxonI++) {
+            int offset = taxonI * traitDim;
+
+            for (int providerI = 0; providerI < providers.length; providerI++) {
+                int srcDim = providers[providerI].getTraitDimension();
+                int srcOffset = taxonI * srcDim; //TODO: should this be getDataDimension???
+                System.arraycopy(subIndicators[providerI], srcOffset, indicators, offset, srcDim);
+            }
+        }
+
+        return indicators;
     }
 
 
@@ -139,12 +171,12 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
     @Override
     public List<Integer> getMissingIndices() {
-        return null; //TODO: how to merge missing indices
+        return missingIndices; //TODO: how to merge missing indices
     }
 
     @Override
     public boolean[] getMissingIndicator() {
-        return new boolean[0]; //TODO: see above
+        return missingIndicators; //TODO: see above
     }
 
     @Override

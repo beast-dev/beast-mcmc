@@ -59,7 +59,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
             for (int providerI = 0; providerI < providers.length; providerI++) {
                 int srcDim = providers[providerI].getDataDimension();
-                int srcOffset = taxonI * srcDim; //TODO: should this be getDataDimension???
+                int srcOffset = taxonI * srcDim;
                 System.arraycopy(subIndicators[providerI], srcOffset, indicators, offset, srcDim);
                 offset += srcDim;
             }
@@ -81,7 +81,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
     @Override
     public int getTraitDimension() {
-        return traitDim; //TODO
+        return traitDim;
     }
 
     @Override

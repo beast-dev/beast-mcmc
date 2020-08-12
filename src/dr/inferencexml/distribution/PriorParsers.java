@@ -207,8 +207,10 @@ public class PriorParsers {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            final double scale = xo.getDoubleAttribute(SCALE);
+            final double shape = xo.getDoubleAttribute(SHAPE);
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new ParetoDistribution());
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ParetoDistribution(scale,shape));
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));

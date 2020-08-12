@@ -447,6 +447,9 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
 
+        @Override
+        public boolean isNodeOrderChanged() { return event.isNodeOrderChanged(); }
+
         @Override public boolean isNodeParameterChanged() { return event.isNodeParameterChanged(); }
 
         @Override public boolean isHeightChanged() { return event.isHeightChanged(); }

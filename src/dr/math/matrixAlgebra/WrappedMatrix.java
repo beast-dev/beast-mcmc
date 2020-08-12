@@ -386,6 +386,43 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                 }
             }
         }
+
+        public static WrappedMatrix.Indexed wrapBlockDiagonalMatrix(double[] buffer, int offset, int startDim, int dimMat) {
+            int[] inds = new int[dimMat];
+            int dim = startDim;
+
+            for (int i = 0; i < dimMat; i++) {
+                inds[i] = dim;
+                dim++;
+            }
+
+            return new WrappedMatrix.Indexed(buffer, offset, inds, inds, dimMat, dimMat);
+        }
+
+        public static void transferSymmetricBlockDiagonal(WrappedMatrix srcMat, WrappedMatrix destMat, int destOffset) {
+            int srcDim = srcMat.getMajorDim();
+            int destDim = destMat.getMajorDim();
+            if (srcMat.getMinorDim() != srcDim || destMat.getMinorDim() != destDim) {
+                throw new RuntimeException("Matrices must be square.");
+            }
+
+            int destI = destOffset;
+
+            for (int i = 0; i < srcDim; i++) {
+
+                destMat.set(destI, destI, srcMat.get(i, i));
+                int destJ = destI + 1;
+
+                for (int j = i + 1; j < srcDim; j++) {
+
+                    double val = srcMat.get(i, j);
+                    destMat.set(destI, destJ, val);
+                    destMat.set(destJ, destI, val);
+                    destJ++;
+                }
+                destI++;
+            }
+        }
     }
 
     final class WrappedUpperTriangularMatrix extends Abstract {
@@ -532,4 +569,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
     }
+
+
+
 }

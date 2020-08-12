@@ -164,7 +164,7 @@ public enum PrecisionType {
             final int offs = offset + dimTrait + index * dimTrait + index;
             partial[offs] = precision;
             partial[offs + dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
-            partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY;
+            partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY; //TODO: what is this? (no access functions)
         }
 
         @Override

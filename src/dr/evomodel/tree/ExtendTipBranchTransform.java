@@ -15,10 +15,11 @@ public class ExtendTipBranchTransform extends TreeTransform {
 
     @Override
     public double transform(Tree tree, NodeRef node, double originalHeight) {
+        double rootHeight = tree.getNodeHeight(tree.getRoot()) ;
         if (tree.isExternal(node)) {
             return originalHeight;
         }
-        return originalHeight + getExtensionForNode(tree, node);
+        return originalHeight + getExtensionForNode(tree, node) * rootHeight;
     }
 
     @Override

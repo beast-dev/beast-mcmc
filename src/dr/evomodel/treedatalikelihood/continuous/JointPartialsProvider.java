@@ -3,6 +3,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
 import java.util.List;
@@ -66,24 +67,29 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         int varOffset = precisionType.getVarianceOffset(traitDim);
         int effDimDim = precisionType.getEffectiveDimensionOffset(traitDim);
 
+        WrappedMatrix.Indexed precWrap = wrapBlockDiagonalMatrix(partial, precOffset, 0, traitDim); //TODO: this only works for precisionType.FULL, make general
+        WrappedMatrix.Indexed varWrap = wrapBlockDiagonalMatrix(partial, varOffset, 0, traitDim); //TODO: see above
+
+        int currentMatrixOffset = 0;
+
+
         for (ContinuousTraitPartialsProvider provider : providers) {
-            double[] subPartial = getTipPartial(taxonIndex, fullyObserved);
+            double[] subPartial = provider.getTipPartial(taxonIndex, fullyObserved);
             int subDim = provider.getTraitDimension();
             int subPrecDim = precisionType.getPrecisionLength(subDim);
-            int subVarDim = precisionType.getVarianceLength(subDim);
-            int matrixIncrement = getMatrixIncrement(traitDim, subDim);
+            int subVarDim = precisionType.getVarianceLength(subDim); //TODO: probably get rid of this
 
-            WrappedMatrix.Indexed precWrap = WrappedMatrix.IndexedFactory(partial, precOffset, precOffset, precOffset, subDim, subDim);
+            WrappedMatrix.Raw subPrec = new WrappedMatrix.Raw(subPartial, precisionType.getPrecisionOffset(subDim), subDim, subDim); //TODO: see above
+            transferBlockDiagonal(subPrec, precWrap, currentMatrixOffset); //TODO: see above
+
+            WrappedMatrix.Raw subVar = new WrappedMatrix.Raw(subPartial, precisionType.getVarianceOffset(subDim), subDim, subDim); //TODO: see above
+            transferBlockDiagonal(subVar, varWrap, currentMatrixOffset); //TODO: see above
+
+            currentMatrixOffset += subDim;
 
 
             System.arraycopy(subPartial, precisionType.getMeanOffset(subDim), partial, meanOffset, subDim);
             meanOffset += subDim;
-
-            System.arraycopy(subPartial, precisionType.getPrecisionOffset(subDim), partial, precOffset, subPrecDim);
-            precOffset += matrixIncrement;
-
-            System.arraycopy(subPartial, precisionType.getVarianceOffset(subDim), partial, varOffset, subVarDim);
-            varOffset += matrixIncrement;
 
             if (precisionType.hasEffectiveDimension()) {
                 partial[effDimDim] += subPartial[precisionType.getEffectiveDimensionOffset(subDim)];
@@ -93,8 +99,41 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         return partial;
     }
 
-    private int getMatrixIncrement(int fullDim, int subDim) { //TODO
-        return 0;
+    private WrappedMatrix.Indexed wrapBlockDiagonalMatrix(double[] buffer, int offset, int startDim, int dimMat) {
+        int[] inds = new int[dimMat];
+        int dim = startDim;
+
+        for (int i = 0; i < dimMat; i++) {
+            inds[i] = dim;
+            dim++;
+        }
+
+        return new WrappedMatrix.Indexed(buffer, offset, inds, inds, dimMat, dimMat);
+    }
+
+    private void transferBlockDiagonal(WrappedMatrix srcMat, WrappedMatrix destMat, int destOffset) {
+        int srcDim = srcMat.getMajorDim();
+        int destDim = destMat.getMajorDim();
+        if (srcMat.getMinorDim() != srcDim || destMat.getMinorDim() != destDim) {
+            throw new RuntimeException("Matrices must be square.");
+        }
+
+        int destI = destOffset;
+
+        for (int i = 0; i < srcDim; i++) {
+
+            destMat.set(destI, destI, srcMat.get(i, i));
+            int destJ = destOffset;
+
+            for (int j = i + 1; j < srcDim; j++) {
+
+                double val = srcMat.get(i, j);
+                destMat.set(destI, destJ, val);
+                destMat.set(destJ, destI, val);
+                destJ++;
+            }
+            destI++;
+        }
     }
 
 
@@ -110,7 +149,8 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
     @Override
     public CompoundParameter getParameter() {
-        throw new RuntimeException("not implemented"); //TODO: This is going to be the real problem, I think
+        System.err.println("Warning: This is broken. (JointPartialsProvider.getParameter())");
+        return providers[0].getParameter(); //TODO: This is going to be the real problem, I think
     }
 
     @Override

@@ -23,10 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.bigFastTree;
+package dr.evomodelxml.bigfasttree;
 
-import dr.evomodel.bigFastTree.CladeAwareSubtreeLeap;
-import dr.evomodel.bigFastTree.CladeNodeModel;
+import dr.evomodel.bigfasttree.CladeAwareSubtreeLeap;
+import dr.evomodel.bigfasttree.CladeNodeModel;
 import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;

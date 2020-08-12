@@ -1,4 +1,4 @@
-package dr.evomodel.bigFastTree;
+package dr.evomodel.bigfasttree;
 
 /*
  * SubtreeLeapOperator.java
@@ -30,7 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.operators.AbstractAdaptableTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.bigFastTree.CladeAwareSubtreeLeapOperatorParser;
+import dr.evomodelxml.bigfasttree.CladeAwareSubtreeLeapOperatorParser;
 import dr.inference.distribution.CauchyDistribution;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;

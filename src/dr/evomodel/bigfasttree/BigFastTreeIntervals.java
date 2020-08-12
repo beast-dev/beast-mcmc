@@ -1,4 +1,4 @@
-package dr.evomodel.bigFastTree;
+package dr.evomodel.bigfasttree;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;

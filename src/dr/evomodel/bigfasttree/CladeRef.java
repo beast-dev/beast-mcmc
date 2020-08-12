@@ -1,4 +1,4 @@
-package dr.evomodel.bigFastTree;
+package dr.evomodel.bigfasttree;
 
 import java.util.BitSet;
 

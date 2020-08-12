@@ -1,6 +1,6 @@
-package dr.evomodelxml.bigFastTree;
+package dr.evomodelxml.bigfasttree;
 
-import dr.evomodel.bigFastTree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 

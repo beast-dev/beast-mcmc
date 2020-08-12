@@ -1,8 +1,8 @@
-package dr.evomodelxml.bigFastTree;
+package dr.evomodelxml.bigfasttree;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigFastTree.CladeNodeModel;
+import dr.evomodel.bigfasttree.CladeNodeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.xml.*;

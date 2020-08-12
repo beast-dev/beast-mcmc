@@ -1,4 +1,4 @@
-package dr.evomodel.bigFastTree;
+package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;

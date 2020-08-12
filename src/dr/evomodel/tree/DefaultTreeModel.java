@@ -29,7 +29,10 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.inference.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A model component for trees.
@@ -424,7 +427,7 @@ public class DefaultTreeModel extends TreeModel {
     private Node oldRoot;
 
     @Override
-    protected boolean isTreeValid() {
+    public boolean isTreeValid() {
         for (Node node : nodes) {
             if (!node.heightParameter.isWithinBounds()) {
                 return false;

@@ -23,18 +23,13 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.tree;
+package dr.evomodelxml.bigFastTree;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.BigFastTreeModel;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.CompoundParameter;
+import dr.evomodel.bigFastTree.BigFastTreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 import java.util.logging.Logger;

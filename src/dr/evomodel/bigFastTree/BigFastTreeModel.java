@@ -23,13 +23,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.tree;
+package dr.evomodel.bigFastTree;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
-import dr.inference.model.*;
+import dr.evomodel.tree.TreeChangedEvent;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
-import java.util.*;
+import java.util.Iterator;
 
 /**
  * A model component for trees. This version uses flat arrays for nodes and heights to maximize

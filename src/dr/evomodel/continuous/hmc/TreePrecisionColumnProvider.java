@@ -26,7 +26,6 @@
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
@@ -77,8 +76,8 @@ public class TreePrecisionColumnProvider extends AbstractModel
 
         assert (likelihoodDelegate.getTraitCount() == 1);
 
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
+        if (tree instanceof Model) {
+            addModel((Model) tree);
         }
     }
 

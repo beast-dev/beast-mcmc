@@ -166,6 +166,12 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
                 tree.setNodeHeightQuietly(node, h * scale);
             }
         }
+
+        if (!tree.isTreeValid()) {
+            // node heights are no long valid (i.e. may be below tips) so force a move reject
+            return Double.NEGATIVE_INFINITY;
+        }
+
         tree.pushTreeChangedEvent(TreeChangedEvent.create(false, true));
 
         return (tree.getInternalNodeCount() - 2) * Math.log(scale);

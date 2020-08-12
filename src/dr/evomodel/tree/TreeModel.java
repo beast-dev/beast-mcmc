@@ -342,7 +342,7 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
 
         inEdit = false;
 
-        assert checkTreeIsValid();
+        assert isTreeValid();
 
         for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
@@ -350,7 +350,7 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
         treeChangedEvents.clear();
     }
 
-    protected abstract boolean checkTreeIsValid();
+    public abstract boolean isTreeValid();
 
     public abstract void setNodeHeightQuietly(NodeRef n, double height);
 }

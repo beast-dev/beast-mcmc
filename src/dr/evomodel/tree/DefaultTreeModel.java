@@ -424,7 +424,7 @@ public class DefaultTreeModel extends TreeModel {
     private Node oldRoot;
 
     @Override
-    protected boolean checkTreeIsValid() {
+    protected boolean isTreeValid() {
         for (Node node : nodes) {
             if (!node.heightParameter.isWithinBounds()) {
                 return false;

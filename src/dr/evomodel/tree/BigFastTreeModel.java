@@ -356,7 +356,7 @@ public class BigFastTreeModel extends TreeModel {
 
 
     @Override
-    protected boolean checkTreeIsValid() {
+    public boolean isTreeValid() {
         for (NodeRef node : nodes) {
             double height = getNodeHeight(node);
             if (height > getNodeHeightUpper(node) || height < getNodeHeightLower(node)) {

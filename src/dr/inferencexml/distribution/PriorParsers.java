@@ -209,6 +209,13 @@ public class PriorParsers {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new ParetoDistribution());
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
             return likelihood;
         }
 

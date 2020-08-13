@@ -36,7 +36,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
     }
 
 
-    public void makeDirty(){
+    public void makeDirty() {
         dirty = true;
     }
 
@@ -67,12 +67,12 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         if (!intervalsKnown) {
             calculateIntervals();
         }
-        return events.getInterval(i+1);
+        return events.getInterval(i + 1);
     }
 
     @Override
-    public double getIntervalTime(int i){
-        if (!intervalsKnown){
+    public double getIntervalTime(int i) {
+        if (!intervalsKnown) {
             calculateIntervals();
         }
         return events.getTime(i);
@@ -83,7 +83,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         if (!intervalsKnown) {
             calculateIntervals();
         }
-        return events.getLineageCount(i+1);
+        return events.getLineageCount(i + 1);
     }
 
     @Override
@@ -92,9 +92,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             calculateIntervals();
         }
         if (i < intervalCount - 1) {
-            return events.getLineageCount(i+1) - events.getLineageCount(i+2);
+            return events.getLineageCount(i + 1) - events.getLineageCount(i + 2);
         } else {
-            return events.getLineageCount(i+1) - 1;
+            return events.getLineageCount(i + 1) - 1;
         }
     }
 
@@ -103,7 +103,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         if (!intervalsKnown) {
             calculateIntervals();
         }
-        return events.getType(i+1);
+        return events.getType(i + 1);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         if (!intervalsKnown) {
             calculateIntervals();
         }
-        return events.getTime(events.getSize()-1);
+        return events.getTime(events.size() - 1);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             // will this update the tree nodes?
 
             NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
-            System.arraycopy(tree.getNodes(),0,nodes,0,tree.getNodeCount());
+            System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
             Arrays.parallelSort(nodes, (a, b) -> Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b)));
 
             intervalCount = nodes.length - 1;
@@ -141,7 +141,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             if (!tree.isExternal(nodes[0])) {
                 throw new IllegalArgumentException("The first event is not a sample event");
             }
-            events.setEvent(new Event(lastTime,IntervalType.SAMPLE,nodes[0].getNumber(),-1,0),0);
+            events.setEvent(lastTime, IntervalType.SAMPLE, nodes[0].getNumber(), 0,-1, 0);
 
             int lineages = 1;
             for (int i = 1; i < nodes.length; i++) {
@@ -150,9 +150,8 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
                 double interval = time - lastTime;
                 IntervalType type = tree.isExternal(node) ? IntervalType.SAMPLE : IntervalType.COALESCENT;
                 int lineageCount = lineages;
-                events.setEvent(new Event(time,type,node.getNumber(),interval,lineageCount),i);
+                events.setEvent(time, type, node.getNumber(), interval, lineageCount, i);
                 events.setNodeOrder(node.getNumber(), i);
-
 
                 if (type == IntervalType.SAMPLE) {
                     lineages++;
@@ -163,20 +162,20 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             }
             intervalsKnown = true;
 
-        }else if (onlyUpdateTimes) {
-            for (int i = 0; i < events.getSize(); i++) {
+        } else if (onlyUpdateTimes) {
+            for (int i = 0; i < events.size(); i++) {
                 double newTime = tree.getNodeHeight(tree.getNode(events.getNode(i)));
-                events.updateTime(newTime, i);
+                events.updateEventTime(newTime, i);
             }
-            onlyUpdateTimes=false;
-        }else {
-            for(int node : updatedNodes){
+            onlyUpdateTimes = false;
+        } else {
+            for (int node : updatedNodes) {
                 events.updateForChangedNode(node, tree.getNodeHeight(tree.getNode(node)));
             }
         }
 
         intervalsKnown = true;
-        dirty=false;
+        dirty = false;
         updatedNodes = new ArrayList<>();
     }
 
@@ -207,13 +206,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
                     if (treeChangedEvent.isHeightChanged()) {
                         NodeRef node = ((TreeChangedEvent) object).getNode();
                         updatedNodes.add(node.getNumber());
-                        intervalsKnown= false;
+                        intervalsKnown = false;
                     }
 
-                }else if (treeChangedEvent.isTreeChanged()) {
-                    if(!treeChangedEvent.isNodeOrderChanged()){
-                        onlyUpdateTimes=true;
-                    }else {
+                } else if (treeChangedEvent.isTreeChanged()) {
+                    if (!treeChangedEvent.isNodeOrderChanged()) {
+                        onlyUpdateTimes = true;
+                    } else {
                         // Full tree events result in a complete updating of the tree likelihood
                         // This event type is now used for EmpiricalTreeDistributions.
 //                    System.err.println("Full tree update event - these events currently aren't used\n" +
@@ -236,7 +235,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 
     @Override
     protected void storeState() {
-        Collections.copy(storedUpdatedNodes,updatedNodes);
+        Collections.copy(storedUpdatedNodes, updatedNodes);
         storedIntervalsKnown = intervalsKnown;
         storedEvents.copyEvents(events);
         storedOnlyUpdateTimes = onlyUpdateTimes;
@@ -278,7 +277,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             }
         }
 
-        Event(double time, IntervalType type, int node,double interval, int lineageCount) {
+        Event(double time, IntervalType type, int node, double interval, int lineageCount) {
             this.time = time;
             this.type = type;
             this.node = node;
@@ -287,9 +286,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 //            this.info = info;
         }
 
-         /* The type of event
+        /* The type of event
          */
-        final IntervalType  type;
+        final IntervalType type;
 
         /**
          * The time of the event
@@ -312,20 +311,14 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
      */
     private class Events {
 
-        public Events(int n) {
-            events = new Event[n];
-            nodeOrder = new int[n];
-        }
-
-
-        public int getSize(){
-            return events.length;
-        }
-        public void sortEvents() {
-            Arrays.parallelSort(events);
-            for (int i = 0; i < events.length; i++) {
-                nodeOrder[events[i].node] = i;
-            }
+        public Events(int numberOfEvents) {
+            nodes = new int[numberOfEvents];
+            nodeOrder = new int[numberOfEvents];
+            lineageCounts = new int[numberOfEvents];
+            intervals = new double[numberOfEvents];
+            times = new double[numberOfEvents];
+            intervalTypes = new IntervalType[numberOfEvents];
+            this.numberOfEvents = numberOfEvents;
         }
 
 
@@ -334,122 +327,144 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
         }
 
         public IntervalType getType(int i) {
-            return events[i].type;
+            return intervalTypes[i];
         }
 
         public double getTime(int i) {
-            return events[i].time;
+            return times[i];
         }
 
         public int size() {
-            return events.length;
+            return numberOfEvents;
         }
 
-        public void setEvent(Event e, int i) {
-            events[i] = e;
+        public void setEvent(double time, IntervalType type, int node, double interval, int lineageCount, int i) {
+            times[i] = time;
+            intervalTypes[i] = type;
+            nodes[i] = node;
+            intervals[i] = interval;
+            lineageCounts[i] = lineageCount;
         }
 
         public void updateForChangedNode(int node, double newTime) {
             int oldPostion = nodeOrder[node];
-            double oldHieght = events[oldPostion].time;
+            double oldHieght = times[oldPostion];
 
-            int newPosition=oldPostion;
-                if (newTime > oldHieght) {
-                    int firstHeigher = findFirstGreater(events, newTime, oldPostion, events.length-1);
-                    newPosition = firstHeigher-1;
+            int newPosition = oldPostion;
+            if (newTime > oldHieght) {
+                int firstHeigher = findFirstGreater(times, newTime, oldPostion, numberOfEvents - 1);
+                newPosition = firstHeigher - 1;
 
-                }else if(newTime <oldHieght){
-                    newPosition = findFirstGreater(events, newTime, 0, oldPostion-1);
+            } else if (newTime < oldHieght) {
+                newPosition = findFirstGreater(times, newTime, 0, oldPostion - 1);
+            }
+
+
+            if (newPosition != oldPostion) {
+                // Borrowed from SortableArray
+                int lineageCount = lineageCounts[oldPostion];
+                double interval = intervals[oldPostion];
+                double time = times[oldPostion];
+                IntervalType type = intervalTypes[oldPostion];
+
+                if (newPosition > oldPostion) {
+                    int len = newPosition - oldPostion;
+                    // move everything from the src to the dest down one spot (opening up a gap at dest)
+                    System.arraycopy(intervals, oldPostion + 1, intervals, oldPostion, len);
+                    System.arraycopy(times, oldPostion + 1, times, oldPostion, len);
+                    System.arraycopy(intervalTypes, oldPostion + 1, intervalTypes, oldPostion, len);
+                    System.arraycopy(nodes, oldPostion + 1, nodes, oldPostion, len); //TODO need this?
+                    System.arraycopy(lineageCounts, oldPostion + 1, lineageCounts, oldPostion, len); //TODO need this?
+
+                } else {
+                    int len = oldPostion - newPosition;
+                    // move everything from dest to src up one spot (opening up a gap at dest)
+                    System.arraycopy(intervals, newPosition, intervals, newPosition + 1, len);
+                    System.arraycopy(times, newPosition, times, newPosition + 1, len);
+                    System.arraycopy(intervalTypes, newPosition, intervalTypes, newPosition + 1, len);
+                    System.arraycopy(nodes, newPosition, nodes, newPosition + 1, len);//TODO need this?
+                    System.arraycopy(lineageCounts, newPosition, lineageCounts, newPosition + 1, len);//TODO need this?
                 }
 
+                lineageCounts[newPosition] = lineageCount;
+                intervals[newPosition] = interval;
+                times[newPosition] = time;
+                intervalTypes[newPosition] = type;
+                nodes[newPosition] = node;
 
-            if(newPosition!=oldPostion) {
-                // Borrowed from SortableArray
-                    Event event = events[oldPostion];
-                    if (newPosition > oldPostion) {
-                        int len = newPosition - oldPostion;
-                        // move everything from the src to the dest down one spot (opening up a gap at dest)
-                        System.arraycopy(events, oldPostion + 1, events, oldPostion, len);
-                    } else {
-                        int len = oldPostion - newPosition;
-                        // move everything from dest to src up one spot (opening up a gap at dest)
-                        System.arraycopy(events, newPosition, events, newPosition + 1, len);
-                    }
-                    events[newPosition] = event;
+                // update node postions
 
-                    // update node postions
-
-                    for (int i = Math.min(oldPostion, newPosition); i < Math.max(oldPostion, newPosition)+1; i++) {
-                        nodeOrder[events[i].node] = i;
-                    }
+                for (int i = Math.min(oldPostion, newPosition); i < Math.max(oldPostion, newPosition) + 1; i++) {
+                    nodeOrder[nodes[i]] = i;
+                }
 
                 //update lineage counts
                 // This current updated lineage counts separately from the changed intervals. Those could be done at the same time
 
-                if(events[newPosition].type==IntervalType.COALESCENT){
-                    int difference = events[newPosition-1].type==IntervalType.COALESCENT?-1: 1;
-                    if(newPosition>oldPostion){
-                        for (int i = oldPostion; i < newPosition ; i++) {
-                            Event e = events[i];
-                            events[i] = new Event(e.time, e.type, e.node, e.interval, e.lineageCount + 1);
+                if (intervalTypes[newPosition] == IntervalType.COALESCENT) {
+                    int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
+                    if (newPosition > oldPostion) {
+                        for (int i = oldPostion; i < newPosition; i++) {
+                             lineageCounts[i]++;
                         }
-                        Event movedEvent = events[newPosition];
-                        events[newPosition] = new Event(movedEvent.time, movedEvent.type, movedEvent.node, movedEvent.interval, events[newPosition-1].lineageCount + difference);
+                        lineageCounts[newPosition] = lineageCounts[newPosition - 1] + difference;
                         // need to increment the lineage counts by 1
-                    }else{
-                        Event movedEvent = events[newPosition];
-                        events[newPosition] = new Event(movedEvent.time, movedEvent.type, movedEvent.node, movedEvent.interval, events[newPosition-1].lineageCount + difference);
-                        for (int i = newPosition+1; i < oldPostion+1 ; i++) {
-                            Event e = events[i];
-                            events[i] = new Event(e.time, e.type, e.node, e.interval, e.lineageCount - 1);
+                    } else {
+                        lineageCounts[newPosition] = lineageCounts[newPosition - 1] + difference;
+                        for (int i = newPosition + 1; i < oldPostion + 1; i++) {
+                            lineageCounts[i]--;
                         }
                     }
-                }else{ // was a sampling event
-                    if(newPosition>oldPostion){
-                        int difference = events[newPosition-1].type==IntervalType.COALESCENT?-1: 1;
-                        for (int i = oldPostion; i < newPosition ; i++) {
-                            Event e = events[i];
-                            events[i] = new Event(e.time, e.type, e.node, e.interval, e.lineageCount - 1);
+                } else { // was a sampling event
+                    if (newPosition > oldPostion) {
+                        int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
+                        for (int i = oldPostion; i < newPosition; i++) {
+                            lineageCounts[i]--;
                         }
-                        Event movedEvent = events[newPosition];
-                        events[newPosition] = new Event(movedEvent.time, movedEvent.type, movedEvent.node, movedEvent.interval, events[newPosition-1].lineageCount +difference);
+                        lineageCounts[newPosition] = lineageCounts[newPosition - 1] +difference;
                         // need to increment the lineage counts by 1
-                    }else{
-                        Event movedEvent = events[newPosition];
-                        if(newPosition==0){
-                            events[newPosition] = new Event(movedEvent.time, movedEvent.type, movedEvent.node, -1, 0);
-                        }else{
-                            int difference = events[newPosition-1].type==IntervalType.COALESCENT?-1: 1;
-                            events[newPosition] = new Event(movedEvent.time, movedEvent.type, movedEvent.node, movedEvent.interval, events[newPosition-1].lineageCount + difference);
+                    } else {
+
+                        if (newPosition == 0) {
+                            lineageCounts[newPosition] = 0;
+                        } else {
+                            int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
+                            lineageCounts[newPosition] = lineageCounts[newPosition-1] + difference;
                         }
-                        for (int i = newPosition+1; i < oldPostion +1; i++) {
-                            Event e = events[i];
-                            events[i] = new Event(e.time, e.type, e.node, e.interval, e.lineageCount + 1);
+                        for (int i = newPosition + 1; i < oldPostion + 1; i++) {
+                            lineageCounts[i]++;
                         }
                     }
                 }
-                updateTime(events[oldPostion].time, oldPostion);
+
+                updateTimeAndIntervals(times[oldPostion], oldPostion);
             }
 
-            updateTime(newTime,newPosition);
+
+            updateTimeAndIntervals(newTime, newPosition);
 
         }
 
         public void copyEvents(Events source) {
-            System.arraycopy(source.events,0,events,0,source.events.length);
-            System.arraycopy(source.nodeOrder,0,nodeOrder,0,source.nodeOrder.length);
+            System.arraycopy(source.nodeOrder, 0, nodeOrder, 0, numberOfEvents);
+            System.arraycopy(source.nodes, 0, nodes, 0, numberOfEvents);
+            System.arraycopy(source.times, 0, times, 0, numberOfEvents);
+            System.arraycopy(source.lineageCounts, 0, lineageCounts, 0, numberOfEvents);
+            System.arraycopy(source.intervalTypes, 0, intervalTypes, 0, numberOfEvents);
+            System.arraycopy(source.intervals, 0, intervals, 0, numberOfEvents);
         }
 
         /**
          * A pivate method that uses a binary search algorithm to find the first entry in the sorted event array
          * with a time greater than the proved value
+         *
          * @param arr
          * @param value
          * @param startPos
          * @param endPos
          * @return
          */
-        private int findFirstGreater(Event[] arr, double value, int startPos, int endPos) {
+        private int findFirstGreater(double[] arr, double value, int startPos, int endPos) {
             //https://stackoverflow.com/questions/6553970/find-the-first-element-in-a-sorted-array-that-is-greater-than-the-target
             //https://www.geeksforgeeks.org/first-strictly-greater-element-in-a-sorted-array-in-java/
             int low = startPos, high = endPos;
@@ -457,58 +472,70 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
             while (low <= high) {
 
                 int mid = (low + high) / 2;
-                if (arr[mid].time <= value) {
+                if (arr[mid] <= value) {
                     /* This index, and everything below it, must not be the first element
                      * greater than what we're looking for because this element is no greater
                      * than the element.
                      */
                     low = mid + 1;
-                }
-                else {
+                } else {
 
                     ans = mid;
                     high = mid - 1;
                 }
 
             }
-            if(ans==-1){
+            if (ans == -1) {
                 // There is no greater element so the "first greater" is outside the array. This is handeled by
                 // updateEventForNode
-                ans=endPos+1;
+                ans = endPos + 1;
             }
             return ans;
         }
 
-        private final Event[] events;
-        private final int[] nodeOrder;
-
         public int getNode(int i) {
-            return events[i].node;
+            return nodes[i];
         }
 
-        public void updateTime(double newTime, int i) {
-            Event oldEvent = events[i];
-            double newInterval = i==0? -1 : newTime-events[i-1].time;
-            events[i] = new Event(newTime, oldEvent.type, oldEvent.node, newInterval, oldEvent.lineageCount);
+        public void updateTimeAndIntervals(double newTime, int i) {
+            double newInterval = i == 0 ? -1 : newTime - times[i - 1];
+            times[i] = newTime;
+            intervals[i] = newInterval;
 
-            if(i<events.length-1) {
-                Event oldNeighbor = events[i + 1];
-                double newNeighborInterval = oldNeighbor.time - newTime;
-                events[i + 1] = new Event(oldNeighbor.time, oldNeighbor.type, oldNeighbor.node, newNeighborInterval, oldNeighbor.lineageCount);
+            if (i < numberOfEvents - 1) {
+                double newNeighborInterval = times[i+1] - newTime;
+                intervals[i+1] = newNeighborInterval;
             }
         }
 
+        public void updateEventTime(double newTime, int i) {
+            double newInterval = i == 0 ? -1 : newTime - times[i - 1];
+            times[i] = newTime;
+            intervals[i] = newInterval;
+        }
+
         public int getLineageCount(int i) {
-            return events[i].lineageCount;
+            return lineageCounts[i];
         }
 
         public double getInterval(int i) {
-            return events[i].interval;
+            return intervals[i];
         }
 
         public void setNodeOrder(int nodeNum, int position) {
-            nodeOrder[nodeNum]=position;
+            nodeOrder[nodeNum] = position;
         }
+
+
+        private final int[] nodes;
+        private final int[] nodeOrder;
+        private final int[] lineageCounts;
+        private final double[] intervals;
+        private final double[] times;
+        private final IntervalType[] intervalTypes;
+        private final int numberOfEvents;
+
+
     }
 
     private final Events events;

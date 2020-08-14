@@ -517,6 +517,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             if (getDeterminant) ci = safeDeterminant(tmp1, true);
             CommonOps.mult(Pi, tmp1, Pip);
             if (getDeterminant && getEffectiveDimension(iBuffer) > 0) {
+                // effectiveDimension > 0 => a tip node & determinant not included earlier
                 InversionResult cP = safeDeterminant(Pi, true);
                 ci = mult(ci, cP);
             }

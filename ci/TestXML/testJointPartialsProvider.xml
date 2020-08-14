@@ -174,7 +174,7 @@
 
     <traitDataLikelihood id="traitLikelihood" traitName="factors" cacheBranches="true" allowIdentical="true"
                          useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
-                         integrateInternalTraits="true" standardize="true" allowSingular="true">
+                         integrateInternalTraits="true" standardize="true">
 
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
@@ -194,7 +194,7 @@
 
     <traitDataLikelihood id="traitLikelihoodFac" traitName="factors" cacheBranches="true" allowIdentical="true"
                          useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
-                         integrateInternalTraits="true" standardize="true" allowSingular="true">
+                         integrateInternalTraits="true" standardize="true">
 
         <multivariateDiffusionModel idref="diffusionModelFac"/>
         <treeModel idref="treeModel"/>
@@ -213,7 +213,7 @@
 
     <traitDataLikelihood id="traitLikelihoodRes" traitName="tRes" cacheBranches="true" allowIdentical="true"
                          useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
-                         integrateInternalTraits="true" standardize="true" allowSingular="true">
+                         integrateInternalTraits="true" standardize="true">
 
         <multivariateDiffusionModel idref="diffusionModelRes"/>
         <treeModel idref="treeModel"/>

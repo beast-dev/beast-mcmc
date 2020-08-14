@@ -648,7 +648,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 //            constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
 //                    nuggetDensity;
 
-            constant = 0.5 * (traitLogDeterminant - factorLogDeterminant - innerProductChange) - LOG_SQRT_2_PI * (observedDimensions[taxon] - numFactors) -
+            constant = 0.5 * (traitLogDeterminant - factorLogDeterminant - innerProductChange) -
+                    LOG_SQRT_2_PI * (observedDimensions[taxon] - effDim) -
                     nuggetDensity;
 
         }

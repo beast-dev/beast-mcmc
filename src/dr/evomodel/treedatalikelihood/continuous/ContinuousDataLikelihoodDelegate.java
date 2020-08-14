@@ -301,21 +301,29 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         }
     }
 
-    public TreeDataLikelihood getCallbackLikelihood() { return callbackLikelihood; }
+    public TreeDataLikelihood getCallbackLikelihood() {
+        return callbackLikelihood;
+    }
 
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
 
-    public ContinuousTraitPartialsProvider getDataModel() { return dataModel; }
+    public ContinuousTraitPartialsProvider getDataModel() {
+        return dataModel;
+    }
 
     public RootProcessDelegate getRootProcessDelegate() {
         return rootProcessDelegate;
     }
 
-    public ConjugateRootTraitPrior getRootPrior() { return rootPrior; }
+    public ConjugateRootTraitPrior getRootPrior() {
+        return rootPrior;
+    }
 
-    public int getPartialBufferCount() { return partialBufferHelper.getBufferCount(); }
+    public int getPartialBufferCount() {
+        return partialBufferHelper.getBufferCount();
+    }
 
     public double[][] getTreeVariance() {
 
@@ -585,7 +593,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
                 Matrix cVar = cVariance.getConditionalVariance();
 
                 sb.append("cMean #").append(tip).append(" ").append(new dr.math.matrixAlgebra.Vector(cMean))
-                    .append(" cVar [").append(cVar).append("]\n");
+                        .append(" cVar [").append(cVar).append("]\n");
             }
         }
 
@@ -655,7 +663,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         int k = 0;
         for (NodeOperation op : nodeOperations) {
 
-            operations[k    ] = getActiveNodeIndex(op.getNodeNumber());
+            operations[k] = getActiveNodeIndex(op.getNodeNumber());
             operations[k + 1] = getActiveNodeIndex(op.getLeftChild());    // source node 1
             operations[k + 2] = getActiveMatrixIndex(op.getLeftChild());  // source matrix 1
             operations[k + 3] = getActiveNodeIndex(op.getRightChild());   // source node 2
@@ -683,7 +691,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 //        return sb.toString();
 //    }
 
-    public DiffusionProcessDelegate getDiffusionProcessDelegate() { return diffusionProcessDelegate; }
+    public DiffusionProcessDelegate getDiffusionProcessDelegate() {
+        return diffusionProcessDelegate;
+    }
 
     public MultivariateDiffusionModel getDiffusionModel() {
         return diffusionProcessDelegate.getDiffusionModel(0);
@@ -691,7 +701,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
     private void setAllTipData(boolean flip) {
         for (int index = 0; index < tipCount; index++) {
-             setTipData(index, flip);
+            setTipData(index, flip);
         }
         updateTipData.clear();
     }
@@ -744,14 +754,14 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchLength() * branchNormalization;
-            branchUpdateCount ++;
+            branchUpdateCount++;
         }
 
         if (!updateTipData.isEmpty()) {
             if (updateTipData.getFirst() == -1) { // Update all tips
                 setAllTipData(flip);
             } else {
-                while(!updateTipData.isEmpty()) {
+                while (!updateTipData.isEmpty()) {
                     int tipIndex = updateTipData.removeFirst();
                     setTipData(tipIndex, flip);
                 }
@@ -786,7 +796,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         if (computeWishartStatistics) {
             degreesOfFreedom = new int[numTraits];
-            outerProducts = new double[dimTrait * dimTrait  * numTraits];
+            outerProducts = new double[dimTrait * dimTrait * numTraits];
             cdi.setWishartStatistics(degreesOfFreedom, outerProducts);
         }
 

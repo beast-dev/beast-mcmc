@@ -105,7 +105,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         final int dim = diffusionModel.getPrecisionmatrix().length;
 
         String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
-        List<Integer> missingIndices;
+        boolean[] missingIndicators;
 //        Parameter sampleMissingParameter = null;
         ContinuousTraitPartialsProvider dataModel;
         boolean useMissingIndices = true;
@@ -117,7 +117,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                     utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            missingIndices = returnValue.missingIndices;
+            missingIndicators = returnValue.getMissingIndicators();
 //            sampleMissingParameter = returnValue.sampleMissingParameter;
             traitName = returnValue.traitName;
             useMissingIndices = returnValue.useMissingIndices;
@@ -130,7 +130,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndicators);
             }
 
 //            System.err.println("Using precisionType == " + precisionType + " for data model.");
@@ -138,12 +138,12 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             if (!integratedProcess) {
                 dataModel = new ContinuousTraitDataModel(traitName,
                         traitParameter,
-                        missingIndices, useMissingIndices,
+                        missingIndicators, useMissingIndices,
                         dim, precisionType);
             } else {
                 dataModel = new IntegratedProcessTraitDataModel(traitName,
                         traitParameter,
-                        missingIndices, useMissingIndices,
+                        missingIndicators, useMissingIndices,
                         dim, precisionType);
             }
         } else {  // Has ContinuousTraitPartialsProvider

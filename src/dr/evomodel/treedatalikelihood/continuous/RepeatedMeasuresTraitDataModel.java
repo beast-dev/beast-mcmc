@@ -76,12 +76,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
-                                          List<Integer> missingIndices,
-//                                          boolean[] missindIndicators,
+                                          boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+        super(name, parameter, missindIndicators, useMissingIndices, dimTrait, PrecisionType.FULL);
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);
@@ -288,7 +287,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                     utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
                             treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
+            boolean[] missingIndicators = returnValue.getMissingIndicators();
 
             XMLObject cxo = xo.getChild(PRECISION);
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
@@ -324,7 +323,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 return new RepeatedMeasuresTraitDataModel(
                         traitName,
                         traitParameter,
-                        missingIndices,
+                        missingIndicators,
 //                    missingIndicators,
                         true,
                         samplingPrecision.getColumnDimension(),
@@ -335,7 +334,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 return new TreeScaledRepeatedMeasuresTraitDataModel(
                         traitName,
                         traitParameter,
-                        missingIndices,
+                        missingIndicators,
                         true,
                         samplingPrecision.getColumnDimension(),
                         samplingPrecision

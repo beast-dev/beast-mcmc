@@ -1084,7 +1084,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
 
         ContinuousTraitPartialsProvider newDataModel = new ContinuousTraitDataModel(((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getName(),
                 likelihoodDelegate.dataModel.getParameter(),
-                ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndices(),
+                ((ContinuousTraitDataModel) likelihoodDelegate.dataModel).getOriginalMissingIndicators(),
                 true,
                 likelihoodDelegate.getTraitDim(), PrecisionType.FULL);
 

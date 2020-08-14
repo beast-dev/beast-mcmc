@@ -27,6 +27,7 @@ package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.StandardizeTraits;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -92,12 +93,16 @@ public class TreeTraitParserUtilities {
         }, optional);
     }
 
-    public void jitter(XMLObject xo, int length, List<Integer> missingIndices) throws XMLParseException {
+    public void jitter(XMLObject xo, int length, List<Integer> missingIndices, int paramDim) throws XMLParseException {
+        jitter(xo, length, ContinuousTraitPartialsProvider.indicesToIndicator(missingIndices, paramDim));
+    }
+
+    public void jitter(XMLObject xo, int length, boolean[] missingIndicators) throws XMLParseException {
         XMLObject cxo = xo.getChild(TreeTraitParserUtilities.JITTER);
         Parameter traits = (Parameter) cxo.getChild(Parameter.class);
         double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
         boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
-        jitter(traits, length, missingIndices, window, duplicates, true);
+        jitter(traits, length, missingIndicators, window, duplicates, true);
     }
 
     public void randomize(XMLObject xo) throws XMLParseException {
@@ -175,7 +180,7 @@ public class TreeTraitParserUtilities {
         return false;
     }
 
-    public void jitter(Parameter trait, int dim, List<Integer> missingIndices, double[] window, boolean duplicates, boolean verbose) {
+    public void jitter(Parameter trait, int dim, boolean[] missingIndicators, double[] window, boolean duplicates, boolean verbose) {
         int numTraits = trait.getDimension() / dim;
         boolean[] update = new boolean[numTraits];
         if (!duplicates) {
@@ -210,7 +215,7 @@ public class TreeTraitParserUtilities {
                 for (int j = 0; j < dim; j++) {
                     final double oldValue = trait.getParameterValue(i * dim + j);
                     final double newValue;
-                    if (!missingIndices.contains(i * dim + j)) {
+                    if (!missingIndicators[i * dim + j]) {
                         newValue = window[j % window.length] * (MathUtils.nextDouble() - 0.5) +
                                 oldValue;
                         trait.setParameterValue(i * dim + j, newValue);
@@ -247,6 +252,10 @@ public class TreeTraitParserUtilities {
             this.sampleMissingParameter = sampleMissingParameter;
             this.useMissingIndices = useMissingIndices;
         }
+
+        public boolean[] getMissingIndicators() { //TODO: deprecate by only storing missingIndicators
+            return ContinuousTraitPartialsProvider.indicesToIndicator(this.missingIndices, traitParameter.getDimension());
+        }
     }
 
     public static boolean isMissing(String oneValue) {
@@ -274,10 +283,7 @@ public class TreeTraitParserUtilities {
         if (parameter instanceof MatrixParameter || parameter instanceof FastMatrixParameter) {
             traitParameter = (CompoundParameter) parameter;
             isMatrixParameter = true;
-        } else
-
-
-        if (parameter instanceof CompoundParameter) {
+        } else if (parameter instanceof CompoundParameter) {
             // if we have been passed a CompoundParameter, this will be a leaf trait
             // parameter from a tree model so use this to allow for individual sampling
             // of leaf parameters.

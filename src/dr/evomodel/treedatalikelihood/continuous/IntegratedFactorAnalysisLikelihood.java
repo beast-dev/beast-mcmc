@@ -69,7 +69,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
-                                              List<Integer> missingIndices,
+                                              boolean[] missingIndicators,
                                               MatrixParameterInterface loadings,
                                               Parameter traitPrecision,
                                               double nuggetPrecision,
@@ -94,9 +94,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         addVariable(loadings);
         addVariable(traitPrecision);
 
-        this.missingDataIndices = missingIndices;
-        this.missingDataIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
-                missingIndices, traitParameter.getDimension());
+        this.missingDataIndicator = missingIndicators;
+        this.missingDataIndices = ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators); //TODO: deprecate
         this.observedIndicators = setupObservedIndicators(missingDataIndices, numTaxa, dimTrait);
         this.observedDimensions = setupObservedDimensions(observedIndicators);
 
@@ -833,7 +832,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                     utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
                             treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
+            boolean[] missingIndicators = returnValue.getMissingIndicators();
 
             MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getElementFirstChild(LOADINGS);
             Parameter traitPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
@@ -851,7 +850,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }
 
 
-            return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
+            return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndicators,
                     loadings, traitPrecision, nugget, taskPool, cacheProvider);
         }
 

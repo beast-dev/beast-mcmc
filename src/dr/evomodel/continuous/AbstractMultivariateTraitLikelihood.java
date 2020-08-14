@@ -904,7 +904,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                         scaleByTime, useTreeLength,
                                         rateModel, null, optimalValues, strengthOfSelection,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, restrictedPartialsList,pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                             }
                         } else {
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -929,7 +929,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices,
+                        traitParameter.getDimension());
             }
 
             if (xo.hasChildNamed(CHECK)) {

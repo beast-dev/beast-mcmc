@@ -58,7 +58,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
     private CompoundSymmetricMatrix precisionMatrix;
     private CachedMatrixInverse precisionMatrixInv;
 
-    protected List<Integer> missingIndices = new ArrayList<Integer>();
+//    protected List<Integer> missingIndices = new ArrayList<Integer>();
+    protected boolean[] missingIndicators;
 
     private MultivariateDiffusionModel diffusionModelVar;
     private ContinuousTraitPartialsProvider dataModelMissing;
@@ -114,17 +115,21 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
         dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
         traitParameter = new CompoundParameter("trait", dataTraits);
 
+        this.missingIndicators = new boolean[traitParameter.getDimension()];
+
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(6);
-        missingIndices.add(7);
-        missingIndices.add(8);
-        missingIndices.add(9);
-        missingIndices.add(10);
-        missingIndices.add(11);
-        missingIndices.add(13);
-        missingIndices.add(15);
-        missingIndices.add(25);
-        missingIndices.add(29);
+
+        missingIndicators[6] = true;
+        missingIndicators[7] = true;
+        missingIndicators[8] = true;
+        missingIndicators[9] = true;
+        missingIndicators[10] = true;
+        missingIndicators[11] = true;
+        missingIndicators[13] = true;
+        missingIndicators[15] = true;
+        missingIndicators[25] = true;
+        missingIndicators[29] = true;
+
 
 
         // Tree
@@ -154,12 +159,12 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
         // Data Model
         dataModelMissing = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
-                missingIndices, true,
+                missingIndicators, true,
                 6, precisionType);
 
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
-                missingIndices, false,
+                missingIndicators, false,
                 6, precisionType);
 
         //// Factor Model //// *****************************************************************************************
@@ -174,7 +179,7 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 loadingsMatrixParameters,
                 factorPrecisionParameters, 0.0, null,
                 IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
@@ -199,14 +204,14 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         dataModelRepeatedMeasures = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 true,
                 dimTrait,
                 samplingPrecision);
 
         dataModelRepeatedMeasuresInv = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasuresInv",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 true,
                 dimTrait,
                 samplingPrecisionInv);

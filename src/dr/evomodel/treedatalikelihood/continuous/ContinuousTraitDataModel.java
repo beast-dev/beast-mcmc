@@ -46,17 +46,15 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
-                                    List<Integer> missingIndices, //TODO: replace
+                                    boolean[] missingIndicators,
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
-
-        this.originalMissingIndicators =
-                ContinuousTraitPartialsProvider.indicesToIndicator(missingIndices, parameter.getDimension()); //TODO: add to constructor
-
-        this.missingIndicators = (useMissingIndices ? originalMissingIndicators : new boolean[originalMissingIndicators.length]);
         addVariable(parameter);
+
+        this.originalMissingIndicators = missingIndicators;
+        this.missingIndicators = (useMissingIndices ? missingIndicators : new boolean[missingIndicators.length]);
 
         this.dimTrait = dimTrait;
         this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
@@ -105,6 +103,10 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     List<Integer> getOriginalMissingIndices() {
         return ContinuousTraitPartialsProvider.indicatorToIndices(originalMissingIndicators); // TODO: finish deprecating
+    }
+
+    boolean[] getOriginalMissingIndicators() {
+        return originalMissingIndicators;
     }
 
     @Override

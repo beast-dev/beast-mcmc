@@ -64,6 +64,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     // TODO: caching observedInnerProduct
 
     private static final PrecisionType precisionType = PrecisionType.FULL;
+    private boolean[] missingTraitIndicators = null;
+
 
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
@@ -192,6 +194,17 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     @Override
     public boolean[] getDataMissingIndicators() {
         return missingDataIndicator;
+    }
+
+    @Override
+    public boolean[] getTraitMissingIndicators() {
+        if (getDataMissingIndicators() == null) {
+            return null;
+        } else if (missingTraitIndicators == null) {
+            this.missingTraitIndicators = new boolean[getParameter().getDimension()];
+            Arrays.fill(missingTraitIndicators, true); // all traits are latent
+        }
+        return missingTraitIndicators;
     }
 
     public List<Integer> getMissingDataIndices() {

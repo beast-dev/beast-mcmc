@@ -51,7 +51,8 @@ public interface ContinuousTraitPartialsProvider {
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);
 
-    List<Integer> getMissingIndices();
+    @Deprecated
+    List<Integer> getMissingIndices(); // use getTraitMissingIndicators() instead
 
     boolean[] getDataMissingIndicators();
 

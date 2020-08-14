@@ -661,7 +661,6 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         // store in precision, variance and normalization constant
         unwrap(precision, partials, partialsOffset + numFactors); //TODO: use PrecisionType.fillPrecisionInPartials()
-        System.err.println("Warning: This will fail with missing data.");
         PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, effDim, numFactors);
 
         if (STORE_VARIANCE) {

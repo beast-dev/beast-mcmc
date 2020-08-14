@@ -57,6 +57,10 @@ public interface ContinuousTraitPartialsProvider {
 
     String getModelName();
 
+    default boolean getDefaultAllowSingular() {
+        return false;
+    }
+
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
         if (indices == null) {

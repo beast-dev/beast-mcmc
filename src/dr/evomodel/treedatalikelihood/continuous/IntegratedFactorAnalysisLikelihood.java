@@ -204,6 +204,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public boolean getDefaultAllowSingular() {
+        return true;
+    }
+
+    @Override
     public Model getModel() {
         return this;
     }

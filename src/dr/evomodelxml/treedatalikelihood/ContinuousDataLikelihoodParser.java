@@ -130,8 +130,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                 utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
-             }
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+            }
 
 //            System.err.println("Using precisionType == " + precisionType + " for data model.");
 
@@ -153,23 +153,23 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());
 
         final boolean allowSingular;
+
+        if (xo.hasAttribute(ALLOW_SINGULAR)) {
+            //TODO: check compatibility (there are cases where allowSingular=false guarantees the incorrect likelihood)
+            allowSingular = xo.getBooleanAttribute(ALLOW_SINGULAR);
+        } else {
+            allowSingular = dataModel.getDefaultAllowSingular();
+        }
+
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
 
             if (traitName == TreeTraitParserUtilities.DEFAULT_TRAIT_NAME) {
                 traitName = FACTOR_NAME;
             }
 
-            if (xo.hasAttribute(ALLOW_SINGULAR)) {
-                allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
-            } else {
-                allowSingular = true;
-            }
         } else if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
             traitName = ((RepeatedMeasuresTraitDataModel) dataModel).getTraitName();
-            allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
             ((RepeatedMeasuresTraitDataModel) dataModel).addTreeAndRateModel(treeModel, rateTransformation);
-        } else {
-            allowSingular = xo.getAttribute(ALLOW_SINGULAR, false);
         }
 
         List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
@@ -203,7 +203,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                 diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, allowSingular);
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
-            ((IntegratedFactorAnalysisLikelihood)dataModel).setLikelihoodDelegate(delegate);
+            ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate(delegate);
         }
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
@@ -277,7 +277,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(CONJUGATE_ROOT_PRIOR, ConjugateRootTraitPrior.rules),
             new XORRule(
-                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[] {
+                    new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
                     new ElementRule(ContinuousTraitPartialsProvider.class)

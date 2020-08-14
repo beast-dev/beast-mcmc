@@ -155,6 +155,15 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         return name;
     }
 
+    @Override
+    public boolean getDefaultAllowSingular() {
+        boolean allowSingular = false;
+        for (ContinuousTraitPartialsProvider provider : providers) {
+            allowSingular = allowSingular || provider.getDefaultAllowSingular();
+        }
+        return allowSingular;
+    }
+
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         private static final String PARSER_NAME = "jointPartialsProvider";

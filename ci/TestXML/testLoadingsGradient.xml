@@ -135,7 +135,7 @@
     </traitDataLikelihood>
     <operators id="operators">
         <hamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0" autoOptimize="true"
-                                       gradientCheckCount="100" gradientCheckTolerance="1e-10">
+                                       gradientCheckCount="100" gradientCheckTolerance="1e-3">
             <jointGradient>
 <!--                <gradient>-->
 <!--                    <distributionLikelihood idref="L.prior"/>-->

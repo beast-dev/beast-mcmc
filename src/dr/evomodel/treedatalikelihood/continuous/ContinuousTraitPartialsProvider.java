@@ -53,7 +53,11 @@ public interface ContinuousTraitPartialsProvider {
 
     List<Integer> getMissingIndices();
 
-    boolean[] getMissingIndicator();
+    boolean[] getDataMissingIndicators();
+
+    default boolean[] getTraitMissingIndicators() {
+        return getDataMissingIndicators();
+    }
 
     CompoundParameter getParameter();
 

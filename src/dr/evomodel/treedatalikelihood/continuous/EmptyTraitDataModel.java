@@ -89,7 +89,7 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public boolean[] getDataMissingIndicators() {
         return null;
     }
 

@@ -35,8 +35,6 @@ import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 
-import java.util.Random;
-
 /**
  * AbstractContinuousExtensionDelegate - interface for a plugin delegate for data simulation NOT on a tree.
  *
@@ -112,7 +110,7 @@ public class ContinuousExtensionDelegate {
 
             CompoundParameter dataParameter = dataModel.getParameter();
             DenseMatrix64F extensionVar = dataModel.getExtensionVariance();
-            boolean[] missingVec = dataModel.getMissingIndicator();
+            boolean[] missingVec = dataModel.getDataMissingIndicators();
             boolean choleskyKnown = false;
             double[][] cholesky = null;
 

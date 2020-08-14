@@ -52,7 +52,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         boolean[] indicators = new boolean[dataDim * nTaxa];
         boolean[][] subIndicators = new boolean[providers.length][0];
         for (int i = 0; i < providers.length; i++) {
-            subIndicators[i] = providers[i].getMissingIndicator();
+            subIndicators[i] = providers[i].getDataMissingIndicators();
         }
         for (int taxonI = 0; taxonI < nTaxa; taxonI++) {
             int offset = taxonI * dataDim;
@@ -140,7 +140,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public boolean[] getDataMissingIndicators() {
         return missingIndicators; //TODO: see above
     }
 

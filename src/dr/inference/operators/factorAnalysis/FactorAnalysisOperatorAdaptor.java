@@ -267,7 +267,7 @@ public interface FactorAnalysisOperatorAdaptor {
         @Override
         public boolean isNotMissing(int trait, int taxon) {
             int index = taxon * getNumberOfTraits() + trait;
-            return !factorLikelihood.getMissingIndicator()[index];
+            return !factorLikelihood.getDataMissingIndicators()[index];
         }
 
         private static final boolean DEBUG = false;

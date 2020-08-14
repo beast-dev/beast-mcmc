@@ -101,7 +101,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public boolean[] getDataMissingIndicators() {
         return missingIndicator;
     }
 

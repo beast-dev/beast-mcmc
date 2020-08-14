@@ -106,7 +106,7 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public boolean[] getDataMissingIndicators() {
         return null;
     }
 

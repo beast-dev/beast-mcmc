@@ -47,6 +47,7 @@ import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -69,6 +70,8 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private Matrix storedSamplingVariance;
     private boolean storedVarianceKnown = false;
     private boolean storedVariableChanged = true;
+
+    private boolean[] missingTraitIndicators = null;
 
 
     public RepeatedMeasuresTraitDataModel(String name,
@@ -136,6 +139,17 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         }
 
         return partial;
+    }
+
+    @Override
+    public boolean[] getTraitMissingIndicators() {
+        if (getDataMissingIndicators() == null) {
+            return null;
+        } else if (missingTraitIndicators == null) {
+            this.missingTraitIndicators = new boolean[getParameter().getDimension()];
+            Arrays.fill(missingTraitIndicators, true); // all traits are latent
+        }
+        return missingTraitIndicators;
     }
 
 

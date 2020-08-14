@@ -37,9 +37,7 @@ import java.util.List;
 public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
 
     private final CompoundParameter parameter;
-    //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
-    private final List<Integer> missingIndices;
-    private final List<Integer> originalMissingIndices;
+    private final boolean[] originalMissingIndicators;
 
     final int numTraits;
     final int dimTrait;
@@ -49,13 +47,16 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
-                                    List<Integer> missingIndices,
+                                    List<Integer> missingIndices, //TODO: replace
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
-        this.originalMissingIndices = missingIndices;
-        this.missingIndices = (useMissingIndices ? missingIndices : new ArrayList<>());
+
+        this.originalMissingIndicators =
+                ContinuousTraitPartialsProvider.indicesToIndicator(missingIndices, parameter.getDimension()); //TODO: add to constructor
+
+        this.missingIndicator = (useMissingIndices ? originalMissingIndicators : new boolean[originalMissingIndicators.length]);
         addVariable(parameter);
 
         this.dimTrait = dimTrait;
@@ -63,8 +64,6 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         this.precisionType = precisionType;
 
 
-        this.missingIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
-                this.missingIndices, parameter.getDimension());
     }
 
     public boolean bufferTips() {
@@ -97,7 +96,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     @Override
     public List<Integer> getMissingIndices() {
-        return missingIndices;
+        return ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicator); // TODO: finish deprecating
     }
 
     @Override
@@ -106,7 +105,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     List<Integer> getOriginalMissingIndices() {
-        return originalMissingIndices;
+        return ContinuousTraitPartialsProvider.indicatorToIndices(originalMissingIndicators); // TODO: finish deprecating
     }
 
     @Override
@@ -149,7 +148,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     protected void acceptState() {
     }
 
-    private double[] getScalarTipPartial(int taxonIndex) {
+    private double[] getScalarTipPartial(int taxonIndex) { // TODO: test
         double[] partial = new double[numTraits * (dimTrait + 1)];
         final Parameter p = parameter.getParameter(taxonIndex);
         int offset = 0;
@@ -159,7 +158,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 final int index = i * dimTrait + j;
                 final int missingIndex = index + dimTrait * numTraits * taxonIndex;
                 partial[offset + j] = p.getParameterValue(index);
-                if (missingIndices != null && missingIndices.contains(missingIndex)) {
+                if (missingIndicator != null && missingIndicator[missingIndex]) {
                     missing = true;
                 }
             }

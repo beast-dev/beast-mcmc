@@ -71,14 +71,17 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return true;
     }
 
+    @Override
     public int getTraitCount() {
         return numTraits;
     }
 
+    @Override
     public int getTraitDimension() {
         return dimTrait;
     }
 
+    @Override
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
@@ -87,14 +90,17 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return super.getModelName();
     }
 
+    @Override
     public CompoundParameter getParameter() {
         return parameter;
     }
 
+    @Override
     public List<Integer> getMissingIndices() {
         return missingIndices;
     }
 
+    @Override
     public boolean[] getMissingIndicator() {
         return missingIndicator;
     }
@@ -165,6 +171,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     private static final boolean OLD = false;
 
+    @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
         if (fullyObserved) {
 

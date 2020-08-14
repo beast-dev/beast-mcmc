@@ -73,12 +73,18 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
         int[] missingInds;
         int nMissing = 0;
         if (missingParameter == null) {
-            List<Integer> originalMissingList = dataModel.getMissingIndices();
-            List<Integer> missingList = new ArrayList<>(originalMissingList);
+            boolean[] missingIndicators = dataModel.getDataMissingIndicators();
 
-            // TODO: this doesn't work for the factor model
+            boolean[] trueMissingIndicators =
+                    ContinuousTraitPartialsProvider.indicesToIndicator(trueMissing, missingIndicators.length);
 
-            missingList.removeAll(trueMissing);
+            List<Integer> missingList = new ArrayList<>();
+            for (int i = 0; i < missingIndicators.length; i++) {
+                if (missingIndicators[i] && !trueMissingIndicators[i]) {
+                    missingList.add(i);
+                }
+            }
+
             nMissing = missingList.size();
 
             missingInds = new int[nMissing];

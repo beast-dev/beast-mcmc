@@ -78,7 +78,7 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
         String name;
     }
 
-    private double size;
+    private double tunableParameter;
 
     private final TreeModel tree;
     private final OperatorType operatorType;
@@ -88,17 +88,17 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
      *
      * @param tree   the tree
      * @param weight the weight
-     * @param size   size of move for types that need it
+     * @param tunableParameter   size of move for types that need it
      * @param targetAcceptance the desired acceptance probability
      * @param operatorType the type of move to make
      * @param mode   coercion mode
      */
-    public NodeHeightOperator(TreeModel tree, double weight, double size, OperatorType operatorType, AdaptationMode mode, double targetAcceptance) {
+    public NodeHeightOperator(TreeModel tree, double weight, double tunableParameter, OperatorType operatorType, AdaptationMode mode, double targetAcceptance) {
         super(mode, targetAcceptance);
 
         this.tree = tree;
         setWeight(weight);
-        this.size = size;
+        this.tunableParameter = tunableParameter;
         this.operatorType = operatorType;
     }
 
@@ -143,7 +143,7 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
                         break;
                     case RANDOMWALK:
                         RandomWalkOperator.BoundaryCondition boundaryCondition = RandomWalkOperator.BoundaryCondition.rejecting;
-                        logq = doRandomWalk(node, oldHeight, upperHeight, lowerHeight, getSize(), boundaryCondition);
+                        logq = doRandomWalk(node, oldHeight, upperHeight, lowerHeight, tunableParameter, boundaryCondition);
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown operatorType");
@@ -156,7 +156,7 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
     }
 
     private double doScaleAll() {
-        final double scaleFactor = getSize();
+        final double scaleFactor = tunableParameter;
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
         for (NodeRef node : tree.getNodes()) {
@@ -178,7 +178,7 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
     }
 
     private double doScaleRoot(NodeRef node, double oldValue, double lower) {
-        final double scaleFactor = getSize();
+        final double scaleFactor = tunableParameter;
         final double scale = (scaleFactor + (MathUtils.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
 
         double h = oldValue - lower;
@@ -295,50 +295,50 @@ public class NodeHeightOperator extends AbstractAdaptableTreeOperator {
         return newValue;
     }
 
-    public double reflectValueLoop(double value, double lower, double upper) {
-        double newValue = value;
-
-        while (newValue < lower || newValue > upper) {
-            if (newValue < lower) {
-                newValue = lower + (lower - newValue);
-            }
-            if (newValue > upper) {
-                newValue = upper - (newValue - upper);
-
-            }
-        }
-
-        return newValue;
-    }
-
-    public double getSize() {
-        return size;
-    }
-
-    public void setSize(double size) {
-        this.size = size;
-    }
-
     @Override
     protected void setAdaptableParameterValue(double value) {
-        setSize(Math.exp(value));
+        if (operatorType == OperatorType.RANDOMWALK) {
+            tunableParameter = Math.exp(value);
+        } else if (operatorType == OperatorType.SCALEALL || operatorType == OperatorType.SCALEROOT) {
+            tunableParameter = 1.0 / (Math.exp(value) + 1.0);
+        } else {
+            throw new IllegalArgumentException("Non-adaptable operator");
+        }
     }
 
     @Override
     protected double getAdaptableParameterValue() {
-        return Math.log(getSize());
+        if (operatorType == OperatorType.RANDOMWALK) {
+            return Math.log(tunableParameter);
+        } else if (operatorType == OperatorType.SCALEALL || operatorType == OperatorType.SCALEROOT) {
+            return Math.log(1.0 / tunableParameter - 1.0);
+        }
+        throw new IllegalArgumentException("Non-adaptable operator");
     }
 
     @Override
     public double getRawParameter() {
-        return getSize();
+        return tunableParameter;
     }
 
     public String getAdaptableParameterName() {
-        return "size";
+        return (operatorType == OperatorType.RANDOMWALK ? "windowSize" :
+                (operatorType == OperatorType.SCALEALL || operatorType == OperatorType.SCALEROOT ? "scaleFactor" :
+                        "none"));
     }
 
     public String getOperatorName() {
-        return "Node height operator";
+        switch (operatorType) {
+            case UNIFORM:
+                return "uniform(" + tree.getId() + " internal nodes)";
+            case RANDOMWALK:
+                return "randomWalk(" + tree.getId() + " internal nodes)";
+            case SCALEROOT:
+                return "scale(" + tree.getId() + " root height)";
+            case SCALEALL:
+                return "scaleAll(" + tree.getId() + " internal nodes)";
+            default:
+                throw new IllegalArgumentException("Unknown OperatorType");
+        }
     }
 }

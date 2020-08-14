@@ -14,6 +14,9 @@ import dr.inference.loggers.Loggable;
 import dr.math.Polynomial;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
@@ -27,11 +30,11 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
 
     private final ContinuousExtensionDelegate extensionDelegate;
     private final int traitDim;
-    private final int[] logDims;
+    private final List<Integer> logDims;
     private double[] traits;
 
 
-    ModelExtensionTraitLogger(ContinuousExtensionDelegate extensionDelegate, int[] loggableDims, int traitDim) {
+    ModelExtensionTraitLogger(ContinuousExtensionDelegate extensionDelegate, List<Integer> loggableDims, int traitDim) {
 
         this.extensionDelegate = extensionDelegate;
         this.traitDim = traitDim;
@@ -46,7 +49,7 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
         String traitName = extensionDelegate.getTreeTrait().getTraitName();
 
 
-        LogColumn[] columns = new LogColumn[logDims.length];
+        LogColumn[] columns = new LogColumn[logDims.size()];
         int i = 0;
         for (int dim : logDims) {
             final int ind = i;
@@ -78,13 +81,13 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
     private enum IndicesProvider {
         ALL {
             @Override
-            int[] getLoggableIndices(ModelExtensionProvider extensionProvider) {
+            List<Integer> getLoggableIndices(ModelExtensionProvider extensionProvider) {
 
                 int dim = extensionProvider.getParameter().getDimension();
-                int[] allDims = new int[dim];
+                List<Integer> allDims = new ArrayList<>(dim);
 
                 for (int i = 0; i < dim; i++) {
-                    allDims[i] = i;
+                    allDims.set(i, i);
                 }
 
                 return allDims;
@@ -98,14 +101,17 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
 
         MISSING {
             @Override
-            int[] getLoggableIndices(ModelExtensionProvider extensionProvider) {
-                int[] missingInds = new int[extensionProvider.getMissingIndices().size()];
+            List<Integer> getLoggableIndices(ModelExtensionProvider extensionProvider) {
+                boolean[] missingIndicators = extensionProvider.getDataMissingIndicators();
+                List<Integer> missingIndices = new ArrayList<>();
 
-                for (int i = 0; i < missingInds.length; i++) {
-                    missingInds[i] = extensionProvider.getMissingIndices().get(i);
+                for (int i = 0; i < missingIndicators.length; i++) {
+                    if (missingIndicators[i]) {
+                        missingIndices.add(i);
+                    }
                 }
 
-                return missingInds;
+                return missingIndices;
             }
 
             @Override
@@ -114,7 +120,7 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
             }
         };
 
-        abstract int[] getLoggableIndices(ModelExtensionProvider extensionProvider);
+        abstract List<Integer> getLoggableIndices(ModelExtensionProvider extensionProvider);
 
         abstract String getName();
     }
@@ -189,7 +195,7 @@ public class ModelExtensionTraitLogger implements Loggable, Reportable {
                     (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate(), treeTrait, tree);
 
             String dims = xo.getAttribute(DIMENSIONS, IndicesProvider.ALL.getName());
-            int[] logDims;
+            List<Integer> logDims;
 
             if (dims.equalsIgnoreCase(IndicesProvider.ALL.getName())) {
 

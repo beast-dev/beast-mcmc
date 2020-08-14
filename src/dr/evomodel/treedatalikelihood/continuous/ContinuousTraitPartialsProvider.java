@@ -54,9 +54,9 @@ public interface ContinuousTraitPartialsProvider {
     @Deprecated
     List<Integer> getMissingIndices(); // use getTraitMissingIndicators() instead
 
-    boolean[] getDataMissingIndicators();
+    boolean[] getDataMissingIndicators(); // returns null for no missing data
 
-    default boolean[] getTraitMissingIndicators() {
+    default boolean[] getTraitMissingIndicators() { // returns null for no missing traits
         return getDataMissingIndicators();
     }
 

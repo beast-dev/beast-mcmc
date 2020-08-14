@@ -37,6 +37,7 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.missingData.InversionResult;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.util.TaskPool;
 import dr.xml.*;
@@ -604,6 +605,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         double constant;
         double nuggetDensity = 0;
 
+        int effDim = 0;
+
         if (observedDimensions[taxon] == 0) {
 
             makeCompletedUnobserved(precision, 0);
@@ -618,7 +621,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                 //System.err.println("\n");
             }
 
-//            final double factorLogDeterminant = ci.getLogDeterminant();
+
+            InversionResult ci = safeDeterminant(precision, false); //TODO: figure out how to remove this (I don't want to do it twice) (see safeMultivariateIntegrator.IncreaseVariances)
+            effDim = ci.getEffectiveDimension();
+            final double factorLogDeterminant = ci.getLogDeterminant();
             double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
 //            final double logDetChange = traitLogDeterminant - factorLogDeterminant;
@@ -642,14 +648,15 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 //            constant = 0.5 * (logDetChange - innerProductChange) - LOG_SQRT_2_PI * (dimensionChange) -
 //                    nuggetDensity;
 
-            constant = 0.5 * (traitLogDeterminant - innerProductChange) - LOG_SQRT_2_PI * (observedDimensions[taxon]) -
+            constant = 0.5 * (traitLogDeterminant - factorLogDeterminant - innerProductChange) - LOG_SQRT_2_PI * (observedDimensions[taxon] - numFactors) -
                     nuggetDensity;
 
         }
 
         // store in precision, variance and normalization constant
         unwrap(precision, partials, partialsOffset + numFactors); //TODO: use PrecisionType.fillPrecisionInPartials()
-        PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, 0, numFactors);
+        System.err.println("Warning: This will fail with missing data.");
+        PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, effDim, numFactors);
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);

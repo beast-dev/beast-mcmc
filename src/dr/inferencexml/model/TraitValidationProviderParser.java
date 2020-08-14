@@ -10,8 +10,6 @@ import dr.inference.model.Parameter;
 import dr.inference.model.TraitValidationProvider;
 import dr.xml.*;
 
-import java.util.List;
-
 /**
  * @author Gabriel Hassler
  */
@@ -51,7 +49,7 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
                         treeModel, true);
 
         Parameter trueParameter = returnValue.traitParameter;
-        List<Integer> trueMissing = returnValue.missingIndices;
+        boolean[] trueMissing = returnValue.getMissingIndicators();
         Parameter missingParameter = null;
         if (xo.hasChildNamed(MASK)) {
             missingParameter = (Parameter) xo.getElementFirstChild(MASK);

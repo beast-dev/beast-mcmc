@@ -62,8 +62,10 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
             Parameter missing = (Parameter) xo.getChild(TreeTraitParserUtilities.MISSING).getChild(Parameter.class);
             missing.setDimension(dataParameter.getDimension());
 
+            boolean[] missingIndicators = returnValue.getMissingIndicators();
+
             for (int i = 0; i < missing.getDimension(); i++) {
-                if (returnValue.missingIndices.contains(i)) {
+                if (missingIndicators[i]) {
                     missing.setParameterValue(i, 1);
                 } else {
                     missing.setParameterValue(i, 0);

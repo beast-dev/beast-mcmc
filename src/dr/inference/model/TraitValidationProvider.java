@@ -38,13 +38,13 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
                                    Parameter missingParameter,
                                    TreeDataLikelihood treeLikelihood,
                                    String inferredValuesName,
-                                   List<Integer> trueMissingIndices) {
+                                   boolean[] trueMissingIndicators) {
 
 
         this.trueTraits = trueTraits;
         this.dimTrait = dataModel.getDataDimension();
 
-        this.missingInds = setupMissingInds(dataModel, missingParameter, trueMissingIndices);
+        this.missingInds = setupMissingInds(dataModel, missingParameter, trueMissingIndicators);
         int nMissing = missingInds.length;
 
 
@@ -69,14 +69,11 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
     }
 
     private int[] setupMissingInds(ContinuousTraitPartialsProvider dataModel, Parameter missingParameter,
-                                   List<Integer> trueMissing) {
+                                   boolean[] trueMissingIndicators) {
         int[] missingInds;
         int nMissing = 0;
         if (missingParameter == null) {
             boolean[] missingIndicators = dataModel.getDataMissingIndicators();
-
-            boolean[] trueMissingIndicators =
-                    ContinuousTraitPartialsProvider.indicesToIndicator(trueMissing, missingIndicators.length);
 
             List<Integer> missingList = new ArrayList<>();
             for (int i = 0; i < missingIndicators.length; i++) {
@@ -97,8 +94,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
 
 
             for (int i = 0; i < missingParameter.getSize(); i++) {
-                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissing.contains(i)) {
-                    //TODO: search more efficiently through the `trueMissing` array
+                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissingIndicators[i]) {
                     nMissing += 1;
                 }
             }
@@ -107,8 +103,7 @@ public class TraitValidationProvider implements CrossValidationProvider, Reporta
             int counter = 0;
 
             for (int i = 0; i < missingParameter.getSize(); i++) {
-                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissing.contains(i)) {
-                    //TODO: (see above)
+                if (missingParameter.getParameterValue(i) == 1.0 && !trueMissingIndicators[i]) {
                     missingInds[counter] = i;
                     counter += 1;
                 }

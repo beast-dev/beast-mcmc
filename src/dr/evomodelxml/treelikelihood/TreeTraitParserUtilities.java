@@ -239,22 +239,26 @@ public class TreeTraitParserUtilities {
 
     public class TraitsAndMissingIndices {
         public CompoundParameter traitParameter;
-        public List<Integer> missingIndices;
+        public boolean[] missingIndicators;
         public String traitName;
         public Parameter sampleMissingParameter;
         public boolean useMissingIndices;
 
-        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName,
+        TraitsAndMissingIndices(CompoundParameter traitParameter, boolean[] missingIndicators, String traitName,
                                 Parameter sampleMissingParameter, boolean useMissingIndices) {
             this.traitParameter = traitParameter;
-            this.missingIndices = missingIndices;
+            this.missingIndicators = missingIndicators;
             this.traitName = traitName;
             this.sampleMissingParameter = sampleMissingParameter;
             this.useMissingIndices = useMissingIndices;
         }
 
-        public boolean[] getMissingIndicators() { //TODO: deprecate by only storing missingIndicators
-            return ContinuousTraitPartialsProvider.indicesToIndicator(this.missingIndices, traitParameter.getDimension());
+        public boolean[] getMissingIndicators() {
+            return missingIndicators;
+        }
+
+        public List<Integer> getMissingIndices() { //TODO: deprecate
+            return ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators);
         }
     }
 
@@ -276,7 +280,8 @@ public class TreeTraitParserUtilities {
         String traitName = inTraitName;
 
         CompoundParameter traitParameter;
-        List<Integer> missingIndices = null;
+        boolean[] missingIndicators = null;
+        int nMissing = 0;
         Parameter sampleMissingParameter = null;
 
         boolean isMatrixParameter = false;
@@ -411,11 +416,12 @@ public class TreeTraitParserUtilities {
 
             // Find missing values
             double[] allValues = traitParameter.getParameterValues();
-            missingIndices = new ArrayList<Integer>();
+            missingIndicators = new boolean[allValues.length];
             for (int i = 0; i < allValues.length; i++) {
                 if ((new Double(allValues[i])).isNaN()) {
                     traitParameter.setParameterValue(i, 0); // Here, missings are set to zero
-                    missingIndices.add(i);
+                    missingIndicators[i] = true;
+                    nMissing++;
                 }
             }
 
@@ -424,8 +430,8 @@ public class TreeTraitParserUtilities {
 
                 double targetSd = xo.getAttribute(TARGET_SD, 1.0);
 
-                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter, missingIndices,
-                        targetSd);
+                StandardizeTraits st = new StandardizeTraits((MatrixParameterInterface) traitParameter,
+                        missingIndicators, targetSd);
                 String message = st.doStandardization(false);
 
                 Logger.getLogger("dr.evomodel.continous").info(message);
@@ -435,8 +441,10 @@ public class TreeTraitParserUtilities {
                 XMLObject cxo = xo.getChild(MISSING);
 
                 Parameter missingParameter = new Parameter.Default(allValues.length, 0.0);
-                for (int i : missingIndices) {
-                    missingParameter.setParameterValue(i, 1.0);
+                for (int i = 0; i < missingIndicators.length; i++) {
+                    if (missingIndicators[i]) {
+                        missingParameter.setParameterValue(i, 1.0);
+                    }
                 }
 
                 if (cxo.hasAttribute(LATENT_FROM) && cxo.hasAttribute(LATENT_TO)) {
@@ -490,11 +498,11 @@ public class TreeTraitParserUtilities {
 
         }
 
-        if (missingIndices == null || missingIndices.size() == 0) {
+        if (missingIndicators == null || nMissing == 0) {
             useMissingIndices = false;
         }
 
-        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName,
+        return new TraitsAndMissingIndices(traitParameter, missingIndicators, traitName,
                 sampleMissingParameter, useMissingIndices);
     }
 

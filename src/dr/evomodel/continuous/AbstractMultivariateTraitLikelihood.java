@@ -30,8 +30,6 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -782,7 +780,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                     utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
+            List<Integer> missingIndices = returnValue.getMissingIndices();
             traitName = returnValue.traitName;
 
             /* TODO Add partially integrated traits here */

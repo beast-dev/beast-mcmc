@@ -91,6 +91,10 @@ public class IntegratedProcessTraitDataModel extends
         int effDim = (int) Math.round(partial[effDimOffset]);
         precisionType.fillEffDimInPartials(partialDouble, 0, effDim, dimTraitDouble);
 
+        int detDimOffset = precisionType.getDeterminantOffset(dimTrait);
+        double det = partial[detDimOffset];
+        precisionType.fillDeterminantInPartials(partialDouble, 0, det, dimTraitDouble);
+
 
         return partialDouble;
     }

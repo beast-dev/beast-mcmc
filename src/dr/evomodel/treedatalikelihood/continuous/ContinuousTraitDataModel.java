@@ -222,6 +222,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             }
 
             precisionType.fillEffDimInPartials(partial, offset, effDim, dimTrait);
+            precisionType.fillNoDeterminantInPartials(partial, offset, dimTrait);
 
             offset += offsetInc;
         }

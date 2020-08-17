@@ -158,19 +158,33 @@ public enum PrecisionType {
     },
 
     FULL("full precision matrix per branch", "full", 2) {
+        // partial structure:
+        //      [mean (p), precision (p^2), variance (p^2), fullPrecision (1), effective dimension (1), determinant (1)]
+
         @Override
         public void fillPrecisionInPartials(double[] partial, int offset, int index, double precision,
                                             int dimTrait) {
             final int offs = offset + dimTrait + index * dimTrait + index;
             partial[offs] = precision;
             partial[offs + dimTrait * dimTrait] = Double.isInfinite(precision) ? 0.0 : 1.0 / precision;
-            partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY; //TODO: what is this? (no access functions)
+            partial[offset + dimTrait + 2 * dimTrait * dimTrait] = Double.POSITIVE_INFINITY;
         }
 
         @Override
         public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait) {
             int effDimOffset = this.getEffectiveDimensionOffset(dimTrait);
             partial[offset + effDimOffset] = effDim;
+        }
+
+        @Override
+        public void fillDeterminantInPartials(double[] partial, int offset, double determinant, int dimTrait) {
+            int determinantOffset = getDeterminantOffset(dimTrait);
+            partial[offset + determinantOffset] = determinant;
+        }
+
+        @Override
+        public void fillNoDeterminantInPartials(double[] partial, int offset, int dimTrait) {
+            fillDeterminantInPartials(partial, offset, getNoDeterminantValue(), dimTrait); //TODO: is it bad to assume NaN is missing?
         }
 
         @Override
@@ -183,7 +197,7 @@ public enum PrecisionType {
 
         @Override
         public int getMatrixLength(int dimTrait) {
-            return 2 * super.getMatrixLength(dimTrait) + 2; //TODO: what was the '+1' for?
+            return 2 * super.getMatrixLength(dimTrait) + 3;
         }
 
         @Override
@@ -204,7 +218,12 @@ public enum PrecisionType {
         @Override
         public int getEffectiveDimensionOffset(int dimTrait) {
             return dimTrait + dimTrait * dimTrait * 2 + 1;
-        } // TODO Put somewhere in buffer
+        }
+
+        @Override
+        public int getDeterminantOffset(int dimTrait) {
+            return dimTrait + dimTrait * dimTrait * 2 + 2;
+        }
 
         @Override
         public int getVarianceOffset(int dimTrait) {
@@ -272,6 +291,18 @@ public enum PrecisionType {
 
     abstract public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait);
 
+    public void fillDeterminantInPartials(double[] partial, int offset, double effDim, int dimTrait) {
+        // do nothing
+    }
+
+    public void fillNoDeterminantInPartials(double[] partial, int offset, int dimTrait) {
+        // do nothing
+    }
+
+    public double getNoDeterminantValue() {
+        return Double.NaN;
+    }
+
     abstract public void copyObservation(double[] partial, int pOffset, double[] data, int dOffset, int dimTrait);
 
     public int getMeanOffset(int dimTrait) {
@@ -286,6 +317,10 @@ public enum PrecisionType {
 
     @SuppressWarnings("unused")
     abstract public int getEffectiveDimensionOffset(int dimTrait);
+
+    public int getDeterminantOffset(int dimTrait) {
+        return -1;
+    }
 
     abstract public double[] getScaledPrecision(double[] partial, int offset, double[] diffusionPrecision, int dimTrait);
 

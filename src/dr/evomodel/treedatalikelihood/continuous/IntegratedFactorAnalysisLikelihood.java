@@ -623,6 +623,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         double nuggetDensity = 0;
 
         int effDim = 0;
+        double factorLogDeterminant = precisionType.getNoDeterminantValue();
 
         if (observedDimensions[taxon] == 0) {
 
@@ -641,7 +642,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             InversionResult ci = safeDeterminant(precision, false); //TODO: figure out how to remove this (I don't want to do it twice) (see safeMultivariateIntegrator.IncreaseVariances)
             effDim = ci.getEffectiveDimension();
-            final double factorLogDeterminant = ci.getLogDeterminant();
+            factorLogDeterminant = ci.getLogDeterminant();
             double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
 //            final double logDetChange = traitLogDeterminant - factorLogDeterminant;
@@ -673,7 +674,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
         // store in precision, variance and normalization constant
         unwrap(precision, partials, partialsOffset + numFactors); //TODO: use PrecisionType.fillPrecisionInPartials()
-        PrecisionType.FULL.fillEffDimInPartials(partials, partialsOffset, effDim, numFactors);
+        precisionType.fillEffDimInPartials(partials, partialsOffset, effDim, numFactors);
+        precisionType.fillDeterminantInPartials(partials, partialsOffset, factorLogDeterminant, numFactors);
 
         if (STORE_VARIANCE) {
             safeInvert2(precision, variance, true);

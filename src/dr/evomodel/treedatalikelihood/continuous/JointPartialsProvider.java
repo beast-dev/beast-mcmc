@@ -27,8 +27,10 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     private final List<Integer> missingIndices;
     private final boolean[] missingIndicators;
 
+    private final boolean defaultAllowSingular;
+    private final Boolean computeDeterminant; // TODO: Maybe pass as argument?
+
     private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes (make sure they're all the same)
-    private static final Boolean computeDeterminant = true; // TODO: Maybe pass as argument?
 
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         this.name = name;
@@ -47,6 +49,8 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         this.missingIndicators = setupMissingIndicators();
         this.missingIndices = ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators);
 
+        this.defaultAllowSingular = setDefaultAllowSingular();
+        this.computeDeterminant = defaultAllowSingular; // TODO: not perfect behavior, should be based on actual value of `allowSingular`
     }
 
 
@@ -182,6 +186,10 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
     @Override
     public boolean getDefaultAllowSingular() {
+        return defaultAllowSingular;
+    }
+
+    private boolean setDefaultAllowSingular() {
         boolean allowSingular = false;
         for (ContinuousTraitPartialsProvider provider : providers) {
             allowSingular = allowSingular || provider.getDefaultAllowSingular();

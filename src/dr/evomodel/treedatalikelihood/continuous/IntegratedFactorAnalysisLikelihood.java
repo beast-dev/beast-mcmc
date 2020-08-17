@@ -623,7 +623,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         double nuggetDensity = 0;
 
         int effDim = 0;
-        double factorLogDeterminant = precisionType.getNoDeterminantValue();
+        double factorLogDeterminant = precisionType.getMissingDeterminantValue();
 
         if (observedDimensions[taxon] == 0) {
 

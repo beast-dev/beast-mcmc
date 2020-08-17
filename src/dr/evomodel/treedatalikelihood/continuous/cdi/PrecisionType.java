@@ -184,7 +184,7 @@ public enum PrecisionType {
 
         @Override
         public void fillNoDeterminantInPartials(double[] partial, int offset, int dimTrait) {
-            fillDeterminantInPartials(partial, offset, getNoDeterminantValue(), dimTrait); //TODO: is it bad to assume NaN is missing?
+            fillDeterminantInPartials(partial, offset, Double.NaN, dimTrait); //TODO: is it bad to assume NaN is missing?
         }
 
         @Override
@@ -245,6 +245,11 @@ public enum PrecisionType {
         public boolean hasEffectiveDimension() {
             return true;
         }
+
+        @Override
+        public boolean hasDeterminant() {
+            return true;
+        }
     };
 
     private final int power;
@@ -291,7 +296,7 @@ public enum PrecisionType {
 
     abstract public void fillEffDimInPartials(double[] partial, int offset, int effDim, int dimTrait);
 
-    public void fillDeterminantInPartials(double[] partial, int offset, double effDim, int dimTrait) {
+    public void fillDeterminantInPartials(double[] partial, int offset, double det, int dimTrait) {
         // do nothing
     }
 
@@ -299,7 +304,11 @@ public enum PrecisionType {
         // do nothing
     }
 
-    public double getNoDeterminantValue() {
+    public boolean isMissingDeterminantValue(double value) {
+        return Double.isNaN(value);
+    }
+
+    public double getMissingDeterminantValue() {
         return Double.NaN;
     }
 
@@ -329,6 +338,10 @@ public enum PrecisionType {
     }
 
     public boolean hasEffectiveDimension() {
+        return false;
+    }
+
+    public boolean hasDeterminant() {
         return false;
     }
 

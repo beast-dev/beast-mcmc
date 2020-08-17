@@ -3,7 +3,9 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -26,6 +28,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     private final boolean[] missingIndicators;
 
     private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes (make sure they're all the same)
+    private static final Boolean computeDeterminant = true; // TODO: Maybe pass as argument?
 
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         this.name = name;
@@ -102,6 +105,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         int precOffset = precisionType.getPrecisionOffset(traitDim);
         int varOffset = precisionType.getVarianceOffset(traitDim);
         int effDimDim = precisionType.getEffectiveDimensionOffset(traitDim);
+        int detDim = precisionType.getDeterminantOffset(traitDim);
 
         WrappedMatrix.Indexed precWrap = wrapBlockDiagonalMatrix(partial, precOffset, 0, traitDim); //TODO: this only works for precisionType.FULL, make general
         WrappedMatrix.Indexed varWrap = wrapBlockDiagonalMatrix(partial, varOffset, 0, traitDim); //TODO: see above
@@ -113,7 +117,9 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
             double[] subPartial = provider.getTipPartial(taxonIndex, fullyObserved);
             int subDim = provider.getTraitDimension();
 
-            WrappedMatrix.Raw subPrec = new WrappedMatrix.Raw(subPartial, precisionType.getPrecisionOffset(subDim), subDim, subDim); //TODO: see above
+            int precisionOffset = precisionType.getPrecisionOffset(subDim);
+
+            WrappedMatrix.Raw subPrec = new WrappedMatrix.Raw(subPartial, precisionOffset, subDim, subDim); //TODO: see above
             transferSymmetricBlockDiagonal(subPrec, precWrap, currentMatrixOffset); //TODO: see above
 
             WrappedMatrix.Raw subVar = new WrappedMatrix.Raw(subPartial, precisionType.getVarianceOffset(subDim), subDim, subDim); //TODO: see above
@@ -128,7 +134,26 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
             if (precisionType.hasEffectiveDimension()) {
                 partial[effDimDim] += subPartial[precisionType.getEffectiveDimensionOffset(subDim)];
             }
+
+            if (precisionType.hasEffectiveDimension() && computeDeterminant) {
+
+                double subDet = subPartial[precisionType.getDeterminantOffset(subDim)];
+
+                if (!precisionType.isMissingDeterminantValue(subDet)) {
+
+                    DenseMatrix64F prec = MissingOps.wrap(subPartial, precisionOffset, subDim, subDim);
+                    DenseMatrix64F var = new DenseMatrix64F(subDim, subDim);
+                    subDet = MissingOps.safeInvert2(prec, var, true).getLogDeterminant();
+                }
+
+                partial[detDim] += subDet;
+            }
         }
+
+        if (!computeDeterminant) {
+            precisionType.fillNoDeterminantInPartials(partial, 0, traitDim);
+        }
+
         //Assume conditional independence (for now)
         return partial;
     }

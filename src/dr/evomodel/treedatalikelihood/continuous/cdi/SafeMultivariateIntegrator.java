@@ -528,7 +528,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
                 final InversionResult cP;
                 double preCalculatedDeterminant = getPartialDeterminant(iBuffer);
 
-                if (preCalculatedDeterminant == PrecisionType.FULL.getNoDeterminantValue()) {
+                if (PrecisionType.FULL.isMissingDeterminantValue(preCalculatedDeterminant)) {
                     cP = safeDeterminant(Pi, true);
                 } else {
                     InversionResult.Code code = InversionResult.getCode(dimTrait, effDim);

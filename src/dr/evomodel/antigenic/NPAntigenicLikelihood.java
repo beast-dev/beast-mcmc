@@ -864,11 +864,10 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
 	        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-            String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, integrate);
            // traitName = returnValue.traitName;
             CompoundParameter traitParameter = returnValue.traitParameter;
 

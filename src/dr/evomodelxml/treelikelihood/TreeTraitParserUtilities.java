@@ -268,7 +268,6 @@ public class TreeTraitParserUtilities {
 
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
-            String inTraitName,
             Tree treeModel,
             boolean integrateOutInternalStates) throws XMLParseException {
 
@@ -277,7 +276,7 @@ public class TreeTraitParserUtilities {
         boolean existingTraitParameter = false;
         int randomSampleSizeFlag = xo.getAttribute(RANDOM_SAMPLE, -1);
 
-        String traitName = inTraitName;
+        final String traitName;
 
         CompoundParameter traitParameter;
         boolean[] missingIndicators = null;
@@ -489,6 +488,8 @@ public class TreeTraitParserUtilities {
                     }
                 }
             }
+        } else {
+            traitName = DEFAULT_TRAIT_NAME;
         }
 
         boolean useMissingIndices = true;

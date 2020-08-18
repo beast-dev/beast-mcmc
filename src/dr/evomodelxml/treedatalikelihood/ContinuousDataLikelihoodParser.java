@@ -104,7 +104,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
 
         final int dim = diffusionModel.getPrecisionmatrix().length;
 
-        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+        final String traitName;
         boolean[] missingIndicators;
 //        Parameter sampleMissingParameter = null;
         ContinuousTraitPartialsProvider dataModel;
@@ -115,7 +115,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             missingIndicators = returnValue.getMissingIndicators();
 //            sampleMissingParameter = returnValue.sampleMissingParameter;
@@ -148,6 +148,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             }
         } else {  // Has ContinuousTraitPartialsProvider
             dataModel = (ContinuousTraitPartialsProvider) xo.getChild(ContinuousTraitPartialsProvider.class);
+            traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         }
 
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());
@@ -161,14 +162,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             allowSingular = dataModel.getDefaultAllowSingular();
         }
 
-        if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
-
-            if (traitName == TreeTraitParserUtilities.DEFAULT_TRAIT_NAME) {
-                traitName = FACTOR_NAME;
-            }
-
-        } else if (dataModel instanceof RepeatedMeasuresTraitDataModel) {
-            traitName = ((RepeatedMeasuresTraitDataModel) dataModel).getTraitName();
+        if (dataModel instanceof RepeatedMeasuresTraitDataModel) { //TODO: find a way to let the dataModel handle this
             ((RepeatedMeasuresTraitDataModel) dataModel).addTreeAndRateModel(treeModel, rateTransformation);
         }
 
@@ -300,6 +294,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
             AttributeRule.newBooleanRule(INTEGRATED_PROCESS, true),
+            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };
 

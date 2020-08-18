@@ -775,13 +775,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-            String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
             List<Integer> missingIndices = returnValue.getMissingIndices();
-            traitName = returnValue.traitName;
+            String traitName = returnValue.traitName;
 
             /* TODO Add partially integrated traits here */
 

@@ -49,12 +49,11 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-        String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
 
         MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
+                utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
         MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
                 returnValue.traitParameter);
 

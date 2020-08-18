@@ -289,8 +289,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
-                            treeModel, true);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             boolean[] missingIndicators = returnValue.getMissingIndicators();
 

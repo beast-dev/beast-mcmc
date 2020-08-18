@@ -836,7 +836,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
+                    utilities.parseTraitsFromTaxonAttributes(xo,
                             treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
             boolean[] missingIndicators = returnValue.getMissingIndicators();

@@ -197,6 +197,15 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
         return allowSingular;
     }
 
+    @Override
+    public boolean suppliesWishartStatistics() {
+        boolean suppliesStatistics = true;
+        for (ContinuousTraitPartialsProvider provider: providers) {
+            suppliesStatistics = suppliesStatistics && provider.suppliesWishartStatistics();
+        }
+        return suppliesStatistics;
+    }
+
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
         private static final String PARSER_NAME = "jointPartialsProvider";

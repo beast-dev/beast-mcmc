@@ -261,6 +261,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     }
 
     @Override
+    public boolean suppliesWishartStatistics() {
+        return false;
+    }
+
+    @Override
     public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
         // Do nothing
     }

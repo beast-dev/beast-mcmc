@@ -221,6 +221,11 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public boolean suppliesWishartStatistics() {
+        return false;
+    }
+
+    @Override
     public Model getModel() {
         return this;
     }

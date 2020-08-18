@@ -68,6 +68,10 @@ public interface ContinuousTraitPartialsProvider {
         return false;
     }
 
+    default boolean suppliesWishartStatistics() {
+        return true;
+    }
+
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
         if (indices == null) {

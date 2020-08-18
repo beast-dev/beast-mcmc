@@ -85,8 +85,7 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
 
             ContinuousTraitPartialsProvider dataProvider = likelihoodDelegate.getDataModel();
 
-            if (!dataProvider.suppliesWishartStatistics()) { //TODO: check that this is appropriate!!!!
-                System.err.println("Warning: THIS HAS NOT BEEN TESTED!!!");
+            if (!dataProvider.suppliesWishartStatistics()) {
                 dataProvider = new EmptyTraitDataModel(traitName, dataProvider.getParameter(),
                         dataProvider.getTraitDimension(), PrecisionType.SCALAR);
             }

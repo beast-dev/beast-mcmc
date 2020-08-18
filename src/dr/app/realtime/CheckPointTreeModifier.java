@@ -511,7 +511,6 @@ public class CheckPointTreeModifier {
                     }
                 }
                 System.out.println("closest node : " + closestRef + " with height " + treeModel.getNodeHeight(closestRef));
-                //TODO: parent node should be older than the age of the taxon that is being added
                 System.out.println("parent node: " + treeModel.getParent(closestRef));
 
                 //begin change
@@ -556,43 +555,79 @@ public class CheckPointTreeModifier {
                             }
                         }
                     }
+
+                    //now that a suitable branch has been found, perform additional checks
+                    //parent of branch = parent; child of branch = splitBranchChild
+                    System.out.printf("parent height: %.25f \n", treeModel.getNodeHeight(parent));
+                    System.out.printf("child height: %.25f \n", treeModel.getNodeHeight(splitBranchChild));
+
+                    if (((treeModel.getNodeHeight(parent) - insertHeight) < MIN_DIST) && ((insertHeight - treeModel.getNodeHeight(splitBranchChild)) < MIN_DIST)) {
+                        throw new RuntimeException("No suitable branch found for sequence insertion (all branches < minimum branch length).");
+                    } else if ((treeModel.getNodeHeight(parent) - insertHeight) < MIN_DIST) {
+                        System.out.println("  insertion height too close to parent height");
+                        double newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (insertHeight - treeModel.getNodeHeight(splitBranchChild));
+                        while (((treeModel.getNodeHeight(parent) - newInsertHeight) < MIN_DIST) && (newInsertHeight - treeModel.getNodeHeight(splitBranchChild) < MIN_DIST)) {
+                            newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (insertHeight - treeModel.getNodeHeight(splitBranchChild));
+                        }
+                        System.out.println("  new insertion height = " + newInsertHeight);
+                        insertHeight = newInsertHeight;
+                    } else if ((insertHeight - treeModel.getNodeHeight(splitBranchChild)) < MIN_DIST) {
+                        System.out.println("  insertion height too close to child height");
+                        double newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (treeModel.getNodeHeight(parent) - insertHeight);
+                        while (((treeModel.getNodeHeight(parent) - newInsertHeight) < MIN_DIST) && (newInsertHeight - treeModel.getNodeHeight(splitBranchChild) < MIN_DIST)) {
+                            newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (treeModel.getNodeHeight(parent) - insertHeight);
+                        }
+                        System.out.println("  new insertion height = " + newInsertHeight);
+                        insertHeight = newInsertHeight;
+                    }
+
                 } else {
                     //first calculate if the new internal node is older than both the new sequence and its closest sequence already present in the tree
                     double remainder = (timeForDistance - Math.abs(treeModel.getNodeHeight(closestRef) - treeModel.getNodeHeight(newTaxon))) / 2.0;
                     if (remainder > 0) {
                         insertHeight = Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)) + remainder;
-                        System.out.println("remainder > 0: " + insertHeight);
+                        System.out.println("remainder > 0 (" + remainder + "): " + insertHeight);
                         splitBranchChild = closestRef;
 
                         if (insertHeight >= treeModel.getNodeHeight(parent)) {
                             while (insertHeight >= treeModel.getNodeHeight(parent)) {
                                 if(treeModel.getParent(parent) == null){
-                                    // Use this insertHeight value in case parent doesn't have parent
-                                    // Otherwise, move up tree
+                                    //use this insertHeight value in case parent doesn't have parent (and we can't move up the tree)
                                     insertHeight = treeModel.getNodeHeight(splitBranchChild) + EPSILON * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(splitBranchChild));
                                     break;
                                 } else {
-                                    if ((insertHeight - treeModel.getNodeHeight(parent)) < MIN_DIST) {
-                                        boolean suitableBranch = false;
-                                        while (!suitableBranch) {
-                                            double parentBranchLength = treeModel.getNodeHeight(treeModel.getParent(parent)) - treeModel.getNodeHeight(parent);
-                                            if (parentBranchLength < MIN_DIST) {
-                                                //find another branch by moving upwards in the tree
-                                                splitBranchChild = parent;
-                                                parent = treeModel.getParent(splitBranchChild);
-                                            } else {
-                                                insertHeight = treeModel.getNodeHeight(parent) + MIN_DIST * MathUtils.nextDouble();
-                                                suitableBranch = true;
-                                            }
-                                        }
-                                        break;
-                                    } else {
-                                        splitBranchChild = parent;
-                                        parent = treeModel.getParent(splitBranchChild);
-                                    }
+                                    //otherwise move up in the tree
+                                    splitBranchChild = parent;
+                                    parent = treeModel.getParent(splitBranchChild);
                                 }
                             }
                         }
+
+                        //now that a suitable branch has been found, perform additional checks
+                        //parent of branch = parent; child of branch = splitBranchChild
+                        System.out.printf("parent height: %.25f \n", treeModel.getNodeHeight(parent));
+                        System.out.printf("child height: %.25f \n", treeModel.getNodeHeight(splitBranchChild));
+
+                        if (((treeModel.getNodeHeight(parent) - insertHeight) < MIN_DIST) && ((insertHeight - treeModel.getNodeHeight(splitBranchChild)) < MIN_DIST)) {
+                            throw new RuntimeException("No suitable branch found for sequence insertion (all branches < minimum branch length).");
+                        } else if ((treeModel.getNodeHeight(parent) - insertHeight) < MIN_DIST) {
+                            System.out.println("  insertion height too close to parent height");
+                            double newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (insertHeight - treeModel.getNodeHeight(splitBranchChild));
+                            while (((treeModel.getNodeHeight(parent) - newInsertHeight) < MIN_DIST) && (newInsertHeight - treeModel.getNodeHeight(splitBranchChild) < MIN_DIST)) {
+                                newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (insertHeight - treeModel.getNodeHeight(splitBranchChild));
+                            }
+                            System.out.println("  new insertion height = " + newInsertHeight);
+                            insertHeight = newInsertHeight;
+                        } else if ((insertHeight - treeModel.getNodeHeight(splitBranchChild)) < MIN_DIST) {
+                            System.out.println("  insertion height too close to child height");
+                            double newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (treeModel.getNodeHeight(parent) - insertHeight);
+                            while (((treeModel.getNodeHeight(parent) - newInsertHeight) < MIN_DIST) && (newInsertHeight - treeModel.getNodeHeight(splitBranchChild) < MIN_DIST)) {
+                                newInsertHeight = treeModel.getNodeHeight(splitBranchChild) + Math.abs(MathUtils.nextDouble()) * (treeModel.getNodeHeight(parent) - insertHeight);
+                            }
+                            System.out.println("  new insertion height = " + newInsertHeight);
+                            insertHeight = newInsertHeight;
+                        }
+
                     } else {
                         // Come up with better way to handle this?
                         insertHeight = EPSILON * (treeModel.getNodeHeight(parent) - Math.max(treeModel.getNodeHeight(closestRef), treeModel.getNodeHeight(newTaxon)));
@@ -624,10 +659,7 @@ public class CheckPointTreeModifier {
                                     suitableBranch = true;
                                 }
                             }
-                            //insertHeight = (treeModel.getNodeHeight(parent) + treeModel.getNodeHeight(treeModel.getParent(parent)))/2.0;
-                            //System.out.printf("new insertHeight: %.25f \n", insertHeight);
-                            //splitBranchChild = parent;
-                            //parent = treeModel.getParent(splitBranchChild);
+
                         }
 
                     }
@@ -635,6 +667,7 @@ public class CheckPointTreeModifier {
 
                 System.out.println("insert at height: " + insertHeight);
                 System.out.printf("parent height: %.25f \n", treeModel.getNodeHeight(parent));
+                System.out.printf("height difference = %.25f\n", (insertHeight - treeModel.getNodeHeight(parent)));
                 if (treeModel.getParent(parent) != null) {
                     System.out.printf("grandparent height: %.25f \n", treeModel.getNodeHeight(treeModel.getParent(parent)));
                 } else {

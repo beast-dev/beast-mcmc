@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 
@@ -70,6 +71,10 @@ public interface ContinuousTraitPartialsProvider {
 
     default boolean suppliesWishartStatistics() {
         return true;
+    }
+
+    default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        // Do nothing
     }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {

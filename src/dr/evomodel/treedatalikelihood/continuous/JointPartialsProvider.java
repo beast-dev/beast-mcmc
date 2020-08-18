@@ -1,5 +1,6 @@
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.inference.model.CompoundParameter;
 import dr.math.matrixAlgebra.WrappedMatrix;
@@ -200,10 +201,17 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     @Override
     public boolean suppliesWishartStatistics() {
         boolean suppliesStatistics = true;
-        for (ContinuousTraitPartialsProvider provider: providers) {
+        for (ContinuousTraitPartialsProvider provider : providers) {
             suppliesStatistics = suppliesStatistics && provider.suppliesWishartStatistics();
         }
         return suppliesStatistics;
+    }
+
+    @Override
+    public void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        for (ContinuousTraitPartialsProvider provider : providers) {
+            provider.addTreeAndRateModel(treeModel, rateTransformation);
+        }
     }
 
 

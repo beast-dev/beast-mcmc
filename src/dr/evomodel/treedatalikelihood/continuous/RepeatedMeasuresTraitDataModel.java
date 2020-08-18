@@ -270,9 +270,6 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         // Do nothing
     }
 
-    public void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
-        // Do nothing
-    }
 
     private static final boolean DEBUG = false;
 

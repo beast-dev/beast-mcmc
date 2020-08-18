@@ -162,9 +162,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             allowSingular = dataModel.getDefaultAllowSingular();
         }
 
-        if (dataModel instanceof RepeatedMeasuresTraitDataModel) { //TODO: find a way to let the dataModel handle this
-            ((RepeatedMeasuresTraitDataModel) dataModel).addTreeAndRateModel(treeModel, rateTransformation);
-        }
+        dataModel.addTreeAndRateModel(treeModel, rateTransformation);
 
         List<BranchRateModel> driftModels = AbstractMultivariateTraitLikelihood.parseDriftModels(xo, diffusionModel);
         List<BranchRateModel> optimalTraitsModels = AbstractMultivariateTraitLikelihood.parseOptimalValuesModels(xo, diffusionModel);

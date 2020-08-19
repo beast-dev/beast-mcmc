@@ -1,14 +1,51 @@
+/*
+ * NoUTurnOperator.java
+ *
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.operators.hmc;
 
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
+import dr.inference.operators.AdaptationMode;
+import dr.inference.operators.GeneralOperator;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Transform;
 
 import java.util.Arrays;
 
-public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator {
+/**
+ * @author Marc A. Suchard
+ * @author Zhenyu Zhang
+ */
+
+public class OldNoUTurnOperator extends HamiltonianMonteCarloOperator implements GeneralOperator, GibbsOperator {
+
+    private final int dim = gradientProvider.getDimension();
 
     class Options {
         private double logProbErrorTol = 100.0;
@@ -18,45 +55,57 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private final Options options = new Options();
 
-    public NoUTurnOperator(ReversibleHMCProvider hmcProvider,
-                           boolean adaptiveStepsize,
-                           double weight) {
-
-        this.hmcProvider = hmcProvider;
-        this.adaptiveStepsize = adaptiveStepsize;
-        setWeight(weight);
+    public OldNoUTurnOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider,
+                              Parameter parameter, Transform transform, Parameter mask,
+                              HamiltonianMonteCarloOperator.Options runtimeOptions,
+                              MassPreconditioner.Type preconditioningType,
+                              ReversibleHMCProvider reversibleHMCprovider) {
+        super(mode, weight, gradientProvider, parameter, transform, mask, runtimeOptions, preconditioningType);
+        this.reversibleHMCProvider = reversibleHMCprovider;
     }
+
+    @Override
+    protected InstabilityHandler getDefaultInstabilityHandler() {
+        return InstabilityHandler.IGNORE;
+    }
+
+    private StepSize stepSizeInformation;
 
     @Override
     public String getOperatorName() {
-        return "No-U-Turn Operator";
+        return "No-UTurn-Sampler operator";
     }
 
     @Override
-    public double doOperation() {
+    public double doOperation(Likelihood likelihood) {
 
-        final double[] initialPosition = hmcProvider.getInitialPosition();
+        if (shouldCheckGradient()) {
+            checkGradient(likelihood);
+        }
 
+        final double[] initialPosition = reversibleHMCProvider.getInitialPosition();
         if (stepSizeInformation == null) {
-            stepSizeInformation = findReasonableStepSize(initialPosition, hmcProvider.getStepSize());
+            stepSizeInformation = findReasonableStepSize(initialPosition, super.stepSize);
         }
 
         double[] position = takeOneStep(getCount() + 1, initialPosition);
 
-        hmcProvider.setParameter(position);
-        return 0;
+        reversibleHMCProvider.setParameter(position);
+
+        return 0.0;
     }
 
     private double[] takeOneStep(long m, double[] initialPosition) {
 
         double[] endPosition = Arrays.copyOf(initialPosition, initialPosition.length);
-        final WrappedVector initialMomentum = hmcProvider.drawMomentum();
+        final WrappedVector initialMomentum = mask(reversibleHMCProvider.drawMomentum(), mask);
 
-        final double initialJointDensity = hmcProvider.getJointProbability(initialMomentum);
+        final double initialJointDensity = getJointProbability(gradientProvider, initialMomentum);
 
         double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
 
         TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum.getBuffer(), 1, true);
+        // Trajectory of Hamiltonian dynamics endowed with a binary tree structure.
 
         int height = 0;
 
@@ -73,14 +122,13 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             }
         }
 
-        if (adaptiveStepsize) {
+        if (autoStepsize) {
             stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
         }
         return endPosition;
     }
 
-    private double[] updateTrajectoryTree(TreeState trajectoryTree, int depth, double logSliceU,
-                                          double initialJointDensity) {
+    private double[] updateTrajectoryTree(TreeState trajectoryTree, int depth, double logSliceU, double initialJointDensity) {
 
         double[] endPosition = null;
 
@@ -124,12 +172,12 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         //double[] position = Arrays.copyOf(inPosition, inPosition.length);
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
 
-        hmcProvider.setParameter(position.getBuffer());
+        reversibleHMCProvider.setParameter(position.getBuffer());
 
         // "one reversibleHMC integral
-        hmcProvider.reversiblePositionMomentumUpdate(position, momentum, direction, stepSize);
+        reversibleHMCProvider.reversiblePositionMomentumUpdate(position, momentum, direction, stepSize);
 
-        double logJointProbAfter = hmcProvider.getJointProbability(momentum);
+        double logJointProbAfter = getJointProbability(gradientProvider, momentum);
 
         final int numNodes = (logSliceU <= logJointProbAfter ? 1 : 0);
 
@@ -139,10 +187,9 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         final double acceptProb = Math.min(1.0, Math.exp(logJointProbAfter - initialJointDensity));
         final int numAcceptProbStates = 1;
 
-        hmcProvider.setParameter(inPosition);
+        reversibleHMCProvider.setParameter(inPosition);
 
-        return new TreeState(position.getBuffer(), momentum.getBuffer(), numNodes, flagContinue, acceptProb,
-                numAcceptProbStates);
+        return new TreeState(position.getBuffer(), momentum.getBuffer(), numNodes, flagContinue, acceptProb, numAcceptProbStates);
     }
 
     private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
@@ -163,11 +210,6 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         return subtree;
     }
 
-    private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {
-        return computeStopCriterion(flagContinue,
-                state.getPosition(1), state.getPosition(-1),
-                state.getMomentum(1), state.getMomentum(-1));
-    }
 
     private StepSize findReasonableStepSize(double[] initialPosition, double forcedInitialStepSize) {
 
@@ -175,17 +217,21 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             return new StepSize(forcedInitialStepSize);
         } else {
             double stepSize = 0.1;
-
-            WrappedVector momentum = hmcProvider.drawMomentum();
+//        final double[] mass = massProvider.getMass();
+            WrappedVector momentum = preconditioning.drawInitialMomentum();
             int count = 1;
-            int dim = initialPosition.length;
+
             WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(initialPosition, dim));
 
-            double probBefore = hmcProvider.getJointProbability(momentum);
+            double probBefore = getJointProbability(gradientProvider, momentum);
+            reversibleHMCProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
+//            try {
+//                doLeap(position, momentum, stepSize);
+//            } catch (NumericInstabilityException e) {
+//                handleInstability();
+//            }
 
-            hmcProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
-
-            double probAfter = hmcProvider.getJointProbability(momentum);
+            double probAfter = getJointProbability(gradientProvider, momentum);
 
             double a = ((probAfter - probBefore) > Math.log(0.5) ? 1 : -1);
 
@@ -194,9 +240,15 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
 
                 probBefore = probAfter;
-                hmcProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
+                reversibleHMCProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
+                //"one frog jump!"
+//                try {
+//                    doLeap(position, momentum, stepSize);
+//                } catch (NumericInstabilityException e) {
+//                    handleInstability();
+//                }
 
-                probAfter = hmcProvider.getJointProbability(momentum);
+                probAfter = getJointProbability(gradientProvider, momentum);
                 probRatio = Math.exp(probAfter - probBefore);
 
                 stepSize = Math.pow(2, a) * stepSize;
@@ -207,11 +259,16 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
                             "iterations");
                 }
             }
-            hmcProvider.setParameter(initialPosition);
+            reversibleHMCProvider.setParameter(initialPosition);
             return new StepSize(stepSize);
         }
     }
 
+    private static boolean computeStopCriterion(boolean flagContinue, TreeState state) {
+        return computeStopCriterion(flagContinue,
+                state.getPosition(1), state.getPosition(-1),
+                state.getMomentum(1), state.getMomentum(-1));
+    }
 
     private static boolean computeStopCriterion(boolean flagContinue,
                                                 double[] positionPlus, double[] positionMinus,
@@ -247,6 +304,15 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         }
 
         return result;
+    }
+
+    private double getJointProbability(GradientWrtParameterProvider gradientProvider, WrappedVector momentum) {
+
+        assert (gradientProvider != null);
+        assert (momentum != null);
+
+        return gradientProvider.getLikelihood().getLogLikelihood() - reversibleHMCProvider.getKineticEnergy(momentum)
+                - reversibleHMCProvider.getParameterLogJacobian();
     }
 
     private class TreeState {
@@ -339,9 +405,9 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         private int numAcceptProbStates;
     }
 
+    private ReversibleHMCProvider reversibleHMCProvider;
 
-    private ReversibleHMCProvider hmcProvider;
-    private StepSize stepSizeInformation;
-    private boolean adaptiveStepsize;
+    private boolean autoStepsize = false; //todo: make a xml choice.
 }
+
 

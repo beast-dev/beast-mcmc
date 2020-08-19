@@ -27,13 +27,14 @@ package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
-import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inference.operators.hmc.OldNoUTurnOperator;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -123,6 +124,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         Transform transform = parseTransform(xo);
 
+        ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
+
         boolean dimensionMismatch = derivative.getDimension() != parameter.getDimension();
         if (transform != null && transform instanceof Transform.MultivariableTransform) {
             dimensionMismatch = ((Transform.MultivariableTransform) transform).getDimension() != parameter.getDimension();
@@ -158,21 +161,21 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 targetAcceptanceProbability
         );
 
-        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode);
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode, reversibleHMCprovider);
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
                                                     HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
-                                                    int runMode) {
+                                                    int runMode, ReversibleHMCProvider reversibleHMCprovider) {
         if (runMode == 0) {
             return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                     parameter, transform, mask,
                     runtimeOptions, preconditioningType);
         } else {
-            return new NoUTurnOperator(adaptationMode, weight, derivative,
+            return new OldNoUTurnOperator(adaptationMode, weight, derivative,
                     parameter,transform, mask,
-                    runtimeOptions, preconditioningType);
+                    runtimeOptions, preconditioningType, reversibleHMCprovider);
         }
 
     }

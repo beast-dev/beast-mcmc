@@ -58,7 +58,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     }
 
     @Override
-    double integrateTrajectory(WrappedVector position) {
+    double integrateTrajectory(WrappedVector position, WrappedVector momentum) {
 
         WrappedVector velocity = drawInitialVelocity();
         WrappedVector gradient = getInitialGradient();
@@ -66,7 +66,10 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
 
         BounceState bounceState = new BounceState(drawTotalTravelTime());
 
+        initializeNumEvent();
+
         while (bounceState.remainingTime > 0) {
+
             if (bounceState.type == Type.BOUNDARY) {
                 updateAction(action, velocity, bounceState.index);
             } else {
@@ -87,6 +90,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
                     bounceState.remainingTime, bounceTime, travelInfo, refreshTime,
                     position, velocity, gradient, action
             );
+
+            recordOneMoreEvent();
         }
         storedVelocity = velocity;
         return 0.0;
@@ -187,7 +192,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     }
 
     private double getRefreshTime() {
-        return MathUtils.nextExponential(1) / refreshmentRate;
+        return refreshmentRate > 0 ? MathUtils.nextExponential(1) / refreshmentRate : Double.POSITIVE_INFINITY;
     }
 
     @SuppressWarnings("all")
@@ -244,5 +249,5 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
         return columns;
     }
 
-    private final double refreshmentRate = 1.4;
+    private final double refreshmentRate = 0.0;
 }

@@ -116,6 +116,9 @@ public class PartiallyMissingInformation {
     }
 
     private boolean isObservationMissing(final int index, final int dim) {
+        if (rawMissingIndicators == null) {
+            return false;
+        }
         final int id = index * dimTrait + dim;
         return rawMissingIndicators[id];
     }

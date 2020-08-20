@@ -101,7 +101,7 @@ public class LogisticGrowthModel extends DemographicModel implements Citable {
             logisticGrowth.setDoublingTime(doublingTime);
         }
 
-        logisticGrowth.setTime50(shapeParameter.getParameterValue(0));
+        logisticGrowth.setTime50(shapeParameter.getParameterValue(0) - getTimeOffset());
 
         return logisticGrowth;
     }

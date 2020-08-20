@@ -107,7 +107,7 @@ public class ConstExpConstModel extends DemographicModel implements Citable {
 
         constExpConst.setEpochTime(epochParameter.getParameterValue(0));
         constExpConst.setN0(N0Parameter.getParameterValue(0));
-        constExpConst.setTime1(timeParameter.getParameterValue(0));
+        constExpConst.setTime1(timeParameter.getParameterValue(0) - getTimeOffset());
 
         if (N1Parameter != null) {
             constExpConst.setN1(N1Parameter.getParameterValue(0));

@@ -97,7 +97,7 @@ public class CataclysmicDemographicModel extends DemographicModel implements Cit
     public DemographicFunction getDemographicFunction() {
         cataclysm.setN0(N0Parameter.getParameterValue(0));
         cataclysm.setGrowthRate(growthRateParameter.getParameterValue(0));
-        cataclysm.setCataclysmTime(timeParameter.getParameterValue(0));
+        cataclysm.setCataclysmTime(timeParameter.getParameterValue(0) - getTimeOffset());
 
         // Doesn't this...
         /*

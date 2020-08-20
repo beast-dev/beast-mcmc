@@ -28,6 +28,8 @@ package dr.inference.operators.hmc;
 import dr.evomodel.operators.NativeZigZag;
 import dr.evomodel.operators.NativeZigZagOptions;
 import dr.evomodel.operators.NativeZigZagWrapper;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -69,6 +71,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         this.runtimeOptions = runtimeOptions;
         this.preconditioning = setupPreconditioning();
+        this.meanVector = getMeanVector(gradientProvider);
 
         setWeight(weight);
         this.missingDataMask = getMissingDataMask();
@@ -218,8 +221,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     WrappedVector getPrecisionProduct(ReadableVector velocity) {
 
-        setParameter(velocity, parameter);
-
+        WrappedVector velocityPlusMean = new WrappedVector.Raw(new double[velocity.getDim()]);
+        for (int i = 0; i < velocityPlusMean.getDim(); i++) {
+            velocityPlusMean.set(i, velocity.get(i) + meanVector[i]);
+        }
+        setParameter(velocityPlusMean, parameter);
         double[] product = productProvider.getProduct(parameter);
 
         if (mask != null) {
@@ -326,6 +332,33 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         numEvents++;
     }
 
+    double[] getMeanVector(GradientWrtParameterProvider gradientProvider) {
+
+        double[] mean = new double[parameter.getDimension()];
+
+        if (gradientProvider.getLikelihood() instanceof TreeDataLikelihood) {
+
+            TreeDataLikelihood likelihood = (TreeDataLikelihood) gradientProvider.getLikelihood();
+            ContinuousDataLikelihoodDelegate likelihoodDelegate =
+                    (ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate();
+            double[] rootMean = likelihoodDelegate.getRootPrior().getMean();
+            int dimTrait = likelihoodDelegate.getTraitDim();
+            int taxonCount = parameter.getDimension() / dimTrait;
+
+            int index = 0;
+            for (int taxon = 0; taxon < taxonCount; ++taxon) {
+                for (int trait = 0; trait < dimTrait; ++trait) {
+                    mean[index + trait] = rootMean[trait];
+                }
+                index += dimTrait;
+            }
+
+            return mean;
+        } else {
+            throw new RuntimeException("Not implemented!");
+        }
+    }
+
     public static class Options {
 
         final double randomTimeWidth;
@@ -409,6 +442,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     int numEvents;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
+    private final double[] meanVector;
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();

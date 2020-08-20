@@ -106,13 +106,12 @@ public class ContinuousTraitTest extends TraceCorrelationAssert {
         dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0});
         traitParameter = new CompoundParameter("trait", dataTraits);
 
-        List<Integer> missingIndices = new ArrayList<Integer>();
+        boolean[] missingIndicators = new boolean[traitParameter.getDimension()];
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(3);
-        missingIndices.add(4);
-        missingIndices.add(5);
-        missingIndices.add(7);
-
+        missingIndicators[3] = true;
+        missingIndicators[4] = true;
+        missingIndicators[5] = true;
+        missingIndicators[7] = true;
         //// Standard Model //// ***************************************************************************************
 
         // Diffusion
@@ -139,7 +138,7 @@ public class ContinuousTraitTest extends TraceCorrelationAssert {
         // Data Model
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
-                missingIndices, true,
+                missingIndicators, true,
                 dimTrait, precisionType);
 
         //// Factor Model //// *****************************************************************************************
@@ -168,15 +167,16 @@ public class ContinuousTraitTest extends TraceCorrelationAssert {
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0, null);
+                factorPrecisionParameters, 0.0, null,
+                IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
 
         //// Integrated Process //// ***********************************************************************************
         // Data Model
         dataModelIntegrated = new IntegratedProcessTraitDataModel("dataModelIntegrated",
                 traitParameter,
-                missingIndices, true,
+                missingIndicators, true,
                 dimTrait, precisionType);
 
         // Root prior

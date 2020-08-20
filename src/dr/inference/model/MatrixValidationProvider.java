@@ -92,8 +92,8 @@ public class MatrixValidationProvider implements CrossValidationProvider {
 
             boolean logSum = xo.getAttribute(LOG_SUM, false);
 
-            if (logSum) return new CrossValidatorSum(provider);
-            return new CrossValidator(provider);
+            if (logSum) return new CrossValidatorSum(provider, ValidationType.SQUARED_ERROR);
+            return new CrossValidator(provider, ValidationType.SQUARED_ERROR);
 
         }
 

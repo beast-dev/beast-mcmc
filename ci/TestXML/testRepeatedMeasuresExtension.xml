@@ -190,12 +190,16 @@
 <!--        <traitValidationProvider idref="traitValidationProvider"/>-->
 <!--    </report>-->
 
+    <cachedReport id="preReport">
+        <traitValidationProvider idref="traitValidationProvider"/>
+    </cachedReport>
+
     <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true" charactersToStrip="\[\],">
         <message>
             Check trait simulation mean
         </message>
         <actual regex="(?s)Mean:\s*(.*?)\n">
-            <traitValidationProvider idref="traitValidationProvider"/>
+            <traitValidationProvider idref="preReport"/>
         </actual>
         <expected>
             0.314994, 5.88288, 5.94891, 2.26695
@@ -207,7 +211,7 @@
             Check trait simulation covariance
         </message>
         <actual regex="(?s)Covariance:\s*(.*)">
-            <traitValidationProvider idref="traitValidationProvider"/>
+            <traitValidationProvider idref="preReport"/>
         </actual>
         <expected>
             1.1813     0.0273852  0.0568626  0.0245222
@@ -252,6 +256,10 @@
 <!--        </log>-->
     </mcmc>
 
+    <cachedReport id="postReport">
+        <traitValidationProvider idref="traitValidationProvider"/>
+    </cachedReport>
+
 <!--    <report>-->
 <!--        Inferred trait mean and variance:-->
 <!--        <traitValidationProvider idref="traitValidationProvider"/>-->
@@ -262,7 +270,7 @@
             Check new trait simulation mean
         </message>
         <actual regex="(?s)Mean:\s*(.*?)\n">
-            <traitValidationProvider idref="traitValidationProvider"/>
+            <traitValidationProvider idref="postReport"/>
         </actual>
         <expected>
             0.0817654, 6.17991, 7.0942, 1.06251
@@ -274,7 +282,7 @@
             Check new trait simulation covariance
         </message>
         <actual regex="(?s)Covariance:\s*(.*)">
-            <traitValidationProvider idref="traitValidationProvider"/>
+            <traitValidationProvider idref="postReport"/>
         </actual>
         <expected>
             1.63446     0.0345087   1.01502  -1.00054

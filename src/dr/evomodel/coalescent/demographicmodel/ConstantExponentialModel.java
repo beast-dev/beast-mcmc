@@ -89,7 +89,7 @@ public class ConstantExponentialModel extends DemographicModel implements Citabl
 
     public DemographicFunction getDemographicFunction() {
 
-        double time = timeParameter.getParameterValue(0);
+        double time = timeParameter.getParameterValue(0) - getTimeOffset();
         double N0 = N0Parameter.getParameterValue(0);
         double growthRate = growthRateParameter.getParameterValue(0);
 

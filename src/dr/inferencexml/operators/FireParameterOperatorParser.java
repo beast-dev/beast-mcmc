@@ -51,6 +51,9 @@ public class FireParameterOperatorParser extends AbstractXMLObjectParser {
         double[] values = null;
         if (xo.hasAttribute(VALUE)) {
             values = xo.getDoubleArrayAttribute(VALUE);
+            System.out.println("\nWarning: when the operator " + FIRE_PARAMETER_OPERATOR + " is given a \"" + VALUE +
+                    "\" attribute, the resulting MCMC run will NOT result in a valid draw from the posterior. " +
+                    "Only set the \"" + VALUE + "\" attribute for debugging purposes.\n");
         }
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);

@@ -33,6 +33,7 @@ import dr.xml.*;
 public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BAYESIAN_BRIDGE = "bayesianBridge";
+
     public static final String GLOBAL_SCALE = "globalScale";
     public static final String LOCAL_SCALE = "localScale";
     public static final String EXPONENT = "exponent";

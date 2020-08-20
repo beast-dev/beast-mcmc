@@ -50,7 +50,6 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     private static final String NORMAL_EXTENSION = "normalExtension";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
-    private static final String TREE_TRAIT_NAME = "treeTraitName";
 
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, Distribution prior,
                                              double weight) {
@@ -230,17 +229,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
             } else {
 
-                XMLObject cxo = xo.getChild(NORMAL_EXTENSION);
-
-                ModelExtensionProvider.NormalExtensionProvider dataModel = (ModelExtensionProvider.NormalExtensionProvider)
-                        cxo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
-
-                TreeDataLikelihood likelihood = (TreeDataLikelihood) cxo.getChild(TreeDataLikelihood.class);
-
-                String treeTraitName = cxo.getStringAttribute(TREE_TRAIT_NAME);
-
-                gammaGibbsProvider = new GammaGibbsProvider.NormalExtensionGibbsProvider(
-                        dataModel, likelihood, treeTraitName);
+                gammaGibbsProvider = (GammaGibbsProvider) xo.getChild(GammaGibbsProvider.class);
             }
 
             return new NormalGammaPrecisionGibbsOperator(gammaGibbsProvider,
@@ -272,12 +261,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                                         new ElementRule(DistributionLikelihood.class)
                                 }),
 
-                        new ElementRule(NORMAL_EXTENSION,
-                                new XMLSyntaxRule[]{
-                                        new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class),
-                                        new ElementRule(TreeDataLikelihood.class),
-                                        AttributeRule.newStringRule(TREE_TRAIT_NAME)
-                                })
+                        new ElementRule(GammaGibbsProvider.class)
 
                 ),
                 new ElementRule(PRIOR,

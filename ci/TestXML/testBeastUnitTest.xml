@@ -179,11 +179,6 @@
         <traitDataLikelihood idref="traitLikelihood"/>
     </repeatedMeasuresTraitLogger>
 
-    <report>
-        With likelihood =
-        <traitDataLikelihood idref="traitLikelihood"/>
-    </report>
-
     <!--<mcmc id="mcmc" chainLength="1" autoOptimize="true">-->
         <!--<posterior id="posterior">-->
             <!--<prior id="prior">-->
@@ -223,12 +218,21 @@
         <!--</log>-->
     <!--</mcmc>-->
 
+    <cachedReport id="traitLikelihoodReport"> <!-- Creates the report once then caches it for use in later unit tests. This isn't necessary but reduces run time if getReport() is expensive. -->
+        <traitDataLikelihood idref="traitLikelihood"/>
+    </cachedReport>
+
+    <report>
+        With likelihood =
+        <cachedReport idref="traitLikelihoodReport"/>
+    </report>
+
     <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="{}">
         <message>
             Check trait variance
         </message>
         <actual regex="(?s)Trait variance:\s*(.*?)\n\n">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <cachedReport idref="traitLikelihoodReport"/> <!-- uses the already existing report from <report/> above. -->
         </actual>
         <expected>
             1.0909090909090908  -6.973762717494701E-18  0.18181818181818182
@@ -242,7 +246,7 @@
             Check data
         </message>
         <actual regex="datum\s*:(.*?)\n">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <traitDataLikelihood idref="traitLikelihood"/> <!-- re-creates the report by calling treeDataLikelihood.getReport() again. -->
         </actual>
         <expected>
             10 1 2 0 -20 3 4 100 0
@@ -254,7 +258,7 @@
             Check log likelihood of observed data
         </message>
         <actual regex="logDatumLikelihood:\s+(.*)\n">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <cachedReport idref="traitLikelihoodReport"/>
         </actual>
         <expected>
             -3337.6458
@@ -266,7 +270,7 @@
             Check log likelihood of observed data
         </message>
         <actual regex="logDatumLikelihood:\s+(.*)\n">
-            <traitDataLikelihood idref="traitLikelihood"/>
+            <cachedReport idref="traitLikelihoodReport"/>
         </actual>
         <expected>
             -3338

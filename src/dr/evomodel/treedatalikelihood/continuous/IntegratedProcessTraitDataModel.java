@@ -44,19 +44,19 @@ public class IntegratedProcessTraitDataModel extends
 
     public IntegratedProcessTraitDataModel(String name,
                                            CompoundParameter parameter,
-                                           List<Integer> missingIndices,
+                                           boolean[] missingIndicators,
                                            boolean useMissingIndices,
                                            final int dimTrait) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, PrecisionType.FULL);
     }
 
     public IntegratedProcessTraitDataModel(String name,
                                            CompoundParameter parameter,
-                                           List<Integer> missingIndices,
+                                           boolean[] missingIndicators,
                                            boolean useMissingIndices,
                                            final int dimTrait,
                                            PrecisionType precisionType) {
-        this(name, parameter, missingIndices, useMissingIndices, dimTrait);
+        this(name, parameter, missingIndicators, useMissingIndices, dimTrait);
         assert precisionType == PrecisionType.FULL : "Integrated Process is only implemented for full precision type.";
     }
 
@@ -90,6 +90,10 @@ public class IntegratedProcessTraitDataModel extends
         int effDimOffset = precisionType.getEffectiveDimensionOffset(dimTrait);
         int effDim = (int) Math.round(partial[effDimOffset]);
         precisionType.fillEffDimInPartials(partialDouble, 0, effDim, dimTraitDouble);
+
+        int detDimOffset = precisionType.getDeterminantOffset(dimTrait);
+        double det = partial[detDimOffset];
+        precisionType.fillDeterminantInPartials(partialDouble, 0, det, dimTraitDouble);
 
 
         return partialDouble;

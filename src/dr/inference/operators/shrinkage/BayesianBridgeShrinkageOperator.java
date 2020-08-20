@@ -47,7 +47,9 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
     @Override
     public double doOperation() {
 
-        sampleGlobalScale(); // Order matters
+        if (globalScalePrior != null) {
+            sampleGlobalScale(); // Order matters
+        }
 
         if (localScale != null) {
             sampleLocalScale();

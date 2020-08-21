@@ -98,9 +98,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			lnL = calculateLogLikelihood(popFunction);
 
 		} else {
-			DemographicFunction demoFunction = demographicModel.getDemographicFunction();
-
-			lnL = calculateLogLikelihood(demoFunction);
+			lnL = calculateLogLikelihood(demographicModel);
 		}
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
 			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() + " is " + Double.toString(lnL));
@@ -113,7 +111,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	 * Calculates the log likelihood of this set of coalescent intervals,
 	 * given a demographic model.
 	 */
-	protected double calculateLogLikelihood(DemographicFunction demographicFunction) {
+	protected double calculateLogLikelihood(DemographicModel demographicModel) {
 
 		double logL = 0.0;
 
@@ -125,7 +123,12 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			return 0.0;
 		}
 
-		double startTime = intervals.getStartTime();
+		double absoluteStartTime = intervals.getStartTime();
+		demographicModel.setTimeOffset(absoluteStartTime);
+
+		DemographicFunction demographicFunction = demographicModel.getDemographicFunction();
+
+		double startTime = 0;
 
 		for (int i = 0; i < n; i++) {
 
@@ -192,7 +195,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 				return Double.NEGATIVE_INFINITY;
 			}
 			final int lineageCount = intervals.getLineageCount(i);
-
 
 			final double kChoose2 = Binomial.choose2(lineageCount);
 

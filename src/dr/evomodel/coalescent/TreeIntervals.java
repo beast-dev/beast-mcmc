@@ -65,13 +65,13 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
             includedLeafSet = TreeUtils.getLeavesForTaxa(tree, includeSubtree);
         }
 
-        if (excludeSubtrees != null) {
+        if (excludeSubtrees != null && excludeSubtrees.size() > 0) {
             excludedLeafSets = new Set[excludeSubtrees.size()];
             for (int i = 0; i < excludeSubtrees.size(); i++) {
                 excludedLeafSets[i] = TreeUtils.getLeavesForTaxa(tree, excludeSubtrees.get(i));
             }
         } else {
-            excludedLeafSets = new Set[0];
+            excludedLeafSets = null;
         }
 
         if (tree instanceof TreeModel) {
@@ -242,7 +242,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
 
     @Override
     public double getStartTime() {
-        return startTime;
+        return intervals.getStartTime();
     }
 
     @Override
@@ -367,8 +367,6 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
     private Tree tree = null;
     private Set<String> includedLeafSet = null;
     private Set[] excludedLeafSets = null;
-
-    private double startTime;
 
     /**
      * The intervals.

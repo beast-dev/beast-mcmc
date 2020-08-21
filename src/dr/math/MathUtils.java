@@ -89,11 +89,17 @@ public class MathUtils {
 			}
 
 		}
-		for (int i = 0; i < pdf.length; i++) {
-			System.err.println(i + "\t" + pdf[i]);
+
+		// fallen through so throw error...
+		StringBuilder sb = new StringBuilder("pdf=[");
+		sb.append(pdf[0]);
+		for (int i = 1; i < pdf.length; i++) {
+			sb.append(",");
+			sb.append(pdf[i]);
 		}
+		sb.append("]");
 		throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
-				"distribution, or all zeroes?");
+				"distribution, or all zeroes? " + sb.toString());
 	}
 
 	/**

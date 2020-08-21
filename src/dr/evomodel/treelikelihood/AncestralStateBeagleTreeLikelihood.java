@@ -25,7 +25,6 @@
 
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.datatype.HiddenCodons;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
@@ -53,7 +52,7 @@ import java.util.Set;
  */
 
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider, AncestralStateTraitProvider {
-
+    private static final boolean CONDITIONAL_PROBABILITIES_IN_LOG_SPACE = true;
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
 //                                              BranchRateModel branchRateModel, boolean useAmbiguities,
@@ -235,9 +234,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             }
             return choice;
         } else {
+            if(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE){
+                return MathUtils.randomChoiceLogPDF(measure);
+            }
             return MathUtils.randomChoicePDF(measure);
         }
     }
+
 
     public void makeDirty() {
         super.makeDirty();
@@ -423,13 +426,19 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     }
 
                     // Sample root character state
-                    int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
-                    System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
+                    int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount + j * stateCount;
+
 
                     double[] frequencies = substitutionModelDelegate.getRootStateFrequencies(); // TODO May have more than one set of frequencies
+
                     for (int i = 0; i < stateCount; i++) {
-                        conditionalProbabilities[i] *= frequencies[i];
+                         if (CONDITIONAL_PROBABILITIES_IN_LOG_SPACE) {
+                             conditionalProbabilities[i] = Math.log(partials[partialsIndex + i]) + Math.log(frequencies[i]);
+                         } else {
+                             conditionalProbabilities[i] = partials[partialsIndex + i] * frequencies[i];
+                         }
                     }
+
                     try {
                         state[j] = drawChoice(conditionalProbabilities);
                     } catch (Error e) {
@@ -472,9 +481,16 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int matrixIndex = category * stateCount * stateCount;
                     int partialIndex = category * stateCount * patternCount;
 
-                    for (int i = 0; i < stateCount; i++)
-                        conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
-                                * probabilities[matrixIndex + parentIndex + i];
+                    for (int i = 0; i < stateCount; i++) {
+                        if (CONDITIONAL_PROBABILITIES_IN_LOG_SPACE) {
+                            conditionalProbabilities[i] = Math.log(partialLikelihood[partialIndex + childIndex + i])
+                                    + Math.log(probabilities[matrixIndex + parentIndex + i]);
+                        } else {
+                            conditionalProbabilities[i] = partialLikelihood[partialIndex + childIndex + i]
+                                    * probabilities[matrixIndex + parentIndex + i];
+                        }
+
+                    }
 
                     state[j] = drawChoice(conditionalProbabilities);
                     reconstructedStates[nodeNum][j] = state[j];
@@ -508,9 +524,13 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int category = rateCategory == null ? 0 : rateCategory[j];
                     int matrixIndex = category * stateCount * stateCount;
 
-                    System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
-                    for (int k = 0; k < stateCount; ++k) {
-                        conditionalProbabilities[k] *= partials[j * stateCount + k];
+                    int probabilityIndex = parentIndex + matrixIndex;
+                    for (int k = 0; k < stateCount; k++) {
+                        if(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE){
+                            conditionalProbabilities[k] = Math.log(probabilities[probabilityIndex + k])+ Math.log(partials[j * stateCount + k]);
+                        }else{
+                            conditionalProbabilities[k] = probabilities[probabilityIndex + k]* partials[j * stateCount + k];
+                        }
                     }
                     reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
 
@@ -548,6 +568,12 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                 }
                             }
                         }
+
+                        if (CONDITIONAL_PROBABILITIES_IN_LOG_SPACE) {
+                            for (int k = 0; k < stateCount; k++) {
+                                conditionalProbabilities[k] = Math.log(conditionalProbabilities[k]);
+                            }
+                        }
                         reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
                     }
 
@@ -561,7 +587,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     }
                 }
             }
-
             hookCalculation(tree, parent, node, parentState, reconstructedStates[nodeNum], null, rateCategory);
         }
     }

@@ -352,11 +352,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 }
                 index += dimTrait;
             }
-
-            return mean;
-        } else {
-            throw new RuntimeException("Not implemented!");
         }
+        return mean;
     }
 
     public static class Options {

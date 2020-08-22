@@ -281,7 +281,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     final WrappedVector drawInitialMomentum() {
-
+        
+        // Definition of "mass matrix" is not standardized for non-Gaussian momentum.
+        // We choose mass_i = var(momentum_i) = mean(|momentum_i|)^2 so that the mass 
+        // can be tuned in a manner analogous to the Gaussian momentum case --- it is
+        // reasonable to tune $mass_i^{-1} = var(position_i) since |velocity_i| = mass_i^{-1/2}.
+        
         ReadableVector mass = preconditioning.mass;
         double[] momentum = new double[mass.getDim()];
 

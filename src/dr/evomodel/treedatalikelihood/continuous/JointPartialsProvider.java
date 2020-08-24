@@ -102,6 +102,9 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     @Override
     public void setTipTraitName(String name) {
         tipTraitName = name;
+        for (ContinuousTraitPartialsProvider provider: providers) {
+            provider.setTipTraitName(name);
+        }
     }
 
     @Override

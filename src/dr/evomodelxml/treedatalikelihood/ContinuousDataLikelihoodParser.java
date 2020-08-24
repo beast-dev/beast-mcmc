@@ -36,10 +36,7 @@ import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
-import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
+import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -239,6 +236,13 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                         traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 treeDataLikelihood.addTraits(new ProcessSimulation(treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
+                int[] partitionDimensions = dataModel.getPartitionDimensions();
+                if (partitionDimensions != null) {
+                    PartitionedTreeTraitProvider partitionedProvider =
+                            new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
+                    treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());
+                }
+
 
 //                String partialTraitName = getPartiallyMissingTraitName(traitName);
 //

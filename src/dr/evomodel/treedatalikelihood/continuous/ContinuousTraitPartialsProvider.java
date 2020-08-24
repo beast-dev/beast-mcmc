@@ -77,6 +77,8 @@ public interface ContinuousTraitPartialsProvider {
         return true;
     }
 
+    default int[] getPartitionDimensions() { return null;}
+
     default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
         // Do nothing
     }

@@ -66,6 +66,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final PrecisionType precisionType = PrecisionType.FULL;
     private boolean[] missingTraitIndicators = null;
 
+    private String tipTraitName;
+
 
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
@@ -166,6 +168,16 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     public int getTraitDimension() {
         return numFactors;
     }  // Returns dimension of latent factors
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
+    }
 
     @Override
     public PrecisionType getPrecisionType() {

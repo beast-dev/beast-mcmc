@@ -44,6 +44,8 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     private final boolean[] missingIndicators;
 
+    protected String tipTraitName = null;
+
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
                                     boolean[] missingIndicators,
@@ -75,6 +77,16 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     @Override
     public int getTraitDimension() {
         return dimTrait;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
     }
 
     @Override

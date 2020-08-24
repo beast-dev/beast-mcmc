@@ -33,6 +33,8 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
     private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes (make sure they're all the same)
 
+    private String tipTraitName;
+
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         this.name = name;
         this.providers = providers;
@@ -90,6 +92,16 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     @Override
     public int getTraitDimension() {
         return traitDim;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
     }
 
     @Override

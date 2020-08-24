@@ -44,6 +44,10 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitDimension();
 
+    String getTipTraitName();
+
+    void setTipTraitName(String name);
+
     default int getDataDimension() {
         return getTraitDimension();
     }

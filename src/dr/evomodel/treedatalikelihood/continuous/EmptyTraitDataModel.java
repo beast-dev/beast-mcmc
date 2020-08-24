@@ -69,6 +69,16 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
+    public String getTipTraitName() {
+        return null;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        // do nothing
+    }
+
+    @Override
     public PrecisionType getPrecisionType() {
         return precisionType;
     }

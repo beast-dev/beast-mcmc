@@ -47,7 +47,6 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
     public static final String OPERATOR_NAME = "normalGammaPrecisionGibbsOperator";
     public static final String LIKELIHOOD = "likelihood";
-    private static final String NORMAL_EXTENSION = "normalExtension";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
 

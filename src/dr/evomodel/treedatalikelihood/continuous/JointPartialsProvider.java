@@ -2,7 +2,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.inference.model.CompoundParameter;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.xml.*;
@@ -18,7 +18,7 @@ import static dr.math.matrixAlgebra.WrappedMatrix.Utils.wrapBlockDiagonalMatrix;
  * @author Marc A. Suchard
  */
 
-public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
+public class JointPartialsProvider extends AbstractModel implements ContinuousTraitPartialsProvider {
 
     private final String name;
     private final ContinuousTraitPartialsProvider[] providers;
@@ -36,6 +36,7 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     private String tipTraitName;
 
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
+        super(name);
         this.name = name;
         this.providers = providers;
 
@@ -54,6 +55,12 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
         this.defaultAllowSingular = setDefaultAllowSingular();
         this.computeDeterminant = defaultAllowSingular; // TODO: not perfect behavior, should be based on actual value of `allowSingular`
+
+        for (ContinuousTraitPartialsProvider provider : providers) {
+            if (provider instanceof Model) {
+                addModel((Model) provider);
+            }
+        }
     }
 
 
@@ -205,8 +212,28 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public String getModelName() {
-        return name;
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged(); // sub-providers should handle everything else
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        // no variables
+    }
+
+    @Override
+    protected void storeState() {
+        // nothing to store
+    }
+
+    @Override
+    protected void restoreState() {
+        // nothing to restore
+    }
+
+    @Override
+    protected void acceptState() {
+        // nothing to do
     }
 
     @Override

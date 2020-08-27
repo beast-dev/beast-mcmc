@@ -45,11 +45,11 @@ public class TreeScaledRepeatedMeasuresTraitDataModel extends RepeatedMeasuresTr
 
     public TreeScaledRepeatedMeasuresTraitDataModel(String name,
                                                     CompoundParameter parameter,
-                                                    List<Integer> missingIndices,
+                                                    boolean[] missingIndicators,
                                                     boolean useMissingIndices,
                                                     final int dimTrait,
                                                     MatrixParameterInterface samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, samplingPrecision);
+        super(name, parameter, missingIndicators, useMissingIndices, dimTrait, samplingPrecision);
     }
 
     @Override

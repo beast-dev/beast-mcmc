@@ -30,8 +30,6 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -777,13 +775,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-            String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
-            traitName = returnValue.traitName;
+            List<Integer> missingIndices = returnValue.getMissingIndices();
+            String traitName = returnValue.traitName;
 
             /* TODO Add partially integrated traits here */
 
@@ -904,7 +901,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                         scaleByTime, useTreeLength,
                                         rateModel, null, optimalValues, strengthOfSelection,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, restrictedPartialsList,pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                             }
                         } else {
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -929,7 +926,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices,
+                        traitParameter.getDimension());
             }
 
             if (xo.hasChildNamed(CHECK)) {

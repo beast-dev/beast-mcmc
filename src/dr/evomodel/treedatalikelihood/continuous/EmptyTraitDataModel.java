@@ -54,13 +54,29 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public boolean bufferTips() { return true; } // TODO maybe should be false
+    public boolean bufferTips() {
+        return true;
+    } // TODO maybe should be false
 
     @Override
-    public int getTraitCount() {  return 1; }
+    public int getTraitCount() {
+        return 1;
+    }
 
     @Override
-    public int getTraitDimension() { return dimTrait; }
+    public int getTraitDimension() {
+        return dimTrait;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return null;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        // do nothing
+    }
 
     @Override
     public PrecisionType getPrecisionType() {
@@ -68,7 +84,9 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public CompoundParameter getParameter() { return traitParameter; }
+    public CompoundParameter getParameter() {
+        return traitParameter;
+    }
 
     @Override
     public String getModelName() {
@@ -76,16 +94,18 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public List<Integer> getMissingIndices() { return null; }
+    public List<Integer> getMissingIndices() {
+        return null;
+    }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public boolean[] getDataMissingIndicators() {
         return null;
     }
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
-        return new double[dimTrait + precisionType.getMatrixLength(dimTrait)];
+        return new double[precisionType.getPartialsDimension(dimTrait)];
     }
 //
 //    private static final String EMPTY_TRAIT_MODEL = "emptyTraitModel";

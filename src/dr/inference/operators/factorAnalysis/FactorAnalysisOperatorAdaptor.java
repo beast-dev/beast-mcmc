@@ -220,7 +220,7 @@ public interface FactorAnalysisOperatorAdaptor {
             this.precision = factorLikelihood.getPrecision();
             this.data = factorLikelihood.getParameter();
 
-            factorTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + FACTOR_NAME);
+            factorTrait = treeLikelihood.getTreeTrait(factorLikelihood.getTipTraitName());
 
             assert (factorTrait != null);
         }
@@ -267,7 +267,7 @@ public interface FactorAnalysisOperatorAdaptor {
         @Override
         public boolean isNotMissing(int trait, int taxon) {
             int index = taxon * getNumberOfTraits() + trait;
-            return !factorLikelihood.getMissingIndicator()[index];
+            return !factorLikelihood.getDataMissingIndicators()[index];
         }
 
         private static final boolean DEBUG = false;

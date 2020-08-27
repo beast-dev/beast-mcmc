@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<beast>
+ <parameter id="parameter" value="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1" lower="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" upper="Infinity Infinity Infinity Infinity Infinity Infinity Infinity Infinity Infinity Infinity"/>
+
+  <autoRegressiveNormalDistributionModel id="normal" dim="10">
+    <scale>
+      <parameter value="1.0"/>
+    </scale>
+    <rho>
+      <parameter value="0.9"/>
+    </rho>
+  </autoRegressiveNormalDistributionModel>
+
+  <multivariateDistributionLikelihood id="distribution">
+    <distribution>
+      <autoRegressiveNormalDistributionModel idref="normal"/>
+    </distribution>
+    <data>
+      <parameter idref="parameter"/>
+    </data>
+  </multivariateDistributionLikelihood>
+
+  <operators id="operators.HZZ">
+
+    <NoUTurnOperator id = "HZZNUTS" weight="1" adaptiveStepsize = "false">
+
+    <zigZagOperator id="HZZ" weight="1" threadCount="1" reversibleFlag="true">
+      <gradient>
+        <distributionLikelihood idref="distribution"/>
+      </gradient>
+      <precisionVectorProduct id="product.hzz" roughTravelTimeGuess="10">
+        <autoRegressiveNormalDistributionModel idref="normal"/>
+      </precisionVectorProduct>
+      <precisionColumn useCache="false">
+        <autoRegressiveNormalDistributionModel idref="normal"/>
+      </precisionColumn>
+    </zigZagOperator>
+
+    </NoUTurnOperator>
+
+  </operators>
+  <mcmc id="mcmc.hmc" chainLength="10000" autoOptimize="true">
+    <posterior>
+      <likelihood id="likelihood.hmc">
+        <distributionLikelihood idref="distribution"/>
+      </likelihood>
+    </posterior>
+    <operators idref="operators.HZZ"/>
+
+    <log logEvery="1000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>
+			</column>
+			<column label="startingValue" sf="6" width="12">
+				<parameter idref="parameter"/>
+			</column>
+	</log>
+
+    <log logEvery="1" fileName="HZZNUTS_ar1_trunc_d10.log">
+      <likelihood idref="likelihood.hmc"/>
+      <parameter idref="parameter"/>
+    </log>
+
+  </mcmc>
+
+  <report>
+    <property name="timer">
+      <object idref="mcmc.hmc"/>
+    </property>
+    <NoUTurnOperator idref="HZZ"/>
+  </report>
+
+  <traceAnalysis fileName="HZZNUTS_ar1_trunc_d10.log" stdError="true"/>
+
+    <assertEqual tolerance="1e-10" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check log-likelihood
+        </message>
+        <actual regex="MultivariateDistributionLikelihood\((.*?)\)">
+                <report>
+                    <distributionLikelihood idref="distribution"/>
+                </report>
+        </actual>
+        <expected>
+        	-22.479977866599285
+        </expected>
+    </assertEqual>
+
+
+  <operators id="operators.MZZ">
+    <zigZagOperator id="MZZ" weight="1" threadCount="1" reversibleFlag="false">
+      <gradient>
+        <distributionLikelihood idref="distribution"/>
+      </gradient>
+      <precisionVectorProduct id="product.mzz" roughTravelTimeGuess="10">
+        <autoRegressiveNormalDistributionModel idref="normal"/>
+      </precisionVectorProduct>
+      <precisionColumn useCache="false">
+        <autoRegressiveNormalDistributionModel idref="normal"/>
+      </precisionColumn>
+    </zigZagOperator>
+  </operators>
+
+  <mcmc id="mcmc.mc" chainLength="100000" autoOptimize="true">
+    <posterior>
+      <likelihood id="likelihood.mc">
+        <distributionLikelihood idref="distribution"/>
+      </likelihood>
+    </posterior>
+    <operators idref="operators.MZZ"/>
+
+
+    <log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>
+			</column>
+			<column label="startingValue" sf="6" width="12">
+				<parameter idref="parameter"/>
+			</column>
+	</log>
+
+    <log logEvery="10" fileName="MZZ_ar1_trunc_d10.log">
+      <likelihood idref="likelihood.mc"/>
+      <parameter idref="parameter"/>
+    </log>
+  </mcmc>
+
+  <report>
+    <property name="timer">
+      <object idref="mcmc.mc"/>
+    </property>
+    <zigZagOperator idref="MZZ"/>
+  </report>
+
+	<traceAnalysis fileName="MZZ_ar1_trunc_d10.log" stdError="true"/>
+
+    <assertEqual tolerance="1e-10" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check log-likelihood
+        </message>
+        <actual regex="MultivariateDistributionLikelihood\((.*?)\)">
+                <report>
+                    <distributionLikelihood idref="distribution"/>
+                </report>
+        </actual>
+        <expected>
+        	-16.817552909712706
+        </expected>
+    </assertEqual>
+
+
+</beast>

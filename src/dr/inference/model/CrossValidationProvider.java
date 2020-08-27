@@ -1,5 +1,7 @@
 package dr.inference.model;
 
+import dr.xml.Reportable;
+
 public interface CrossValidationProvider {
 
     double[] getTrueValues();
@@ -13,7 +15,7 @@ public interface CrossValidationProvider {
     String getNameSum(int dim);
 
 
-    class CrossValidator extends Statistic.Abstract {
+    class CrossValidator extends Statistic.Abstract implements Reportable {
         protected final CrossValidationProvider provider;
         private final double[] statValues;
         private final int[] relevantDims;
@@ -61,7 +63,25 @@ public interface CrossValidationProvider {
             return statValues[dim];
         }
 
+        @Override
+        public String getReport() {
+            int reps = 100000;
+            double[] vals = new double[dimStat];
+            for (int i = 0; i < reps; i++) {
+                for (int j = 0; j < dimStat; j++) {
+                    vals[j] += getStatisticValue(j);
+                }
+            }
 
+            StringBuilder sb = new StringBuilder();
+            sb.append("Cross Validation Report:\n\n");
+            for (int j = 0; j < dimStat; j++) {
+                sb.append("\t" + getDimensionName(j) + ": " + vals[j] / reps + "\n");
+            }
+            sb.append("\n");
+
+            return sb.toString();
+        }
     }
 
     class CrossValidatorSum extends CrossValidator {

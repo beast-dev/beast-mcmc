@@ -27,6 +27,7 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PathGradient;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
@@ -47,7 +48,7 @@ import dr.util.Transform;
  */
 
 public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
-        implements GeneralOperator, PathDependent {
+        implements GeneralOperator, PathDependent, ReversibleHMCProvider {
 
     final GradientWrtParameterProvider gradientProvider;
     protected double stepSize;
@@ -338,7 +339,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return count;
     }
 
-    double getKineticEnergy(ReadableVector momentum) {
+    public double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();
 
@@ -665,5 +666,59 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //
 //            private double EPS = 10e-10;
         }
+    }
+
+    protected void doLeap(final double[] position,
+                          final WrappedVector momentum,
+                          final double stepSize) throws NumericInstabilityException {
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
+        leapFrogEngine.updatePosition(position, momentum, stepSize);
+        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
+                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
+    }
+
+    @Override
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+        try {
+            doLeap(position.getBuffer(), momentum, direction * time);
+        } catch (NumericInstabilityException e) {
+            handleInstability();
+        }
+    }
+
+    @Override
+    public double[] getInitialPosition() {
+
+        return leapFrogEngine.getInitialPosition();
+    }
+
+    @Override
+    public double getParameterLogJacobian() {
+        return leapFrogEngine.getParameterLogJacobian();
+    }
+
+    @Override
+    public void setParameter(double[] position) {
+        leapFrogEngine.setParameter(position);
+    }
+
+    @Override
+    public WrappedVector drawMomentum() {
+        return mask(preconditioning.drawInitialMomentum(), mask);
+    }
+
+    @Override
+    public double getJointProbability(WrappedVector momentum) {
+        return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getStepSize() {
+        return stepSize;
+    }
+
+    protected void handleInstability() {
+        throw new RuntimeException("Numerical instability; need to handle"); // TODO
     }
 }

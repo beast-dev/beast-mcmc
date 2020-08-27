@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon1">
+            <attr name="sparse">0.0076177742633394985 NA NA -0.8666572905938715 NA -0.5001246338040305 NA</attr>
+            <attr name="full">0.0076177742633394985 NA NA -0.8666572905938715 -0.454549337998158 -0.5001246338040305
+                NA
+            </attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="sparse">0.05702524809146323 NA NA 2.3897801345872987 -1.5146279580725215 0.8960512885879615
+                -2.2012739127775762
+            </attr>
+            <attr name="full">0.05702524809146323 NA NA 2.3897801345872987 -1.5146279580725215 0.8960512885879615
+                -2.2012739127775762
+            </attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="sparse">NA NA NA NA NA NA -1.396413239367357</attr>
+            <attr name="full">-0.5484010117038763 NA -0.42898479922720356 -0.3440100523685048 0.6436374468251037
+                -0.09729958495856225 -1.396413239367357
+            </attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="sparse">0.3515255484089337 NA NA NA -1.426378176957026 -0.7790116303715932 0.2981854605237854
+            </attr>
+            <attr name="full">0.3515255484089337 NA NA NA -1.426378176957026 -0.7790116303715932 0.2981854605237854
+            </attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="sparse">-0.784929798992992 NA NA 0.7619824434342454 1.5439602691637375 0.09081342420693704 NA
+            </attr>
+            <attr name="full">-0.784929798992992 NA NA 0.7619824434342454 1.5439602691637375 0.09081342420693704
+                1.6135287964494376
+            </attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="sparse">NA NA 0.4270454816694809 -0.6230781939110783 NA NA NA</attr>
+            <attr name="full">NA -0.8161262390971513 0.4270454816694809 -0.6230781939110783 NA NA NA</attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="sparse">0.30611493207760276 -1.0144436604293505 NA NA NA -0.6908795858187 -0.07712188884427165
+            </attr>
+            <attr name="full">0.30611493207760276 -1.0144436604293505 -0.8920557774375898 1.478607059857378 NA
+                -0.6908795858187 -0.07712188884427165
+            </attr>
+        </taxon>
+        <taxon id="taxon8">
+            <attr name="sparse">-1.0304943902767967 NA -0.8909827170981991 NA NA 1.066150616149452 NA</attr>
+            <attr name="full">-1.0304943902767967 NA -0.8909827170981991 1.1873505039550996 NA 1.066150616149452
+                -1.7083839109325234
+            </attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="sparse">NA -0.2221684856569227 NA NA 0.8655080462439241 NA NA</attr>
+            <attr name="full">NA -0.2221684856569227 NA 0.41571346596533654 0.8655080462439241 NA -0.01291823951389353
+            </attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="sparse">NA NA -0.7122666957434696 -0.44738267923159963 NA 0.23315524522158199
+                -0.11815301665147325
+            </attr>
+            <attr name="full">NA -0.17438164408909365 -0.7122666957434696 -0.44738267923159963 NA 0.23315524522158199
+                -0.11815301665147325
+            </attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (((taxon1:0.5240963452876763,taxon5:7.902198392203038):0.9341302879400424,taxon7:1.432369469055692):2.584174631657951,(((taxon4:2.0031623441254434,(taxon3:2.660919437013892,taxon8:0.13626756429569198):0.5831752266184369):0.590207122838246,taxon9:3.007664416818267):0.8258936593590096,(taxon6:1.1212461843902313,(taxon10:1.3844642276921775,taxon2:0.08315175028640569):0.47248040383417067):0.27742433861548693):0.015925867863833734);
+    </newick>
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="7"
+                    name="sparse">
+            <parameter id="sparseTraits"/>
+        </nodeTraits>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="7"
+                    name="full">
+            <parameter id="fullTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix id="diffusion.precision">
+                <parameter dimension="3" value="1" lower="0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <matrixParameter id="L">
+        <parameter
+                value="-0.6325563176821224 -0.785751053817025 -0.23236243995649072 -1.9737902929363504 0.8084047625956468 -0.3880748220629019 -0.02338761320366489"/>
+        <parameter
+                value="-1.7337551994192786 0.4749217262040388 0.1844449916003127 -0.7623255206702356 -0.20092798377805954 -0.001551025159085228 -2.198680996374538"/>
+        <parameter
+                value="0.2962825104489853 0.6994853382044979 -0.07096521254343297 0.25009505164097723 0.43231508809394403 0.2717043320216292 1.195693054757052"/>
+    </matrixParameter>
+
+    <integratedFactorModel id="factorModel" traitName="sparse" nugget="0" standardize="false">
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <precision>
+            <parameter id="traits.precision"
+                       value="4.725819373248511 2.022429801566539 2.089399492531513 3.3332699982878076 2.9375880999148065 20.189186092886473 36.995401606763494"
+                       lower="0.0"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="sparseTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <traitDataLikelihood id="traitLikelihood" traitName="factors" cacheBranches="true" allowIdentical="true"
+                         useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         integrateInternalTraits="true" standardize="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="factorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <traitValidationProvider id="traitValidationProvider" traitName="full" inferredTrait="factors">
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <traitParameter>
+            <parameter idref="fullTraits"/>
+        </traitParameter>
+    </traitValidationProvider>
+
+    <crossValidation id="traitValidation" type="squaredError" logSum="false">
+        <traitValidationProvider idref="traitValidationProvider"/>
+    </crossValidation>
+
+    <cachedReport id="mseReport">
+        ValidationReport
+        <crossValidation idref="traitValidation"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="mseReport"/>
+    </report>
+
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon1.5:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            0.9403636941418451
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon3.1:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            3.152681491605504
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon3.3:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            1.3595632045807138
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon3.4:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            16.633
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon3.5:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            4.67414
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon3.6:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            1.34499
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon5.7:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            2.11779
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon6.2:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            4.03159
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon7.3:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            1.0027
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon7.4:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            7.79521
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon8.4:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            2.14541
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon8.7:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            2.47755
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon9.4:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            11.8013
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon9.7:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            19.443
+        </expected>
+    </assertEqual>
+    <assertEqual tolerance="1e-2" toleranceType="relative" verbose="true">
+        <actual regex="traitValidationProvider.taxon10.2:\s*(.*)\n">
+            <cachedReport idref="mseReport"/>
+        </actual>
+        <expected>
+            1.61935
+        </expected>
+    </assertEqual>
+
+
+
+<!--        <assertEqual tolerance="1e-2" toleranceType="absolute" verbose="true">-->
+
+<!--            <actual regex="likelihood:\s+(.*)\n">-->
+<!--                <likelihood idref="likelihood"/>-->
+<!--            </actual>-->
+<!--            <expected>-->
+<!--                -88.87428942127798-->
+<!--            </expected>-->
+<!--        </assertEqual>-->
+
+</beast>

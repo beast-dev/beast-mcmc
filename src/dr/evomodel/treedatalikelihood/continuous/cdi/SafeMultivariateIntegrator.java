@@ -1,11 +1,12 @@
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
 import static dr.math.matrixAlgebra.missingData.InversionResult.mult;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
@@ -24,6 +25,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         allocateStorage();
 
         effectiveDimensionOffset = PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait);
+        determinantOffset = PrecisionType.FULL.getDeterminantOffset(dimTrait);
 
         System.err.println("Trying SafeMultivariateIntegrator");
     }
@@ -99,6 +101,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     @SuppressWarnings("unused")
     private void setEffectiveDimension(int iBuffer, double effDim) {
         partials[iBuffer * dimPartial + effectiveDimensionOffset] = effDim;
+    }
+
+    private double getPartialDeterminant(int iBuffer) {
+        return partials[iBuffer * dimPartial + determinantOffset];
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -516,8 +522,19 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             idMinusA(tmp1);
             if (getDeterminant) ci = safeDeterminant(tmp1, true);
             CommonOps.mult(Pi, tmp1, Pip);
-            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) {
-                InversionResult cP = safeDeterminant(Pi, true);
+            int effDim = (int) Math.round(getEffectiveDimension(iBuffer));
+            if (getDeterminant && effDim > 0) {
+                // effectiveDimension > 0 => a tip node & determinant not included earlier
+                final InversionResult cP;
+                double preCalculatedDeterminant = getPartialDeterminant(iBuffer);
+
+                if (PrecisionType.FULL.isMissingDeterminantValue(preCalculatedDeterminant)) {
+                    cP = safeDeterminant(Pi, true);
+                } else {
+                    InversionResult.Code code = InversionResult.getCode(dimTrait, effDim);
+                    cP = new InversionResult(code, effDim, -preCalculatedDeterminant);
+                }
+
                 ci = mult(ci, cP);
             }
         }
@@ -705,6 +722,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     private final int effectiveDimensionOffset;
+    private final int determinantOffset;
 
     private DenseMatrix64F matrixQjPjp;
     private double[] vectorDelta;

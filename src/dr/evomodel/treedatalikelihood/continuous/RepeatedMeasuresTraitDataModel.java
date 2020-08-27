@@ -47,6 +47,7 @@ import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -59,7 +60,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private final String traitName;
     private final MatrixParameterInterface samplingPrecisionParameter;
     private boolean diagonalOnly = false;
-//    private DenseMatrix64F samplingVariance;
+    //    private DenseMatrix64F samplingVariance;
     private boolean variableChanged = true;
     private boolean varianceKnown = false;
 
@@ -70,15 +71,19 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     private boolean storedVarianceKnown = false;
     private boolean storedVariableChanged = true;
 
+    private boolean[] missingTraitIndicators = null;
+
 
     public RepeatedMeasuresTraitDataModel(String name,
                                           CompoundParameter parameter,
-                                          List<Integer> missingIndices,
-//                                          boolean[] missindIndicators,
+                                          boolean[] missindIndicators,
                                           boolean useMissingIndices,
                                           final int dimTrait,
                                           MatrixParameterInterface samplingPrecision) {
-        super(name, parameter, missingIndices, useMissingIndices, dimTrait, PrecisionType.FULL);
+
+        super(name, parameter, missindIndicators, useMissingIndices, dimTrait,
+                dimTrait == 1 ? PrecisionType.SCALAR : PrecisionType.FULL); //TODO: Not sure this is the best way to do this.
+
         this.traitName = name;
         this.samplingPrecisionParameter = samplingPrecision;
         addVariable(samplingPrecision);
@@ -103,10 +108,13 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         recomputeVariance();
 
         if (fullyObserved) {
-            return new double[dimTrait + 1];
+            throw new RuntimeException("Incompatible with this model.");
         }
 
         double[] partial = super.getTipPartial(taxonIndex, fullyObserved);
+        if (precisionType == precisionType.SCALAR) {
+            return partial; //TODO: I don't think this is right, especially given constructor above.
+        }
         DenseMatrix64F V = MissingOps.wrap(partial, dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
         //TODO: remove diagonalOnly part
@@ -136,6 +144,17 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
         }
 
         return partial;
+    }
+
+    @Override
+    public boolean[] getTraitMissingIndicators() {
+        if (getDataMissingIndicators() == null) {
+            return null;
+        } else if (missingTraitIndicators == null) {
+            this.missingTraitIndicators = new boolean[getParameter().getDimension()];
+            Arrays.fill(missingTraitIndicators, true); // all traits are latent
+        }
+        return missingTraitIndicators;
     }
 
 
@@ -211,6 +230,11 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     }
 
     @Override
+    public boolean diagonalVariance() {
+        return false; //TODO: base on precisionType
+    }
+
+    @Override
     public DenseMatrix64F getExtensionVariance() {
         recomputeVariance();
         double[] buffer = samplingVariance.toArrayComponents();
@@ -243,13 +267,15 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
     }
 
     @Override
+    public boolean suppliesWishartStatistics() {
+        return false;
+    }
+
+    @Override
     public void chainRuleWrtVariance(double[] gradient, NodeRef node) {
         // Do nothing
     }
 
-    public void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
-        // Do nothing
-    }
 
     private static final boolean DEBUG = false;
 
@@ -266,10 +292,9 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME,
-                            treeModel, true);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
+            boolean[] missingIndicators = returnValue.getMissingIndicators();
 
             XMLObject cxo = xo.getChild(PRECISION);
             MatrixParameterInterface samplingPrecision = (MatrixParameterInterface)
@@ -305,7 +330,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 return new RepeatedMeasuresTraitDataModel(
                         traitName,
                         traitParameter,
-                        missingIndices,
+                        missingIndicators,
 //                    missingIndicators,
                         true,
                         samplingPrecision.getColumnDimension(),
@@ -316,7 +341,7 @@ public class RepeatedMeasuresTraitDataModel extends ContinuousTraitDataModel imp
                 return new TreeScaledRepeatedMeasuresTraitDataModel(
                         traitName,
                         traitParameter,
-                        missingIndices,
+                        missingIndicators,
                         true,
                         samplingPrecision.getColumnDimension(),
                         samplingPrecision

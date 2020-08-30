@@ -20,6 +20,8 @@ public interface ReversibleHMCProvider {
 
     double getJointProbability(WrappedVector momentum);
 
+    double getLogLikelihood();
+
     double getKineticEnergy(ReadableVector momentum);
 
     double getStepSize();

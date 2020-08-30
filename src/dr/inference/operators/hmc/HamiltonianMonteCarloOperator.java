@@ -714,6 +714,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
+    public double getLogLikelihood() {
+        return gradientProvider.getLikelihood().getLogLikelihood();
+    }
+
+    @Override
     public double getStepSize() {
         return stepSize;
     }

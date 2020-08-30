@@ -565,6 +565,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public double getLogLikelihood() {
+        return gradientProvider.getLikelihood().getLogLikelihood();
+    }
+
+    @Override
     public double getKineticEnergy(ReadableVector momentum) {
 
         final int dim = momentum.getDim();

@@ -118,12 +118,11 @@ public interface GammaGibbsProvider {
         private double[] tipValues;
 
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
-                                            TreeDataLikelihood treeLikelihood,
-                                            String traitName) {
+                                            TreeDataLikelihood treeLikelihood) {
             this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
+            this.tipTrait = treeLikelihood.getTreeTrait(dataModel.getTipTraitName());
             this.missingVector = dataModel.getDataMissingIndicators();
 
             MatrixParameterInterface matrixParameter = dataModel.getExtensionPrecision();

@@ -36,10 +36,7 @@ import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
-import dr.evomodel.treedatalikelihood.preorder.ConditionalOnTipsRealizedDelegate;
-import dr.evomodel.treedatalikelihood.preorder.MultivariateConditionalOnTipsRealizedDelegate;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
-import dr.evomodel.treedatalikelihood.preorder.TipRealizedValuesViaFullConditionalDelegate;
+import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -47,6 +44,8 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
+
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 
 /**
  * @author Andrew Rambaut
@@ -151,6 +150,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
             traitName = xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME, TreeTraitParserUtilities.DEFAULT_TRAIT_NAME);
         }
 
+        dataModel.setTipTraitName(getTipTraitName(traitName)); // TODO: not an ideal solution as the trait name could be set differently later
+
         ConjugateRootTraitPrior rootPrior = ConjugateRootTraitPrior.parseConjugateRootTraitPrior(xo, dataModel.getTraitDimension());
 
         final boolean allowSingular;
@@ -235,6 +236,13 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser {
                         traitName, treeModel, diffusionModel, dataModel, rootPrior, rateTransformation, delegate);
 
                 treeDataLikelihood.addTraits(new ProcessSimulation(treeDataLikelihood, fullConditionalDelegate).getTreeTraits());
+                int[] partitionDimensions = dataModel.getPartitionDimensions();
+                if (partitionDimensions != null) {
+                    PartitionedTreeTraitProvider partitionedProvider =
+                            new PartitionedTreeTraitProvider(treeDataLikelihood.getTreeTraits(), partitionDimensions);
+                    treeDataLikelihood.addTraits(partitionedProvider.getTreeTraits());
+                }
+
 
 //                String partialTraitName = getPartiallyMissingTraitName(traitName);
 //

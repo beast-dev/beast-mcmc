@@ -220,7 +220,7 @@ public interface FactorAnalysisOperatorAdaptor {
             this.precision = factorLikelihood.getPrecision();
             this.data = factorLikelihood.getParameter();
 
-            factorTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + FACTOR_NAME);
+            factorTrait = treeLikelihood.getTreeTrait(factorLikelihood.getTipTraitName());
 
             assert (factorTrait != null);
         }

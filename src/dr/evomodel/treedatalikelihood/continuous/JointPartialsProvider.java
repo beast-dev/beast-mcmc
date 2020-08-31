@@ -33,6 +33,8 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
 
     private static final PrecisionType precisionType = PrecisionType.FULL; //TODO: base on child precisionTypes (make sure they're all the same)
 
+    private String tipTraitName;
+
     public JointPartialsProvider(String name, ContinuousTraitPartialsProvider[] providers) {
         this.name = name;
         this.providers = providers;
@@ -93,8 +95,30 @@ public class JointPartialsProvider implements ContinuousTraitPartialsProvider {
     }
 
     @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
+        for (int i = 0; i < providers.length; i++) {
+            providers[i].setTipTraitName(name + "." + i); // TODO: make static method for making name both here and in PartitionedTreeTraitProvider;
+        }
+    }
+
+    @Override
     public int getDataDimension() {
         return dataDim; //TODO: maybe throw error here? Used for model extension, mse stuff and it might be worth putting conditions if JointPartialsProvider
+    }
+
+    @Override
+    public int[] getPartitionDimensions() {
+        int[] dims = new int[providers.length];
+        for (int i = 0; i < providers.length; i++) {
+            dims[i] = providers[i].getTraitDimension();
+        }
+        return dims;
     }
 
     @Override

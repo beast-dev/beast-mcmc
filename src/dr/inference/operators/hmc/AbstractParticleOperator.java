@@ -123,7 +123,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         WrappedVector position = getInitialPosition();
 
-        double hastingsRatio = integrateTrajectory(position);
+        WrappedVector momentum = drawInitialMomentum();
+
+        double hastingsRatio = integrateTrajectory(position, momentum);
 
         setParameter(position, parameter);
 
@@ -134,7 +136,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return hastingsRatio;
     }
 
-    abstract double integrateTrajectory(WrappedVector position);
+    abstract double integrateTrajectory(WrappedVector position, WrappedVector momentum);
+
+    WrappedVector drawInitialMomentum() {
+        return new WrappedVector.Raw(null, 0, 0);
+    }
 
     double drawTotalTravelTime() {
         double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
@@ -160,6 +166,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             p[i] += time * v[i];
         }
     }
+
+    static void updatePosition(double[] p, double[] v, double time) {
+        for (int i = 0, len = p.length; i < len; ++i) {
+            p[i] += time * v[i];
+        }
+    }
+
+
+    static void updateMomentum(double[] a, double[] g, double[] m, double time) {
+
+        final double halfTimeSquared = time * time / 2;
+
+        for (int i = 0, len = m.length; i < len; ++i) {
+            m[i] = m[i] + time * g[i] - halfTimeSquared * a[i];
+        }
+    }
+
 
     WrappedVector getInitialGradient() {
 
@@ -226,12 +249,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
-
-        if (TEST_CRITICAL_REGION) {
-            if (nativeZigZag.inCriticalRegion()) {
-                nativeZigZag.exitCriticalRegion();
-            }
-        }
 
         WrappedVector column = getPrecisionColumn(eventIndex);
 
@@ -301,6 +318,14 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
+    void initializeNumEvent(){
+        numEvents = 0;
+    }
+
+    void recordOneMoreEvent(){
+        numEvents++;
+    }
+
     public static class Options {
 
         final double randomTimeWidth;
@@ -315,7 +340,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     protected class Preconditioning {
 
         final WrappedVector mass;
-        final double totalTravelTime;
+        double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
             this.mass = mass;
@@ -374,24 +399,24 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return TIMING ? timer.toString() : "";
     }
 
-    private final GradientWrtParameterProvider gradientProvider;
+    protected final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    final PrecisionColumnProvider columnProvider;
-    private final Parameter parameter;
+    private final PrecisionColumnProvider columnProvider;
+    protected final Parameter parameter;
     private final Options runtimeOptions;
     final Parameter mask;
     private final double[] maskVector;
-
+    int numEvents;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 
-    final static boolean TEST_NATIVE_OPERATOR = false;
+    private final static boolean TEST_NATIVE_OPERATOR = false;
     final static boolean TEST_NATIVE_BOUNCE = false;
-    final static boolean TEST_CRITICAL_REGION = false;
+//    final static boolean TEST_CRITICAL_REGION = false;
     final static boolean TEST_NATIVE_INNER_BOUNCE = false;
-    final static boolean TEST_FUSED_DYNAMICS = true;
+
     NativeZigZagWrapper nativeZigZag;
 }

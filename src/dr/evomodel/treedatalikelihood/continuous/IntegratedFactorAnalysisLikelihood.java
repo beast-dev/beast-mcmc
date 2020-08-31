@@ -66,6 +66,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     private static final PrecisionType precisionType = PrecisionType.FULL;
     private boolean[] missingTraitIndicators = null;
 
+    private String tipTraitName;
+
 
     public IntegratedFactorAnalysisLikelihood(String name,
                                               CompoundParameter traitParameter,
@@ -166,6 +168,16 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     public int getTraitDimension() {
         return numFactors;
     }  // Returns dimension of latent factors
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
+    }
 
     @Override
     public PrecisionType getPrecisionType() {
@@ -647,7 +659,8 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             InversionResult ci = safeDeterminant(precision, false); //TODO: figure out how to remove this (I don't want to do it twice) (see safeMultivariateIntegrator.IncreaseVariances)
             effDim = ci.getEffectiveDimension();
-            factorLogDeterminant = ci.getLogDeterminant();
+            factorLogDeterminant = ci.getReturnCode() == InversionResult.Code.NOT_OBSERVED ? 0 : ci.getLogDeterminant();
+//            factorLogDeterminant = ci.getLogDeterminant();
             double traitLogDeterminant = getTraitLogDeterminant(taxon);
 
 //            final double logDetChange = traitLogDeterminant - factorLogDeterminant;

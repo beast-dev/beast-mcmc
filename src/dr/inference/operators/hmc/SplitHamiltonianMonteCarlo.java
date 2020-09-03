@@ -50,7 +50,7 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         //2:update them
         reversibleHMCProviderB.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
         reversibleHMCProviderA.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
-        reversibleHMCProviderB.reversiblePositionMomentumUpdate(positionB, positionB, direction, time);
+        reversibleHMCProviderB.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
         //3:merge the position and momentum, update position and momentum
         updateMergedVector(positionA, positionB, position);
         updateMergedVector(momentumA, momentumB, momentum);

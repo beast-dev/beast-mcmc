@@ -1,11 +1,12 @@
-package test.dr.evomodel.bigFastTree;
+package test.dr.evomodel.bigfasttree;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigFastTree.ApproximatePoissonTreeLikelihood;
-import dr.evomodel.bigFastTree.BigFastTreeModel;
+
+import dr.evolution.tree.TreeUtils;
+import dr.evomodel.bigfasttree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
@@ -26,11 +27,14 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         tree = importer.importTree(null);
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
+        cladeModel = new CladeNodeModel(tree, treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
-                tree,
                 1,
                 treeModel,
-                branchRateModel);
+                branchRateModel,
+                constrainedBranchLengthProvider);
 
         expectedLL= 0;
         double[] expectations = {1d,1d,1.1,2d,0.1};
@@ -64,10 +68,10 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
     public void testAfterTopologyChange(){
 
 
-        NodeRef selectedNode1 = treeModel.getNode(0);
-        NodeRef selectedNode2 = treeModel.getNode(2);
+        NodeRef selectedNode1 = treeModel.getNode(0); // node 1
+        NodeRef selectedNode2 = treeModel.getNode(2); // node 3
 
-        NodeRef parent1 = treeModel.getParent(selectedNode1);
+        NodeRef parent1 = treeModel.getParent(selectedNode1); // clade root
         NodeRef parent2 = treeModel.getParent(selectedNode2);
 
         treeModel.beginTreeEdit();
@@ -88,7 +92,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
     }
 
-    public void testAfterPolytomyRootChange(){
+    public void testAfterPolytomyRootChange() throws TreeUtils.MissingTaxonException {
 
         NodeRef rootNode = treeModel.getRoot();
         NodeRef polytomyRoot0 = treeModel.getNode(5);
@@ -112,6 +116,8 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         treeModel.addChild(polytomyRoot0, tip1);
         treeModel.endTreeEdit();
 
+        cladeModel.setRootNode(cladeModel.getClade(polytomyRoot1),polytomyRoot1);
+
         double LL = approximatePoissonTreeLikelihood.getLogLikelihood();
         approximatePoissonTreeLikelihood.makeDirty();
         double newLL = approximatePoissonTreeLikelihood.getLogLikelihood();
@@ -121,32 +127,8 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
     }
 
-    public void testTryingToBrakeIt(){
 
-
-        NodeRef selectedNode1 = treeModel.getNode(3);
-        NodeRef selectedNode2 = treeModel.getNode(5);
-
-        NodeRef parent1 = treeModel.getParent(selectedNode1);
-        NodeRef parent2 = treeModel.getParent(selectedNode2);
-
-        treeModel.beginTreeEdit();
-        treeModel.removeChild(parent1, selectedNode1);
-        treeModel.removeChild(parent2, selectedNode2);
-
-        treeModel.addChild(parent1, selectedNode2);
-        treeModel.addChild(parent2, selectedNode1);
-        treeModel.endTreeEdit();
-
-
-        double LL = approximatePoissonTreeLikelihood.getLogLikelihood();
-        approximatePoissonTreeLikelihood.makeDirty();
-        double newLL = approximatePoissonTreeLikelihood.getLogLikelihood();
-
-        assertEquals(LL,newLL);
-
-    }
-   public void testRootPolytomy() throws IOException, Importer.ImportException {
+   public void testRootPolytomy() throws IOException, Importer.ImportException, TreeUtils.MissingTaxonException {
        branchRateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
 
        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,3:1.0,4:1.0);");
@@ -155,11 +137,15 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
        tree = importer.importTree(null);
        treeModel = new BigFastTreeModel(importer2.importTree(null));
 
+       CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
+       BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+
        approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
-               tree,
                1,
                treeModel,
-               branchRateModel);
+               branchRateModel,
+               constrainedBranchLengthProvider);
+
        approximatePoissonTreeLikelihood.getLogLikelihood();
        expectedLL= 0;
        double[] expectations = {1d,1d,1d,1.1,1.1};
@@ -173,6 +159,10 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
        NodeRef rootNode1 = treeModel.getNode(5);
        NodeRef tip3 = treeModel.getNode(2);
 
+
+
+       CladeRef clade = cladeModel.getClade(rootNode);
+
        treeModel.beginTreeEdit();
 
        treeModel.removeChild(rootNode, rootNode1);
@@ -182,7 +172,11 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
        treeModel.addChild(rootNode,tip3);
        treeModel.addChild(rootNode1,rootNode);
 
+       treeModel.setNodeHeight(rootNode1,treeModel.getNodeHeight(rootNode)+1);
        treeModel.endTreeEdit();
+
+
+       cladeModel.setRootNode(clade,rootNode1);
 
        double LL = approximatePoissonTreeLikelihood.getLogLikelihood();
        approximatePoissonTreeLikelihood.makeDirty();
@@ -192,7 +186,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
    }
 
-    public void testRootPolytomyHeightChange() throws IOException, Importer.ImportException {
+    public void testRootPolytomyHeightChange() throws IOException, Importer.ImportException, TreeUtils.MissingTaxonException {
         branchRateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
 
         NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,3:1.0,4:1.0,5:1.0);");
@@ -201,11 +195,14 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         tree = importer.importTree(null);
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
+        CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
-                tree,
                 1,
                 treeModel,
-                branchRateModel);
+                branchRateModel,
+                constrainedBranchLengthProvider);
         approximatePoissonTreeLikelihood.getLogLikelihood();
         expectedLL= 0;
         double[] expectations = {1d,1d,1d,1.1,1.1};
@@ -261,7 +258,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
     //     +-- 2
     //
     //
-    public void testRootAndRootChildUpdates() throws IOException, Importer.ImportException {
+    public void testRootAndRootChildUpdates() throws IOException, Importer.ImportException, TreeUtils.MissingTaxonException {
         branchRateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
 
         NewickImporter importer = new NewickImporter("((1:1.0,2:0.5,3:2.0):0.1,4:0.3,(7:0.2,8:0.1,9:0.3):0.2,6:0.01)");
@@ -270,11 +267,14 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         tree = importer.importTree(null);
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
+        CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
-                tree,
                 1,
                 treeModel,
-                branchRateModel);
+                branchRateModel,
+                constrainedBranchLengthProvider);
 
         approximatePoissonTreeLikelihood.getLogLikelihood();
 
@@ -283,6 +283,9 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         NodeRef parent = treeModel.getParent(node);
         NodeRef grandparent = treeModel.getParent(parent);
         NodeRef root = treeModel.getRoot();
+
+        CladeRef clade = cladeModel.getClade(node);
+
         treeModel.beginTreeEdit();
 
         treeModel.removeChild(grandparent,parent);
@@ -290,11 +293,13 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
         treeModel.setNodeHeight(parent,treeModel.getNodeHeight(root)+1);
         treeModel.setRoot(parent);
+        cladeModel.setRootNode(clade, parent);
         treeModel.addChild(parent,root);
 
         treeModel.addChild(grandparent,sibling);
 
         treeModel.endTreeEdit();
+
 
         double LL = approximatePoissonTreeLikelihood.getLogLikelihood();
         approximatePoissonTreeLikelihood.makeDirty();
@@ -303,7 +308,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         assertEquals(LL,newLL);
     }
 
-    public void testOtherChildUpdates() throws IOException, Importer.ImportException {
+    public void testOtherChildUpdates() throws IOException, Importer.ImportException, TreeUtils.MissingTaxonException {
         branchRateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
 
         NewickImporter importer = new NewickImporter("((1:1.0,2:0.5,3:2.0):0.1,4:0.3,(7:0.2,8:0.1,9:0.3):0.2,6:0.01)");
@@ -312,11 +317,14 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         tree = importer.importTree(null);
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
+        CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
-                tree,
                 1,
                 treeModel,
-                branchRateModel);
+                branchRateModel,
+                constrainedBranchLengthProvider);
 
         approximatePoissonTreeLikelihood.getLogLikelihood();
 
@@ -325,6 +333,9 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         NodeRef parent = treeModel.getParent(node);
         NodeRef grandparent = treeModel.getParent(parent);
         NodeRef root = treeModel.getRoot();
+
+        CladeRef clade = cladeModel.getClade(parent);
+
         treeModel.beginTreeEdit();
 
         treeModel.removeChild(grandparent,parent);
@@ -332,6 +343,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
         treeModel.setNodeHeight(parent,treeModel.getNodeHeight(root)+1);
         treeModel.setRoot(parent);
+        cladeModel.setRootNode(clade, parent);
         treeModel.addChild(parent,root);
 
         treeModel.addChild(grandparent,sibling);
@@ -349,6 +361,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
     private TreeModel treeModel;
     private BranchRateModel branchRateModel;
     private ApproximatePoissonTreeLikelihood approximatePoissonTreeLikelihood;
+    private CladeNodeModel cladeModel;
     private double expectedLL;
 }
 

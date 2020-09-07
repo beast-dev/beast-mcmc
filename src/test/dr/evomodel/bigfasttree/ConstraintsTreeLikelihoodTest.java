@@ -1,4 +1,4 @@
-package test.dr.evomodel.bigFastTree;
+package test.dr.evomodel.bigfasttree;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -6,8 +6,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
-import dr.evomodel.bigFastTree.BigFastTreeModel;
-import dr.evomodel.bigFastTree.ConstraintsTreeLikelihood;
+import dr.evomodel.bigfasttree.BigFastTreeModel;
+import dr.evomodel.bigfasttree.ConstraintsTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import junit.framework.TestCase;
 

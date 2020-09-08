@@ -473,6 +473,10 @@ public class MathUtils {
 		return true;
 	}
 
+	public static boolean isClose(double x, double y, double tolerance) {
+		return Math.abs(x - y) < tolerance;
+	}
+
 	public static boolean isRelativelyClose(double[] x, double[] y, double relativeTolerance) {
 		if (x.length != y.length) return false;
 

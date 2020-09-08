@@ -73,5 +73,6 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
         }
         sumLengths /= treeLengths.length;
         CommonOps.scale(sumLengths, traitVariance, varSum);
+        CommonOps.addEquals(varSum, 1 / priorSampleSize, traitVariance);
     }
 }

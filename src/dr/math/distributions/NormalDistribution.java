@@ -25,7 +25,7 @@
 
 package dr.math.distributions;
 
-import dr.inference.distribution.NormalStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsHelper.NormalStatisticsProvider;
 import dr.inference.model.GradientProvider;
 import dr.math.ErrorFunction;
 import dr.math.MathUtils;
@@ -529,12 +529,13 @@ public class NormalDistribution implements Distribution, RandomGenerator, Gradie
 
     //NormalStatisticsProviderInterface
     @Override
-    public double getNormalMean(int dim) {
+    public double getNormalMean() {
         return getMean();
     }
 
     @Override
-    public double getNormalSD(int dim) {
-        return getSD();
+    public double getNormalPrecision() {
+        double sd = getSD();
+        return 1.0 / (sd * sd);
     }
 }

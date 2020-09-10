@@ -29,18 +29,14 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
-import dr.inference.distribution.NormalDistributionModel;
-import dr.inference.distribution.NormalStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsHelper.NormalMatrixStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
 import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
 import dr.math.distributions.Distribution;
-import dr.math.distributions.NormalDistribution;
-import dr.util.Attribute;
 import dr.xml.*;
 
 /**
@@ -83,18 +79,18 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         // Get priors
         DistributionLikelihood priorDistLike = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
 
-        NormalStatisticsProvider prior = null;
+        NormalMatrixStatisticsProvider prior;
 
         if (priorDistLike != null) {
             Distribution priorDist = priorDistLike.getDistribution();
-            if (priorDist instanceof NormalStatisticsProvider) {
-                prior = (NormalStatisticsProvider) priorDist;
+            if (priorDist instanceof NormalMatrixStatisticsProvider) {
+                prior = (NormalMatrixStatisticsProvider) priorDist;
             } else {
                 throw new XMLParseException("The prior distribution with id " + priorDistLike.getId() +
                         " is not normally distributed. This operator requires a normal prior.");
             }
         } else {
-            prior = (NormalStatisticsProvider) xo.getChild(NormalStatisticsProvider.class); //Should be null if doesn't exist
+            prior = (NormalMatrixStatisticsProvider) xo.getChild(NormalMatrixStatisticsProvider.class); //Should be null if doesn't exist
         }
 
 
@@ -168,7 +164,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             new XORRule(
                     new XMLSyntaxRule[]{
                             new ElementRule(DistributionLikelihood.class),
-                            new ElementRule(NormalStatisticsProvider.class),
+                            new ElementRule(NormalMatrixStatisticsProvider.class),
                             new AndRule(
                                     new ElementRule(MomentDistributionModel.class),
                                     new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{

@@ -25,6 +25,7 @@
 
 package dr.inference.distribution;
 
+import dr.inference.distribution.NormalStatisticsHelper.NormalStatisticsProvider;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.NormalDistributionModelParser;
 import dr.math.MathUtils;
@@ -89,13 +90,18 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public double getNormalMean(int dim) {
+    public double getNormalMean() {
         return mean.getValue(0);
     }
 
     @Override
-    public double getNormalSD(int dim) {
-        return getStdev();
+    public double getNormalPrecision() {
+        if (hasPrecision) {
+            return precision.getValue(0);
+        }
+
+        double sd = getStdev();
+        return 1.0 / (sd * sd);
     }
 
     public Variable<Double> getPrecision() {

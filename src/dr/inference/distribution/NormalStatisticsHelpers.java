@@ -140,7 +140,7 @@ public class NormalStatisticsHelpers {
         public double[] precisionMeanProduct(int col) {
             double[] prod = new double[nRows];
             for (int row = 0; row < nRows; row++) {
-                prod[row] = getColumnPrecisionDiagonal(row, col) * getColumnPrecisionDiagonal(row, col);
+                prod[row] = getColumnPrecisionDiagonal(row, col) * getNormalMean(row, col);
             }
             return prod;
         }

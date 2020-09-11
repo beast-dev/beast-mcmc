@@ -1,7 +1,7 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
-import dr.inference.distribution.NormalStatisticsHelper.IndependentNormalStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsHelpers.IndependentNormalStatisticsProvider;
 import dr.math.distributions.NormalDistribution;
 
 /**

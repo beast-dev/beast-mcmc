@@ -1,6 +1,6 @@
 package dr.evomodel.continuous;
 
-import dr.inference.distribution.NormalStatisticsHelper.IndependentNormalStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsHelpers.IndependentNormalStatisticsProvider;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;

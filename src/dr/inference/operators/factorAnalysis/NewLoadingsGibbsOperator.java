@@ -28,7 +28,7 @@ package dr.inference.operators.factorAnalysis;
 import dr.evomodel.treedatalikelihood.continuous.HashedMissingArray;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
-import dr.inference.distribution.NormalStatisticsHelper.NormalMatrixStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsHelpers.MatrixNormalStatisticsHelper;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -64,7 +64,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final boolean randomScan;
     private double pathParameter = 1.0;
 
-    private final NormalMatrixStatisticsProvider prior;
+    private final MatrixNormalStatisticsHelper prior;
     private final double priorPrecisionWorking;
 
     private final FactorAnalysisOperatorAdaptor adaptor;
@@ -74,7 +74,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private final double[][] observedIndicators;
 
-    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, NormalMatrixStatisticsProvider prior,
+    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, MatrixNormalStatisticsHelper prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
@@ -229,7 +229,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
 
     private double[][] getAdjustedPriorPrecision(int col) { //TODO: should probably have some special function for adding precision so you don't need to construct a double[][]
-        double[][] priorPrecision = prior.getColPrecision(col);
+        double[][] priorPrecision = prior.getColumnPrecision(col);
         int rowDim = priorPrecision.length;
         for (int i = 0; i < rowDim; i++) {
             priorPrecision[i][i] = priorPrecision[i][i] * pathParameter + (1 - pathParameter) * priorPrecisionWorking; //TODO: workingPrior should probably same as originalPrior(if not specified)

@@ -25,7 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.distribution.NormalStatisticsHelper.NormalStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsHelpers.IndependentNormalStatisticsProvider;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.NormalDistributionModelParser;
 import dr.math.MathUtils;
@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, NormalStatisticsProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, IndependentNormalStatisticsProvider {
     /**
      * Constructor.
      */
@@ -90,12 +90,12 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public double getNormalMean() {
+    public double getNormalMean(int dim) {
         return mean.getValue(0);
     }
 
     @Override
-    public double getNormalPrecision() {
+    public double getNormalPrecision(int dim) {
         if (hasPrecision) {
             return precision.getValue(0);
         }

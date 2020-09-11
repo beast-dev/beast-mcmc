@@ -32,7 +32,6 @@ import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.distribution.NormalStatisticsHelpers.MatrixNormalStatisticsHelper;
 import dr.inference.distribution.NormalStatisticsHelpers.NormalStatisticsHelper;
 import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;

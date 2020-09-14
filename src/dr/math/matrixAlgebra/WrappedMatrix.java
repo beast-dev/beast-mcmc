@@ -32,7 +32,6 @@ import org.ejml.data.DenseMatrix64F;
 import java.util.Arrays;
 
 import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
-import static junit.framework.Assert.assertEquals;
 
 /**
  * @author Marc A. Suchard
@@ -432,7 +431,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     sum += temp * temp;
                 }
                 if (sum > 1.0) {
-                    assertEquals(1.0, sum, 1E-6);
+                    assert (Math.abs(sum - 1.0) < 1E-6);
                     sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));

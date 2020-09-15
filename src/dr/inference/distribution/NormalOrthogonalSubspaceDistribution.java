@@ -2,15 +2,21 @@ package dr.inference.distribution;
 
 import dr.inference.distribution.NormalStatisticsHelpers.IndependentNormalStatisticsProvider;
 import dr.inference.model.*;
+import dr.inferencexml.distribution.NormalOrthogonalSubspaceDistributionParser;
 import dr.math.distributions.NormalDistribution;
+import dr.math.matrixAlgebra.Matrix;
+import dr.xml.Reportable;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.ops.CommonOps;
 
+import java.util.Arrays;
+
 
 public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihood
-        implements NormalStatisticsHelpers.MatrixNormalStatisticsHelper, IndependentNormalStatisticsProvider {
+        implements NormalStatisticsHelpers.MatrixNormalStatisticsHelper, IndependentNormalStatisticsProvider,
+        Reportable {
 
     private final IndependentNormalStatisticsProvider priorDistribution;
     private final MatrixParameterInterface matrix;
@@ -24,7 +30,8 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     private final DenseMatrix64F wBuffer;
     private final DenseMatrix64F priorVarBuffer;
     private final DenseMatrix64F rotatedPrecision;
-    private final DenseMatrix64F rotatedMean;
+    private final double[] meanBuffer;
+//    private final DenseMatrix64F rotatedMean;
 
     private final double[][] precisionArrayBuffer;
 
@@ -47,7 +54,14 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
         this.rotatedPrecision = new DenseMatrix64F(nRows, nRows);
         this.kBuffer = new DenseMatrix64F(nRows, nRows);
         this.precisionArrayBuffer = new double[nRows][nRows];
-        this.rotatedMean = new DenseMatrix64F(nRows, 1);
+        this.meanBuffer = new double[nRows];
+//        this.rotatedMean = new DenseMatrix64F(nRows, 1);
+
+        for (int i = 0; i < matrix.getDimension(); i++) {
+            if (priorDistribution.getNormalMean(i) != 0) {
+                throw new RuntimeException("Not implemented for prior with non-zero mean.");
+            }
+        }
 
 
         addVariable(matrix);
@@ -63,13 +77,11 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
 
     @Override
     public double[] precisionMeanProduct(int col) {
-        updateRotatedPrecision(col);
-
-        //TODO: lazy compute below
-
-        double[] mean = adaptor.getColumnMean(col);
-        CommonOps.mult(rotatedPrecision, DenseMatrix64F.wrap(nRows, 1, mean), rotatedMean);
-        return rotatedMean.getData();
+        Arrays.fill(meanBuffer, 0);
+        return meanBuffer;
+//        double[] mean = adaptor.getColumnMean(col);
+//        CommonOps.mult(rotatedPrecision, DenseMatrix64F.wrap(nRows, 1, mean), rotatedMean);
+//        return rotatedMean.getData();
     }
 
     @Override
@@ -155,7 +167,7 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
                 double prec = adaptor.getColumnPrecisionDiagonal(row, col);
                 double sd = 1.0 / Math.sqrt(prec);
                 logLikelihood += NormalDistribution.logPdf(
-                        matrix.getParameterValue(row, col), adaptor.getNormalMean(row, col), sd);
+                        matrix.getParameterValue(col, row), adaptor.getNormalMean(col, row), sd); //assumes matrix transposed
             }
         }
 
@@ -182,5 +194,22 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     public NormalStatisticsHelpers.MatrixNormalStatisticsHelper matrixNormalHelper(int nRows, int nCols) {
         if (nRows != nRows || nCols != nCols) throw new RuntimeException("Incompatible dimensions.");
         return this;
+    }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder(NormalOrthogonalSubspaceDistributionParser.PARSER + " report:\n");
+        sb.append("\tlikelihood: " + getLogLikelihood() + "\n");
+
+        sb.append("\trotated precisions:\n");
+        for (int i = 0; i < nCols; i++) {
+            sb.append("\t\tcolumn " + (i + 1) + ":\n");
+            Matrix pMat = new Matrix(this.getColumnPrecision(i));
+            sb.append(pMat.toString(3));
+            sb.append("\n");
+        }
+
+        sb.append("\n\n");
+        return sb.toString();
     }
 }

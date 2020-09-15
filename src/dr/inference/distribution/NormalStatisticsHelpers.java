@@ -101,7 +101,7 @@ public class NormalStatisticsHelpers {
 
         @Override
         public double getNormalMean(int row, int col) {
-            return statistcisProvider.getNormalMean(row * nCols + col); //TODO: check that indexing is correct
+            return statistcisProvider.getNormalMean(col * nRows + row); //TODO: check that indexing is correct
         }
 
         @Override

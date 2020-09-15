@@ -82,20 +82,25 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         // Get priors
         DistributionLikelihood priorDistLike = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
 
+        final NormalStatisticsHelper helper;
         final MatrixNormalStatisticsHelper prior;
 
         if (priorDistLike != null) {
             Distribution priorDist = priorDistLike.getDistribution();
             if (priorDist instanceof NormalStatisticsHelper) {
-                NormalStatisticsHelper helper = (NormalStatisticsHelper) priorDist;
-                prior = helper.matrixNormalHelper(loadings.getColumnDimension(), loadings.getRowDimension());
+                helper = (NormalStatisticsHelper) priorDist;
             } else {
                 throw new XMLParseException("The prior distribution with id " + priorDistLike.getId() +
                         " is not normally distributed (or does not provide the appropriate statistics). " +
                         "This operator requires a normal prior.");
             }
         } else {
-            prior = (MatrixNormalStatisticsHelper) xo.getChild(MatrixNormalStatisticsHelper.class); //Should be null if doesn't exist
+            helper = (NormalStatisticsHelper) xo.getChild(NormalStatisticsHelper.class); //Should be null if doesn't exist
+        }
+        if (helper != null) {
+            prior = helper.matrixNormalHelper(loadings.getColumnDimension(), loadings.getRowDimension());
+        } else {
+            prior = null;
         }
 
 
@@ -167,7 +172,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             new XORRule(
                     new XMLSyntaxRule[]{
                             new ElementRule(DistributionLikelihood.class),
-                            new ElementRule(MatrixNormalStatisticsHelper.class),
+                            new ElementRule(NormalStatisticsHelper.class),
                             new AndRule(
                                     new ElementRule(MomentDistributionModel.class),
                                     new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{

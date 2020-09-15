@@ -612,6 +612,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
             }
             adaptor.fireLoadingsChanged();
+            restoreLoadings(originalLoadings);
         }
 
         restoreLoadings(originalLoadings);

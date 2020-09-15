@@ -21,7 +21,6 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     private final IndependentNormalStatisticsProvider priorDistribution;
     private final MatrixParameterInterface matrix;
     private Boolean rotationKnown = false;
-    private Boolean likelihoodKnown = false;
     private final int nRows;
     private final int nCols;
     private final SingularValueDecomposition svd;
@@ -31,7 +30,6 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     private final DenseMatrix64F priorVarBuffer;
     private final DenseMatrix64F rotatedPrecision;
     private final double[] meanBuffer;
-//    private final DenseMatrix64F rotatedMean;
 
     private final double[][] precisionArrayBuffer;
 
@@ -55,7 +53,6 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
         this.kBuffer = new DenseMatrix64F(nRows, nRows);
         this.precisionArrayBuffer = new double[nRows][nRows];
         this.meanBuffer = new double[nRows];
-//        this.rotatedMean = new DenseMatrix64F(nRows, 1);
 
         for (int i = 0; i < matrix.getDimension(); i++) {
             if (priorDistribution.getNormalMean(i) != 0) {
@@ -79,9 +76,6 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     public double[] precisionMeanProduct(int col) {
         Arrays.fill(meanBuffer, 0);
         return meanBuffer;
-//        double[] mean = adaptor.getColumnMean(col);
-//        CommonOps.mult(rotatedPrecision, DenseMatrix64F.wrap(nRows, 1, mean), rotatedMean);
-//        return rotatedMean.getData();
     }
 
     @Override
@@ -177,7 +171,6 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     @Override
     public void makeDirty() {
         rotationKnown = false;
-        likelihoodKnown = false;
     }
 
     @Override

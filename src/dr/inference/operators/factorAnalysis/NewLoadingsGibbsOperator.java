@@ -588,9 +588,10 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     @Override
     public String getReport() {
-        int repeats = 1000000;
+        int baserRepeats = 1000000;
         int nFac = adaptor.getNumberOfFactors();
         int nTraits = adaptor.getNumberOfTraits();
+        int repeats = randomScan ? baserRepeats * nTraits : baserRepeats;
 
 
         int dimLoadings = nTraits * nFac;
@@ -612,11 +613,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
             }
             adaptor.fireLoadingsChanged();
-            restoreLoadings(originalLoadings);
+            if (!randomScan) {
+                restoreLoadings(originalLoadings);
+            }
+//            restoreLoadings(originalLoadings);
         }
 
         restoreLoadings(originalLoadings);
-        adaptor.fireLoadingsChanged();
 
         for (int i = 0; i < dimLoadings; i++) {
             loadMean[i] /= repeats;
@@ -659,6 +662,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
             adaptor.setLoadingsForTraitQuietly(i, buffer);
         }
+
+        adaptor.fireLoadingsChanged();
     }
 
 }

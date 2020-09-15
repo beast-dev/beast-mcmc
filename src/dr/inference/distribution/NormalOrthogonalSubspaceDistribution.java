@@ -10,7 +10,7 @@ import org.ejml.ops.CommonOps;
 
 
 public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihood
-        implements NormalStatisticsHelpers.MatrixNormalStatisticsHelper {
+        implements NormalStatisticsHelpers.MatrixNormalStatisticsHelper, IndependentNormalStatisticsProvider {
 
     private final IndependentNormalStatisticsProvider priorDistribution;
     private final MatrixParameterInterface matrix;
@@ -37,9 +37,9 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
         super(name);
         this.priorDistribution = priorDistribution;
         this.matrix = matrix;
-        this.nRows = matrix.getRowDimension();
-        this.nCols = matrix.getColumnDimension();
-        this.svd = DecompositionFactory.svd(nRows, nCols, false, true, true);
+        this.nRows = matrix.getColumnDimension();
+        this.nCols = matrix.getRowDimension();
+        this.svd = DecompositionFactory.svd(nRows, nCols, true, true, true);
         this.uBuffer = new DenseMatrix64F(nRows, nRows);
         this.vBuffer = new DenseMatrix64F(nRows, nCols);
         this.wBuffer = new DenseMatrix64F(nRows, nRows);
@@ -47,7 +47,7 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
         this.rotatedPrecision = new DenseMatrix64F(nRows, nRows);
         this.kBuffer = new DenseMatrix64F(nRows, nRows);
         this.precisionArrayBuffer = new double[nRows][nRows];
-        this.rotatedMean = new DenseMatrix64F(nRows);
+        this.rotatedMean = new DenseMatrix64F(nRows, 1);
 
 
         addVariable(matrix);
@@ -58,7 +58,7 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
 
     @Override
     public double getScalarPrecision() {
-        throw new RuntimeException("Not implemented");
+        return priorDistribution.matrixNormalHelper(nRows, nCols).getScalarPrecision();
     }
 
     @Override
@@ -166,5 +166,21 @@ public class NormalOrthogonalSubspaceDistribution extends AbstractModelLikelihoo
     public void makeDirty() {
         rotationKnown = false;
         likelihoodKnown = false;
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return priorDistribution.getNormalMean(dim);
+    }
+
+    @Override
+    public double getNormalPrecision(int dim) {
+        return priorDistribution.getNormalPrecision(dim);
+    }
+
+    @Override
+    public NormalStatisticsHelpers.MatrixNormalStatisticsHelper matrixNormalHelper(int nRows, int nCols) {
+        if (nRows != nRows || nCols != nCols) throw new RuntimeException("Incompatible dimensions.");
+        return this;
     }
 }

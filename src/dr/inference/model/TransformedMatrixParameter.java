@@ -1,6 +1,7 @@
 package dr.inference.model;
 
 import dr.util.Transform;
+import dr.xml.*;
 
 public class TransformedMatrixParameter extends TransformedMultivariateParameter implements MatrixParameterInterface {
 
@@ -18,9 +19,6 @@ public class TransformedMatrixParameter extends TransformedMultivariateParameter
         this.nCols = matrix.getColumnDimension();
 
         this.transformedMatrix = new FastMatrixParameter(matrix.getId() + ".transformed", nRows, nCols, 0.0);
-
-        transformedMatrix.setAllParameterValuesQuietly(matrix.getParameterValues(), 0);
-        transformedMatrix.fireParameterChangedEvent();
         addVariableListener((VariableListener) matrix);
     }
 
@@ -113,6 +111,7 @@ public class TransformedMatrixParameter extends TransformedMultivariateParameter
             transformedValues = transform(unTransformedValues);
             transformedMatrix.setAllParameterValuesQuietly(transformedValues, 0);
             transformedMatrix.fireParameterChangedEvent();
+            needToUpdate = false;
         }
     }
 
@@ -122,4 +121,41 @@ public class TransformedMatrixParameter extends TransformedMultivariateParameter
         super.variableChangedEvent(variable, index, type);
 
     }
+
+    public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        private final String TRANSFORMED_MATRIX = "transformedMatrixParameter";
+
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MatrixParameterInterface param = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+            Transform.MultivariateTransform transform =
+                    (Transform.MultivariateTransform) xo.getChild(Transform.MultivariateTransform.class);
+            return new TransformedMatrixParameter(param, transform);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    new ElementRule(MatrixParameterInterface.class),
+                    new ElementRule(Transform.MultivariateTransform.class)
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "Transformed matrix";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return TransformedMultivariateParameter.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return TRANSFORMED_MATRIX;
+        }
+    };
 }

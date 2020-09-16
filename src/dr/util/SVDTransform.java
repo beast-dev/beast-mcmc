@@ -1,0 +1,82 @@
+package dr.util;
+
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.SingularValueDecomposition;
+
+public class SVDTransform extends Transform.MultivariateTransform {
+    private static final String ORTHO = "orthogonalTransform";
+
+    private final SingularValueDecomposition svd;
+    private final DenseMatrix64F inputBuffer;
+    private final DenseMatrix64F outputBuffer;
+
+
+    public SVDTransform(int nRows, int nCols) {
+        super(nRows * nCols);
+        this.svd = DecompositionFactory.svd(nRows, nCols, true, true, true);
+        this.inputBuffer = new DenseMatrix64F(nRows, nCols);
+        this.outputBuffer = new DenseMatrix64F(nRows, nCols);
+    }
+
+
+    @Override
+    public double[] inverse(double[] values, int from, int to, double sum) {
+        throw new RuntimeException("Cannot invert.");
+    }
+
+    @Override
+    public double[] gradient(double[] values, int from, int to) {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    @Override
+    public double[] gradientInverse(double[] values, int from, int to) {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    @Override
+    public String getTransformName() {
+        return ORTHO;
+    }
+
+    @Override
+    protected double[] transform(double[] values) {
+        inputBuffer.setData(values);
+        svd.decompose(inputBuffer);
+        double[] singularValues = svd.getSingularValues();
+        svd.getV(outputBuffer, true);
+        for (int i = 0; i < outputBuffer.getNumRows(); i++) {
+            double sv = singularValues[i];
+            for (int j = 0; j < outputBuffer.getNumCols(); j++) {
+                outputBuffer.set(i, j, sv * outputBuffer.get(i, j));
+            }
+        }
+        return outputBuffer.getData();
+    }
+
+    @Override
+    protected double[] inverse(double[] values) {
+        throw new RuntimeException("Cannot invert.");
+    }
+
+    @Override
+    protected double getLogJacobian(double[] values) {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    @Override
+    protected double[] getGradientLogJacobianInverse(double[] values) {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    @Override
+    public double[][] computeJacobianMatrixInverse(double[] values) {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    @Override
+    protected boolean isInInteriorDomain(double[] values) {
+        throw new RuntimeException("Not implemented.");
+    }
+}

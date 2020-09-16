@@ -85,7 +85,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         }
     }
 
-    private double inverse(double value) {
+    protected double inverse(double value) {
         return inverse ? transform.transform(value) : transform.inverse(value);
     }
 

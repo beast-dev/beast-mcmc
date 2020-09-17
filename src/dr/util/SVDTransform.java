@@ -3,6 +3,7 @@ package dr.util;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
+import org.ejml.ops.SingularOps;
 
 public class SVDTransform extends Transform.MultivariateTransform {
     private static final String ORTHO = "orthogonalTransform";
@@ -44,8 +45,15 @@ public class SVDTransform extends Transform.MultivariateTransform {
     protected double[] transform(double[] values) {
         inputBuffer.setData(values);
         svd.decompose(inputBuffer);
+
         double[] singularValues = svd.getSingularValues();
         svd.getV(outputBuffer, true);
+
+        if (!descending(singularValues)) {
+            DenseMatrix64F uBuffer = new DenseMatrix64F(inputBuffer.numRows, inputBuffer.numRows);
+            svd.getU(uBuffer, false);
+            SingularOps.descendingOrder(uBuffer, false, singularValues, singularValues.length, outputBuffer, true);
+        }
         for (int i = 0; i < outputBuffer.getNumRows(); i++) {
             double sv = singularValues[i];
             for (int j = 0; j < outputBuffer.getNumCols(); j++) {
@@ -53,6 +61,15 @@ public class SVDTransform extends Transform.MultivariateTransform {
             }
         }
         return outputBuffer.getData();
+    }
+
+    private boolean descending(double[] values) {
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] > values[i - 1]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

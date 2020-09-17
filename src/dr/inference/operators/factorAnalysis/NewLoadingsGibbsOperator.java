@@ -214,13 +214,16 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         double[][] adjustedPriorPrecision = getAdjustedPriorPrecision(row); //Assumes loadings are transposed
 
+        double errorPrecision = adaptor.getColumnPrecision(row);
 
         for (int i = 0; i < newRowDimension; i++) {
-            for (int j = i; j < newRowDimension; j++) { //TODO: don't double compute diagonals
-                answer[i][j] *= this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
+            answer[i][i] *= errorPrecision;
+            answer[i][i] = answer[i][i] * pathParameter + adjustedPriorPrecision[i][i];
 
-                answer[i][j] = answer[i][j] * pathParameter +
-                        adjustedPriorPrecision[i][j];
+            for (int j = i + 1; j < newRowDimension; j++) {
+
+                answer[i][j] *= errorPrecision; //adaptor.getColumnPrecision().getParameterValue(row, row);
+                answer[i][j] = answer[i][j] * pathParameter + adjustedPriorPrecision[i][j];
 
                 answer[j][i] = answer[i][j];
             }

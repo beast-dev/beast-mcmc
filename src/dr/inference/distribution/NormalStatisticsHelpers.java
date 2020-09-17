@@ -116,15 +116,15 @@ public class NormalStatisticsHelpers {
         }
 
         public double getColumnPrecisionDiagonal(int row, int col) {
-            return statistcisProvider.getNormalPrecision(col + nCols * row);
+            return statistcisProvider.getNormalPrecision(col * nRows + row);
         }
 
         @Override
-        public double[][] getColumnPrecision(int col) {
-            double[][] prec = new double[nRows][nRows];
+        public double[][] getColumnPrecision(int row) {
+            double[][] prec = new double[nCols][nCols];
 
-            for (int i = 0; i < nRows; i++) {
-                double p = getColumnPrecisionDiagonal(i, col); //TODO: check that indexing is correct
+            for (int i = 0; i < nCols; i++) {
+                double p = getColumnPrecisionDiagonal(row, i); //TODO: check that indexing is correct
                 prec[i][i] = p;
             }
 

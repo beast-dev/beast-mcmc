@@ -99,6 +99,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         }
         if (helper != null) {
             prior = helper.matrixNormalHelper(loadings.getColumnDimension(), loadings.getRowDimension());
+        } else if (xo.getChild(MatrixNormalStatisticsHelper.class) != null) {
+            prior = (MatrixNormalStatisticsHelper) xo.getChild(MatrixNormalStatisticsHelper.class);
         } else {
             prior = null;
         }
@@ -173,6 +175,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(DistributionLikelihood.class),
                             new ElementRule(NormalStatisticsHelper.class),
+                            new ElementRule(MatrixNormalStatisticsHelper.class),
                             new AndRule(
                                     new ElementRule(MomentDistributionModel.class),
                                     new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{

@@ -11,6 +11,7 @@ public class SVDTransform extends Transform.MultivariateTransform {
     private final SingularValueDecomposition svd;
     private final DenseMatrix64F inputBuffer;
     private final DenseMatrix64F outputBuffer;
+    private final DenseMatrix64F U;
 
 
     public SVDTransform(int nRows, int nCols) {
@@ -18,6 +19,7 @@ public class SVDTransform extends Transform.MultivariateTransform {
         this.svd = DecompositionFactory.svd(nRows, nCols, true, true, true);
         this.inputBuffer = new DenseMatrix64F(nRows, nCols);
         this.outputBuffer = new DenseMatrix64F(nRows, nCols);
+        this.U = new DenseMatrix64F(nRows, nRows);
     }
 
 
@@ -48,11 +50,10 @@ public class SVDTransform extends Transform.MultivariateTransform {
 
         double[] singularValues = svd.getSingularValues();
         svd.getV(outputBuffer, true);
+        svd.getU(U, false);
 
         if (!descending(singularValues)) {
-            DenseMatrix64F uBuffer = new DenseMatrix64F(inputBuffer.numRows, inputBuffer.numRows);
-            svd.getU(uBuffer, false);
-            SingularOps.descendingOrder(uBuffer, false, singularValues, singularValues.length, outputBuffer, true);
+            SingularOps.descendingOrder(U, false, singularValues, singularValues.length, outputBuffer, true);
         }
         for (int i = 0; i < outputBuffer.getNumRows(); i++) {
             double sv = singularValues[i];
@@ -95,5 +96,15 @@ public class SVDTransform extends Transform.MultivariateTransform {
     @Override
     protected boolean isInInteriorDomain(double[] values) {
         throw new RuntimeException("Not implemented.");
+    }
+
+    public double[][] getU() {
+        double[][] uArray = new double[U.numRows][U.numRows]; //TODO: cached if needed
+        for (int i = 0; i < U.numRows; i++) {
+            for (int j = 0; j < U.numCols; j++) {
+                uArray[i][j] = U.get(i, j);
+            }
+        }
+        return uArray;
     }
 }

@@ -118,6 +118,7 @@ public class TransformedMatrixParameter extends TransformedMultivariateParameter
     @Override
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         needToUpdate = true;
+        update(); //TODO: try to do this lazily
         super.variableChangedEvent(variable, index, type);
 
     }

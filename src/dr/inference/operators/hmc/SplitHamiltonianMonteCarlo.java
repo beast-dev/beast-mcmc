@@ -88,11 +88,10 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         return inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
     }
 
-    @Deprecated
-    private WrappedVector mergeWrappedVector(WrappedVector vectorA, WrappedVector vectorB) {
-        double[] buffer = new double[dimA + dimB];
-        System.arraycopy(vectorA.getBuffer(), 0, buffer, 0, dimA);
-        System.arraycopy(vectorB.getBuffer(), 0, buffer, dimA, dimB);
+    private static WrappedVector mergeWrappedVector(WrappedVector lhs, WrappedVector rhs) {
+        double[] buffer = new double[lhs.getDim() + rhs.getDim()];
+        System.arraycopy(lhs.getBuffer(), 0, buffer, 0, lhs.getDim());
+        System.arraycopy(rhs.getBuffer(), 0, buffer, lhs.getDim(), rhs.getDim());
         return new WrappedVector.Raw(buffer);
     }
 

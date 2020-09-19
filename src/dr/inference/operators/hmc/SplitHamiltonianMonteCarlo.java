@@ -164,7 +164,9 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         ReadableVector momentumA = new WrappedVector.Raw(bufferA);
         ReadableVector momentumB = new WrappedVector.Raw(bufferB);
 
-        // TODO Use WrappedVector.View (or make a ReadableVector.View) instead
+        // TODO Use ReadableVector.View instead
+//        return inner.getKineticEnergy(new ReadableVector.View(momentum, 0, dimA)) +
+//                outer.getKineticEnergy(new ReadableVector.View(momentum, dimA, dimB));
 
         return inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB);
     }

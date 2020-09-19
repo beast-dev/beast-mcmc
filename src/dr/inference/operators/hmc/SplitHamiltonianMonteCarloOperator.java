@@ -18,6 +18,10 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     private int nSteps;
     private int innerSteps;
 
+    // TODO Why are both SMHC and SHMCOperator necessary?  There seems to be considerable overlap.
+    // TODO Is it possible to combine (into a single class or hierarchy of related classes) to avoid
+    // TODO duplication?
+
     public SplitHamiltonianMonteCarloOperator(double weight, ReversibleHMCProvider reversibleHMCProviderA,
                                               ReversibleHMCProvider reversibleHMCProviderB, double stepSize,
                                               double relativeScale, int nSteps, int innerSteps) {

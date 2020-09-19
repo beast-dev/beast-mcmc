@@ -12,14 +12,16 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
 
-    public SplitHamiltonianMonteCarlo(ReversibleHMCProvider reversibleHMCProviderA,
-                                      ReversibleHMCProvider reversibleHMCProviderB, double stepSize,
+    public SplitHamiltonianMonteCarlo(ReversibleHMCProvider inner,
+                                      ReversibleHMCProvider outer, double stepSize,
                                       double relativeScale) {
 
-        this.reversibleHMCProviderA = reversibleHMCProviderA; //todo: better names. Now A = HZZ, B = HMC
-        this.reversibleHMCProviderB = reversibleHMCProviderB;
-        dimA = reversibleHMCProviderA.getInitialPosition().length;
-        dimB = reversibleHMCProviderB.getInitialPosition().length;
+        // TODO Call providers: inner and outer
+
+        this.inner = inner; //todo: better names. Now A = HZZ, B = HMC
+        this.outer = outer;
+        this.dimA = inner.getInitialPosition().length;
+        this.dimB = outer.getInitialPosition().length;
 
         this.stepSize = stepSize;
         this.relativeScale = relativeScale;
@@ -48,12 +50,27 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         // WrappedVector (check offset)?
 
         //2:update them
-        reversibleHMCProviderB.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
-        reversibleHMCProviderA.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
-        reversibleHMCProviderB.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+        inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
+        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
         //3:merge the position and momentum, update position and momentum
         updateMergedVector(positionA, positionB, position);
         updateMergedVector(momentumA, momentumB, momentum);
+
+        // TODO Avoid all these unncessary copies via
+
+//        WrappedVector positionA = new WrappedVector.View(position, 0, dimA);
+//        WrappedVector momentumA = new WrappedVector.View(momentum, 0, dimA);
+//
+//        WrappedVector positionB = new WrappedVector.View(position, dimA, dimB);
+//        WrappedVector momentumB = new WrappedVector.View(momentum, dimA, dimB);
+//
+//        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+//        inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
+//        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+        // done
+
+
     }
 
 
@@ -61,16 +78,17 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
     public double[] getInitialPosition() {
 
         double[] jointPosition = new double[dimA + dimB];
-        System.arraycopy(reversibleHMCProviderA.getInitialPosition(), 0, jointPosition, 0, dimA);
-        System.arraycopy(reversibleHMCProviderB.getInitialPosition(), 0, jointPosition, dimA, dimB);
+        System.arraycopy(inner.getInitialPosition(), 0, jointPosition, 0, dimA);
+        System.arraycopy(outer.getInitialPosition(), 0, jointPosition, dimA, dimB);
         return jointPosition;
     }
 
     @Override
     public double getParameterLogJacobian() {
-        return reversibleHMCProviderA.getParameterLogJacobian() + reversibleHMCProviderB.getParameterLogJacobian();
+        return inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
     }
 
+    @Deprecated
     private WrappedVector mergeWrappedVector(WrappedVector vectorA, WrappedVector vectorB) {
         double[] buffer = new double[dimA + dimB];
         System.arraycopy(vectorA.getBuffer(), 0, buffer, 0, dimA);
@@ -78,11 +96,13 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         return new WrappedVector.Raw(buffer);
     }
 
+    @Deprecated
     private void splitWrappedVector(WrappedVector vectorAB, double[] bufferA, double[] bufferB) {
         System.arraycopy(vectorAB.getBuffer(), 0, bufferA, 0, dimA);
         System.arraycopy(vectorAB.getBuffer(), dimA, bufferB, 0, dimB);
     }
 
+    @Deprecated
     private void updateMergedVector(WrappedVector vectorA, WrappedVector vectorB, WrappedVector vectorAB) {
         for (int i = 0; i < dimA + dimB; i++) {
             if (i < dimA) {
@@ -101,13 +121,15 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         System.arraycopy(position, 0, bufferA, 0, dimA);
         System.arraycopy(position, dimA, bufferB, 0, dimB);
 
-        reversibleHMCProviderA.setParameter(bufferA);
-        reversibleHMCProviderB.setParameter(bufferB);
+        inner.setParameter(bufferA);
+        outer.setParameter(bufferB);
+
+        // TODO Maybe could remove extra copy (if rate-limiting) by passing WrappedVector or ReadableVector
     }
 
     @Override
     public WrappedVector drawMomentum() {
-        return mergeWrappedVector(reversibleHMCProviderA.drawMomentum(), reversibleHMCProviderB.drawMomentum());
+        return mergeWrappedVector(inner.drawMomentum(), outer.drawMomentum());
     }
 
     @Override
@@ -118,15 +140,17 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         double[] momentumAbuffer = new double[dimA];
         double[] momentumBbuffer = new double[dimB];
         //2:split the momentum
-        splitWrappedVector(momentum, momentumAbuffer, momentumBbuffer);
+        splitWrappedVector(momentum, momentumAbuffer, momentumBbuffer);  // TODO Use WrappedVector.View instead
         //todo: better solution. Now only part B has a prior.
-        return reversibleHMCProviderA.getJointProbability(new WrappedVector.Raw(momentumAbuffer)) + reversibleHMCProviderB.getJointProbability(new WrappedVector.Raw(momentumBbuffer)) - reversibleHMCProviderA.getLogLikelihood();
+        return inner.getJointProbability(new WrappedVector.Raw(momentumAbuffer))
+                + outer.getJointProbability(new WrappedVector.Raw(momentumBbuffer))
+                - inner.getLogLikelihood();
     }
 
     @Override
     public double getLogLikelihood() {
         //todo: better solution. Now only part B has a prior. A only has likelihood.
-        return reversibleHMCProviderA.getLogLikelihood();
+        return inner.getLogLikelihood();
     }
 
     @Override
@@ -141,7 +165,9 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         ReadableVector momentumA = new WrappedVector.Raw(bufferA);
         ReadableVector momentumB = new WrappedVector.Raw(bufferB);
 
-        return reversibleHMCProviderA.getKineticEnergy(momentumA) + reversibleHMCProviderB.getKineticEnergy(momentumB);
+        // TODO Use WrappedVector.View (or make a ReadableVector.View) instead
+
+        return inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB);
     }
 
     @Override
@@ -153,6 +179,6 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
     private int dimB;
     private double stepSize;
     private double relativeScale;
-    private ReversibleHMCProvider reversibleHMCProviderA;
-    private ReversibleHMCProvider reversibleHMCProviderB;
+    private ReversibleHMCProvider inner;
+    private ReversibleHMCProvider outer;
 }

@@ -48,7 +48,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         this.nodeHeights = nodeHeights;
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
-        addModel(treeModel);
+        treeModel.addModel(this);
         treeModel.addModelRestoreListener(this);
     }
 

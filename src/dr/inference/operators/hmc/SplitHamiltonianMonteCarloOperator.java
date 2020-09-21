@@ -8,8 +8,13 @@ import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
 import java.util.Arrays;
+/**
+ * @author Zhenyu Zhang
+ * @author Aki Nishimura
+ * @author Marc A. Suchard
+ */
 
-public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperator implements GeneralOperator {
+public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperator implements GeneralOperator{//todo: make a ReversibleHMCProvider for NUTS use.
 
     private double stepSize;
     private double relativeScale;

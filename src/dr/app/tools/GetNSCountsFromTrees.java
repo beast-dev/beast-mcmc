@@ -155,14 +155,13 @@ public class GetNSCountsFromTrees {
             NodeRef node = tree.getNode(x);
             if (!tree.isRoot(node)){
                 count ++;
-
                 if (nodeToConsider(tree, node, branchSet, inclusionSets, exclusionSets)){
                     double branchLength = tree.getBranchLength(node);
                     length += branchLength;
                     Object totalNObject = tree.getNodeAttribute(node, totalcN);
                     Object totalSObject = tree.getNodeAttribute(node, totalcS);
                     if (totalNObject!=null && totalSObject!=null) {
-                        double totalN = (Double) totalNObject;
+                         double totalN = (Double) totalNObject;
                         double totalS = (Double) totalSObject;
                         double totaluNObject = (Double) tree.getNodeAttribute(node, totaluN);
                         double totaluSObject = (Double) tree.getNodeAttribute(node, totaluS);
@@ -383,14 +382,12 @@ public class GetNSCountsFromTrees {
     }
 
     private static boolean isMRCAnode(Tree tree, NodeRef node, Set targetSet) {
-
         NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, targetSet);
-
         if (node.equals(mrca)){
             return true;
         } else {
             return false;
-        }
+         }
     }
 
     private boolean branchInfo;

@@ -46,7 +46,7 @@ public class MatrixVonMisesFisherGibbsOperator extends SimpleMCMCOperator implem
         double maxPrecision = getMaximumPrecision();
 
 
-        CommonOps.multTransA(F, Y, C);
+        CommonOps.multTransA(Y, F, C);
         for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
             double scaledNorm = D.get(i, i) * maxPrecision;
             for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
@@ -73,18 +73,20 @@ public class MatrixVonMisesFisherGibbsOperator extends SimpleMCMCOperator implem
 
 
     private void splitLoadings() {
-        int offset = 0;
+        int offset1 = 0;
+        int offset2 = 0;
         for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
             double sumSquares = 0;
             for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                sumSquares += adaptor.getLoadingsValue(offset);
-                offset++;
+                sumSquares += adaptor.getLoadingsValue(offset1);
+                offset1++;
             }
             double norm = Math.sqrt(sumSquares);
             D.set(i, i, norm);
             double invNorm = 1.0 / norm;
             for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                V.set(offset, adaptor.getLoadingsValue(offset) * invNorm);
+                V.set(offset2, adaptor.getLoadingsValue(offset2) * invNorm);
+                offset2++;
             }
         }
     }

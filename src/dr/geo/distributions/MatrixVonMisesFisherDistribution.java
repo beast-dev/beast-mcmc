@@ -7,6 +7,7 @@ import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.EigenDecomposition;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.ops.CommonOps;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import static dr.math.MathUtils.nextDouble;
 
@@ -45,15 +46,20 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator {
             SingularValueDecomposition svd = new DecompositionFactory().svd(C.numRows, C.numCols, false, false, true);
             svd.decompose(C);
             double[] singularValues = svd.getSingularValues();
+            System.out.println("Rejects: " + rejects);
             CommonOps.multTransA(C, uniformDraw, kkBuffer1); //TODO: just need the trace, super inefficient
             double trace = 0;
             for (int i = 0; i < C.numCols; i++) {
                 trace += kkBuffer1.get(i, i) - singularValues[i];
             }
 
-            if (nextDouble() < trace) {
+            System.out.println("ExpTrace: " + Math.exp(trace));
+
+            if (nextDouble() < Math.exp(trace)) {
                 return uniformDraw.getData();
             }
+            rejects++;
+            System.out.println("");
         }
 
         throw new RuntimeException("Rejection sampler failed.");//TODO: handle better
@@ -66,7 +72,7 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator {
             X[i] = MathUtils.nextGaussian();
         }
         mkBuffer1.setData(X);
-        CommonOps.multTransB(mkBuffer1, mkBuffer1, kkBuffer1);
+        CommonOps.multTransA(mkBuffer1, mkBuffer1, kkBuffer1);
         EigenDecomposition<DenseMatrix64F> eig = DecompositionFactory.eig(nColumns, true, true);
         eig.decompose(kkBuffer1);
         for (int i = 0; i < nColumns; i++) {

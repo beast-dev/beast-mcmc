@@ -34,6 +34,7 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.TaskPool;
+import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.function.BinaryOperator;
@@ -547,6 +548,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public double getParameterLogJacobian() { // transform is not allowed yet.
         return 0;
+    }
+
+    @Override
+    public Transform getTransform() {
+        return null;
+    }
+
+    @Override
+    public GradientWrtParameterProvider getGradientProvider() {
+        return gradientProvider;
     }
 
     @Override

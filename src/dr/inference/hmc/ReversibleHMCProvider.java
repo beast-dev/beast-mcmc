@@ -2,6 +2,7 @@ package dr.inference.hmc;
 
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.util.Transform;
 /**
  * @author Zhenyu Zhang
  */
@@ -14,6 +15,10 @@ public interface ReversibleHMCProvider {
 
     double getParameterLogJacobian();
 
+    Transform getTransform();
+
+    GradientWrtParameterProvider getGradientProvider();
+
     void setParameter(double[] position);
 
     WrappedVector drawMomentum();
@@ -25,5 +30,4 @@ public interface ReversibleHMCProvider {
     double getKineticEnergy(ReadableVector momentum);
 
     double getStepSize();
-
 }

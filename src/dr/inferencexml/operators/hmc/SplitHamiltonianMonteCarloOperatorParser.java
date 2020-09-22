@@ -1,6 +1,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.ReversibleHMCProvider;
+import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.SplitHamiltonianMonteCarloOperator;
 import dr.xml.*;
@@ -16,6 +17,8 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
     private final static String N_INNER_STEPS = "nInnerSteps";
     private final static String STEP_SIZE = "stepSize";
     private final static String RELATIVE_SCALE = "relativeScale";
+    private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
+    private final static String GRADIENT_CHECK_TOL = "gradientCheckTolerance";
 
 
     @Override
@@ -25,15 +28,19 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double relativeScale = xo.getDoubleAttribute(RELATIVE_SCALE);
 
-        ReversibleHMCProvider reversibleHMCproviderA = (ReversibleHMCProvider) xo.getChild(0);
-        ReversibleHMCProvider reversibleHMCproviderB = (ReversibleHMCProvider) xo.getChild(1);
+        ReversibleHMCProvider reversibleHMCproviderA = (ReversibleHMCProvider) xo.getChild(1); //todo: avoid hard-coded order of reversible provider?
+        ReversibleHMCProvider reversibleHMCproviderB = (ReversibleHMCProvider) xo.getChild(2);
 
         int nStep = xo.getAttribute(N_STEPS, 5);
         int nInnerStep = xo.getAttribute(N_INNER_STEPS, 5);
+        int gradientCheckCount = xo.getAttribute(GRADIENT_CHECK_COUNT, 0);
+        double gradientCheckTol = xo.getAttribute(GRADIENT_CHECK_TOL, 0.01);
 
-        return new SplitHamiltonianMonteCarloOperator(weight, reversibleHMCproviderA, reversibleHMCproviderB,
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+        return new SplitHamiltonianMonteCarloOperator(weight, reversibleHMCproviderA, reversibleHMCproviderB, parameter,
                 stepSize, relativeScale, nStep
-                , nInnerStep);
+                , nInnerStep, gradientCheckCount, gradientCheckTol);
     }
 
     @Override

@@ -29,7 +29,6 @@ import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inference.operators.hmc.SplitHamiltonianMonteCarlo;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
@@ -53,17 +52,7 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         ReversibleHMCProvider reversibleHMCprovider;
-        if (xo.getChildCount() == 1) { //ordinal NUTS
-            reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
-
-        } else if (xo.getChildCount() == 2) { //split HMC
-            ReversibleHMCProvider reversibleHMCproviderA = (ReversibleHMCProvider) xo.getChild(0);
-            ReversibleHMCProvider reversibleHMCproviderB = (ReversibleHMCProvider) xo.getChild(1);
-            reversibleHMCprovider = new SplitHamiltonianMonteCarlo(reversibleHMCproviderA, reversibleHMCproviderB,
-                    0.01, 10);
-        } else {
-            throw new RuntimeException("Not implemented");
-        }
+        reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
         boolean adaptiveStepsize = xo.getAttribute(ADAPTIVE_STEPSIZE_FLG, true);
         return new NoUTurnOperator(reversibleHMCprovider, adaptiveStepsize, weight);
     }

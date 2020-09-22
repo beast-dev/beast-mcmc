@@ -699,6 +699,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
+    public Transform getTransform() {
+        return transform;
+    }
+
+    @Override
+    public GradientWrtParameterProvider getGradientProvider() {
+        return gradientProvider;
+    }
+
+    @Override
     public void setParameter(double[] position) {
         leapFrogEngine.setParameter(position);
     }

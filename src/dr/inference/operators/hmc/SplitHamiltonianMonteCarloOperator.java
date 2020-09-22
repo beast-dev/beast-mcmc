@@ -13,8 +13,6 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
-import java.util.Arrays;
-
 /**
  * @author Zhenyu Zhang
  * @author Aki Nishimura
@@ -36,8 +34,10 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     private int nSteps;
     private int innerSteps;
 
+
     private int gradientCheckCount;
     private double gradientCheckTolerance;
+
 
     public SplitHamiltonianMonteCarloOperator(double weight, ReversibleHMCProvider reversibleHMCProviderA,
                                               ReversibleHMCProvider reversibleHMCProviderB, Parameter parameter,

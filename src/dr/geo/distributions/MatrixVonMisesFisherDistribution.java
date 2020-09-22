@@ -22,8 +22,8 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator {
     private final DenseMatrix64F kkBuffer3;
     private static final int MAX_REJECTS = 100;
 
-    MatrixVonMisesFisherDistribution(double[] C, int nRows, int nColumns) {
-        this.C = DenseMatrix64F.wrap(nRows, nColumns, C);
+    public MatrixVonMisesFisherDistribution(int nRows, int nColumns) {
+        this.C = new DenseMatrix64F(nRows, nColumns);
         this.nRows = nRows;
         this.nColumns = nColumns;
         this.mkBuffer1 = new DenseMatrix64F(nRows, nColumns);
@@ -88,5 +88,9 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator {
     @Override
     public double logPdf(Object x) {
         throw new RuntimeException("Not yet implemented.");
+    }
+
+    public void setC(double[] values) {
+        C.setData(values);
     }
 }

@@ -73,13 +73,25 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 TreeTraversal.TraversalType.PRE_ORDER);
 
 
-        addModel(treeModel);
+        updateRatios();
         addVariable(ratios);
         constructEpochs();
     }
 
     @Override
     public void modelRestored(Model model) {
+        epochKnown = false;
+        ratiosKnown = false;
+    }
+
+
+    @Override
+    public void storeState() {
+        ratios.storeParameterValues();
+    }
+
+    @Override
+    public void restoreState() {
         ratios.restoreParameterValues();
     }
 
@@ -145,6 +157,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     public double[] getRatios() {
+        updateRatios();
         return ratios.getParameterValues();
     }
 
@@ -152,6 +165,14 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
         ratiosKnown = false;
+    }
+
+    private void checkNan(double[] values) {
+        for (int i = 0; i < values.length; i++) {
+            if (Double.isNaN(values[i])) {
+                System.err.println("wrong");
+            }
+        }
     }
 
     protected void updateRatios() {
@@ -175,7 +196,6 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                     previousNodeHeight = currentNodeHeight;
                 }
             }
-            ratios.storeParameterValues();
             ratiosKnown = true;
         }
     }

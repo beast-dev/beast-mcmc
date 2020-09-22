@@ -254,6 +254,67 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
                 second[i] -= firstSquared[i];
             }
         }
+
+        if (DEBUG) {
+            checkReduction(first);
+        }
+
+    }
+
+    private void checkReduction(double[] array) {
+        for (int i = 0; i < array.length; i++) {
+            if (Double.isNaN(array[i])) {
+                double[] postPartial = new double[patternCount * stateCount * categoryCount];
+                double[] rootPostPartial = new double[patternCount * stateCount * categoryCount];
+                double[] prePartial = new double[patternCount * stateCount * categoryCount];
+                double[] differentialMatrix = new double[stateCount * stateCount * categoryCount];
+                beagle.getPartials(getPostOrderPartialIndex(0), Beagle.NONE, postPartial);
+                beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostPartial);
+                beagle.getPartials(getPreOrderPartialIndex(0), Beagle.NONE, prePartial);
+                beagle.getTransitionMatrix(getFirstDerivativeMatrixBufferIndex(0), differentialMatrix);
+
+                double[] grandNumerator = new double[patternCount];
+                double[] grandDenominator = new double[patternCount];
+
+                for (int category = 0; category < categoryCount; category++) {
+                    final double weight = siteRateModel.getProportionForCategory(category);
+                    for (int pattern = 0; pattern < patternCount; pattern++) {
+                        double numerator = 0.0;
+                        double denominator = 0.0;
+                        for (int j = 0; j < stateCount; j++) {
+                            double sumOverState = 0.0;
+                            for (int k = 0; k < stateCount; k++) {
+                                sumOverState += differentialMatrix[stateCount * stateCount * category + stateCount * j + k]
+                                        * postPartial[stateCount * patternCount * category + stateCount * pattern + k];
+
+                            }
+                            numerator += sumOverState * prePartial[stateCount * patternCount * category + stateCount * pattern + j];
+                            denominator += postPartial[stateCount * patternCount * category + stateCount * pattern + j] * prePartial[stateCount * patternCount * category + stateCount * pattern + j];
+                        }
+
+                        grandNumerator[pattern] += weight * numerator;
+                        grandDenominator[pattern] += weight * denominator;
+                    }
+                }
+
+                double sumDeriv = 0.0;
+                for (int j = 0; j < patternCount; j++) {
+                    sumDeriv += grandNumerator[j] / grandDenominator[j] * patternList.getPatternWeight(j);
+                }
+                double[] rootFrequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+                double[] patternProb = new double[patternCount];
+                for (int category = 0; category < categoryCount; category++) {
+                    final double weight = siteRateModel.getProportionForCategory(category);
+                    for (int pattern = 0; pattern < patternCount; pattern++) {
+                        double sumOverState = 0.0;
+                        for (int j = 0; j < stateCount; j++) {
+                            sumOverState += rootPostPartial[stateCount * patternCount * category + stateCount * pattern + j] * rootFrequencies[j];
+                        }
+                        patternProb[pattern] += sumOverState * siteRateModel.getProportionForCategory(category);
+                    }
+                }
+            }
+        }
     }
 
     protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
@@ -335,6 +396,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
     private boolean substitutionProcessKnown;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
+    private final boolean DEBUG = false;
     private long simulateCount = 0;
     private long getTraitCount = 0;
     private long updatePrePartialCount = 0;

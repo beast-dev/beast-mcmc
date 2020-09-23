@@ -31,7 +31,6 @@ import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
-import static dr.math.MathUtils.isClose;
 import static dr.math.matrixAlgebra.WrappedMatrix.Utils.makeString;
 
 /**
@@ -493,7 +492,7 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
                     sum += temp * temp;
                 }
                 if (sum > 1.0) {
-                    assert isClose(1.0, sum, 1E-6);
+                    assert (Math.abs(sum - 1.0) < 1E-6);
                     sum = 1.0;
                 }
                 W.set(j, j, Math.sqrt(1 - sum));
@@ -569,7 +568,6 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
         }
 
     }
-
 
 
 }

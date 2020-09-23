@@ -156,38 +156,7 @@ public class GetNSCountsFromTrees {
             if (!tree.isRoot(node)){
                 count ++;
 
-                boolean proceed = false;
-                if (branchSet == BranchSet.ALL) {
-                    proceed = true;
-                } else if (branchSet == BranchSet.EXT && tree.isExternal(node)) {
-                    proceed = true;
-                } else if (branchSet == BranchSet.INT && !tree.isExternal(node)) {
-                    proceed = true;
-                } else if (branchSet == BranchSet.BACKBONE) {
-                    for (Set inclusionSet: inclusionSets){
-                        if (onBackbone(tree, node, inclusionSet)){
-                            proceed = true;
-                        }
-                    }
-                } else if (branchSet == BranchSet.CLADE) {
-                    for (Set inclusionSet: inclusionSets){
-                        if (inClade(tree, node, inclusionSet, cladeStem)){
-                            proceed = true;
-                        }
-                    }
-                }
-
-                //if the node falls in one of the clades we are excluding, do not proceed.
-                if (proceed && exclusionSets.size()>0){
-                    for(Set exclusionSet: exclusionSets){
-                        if(inClade(tree, node, exclusionSet, excludeCladeStems)){
-                            proceed = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (proceed){
+                if (nodeToConsider(tree, node, branchSet, inclusionSets, exclusionSets)){
                     double branchLength = tree.getBranchLength(node);
                     length += branchLength;
                     Object totalNObject = tree.getNodeAttribute(node, totalcN);
@@ -292,6 +261,45 @@ public class GetNSCountsFromTrees {
         }
     }
 
+    private boolean nodeToConsider(Tree tree, NodeRef node, BranchSet branchSet, List<Set> inclusionSets,  List<Set> exclusionSets){
+        boolean nodeToConsider = false;
+        if (branchSet == BranchSet.ALL) {
+            nodeToConsider = true;
+        } else if (branchSet == BranchSet.EXT && tree.isExternal(node)) {
+            nodeToConsider = true;
+        } else if (branchSet == BranchSet.INT && !tree.isExternal(node)) {
+            nodeToConsider = true;
+        } else if (branchSet == BranchSet.BACKBONE) {
+            for (Set inclusionSet: inclusionSets){
+                if (onBackbone(tree, node, inclusionSet)){
+                    nodeToConsider = true;
+                }
+            }
+        } else if (branchSet == BranchSet.CLADE) {
+            for (Set inclusionSet: inclusionSets){
+                if (inClade(tree, node, inclusionSet, cladeStem)){
+                    nodeToConsider = true;
+                }
+            }
+        } else if (branchSet == BranchSet.SINGLEBRANCH) {
+            Set inclusionSet = inclusionSets.get(0); //the issue with multiple inclusion sets is caught in the main method
+            if (exclusionSets.size()>0){
+                System.err.println("exclusion sets are ignored for a single branch");
+            }
+            nodeToConsider = isMRCAnode(tree, node, inclusionSet);
+        }
+
+        //if the node falls in one of the clades we are excluding, do not proceed.
+        if (nodeToConsider && exclusionSets.size()>0 && (branchSet != BranchSet.SINGLEBRANCH)){
+            for(Set exclusionSet: exclusionSets){
+                if(inClade(tree, node, exclusionSet, excludeCladeStems)){
+                    nodeToConsider = false;
+                    break;
+                }
+            }
+        }
+        return nodeToConsider;
+    }
 
     private boolean inSiteList(Integer site, double[] siteList){
         boolean returnBoolean = false;
@@ -352,7 +360,6 @@ public class GetNSCountsFromTrees {
     }
 
     private static boolean inClade(Tree tree, NodeRef node, Set targetSet, boolean includeStem) {
-
         Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
 
         leafSet.removeAll(targetSet);
@@ -375,6 +382,17 @@ public class GetNSCountsFromTrees {
         }
     }
 
+    private static boolean isMRCAnode(Tree tree, NodeRef node, Set targetSet) {
+
+        NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, targetSet);
+
+        if (node.equals(mrca)){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private boolean branchInfo;
     private boolean zeroBranches;
     private boolean summary;
@@ -390,7 +408,8 @@ public class GetNSCountsFromTrees {
         INT,
         EXT,
         BACKBONE,
-        CLADE
+        CLADE,
+        SINGLEBRANCH
     }
 
     private static String[] parseVariableLengthStringArray(String inString) {
@@ -546,6 +565,23 @@ public class GetNSCountsFromTrees {
                 }
             } else {
                 progressStream.println("you want to get summaries for one or more clades, but no files with taxa to define it are provided??");
+                System.exit(-1);
+            }
+        }
+        if (set == set.SINGLEBRANCH) {
+            if (arguments.hasOption(INCLUDECLADES)) {
+                String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(INCLUDECLADES));
+                if (fileList.length > 1){
+                    progressStream.println("more than one clade set is specified for a summary of a single branch??");
+                    System.exit(-1);
+                } else {
+                    String singleSet = fileList[0];
+                    inclusionSets.add(getTargetSet(singleSet));
+                    progressStream.println("getting target set for a single branch summary specification: " + singleSet);
+                }
+            } else {
+                progressStream.println("you want to get summaries for a single branch, but no files with taxa to define to child node of the branch are provided??");
+                System.exit(-1);
             }
         }
 

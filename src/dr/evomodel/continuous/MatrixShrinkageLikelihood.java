@@ -1,6 +1,6 @@
 package dr.evomodel.continuous;
 
-import dr.inference.distribution.NormalStatisticsHelpers.IndependentNormalStatisticsProvider;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -13,7 +13,7 @@ import java.util.Arrays;
  */
 
 public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider,
-        IndependentNormalStatisticsProvider, Reportable {
+        NormalStatisticsProvider, Reportable {
 
     private final MatrixParameterInterface loadings;
     private final BayesianBridgeLikelihood[] rowPriors;
@@ -133,20 +133,19 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
     }
 
     @Override
-    public double getNormalPrecision(int dim) {
+    public double getNormalSD(int dim) {
         int row = dim / loadings.getRowDimension();
         int col = dim - row * loadings.getRowDimension();
         double globalScale = rowPriors[row].getGlobalScale().getParameterValue(0);
         double localScale = rowPriors[row].getLocalScale().getParameterValue(col);
-        double sd = globalScale * localScale;
-        return 1.0 / (sd * sd);
+        return globalScale * localScale;
     }
 
     @Override
     public String getReport() {
         StringBuilder sb = new StringBuilder("MatrixShrinkageLikelihood\n");
         int counter = 0;
-        for (BayesianBridgeLikelihood like : rowPriors) {
+        for (BayesianBridgeLikelihood like: rowPriors) {
             counter += 1;
             sb.append("\tLikelihood " + counter + ": ");
             sb.append(like.getLogLikelihood());
@@ -155,6 +154,6 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
         sb.append("Likelihood: ");
         sb.append(getLogLikelihood());
         sb.append("\n");
-        return sb.toString();
+        return  sb.toString();
     }
 }

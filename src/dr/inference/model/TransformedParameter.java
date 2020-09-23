@@ -85,7 +85,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         }
     }
 
-    protected double inverse(double value) {
+    private double inverse(double value) {
         return inverse ? transform.transform(value) : transform.inverse(value);
     }
 
@@ -207,10 +207,6 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
             return transform.getLogJacobian(oldValues, 0, oldValues.length)
                     - transform.getLogJacobian(newValues, 0, newValues.length);
         }
-    }
-
-    public Transform getTransform() {
-        return transform;
     }
 
     protected final Parameter parameter;

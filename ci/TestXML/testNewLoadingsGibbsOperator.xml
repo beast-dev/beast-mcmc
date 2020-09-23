@@ -157,10 +157,10 @@
     </multivariateDiffusionModel>
 
     <matrixParameter id="L">
-        <parameter id="L1"
-                   value="0.0076177742633394985 -0.5484010117038763 -0.784929798992992 0.30611493207760276 -0.21629784327601548"/>
-        <parameter id="L2"
-                   value="0 0.3515255484089337 0.24501763591278475 -1.0304943902767967 -2.132446790112065"/>
+        <parameter
+                value="0.0076177742633394985 -0.5484010117038763 -0.784929798992992 0.30611493207760276 -0.21629784327601548"/>
+        <parameter
+                value="0 0.3515255484089337 0.24501763591278475 -1.0304943902767967 -2.132446790112065"/>
     </matrixParameter>
 
     <cachedPrior id="loadings.prior">
@@ -169,75 +169,6 @@
         </normalPrior>
         <matrixParameter idref="L"/>
     </cachedPrior>
-
-    <!--    Shrinkage prior-->
-
-    <parameter id="rowMult2" value="100" lower="0"/>
-    <parameter id="globalPrecision1" value="1" lower="0"/>
-
-    <productParameter id="globalPrecision2">
-        <parameter idref="globalPrecision1"/>
-        <parameter idref="rowMult2"/>
-    </productParameter>
-
-    <parameter id="localScale1"
-               value="1.8645309294176249 0.459518440729152 0.9819674858168148 0.6893728906671813 1.0051884245585159"
-               lower="0"/>
-    <parameter id="localScale2"
-               value="0.927352812455257 0.8781917752851336 1.4113828200459908 0.4336627522185643 0.9572235089557637"
-               lower="0"/>
-
-    <transformedParameter id="globalScale1" type="power">
-        <parameter idref="globalPrecision1"/>
-        <powerTransform power="-0.5">
-            <transform type="power"/>
-        </powerTransform>
-    </transformedParameter>
-    <transformedParameter id="globalScale2" type="power">
-        <productParameter idref="globalPrecision2"/>
-        <powerTransform power="-0.5">
-            <transform type="power"/>
-        </powerTransform>
-    </transformedParameter>
-
-    <bayesianBridge id="bb1">
-        <parameter idref="L1"/>
-        <globalScale>
-            <transformedParameter idref="globalScale1"/>
-        </globalScale>
-        <localScale>
-            <parameter idref="localScale1"/>
-        </localScale>
-        <exponent>
-            <parameter value="0.5"/>
-        </exponent>
-    </bayesianBridge>
-    <bayesianBridge id="bb2">
-        <parameter idref="L2"/>
-        <globalScale>
-            <transformedParameter idref="globalScale2"/>
-        </globalScale>
-        <localScale>
-            <parameter idref="localScale2"/>
-        </localScale>
-        <exponent>
-            <parameter value="0.5"/>
-        </exponent>
-    </bayesianBridge>
-
-    <matrixShrinkageLikelihood id="L.prior.shrinkage">
-        <matrixParameter idref="L"/>
-        <rowPriors>
-            <bayesianBridge idref="bb1"/>
-            <bayesianBridge idref="bb2"/>
-        </rowPriors>
-    </matrixShrinkageLikelihood>
-
-    <normalOrthogonalSubspaceDistribution id="L.prior.ortho">
-        <matrixShrinkageLikelihood idref="L.prior.shrinkage"/>
-        <matrixParameter idref="L"/>
-    </normalOrthogonalSubspaceDistribution>
-
 
     <!--    <integratedFactorModel id="factorModel" traitName="traits" nugget="0" standardize="false">-->
     <!--        <loadings>-->
@@ -361,318 +292,216 @@
             <traitDataLikelihood idref="traitLikelihood"/>
             <normalPrior idref="loadings.prior.inner"/>
         </loadingsGibbsOperator>
-
-        <loadingsGibbsOperator id="unconstrainedLoadingsOpShrinkage" weight="5.0" scaleFactor="1.0" randomScan="false"
-                               newMode="true"
-                               constraint="none" sparsity="none">
-            <!--            <integratedFactorModel idref="factorModel"/>-->
-            <latentFactorModel idref="lfm"/>
-            <traitDataLikelihood idref="traitLikelihood"/>
-            <matrixShrinkageLikelihood idref="L.prior.shrinkage"/>
-        </loadingsGibbsOperator>
-
-        <loadingsGibbsOperator id="unconstrainedLoadingsOpOrtho" weight="5.0" scaleFactor="1.0" randomScan="false"
-                               newMode="true"
-                               constraint="none" sparsity="none">
-            <!--            <integratedFactorModel idref="factorModel"/>-->
-            <latentFactorModel idref="lfm"/>
-            <traitDataLikelihood idref="traitLikelihood"/>
-            <normalOrthogonalSubspaceDistribution idref="L.prior.ortho"/>
-        </loadingsGibbsOperator>
     </operators>
 
-        <cachedReport id="unconstrainedReport">
-            <loadingsGibbsOperator idref="unconstrainedLoadingsOp"/>
-        </cachedReport>
-
-        <report>
-            <cachedReport idref="unconstrainedReport"/>
-        </report>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
-            <message>
-                Check unconstrained loadings mean
-            </message>
-            <actual regex="Loadings mean:\s+(.*)\n">
-                <cachedReport idref="unconstrainedReport"/>
-            </actual>
-            <expected>
-                0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
-                0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
-            </expected>
-        </assertEqual>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
-            <message>
-                Check unconstrained loadings covariance
-            </message>
-            <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-                <cachedReport idref="unconstrainedReport"/>
-            </actual>
-            <expected>
-                0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
-                0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
-                0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
-                0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
-                0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
-                0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
-                0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
-                0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
-                0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
-                0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
-            </expected>
-        </assertEqual>
-
-        <cachedReport id="constrainedReport">
-            <loadingsGibbsOperator idref="constrainedLoadingsOp"/>
-        </cachedReport>
-
-        <report>
-            <cachedReport idref="constrainedReport"/>
-        </report>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
-            <message>
-                Check constrained loadings mean
-            </message>
-            <actual regex="Loadings mean:\s+(.*)\n">
-                <cachedReport idref="constrainedReport"/>
-            </actual>
-            <expected>
-                0.053731487267558116 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
-                0.0 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
-            </expected>
-        </assertEqual>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
-            <message>
-                Check constrained loadings covariance
-            </message>
-            <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-                <cachedReport idref="constrainedReport"/>
-            </actual>
-            <expected>
-                0.10822407804554998 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-                0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
-                0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
-                0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
-                0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
-                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-                0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
-                0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
-                0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
-                0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
-            </expected>
-        </assertEqual>
-
-
-        <cachedReport id="unconstrainedReportMulti">
-            <loadingsGibbsOperator idref="unconstrainedLoadingsOpMulti"/>
-        </cachedReport>
-
-        <report>
-            <cachedReport idref="unconstrainedReportMulti"/>
-        </report>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
-            <message>
-                Check unconstrained loadings mean (multithreaded)
-            </message>
-            <actual regex="Loadings mean:\s+(.*)\n">
-                <cachedReport idref="unconstrainedReportMulti"/>
-            </actual>
-            <expected>
-                0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
-                0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
-            </expected>
-        </assertEqual>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
-            <message>
-                Check unconstrained loadings covariance (multithreaded)
-            </message>
-            <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-                <cachedReport idref="unconstrainedReportMulti"/>
-            </actual>
-            <expected>
-                0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
-                0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
-                0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
-                0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
-                0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
-                0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
-                0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
-                0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
-                0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
-                0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
-            </expected>
-        </assertEqual>
-
-        <cachedReport id="constrainedReportMulti">
-            <loadingsGibbsOperator idref="constrainedLoadingsOpMulti"/>
-        </cachedReport>
-
-        <report>
-            <cachedReport idref="constrainedReportMulti"/>
-        </report>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
-            <message>
-                Check constrained loadings mean (multithreaded)
-            </message>
-            <actual regex="Loadings mean:\s+(.*)\n">
-                <cachedReport idref="constrainedReportMulti"/>
-            </actual>
-            <expected>
-                0.053731487267558116 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
-                0.0 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
-            </expected>
-        </assertEqual>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
-            <message>
-                Check constrained loadings covariance (multithreaded)
-            </message>
-            <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-                <cachedReport idref="constrainedReportMulti"/>
-            </actual>
-            <expected>
-                0.10822407804554998 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-                0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
-                0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
-                0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
-                0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
-                0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-                0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
-                0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
-                0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
-                0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
-            </expected>
-        </assertEqual>
-
-        <cachedReport id="unconstrainedReportRandScan">
-            <loadingsGibbsOperator idref="unconstrainedLoadingsOpRandScan"/>
-        </cachedReport>
-
-        <report>
-            <cachedReport idref="unconstrainedReportRandScan"/>
-        </report>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
-            <message>
-                Check unconstrained loadings mean (random scan)
-            </message>
-            <actual regex="Loadings mean:\s+(.*)\n">
-                <cachedReport idref="unconstrainedReportRandScan"/>
-            </actual>
-            <expected>
-                0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
-                0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
-            </expected>
-        </assertEqual>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
-            <message>
-                Check unconstrained loadings covariance (random scan)
-            </message>
-            <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-                <cachedReport idref="unconstrainedReportRandScan"/>
-            </actual>
-            <expected>
-                0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
-                0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
-                0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
-                0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
-                0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
-                0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
-                0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
-                0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
-                0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
-                0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
-            </expected>
-        </assertEqual>
-
-        <cachedReport id="unconstrainedReportShrinkage">
-            <loadingsGibbsOperator idref="unconstrainedLoadingsOpShrinkage"/>
-        </cachedReport>
-
-        <report>
-            <cachedReport idref="unconstrainedReportShrinkage"/>
-        </report>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
-            <message>
-                Check unconstrained loadings mean (shrinkage)
-            </message>
-            <actual regex="Loadings mean:\s+(.*)\n">
-                <cachedReport idref="unconstrainedReportShrinkage"/>
-            </actual>
-            <expected>
-                0.0589282  -0.404863   -0.542189     0.290106   -0.540506
-                0.04255     0.0884434  -0.00678642  -0.0166104  -0.315714
-            </expected>
-        </assertEqual>
-
-        <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
-            <message>
-                Check unconstrained loadings covariance (shrinkage)
-            </message>
-            <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-                <cachedReport idref="unconstrainedReportShrinkage"/>
-            </actual>
-            <expected>
-                0.11726665037654795 0.0 0.0 0.0 0.0 0.00013376695133209693 0.0 0.0 0.0 0.0
-                0.0 0.04152221968270005 0.0 0.0 0.0 0.0 9.299353793170972e-5 0.0 0.0 0.0
-                0.0 0.0 0.1362077688778558 0.0 0.0 0.0 0.0 0.0002620964023954445 0.0 0.0
-                0.0 0.0 0.0 0.0986901492744138 0.0 0.0 0.0 0.0 2.529181864629202e-5 0.0
-                0.0 0.0 0.0 0.0 0.04607425792392617 0.0 0.0 0.0 0.0 0.0001268159595172877
-                0.00013376695133209693 0.0 0.0 0.0 0.0 0.008035972630942096 0.0 0.0 0.0 0.0
-                0.0 9.299353793170972e-5 0.0 0.0 0.0 0.0 0.006719356748287898 0.0 0.0 0.0
-                0.0 0.0 0.0002620964023954445 0.0 0.0 0.0 0.0 0.017716714062754123 0.0 0.0
-                0.0 0.0 0.0 2.529181864629202e-5 0.0 0.0 0.0 0.0 0.0018529304176888568 0.0
-                0.0 0.0 0.0 0.0 0.0001268159595172877 0.0 0.0 0.0 0.0 0.007713122229109928
-            </expected>
-        </assertEqual>
-
-    <cachedReport id="unconstrainedReportOrtho">
-        <loadingsGibbsOperator idref="unconstrainedLoadingsOpOrtho"/>
+    <cachedReport id="unconstrainedReport">
+        <loadingsGibbsOperator idref="unconstrainedLoadingsOp"/>
     </cachedReport>
 
     <report>
-        <cachedReport idref="unconstrainedReportOrtho"/>
+        <cachedReport idref="unconstrainedReport"/>
     </report>
 
     <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
         <message>
-            Check unconstrained loadings mean (orthogonal)
+            Check unconstrained loadings mean
         </message>
         <actual regex="Loadings mean:\s+(.*)\n">
-            <cachedReport idref="unconstrainedReportOrtho"/>
+            <cachedReport idref="unconstrainedReport"/>
         </actual>
         <expected>
-            -0.024356 -0.0885476 -0.0696872 0.0499428 -0.0166712
-            0.620584 0.570857 -0.0215926 -0.906294 -1.86668
+            0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
         </expected>
     </assertEqual>
 
     <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
         <message>
-            Check unconstrained loadings covariance (orthogonal)
+            Check unconstrained loadings covariance
         </message>
         <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
-            <cachedReport idref="unconstrainedReportOrtho"/>
+            <cachedReport idref="unconstrainedReport"/>
         </actual>
         <expected>
-            0.008295730024965909 0.0 0.0 0.0 0.0 -0.005386110507677034 0.0 0.0 0.0 0.0
-            0.0 0.006791422599628163 0.0 0.0 0.0 0.0 -0.0016638386933231543 0.0 0.0 0.0
-            0.0 0.0 0.017975457971079946 0.0 0.0 0.0 0.0 -0.005721339722140326 0.0 0.0
-            0.0 0.0 0.0 0.0020958560603241464 0.0 0.0 0.0 0.0 -0.00486164773014464 0.0
-            0.0 0.0 0.0 0.0 0.007788096769507535 0.0 0.0 0.0 0.0 -0.0018119139514269007
-            -0.005386110507677034 0.0 0.0 0.0 0.0 0.11789212374629722 0.0 0.0 0.0 0.0
-            0.0 -0.0016638386933231543 0.0 0.0 0.0 0.0 0.041704883520768246 0.0 0.0 0.0
-            0.0 0.0 -0.005721339722140326 0.0 0.0 0.0 0.0 0.1368510251840502 0.0 0.0
-            0.0 0.0 0.0 -0.00486164773014464 0.0 0.0 0.0 0.0 0.09905985602018405 0.0
-            0.0 0.0 0.0 0.0 -0.0018119139514269007 0.0 0.0 0.0 0.0 0.046334888339893375
+            0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="constrainedReport">
+        <loadingsGibbsOperator idref="constrainedLoadingsOp"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="constrainedReport"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check constrained loadings mean
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="constrainedReport"/>
+        </actual>
+        <expected>
+            0.053731487267558116 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.0 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check constrained loadings covariance
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="constrainedReport"/>
+        </actual>
+        <expected>
+            0.10822407804554998 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+
+    <cachedReport id="unconstrainedReportMulti">
+        <loadingsGibbsOperator idref="unconstrainedLoadingsOpMulti"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="unconstrainedReportMulti"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="unconstrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check unconstrained loadings covariance (multithreaded)
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="unconstrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="constrainedReportMulti">
+        <loadingsGibbsOperator idref="constrainedLoadingsOpMulti"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="constrainedReportMulti"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check constrained loadings mean (multithreaded)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="constrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.053731487267558116 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.0 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check constrained loadings covariance (multithreaded)
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="constrainedReportMulti"/>
+        </actual>
+        <expected>
+            0.10822407804554998 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="unconstrainedReportRandScan">
+        <loadingsGibbsOperator idref="unconstrainedLoadingsOpRandScan"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="unconstrainedReportRandScan"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check unconstrained loadings mean (random scan)
+        </message>
+        <actual regex="Loadings mean:\s+(.*)\n">
+            <cachedReport idref="unconstrainedReportRandScan"/>
+        </actual>
+        <expected>
+            0.06261153851822523 -0.4699662959670842 -0.545626089052493 0.31050618705739425 -0.5663311418059692
+            0.57802612914374 0.6517206527371121 -0.05292632853051347 -1.0010822156534924 -1.9027605591127699
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-3" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check unconstrained loadings covariance (random scan)
+        </message>
+        <actual regex="(?s)Loadings covariance:\s+(.*?)\n\n">
+            <cachedReport idref="unconstrainedReportRandScan"/>
+        </actual>
+        <expected>
+            0.10824984565926407 0.0 0.0 0.0 0.0 0.0016772824381287262 0.0 0.0 0.0 0.0
+            0.0 0.04915715329069753 0.0 0.0 0.0 0.0 0.0008125904080343903 0.0 0.0 0.0
+            0.0 0.0 0.1369255061382092 0.0 0.0 0.0 0.0 0.002052822342972109 0.0 0.0
+            0.0 0.0 0.0 0.11078613944903709 0.0 0.0 0.0 0.0 0.0017116581527867906 0.0
+            0.0 0.0 0.0 0.0 0.046062881549419586 0.0 0.0 0.0 0.0 0.0007639406946226509
+            0.0016772824381287262 0.0 0.0 0.0 0.0 0.10917877023733247 0.0 0.0 0.0 0.0
+            0.0 0.0008125904080343903 0.0 0.0 0.0 0.0 0.049607187932905986 0.0 0.0 0.0
+            0.0 0.0 0.002052822342972109 0.0 0.0 0.0 0.0 0.1380624149172233 0.0 0.0
+            0.0 0.0 0.0 0.0017116581527867906 0.0 0.0 0.0 0.0 0.11173410223170872 0.0
+            0.0 0.0 0.0 0.0 0.0007639406946226509 0.0 0.0 0.0 0.0 0.046485972658757944
         </expected>
     </assertEqual>
 

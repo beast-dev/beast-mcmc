@@ -34,8 +34,8 @@ import dr.util.Transform;
 
 public class TransformedMultivariateParameter extends TransformedParameter {
 
-    protected double[] transformedValues;
-    protected double[] unTransformedValues;
+    private double[] transformedValues;
+    private double[] unTransformedValues;
 //    private double[] storedTransformedValues; //TODO store/restore mechanism for TransformedParameter ?
 
     public TransformedMultivariateParameter(Parameter parameter, Transform.MultivariableTransform transform) {
@@ -90,14 +90,14 @@ public class TransformedMultivariateParameter extends TransformedParameter {
 //        return new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, parameter.getDimension());
 //    }
 
-    protected void update() {
+    private void update() {
         if (hasChanged()) {
             unTransformedValues = parameter.getParameterValues();
             transformedValues = transform(unTransformedValues);
         }
     }
 
-    protected boolean hasChanged() {
+    private boolean hasChanged() {
         for (int i = 0; i < unTransformedValues.length; i++) {
             if (parameter.getParameterValue(i) != unTransformedValues[i]) {
                 return true;

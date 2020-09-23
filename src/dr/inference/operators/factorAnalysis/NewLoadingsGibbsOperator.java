@@ -28,7 +28,7 @@ package dr.inference.operators.factorAnalysis;
 import dr.evomodel.treedatalikelihood.continuous.HashedMissingArray;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
-import dr.inference.distribution.NormalStatisticsHelpers.MatrixNormalStatisticsHelper;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -64,7 +64,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final boolean randomScan;
     private double pathParameter = 1.0;
 
-    private final MatrixNormalStatisticsHelper prior;
+    private final NormalStatisticsProvider prior;
     private final double priorPrecisionWorking;
 
     private final FactorAnalysisOperatorAdaptor adaptor;
@@ -74,7 +74,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private final double[][] observedIndicators;
 
-    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, MatrixNormalStatisticsHelper prior,
+    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
@@ -102,8 +102,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
 
         if (workingPrior == null) {
-            priorPrecisionWorking = prior.getScalarPrecision(); //TODO: Do I need to let priorPrecisionWorking vary with dimension?
-            System.err.println("Warning: Will not have intended behavior with path sampling.");
+            priorPrecisionWorking = getPrecision(prior, 0); //TODO: Do I need to let priorPrecisionWorking vary with dimension?
         } else {
             priorPrecisionWorking = 1 / (this.workingPrior.getStdev() * this.workingPrior.getStdev());
         }
@@ -150,6 +149,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         abstract boolean useCache();
 
+    }
+
+    private double getPrecision(NormalStatisticsProvider provider, int dim) {
+        double sd = provider.getNormalSD(dim);
+        return 1.0 / (sd * sd);
     }
 
     private double[][] setupObservedIndicators() {
@@ -212,45 +216,24 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         }
 
-        double[][] adjustedPriorPrecision = getAdjustedPriorPrecision(row); //Assumes loadings are transposed
-
-        double errorPrecision = adaptor.getColumnPrecision(row);
-
         for (int i = 0; i < newRowDimension; i++) {
-            answer[i][i] *= errorPrecision;
-            answer[i][i] = answer[i][i] * pathParameter + adjustedPriorPrecision[i][i];
-
-            for (int j = i + 1; j < newRowDimension; j++) {
-
-                answer[i][j] *= errorPrecision; //adaptor.getColumnPrecision().getParameterValue(row, row);
-                answer[i][j] = answer[i][j] * pathParameter + adjustedPriorPrecision[i][j];
-
-                answer[j][i] = answer[i][j];
+            for (int j = i; j < newRowDimension; j++) {
+                answer[i][j] *= this.adaptor.getColumnPrecision(row); //adaptor.getColumnPrecision().getParameterValue(row, row);
+                if (i == j) {
+                    answer[i][j] = answer[i][j] * pathParameter +
+                            getAdjustedPriorPrecision(adaptor.getNumberOfTraits() * i + row);
+                } else {
+                    answer[i][j] *= pathParameter;
+                    answer[j][i] = answer[i][j];
+                }
             }
         }
-    }
-
-
-    private double[][] getAdjustedPriorPrecision(int col) { //TODO: should probably have some special function for adding precision so you don't need to construct a double[][]
-        double[][] priorPrecision = prior.getColumnPrecision(col);
-        int rowDim = priorPrecision.length;
-        for (int i = 0; i < rowDim; i++) {
-            priorPrecision[i][i] = priorPrecision[i][i] * pathParameter + (1 - pathParameter) * priorPrecisionWorking; //TODO: workingPrior should probably same as originalPrior(if not specified)
-
-            for (int j = i + 1; j < rowDim; j++) {
-                priorPrecision[i][j] *= pathParameter;
-                priorPrecision[j][i] = priorPrecision[i][j];
-            }
-        }
-        return priorPrecision;
     }
 
 
     private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean) {
 
         final int p = adaptor.getNumberOfTaxa();
-
-        double[] priorPrecisionMeanProduct = prior.precisionMeanProduct(dataColumn);
 
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
@@ -261,9 +244,12 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                             * adaptor.getDataValue(dataColumn, k); //data.getParameterValue(dataColumn, k);
                 }
             }
-            sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
 
-            midMean[i] = sum + priorPrecisionMeanProduct[i];
+            int priorDim = adaptor.getNumberOfTraits() * i + dataColumn;
+
+            sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
+            sum += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
+            midMean[i] = sum;
         }
 
         for (int i = 0; i < newRowDimension; i++) {
@@ -404,6 +390,9 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         pathParameter = beta;
     }
 
+    private double getAdjustedPriorPrecision(int dim) {
+        return getPrecision(prior, dim) * pathParameter + (1 - pathParameter) * priorPrecisionWorking;
+    }
 
     class DrawCaller implements Callable<Double> {
 
@@ -587,14 +576,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             throw new IllegalArgumentException("Unknown dimension provider type");
         }
 
-    }
+        }
 
     @Override
     public String getReport() {
-        int baserRepeats = 1000000;
+        int repeats = 1000000;
         int nFac = adaptor.getNumberOfFactors();
         int nTraits = adaptor.getNumberOfTraits();
-        int repeats = randomScan ? baserRepeats * nTraits : baserRepeats;
 
 
         int dimLoadings = nTraits * nFac;
@@ -616,13 +604,10 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                 }
             }
             adaptor.fireLoadingsChanged();
-            if (!randomScan) {
-                restoreLoadings(originalLoadings);
-            }
-//            restoreLoadings(originalLoadings);
         }
 
         restoreLoadings(originalLoadings);
+        adaptor.fireLoadingsChanged();
 
         for (int i = 0; i < dimLoadings; i++) {
             loadMean[i] /= repeats;
@@ -665,8 +650,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
             adaptor.setLoadingsForTraitQuietly(i, buffer);
         }
-
-        adaptor.fireLoadingsChanged();
     }
 
 }

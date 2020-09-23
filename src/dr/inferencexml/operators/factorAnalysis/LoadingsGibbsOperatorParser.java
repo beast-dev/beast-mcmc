@@ -29,15 +29,18 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
-import dr.inference.distribution.NormalStatisticsHelpers.MatrixNormalStatisticsHelper;
-import dr.inference.distribution.NormalStatisticsHelpers.NormalStatisticsHelper;
+import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
 import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
 import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
 import dr.math.distributions.Distribution;
+import dr.math.distributions.NormalDistribution;
+import dr.util.Attribute;
 import dr.xml.*;
 
 /**
@@ -69,40 +72,29 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         boolean useNewMode = xo.getAttribute(MODE, false);
 
         // Get main objects
-        final MatrixParameterInterface loadings;
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
-        IntegratedFactorAnalysisLikelihood integratedLikelihood =
-                (IntegratedFactorAnalysisLikelihood) xo.getChild(IntegratedFactorAnalysisLikelihood.class);
-        if (LFM != null) {
-            loadings = LFM.getLoadings();
-        } else {
-            loadings = integratedLikelihood.getLoadings();
+
+        // TODO The next 3 lines are not necessary, nor in XML rules
+        MatrixParameterInterface loadings = null;
+        if (xo.getChild(MatrixParameterInterface.class) != null) {
+            loadings = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         }
 
         // Get priors
         DistributionLikelihood priorDistLike = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
 
-        final NormalStatisticsHelper helper;
-        final MatrixNormalStatisticsHelper prior;
+        NormalStatisticsProvider prior = null;
 
         if (priorDistLike != null) {
             Distribution priorDist = priorDistLike.getDistribution();
-            if (priorDist instanceof NormalStatisticsHelper) {
-                helper = (NormalStatisticsHelper) priorDist;
+            if (priorDist instanceof NormalStatisticsProvider) {
+                prior = (NormalStatisticsProvider) priorDist;
             } else {
                 throw new XMLParseException("The prior distribution with id " + priorDistLike.getId() +
-                        " is not normally distributed (or does not provide the appropriate statistics). " +
-                        "This operator requires a normal prior.");
+                        " is not normally distributed. This operator requires a normal prior.");
             }
         } else {
-            helper = (NormalStatisticsHelper) xo.getChild(NormalStatisticsHelper.class); //Should be null if doesn't exist
-        }
-        if (helper != null) {
-            prior = helper.matrixNormalHelper(loadings.getColumnDimension(), loadings.getRowDimension());
-        } else if (xo.getChild(MatrixNormalStatisticsHelper.class) != null) {
-            prior = (MatrixNormalStatisticsHelper) xo.getChild(MatrixNormalStatisticsHelper.class);
-        } else {
-            prior = null;
+            prior = (NormalStatisticsProvider) xo.getChild(NormalStatisticsProvider.class); //Should be null if doesn't exist
         }
 
 
@@ -126,6 +118,8 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                 if (LFM != null) {
                     adaptor = new FactorAnalysisOperatorAdaptor.SampledFactors(LFM);
                 } else {
+                    IntegratedFactorAnalysisLikelihood integratedLikelihood = (IntegratedFactorAnalysisLikelihood)
+                            xo.getChild(IntegratedFactorAnalysisLikelihood.class);
                     TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
                     adaptor = new FactorAnalysisOperatorAdaptor.IntegratedFactors(integratedLikelihood, treeLikelihood);
                 }
@@ -154,7 +148,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                 return null;
             }
         } else {
-            return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, LFM.getLoadings(), cutoffPrior);
+            return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings, cutoffPrior);
         }
     }
 
@@ -174,8 +168,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             new XORRule(
                     new XMLSyntaxRule[]{
                             new ElementRule(DistributionLikelihood.class),
-                            new ElementRule(NormalStatisticsHelper.class),
-                            new ElementRule(MatrixNormalStatisticsHelper.class),
+                            new ElementRule(NormalStatisticsProvider.class),
                             new AndRule(
                                     new ElementRule(MomentDistributionModel.class),
                                     new ElementRule(CUTOFF_PRIOR, new XMLSyntaxRule[]{

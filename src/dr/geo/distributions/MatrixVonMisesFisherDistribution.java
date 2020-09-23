@@ -54,7 +54,11 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
 
     @Override
     public double[] nextRandom() {
+        //TODO:
+        return null;
+    }
 
+    private double[] slowNextRandom() {
         updateC();
         int rejects = 0;
 
@@ -81,7 +85,6 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         }
 
         throw new RuntimeException("Rejection sampler failed.");//TODO: handle better
-
     }
 
     private DenseMatrix64F nextUniform() {

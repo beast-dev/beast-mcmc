@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon1">
+            <attr name="traits">NA NA NA NA NA NA -0.7522851275073772</attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="traits">-0.42898479922720356 -0.3440100523685048 0.6436374468251037 -0.09729958495856225
+                -1.396413239367357 NA NA
+            </attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="traits">0.09104086929644847 0.38443026317349643 -1.426378176957026 -0.7790116303715932
+                0.2981854605237854 -0.09793696210859011 0.03706742865102728
+            </attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="traits">NA NA 1.5439602691637375 NA 1.6135287964494376 -0.8583256421345544 0.2845890830831352
+            </attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="traits">0.4270454816694809 NA NA NA 0.01045577909380348 -0.8064419255097306 1.7342729545238105
+            </attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="traits">-0.8920557774375898 1.478607059857378 NA -0.6908795858187 NA NA -0.6319790093391232
+            </attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="traits">-0.8909827170981991 1.1873505039550996 -0.39339506737983243 1.066150616149452
+                -1.7083839109325234 NA 0.5446097585263934
+            </attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="traits">-0.11560476062111587 0.41571346596533654 NA NA -0.01291823951389353 1.6684512296510925
+                -0.48494596043058696
+            </attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="traits">NA NA -0.17865180808229236 0.23315524522158199 NA 1.808755790283758 NA</attr>
+        </taxon>
+        <taxon id="taxon8">
+            <attr name="traits">-0.8666572905938715 -0.454549337998158 NA -0.5397266841036715 NA NA 0.8101466138794606
+            </attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree">
+        ((((((taxon1:0.020372455503738562,taxon6:0.020372455503738562):0.04292147117625211,taxon7:0.06329392667999068):0.2492634584940438,taxon10:0.3125573851740344):0.26247859203581464,taxon9:0.575035977209849):0.20678315951777865,((taxon3:0.6579403898666609,taxon5:0.6579403898666609):0.021413251999499675,taxon4:0.6793536418661607):0.10246549486146707):0.2181808632723723,(taxon2:0.8562532934814835,taxon8:0.8562532934814835):0.1437467065185165);
+    </newick>
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="7"
+                    name="traits">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix id="diffusion.precision">
+                <parameter dimension="3" value="1" lower="0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <matrixParameter id="V">
+        <parameter id="V1"
+                   value="1 0 0 0 0 0 0"/>
+        <parameter id="V2"
+                   value="0 1 0 0 0 0 0"/>
+        <parameter id="V3"
+                   value="0 0 1 0 0 0 0"/>
+    </matrixParameter>
+    <productParameter id="L1">
+        <scale>
+            <parameter id="D1" value="1"/>
+        </scale>
+        <parameter idref="V1"/>
+    </productParameter>
+    <productParameter id="L2">
+        <scale>
+            <parameter id="D2" value="0.1"/>
+        </scale>
+        <parameter idref="V2"/>
+    </productParameter>
+    <productParameter id="L3">
+        <scale>
+            <parameter id="D3" value="0.001"/>
+        </scale>
+        <parameter idref="V3"/>
+    </productParameter>
+    <matrixParameter id="L">
+        <parameter idref="L1"/>
+        <parameter idref="L2"/>
+        <parameter idref="L3"/>
+    </matrixParameter>
+<!--    <distributionLikelihood id="L.prior">-->
+<!--        <data>-->
+<!--            <matrixParameter idref="L"/>-->
+<!--        </data>-->
+<!--        <distribution>-->
+<!--            <normalDistributionModel>-->
+<!--                <mean>-->
+<!--                    <parameter value="0.0"/>-->
+<!--                </mean>-->
+<!--                <stdev>-->
+<!--                    <parameter value="1.0"/>-->
+<!--                </stdev>-->
+<!--            </normalDistributionModel>-->
+<!--        </distribution>-->
+<!--    </distributionLikelihood>-->
+
+    <integratedFactorModel id="factorModel" traitName="traits" nugget="0" standardize="false">
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <precision>
+            <parameter id="traits.precision"
+                       value="1.5709750622902456 2.1814127915335018 0.6551264204117679 0.04326219904762126 0.28376437758851397 0.7167631495584004 0.08847989507702624"
+                       lower="0.0"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <traitDataLikelihood id="traitLikelihood" traitName="factors" cacheBranches="true" allowIdentical="true"
+                         useTreeLength="false" scaleByTime="true" reportAsMultivariate="true"
+                         integrateInternalTraits="true" standardize="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="factorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+    <gammaPrior id="gammaPrior" shape="1.0" scale="1.0">
+        <parameter idref="traits.precision"/>
+    </gammaPrior>
+    <operators id="operators">
+        <!--        <matrixVonMisesFisherGibbsOperator weight="1">-->
+        <!--            <traitDataLikelihood idref="traitLikelihood"/>-->
+        <!--            <integratedFactorModel idref="factorModel"/>-->
+        <!--        </matrixVonMisesFisherGibbsOperator>-->
+        <matrixRotationOperator rotationWindow="0.1" weight="1">
+            <matrixParameter idref="V"/>
+        </matrixRotationOperator>
+
+    </operators>
+
+
+    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+<!--                <distributionLikelihood idref="L.prior"/>-->
+                <gammaPrior idref="gammaPrior"/>
+            </prior>
+
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="traitLikelihood"/>
+                <integratedFactorModel idref="factorModel"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1000">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+    </mcmc>
+
+
+</beast>

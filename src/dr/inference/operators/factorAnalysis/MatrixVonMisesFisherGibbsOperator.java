@@ -13,23 +13,16 @@ public class MatrixVonMisesFisherGibbsOperator extends SimpleMCMCOperator implem
 
     private static final String MATRIX_VONMISES_FISHER_GIBBS = "matrixVonMisesFisherGibbsOperator";
     private final FactorAnalysisOperatorAdaptor adaptor;
-    private final DenseMatrix64F D;
-    private final DenseMatrix64F V;
-    private final DenseMatrix64F F;
-    private final DenseMatrix64F Y;
     private final DenseMatrix64F C;
     private final MatrixVonMisesFisherDistribution vonMisesFisherDistribution;
 
     MatrixVonMisesFisherGibbsOperator(double weight, FactorAnalysisOperatorAdaptor adaptor) {
         setWeight(weight);
         this.adaptor = adaptor;
-        this.V = new DenseMatrix64F(adaptor.getNumberOfTraits(), adaptor.getNumberOfFactors());
-        this.D = new DenseMatrix64F(adaptor.getNumberOfFactors(), adaptor.getNumberOfFactors());
-        this.F = new DenseMatrix64F(adaptor.getNumberOfTaxa(), adaptor.getNumberOfFactors());
-        this.Y = new DenseMatrix64F(adaptor.getNumberOfTaxa(), adaptor.getNumberOfTraits());
+
         this.C = new DenseMatrix64F(adaptor.getNumberOfTraits(), adaptor.getNumberOfFactors());
         this.vonMisesFisherDistribution =
-                new MatrixVonMisesFisherDistribution(adaptor.getNumberOfTraits(), adaptor.getNumberOfFactors());
+                new MatrixVonMisesFisherDistribution(adaptor);
 
     }
 
@@ -40,21 +33,7 @@ public class MatrixVonMisesFisherGibbsOperator extends SimpleMCMCOperator implem
 
     @Override
     public double doOperation() {
-        splitLoadings();
-        fillFactors();
-        fillTraits();
-        double maxPrecision = getMaximumPrecision();
 
-
-        CommonOps.multTransA(Y, F, C);
-        for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-            double scaledNorm = D.get(i, i) * maxPrecision;
-            for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                C.set(j, i, C.get(j, i) * scaledNorm);
-            }
-        }
-
-        vonMisesFisherDistribution.setC(C.getData());
         double[] draw = vonMisesFisherDistribution.nextRandom();
 
         double[] kBuffer = new double[adaptor.getNumberOfFactors()];
@@ -69,54 +48,6 @@ public class MatrixVonMisesFisherGibbsOperator extends SimpleMCMCOperator implem
         }
         adaptor.fireLoadingsChanged();
         return 0;
-    }
-
-
-    private void splitLoadings() {
-        int offset1 = 0;
-        int offset2 = 0;
-        for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
-            double sumSquares = 0;
-            for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                sumSquares += adaptor.getLoadingsValue(offset1);
-                offset1++;
-            }
-            double norm = Math.sqrt(sumSquares);
-            D.set(i, i, norm);
-            double invNorm = 1.0 / norm;
-            for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                V.set(offset2, adaptor.getLoadingsValue(offset2) * invNorm);
-                offset2++;
-            }
-        }
-    }
-
-    private void fillFactors() {
-        adaptor.drawFactors();
-        for (int i = 0; i < adaptor.getNumberOfTaxa(); i++) {
-            for (int j = 0; j < adaptor.getNumberOfFactors(); j++) {
-                F.set(i, j, adaptor.getFactorValue(j, i));
-            }
-        }
-    }
-
-    private void fillTraits() {
-        //TODO: fill in missing traits
-        for (int i = 0; i < adaptor.getNumberOfTaxa(); i++) {
-            for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                Y.set(i, j, adaptor.getDataValue(j, i));
-            }
-        }
-    }
-
-    private double getMaximumPrecision() {
-        double maxPrec = 0;
-        for (int i = 0; i < adaptor.getNumberOfTraits(); i++) {
-            if (adaptor.getColumnPrecision(i) > maxPrec) {
-                maxPrec = adaptor.getColumnPrecision(i);
-            }
-        }
-        return maxPrec;
     }
 
 

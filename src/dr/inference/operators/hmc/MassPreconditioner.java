@@ -338,7 +338,20 @@ public interface MassPreconditioner {
 
             double[] result = new double[dim];
             Arrays.fill(result, 1.0);
-            inverseMass = result;
+            inverseMass = normalizeVector(new WrappedVector.Raw(result), dim);
+        }
+
+        protected double[] normalizeVector(ReadableVector values, double targetSum) {
+            double sum = 0.0;
+            for (int i = 0; i < values.getDim(); i++) {
+                sum += values.get(i);
+            }
+            final double multiplier = targetSum / sum;
+            double[] normalizedValues = new double[values.getDim()];
+            for (int i = 0; i < values.getDim(); i++) {
+                normalizedValues[i] = values.get(i) * multiplier;
+            }
+            return normalizedValues;
         }
 
         @Override
@@ -474,19 +487,6 @@ public interface MassPreconditioner {
                 return inverseMass;
             }
 
-        }
-
-        private double[] normalizeVector(ReadableVector values, double targetSum) {
-            double sum = 0.0;
-            for (int i = 0; i < values.getDim(); i++) {
-                sum += values.get(i);
-            }
-            final double multiplier = targetSum / sum;
-            double[] normalizedValues = new double[values.getDim()];
-            for (int i = 0; i < values.getDim(); i++) {
-                normalizedValues[i] = values.get(i) * multiplier;
-            }
-            return normalizedValues;
         }
 
         @Override

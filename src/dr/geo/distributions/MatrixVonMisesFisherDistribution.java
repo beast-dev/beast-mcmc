@@ -26,6 +26,10 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
     private final DenseMatrix64F kkBuffer1;
     private final DenseMatrix64F kkBuffer2;
     private final DenseMatrix64F kkBuffer3;
+    private final DenseMatrix64F mmBuffer;
+    private final DenseMatrix64F mBuffer1;
+    private final DenseMatrix64F mBuffer2;
+
 
     private final DenseMatrix64F D;
     private final DenseMatrix64F V;
@@ -45,6 +49,10 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         this.kkBuffer1 = new DenseMatrix64F(nColumns, nColumns);
         this.kkBuffer2 = new DenseMatrix64F(nColumns, nColumns);
         this.kkBuffer3 = new DenseMatrix64F(nColumns, nColumns);
+        this.mmBuffer = new DenseMatrix64F(nRows, nRows);
+        this.mBuffer1 = new DenseMatrix64F(nRows, 1);
+        this.mBuffer2 = new DenseMatrix64F(nRows, 1);
+
         this.V = new DenseMatrix64F(adaptor.getNumberOfTraits(), adaptor.getNumberOfFactors());
         this.D = new DenseMatrix64F(adaptor.getNumberOfFactors(), adaptor.getNumberOfFactors());
         this.F = new DenseMatrix64F(adaptor.getNumberOfTaxa(), adaptor.getNumberOfFactors());
@@ -54,8 +62,87 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
 
     @Override
     public double[] nextRandom() {
+
         //TODO:
         return null;
+    }
+
+    private double[] nextVectorVonMisesFisher(double[] c) {
+        double[] u = c.clone();
+        double norm = makeUnit(u);
+        double[] unitDraw = nextVectorVonMisesFisherUnitMode(c.length, norm);
+        SingularValueDecomposition svd = DecompositionFactory.svd(c.length, 1, true, false, false);
+
+        mBuffer1.setData(u);
+        svd.decompose(mBuffer1); //TODO: probably better way to construct orthogonal matrix including u
+        svd.getU(mmBuffer, false);
+
+        double[] firstCol = new double[u.length];
+        int lastColStart = (u.length - 1) * u.length;
+        System.arraycopy(mmBuffer.data, lastColStart, firstCol, 0, u.length);
+        System.arraycopy(u, 0, mmBuffer.data, lastColStart, u.length);
+        System.arraycopy(firstCol, 0, mmBuffer.data, 0, u.length);
+
+        CommonOps.mult(mmBuffer, mBuffer1, mBuffer2);
+
+        return mBuffer2.getData();
+    }
+
+    //Wood, Andrew TA. "Simulation of the von Mises Fisher distribution." Communications in statistics-simulation and computation 23.1 (1994): 157-164.
+    //draws from von Mises-Fisher with mode (0, ..., 0, 1)^t and concentration `norm`
+    private double[] nextVectorVonMisesFisherUnitMode(int m, double norm) {
+
+        int rejects = 0;
+
+        while (rejects < MAX_REJECTS) {
+
+            double mMinusOne = m - 1;
+            double b = -2 * norm + Math.sqrt(4 * norm * norm + mMinusOne * mMinusOne);
+            b /= mMinusOne;
+
+            double x0 = (1 - b) / (1 + b);
+            double c = norm * x0 + mMinusOne * Math.log(1 - x0 * x0);
+
+            double z = MathUtils.nextBeta(mMinusOne / 2, mMinusOne / 2);
+            double u = MathUtils.nextDouble();
+
+            double w = (1 - (1 + b) * z) / (1 - (1 - b) * z);
+
+            if (norm * w + mMinusOne * Math.log(1 - x0 * w) - c > Math.log(u)) {
+                double[] v = nextUniformVector(m - 1);
+                double[] draw = new double[m];
+                double norm2 = Math.sqrt(1 - w * w);
+                for (int i = 0; i < v.length; i++) {
+                    draw[i] = norm2 * v[i];
+                }
+                draw[m - 1] = w;
+                return draw;
+            }
+        }
+
+        return null;
+    }
+
+    private double[] nextUniformVector(int dim) {
+        double[] draw = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            draw[i] = MathUtils.nextGaussian();
+        }
+        makeUnit(draw);
+        return draw;
+    }
+
+    private double makeUnit(double[] x) {
+        double sumSqares = 0;
+        for (int i = 0; i < x.length; i++) {
+            sumSqares += x[i] * x[i];
+        }
+        double norm = Math.sqrt(sumSqares);
+        double invNorm = 1.0 / norm;
+        for (int i = 0; i < x.length; i++) {
+            x[i] *= invNorm;
+        }
+        return norm;
     }
 
     private double[] slowNextRandom() {

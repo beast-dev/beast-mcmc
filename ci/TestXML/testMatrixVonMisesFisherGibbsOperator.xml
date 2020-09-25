@@ -101,21 +101,21 @@
         <parameter idref="L2"/>
         <parameter idref="L3"/>
     </matrixParameter>
-<!--    <distributionLikelihood id="L.prior">-->
-<!--        <data>-->
-<!--            <matrixParameter idref="L"/>-->
-<!--        </data>-->
-<!--        <distribution>-->
-<!--            <normalDistributionModel>-->
-<!--                <mean>-->
-<!--                    <parameter value="0.0"/>-->
-<!--                </mean>-->
-<!--                <stdev>-->
-<!--                    <parameter value="1.0"/>-->
-<!--                </stdev>-->
-<!--            </normalDistributionModel>-->
-<!--        </distribution>-->
-<!--    </distributionLikelihood>-->
+    <!--    <distributionLikelihood id="L.prior">-->
+    <!--        <data>-->
+    <!--            <matrixParameter idref="L"/>-->
+    <!--        </data>-->
+    <!--        <distribution>-->
+    <!--            <normalDistributionModel>-->
+    <!--                <mean>-->
+    <!--                    <parameter value="0.0"/>-->
+    <!--                </mean>-->
+    <!--                <stdev>-->
+    <!--                    <parameter value="1.0"/>-->
+    <!--                </stdev>-->
+    <!--            </normalDistributionModel>-->
+    <!--        </distribution>-->
+    <!--    </distributionLikelihood>-->
 
     <integratedFactorModel id="factorModel" traitName="traits" nugget="0" standardize="false">
         <loadings>
@@ -149,43 +149,53 @@
     <gammaPrior id="gammaPrior" shape="1.0" scale="1.0">
         <parameter idref="traits.precision"/>
     </gammaPrior>
-    <operators id="operators">
-        <!--        <matrixVonMisesFisherGibbsOperator weight="1">-->
-        <!--            <traitDataLikelihood idref="traitLikelihood"/>-->
-        <!--            <integratedFactorModel idref="factorModel"/>-->
-        <!--        </matrixVonMisesFisherGibbsOperator>-->
-        <matrixRotationOperator rotationWindow="0.1" weight="1">
-            <matrixParameter idref="V"/>
-        </matrixRotationOperator>
 
-    </operators>
+    <matrixVonMisesFisherDistribution id="mvmfDistribution">
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <integratedFactorModel idref="factorModel"/>
+    </matrixVonMisesFisherDistribution>
+    <report>
+        <matrixVonMisesFisherDistribution idref="mvmfDistribution"/>
+    </report>
 
 
-    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
-        <posterior id="posterior">
-            <prior id="prior">
-<!--                <distributionLikelihood idref="L.prior"/>-->
-                <gammaPrior idref="gammaPrior"/>
-            </prior>
+<!--    <operators id="operators">-->
+<!--        &lt;!&ndash;        <matrixVonMisesFisherGibbsOperator weight="1">&ndash;&gt;-->
+<!--        &lt;!&ndash;            <traitDataLikelihood idref="traitLikelihood"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;            <integratedFactorModel idref="factorModel"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;        </matrixVonMisesFisherGibbsOperator>&ndash;&gt;-->
+<!--        <matrixRotationOperator rotationWindow="0.1" weight="1">-->
+<!--            <matrixParameter idref="V"/>-->
+<!--        </matrixRotationOperator>-->
 
-            <likelihood id="likelihood">
-                <traitDataLikelihood idref="traitLikelihood"/>
-                <integratedFactorModel idref="factorModel"/>
-            </likelihood>
-        </posterior>
-        <operators idref="operators"/>
-        <log id="screenLog" logEvery="1000">
-            <column label="posterior" dp="4" width="12">
-                <posterior idref="posterior"/>
-            </column>
-            <column label="prior" dp="4" width="12">
-                <prior idref="prior"/>
-            </column>
-            <column label="likelihood" dp="4" width="12">
-                <likelihood idref="likelihood"/>
-            </column>
-        </log>
-    </mcmc>
+<!--    </operators>-->
+
+
+<!--    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">-->
+<!--        <posterior id="posterior">-->
+<!--            <prior id="prior">-->
+<!--                &lt;!&ndash;                <distributionLikelihood idref="L.prior"/>&ndash;&gt;-->
+<!--                <gammaPrior idref="gammaPrior"/>-->
+<!--            </prior>-->
+
+<!--            <likelihood id="likelihood">-->
+<!--                <traitDataLikelihood idref="traitLikelihood"/>-->
+<!--                <integratedFactorModel idref="factorModel"/>-->
+<!--            </likelihood>-->
+<!--        </posterior>-->
+<!--        <operators idref="operators"/>-->
+<!--        <log id="screenLog" logEvery="1000">-->
+<!--            <column label="posterior" dp="4" width="12">-->
+<!--                <posterior idref="posterior"/>-->
+<!--            </column>-->
+<!--            <column label="prior" dp="4" width="12">-->
+<!--                <prior idref="prior"/>-->
+<!--            </column>-->
+<!--            <column label="likelihood" dp="4" width="12">-->
+<!--                <likelihood idref="likelihood"/>-->
+<!--            </column>-->
+<!--        </log>-->
+<!--    </mcmc>-->
 
 
 </beast>

@@ -6,6 +6,7 @@ import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.RandomGenerator;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
@@ -15,7 +16,7 @@ import org.ejml.ops.CommonOps;
 
 import static dr.math.MathUtils.nextDouble;
 
-public class MatrixVonMisesFisherDistribution implements RandomGenerator, MultivariateDistribution {
+public class MatrixVonMisesFisherDistribution implements RandomGenerator, MultivariateDistribution, Reportable {
 
     private final FactorAnalysisOperatorAdaptor adaptor; //TODO: way fewer buffers
     private final DenseMatrix64F C;
@@ -77,12 +78,15 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         svd.decompose(mBuffer1); //TODO: probably better way to construct orthogonal matrix including u
         svd.getU(mmBuffer, false);
 
-        double[] firstCol = new double[u.length];
-        int lastColStart = (u.length - 1) * u.length;
-        System.arraycopy(mmBuffer.data, lastColStart, firstCol, 0, u.length);
-        System.arraycopy(u, 0, mmBuffer.data, lastColStart, u.length);
-        System.arraycopy(firstCol, 0, mmBuffer.data, 0, u.length);
+        for (int i = 0; i < u.length; i++) {
+            double f = mmBuffer.get(i, 0);
+            double l = mmBuffer.get(i, u.length - 1);
+            mmBuffer.set(i, 0, l);
+            mmBuffer.set(i, u.length - 1, f);
 
+        }
+
+        mBuffer1.setData(unitDraw);
         CommonOps.mult(mmBuffer, mBuffer1, mBuffer2);
 
         return mBuffer2.getData();
@@ -118,6 +122,8 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
                 draw[m - 1] = w;
                 return draw;
             }
+
+            rejects++;
         }
 
         return null;
@@ -298,6 +304,51 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
     @Override
     public String getType() {
         return "MatrixVonMises-Fisher";
+    }
+
+    @Override
+    public String getReport() {
+        int repeats = 100;
+        int dim = C.numRows;
+
+        double[] c = nextUniformVector(dim);
+        double[] u = c.clone();
+
+        double norm = 10000000;
+
+        for (int i = 0; i < dim; i++) {
+            c[i] *= norm;
+        }
+
+        double[] mean = new double[dim];
+        double[] var = new double[dim];
+        for (int i = 0; i < repeats; i++) {
+            double[] draw = nextVectorVonMisesFisher(c);
+
+            for (int j = 0; j < dim; j++) {
+                mean[j] += draw[j];
+                var[j] += draw[j] * draw[j];
+            }
+            double drawNorm = makeUnit(draw);
+            if (!MathUtils.isClose(drawNorm, 1.0, 1e-8)) {
+                System.err.println("Norm: " + drawNorm);
+            }
+        }
+
+        for (int i = 0; i < dim; i++) {
+            mean[i] /= repeats;
+            var[i] /= repeats;
+            var[i] -= mean[i] * mean[i];
+        }
+
+        StringBuilder sb = new StringBuilder("matrix von Mises-Fisher distribution:\n");
+        makeUnit(c);
+        sb.append("original: " + new Vector(c) + "\n");
+        sb.append("mean: " + new Vector(mean));
+        sb.append("\n");
+        sb.append("variance: " + new Vector(var));
+        sb.append("\n\n");
+        return sb.toString();
     }
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {

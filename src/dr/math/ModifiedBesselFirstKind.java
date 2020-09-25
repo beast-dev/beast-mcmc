@@ -56,7 +56,7 @@ public class ModifiedBesselFirstKind {
             tox = 2.0 / Math.abs(x);
             bip = ans = 0.0;
             bi = 1.0;
-            for (j = 2 * (n + (int)Math.sqrt(ACC * n)); j > 0; j--) {
+            for (j = 2 * (n + (int) Math.sqrt(ACC * n)); j > 0; j--) {
                 bim = bip + j * tox * bi;
                 bip = bi;
                 bi = bim;
@@ -71,4 +71,25 @@ public class ModifiedBesselFirstKind {
             return (x < 0.0 && ((n & 1) != 0)) ? -ans : ans;
         }
     }
+
+
+    // taken from http://janroman.dhis.org/finance/Math/Bessel.pdf
+    public static double bessi(double x, double order) {
+
+
+        double iv = Math.pow(x / 2, order) / Math.exp(GammaFunction.lnGamma(1 + order));
+        double y = x * x / 4;
+        double b = 1;
+        double sum = b;
+        for (int i = 1; i < ACC; i++) {
+            double k = i;
+            double z = y / (k * (k + order));
+            b *= z;
+            sum += b;
+        }
+
+        iv *= sum;
+        return iv;
+    }
+
 }

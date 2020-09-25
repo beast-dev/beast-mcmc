@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.math.MathUtils;
+import dr.math.ModifiedBesselFirstKind;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.RandomGenerator;
 import dr.math.matrixAlgebra.Vector;
@@ -36,6 +37,7 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
     private final DenseMatrix64F V;
     private final DenseMatrix64F F;
     private final DenseMatrix64F Y;
+    private final DenseMatrix64F H;
     private static final int MAX_REJECTS = 100;
 
     public MatrixVonMisesFisherDistribution(FactorAnalysisOperatorAdaptor adaptor) { //TODO:remove adaptor?
@@ -58,15 +60,95 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         this.D = new DenseMatrix64F(adaptor.getNumberOfFactors(), adaptor.getNumberOfFactors());
         this.F = new DenseMatrix64F(adaptor.getNumberOfTaxa(), adaptor.getNumberOfFactors());
         this.Y = new DenseMatrix64F(adaptor.getNumberOfTaxa(), adaptor.getNumberOfTraits());
+        this.H = new DenseMatrix64F(nRows, nColumns);
+
     }
 
 
     @Override
     public double[] nextRandom() {
+        updateC();
+        SingularValueDecomposition svd = DecompositionFactory.svd(C.numRows, C.numCols, true, true, true);
+        svd.decompose(C);
+        double[] singularValues = svd.getSingularValues();
+        svd.getU(H, false);
+        for (int i = 0; i < nRows; i++) {
+            for (int j = 0; j < nColumns; j++) {
+                H.set(i, j, H.get(i, j) * singularValues[j]);
+            }
+        }
 
-        //TODO:
-        return null;
+        int rejects = 0;
+        boolean valid = false;
+
+
+        double ratio = 1.0;
+
+        while (!valid && rejects < MAX_REJECTS) {
+            double u = MathUtils.nextDouble();
+
+            DenseMatrix64F x1 = transferColumns(H, 0, 1);
+            double[] draw1 = nextVectorVonMisesFisher(x1.data);
+            x1.setData(draw1);
+            transferColumns(x1, 0, mkBuffer1, 0, 1); //mkBuffer1 stores matrix draw
+
+            ratio = 1.0;
+            double besselOrder = (C.numRows - C.numCols - 1) / 2;
+
+            for (int i = 1; i < C.numRows; i++) {
+                DenseMatrix64F previousDraws = new DenseMatrix64F(C.numRows, i);
+                transferColumns(mkBuffer1, 0, previousDraws, 0, i);
+                SingularValueDecomposition nullSvd = DecompositionFactory.svd(C.numRows, i, true, false, false);
+                nullSvd.decompose(previousDraws);
+                nullSvd.getU(mmBuffer, false);
+                DenseMatrix64F nullMatrix = transferColumns(mmBuffer, i, C.numRows - i);
+                transferColumns(H, i, mBuffer1, 0, 1);
+                double normHr = computeNorm(mBuffer1.data);
+
+                DenseMatrix64F z = new DenseMatrix64F(C.numRows - i, 1);
+                CommonOps.multTransA(nullMatrix, mBuffer1, z);
+                double normNtHr = computeNorm(z.data);
+                double[] zBuffer = nextVectorVonMisesFisher(z.data);
+                z.setData(zBuffer);
+                CommonOps.mult(nullMatrix, z, mBuffer1);
+                transferColumns(mBuffer1, 0, mkBuffer1, i, 1);
+
+                double iHr = ModifiedBesselFirstKind.bessi(normHr, besselOrder);
+                double iNtHr = ModifiedBesselFirstKind.bessi(normNtHr, besselOrder);
+                ratio *= (iHr / iNtHr) * Math.pow(normHr / normNtHr, besselOrder);
+            }
+
+            if (u < ratio) {
+                valid = true;
+            }
+
+        }
+
+        if (!valid) {
+            return null;
+        }
+
+        svd.getV(mkBuffer2, true);
+
+        DenseMatrix64F X = new DenseMatrix64F(C.numRows, C.numCols);
+        CommonOps.multTransB(mkBuffer1, mkBuffer2, X);
+        return X.data;
     }
+
+    public void transferColumns(DenseMatrix64F src, int srcStart, DenseMatrix64F dest, int destStart, int nColumns) {
+        for (int i = src.numRows; i < src.numRows; i++) {
+            for (int j = 0; j < nColumns; j++) {
+                dest.set(i, j + destStart, src.get(i, j + srcStart));
+            }
+        }
+    }
+
+    public DenseMatrix64F transferColumns(DenseMatrix64F src, int srcStart, int nColumns) {
+        DenseMatrix64F mat = new DenseMatrix64F(src.numRows, nColumns);
+        transferColumns(src, srcStart, mat, 0, nColumns);
+        return mat;
+    }
+
 
     private double[] nextVectorVonMisesFisher(double[] c) {
         double[] u = c.clone();
@@ -139,16 +221,20 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
     }
 
     private double makeUnit(double[] x) {
-        double sumSqares = 0;
-        for (int i = 0; i < x.length; i++) {
-            sumSqares += x[i] * x[i];
-        }
-        double norm = Math.sqrt(sumSqares);
+        double norm = computeNorm(x);
         double invNorm = 1.0 / norm;
         for (int i = 0; i < x.length; i++) {
             x[i] *= invNorm;
         }
         return norm;
+    }
+
+    private double computeNorm(double[] x) {
+        double sumSqares = 0;
+        for (int i = 0; i < x.length; i++) {
+            sumSqares += x[i] * x[i];
+        }
+        return Math.sqrt(sumSqares);
     }
 
     private double[] slowNextRandom() {

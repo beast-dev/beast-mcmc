@@ -105,7 +105,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             throw new XMLParseException("Random step count fraction must be < 1.0");
         }
 
-        int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 1);
+        int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 0);
 
         int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 

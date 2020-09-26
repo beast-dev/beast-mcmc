@@ -24,7 +24,7 @@
  */
 
 package dr.inferencexml.operators.hmc;
-
+import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
@@ -58,6 +58,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
+    private final static String PRECONDITIONER = "preconditioner";
+    private final static String SHRINKAGE_PRECONDITIONER = "shrinkagePreconditioner";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -65,6 +67,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
     private final static String INSTABILITY_HANDLER = "instabilityHandler";
     private final static String MASK = "mask";
+
+    private MassPreconditioner shrinkagePreconditioner;
 
     @Override
     public String getParserName() {
@@ -101,7 +105,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             throw new XMLParseException("Random step count fraction must be < 1.0");
         }
 
-        int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 0);
+        int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 1);
 
         int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 
@@ -156,6 +160,23 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         String instabilityHandlerCase = xo.getAttribute(INSTABILITY_HANDLER, "reject");
         HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
 
+        if (xo.hasChildNamed(PRECONDITIONER)){
+            if (preconditioningType != MassPreconditioner.Type.NONE){
+                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
+            }
+            XMLObject cxo = xo.getChild(PRECONDITIONER);
+
+            if (cxo.hasChildNamed(SHRINKAGE_PRECONDITIONER)){
+                XMLObject ccxo = cxo.getChild(SHRINKAGE_PRECONDITIONER);
+                JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) ccxo.getChild(JointBayesianBridgeDistributionModel.class);
+                preconditioningUpdateFrequency = 1;
+                shrinkagePreconditioner = new MassPreconditioner.ShrinkagePreconditioner(bridge, transform);
+            }
+            else{
+                throw new XMLParseException("Unknown preconditioner specified");
+            }
+        }
+
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
                 preconditioningUpdateFrequency, preconditioningDelay, preconditioningMemory,
@@ -165,7 +186,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 instabilityHandler
         );
 
-        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode, reversibleHMCprovider);
+        if (xo.hasChildNamed(PRECONDITIONER)) {
+            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
+                    parameter, transform, mask,
+                    runtimeOptions, shrinkagePreconditioner);
+        }
+        else {
+            return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode, reversibleHMCprovider);
+        }
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
@@ -205,6 +233,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     new ElementRule(Parameter.class),
 
             }, true),
+            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
+                    new ElementRule(MassPreconditioner.class)
+            }, true),
+
     };
 
     @Override

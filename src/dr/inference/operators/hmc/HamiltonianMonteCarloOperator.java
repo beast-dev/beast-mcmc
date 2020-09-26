@@ -80,6 +80,27 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this.leapFrogEngine = constructLeapFrogEngine(transform);
     }
 
+    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+                                         GradientWrtParameterProvider gradientProvider,
+                                         Parameter parameter, Transform transform, Parameter maskParameter,
+                                         Options runtimeOptions,
+                                         MassPreconditioner preconditioner) {
+
+        super(mode, runtimeOptions.targetAcceptanceProbability);
+
+        setWeight(weight);
+
+        this.gradientProvider = gradientProvider;
+        this.runtimeOptions = runtimeOptions;
+        this.stepSize = runtimeOptions.initialStepSize;
+        this.preconditioning = preconditioner;
+        this.parameter = parameter;
+        this.mask = buildMask(maskParameter);
+        this.transform = transform;
+
+        this.leapFrogEngine = constructLeapFrogEngine(transform);
+    }
+
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
         return (transform != null ?
                 new LeapFrogEngine.WithTransform(parameter, transform,

@@ -46,7 +46,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
                                               int gradientCheckCount, double gradientCheckTolerance) {
 
         setWeight(weight);
-        this.inner = inner; //todo: better names. Now A = HZZ, B = HMC
+        this.inner = inner;
         this.outer = outer;
         dimA = inner.getInitialPosition().length;
         dimB = outer.getInitialPosition().length;

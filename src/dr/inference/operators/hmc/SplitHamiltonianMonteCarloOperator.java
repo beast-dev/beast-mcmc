@@ -163,12 +163,12 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
         for (int i = 0; i < nSteps; i++) {
             for (int j = 0; j < innerSteps; j++) {
-                outer.reversiblePositionMomentumUpdate(positionB, momentumB, 1, stepSize);
+                outer.reversiblePositionMomentumUpdate(positionB, momentumB, 1, .5 * stepSize / innerSteps);
             }
             inner.reversiblePositionMomentumUpdate(positionA, momentumA, 1,
                     relativeScale * stepSize);
             for (int j = 0; j < innerSteps; j++) {
-                outer.reversiblePositionMomentumUpdate(positionB, momentumB, 1, stepSize);
+                outer.reversiblePositionMomentumUpdate(positionB, momentumB, 1, .5 * stepSize / innerSteps);
             }
         }
 
@@ -233,11 +233,11 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
         //2:update them
         for (int i = 0; i < innerSteps; i++) {
-            outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+            outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, .5 * time / innerSteps);
         }
         inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
         for (int i = 0; i < innerSteps; i++) {
-            outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+            outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, .5 * time / innerSteps);
         }
         //3:merge the position and momentum, update position and momentum
         updateMergedVector(positionA, positionB, position);

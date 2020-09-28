@@ -202,13 +202,14 @@
                 <include name="dr/evomodel/branchratemodel/**/*.class"/>
                 <include name="dr/evomodel/clock/**/*.class"/>
                 <include name="dr/evomodel/coalescent/**/*.class"/>
+                <include name="dr/evomodel/continuous/**/*.class"/>
                 <include name="dr/evomodel/operators/**/*.class"/>
                 <include name="dr/evomodel/sitemodel/**/*.class"/>
                 <include name="dr/evomodel/speciation/**/*.class"/>
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
-                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
+                <include name="dr/evomodel/treedatalikelihood/**/*.class"/>
                 <include name="dr/evomodelxml/**/*.class"/>
                 <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>

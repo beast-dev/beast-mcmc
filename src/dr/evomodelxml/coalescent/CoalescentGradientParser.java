@@ -28,6 +28,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.CoalescentGradient;
 import dr.evomodel.coalescent.CoalescentLikelihood;
+import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
 /**
@@ -41,7 +42,8 @@ public class CoalescentGradientParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         CoalescentLikelihood likelihood = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
-        return new CoalescentGradient(likelihood);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        return new CoalescentGradient(likelihood, tree);
     }
 
     @Override
@@ -51,6 +53,7 @@ public class CoalescentGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(CoalescentLikelihood.class),
+            new ElementRule(TreeModel.class),
     };
 
 

@@ -2266,12 +2266,7 @@ public class TimeSlicer {
     }
 
     public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
+        BaseTreeTool.centreLine(line, 60, progressStream);
     }
 
     public static void printTitle() {

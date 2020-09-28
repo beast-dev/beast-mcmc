@@ -103,22 +103,22 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     }
 
     @Override
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    public final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
        // no intermediates need to be recalculated...
     }
 
     @Override
-    protected void storeState() {
+    public void storeState() {
        // Do nothing
     }
 
     @Override
-    protected void restoreState() {
+    public void restoreState() {
         // Do nothing
     }
 
     @Override
-    protected void acceptState() {
+    public void acceptState() {
     } // no additional state needs accepting
 
     private final Parameter coefficients;

@@ -54,10 +54,11 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
     private final Parameter parameter;
     private final Tree tree;
 
-    public CoalescentGradient(CoalescentLikelihood likelihood) {
+    public CoalescentGradient(CoalescentLikelihood likelihood,
+                              TreeModel tree) {
         this.likelihood = likelihood;
-        this.tree = likelihood.getTree();
-        this.parameter = new NodeHeightProxyParameter("NodeHeights", (TreeModel) likelihood.getTree(), true);
+        this.tree = tree;
+        this.parameter = new NodeHeightProxyParameter("NodeHeights", tree, true);
     }
 
     @Override
@@ -90,7 +91,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
         double[] sortedValues = new double[tree.getInternalNodeCount()];
         getIntervalIndexForInternalNodes(intervalIndices, nodeIndices, sortedValues);
 
-        IntervalList intervals = likelihood.getIntervals();
+        IntervalList intervals = likelihood.getIntervalList();
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
@@ -142,7 +143,7 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Reporta
             sortedValues[i] = nodeHeights[nodeIndices[i]];
         }
 
-        IntervalList intervals = likelihood.getIntervals();
+        IntervalList intervals = likelihood.getIntervalList();
         int intervalIndex = 0;
         double finishTime = intervals.getInterval(intervalIndex);
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {

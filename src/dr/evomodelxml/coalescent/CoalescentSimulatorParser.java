@@ -25,16 +25,11 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.distribution.ParametricDistributionModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.xml.*;
 
 import java.util.ArrayList;

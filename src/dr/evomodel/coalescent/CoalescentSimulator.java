@@ -26,10 +26,8 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.tree.*;
-import dr.evolution.util.Date;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evolution.util.TimeScale;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.math.UnivariateFunction;
 

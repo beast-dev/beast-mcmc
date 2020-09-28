@@ -1014,6 +1014,70 @@ public interface Transform {
         }
     }
 
+    class InverseSumTransform extends UnivariableTransform {
+        private double sum;
+
+        InverseSumTransform() {
+            this.sum = 1;
+        }
+
+        InverseSumTransform(double sum) {
+            this.sum = sum;
+        }
+
+        @Override
+        public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
+            return 0;
+        }
+
+        @Override
+        public double updateOffdiagonalHessianLogDensity(double offdiagonalHessian, double transformationHessian,
+                                                         double gradientI, double gradientJ, double valueI,
+                                                         double valueJ) {
+            return 0;
+        }
+
+        @Override
+        public String getTransformName() {
+            return "inversedSum transform";
+        }
+
+        @Override
+        public double transform(double value) {
+            return value / (value * sum - 1);
+        }
+
+        @Override
+        public double inverse(double value) {
+            return transform(value);
+        }
+
+        @Override
+        public double gradientInverse(double value) {
+            return 0;
+        }
+
+        @Override
+        protected double getGradientLogJacobianInverse(double value) {
+            return 0;
+        }
+
+        @Override
+        public double gradient(double value) {
+            return 0;
+        }
+
+        @Override
+        public double getLogJacobian(double value) {
+            return 0;
+        }
+
+        @Override
+        public boolean isInInteriorDomain(double value) {
+            return false;
+        }
+    }
+
     class NoTransform extends UnivariableTransform {
 
         public double transform(double value) {
@@ -2251,6 +2315,7 @@ public interface Transform {
         LOG_CONSTRAINED_SUM("logConstrainedSum", new LogConstrainedSumTransform()),
         LOGIT("logit", new LogitTransform()),
         FISHER_Z("fisherZ",new FisherZTransform()),
+        INVERSE_SUM("inverseSum", new InverseSumTransform()),
         POWER("power", new PowerTransform());
 
         Type(String name, Transform transform) {

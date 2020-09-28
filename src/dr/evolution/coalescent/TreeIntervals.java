@@ -83,6 +83,11 @@ public class TreeIntervals implements IntervalList {
         return tree.getExternalNodeCount();
     }
 
+    @Override
+    public double getStartTime() {
+        return 0;
+    }
+
     /**
      * get number of intervals
      */
@@ -231,7 +236,7 @@ public class TreeIntervals implements IntervalList {
     /**
      * Recalculates all the intervals for the given tree.
      */
-    private void calculateIntervals() {
+    public void calculateIntervals() {
 
         int nodeCount = tree.getNodeCount();
 

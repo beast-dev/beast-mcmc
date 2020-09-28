@@ -28,6 +28,7 @@ package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
@@ -71,10 +72,10 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         }
 
         Parameter coalescentIntervals = null;
-        GMRFSkyrideLikelihood skyrideLikelihood = null;
+        OldGMRFSkyrideLikelihood skyrideLikelihood = null;
         if (xo.hasChildNamed(COALESCENT_INTERVAL)) {
             cxo = xo.getChild(COALESCENT_INTERVAL);
-            skyrideLikelihood = (GMRFSkyrideLikelihood) cxo.getChild(GMRFSkyrideLikelihood.class);
+            skyrideLikelihood = (OldGMRFSkyrideLikelihood) cxo.getChild(OldGMRFSkyrideLikelihood.class);
         }
 
         boolean withRoot = xo.getBooleanAttribute(WITH_ROOT);
@@ -113,7 +114,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                 new XORRule(
                         new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
                         new AndRule(
-                                new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class,
+                                new ElementRule(COALESCENT_INTERVAL, OldGMRFSkyrideLikelihood.class,
                                         "Construct a proxy parameter for coalescent intervals from the Skyride likelihood."),
                                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter")
                         )

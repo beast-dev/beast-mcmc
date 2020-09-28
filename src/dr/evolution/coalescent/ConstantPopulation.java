@@ -75,7 +75,12 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 		return 1.0/getN0();
 	}
 
-    // same as abstract
+	@Override
+	public double getIntegral(double start, double finish) {
+		return (finish - start) / getN0();
+	}
+
+	// same as abstract
 //	/**
 //	 * Calculates the integral 1/N(x) dx between start and finish. The
 //	 * inherited function in DemographicFunction.Abstract calls a

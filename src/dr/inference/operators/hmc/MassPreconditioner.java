@@ -66,6 +66,18 @@ public interface MassPreconditioner {
                 return new AdaptiveDiagonalPreconditioning(dimension, transform, options.preconditioningDelay);
             }
         },
+        SHRINKAGE_DIAGONAL("shrinkageDiagonal") {
+            @Override
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+
+                if (!(gradient instanceof JointBayesianBridgeDistributionModel)) {
+                    throw new RuntimeException("Gradient must be a JointBayesianBridgeDistributionModel for shrinkageDisgonal preconditioning!");
+                }
+
+                return new ShrinkagePreconditioner((JointBayesianBridgeDistributionModel) gradient, transform);
+
+            }
+        },
         FULL("full") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {

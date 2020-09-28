@@ -398,7 +398,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 
         if (traits == null || traits.size() == 0) {
-            int result = selectTraitDialog.showDialog(options.traits, null, this);
+            int result = selectTraitDialog.showDialog(options.traits, null, this, true);
             if (result != JOptionPane.CANCEL_OPTION) {
                 traits = selectTraitDialog.getTraits();
 
@@ -415,7 +415,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
                 name = selectTraitDialog.getName();
             } else {
-                result = selectTraitDialog.showDialog(null, null, this);
+                result = selectTraitDialog.showDialog(traits, null, this, false);
                 name = selectTraitDialog.getName();
 
                 if (result == JOptionPane.CANCEL_OPTION) {

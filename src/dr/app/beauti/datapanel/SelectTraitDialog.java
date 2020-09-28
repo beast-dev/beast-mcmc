@@ -49,6 +49,7 @@ public class SelectTraitDialog {
     JCheckBox copyCheck;
     JTextField nameField;
     JScrollPane scrollPane;
+    JCheckBox independentBox;
 
     OptionsPanel optionPanel;
 
@@ -75,9 +76,9 @@ public class SelectTraitDialog {
 
     }
 
-    public int showDialog(Collection<TraitData> traits, String defaultName, Component parent) {
+    public int showDialog(Collection<TraitData> traits, String defaultName, Component parent, Boolean allowSelectTraits) {
         optionPanel.removeAll();
-        if (traits == null) {
+        if (traits == null || !allowSelectTraits) {
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
             optionPanel.addComponentWithLabel("Name trait partition:", nameField);
             nameField.setText(defaultName != null ? defaultName : "untitled_traits");
@@ -126,7 +127,7 @@ public class SelectTraitDialog {
                     JOptionPane.showMessageDialog(parent, "Cannot have an empty partition name.", "No Partition Name", JOptionPane.ERROR_MESSAGE);
                 }
 
-                if (getTraits().size() == 0) {
+                if (getTraits().size() == 0 && allowSelectTraits) {
                     isValid = false;
                     JOptionPane.showMessageDialog(parent, "Please select a trait(s).", "No Trait(s) Selected", JOptionPane.ERROR_MESSAGE);
                 }

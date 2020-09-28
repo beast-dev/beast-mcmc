@@ -5,6 +5,7 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
+import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
@@ -13,10 +14,7 @@ import dr.math.AdaptableVector;
 import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
-import dr.math.matrixAlgebra.WrappedMatrix;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
 
 import java.util.ArrayList;
@@ -270,6 +268,8 @@ public interface MassPreconditioner {
         }
     }
 
+
+
     abstract class AbstractMassPreconditioning implements MassPreconditioner {
         final protected int dim;
         final protected Transform transform;
@@ -396,8 +396,37 @@ public interface MassPreconditioner {
         }
     }
 
+    class ShrinkagePreconditioner extends DiagonalPreconditioning {
 
-    class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
+        JointBayesianBridgeDistributionModel bridge;
+
+        public ShrinkagePreconditioner(JointBayesianBridgeDistributionModel bridge, Transform transform){
+            super(bridge.getDimension(), transform);
+            this.bridge = bridge;
+            inverseMass = computeInverseMass();
+        }
+
+        public MassPreconditioner factory(JointBayesianBridgeDistributionModel bridge, Transform transform) {
+            return new ShrinkagePreconditioner(bridge, transform);
+        }
+
+        @Override
+        protected double[] computeInverseMass() {
+            double diagonal[] = new double[(bridge.getDimension())];
+
+            for (int i = 0; i < bridge.getDimension(); i++){
+                diagonal[i] = bridge.getGlobalLocalProduct(i);
+            }
+            return diagonal;
+        }
+
+        @Override
+        public void storeSecant(ReadableVector gradient, ReadableVector position) {
+            // Do nothing
+        }
+    }
+
+        class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
 
         final protected HessianWrtParameterProvider hessian;
 

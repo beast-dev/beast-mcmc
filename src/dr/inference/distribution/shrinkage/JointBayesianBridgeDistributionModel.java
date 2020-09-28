@@ -68,6 +68,11 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         return globalLocalProduct;
     }
 
+    public double getGlobalLocalProduct(int index) {
+        double globalLocalProduct = globalScale.getParameterValue(0) * localScale.getParameterValue(index);
+        return globalLocalProduct;
+    }
+
     private final Parameter localScale;
     private final Parameter slabWidth;
 }

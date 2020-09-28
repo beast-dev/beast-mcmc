@@ -468,6 +468,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (minRow != -1) {
             dataTable.getSelectionModel().setSelectionInterval(minRow, maxRow);
         }
+
+        selectTraitDialog.setMakeCopy(false);
         fireDataChanged();
         repaint();
 

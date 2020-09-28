@@ -145,6 +145,10 @@ public class SelectTraitDialog {
         return copyCheck.isSelected();
     }
 
+    public void setMakeCopy(boolean b) {
+        copyCheck.setSelected(b);
+    }
+
     public String getName() {
         return nameField.getText();
     }

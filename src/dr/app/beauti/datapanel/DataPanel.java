@@ -441,7 +441,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         int minRow = -1;
         int maxRow;
 
-        if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE) {
+        if (traits.get(0).getTraitType() == TraitData.TraitType.DISCRETE || selectTraitDialog.getForceIndependent()) {
 
             for (int i = 0; i < traits.size(); i++) {
 
@@ -469,7 +469,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             dataTable.getSelectionModel().setSelectionInterval(minRow, maxRow);
         }
 
-        selectTraitDialog.setMakeCopy(false);
+        selectTraitDialog.reset();
         fireDataChanged();
         repaint();
 

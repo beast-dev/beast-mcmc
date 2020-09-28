@@ -46,10 +46,10 @@ public class SelectTraitDialog {
     //    JComboBox traitCombo;
     JList traitList;
     DefaultListModel traitModel;
-    JCheckBox copyCheck;
+    private final JCheckBox copyCheck;
     JTextField nameField;
     JScrollPane scrollPane;
-    JCheckBox independentBox;
+    private final JCheckBox independentBox;
 
     OptionsPanel optionPanel;
 
@@ -63,6 +63,8 @@ public class SelectTraitDialog {
         copyCheck = new JCheckBox("Name trait partition:");
         nameField = new JTextField();
         nameField.setColumns(20);
+
+        independentBox = new JCheckBox("New partition for each trait");
 
         optionPanel = new OptionsPanel(12, 12);
 
@@ -94,6 +96,11 @@ public class SelectTraitDialog {
             optionPanel.addComponentWithLabel("Trait(s):", scrollPane);
             optionPanel.addComponents(copyCheck, nameField);
             nameField.setEnabled(copyCheck.isSelected());
+        }
+
+        if (traits != null && traits.size() > 1) {
+            independentBox.setSelected(false);
+            optionPanel.addComponent(independentBox);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -145,8 +152,13 @@ public class SelectTraitDialog {
         return copyCheck.isSelected();
     }
 
-    public void setMakeCopy(boolean b) {
-        copyCheck.setSelected(b);
+    public void reset() {
+        copyCheck.setSelected(false);
+        independentBox.setSelected(false);
+    }
+
+    public boolean getForceIndependent() {
+        return independentBox.isSelected();
     }
 
     public String getName() {

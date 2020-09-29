@@ -151,11 +151,11 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
 
             likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
-            double tmp = calculateLogLikelihood(); // after traverse all nodes and patterns have been updated --
-            //so change flags to reflect this.
+            double tmp = calculateLogLikelihood();
             likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
 
             if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
+                setAllNodesUpdated();
                 logLikelihood = tmp;
                 likelihoodKnown = true;
             }

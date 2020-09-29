@@ -1022,7 +1022,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     }
 
     @Override
-    public boolean providesPostOrderStatisticsOnly() { return true; }
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations) {

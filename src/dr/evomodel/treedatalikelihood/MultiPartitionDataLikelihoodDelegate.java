@@ -1300,7 +1300,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     }
 
     @Override
-    public boolean providesPostOrderStatisticsOnly() { return true; }
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {

@@ -206,6 +206,7 @@
 
 	<coalescentGradient id="coalescentGradient">
 		<coalescentLikelihood idref="coalescent"/>
+		<treeModel idref="treeModel"/>
 	</coalescentGradient>
 
 	<report>

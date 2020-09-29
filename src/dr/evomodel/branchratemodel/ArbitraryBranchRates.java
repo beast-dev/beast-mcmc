@@ -49,7 +49,7 @@ import java.util.function.DoubleBinaryOperator;
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRatesFullMethods, Citable {
+public class ArbitraryBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
     // The rates of each branch
     private final TreeParameterModel rates;

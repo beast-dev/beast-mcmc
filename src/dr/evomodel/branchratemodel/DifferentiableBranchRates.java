@@ -30,8 +30,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.DoubleBinaryOperator;
 
 /**
@@ -39,6 +37,10 @@ import java.util.function.DoubleBinaryOperator;
  * @author Alexander Fisher
  */
 public interface DifferentiableBranchRates  extends BranchRates {
+
+    default Tree getTree() { return null; } // TODO Deprecate
+
+    default double getUntransformedBranchRate(Tree tree, NodeRef node) { return getBranchRate(tree, node); }
 
     double getBranchRateDifferential(Tree tree, NodeRef node); // TODO Deprecate
 

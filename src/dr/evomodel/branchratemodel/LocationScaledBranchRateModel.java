@@ -43,7 +43,8 @@ import java.util.function.DoubleBinaryOperator;
  * @author Alexander Fisher
  */
 
-public class LocationScaledBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRatesFullMethods, Citable {
+public class LocationScaledBranchRateModel extends AbstractBranchRateModel
+        implements DifferentiableBranchRates, Citable {
 
     private final TreeModel treeModel;
     private final BranchRateModel branchRateModel;

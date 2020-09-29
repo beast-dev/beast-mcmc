@@ -25,10 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DifferentiableBranchRatesFullMethods;
+import dr.evomodel.branchratemodel.*;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.xml.*;
 
@@ -46,10 +43,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        DifferentiableBranchRatesFullMethods branchRates = (DifferentiableBranchRatesFullMethods) xo.getChild(BranchRateModel.class);
-        if(!(branchRates instanceof DifferentiableBranchRatesFullMethods)){
-            throw new XMLParseException("Branch rate model must be implement DifferentialBranchRateMethodsFul");
-        }
+        DifferentiableBranchRates branchRates = (DifferentiableBranchRates) xo.getChild(BranchRateModel.class);
 
         ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
                            xo.getChild(ParametricMultivariateDistributionModel.class);
@@ -58,6 +52,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
         boolean log = xo.getAttribute(LOG, false);
 
+        // TODO Change parser to accept Tree and then pass to ACBRD
         return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
                 scaling, log);
     }
@@ -96,7 +91,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(BranchRateModel.class),
+            new ElementRule(DifferentiableBranchRates.class),
             new ElementRule(ParametricMultivariateDistributionModel.class),
             AttributeRule.newStringRule(SCALING, true),
             AttributeRule.newBooleanRule(LOG, true),

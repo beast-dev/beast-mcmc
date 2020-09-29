@@ -42,7 +42,7 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
     private final GradientWrtParameterProvider rateGradientProvider;
     private final AutoCorrelatedGradientWrtIncrements priorGradientProvider;
 
-    private final BranchRateModel branchRates;
+    private final DifferentiableBranchRates branchRates;
     private final Tree tree;
 
     private final AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling;
@@ -102,9 +102,9 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
         }
 
         if (!tree.isRoot(node)) {
-            int index = ((DifferentiableBranchRatesFullMethods) branchRates).getParameterIndexFromNode(node);
+            int index = branchRates.getParameterIndexFromNode(node);
             gradientForNode += units.inverseTransformGradient(
-                    gradientWrtRates[index], ((DifferentiableBranchRatesFullMethods) branchRates).getUntransformedBranchRate(tree, node));
+                    gradientWrtRates[index], branchRates.getUntransformedBranchRate(tree, node));
             gradientWrtIncrements[index] = scaling.inverseRescaleIncrement(gradientForNode, tree.getBranchLength(node));
         }
 

@@ -39,7 +39,7 @@ import dr.xml.Reportable;
 public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameterProvider, Reportable {
 
     private final AutoCorrelatedBranchRatesDistribution distribution;
-    private final BranchRateModel branchRates;
+    private final DifferentiableBranchRates branchRates;
     private final Tree tree;
 
     private final AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling;
@@ -101,7 +101,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         }
 
         if (!tree.isRoot(node)) {
-            int index = ((DifferentiableBranchRatesFullMethods) branchRates).getParameterIndexFromNode(node);
+            int index = branchRates.getParameterIndexFromNode(node);
             gradientWrtIncrements[index] -= scaling.inverseRescaleIncrement(
                     1.0 * numberDescendents, tree.getBranchLength(node));  // d / d c_i log-Jacobian
         }
@@ -171,7 +171,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         double increment = parentIncrement;
 
         if (!tree.isRoot(node)) {
-            int index = ((DifferentiableBranchRatesFullMethods) branchRates).getParameterIndexFromNode(node);
+            int index = branchRates.getParameterIndexFromNode(node);
             increment += scaling.inverseRescaleIncrement(increments[index], tree.getBranchLength(node));
 
             rates[index] = units.inverseTransform(increment);

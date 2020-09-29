@@ -28,7 +28,6 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.geo.Location;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -48,7 +47,7 @@ import java.util.List;
 public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikelihood
         implements GradientWrtParameterProvider, Citable, Reportable {
 
-    private final DifferentiableBranchRatesFullMethods branchRateModel;
+    private final DifferentiableBranchRates branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
     private final BranchRateUnits units;
@@ -73,7 +72,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] savedIncrements;
 
     public AutoCorrelatedBranchRatesDistribution(String name,
-                                                 DifferentiableBranchRatesFullMethods  branchRateModel,
+                                                 DifferentiableBranchRates  branchRateModel,
                                                  ParametricMultivariateDistributionModel distribution,
                                                  BranchVarianceScaling scaling,
                                                  boolean takeLogBeforeIncrement) {
@@ -151,7 +150,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     BranchVarianceScaling getScaling() { return scaling; }
 
-    BranchRateModel getBranchRateModel() { return (BranchRateModel) branchRateModel; }
+    DifferentiableBranchRates getBranchRateModel() { return branchRateModel; }
 
     private void rescaleGradientWrtIncrements(double[] gradientWrtIncrements) {
         for (int i = 0; i < dim; i++) {

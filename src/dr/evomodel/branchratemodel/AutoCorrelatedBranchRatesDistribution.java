@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.geo.Location;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
@@ -47,7 +48,7 @@ import java.util.List;
 public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikelihood
         implements GradientWrtParameterProvider, Citable, Reportable {
 
-    private final ArbitraryBranchRates branchRateModel;
+    private final DifferentiableBranchRatesFullMethods branchRateModel;
     private final ParametricMultivariateDistributionModel distribution;
     private final BranchVarianceScaling scaling;
     private final BranchRateUnits units;
@@ -72,7 +73,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] savedIncrements;
 
     public AutoCorrelatedBranchRatesDistribution(String name,
-                                                 ArbitraryBranchRates branchRateModel,
+                                                 DifferentiableBranchRatesFullMethods  branchRateModel,
                                                  ParametricMultivariateDistributionModel distribution,
                                                  BranchVarianceScaling scaling,
                                                  boolean takeLogBeforeIncrement) {
@@ -85,7 +86,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         this.tree = branchRateModel.getTree();
         this.rateParameter = branchRateModel.getRateParameter();
 
-        addModel(branchRateModel);
+        addModel((BranchRateModel) branchRateModel);
         addModel(distribution);
 
         if (tree instanceof TreeModel) {
@@ -150,13 +151,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     BranchVarianceScaling getScaling() { return scaling; }
 
-    ArbitraryBranchRates getBranchRateModel() { return branchRateModel; }
+    BranchRateModel getBranchRateModel() { return (BranchRateModel) branchRateModel; }
 
     private void rescaleGradientWrtIncrements(double[] gradientWrtIncrements) {
         for (int i = 0; i < dim; i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                int index = branchRateModel.getParameterIndexFromNode(node);
+                    int index = branchRateModel.getParameterIndexFromNode(node);
                 gradientWrtIncrements[index] = scaling.rescaleIncrement(
                         gradientWrtIncrements[index], tree.getBranchLength(node));
             }

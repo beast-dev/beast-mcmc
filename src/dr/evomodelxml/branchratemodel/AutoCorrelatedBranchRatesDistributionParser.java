@@ -27,6 +27,8 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRatesFullMethods;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.xml.*;
 
@@ -44,7 +46,10 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
+        DifferentiableBranchRatesFullMethods branchRates = (DifferentiableBranchRatesFullMethods) xo.getChild(BranchRateModel.class);
+        if(!(branchRates instanceof DifferentiableBranchRatesFullMethods)){
+            throw new XMLParseException("Branch rate model must be implement DifferentialBranchRateMethodsFul");
+        }
 
         ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
                            xo.getChild(ParametricMultivariateDistributionModel.class);
@@ -91,7 +96,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(ArbitraryBranchRates.class),
+            new ElementRule(BranchRateModel.class),
             new ElementRule(ParametricMultivariateDistributionModel.class),
             AttributeRule.newStringRule(SCALING, true),
             AttributeRule.newBooleanRule(LOG, true),

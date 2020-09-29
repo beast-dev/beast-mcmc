@@ -43,7 +43,7 @@ import java.util.function.DoubleBinaryOperator;
  * @author Alexander Fisher
  */
 
-public class LocationScaledBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
+public class LocationScaledBranchRateModel extends AbstractBranchRateModel implements DifferentiableBranchRatesFullMethods, Citable {
 
     private final TreeModel treeModel;
     private final BranchRateModel branchRateModel;
@@ -101,6 +101,10 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel imple
         return differentiableBranchRateModel.getRateParameter();
     }
 
+    public Tree getTree() {
+        return treeModel;
+    }
+
     @Override
     public int getParameterIndexFromNode(NodeRef node) {
         checkDifferentiability();
@@ -145,6 +149,11 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel imple
     public double getBranchRate(final Tree tree, final NodeRef node) {
         assert tree == treeModel;
         return location.getEffect(tree, node) * branchRateModel.getBranchRate(tree, node);
+    }
+
+    public double getUntransformedBranchRate(Tree tree, NodeRef node) {
+        // returns the rate scaled by the location
+        return getBranchRate(tree, node);
     }
 
     @Override

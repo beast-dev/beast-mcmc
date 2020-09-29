@@ -68,6 +68,10 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
     @Override
     public double[] nextRandom() {
         updateC();
+        return nextRandomNoUpdate();
+    }
+
+    public double[] nextRandomNoUpdate() {
         SingularValueDecomposition svd = DecompositionFactory.svd(C.numRows, C.numCols, true, true, true);
         svd.decompose(C);
         double[] singularValues = svd.getSingularValues();
@@ -95,7 +99,7 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
             ratio = 1.0;
             double besselOrder = (C.numRows - C.numCols - 1) / 2;
 
-            for (int i = 1; i < C.numRows; i++) {
+            for (int i = 1; i < C.numCols; i++) {
                 DenseMatrix64F previousDraws = new DenseMatrix64F(C.numRows, i);
                 transferColumns(mkBuffer1, 0, previousDraws, 0, i);
                 SingularValueDecomposition nullSvd = DecompositionFactory.svd(C.numRows, i, true, false, false);
@@ -122,21 +126,25 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
                 valid = true;
             }
 
+            System.out.println(rejects);
+            rejects++;
+
         }
 
         if (!valid) {
+            System.err.println("Didn't work.");
             return null;
         }
 
-        svd.getV(mkBuffer2, true);
+        svd.getV(kkBuffer1, true);
 
         DenseMatrix64F X = new DenseMatrix64F(C.numRows, C.numCols);
-        CommonOps.multTransB(mkBuffer1, mkBuffer2, X);
+        CommonOps.multTransB(mkBuffer1, kkBuffer1, X);
         return X.data;
     }
 
     public void transferColumns(DenseMatrix64F src, int srcStart, DenseMatrix64F dest, int destStart, int nColumns) {
-        for (int i = src.numRows; i < src.numRows; i++) {
+        for (int i = 0; i < src.numRows; i++) {
             for (int j = 0; j < nColumns; j++) {
                 dest.set(i, j + destStart, src.get(i, j + srcStart));
             }
@@ -155,9 +163,12 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         double norm = makeUnit(u);
         double[] unitDraw = nextVectorVonMisesFisherUnitMode(c.length, norm);
         SingularValueDecomposition svd = DecompositionFactory.svd(c.length, 1, true, false, false);
+        DenseMatrix64F mBuffer = new DenseMatrix64F(c.length, 1);
+        DenseMatrix64F mmBuffer = new DenseMatrix64F(c.length, c.length);
+        DenseMatrix64F mBuffer2 = new DenseMatrix64F(c.length, 1);
 
-        mBuffer1.setData(u);
-        svd.decompose(mBuffer1); //TODO: probably better way to construct orthogonal matrix including u
+        mBuffer.setData(u);
+        svd.decompose(mBuffer); //TODO: probably better way to construct orthogonal matrix including u
         svd.getU(mmBuffer, false);
 
         for (int i = 0; i < u.length; i++) {
@@ -168,8 +179,8 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
 
         }
 
-        mBuffer1.setData(unitDraw);
-        CommonOps.mult(mmBuffer, mBuffer1, mBuffer2);
+        mBuffer.setData(unitDraw);
+        CommonOps.mult(mmBuffer, mBuffer, mBuffer2);
 
         return mBuffer2.getData();
     }
@@ -398,9 +409,8 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         int dim = C.numRows;
 
         double[] c = nextUniformVector(dim);
-        double[] u = c.clone();
 
-        double norm = 10000000;
+        double norm = 10000;
 
         for (int i = 0; i < dim; i++) {
             c[i] *= norm;
@@ -434,7 +444,20 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         sb.append("\n");
         sb.append("variance: " + new Vector(var));
         sb.append("\n\n");
+
+        DenseMatrix64F newC = nextUniform();
+        for (int i = 0; i < newC.data.length; i++) {
+            C.data[i] = newC.data[i] * norm;
+        }
+
+        double[] matDraw = nextRandomNoUpdate();
+        sb.append(new Vector(matDraw));
+        sb.append("\n");
+        sb.append(new Vector(newC.data));
+
         return sb.toString();
+
+
     }
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {

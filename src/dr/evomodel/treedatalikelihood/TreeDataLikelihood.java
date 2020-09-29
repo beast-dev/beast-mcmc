@@ -127,6 +127,12 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
 
             logLikelihood = calculateLogLikelihood();
+
+            if (COUNT_TOTAL_OPERATIONS) {
+                long endTime = System.nanoTime();
+                totalLikelihoodTime += (endTime - startTime) / 1000000;
+            }
+
             setAllNodesUpdated();
             likelihoodKnown = true;
         }
@@ -510,6 +516,5 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private int totalRateUpdateSingleCount = 0;
     private int totalPostOrderStatistics = 0;
     private int totalCalculatePostOrderStatistics = 0;
-
     private long totalLikelihoodTime = 0;
 }

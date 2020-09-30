@@ -9,10 +9,7 @@ import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
-import dr.math.AdaptableCovariance;
-import dr.math.AdaptableVector;
-import dr.math.MathUtils;
-import dr.math.MultivariateFunction;
+import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.util.Transform;
@@ -63,7 +60,7 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
                 int dimension = transform instanceof Transform.MultivariableTransform ?
                         ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
-                return new AdaptiveDiagonalPreconditioning(dimension, transform, options.preconditioningDelay);
+                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay);
             }
         },
         SHRINKAGE_DIAGONAL("shrinkageDiagonal") {
@@ -510,11 +507,40 @@ public interface MassPreconditioner {
 
         private AdaptableVector.AdaptableVariance variance;
         private final int minimumUpdates;
+        private final GradientWrtParameterProvider gradient;
 
-        AdaptiveDiagonalPreconditioning(int dim, Transform transform, int preconditioningDelay) {
+        AdaptiveDiagonalPreconditioning(int dim,
+                                        GradientWrtParameterProvider gradient,
+                                        Transform transform, int preconditioningDelay) {
             super(dim, transform);
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.minimumUpdates = preconditioningDelay;
+            this.gradient = gradient;
+            setInitialMass();
+        }
+
+        @Override
+        protected void initializeMass() {
+        }
+
+        private void setInitialMass() {
+            double[] values = gradient.getParameter().getParameterValues();
+            for (int i = 0; i < dim; i++) {
+                gradient.getParameter().setParameterValueQuietly(i, values[i] + MachineAccuracy.SQRT_SQRT_EPSILON);
+            }
+            gradient.getParameter().fireParameterChangedEvent();
+            double[] gradientPlus = gradient.getGradientLogDensity();
+
+            for (int i = 0; i < dim; i++) {
+                gradient.getParameter().setParameterValueQuietly(i, values[i] - MachineAccuracy.SQRT_SQRT_EPSILON);
+            }
+            gradient.getParameter().fireParameterChangedEvent();
+            double[] gradientMinus = gradient.getGradientLogDensity();
+
+            for (int i = 0; i < dim; i++) {
+                values[i] = Math.abs((gradientPlus[i] - gradientMinus[i]) / (2.0 * MachineAccuracy.SQRT_SQRT_EPSILON));
+            }
+            inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);
         }
 
         @Override

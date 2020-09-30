@@ -31,8 +31,6 @@ import dr.inference.model.ModelListener;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.DoubleBinaryOperator;
 
 /**

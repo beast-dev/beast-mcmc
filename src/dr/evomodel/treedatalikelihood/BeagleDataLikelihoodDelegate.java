@@ -908,7 +908,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // next step
             flip = false;
             underflowHandling = 0;
-            throw new LikelihoodUnderflowException();
+
+            if (USE_CACHED_EXCEPTION) {
+                if (cachedException == null) {
+                    cachedException = new LikelihoodUnderflowException();
+                }
+                throw cachedException;
+            } else {
+                throw new LikelihoodUnderflowException();
+            }
 
         } else {
 
@@ -1221,4 +1229,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * PreOrder related settings
      */
     private PreOrderSettings settings;
+
+    private static boolean USE_CACHED_EXCEPTION = true;
+    private LikelihoodUnderflowException cachedException = null; // new LikelihoodUnderflowException();
 }

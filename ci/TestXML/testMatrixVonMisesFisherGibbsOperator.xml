@@ -2,52 +2,160 @@
 <beast>
     <taxa>
         <taxon id="taxon1">
-            <attr name="traits">NA NA NA NA NA NA -0.7522851275073772</attr>
-        </taxon>
-        <taxon id="taxon6">
-            <attr name="traits">-0.42898479922720356 -0.3440100523685048 0.6436374468251037 -0.09729958495856225
-                -1.396413239367357 NA NA
-            </attr>
-        </taxon>
-        <taxon id="taxon7">
-            <attr name="traits">0.09104086929644847 0.38443026317349643 -1.426378176957026 -0.7790116303715932
-                0.2981854605237854 -0.09793696210859011 0.03706742865102728
-            </attr>
-        </taxon>
-        <taxon id="taxon10">
-            <attr name="traits">NA NA 1.5439602691637375 NA 1.6135287964494376 -0.8583256421345544 0.2845890830831352
-            </attr>
-        </taxon>
-        <taxon id="taxon9">
-            <attr name="traits">0.4270454816694809 NA NA NA 0.01045577909380348 -0.8064419255097306 1.7342729545238105
-            </attr>
-        </taxon>
-        <taxon id="taxon3">
-            <attr name="traits">-0.8920557774375898 1.478607059857378 NA -0.6908795858187 NA NA -0.6319790093391232
-            </attr>
-        </taxon>
-        <taxon id="taxon5">
-            <attr name="traits">-0.8909827170981991 1.1873505039550996 -0.39339506737983243 1.066150616149452
-                -1.7083839109325234 NA 0.5446097585263934
-            </attr>
-        </taxon>
-        <taxon id="taxon4">
-            <attr name="traits">-0.11560476062111587 0.41571346596533654 NA NA -0.01291823951389353 1.6684512296510925
-                -0.48494596043058696
-            </attr>
+            <attr name="traits">-0.4910912263486519 2.676757918807719 4.661153563731718 30.81960985537017 -1.2312340616247068 19.668024366386735 4.553944039385622 -9.112538703949108 7.558205117886358 13.182156921684902</attr>
         </taxon>
         <taxon id="taxon2">
-            <attr name="traits">NA NA -0.17865180808229236 0.23315524522158199 NA 1.808755790283758 NA</attr>
+            <attr name="traits">-0.18657244232391434 -31.616273244668125 -27.32922493669179 181.08309203392344 5.23220151671103 67.9559749426838 19.179865548474517 -85.97685229845872 77.29010171665907 75.81042679643087</attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="traits">1.3705661398431044 15.598328239483715 9.932362314083218 -154.1050194215044 -1.9473900641301285 -69.59058895150396 -18.012059642089806 64.90341708210907 -57.86333868230067 -63.080073052074255</attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="traits">-0.37130089692752666 -36.267549939626655 -31.84563938088098 213.33880714619357 6.353197464423087 80.68896334201189 22.067301979723734 -101.11587016114743 90.2827404867779 88.99778679973991</attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="traits">0.8513295153695881 33.73034382893524 23.204802427140834 -272.4450737365878 -2.218861133922913 -116.71171926802717 -29.943799856844826 120.31185166241245 -107.76970197363075 -115.2570383467381</attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="traits">1.279785600262164 30.58547349675983 21.216848617460567 -258.78503192714663 -2.558783952318446 -111.53097891981405 -29.32480464842876 113.38988828938892 -102.10236218964725 -109.7115728119706</attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="traits">-1.442676473630119 0.9557193276081747 5.966603492681502 73.5899093073391 -1.9104597519008548 40.89878511906334 8.931208973606783 -25.22787971755229 21.593777730355605 29.556841013566487</attr>
         </taxon>
         <taxon id="taxon8">
-            <attr name="traits">-0.8666572905938715 -0.454549337998158 NA -0.5397266841036715 NA NA 0.8101466138794606
-            </attr>
+            <attr name="traits">0.6123938281488738 4.454496107071724 3.0991019603367 -54.30964661527518 -1.379160115874482 -23.695652288314086 -6.568262151767051 22.533125646532856 -19.40607994764142 -21.619635832737913</attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="traits">2.62275688204427 35.21500479236647 23.766838566862624 -308.6662076091192 -3.4953026762476123 -133.87009849974123 -33.970969137890414 133.0842910480094 -119.33277624840474 -128.16264624890945</attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="traits">-0.10561227480707022 44.99754168247455 43.18684921660841 -215.35053067852786 -7.508150523737961 -72.63619058755769 -20.984316327180675 108.7894464707421 -98.41136293988933 -91.47855406351832</attr>
+        </taxon>
+        <taxon id="taxon11">
+            <attr name="traits">1.9430779984836348 34.75013030338769 24.672765053683776 -306.3551190058435 -3.8619064547367157 -133.1333623872453 -34.5221059947706 132.6948455180088 -118.97531657033743 -127.8343548616168</attr>
+        </taxon>
+        <taxon id="taxon12">
+            <attr name="traits">-1.3843288982083832 -12.187355142058692 -4.149139031844587 158.08058193335535 0.14426175800547325 75.12734521676208 18.15279120326131 -64.54375593423072 56.55344290406501 65.55646488253446</attr>
+        </taxon>
+        <taxon id="taxon13">
+            <attr name="traits">-0.33554609306755934 -35.671607701647225 -31.992016536630153 203.91391570817942 6.472263258031531 76.3021895983882 20.70341319776545 -96.53269157703583 86.830543612983 85.11783528103524</attr>
+        </taxon>
+        <taxon id="taxon14">
+            <attr name="traits">1.3217414832461194 30.554733638044468 19.354101340286434 -282.716443687976 -1.2251260757323126 -124.41299814768185 -32.16064586765423 121.76827785871504 -109.42292653476534 -118.69657126046836</attr>
+        </taxon>
+        <taxon id="taxon15">
+            <attr name="traits">-0.5867073540571678 -38.166857498064005 -33.992635942194575 212.32168282522937 6.112936230684787 77.863334489854 21.60031890688119 -101.20075206400193 92.07971145112501 88.74249804754757</attr>
+        </taxon>
+        <taxon id="taxon16">
+            <attr name="traits">-0.22408078524001174 52.20426608612569 52.66825626929172 -216.59926764468827 -11.117030475942405 -65.60841640134255 -19.26241767790789 113.49134235891574 -101.98303308168187 -90.67594404959127</attr>
+        </taxon>
+        <taxon id="taxon17">
+            <attr name="traits">-1.7761076043738833 8.616711295251163 10.943140184283202 13.558522524045987 -1.4679589746651969 16.751462529057875 3.0873342735149665 1.7879894294266265 -3.0028893175665403 4.0425192520629825</attr>
+        </taxon>
+        <taxon id="taxon18">
+            <attr name="traits">-1.579069538174846 -9.704967373118878 -4.4030021323959625 134.11632306212655 1.4280000442971725 63.82930267853684 16.003402247064365 -53.40566697304924 46.939451376972634 54.68010050092523</attr>
+        </taxon>
+        <taxon id="taxon19">
+            <attr name="traits">-1.3323657460089326 13.477725213292352 14.698272914460146 -31.10390714182397 -2.0289211255977375 -3.283837248407301 -1.5226126664284223 21.043159846988264 -20.476939806151822 -15.152184298287105</attr>
+        </taxon>
+        <taxon id="taxon20">
+            <attr name="traits">-0.013227892587081402 48.29681264532094 48.139387512191576 -204.72826650430608 -10.077416114713229 -62.71417520668682 -19.31277347624426 107.17324034427743 -96.19977676828768 -86.28011770872467</attr>
+        </taxon>
+        <taxon id="taxon21">
+            <attr name="traits">1.427067207697852 41.440450151230735 31.756554114923336 -310.4769729850031 -5.537861047999408 -129.09291481503027 -34.842027729830406 138.36026624437716 -124.32847149377928 -129.88781849253257</attr>
+        </taxon>
+        <taxon id="taxon22">
+            <attr name="traits">1.5811908680716853 40.95614228317203 28.711879444779935 -335.031328199416 -4.45709689915503 -143.09967110122346 -37.76215016116281 147.26294069654566 -131.3869653990012 -140.20167514310887</attr>
+        </taxon>
+        <taxon id="taxon23">
+            <attr name="traits">-0.021084340583458205 -28.263628158382293 -25.023666175676333 156.19050731526835 4.965720417640796 57.90852382636464 15.816734436280882 -74.44995557210396 67.24030334945576 65.45583456836663</attr>
+        </taxon>
+        <taxon id="taxon24">
+            <attr name="traits">-1.0389020338718726 -2.504950975593625 1.1471914856174323 65.78636850198099 -0.4966483811377429 33.92554929060348 8.254961151875518 -24.405793293241395 21.884880169433114 26.829653420088043</attr>
+        </taxon>
+        <taxon id="taxon25">
+            <attr name="traits">-1.4487075318287732 -1.4280869311684754 2.306915262528644 70.50350337588195 0.49704172836088534 37.384537598113994 9.275388281821579 -25.13322651525435 21.497279066799813 27.27252487424098</attr>
+        </taxon>
+        <taxon id="taxon26">
+            <attr name="traits">-0.35300055469884173 56.702285554244675 56.55543487176525 -225.4807408694256 -11.337989841218619 -66.31840492900584 -20.63219200435591 118.89018926915098 -107.39187147831919 -94.81614791124714</attr>
+        </taxon>
+        <taxon id="taxon27">
+            <attr name="traits">0.2935323617260174 -25.468833918269784 -24.05490513126855 110.3192813755166 3.97524662220438 35.00715380835223 10.438891997698832 -57.1426656693401 51.51609933249099 46.653153238606876</attr>
+        </taxon>
+        <taxon id="taxon28">
+            <attr name="traits">-1.576197699611837 18.66004218251797 20.898788909673424 -31.050537977144007 -3.478638146923324 1.4572340225440732 -2.0754864089002956 24.663027255140697 -23.302506118652836 -14.892023651127433</attr>
+        </taxon>
+        <taxon id="taxon29">
+            <attr name="traits">2.720550714419919 13.742494108549407 3.4449313906529246 -218.804695108557 -1.7564824176127138 -106.76186699360298 -26.371287628616013 86.54830323918348 -75.68736086308351 -89.50699035743934</attr>
+        </taxon>
+        <taxon id="taxon30">
+            <attr name="traits">3.961765066099422 53.97310243562343 37.4108002026507 -468.3148476656833 -6.508645618408553 -203.36313152461244 -52.35444482844458 202.80849233392703 -180.33029792579336 -193.92863739985285</attr>
+        </taxon>
+        <taxon id="taxon31">
+            <attr name="traits">-0.5393884762732382 42.024130175624514 42.11875466875743 -167.862251755509 -8.217115518661355 -49.678759932295435 -15.070713118180885 88.56943407875427 -80.46135170510271 -70.96497684428314</attr>
+        </taxon>
+        <taxon id="taxon32">
+            <attr name="traits">1.6106854434485758 52.47547069103004 42.303204886066865 -373.63669046030685 -7.8372723864783245 -152.54406916737437 -40.42193388659106 169.05664198113578 -151.0378435004352 -155.5580807119641</attr>
+        </taxon>
+        <taxon id="taxon33">
+            <attr name="traits">-0.09130123066051352 -1.0186097524260527 0.9392494783257804 27.26301003792248 -0.7100657617610034 14.417554030172667 3.6825022094889586 -10.575162139727057 9.56943342040334 12.361881081025523</attr>
+        </taxon>
+        <taxon id="taxon34">
+            <attr name="traits">-1.2041145271387932 13.57968215316843 15.104501224179764 -29.567903958938228 -2.2920703288815667 -2.491131244501426 -2.1841490039989013 20.61307550166926 -19.734431079664628 -14.336039077983886</attr>
+        </taxon>
+        <taxon id="taxon35">
+            <attr name="traits">-0.842602740045349 -31.853620102886307 -25.060873586674372 209.31015513751603 4.024073249328493 83.2312895807272 22.26173084600276 -96.59007004242517 87.14865921373755 87.82581225585167</attr>
+        </taxon>
+        <taxon id="taxon36">
+            <attr name="traits">2.036551854361428 52.54258600734558 41.96798833820829 -371.7810632008818 -6.9553280372140796 -151.62537579308747 -40.23998519260785 168.6560882265633 -150.93339059960226 -156.10238454399948</attr>
+        </taxon>
+        <taxon id="taxon37">
+            <attr name="traits">-0.49361856661268466 -8.212651532161214 -6.806574104046963 51.73795506435753 1.0764049352211145 20.859622971346717 5.340688938772115 -24.789935792770475 22.412009748797544 22.151783431504832</attr>
+        </taxon>
+        <taxon id="taxon38">
+            <attr name="traits">-0.7091521416175637 -14.030009456022785 -9.263031320644227 134.61185141043012 1.7631189444012778 60.06050363431169 14.986634528510384 -57.05047788587236 50.52689399982886 54.98146508549535</attr>
+        </taxon>
+        <taxon id="taxon39">
+            <attr name="traits">-0.09695863773835511 40.19458066281668 38.292228895288794 -183.31814211795984 -7.959013363903836 -60.74322442440362 -17.39166915392072 92.80534530033715 -83.14894362502014 -77.41161645589541</attr>
+        </taxon>
+        <taxon id="taxon40">
+            <attr name="traits">1.4259906973819458 27.49845741652048 19.48459210619568 -219.11376189796263 -3.3410080638873576 -92.93392393052467 -24.333750764384376 96.72757143876142 -86.11855176385782 -91.11100687709688</attr>
+        </taxon>
+        <taxon id="taxon41">
+            <attr name="traits">-0.1270079159006707 -7.484279812231031 -5.54745967237757 59.14967452826627 0.6367869537192891 24.54020286234567 6.472720891556188 -26.55284306479792 23.685049164909604 25.14117478930907</attr>
+        </taxon>
+        <taxon id="taxon42">
+            <attr name="traits">1.722144677500317 39.134719657818756 32.28593717193656 -265.23960942172494 -7.83377370083258 -105.74246384972406 -28.380460588779428 121.14174665421507 -107.6127755682702 -109.8815836226078</attr>
+        </taxon>
+        <taxon id="taxon43">
+            <attr name="traits">-0.16736718226019734 19.161108713075695 19.889575581644294 -67.88269973041845 -3.9026804824351955 -16.722792942171427 -5.438101811159199 37.52396553004289 -34.138214450047755 -28.956383980538703</attr>
+        </taxon>
+        <taxon id="taxon44">
+            <attr name="traits">1.33061550903288 32.58740976798812 24.327007344761462 -250.39811664781857 -3.894913756336527 -104.65316572257518 -27.72151283500941 111.71149567693593 -99.32664860916573 -104.46899845686252</attr>
+        </taxon>
+        <taxon id="taxon45">
+            <attr name="traits">-0.8292726696051871 28.407682300204176 28.659185779881128 -98.63198532825655 -4.205207288052367 -26.09847757641795 -8.523777150018446 56.00141904391097 -51.78616488323933 -43.622325692877865</attr>
+        </taxon>
+        <taxon id="taxon46">
+            <attr name="traits">-1.12942867113432 -24.821459151447634 -21.177018725766114 159.40301361709672 5.426989792555977 63.23448513949745 16.068654375251104 -73.61056314815893 65.35873710269153 65.4057120459277</attr>
+        </taxon>
+        <taxon id="taxon47">
+            <attr name="traits">-0.5017989018156664 41.32047705046903 42.36815915978949 -166.386295586872 -8.678718562013216 -48.86076455888777 -14.755886666387111 88.10836345428741 -79.71586129765302 -70.5337195224984</attr>
+        </taxon>
+        <taxon id="taxon48">
+            <attr name="traits">-1.0222314138892419 28.532524195178294 28.951969043690987 -98.78333672038936 -4.1133495903295705 -25.848100945809527 -8.816831972552379 55.85483702617004 -51.225905415213575 -43.02279335836742</attr>
+        </taxon>
+        <taxon id="taxon49">
+            <attr name="traits">-0.8180965216401415 -40.91429710506502 -36.14666554639698 223.74344625782697 5.863637821660729 81.99865050137318 22.96001089951492 -107.56146829394655 97.65078807762966 93.88157961188423</attr>
+        </taxon>
+        <taxon id="taxon50">
+            <attr name="traits">-0.10236990725145517 2.1131164493481456 2.3811426094426786 4.681420357263004 -0.1381415446296069 4.722570887745981 1.1067788438846853 -0.38182393715123036 -0.19428053585553667 1.3776315378355624</attr>
         </taxon>
     </taxa>
-    <newick id="startingTree">
-        ((((((taxon1:0.020372455503738562,taxon6:0.020372455503738562):0.04292147117625211,taxon7:0.06329392667999068):0.2492634584940438,taxon10:0.3125573851740344):0.26247859203581464,taxon9:0.575035977209849):0.20678315951777865,((taxon3:0.6579403898666609,taxon5:0.6579403898666609):0.021413251999499675,taxon4:0.6793536418661607):0.10246549486146707):0.2181808632723723,(taxon2:0.8562532934814835,taxon8:0.8562532934814835):0.1437467065185165);
-    </newick>
-    <treeModel id="treeModel">
+    <newick id="startingTree" usingHeights="true" usingDates="false">(((((taxon22:0.08801641510803605,((taxon9:0.0009981787184518047,taxon11:0.0009981787184518047):0.05238028958430869,(taxon3:0.01758764267666401,taxon40:0.01758764267666401):0.035790825626096485):0.03463794680527556):0.03475440465560476,(taxon44:0.08319636426351684,((taxon5:0.03894091106093323,taxon6:0.03894091106093323):0.028474560672289907,taxon14:0.06741547173322314):0.0157808925302937):0.039574455500123965):0.5462866230413049,(taxon29:0.4135796891753198,((taxon36:0.2778924256848372,taxon42:0.2778924256848372):0.026544962437478278,((taxon21:0.01426702672587715,taxon32:0.01426702672587715):0.1792365460449113,taxon30:0.19350357277078842):0.11093381535152705):0.10914230105300433):0.2554777536296259):0.09538818754776439,((taxon8:0.27905156804351755,(taxon13:0.01879077855721253,taxon2:0.01879077855721253):0.26026078948630504):0.016098232543334985,((taxon46:0.09858368106877578,taxon50:0.09858368106877578):0.19594118374795422,(((taxon37:0.01906275293441791,taxon41:0.01906275293441791):0.11381723117887513,(taxon33:0.06217403337585699,taxon4:0.06217403337585699):0.07070595073743606):0.036319190970689266,(((taxon27:0.05567557908926225,taxon49:0.05567557908926225):0.06360748142544813,taxon23:0.11928306051471038):0.024509560250743193,taxon15:0.14379262076545357):0.02540655431852874):0.12532568973274769):0.000624935770122532):0.46929582976585754):0.2355543696472899,(((taxon35:0.5395183348594684,(((taxon24:0.019973902337746433,taxon38:0.019973902337746433):0.10576634642283289,taxon43:0.12574024876057935):0.365661244029818,((taxon19:0.22587968367745095,taxon20:0.22587968367745095):0.09662340628868768,(taxon26:0.06390892434023249,taxon16:0.06390892434023249):0.25859416562590615):0.1688984028242587):0.0481168420690711):0.04635910650622252,(((taxon47:0.001367384404944961,taxon31:0.001367384404944961):0.037880943004062854,taxon39:0.03924832740900781):0.45373763529033684,(taxon18:0.15917309835730517,taxon1:0.15917309835730517):0.3338128643420395):0.09289147866634626):0.07136819994968394,((taxon12:0.11201301443465854,taxon7:0.11201301443465854):0.19065974907822644,((((taxon28:0.039879220571702415,(taxon45:2.6979079831395286e-5,taxon48:2.6979079831395286e-5):0.03985224149187101):0.004651737574069906,(taxon25:0.014414190319238594,taxon17:0.014414190319238594):0.030116767826533723):0.007976442658476865,taxon34:0.052507400804249184):0.021250463871307388,taxon10:0.07375786467555658):0.2289148988373284):0.3545728778024899):0.3427543586846251);;</newick>
+
+
+    <treeModel id="treeModel" fixHeights="true">
         <tree idref="startingTree"/>
         <rootHeight>
             <parameter id="treeModel.rootHeight"/>
@@ -58,144 +166,139 @@
         <nodeHeights internalNodes="true" rootNode="true">
             <parameter id="treeModel.allInternalNodeHeights"/>
         </nodeHeights>
-        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="7"
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="10"
                     name="traits">
             <parameter id="leafTraits"/>
         </nodeTraits>
     </treeModel>
+
     <multivariateDiffusionModel id="diffusionModel">
         <precisionMatrix>
-            <DiagonalMatrix id="diffusion.precision">
-                <parameter dimension="3" value="1" lower="0"/>
+            <DiagonalMatrix>
+                <parameter value="1.0 1 1"/>
             </DiagonalMatrix>
         </precisionMatrix>
     </multivariateDiffusionModel>
-    <matrixParameter id="V">
-        <parameter id="V1"
-                   value="1 0 0 0 0 0 0"/>
-        <parameter id="V2"
-                   value="0 1 0 0 0 0 0"/>
-        <parameter id="V3"
-                   value="0 0 1 0 0 0 0"/>
-    </matrixParameter>
-    <productParameter id="L1">
-        <scale>
-            <parameter id="D1" value="1"/>
-        </scale>
-        <parameter idref="V1"/>
-    </productParameter>
-    <productParameter id="L2">
-        <scale>
-            <parameter id="D2" value="0.1"/>
-        </scale>
-        <parameter idref="V2"/>
-    </productParameter>
-    <productParameter id="L3">
-        <scale>
-            <parameter id="D3" value="0.001"/>
-        </scale>
-        <parameter idref="V3"/>
-    </productParameter>
-    <matrixParameter id="L">
-        <parameter idref="L1"/>
-        <parameter idref="L2"/>
-        <parameter idref="L3"/>
-    </matrixParameter>
-    <!--    <distributionLikelihood id="L.prior">-->
-    <!--        <data>-->
-    <!--            <matrixParameter idref="L"/>-->
-    <!--        </data>-->
-    <!--        <distribution>-->
-    <!--            <normalDistributionModel>-->
-    <!--                <mean>-->
-    <!--                    <parameter value="0.0"/>-->
-    <!--                </mean>-->
-    <!--                <stdev>-->
-    <!--                    <parameter value="1.0"/>-->
-    <!--                </stdev>-->
-    <!--            </normalDistributionModel>-->
-    <!--        </distribution>-->
-    <!--    </distributionLikelihood>-->
 
-    <integratedFactorModel id="factorModel" traitName="traits" nugget="0" standardize="false">
+    <matrixParameter id="L">
+        <parameter id="L1" value="1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="L2" value="0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+        <parameter id="L3" value="0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>
+    </matrixParameter>
+
+<!--    <matrixParameter id="V">-->
+<!--        <parameter id="V1" value="1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+<!--        <parameter id="V2" value="0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+<!--        <parameter id="V3" value="0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"/>-->
+<!--    </matrixParameter>-->
+
+<!--    <productParameter id="L1">-->
+<!--        <scale>-->
+<!--            <parameter id="D1" value="2.0"/>-->
+<!--        </scale>-->
+<!--        <parameter idref="V1"/>-->
+<!--    </productParameter>-->
+<!--    <productParameter id="L2">-->
+<!--        <scale>-->
+<!--            <parameter id="D2" value="0.5"/>-->
+<!--        </scale>-->
+<!--        <parameter idref="V2"/>-->
+<!--    </productParameter>-->
+<!--    <productParameter id="L3">-->
+<!--        <scale>-->
+<!--            <parameter id="D3" value="0.125"/>-->
+<!--        </scale>-->
+<!--        <parameter idref="V3"/>-->
+<!--    </productParameter>-->
+
+<!--    <matrixParameter id="L">-->
+<!--        <parameter idref="L1"/>-->
+<!--        <parameter idref="L2"/>-->
+<!--        <parameter idref="L3"/>-->
+<!--    </matrixParameter>-->
+
+    <integratedFactorModel id="factorModel" traitName="traits" standardize="true">
         <loadings>
             <matrixParameter idref="L"/>
         </loadings>
         <precision>
-            <parameter id="traits.precision"
-                       value="1.5709750622902456 2.1814127915335018 0.6551264204117679 0.04326219904762126 0.28376437758851397 0.7167631495584004 0.08847989507702624"
-                       lower="0.0"/>
+            <parameter id="factorPrecision" value="1e1" dimension="10" lower="0.0"/>
         </precision>
         <treeModel idref="treeModel"/>
         <traitParameter>
             <parameter idref="leafTraits"/>
         </traitParameter>
     </integratedFactorModel>
-    <traitDataLikelihood id="traitLikelihood" traitName="factors" cacheBranches="true" allowIdentical="true"
-                         useTreeLength="false" scaleByTime="true" reportAsMultivariate="true"
-                         integrateInternalTraits="true" standardize="true">
+
+    <gammaPrior id="factorPrecision.prior" scale="1.0" shape="1.0">
+        <parameter idref="factorPrecision"/>
+    </gammaPrior>
+
+    <traitDataLikelihood allowIdentical="true" standardize="false" cacheBranches="true" integrateInternalTraits="true"
+                         id="traitLikelihood" traitName="factors" useTreeLength="false" scaleByTime="true"
+                         reportAsMultivariate="true" allowSingular="true">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
         <integratedFactorModel idref="factorModel"/>
         <conjugateRootPrior>
             <meanParameter>
-                <parameter value="0.0 0.0 0.0"/>
+                <parameter value="0.0 0 0"/>
             </meanParameter>
             <priorSampleSize>
-                <parameter value="0.001" dimension="1"/>
+                <parameter value="0.001"/>
             </priorSampleSize>
         </conjugateRootPrior>
     </traitDataLikelihood>
-    <gammaPrior id="gammaPrior" shape="1.0" scale="1.0">
-        <parameter idref="traits.precision"/>
-    </gammaPrior>
 
-    <matrixVonMisesFisherDistribution id="mvmfDistribution">
-        <traitDataLikelihood idref="traitLikelihood"/>
-        <integratedFactorModel idref="factorModel"/>
-    </matrixVonMisesFisherDistribution>
-    <report>
-        <matrixVonMisesFisherDistribution idref="mvmfDistribution"/>
-    </report>
+    <operators id="operators">
 
+        <matrixVonMisesFisherGibbsOperator weight="1">
+            <traitDataLikelihood idref="traitLikelihood"/>
+            <integratedFactorModel idref="factorModel"/>
+        </matrixVonMisesFisherGibbsOperator>
 
-<!--    <operators id="operators">-->
-<!--        &lt;!&ndash;        <matrixVonMisesFisherGibbsOperator weight="1">&ndash;&gt;-->
-<!--        &lt;!&ndash;            <traitDataLikelihood idref="traitLikelihood"/>&ndash;&gt;-->
-<!--        &lt;!&ndash;            <integratedFactorModel idref="factorModel"/>&ndash;&gt;-->
-<!--        &lt;!&ndash;        </matrixVonMisesFisherGibbsOperator>&ndash;&gt;-->
-<!--        <matrixRotationOperator rotationWindow="0.1" weight="1">-->
+<!--        <matrixRotationOperator weight="1" rotationWindow="0.01">-->
 <!--            <matrixParameter idref="V"/>-->
 <!--        </matrixRotationOperator>-->
 
-<!--    </operators>-->
-
-
-<!--    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">-->
-<!--        <posterior id="posterior">-->
-<!--            <prior id="prior">-->
-<!--                &lt;!&ndash;                <distributionLikelihood idref="L.prior"/>&ndash;&gt;-->
-<!--                <gammaPrior idref="gammaPrior"/>-->
-<!--            </prior>-->
-
-<!--            <likelihood id="likelihood">-->
-<!--                <traitDataLikelihood idref="traitLikelihood"/>-->
-<!--                <integratedFactorModel idref="factorModel"/>-->
-<!--            </likelihood>-->
-<!--        </posterior>-->
-<!--        <operators idref="operators"/>-->
-<!--        <log id="screenLog" logEvery="1000">-->
-<!--            <column label="posterior" dp="4" width="12">-->
-<!--                <posterior idref="posterior"/>-->
-<!--            </column>-->
-<!--            <column label="prior" dp="4" width="12">-->
-<!--                <prior idref="prior"/>-->
-<!--            </column>-->
-<!--            <column label="likelihood" dp="4" width="12">-->
-<!--                <likelihood idref="likelihood"/>-->
-<!--            </column>-->
-<!--        </log>-->
-<!--    </mcmc>-->
-
-
+        <!--        <normalGammaPrecisionGibbsOperator weight="1.0">-->
+        <!--            <prior>-->
+        <!--                <gammaPrior idref="factorPrecision.prior"/>-->
+        <!--            </prior>-->
+        <!--            <normalExtension treeTraitName="factors">-->
+        <!--                <integratedFactorModel idref="factorModel"/>-->
+        <!--                <traitDataLikelihood idref="traitLikelihood"/>-->
+        <!--            </normalExtension>-->
+        <!--        </normalGammaPrecisionGibbsOperator>-->
+    </operators>
+    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <gammaPrior idref="factorPrecision.prior"/>
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="traitLikelihood"/>
+                <integratedFactorModel idref="factorModel"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="100">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="10" fileName="testMvMFGibbsOperator.log" overwrite="true">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="likelihood"/>
+            <matrixParameter idref="L"/>
+            <parameter idref="factorPrecision"/>
+        </log>
+    </mcmc>
 </beast>

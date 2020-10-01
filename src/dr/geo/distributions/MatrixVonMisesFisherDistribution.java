@@ -86,7 +86,7 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         boolean valid = false;
 
 
-        double ratio = 1.0;
+        double ratio;
 
         while (!valid && rejects < MAX_REJECTS) {
             double u = MathUtils.nextDouble();
@@ -117,16 +117,14 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
                 CommonOps.mult(nullMatrix, z, mBuffer1);
                 transferColumns(mBuffer1, 0, mkBuffer1, i, 1);
 
-                double iHr = ModifiedBesselFirstKind.bessi(normHr, besselOrder);
-                double iNtHr = ModifiedBesselFirstKind.bessi(normNtHr, besselOrder);
-                ratio *= (iHr / iNtHr) * Math.pow(normHr / normNtHr, besselOrder);
+                ratio *= ModifiedBesselFirstKind.scaledBessIRatio(normNtHr, normHr, besselOrder);
             }
 
             if (u < ratio) {
                 valid = true;
             }
 
-            System.out.println(rejects);
+//            System.out.println(rejects);
             rejects++;
 
         }
@@ -334,7 +332,7 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
         for (int i = 0; i < adaptor.getNumberOfFactors(); i++) {
             double sumSquares = 0;
             for (int j = 0; j < adaptor.getNumberOfTraits(); j++) {
-                sumSquares += adaptor.getLoadingsValue(offset1);
+                sumSquares += adaptor.getLoadingsValue(offset1) * adaptor.getLoadingsValue(offset1);
                 offset1++;
             }
             double norm = Math.sqrt(sumSquares);
@@ -410,7 +408,7 @@ public class MatrixVonMisesFisherDistribution implements RandomGenerator, Multiv
 
         double[] c = nextUniformVector(dim);
 
-        double norm = 10000;
+        double norm = 1000;
 
         for (int i = 0; i < dim; i++) {
             c[i] *= norm;

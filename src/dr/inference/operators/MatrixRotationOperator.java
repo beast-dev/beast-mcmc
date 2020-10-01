@@ -50,8 +50,7 @@ public class MatrixRotationOperator extends AbstractAdaptableOperator {
 
     @Override
     protected void setAdaptableParameterValue(double value) {
-        rotationWindow = value;
-
+        this.rotationWindow = value;
     }
 
     @Override

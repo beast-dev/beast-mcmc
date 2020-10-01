@@ -143,6 +143,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         return differentiableBranchRateModel.getParameterIndexFromNode(node);
     }
 
+    public double getPriorRateAsIncrement(Tree tree){
+        return 0;
+    }
+
     private void checkDifferentiability() {
         if (differentiableBranchRateModel == null) {
             throw new RuntimeException("Non-differentiable base BranchRateModel");

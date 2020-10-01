@@ -67,6 +67,8 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double logJacobian;
     private double savedLogJacobian;
 
+    private double priorRateAsIncrement;
+
     private final int dim;
     private double[] increments;
     private double[] savedIncrements;
@@ -261,7 +263,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private void checkIncrements() {
         if (!incrementsKnown) {
-            logJacobian =  recursePreOrder(tree.getRoot(), 0.0);
+            logJacobian =  recursePreOrder(tree.getRoot(), 0); //branchRateModel.getPriorRateAsIncrement(tree));
             incrementsKnown = true;
         }
     }
@@ -281,7 +283,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             final double rateAsIncrement = units.transform(rate);
             final double branchLength = tree.getBranchLength(node);
 
-            logJacobian += units.getTransformLogJacobian(rate) + scaling.getTransformLogJacobian(branchLength);
+            logJacobian += units.getTransformLogJacobian(rate) + scaling.getTransformLogJacobian(branchLength);// - branchRateModel.getPriorRateAsIncrement(tree);
 
             final double rateIncrement = scaling.rescaleIncrement(
                     rateAsIncrement - parentRateAsIncrement, branchLength);

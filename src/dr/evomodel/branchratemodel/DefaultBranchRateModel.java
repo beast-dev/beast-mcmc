@@ -90,6 +90,10 @@ public final class DefaultBranchRateModel implements BranchRateModel, Differenti
         return null;
     }
 
+    public double getPriorRateAsIncrement(Tree tree){
+        return 0;
+    }
+
     public void setId(String id) {
         // nothing to do
     }

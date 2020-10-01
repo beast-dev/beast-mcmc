@@ -163,6 +163,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
         }
     }
 
+    public double getPriorRateAsIncrement(Tree tree){
+        return 0;
+    }
+
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
 
     protected void storeState() { }

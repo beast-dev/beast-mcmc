@@ -125,8 +125,8 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel
 
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented");
-//        return gradient;
+//        throw new RuntimeException("Not yet implemented");
+        return gradient;
     }
 
     @Override
@@ -154,7 +154,14 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel
 
     public double getUntransformedBranchRate(Tree tree, NodeRef node) {
         // returns the rate scaled by the location
-        return getBranchRate(tree, node);
+//        return getBranchRate(tree, node);
+
+        //returns just the rate
+        return branchRateModel.getBranchRate(tree, node);
+    }
+
+    public double getPriorRateAsIncrement(Tree tree){
+        return Math.log(location.getEffect(tree, null));
     }
 
     @Override

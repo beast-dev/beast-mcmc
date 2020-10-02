@@ -699,6 +699,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     }
 
     @Override
+    public Transform getTransform() {
+        return transform;
+    }
+
+    @Override
+    public GradientWrtParameterProvider getGradientProvider() {
+        return gradientProvider;
+    }
+
+    @Override
     public void setParameter(double[] position) {
         leapFrogEngine.setParameter(position);
     }
@@ -711,6 +721,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     @Override
     public double getJointProbability(WrappedVector momentum) {
         return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return gradientProvider.getLikelihood().getLogLikelihood();
     }
 
     @Override

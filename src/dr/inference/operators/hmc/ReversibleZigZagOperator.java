@@ -34,6 +34,7 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.TaskPool;
+import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.function.BinaryOperator;
@@ -281,7 +282,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     final WrappedVector drawInitialMomentum() {
-
+        
+        // Definition of "mass matrix" is not standardized for non-Gaussian momentum.
+        // We choose mass_i = var(momentum_i) = mean(|momentum_i|)^2 so that the mass 
+        // can be tuned in a manner analogous to the Gaussian momentum case --- it is
+        // reasonable to tune $mass_i^{-1} = var(position_i) since |velocity_i| = mass_i^{-1/2}.
+        
         ReadableVector mass = preconditioning.mass;
         double[] momentum = new double[mass.getDim()];
 
@@ -545,6 +551,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public Transform getTransform() {
+        return null;
+    }
+
+    @Override
+    public GradientWrtParameterProvider getGradientProvider() {
+        return gradientProvider;
+    }
+
+    @Override
     public void setParameter(double[] position) {
         ReadableVector.Utils.setParameter(position, parameter);
     }
@@ -557,6 +573,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public double getJointProbability(WrappedVector momentum) {
         return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return gradientProvider.getLikelihood().getLogLikelihood();
     }
 
     @Override

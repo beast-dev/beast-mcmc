@@ -71,8 +71,8 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         this.tipCount = dataLikelihood.getTree().getExternalNodeCount();
         this.dimPartial = dimTrait + 1;
 
-        addModel(dataLikelihood);
-
+        dataLikelihood.addModelListener(this);
+        dataLikelihood.addModel(this);
         String partialTraitName = getTipTraitName(traitName);
         tipSampleTrait = dataLikelihood.getTreeTrait(partialTraitName);
 

@@ -253,8 +253,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         out.print("\t");
                         out.print(parameter.getParameterUntransformedValue(dim));
                     }
+                    out.print("\n");
                 }
-                out.print("\n");
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -419,44 +419,45 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
             for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
 
-                line = in.readLine();
-                fields = line.split("\t");
-                //if (!fields[0].equals(parameter.getParameterName())) {
-                //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-                //}
-                int dimension = Integer.parseInt(fields[2]);
+                if (!parameter.isImmutable()) {
+                    line = in.readLine();
+                    fields = line.split("\t");
+                    //if (!fields[0].equals(parameter.getParameterName())) {
+                    //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
+                    //}
+                    int dimension = Integer.parseInt(fields[2]);
 
-                if (dimension != parameter.getDimension()) {
-                    System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
-                    System.err.print("Read from file: ");
-                    for (int i = 0; i < fields.length; i++) {
-                        System.err.print(fields[i] + "\t");
+                    if (dimension != parameter.getDimension()) {
+                        System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
+                        System.err.print("Read from file: ");
+                        for (int i = 0; i < fields.length; i++) {
+                            System.err.print(fields[i] + "\t");
+                        }
+                        System.err.println();
                     }
-                    System.err.println();
-                }
 
-                if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
-                    // System.out.println("eek");
-                    double value = Double.parseDouble(fields[3]);
-                    parameter.setParameterValue(0, value);
-                    if (DEBUG) {
-                        System.out.println("restoring " + fields[1] + " with value " + value);
-                    }
-                } else {
-                    if (DEBUG) {
-                        System.out.print("restoring " + fields[1] + " with values ");
-                    }
-                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                    if (fields[1].equals("branchRates.categories.rootNodeNumber")) {
+                        // System.out.println("eek");
+                        double value = Double.parseDouble(fields[3]);
+                        parameter.setParameterValue(0, value);
                         if (DEBUG) {
-                            System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                            System.out.println("restoring " + fields[1] + " with value " + value);
+                        }
+                    } else {
+                        if (DEBUG) {
+                            System.out.print("restoring " + fields[1] + " with values ");
+                        }
+                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                            parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                            if (DEBUG) {
+                                System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                            }
+                        }
+                        if (DEBUG) {
+                            System.out.println();
                         }
                     }
-                    if (DEBUG) {
-                        System.out.println();
-                    }
                 }
-
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {

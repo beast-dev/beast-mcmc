@@ -358,7 +358,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         final double[] position = leapFrogEngine.getInitialPosition();
         final WrappedVector momentum = mask(preconditioning.drawInitialMomentum(), mask);
-        leapFrogEngine.projectMomentum(momentum); //if momentum restricted to subspace
+        leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 
         final double prop = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -530,7 +530,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 
         double[] getLastPosition();
 
-        void projectMomentum(WrappedVector momentum);
+        void projectMomentum(double[] momentum, double[] position);
 
         class Default implements LeapFrogEngine {
 
@@ -573,7 +573,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             }
 
             @Override
-            public void projectMomentum(WrappedVector momentum) {
+            public void projectMomentum(double[] momentum, double[] position) {
                 // do nothing
             }
 

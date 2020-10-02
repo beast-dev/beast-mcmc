@@ -96,7 +96,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     private boolean shouldUpdatePreconditioning() {
         return ((runtimeOptions.preconditioningUpdateFrequency > 0)
                 && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                    && (getCount() > runtimeOptions.preconditioningDelay))));
+                && (getCount() > runtimeOptions.preconditioningDelay))));
     }
 
     private static double[] buildMask(Parameter maskParameter) {
@@ -328,7 +328,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    static class NumericInstabilityException extends Exception { }
+    static class NumericInstabilityException extends Exception {
+    }
 
     private int getNumberOfSteps() {
         int count = runtimeOptions.nSteps;
@@ -438,7 +439,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return true; }
+            boolean checkPositionTransform() {
+                return true;
+            }
         },
 
         DEBUG {
@@ -467,7 +470,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return true; }
+            boolean checkPositionTransform() {
+                return true;
+            }
         },
 
         IGNORE {
@@ -487,12 +492,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return false; }
+            boolean checkPositionTransform() {
+                return false;
+            }
         };
 
         abstract void checkValue(double x) throws NumericInstabilityException;
-//        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+
+        //        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
         abstract void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException;
+
         abstract boolean checkPositionTransform();
     }
 

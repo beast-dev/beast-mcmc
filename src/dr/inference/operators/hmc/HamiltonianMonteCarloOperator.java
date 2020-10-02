@@ -668,22 +668,26 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    protected void doLeap(final double[] position,
-                          final WrappedVector momentum,
-                          final double stepSize) throws NumericInstabilityException {
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize);
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-    }
-
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+                                                 WrappedVector gradient, int direction, double time) {
+
         try {
-            doLeap(position.getBuffer(), momentum, direction * time);
+            leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
+                    mask(gradient.getBuffer(), mask), time * direction / 2);
+            leapFrogEngine.updatePosition(position.getBuffer(), momentum, time * direction);
+            updateGradient(gradient);
+            leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
+                    mask(gradient.getBuffer(), mask), time * direction / 2);
         } catch (NumericInstabilityException e) {
             handleInstability();
+        }
+    }
+
+    public void updateGradient(WrappedVector gradient) {
+        double[] buffer = gradientProvider.getGradientLogDensity();
+        for (int i = 0; i < buffer.length; i++) {
+            gradient.set(i, buffer[i]);
         }
     }
 

@@ -29,7 +29,8 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
     @Override
     public void updateMomentum(double[] position, double[] momentum, double[] gradient,
                                double functionalStepSize) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
-
+        super.updateMomentum(position, momentum, gradient, functionalStepSize);
+        projectMomentum(momentum, position);
 
     }
 

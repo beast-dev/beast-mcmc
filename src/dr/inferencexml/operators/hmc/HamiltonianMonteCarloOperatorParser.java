@@ -34,7 +34,6 @@ import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.MassPreconditioner;
-import dr.inference.operators.hmc.OldNoUTurnOperator;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -50,9 +49,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String HMC_OPERATOR = "hamiltonianMonteCarloOperator";
     private final static String N_STEPS = "nSteps";
     private final static String STEP_SIZE = "stepSize";
-    private final static String MODE = "mode";
-    private final static String NUTS = "nuts";
-    private final static String VANILLA = "vanilla";
     private final static String RANDOM_STEP_FRACTION = "randomStepCountFraction";
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
@@ -70,14 +66,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         return HMC_OPERATOR;
     }
 
-    private int parseRunMode(XMLObject xo) throws XMLParseException {
-        int mode = 0;
-        if (xo.getAttribute(MODE, VANILLA).toLowerCase().compareTo(NUTS) == 0) {
-            mode = 1;
-        }
-        return mode;
-    }
-
     private MassPreconditioner.Type parsePreconditioning(XMLObject xo) throws XMLParseException {
 
         return MassPreconditioner.Type.parseFromString(
@@ -91,7 +79,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         int nSteps = xo.getAttribute(N_STEPS, 10);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
-        int runMode = parseRunMode(xo);
 
         MassPreconditioner.Type preconditioningType = parsePreconditioning(xo);
 
@@ -161,24 +148,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 targetAcceptanceProbability
         );
 
-        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, runMode, reversibleHMCprovider);
+        return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
+                parameter, transform, mask,
+                runtimeOptions, preconditioningType);
     }
 
-    protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
-                                                    Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
-                                                    int runMode, ReversibleHMCProvider reversibleHMCprovider) {
-        if (runMode == 0) {
-            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
-                    parameter, transform, mask,
-                    runtimeOptions, preconditioningType);
-        } else {
-            return new OldNoUTurnOperator(adaptationMode, weight, derivative,
-                    parameter,transform, mask,
-                    runtimeOptions, preconditioningType, reversibleHMCprovider);
-        }
-
-    }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -191,7 +165,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
-            AttributeRule.newStringRule(MODE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE_PROBABILITY, true),
             new ElementRule(Parameter.class, true),

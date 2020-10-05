@@ -79,9 +79,6 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         EigenDecomposition eigDecomposition2 = eigSystem2.decomposeMatrix(VtV);
         eigSystem2.computeExponential(eigDecomposition2, functionalStepSize, expBuffer2);
 
-        System.out.println("B");
-
-
         DenseMatrix64F X = new DenseMatrix64F(nCols * 2, nCols * 2);
         DenseMatrix64F Y = new DenseMatrix64F(nCols * 2, nCols * 2);
 
@@ -89,7 +86,12 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         Y.setData(expBuffer2);
 
         DenseMatrix64F Z = new DenseMatrix64F(nCols * 2, nCols * 2);
+
+        System.out.println("A"); //This gets printed
+
         CommonOps.mult(Y, X, Z);
+
+        System.out.println("B"); //This does not get printed
 
         DenseMatrix64F PM = new DenseMatrix64F(nRows, nCols * 2);
         for (int i = 0; i < nRows; i++) {
@@ -110,7 +112,6 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         }
 
         System.arraycopy(newPosition.data, 0, position, 0, position.length);
-        System.out.println("A");
 
 
     }

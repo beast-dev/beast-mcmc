@@ -77,7 +77,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this.mask = buildMask(maskParameter);
         this.transform = transform;
 
-        this.leapFrogEngine = constructLeapFrogEngine(transform);
+        System.err.println("Remove below:");
+        this.leapFrogEngine = new GeodesicLeapFrogEngine(parameter, getDefaultInstabilityHandler(), preconditioning, mask);
+//        this.leapFrogEngine = constructLeapFrogEngine(transform);
     }
 
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {

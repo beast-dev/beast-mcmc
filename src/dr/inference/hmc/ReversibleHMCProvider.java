@@ -9,7 +9,7 @@ import dr.util.Transform;
 
 public interface ReversibleHMCProvider {
 
-    void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time);
+    void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction, double time);
 
     double[] getInitialPosition();
 

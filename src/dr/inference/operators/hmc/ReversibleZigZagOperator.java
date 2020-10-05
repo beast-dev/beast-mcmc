@@ -522,7 +522,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient,
                                                  int direction, double time) {
 
         preconditioning.totalTravelTime = time;

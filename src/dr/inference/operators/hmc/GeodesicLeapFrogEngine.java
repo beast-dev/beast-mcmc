@@ -28,11 +28,11 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         this.matrixParameter = (MatrixParameterInterface) parameter;
         this.nRows = matrixParameter.getRowDimension();
         this.nCols = matrixParameter.getColumnDimension();
-        this.positionMatrix = new DenseMatrix64F(nRows, nCols);
+        this.positionMatrix = new DenseMatrix64F(nCols, nRows);
         this.innerProduct = new DenseMatrix64F(nCols, nCols);
         this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
-        this.projection = new DenseMatrix64F(nRows, nCols);
-        this.momentumMatrix = new DenseMatrix64F(nRows, nCols);
+        this.projection = new DenseMatrix64F(nCols, nRows);
+        this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
     }
 
     @Override
@@ -49,8 +49,8 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
 
         positionMatrix.setData(position);
         System.arraycopy(momentum.getBuffer(), momentum.getOffset(), momentumMatrix.data, 0, momentum.getDim());
-        CommonOps.multTransA(positionMatrix, momentumMatrix, innerProduct);
-        CommonOps.multTransA(momentumMatrix, momentumMatrix, innerProduct2);
+        CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
+        CommonOps.multTransB(momentumMatrix, momentumMatrix, innerProduct2);
 
         double[][] XtV = new double[nCols][nCols];
         double[][] VtV = new double[2 * nCols][2 * nCols];
@@ -58,10 +58,10 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         for (int i = 0; i < nCols; i++) {
             VtV[i + nCols][i] = 1;
             for (int j = 0; j < nCols; j++) {
-                XtV[i][j] = innerProduct.get(i, j);
-                VtV[i][j] = innerProduct.get(i, j);
-                VtV[i + nCols][j + nCols] = innerProduct.get(i, j);
-                VtV[i][j + nCols] = innerProduct2.get(i, j);
+                XtV[i][j] = innerProduct.get(j, i);
+                VtV[i][j] = innerProduct.get(j, i);
+                VtV[i + nCols][j + nCols] = innerProduct.get(j, i);
+                VtV[i][j + nCols] = innerProduct2.get(j, i);
             }
         }
 
@@ -94,25 +94,26 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
 
         CommonOps.mult(Y, X, Z);
 
-        DenseMatrix64F PM = new DenseMatrix64F(nRows, nCols * 2);
+        DenseMatrix64F PM = new DenseMatrix64F(nCols * 2, nRows);
         for (int i = 0; i < nRows; i++) {
             for (int j = 0; j < nCols; j++) {
-                PM.set(i, j, positionMatrix.get(i, j));
-                PM.set(i, j + nCols, momentumMatrix.get(i, j));
+                PM.set(j, i, positionMatrix.get(j, i));
+                PM.set(j + nCols, i, momentumMatrix.get(j, i));
             }
         }
 
-        DenseMatrix64F W = new DenseMatrix64F(nRows, 2 * nCols);
-        CommonOps.mult(PM, Z, W);
+        DenseMatrix64F W = new DenseMatrix64F(2 * nCols, nRows);
+        CommonOps.mult(Z, PM, W);
 
-        DenseMatrix64F newPosition = new DenseMatrix64F(nRows, nCols);
         for (int i = 0; i < nRows; i++) {
             for (int j = 0; j < nCols; j++) {
-                newPosition.set(i, j, W.get(i, j));
+                positionMatrix.set(j, i, W.get(j, i));
             }
         }
 
-        System.arraycopy(newPosition.data, 0, position, 0, position.length);
+        System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
+        CommonOps.multTransB(positionMatrix, positionMatrix, innerProduct);
+        System.out.println(innerProduct);
 
 
     }
@@ -122,10 +123,10 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         positionMatrix.setData(position);
         momentumMatrix.setData(momentum);
 
-        CommonOps.multTransA(positionMatrix, momentumMatrix, innerProduct);
+        CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
         EJMLUtils.addWithTransposed(innerProduct);
 
-        CommonOps.mult(0.5, positionMatrix, innerProduct, projection);
+        CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
         CommonOps.subtractEquals(momentumMatrix, projection);
     }
 }

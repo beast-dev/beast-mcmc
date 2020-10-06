@@ -7,6 +7,7 @@ import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.EJMLUtils;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
 import org.ejml.ops.CommonOps;
 
 
@@ -58,9 +59,9 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         for (int i = 0; i < nCols; i++) {
             VtV[i + nCols][i] = 1;
             for (int j = 0; j < nCols; j++) {
-                XtV[i][j] = innerProduct.get(j, i);
-                VtV[i][j] = innerProduct.get(j, i);
-                VtV[i + nCols][j + nCols] = innerProduct.get(j, i);
+                XtV[i][j] = innerProduct.get(i, j);
+                VtV[i][j] = innerProduct.get(i, j);
+                VtV[i + nCols][j + nCols] = innerProduct.get(i, j);
                 VtV[i][j + nCols] = innerProduct2.get(j, i);
             }
         }

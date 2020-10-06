@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Bounds;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -47,6 +48,9 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
     private Parameter parameter;
     private double[] cachedIncrements;
+
+    private double [] uppers;
+    private double [] lowers;
 
     public AutoCorrelatedGradientWrtIncrements(AutoCorrelatedBranchRatesDistribution distribution) {
         this.distribution = distribution;
@@ -125,8 +129,17 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
             @Override
             public void setParameterValue(int dim, double value) {
-                throw new RuntimeException("Do not set single value at a time");
+                if (cachedIncrements == null) {
+                    cachedIncrements = new double[getDimension()];
+                }
+                cachedIncrements[dim] = value;
+                fireParameterChangedEvent();
             }
+
+//            @Override
+//            public void setParameterValue(int dim, double value) {
+//                throw new RuntimeException("Do not set single value at a time");
+//            }
 
             @Override
             public void setParameterValueQuietly(int dim, double value) {
@@ -162,6 +175,18 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
                     sb.append(", ").append(getParameterValue(i));
                 }
                 return sb.toString();
+            }
+
+            @Override
+            public Bounds<Double> getBounds() {
+                uppers = new double[dim];
+                lowers = new double[dim];
+                for(int i=0; i<dim; i++){
+                    uppers[i] = Double.POSITIVE_INFINITY;
+                    lowers[i] = Double.NEGATIVE_INFINITY;
+                }
+                DefaultBounds bounds = new DefaultBounds(uppers, lowers);
+                return bounds;
             }
         };
     }

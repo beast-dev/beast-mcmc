@@ -129,18 +129,10 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
             @Override
             public void setParameterValue(int dim, double value) {
-                if (cachedIncrements == null) {
-                    cachedIncrements = new double[getDimension()];
-                }
-                cachedIncrements[dim] = value;
-                fireParameterChangedEvent();
+                setParameterValueQuietly(dim, value);
+                fireParameterChangedEvent(dim, ChangeType.VALUE_CHANGED);
             }
-
-//            @Override
-//            public void setParameterValue(int dim, double value) {
-//                throw new RuntimeException("Do not set single value at a time");
-//            }
-
+            
             @Override
             public void setParameterValueQuietly(int dim, double value) {
                 if (cachedIncrements == null) {

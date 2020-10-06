@@ -132,7 +132,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
                 setParameterValueQuietly(dim, value);
                 fireParameterChangedEvent(dim, ChangeType.VALUE_CHANGED);
             }
-            
+
             @Override
             public void setParameterValueQuietly(int dim, double value) {
                 if (cachedIncrements == null) {
@@ -171,15 +171,19 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
 
             @Override
             public Bounds<Double> getBounds() {
-                uppers = new double[dim];
-                lowers = new double[dim];
-                for(int i=0; i<dim; i++){
-                    uppers[i] = Double.POSITIVE_INFINITY;
-                    lowers[i] = Double.NEGATIVE_INFINITY;
+                if (bounds == null) {
+                    uppers = new double[dim];
+                    lowers = new double[dim];
+                    for (int i = 0; i < dim; i++) {
+                        uppers[i] = Double.POSITIVE_INFINITY;
+                        lowers[i] = Double.NEGATIVE_INFINITY;
+                    }
+                    bounds = new DefaultBounds(uppers, lowers);
                 }
-                DefaultBounds bounds = new DefaultBounds(uppers, lowers);
                 return bounds;
             }
+
+            private Bounds<Double> bounds;
         };
     }
 

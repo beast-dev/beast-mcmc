@@ -123,27 +123,30 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
         return new Parameter.Proxy("increments", distribution.getDimension()) {
 
             @Override
-            public double getParameterValue(int dim) {
-                return distribution.getIncrement(dim);
+            public double getParameterValue(int index) {
+                return distribution.getIncrement(index);
             }
 
             @Override
-            public void setParameterValue(int dim, double value) {
-                setParameterValueQuietly(dim, value);
+            public void setParameterValue(int index, double value) {
+                for (int i = 0; i < dim; ++i) {
+                    setParameterValueQuietly(i, i == index ? value : distribution.getIncrement(index) );
+                }
+
                 fireParameterChangedEvent(dim, ChangeType.VALUE_CHANGED);
             }
 
             @Override
-            public void setParameterValueQuietly(int dim, double value) {
+            public void setParameterValueQuietly(int index, double value) {
                 if (cachedIncrements == null) {
                     cachedIncrements = new double[getDimension()];
                 }
 
-                cachedIncrements[dim] = value;
+                cachedIncrements[index] = value;
             }
 
             @Override
-            public void setParameterValueNotifyChangedAll(int dim, double value) {
+            public void setParameterValueNotifyChangedAll(int index, double value) {
                 throw new RuntimeException("Do not set single value at a time");
             }
 

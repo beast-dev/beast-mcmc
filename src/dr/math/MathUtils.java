@@ -485,4 +485,15 @@ public class MathUtils {
 
 		return true;
 	}
+
+	public static double maximum(double[] array) {
+		double max = array[0];
+		for (double x : array) {
+			if (x > max) {
+				max = x;
+			}
+		}
+
+		return max;
+	}
 }

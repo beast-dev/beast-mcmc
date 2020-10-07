@@ -62,7 +62,7 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
             for (int j = 0; j < nCols; j++) {
                 VtV[i][j] = innerProduct.get(i, j);
                 VtV[i + nCols][j + nCols] = innerProduct.get(i, j);
-                VtV[i][j + nCols] = innerProduct2.get(j, i);
+                VtV[i][j + nCols] = -innerProduct2.get(j, i);
             }
         }
 
@@ -73,10 +73,9 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
 
         double[] expBuffer2 = new double[nCols * nCols * 4];
         SkewSymmetricMatrixExponential matExp2 = new SkewSymmetricMatrixExponential(nCols * 2); //TODO: better matrix exponential
-        matExp2.exponentiate(new DenseMatrix64F(VtV).data, expBuffer2);
-//        ComplexColtEigenSystem eigSystem2 = new ComplexColtEigenSystem(nCols * 2);
-//        EigenDecomposition eigDecomposition2 = eigSystem2.decomposeMatrix(VtV);
-//        eigSystem2.computeExponential(eigDecomposition2, 1.0, expBuffer2);
+        DenseMatrix64F VtVmat = new DenseMatrix64F(VtV);
+        CommonOps.scale(functionalStepSize, VtVmat);
+        matExp2.exponentiate(VtVmat.data, expBuffer2);
 
         DenseMatrix64F X = new DenseMatrix64F(nCols * 2, nCols * 2);
         DenseMatrix64F Y = new DenseMatrix64F(nCols * 2, nCols * 2);
@@ -102,17 +101,18 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         }
 
         DenseMatrix64F W = new DenseMatrix64F(2 * nCols, nRows);
+        CommonOps.transpose(Z);
         CommonOps.mult(Z, PM, W);
 
         for (int i = 0; i < nRows; i++) {
             for (int j = 0; j < nCols; j++) {
                 positionMatrix.set(j, i, W.get(j, i));
+                momentumMatrix.set(j, i, W.get(j + nCols, i));
             }
         }
 
         System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
-        CommonOps.multTransB(positionMatrix, positionMatrix, innerProduct);
-        System.out.println(innerProduct);
+        System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
 
 
     }

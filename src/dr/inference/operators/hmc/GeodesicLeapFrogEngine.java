@@ -4,7 +4,9 @@ import dr.evomodel.substmodel.ComplexColtEigenSystem;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.EJMLUtils;
+import dr.math.matrixAlgebra.SkewSymmetricMatrixExponential;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
@@ -53,13 +55,11 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
         CommonOps.multTransB(momentumMatrix, momentumMatrix, innerProduct2);
 
-        double[][] XtV = new double[nCols][nCols];
         double[][] VtV = new double[2 * nCols][2 * nCols];
 
         for (int i = 0; i < nCols; i++) {
             VtV[i + nCols][i] = 1;
             for (int j = 0; j < nCols; j++) {
-                XtV[i][j] = innerProduct.get(i, j);
                 VtV[i][j] = innerProduct.get(i, j);
                 VtV[i + nCols][j + nCols] = innerProduct.get(i, j);
                 VtV[i][j + nCols] = innerProduct2.get(j, i);
@@ -67,18 +67,16 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         }
 
         double[] expBuffer = new double[nCols * nCols];
-
-
-        ComplexColtEigenSystem eigSystem = new ComplexColtEigenSystem(nCols);
-        EigenDecomposition eigDecomposition = eigSystem.decomposeMatrix(XtV);
-        eigSystem.computeExponential(eigDecomposition, functionalStepSize, expBuffer);
-
+        CommonOps.scale(-functionalStepSize, innerProduct);
+        SkewSymmetricMatrixExponential matExp1 = new SkewSymmetricMatrixExponential(nCols);
+        matExp1.exponentiate(innerProduct.data, expBuffer);
 
         double[] expBuffer2 = new double[nCols * nCols * 4];
-
-        ComplexColtEigenSystem eigSystem2 = new ComplexColtEigenSystem(nCols * 2);
-        EigenDecomposition eigDecomposition2 = eigSystem2.decomposeMatrix(VtV);
-        eigSystem2.computeExponential(eigDecomposition2, functionalStepSize, expBuffer2);
+        SkewSymmetricMatrixExponential matExp2 = new SkewSymmetricMatrixExponential(nCols * 2); //TODO: better matrix exponential
+        matExp2.exponentiate(new DenseMatrix64F(VtV).data, expBuffer2);
+//        ComplexColtEigenSystem eigSystem2 = new ComplexColtEigenSystem(nCols * 2);
+//        EigenDecomposition eigDecomposition2 = eigSystem2.decomposeMatrix(VtV);
+//        eigSystem2.computeExponential(eigDecomposition2, 1.0, expBuffer2);
 
         DenseMatrix64F X = new DenseMatrix64F(nCols * 2, nCols * 2);
         DenseMatrix64F Y = new DenseMatrix64F(nCols * 2, nCols * 2);

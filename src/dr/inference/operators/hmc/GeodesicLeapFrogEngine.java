@@ -114,6 +114,9 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
         System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
         System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
 
+        matrixParameter.setAllParameterValuesQuietly(position, 0);
+        matrixParameter.fireParameterChangedEvent();
+
 
     }
 

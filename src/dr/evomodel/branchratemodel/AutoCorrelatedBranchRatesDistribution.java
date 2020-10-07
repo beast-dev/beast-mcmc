@@ -73,11 +73,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double[] increments;
     private double[] savedIncrements;
 
+    private boolean operateOnIncrements;
+
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  DifferentiableBranchRates  branchRateModel,
                                                  ParametricMultivariateDistributionModel distribution,
                                                  BranchVarianceScaling scaling,
-                                                 boolean takeLogBeforeIncrement) {
+                                                 boolean takeLogBeforeIncrement, boolean operateOnIncrements) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.distribution = distribution;
@@ -97,6 +99,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
         this.dim = branchRateModel.getRateParameter().getDimension();
         this.increments = new double[dim];
         this.savedIncrements = new double[dim];
+        this.operateOnIncrements = operateOnIncrements;
 
         if (dim != distribution.getMean().length) {
             throw new RuntimeException("Dimension mismatch in AutoCorrelatedRatesDistribution. " +
@@ -270,8 +273,13 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
     private double calculateLogLikelihood() {
         checkIncrements();
-        return logJacobian +
-                distribution.logPdf(increments);
+        if(operateOnIncrements){
+            return distribution.logPdf(increments);
+        }
+        else {
+            return logJacobian +
+                    distribution.logPdf(increments);
+        }
     }
 
     private double recursePreOrder(NodeRef node, double parentRateAsIncrement) {

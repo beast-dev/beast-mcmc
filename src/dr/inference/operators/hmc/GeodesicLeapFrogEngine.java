@@ -2,14 +2,17 @@ package dr.inference.operators.hmc;
 
 import dr.evomodel.substmodel.ComplexColtEigenSystem;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.EigenSystem;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.EJMLUtils;
 import dr.math.matrixAlgebra.SkewSymmetricMatrixExponential;
 import dr.math.matrixAlgebra.WrappedVector;
+import org.ejml.alg.dense.decomposition.TriangularSolver;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
 
 
@@ -110,6 +113,14 @@ public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFr
                 momentumMatrix.set(j, i, W.get(j + nCols, i));
             }
         }
+
+        //TODO: only run chunk below occasionally
+        CommonOps.multTransB(positionMatrix, positionMatrix, innerProduct);
+        CholeskyDecomposition cholesky = DecompositionFactory.chol(nCols, true);
+        cholesky.decompose(innerProduct);
+        TriangularSolver.invertLower(innerProduct.data, nCols);
+        CommonOps.mult(innerProduct, positionMatrix, projection);
+        System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
 
         System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
         System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());

@@ -148,9 +148,19 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 targetAcceptanceProbability
         );
 
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, reversibleHMCprovider);
+
+    }
+
+    protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
+                                                    Parameter parameter, Transform transform, Parameter mask,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    ReversibleHMCProvider reversibleHMCprovider) {
+
         return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
                 runtimeOptions, preconditioningType);
+
     }
 
 
@@ -170,7 +180,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
-            new ElementRule(MASK, new XMLSyntaxRule[] {
+            new ElementRule(MASK, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
 
             }, true),

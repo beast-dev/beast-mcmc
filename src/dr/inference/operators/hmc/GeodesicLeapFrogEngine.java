@@ -1,11 +1,7 @@
 package dr.inference.operators.hmc;
 
-import dr.evomodel.substmodel.ComplexColtEigenSystem;
-import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.EigenSystem;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.math.MathUtils;
 import dr.math.matrixAlgebra.EJMLUtils;
 import dr.math.matrixAlgebra.SkewSymmetricMatrixExponential;
 import dr.math.matrixAlgebra.WrappedVector;

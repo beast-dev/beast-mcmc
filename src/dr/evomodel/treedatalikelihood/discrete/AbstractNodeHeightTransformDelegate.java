@@ -50,6 +50,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         addVariable(nodeHeights);
         treeModel.addModel(this);
         treeModel.addModelRestoreListener(this);
+        treeModel.addModelListener(this);
     }
 
     public void setNodeHeights(double[] nodeHeights) {

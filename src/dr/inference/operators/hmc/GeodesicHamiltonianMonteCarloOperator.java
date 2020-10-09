@@ -1,27 +1,85 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
+import dr.inferencexml.operators.hmc.GeodesicHamiltonianMonteCarloOperatorParser;
 import dr.math.matrixAlgebra.EJMLUtils;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SkewSymmetricMatrixExponential;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
+import dr.xml.Reportable;
 import org.ejml.alg.dense.decomposition.TriangularSolver;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
 
-public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator {
+public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
     public GeodesicHamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider, Parameter parameter, Transform transform, Parameter maskParameter, Options runtimeOptions, MassPreconditioner.Type preconditioningType) {
         super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioningType);
         this.leapFrogEngine = new GeodesicLeapFrogEngine(parameter, getDefaultInstabilityHandler(), preconditioning, mask);
     }
 
-    public class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
+    @Override
+    public String getOperatorName() {
+        return "GeodesicHMC(" + parameter.getParameterName() + ")";
+    }
+
+    @Override
+    public String getReport() {
+
+        MatrixParameterInterface matParam = (MatrixParameterInterface) parameter;
+        int k = matParam.getColumnDimension();
+        int p = matParam.getRowDimension();
+
+        StringBuilder sb = new StringBuilder("operator: " + GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME);
+        sb.append("\n");
+        sb.append("\toriginal position:\n");
+        Matrix originalPosition = new Matrix(matParam.getParameterAsMatrix());
+        sb.append(originalPosition.toString(2));
+
+        double[] momentum = new double[parameter.getDimension()];
+
+        for (int i = 0; i < momentum.length; i++) { //Need some deterministic way to assign momentum for test
+            momentum[i] = i;
+        }
+
+        Matrix originalMomentum = new Matrix(p, k);
+        for (int i = 0; i < p; i++) {
+            for (int j = 0; j < k; j++) {
+                originalMomentum.set(i, j, momentum[i + j * p]);
+            }
+        }
+        sb.append("\toriginal momentum (unprojected):\n");
+        sb.append(originalMomentum.toString(2));
+
+        WrappedVector wrappedMomentum = new WrappedVector.Raw(momentum);
+        double hastings;
+        try {
+            hastings = leapFrogGivenMomentum(wrappedMomentum);
+        } catch (NumericInstabilityException e) {
+            e.printStackTrace();
+            throw new RuntimeException("HMC failed");
+        }
+
+        Matrix finalPosition = new Matrix(matParam.getParameterAsMatrix());
+        sb.append("\n");
+        sb.append("\tfinal position:\n");
+        sb.append(finalPosition.toString(2));
+        sb.append("\n");
+        sb.append("\thastings ratio: " + hastings + "\n\n");
+
+
+        return sb.toString();
+    }
+
+
+    public static class GeodesicLeapFrogEngine extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
 
         private final MatrixParameterInterface matrixParameter;
         private final DenseMatrix64F positionMatrix;

@@ -18,7 +18,7 @@ import dr.xml.XMLSyntaxRule;
  */
 
 public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
-    private final static String OPERATOR_NAME = "geodesicHamiltonianMonteCarloOperator";
+    public final static String OPERATOR_NAME = "geodesicHamiltonianMonteCarloOperator";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

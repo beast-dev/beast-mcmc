@@ -361,7 +361,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return leapFrogGivenMomentum(momentum);
     }
 
-    private double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+    protected double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
         final double[] position = leapFrogEngine.getInitialPosition();
         leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 

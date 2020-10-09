@@ -357,8 +357,12 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             System.err.println("HMC step size: " + stepSize);
         }
 
-        final double[] position = leapFrogEngine.getInitialPosition();
         final WrappedVector momentum = mask(preconditioning.drawInitialMomentum(), mask);
+        return leapFrogGivenMomentum(momentum);
+    }
+
+    private double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+        final double[] position = leapFrogEngine.getInitialPosition();
         leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 
         final double prop = getKineticEnergy(momentum) +

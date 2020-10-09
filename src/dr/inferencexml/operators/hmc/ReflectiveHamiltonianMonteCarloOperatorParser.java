@@ -54,10 +54,12 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
         return super.parseXMLObject(xo);
     }
 
+    @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
                                                     HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
-                                                    int runMode, ReversibleHMCProvider reversibleHMCprovider) {
+                                                    ReversibleHMCProvider reversibleHMCprovider) {
+
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
                 runtimeOptions, preconditioningType, graphicalParameterBound);

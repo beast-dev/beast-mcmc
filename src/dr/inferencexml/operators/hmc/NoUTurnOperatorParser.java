@@ -51,8 +51,7 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        ReversibleHMCProvider reversibleHMCprovider;
-        reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
+        ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
         boolean adaptiveStepsize = xo.getAttribute(ADAPTIVE_STEPSIZE_FLG, true);
         return new NoUTurnOperator(reversibleHMCprovider, adaptiveStepsize, weight);
     }

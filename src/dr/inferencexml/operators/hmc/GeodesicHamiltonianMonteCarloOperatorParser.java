@@ -1,6 +1,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.GeodesicHamiltonianMonteCarloOperator;
@@ -24,10 +25,11 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
         return super.parseXMLObject(xo);
     }
 
+    @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
                                                     HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
-                                                    int runMode) {
+                                                    ReversibleHMCProvider reversibleHMCprovider) {
         return new GeodesicHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
                 runtimeOptions, preconditioningType);

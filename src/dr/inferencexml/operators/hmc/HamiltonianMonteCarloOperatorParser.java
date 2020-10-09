@@ -65,7 +65,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String INSTABILITY_HANDLER = "instabilityHandler";
     private final static String MASK = "mask";
 
-    private MassPreconditioner shrinkagePreconditioner;
+    private MassPreconditioner preconditioner;
 
     @Override
     public String getParserName() {
@@ -148,22 +148,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         String instabilityHandlerCase = xo.getAttribute(INSTABILITY_HANDLER, "reject");
         HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
 
-        if (xo.hasChildNamed(PRECONDITIONER)) {
-            if (preconditioningType != MassPreconditioner.Type.NONE) {
-                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
-            }
-            XMLObject cxo = xo.getChild(PRECONDITIONER);
-
-            if (cxo.hasChildNamed(SHRINKAGE_PRECONDITIONER)) {
-                XMLObject ccxo = cxo.getChild(SHRINKAGE_PRECONDITIONER);
-                JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) ccxo.getChild(JointBayesianBridgeDistributionModel.class);
-                preconditioningUpdateFrequency = 1;
-                shrinkagePreconditioner = new MassPreconditioner.ShrinkagePreconditioner(bridge, transform);
-            } else {
-                throw new XMLParseException("Unknown preconditioner specified");
-            }
-        }
-
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
                 preconditioningUpdateFrequency, preconditioningDelay, preconditioningMemory,
@@ -174,23 +158,42 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         );
 
         if (xo.hasChildNamed(PRECONDITIONER)) {
+            if (preconditioningType != MassPreconditioner.Type.NONE) {
+                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
+            }
+            XMLObject cxo = xo.getChild(PRECONDITIONER);
+
+            if (cxo.hasChildNamed(SHRINKAGE_PRECONDITIONER)) {
+                XMLObject ccxo = cxo.getChild(SHRINKAGE_PRECONDITIONER);
+                JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) ccxo.getChild(JointBayesianBridgeDistributionModel.class);
+                preconditioningUpdateFrequency = 1;
+                preconditioner = new MassPreconditioner.ShrinkagePreconditioner(bridge, transform);
+            } else {
+                throw new XMLParseException("Unknown preconditioner specified");
+            }
+        } else {
+            preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
+        }
+
+
+        if (xo.hasChildNamed(PRECONDITIONER)) {
             return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                     parameter, transform, mask,
-                    runtimeOptions, shrinkagePreconditioner);
+                    runtimeOptions, preconditioner);
         } else {
-            return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, reversibleHMCprovider);
+            return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, reversibleHMCprovider);
         }
 
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner,
                                                     ReversibleHMCProvider reversibleHMCprovider) {
 
         return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioningType);
+                runtimeOptions, preconditioner);
 
     }
 

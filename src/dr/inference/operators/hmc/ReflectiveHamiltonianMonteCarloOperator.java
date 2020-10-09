@@ -53,10 +53,10 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                                                    Transform transform,
                                                    Parameter maskParameter,
                                                    Options runtimeOptions,
-                                                   MassPreconditioner.Type preconditioningType,
+                                                   MassPreconditioner preconditioner,
                                                    GraphicalParameterBound graphicalParameterBound) {
 
-        super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioningType);
+        super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner);
 
         this.treeParameterBound = graphicalParameterBound;
         this.leapFrogEngine = constructLeapFrogEngine(transform);

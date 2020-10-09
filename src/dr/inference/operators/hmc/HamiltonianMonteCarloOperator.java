@@ -59,26 +59,26 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     protected final double[] mask;
     protected final Transform transform;
 
-    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
-                                         GradientWrtParameterProvider gradientProvider,
-                                         Parameter parameter, Transform transform, Parameter maskParameter,
-                                         Options runtimeOptions,
-                                         MassPreconditioner.Type preconditioningType) {
-
-        super(mode, runtimeOptions.targetAcceptanceProbability);
-
-        setWeight(weight);
-
-        this.gradientProvider = gradientProvider;
-        this.runtimeOptions = runtimeOptions;
-        this.stepSize = runtimeOptions.initialStepSize;
-        this.preconditioning = preconditioningType.factory(gradientProvider, transform, runtimeOptions);
-        this.parameter = parameter;
-        this.mask = buildMask(maskParameter);
-        this.transform = transform;
-
-        this.leapFrogEngine = constructLeapFrogEngine(transform);
-    }
+//    public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+//                                         GradientWrtParameterProvider gradientProvider,
+//                                         Parameter parameter, Transform transform, Parameter maskParameter,
+//                                         Options runtimeOptions,
+//                                         MassPreconditioner.Type preconditioningType) {
+//
+//        super(mode, runtimeOptions.targetAcceptanceProbability);
+//
+//        setWeight(weight);
+//
+//        this.gradientProvider = gradientProvider;
+//        this.runtimeOptions = runtimeOptions;
+//        this.stepSize = runtimeOptions.initialStepSize;
+//        this.preconditioning = preconditioningType.factory(gradientProvider, transform, runtimeOptions);
+//        this.parameter = parameter;
+//        this.mask = buildMask(maskParameter);
+//        this.transform = transform;
+//
+//        this.leapFrogEngine = constructLeapFrogEngine(transform);
+//    }
 
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,

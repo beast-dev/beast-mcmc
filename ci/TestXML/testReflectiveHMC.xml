@@ -992,16 +992,26 @@
 	<operators id="operators" optimizationSchedule="log">
 
 
-		<reflectiveHamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="1E-4" mode="reflective"
-                                       drawVariance="1.0" autoOptimize="false"
-                                       gradientCheckCount="0">
-<!--                                        preconditioning="diagonal" preconditioningDelay="0" preconditioningUpdateFrequency="10"> -->
+        <reflectiveHamiltonianMonteCarloOperator id="reflectiveHMC" weight="1" nSteps="10" stepSize="1E-4"
+                                                 mode="reflective"
+                                                 drawVariance="1.0" autoOptimize="false"
+                                                 gradientCheckCount="0">
+            <!--                                        preconditioning="diagonal" preconditioningDelay="0" preconditioningUpdateFrequency="10"> -->
             <jointGradient idref="jointNodeHeightGradient"/>
             <nodeHeightProxyParameter idref="nodeHeightProxyParameter"/>
             <graphicalParameterBounds idref="nodeHeightBounds"/>
         </reflectiveHamiltonianMonteCarloOperator>
 
-	</operators>
+    </operators>
+
+    <assertEqual verbose="true">
+        <actual regex="operator type:\s*(.*)\n">
+            <reflectiveHamiltonianMonteCarloOperator idref="reflectiveHMC"/>
+        </actual>
+        <expected>
+            reflectiveHamiltonianMonteCarloOperator
+        </expected>
+    </assertEqual>
 
 	<!-- Define MCMC                                                             -->
 	<mcmc id="mcmc" chainLength="100" autoOptimize="false" fullEvaluation="0" autoOptimizeDelay="0">

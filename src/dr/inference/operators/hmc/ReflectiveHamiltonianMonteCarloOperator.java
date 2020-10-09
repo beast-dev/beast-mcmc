@@ -30,16 +30,18 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
+import dr.inferencexml.operators.hmc.ReflectiveHamiltonianMonteCarloOperatorParser;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
+import dr.xml.Reportable;
 
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator {
+public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
     private final GraphicalParameterBound treeParameterBound;
 
@@ -64,6 +66,17 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
         return new WithGraphBounds(parameter, getDefaultInstabilityHandler(), preconditioning, mask, treeParameterBound);
     }
+
+    @Override
+    public String getReport() {
+        return "operator type: " + ReflectiveHamiltonianMonteCarloOperatorParser.OPERATOR_NAME + "\n\n";
+    }
+
+    @Override
+    public String getOperatorName() {
+        return "ReflectiveHMC(" + parameter.getParameterName() + ")";
+    }
+
 
     class WithGraphBounds extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
 

@@ -43,9 +43,9 @@ import dr.xml.XMLSyntaxRule;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser{
+public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
 
-    private final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
+    public final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
     private GraphicalParameterBound graphicalParameterBound;
 
     @Override

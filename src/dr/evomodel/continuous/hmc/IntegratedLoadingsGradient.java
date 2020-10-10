@@ -503,12 +503,28 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
             // TODO Check dimensions, parameters, etc.
 
-            return new IntegratedLoadingsGradient(
+            return factory(
                     treeDataLikelihood,
                     continuousDataLikelihoodDelegate,
                     factorAnalysis,
                     taskPool,
                     threadProvider,
+                    remainderCompProvider);
+
+        }
+
+        protected IntegratedLoadingsGradient factory(TreeDataLikelihood treeDataLikelihood,
+                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                     IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                                     TaskPool taskPool,
+                                                     ThreadUseProvider threadUseProvider,
+                                                     RemainderCompProvider remainderCompProvider) {
+            return new IntegratedLoadingsGradient(
+                    treeDataLikelihood,
+                    likelihoodDelegate,
+                    factorAnalysisLikelihood,
+                    taskPool,
+                    threadUseProvider,
                     remainderCompProvider);
 
         }

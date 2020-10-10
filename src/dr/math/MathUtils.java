@@ -477,6 +477,7 @@ public class MathUtils {
         return Math.abs(x - y) < tolerance;
     }
 
+
     public static boolean isRelativelyClose(double[] x, double[] y, double relativeTolerance) {
         if (x.length != y.length) return false;
 
@@ -489,12 +490,23 @@ public class MathUtils {
         return true;
     }
 
+
     public static boolean isRelativelyClose(double x, double y, double relativeTolerance) {
         double relativeDifference = 2 * (x - y) / (x + y);
         if (Math.abs(relativeDifference) > relativeTolerance) {
             return false;
         }
-
         return true;
+    }
+
+    public static double maximum(double[] array) {
+        double max = array[0];
+        for (double x : array) {
+            if (x > max) {
+                max = x;
+            }
+        }
+
+        return max;
     }
 }

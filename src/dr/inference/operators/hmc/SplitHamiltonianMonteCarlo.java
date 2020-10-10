@@ -30,7 +30,7 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
     }
 
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction,
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
 
         double[] positionAbuffer = new double[dimA];
@@ -49,12 +49,16 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
         WrappedVector positionB = new WrappedVector.Raw(positionBbuffer);
         WrappedVector momentumA = new WrappedVector.Raw(momentumAbuffer);
         WrappedVector momentumB = new WrappedVector.Raw(momentumBbuffer);
+
+        WrappedVector gradientA = new WrappedVector.Raw(getGradientProvider().getGradientLogDensity());
+        WrappedVector gradientB = new WrappedVector.Raw(getGradientProvider().getGradientLogDensity());
+
         // WrappedVector (check offset)?
 
         //2:update them
-        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
-        inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
-        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+        outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradientB, direction, time);
+        inner.reversiblePositionMomentumUpdate(positionA, momentumA, gradientA, direction, relativeScale * time);
+        outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradientB, direction, time);
         //3:merge the position and momentum, update position and momentum
         updateMergedVector(positionA, positionB, position);
         updateMergedVector(momentumA, momentumB, momentum);
@@ -72,6 +76,7 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
 //        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
         // done
 
+        throw new RuntimeException("must correct gradient inner and outer before using this!");
 
     }
 

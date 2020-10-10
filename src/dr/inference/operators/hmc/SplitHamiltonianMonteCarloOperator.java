@@ -158,17 +158,21 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         WrappedVector momentumA = inner.drawMomentum();
         WrappedVector momentumB = outer.drawMomentum();
 
+        WrappedVector gradientA = new WrappedVector.Raw(inner.getGradientProvider().getGradientLogDensity());
+        WrappedVector gradientB = new WrappedVector.Raw(outer.getGradientProvider().getGradientLogDensity());
+
         final double prop =
                 inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB) + inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
 
         for (int i = 0; i < nSteps; i++) {
             for (int j = 0; j < nSplitOuter; j++) {
-                outer.reversiblePositionMomentumUpdate(positionB, momentumB, 1, .5 * stepSize / nSplitOuter);
+                outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradientB,1, .5 * stepSize / nSplitOuter);
             }
-            inner.reversiblePositionMomentumUpdate(positionA, momentumA, 1,
+            inner.reversiblePositionMomentumUpdate(positionA, momentumA, gradientA, 1,
                     relativeScale * stepSize);
+            updateOuterGradient(gradientB);
             for (int j = 0; j < nSplitOuter; j++) {
-                outer.reversiblePositionMomentumUpdate(positionB, momentumB, 1, .5 * stepSize / nSplitOuter);
+                outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradientB,1, .5 * stepSize / nSplitOuter);
             }
         }
 
@@ -176,6 +180,13 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
                 inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB) + inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
 
         return prop - res;
+    }
+
+    public void updateOuterGradient(WrappedVector gradient) {
+        double[] buffer = outer.getGradientProvider().getGradientLogDensity();
+        for (int i = 0; i < buffer.length; i++) {
+            gradient.set(i, buffer[i]);
+        }
     }
 
 
@@ -211,7 +222,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     }
 
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction,
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
 
         double[] positionAbuffer = new double[dimA];
@@ -233,11 +244,12 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
         //2:update them
         for (int i = 0; i < nSplitOuter; i++) {
-            outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, .5 * time / nSplitOuter);
+            outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradient, direction, .5 * time / nSplitOuter);
         }
-        inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
+        inner.reversiblePositionMomentumUpdate(positionA, momentumA, gradient, direction, relativeScale * time);
+        updateOuterGradient(gradient);
         for (int i = 0; i < nSplitOuter; i++) {
-            outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, .5 * time / nSplitOuter);
+            outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradient, direction, .5 * time / nSplitOuter);
         }
         //3:merge the position and momentum, update position and momentum
         updateMergedVector(positionA, positionB, position);
@@ -254,6 +266,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 //        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
 //        inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
 //        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
+        //throw new RuntimeException("must correct gradient inner and outer before using this!");
 
     }
 
@@ -315,7 +328,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     @Override
     public GradientWrtParameterProvider getGradientProvider() {
-        return null;
+        return outer.getGradientProvider();
     }
 
     private double[] mergeGradient() {

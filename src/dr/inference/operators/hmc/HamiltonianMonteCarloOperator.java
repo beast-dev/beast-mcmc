@@ -96,7 +96,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     private boolean shouldUpdatePreconditioning() {
         return ((runtimeOptions.preconditioningUpdateFrequency > 0)
                 && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                    && (getCount() > runtimeOptions.preconditioningDelay))));
+                && (getCount() > runtimeOptions.preconditioningDelay))));
     }
 
     private static double[] buildMask(Parameter maskParameter) {
@@ -328,7 +328,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    static class NumericInstabilityException extends Exception { }
+    static class NumericInstabilityException extends Exception {
+    }
 
     private int getNumberOfSteps() {
         int count = runtimeOptions.nSteps;
@@ -356,8 +357,13 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             System.err.println("HMC step size: " + stepSize);
         }
 
-        final double[] position = leapFrogEngine.getInitialPosition();
         final WrappedVector momentum = mask(preconditioning.drawInitialMomentum(), mask);
+        return leapFrogGivenMomentum(momentum);
+    }
+
+    protected double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+        final double[] position = leapFrogEngine.getInitialPosition();
+        leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 
         final double prop = getKineticEnergy(momentum) +
                 leapFrogEngine.getParameterLogJacobian();
@@ -437,7 +443,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return true; }
+            boolean checkPositionTransform() {
+                return true;
+            }
         },
 
         DEBUG {
@@ -466,7 +474,9 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return true; }
+            boolean checkPositionTransform() {
+                return true;
+            }
         },
 
         IGNORE {
@@ -486,12 +496,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //            }
 
             @Override
-            boolean checkPositionTransform() { return false; }
+            boolean checkPositionTransform() {
+                return false;
+            }
         };
 
         abstract void checkValue(double x) throws NumericInstabilityException;
-//        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
+
+        //        abstract void checkEqual(double x, double y, double eps) throws NumericInstabilityException;
         abstract void checkPosition(Transform transform, double[] unTransformedPosition) throws NumericInstabilityException;
+
         abstract boolean checkPositionTransform();
     }
 
@@ -528,6 +542,8 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         double[] getLastGradient();
 
         double[] getLastPosition();
+
+        void projectMomentum(double[] momentum, double[] position);
 
         class Default implements LeapFrogEngine {
 
@@ -567,6 +583,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             @Override
             public double[] getLastPosition() {
                 return lastPosition;
+            }
+
+            @Override
+            public void projectMomentum(double[] momentum, double[] position) {
+                // do nothing
             }
 
             @Override
@@ -668,22 +689,26 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    protected void doLeap(final double[] position,
-                          final WrappedVector momentum,
-                          final double stepSize) throws NumericInstabilityException {
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-        leapFrogEngine.updatePosition(position, momentum, stepSize);
-        leapFrogEngine.updateMomentum(position, momentum.getBuffer(),
-                mask(gradientProvider.getGradientLogDensity(), mask), stepSize / 2);
-    }
-
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, int direction, double time) {
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+                                                 WrappedVector gradient, int direction, double time) {
+
         try {
-            doLeap(position.getBuffer(), momentum, direction * time);
+            leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
+                    mask(gradient.getBuffer(), mask), time * direction / 2);
+            leapFrogEngine.updatePosition(position.getBuffer(), momentum, time * direction);
+            updateGradient(gradient);
+            leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
+                    mask(gradient.getBuffer(), mask), time * direction / 2);
         } catch (NumericInstabilityException e) {
             handleInstability();
+        }
+    }
+
+    public void updateGradient(WrappedVector gradient) {
+        double[] buffer = gradientProvider.getGradientLogDensity();
+        for (int i = 0; i < buffer.length; i++) {
+            gradient.set(i, buffer[i]);
         }
     }
 

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <matrixParameter id="X">
+        <parameter
+                value="-0.08032379702908181 0.19237738479250088 0.15932701607944252 -0.04940859439381497 0.5385678141060061 -0.25528637483426475 -0.15497261766370693 0.5270733313186051 0.019645664557815315 0.5208431027505155"/>
+        <parameter
+                value="-0.1029989501750626 0.6935280492106076 -0.17807128856558754 0.1276285012772287 0.11962958879721763 -0.11755749319631781 -0.41959205166997526 -0.014803167895001218 -0.1170855862851587 -0.4922346820661918"/>
+        <parameter
+                value="0.09220023508012402 0.2746548252337606 0.003397311846830453 -0.1410740952584737 -0.4213478680773495 0.2842652650120244 -0.4947457553985013 -0.2460812292976453 0.06759287927564045 0.5726355765181484"/>
+    </matrixParameter>
+
+    <distributionLikelihood id="X.prior">
+        <data>
+            <matrixParameter idref="X"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="1"/>
+                </mean>
+                <stdev>
+                    <parameter value="1e-1"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+
+    <operators id="operators">
+        <geodesicHamiltonianMonteCarloOperator id="geodesicHMC" weight="1.0" nSteps="5" stepSize="0.05"
+                                               drawVariance="1.0"
+                                               autoOptimize="false"
+                                               gradientCheckCount="100" gradientCheckTolerance="1e-2">
+            <gradient>
+                <distributionLikelihood idref="X.prior"/>
+                <matrixParameter idref="X"/>
+            </gradient>
+
+            <matrixParameter idref="X"/>
+            <graphicalParameterBounds>
+                <parameter value="0"/>
+            </graphicalParameterBounds>
+        </geodesicHamiltonianMonteCarloOperator>
+    </operators>
+
+    <cachedReport id="gdHMC">
+        <geodesicHamiltonianMonteCarloOperator idref="geodesicHMC"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="gdHMC"/>
+    </report>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog position
+        </message>
+        <actual regex="(?s)final position:\s*(.*?)\n\n">
+            <cachedReport idref="gdHMC"/>
+        </actual>
+        <expected>
+            -0.181314 -0.627619 -0.302442
+            0.680691 -0.261439 -0.0480654
+            -0.131925 -0.455502 -0.325809
+            0.267774 -0.104319 -0.180902
+            0.271192 0.111662 -0.561838
+            0.202814 -0.311839 0.314318
+            -0.0616983 0.0999747 -0.247963
+            0.367584 0.191271 -0.220852
+            0.396632 0.0637276 0.285482
+            0.0613069 -0.398781 0.4014
+        </expected>
+    </assertEqual>
+
+    <assertEqual verbose="true" tolerance="1e-4" charactersToStrip="{}">
+        <message>
+            check geodesic leapfrog ratio
+        </message>
+        <actual regex="hastings ratio:\s*(.*)\n">
+            <cachedReport idref="gdHMC"/>
+        </actual>
+        <expected>
+            -7251.556582506859
+        </expected>
+    </assertEqual>
+
+    <!--    <mcmc id="mcmc" chainLength="10000" autoOptimize="true">-->
+    <!--        <posterior id="posterior">-->
+    <!--            <prior id="prior">-->
+    <!--                <distributionLikelihood idref="X.prior"/>-->
+    <!--            </prior>-->
+    <!--        </posterior>-->
+    <!--        <operators idref="operators"/>-->
+    <!--        <log id="screenLog" logEvery="1000">-->
+    <!--            <column label="prior" dp="4" width="12">-->
+    <!--                <prior idref="prior"/>-->
+    <!--            </column>-->
+    <!--        </log>-->
+    <!--        <log id="fileLog" fileName="geodesic.log" logEvery="10">-->
+    <!--            <distributionLikelihood idref="X.prior"/>-->
+    <!--            <parameter idref="X"/>-->
+    <!--        </log>-->
+    <!--    </mcmc>-->
+</beast>

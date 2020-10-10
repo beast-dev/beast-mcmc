@@ -9,6 +9,7 @@ import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelih
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
+import dr.evomodelxml.continuous.hmc.IntegratedLoadingsGradientParser;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.math.matrixAlgebra.*;
@@ -44,12 +45,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final RemainderCompProvider remainderCompProvider;
     private final TaskPool taskPool;
 
-    protected IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
-                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                         IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                         TaskPool taskPool,
-                                         ThreadUseProvider threadUseProvider,
-                                         RemainderCompProvider remainderCompProvider) {
+    public IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
+                                      ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                      IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                      TaskPool taskPool,
+                                      ThreadUseProvider threadUseProvider,
+                                      RemainderCompProvider remainderCompProvider) {
 
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
@@ -95,6 +96,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             for (int i = 0; i < length; ++i) {
                 stopWatches[i] = new StopWatch();
             }
+
+            System.out.println("WARNING: " + IntegratedLoadingsGradientParser.PARSER_NAME +
+                    " is running serially (not in parallel).");
+
         }
     }
 
@@ -361,7 +366,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return new WrappedNormalSufficientStatistics(buffer, 0, dimFactors, null, PrecisionType.FULL);
     }
 
-    protected enum ThreadUseProvider {
+    public enum ThreadUseProvider {
         PARALLEL {
             @Override
             boolean usePool() {
@@ -410,7 +415,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return sb.toString();
     }
 
-    protected enum RemainderCompProvider {
+    public enum RemainderCompProvider {
 
         FULL {
             @Override
@@ -436,128 +441,6 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     private static final boolean DEBUG = false;
 
-    private static final String PARSER_NAME = "integratedFactorAnalysisLoadingsGradient";
-    private static final String THREAD_TYPE = "threadType";
-    private static final String PARALLEL = "parallel";
-    private static final String SERIAL = "serial";
-    private static final String REMAINDER_COMPUTATION = "remainderComputation";
-    private static final String FULL = "full";
-    private static final String SKIP = "skip";
-
-    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood)
-                    xo.getChild(TreeDataLikelihood.class);
-
-            IntegratedFactorAnalysisLikelihood factorAnalysis = (IntegratedFactorAnalysisLikelihood)
-                    xo.getChild(IntegratedFactorAnalysisLikelihood.class);
-
-            DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
-
-            if (!(likelihoodDelegate instanceof ContinuousDataLikelihoodDelegate)) {
-                throw new XMLParseException("TODO");
-            }
-
-            ContinuousDataLikelihoodDelegate continuousDataLikelihoodDelegate =
-                    (ContinuousDataLikelihoodDelegate) likelihoodDelegate;
-
-            TaskPool taskPool = (TaskPool) xo.getChild(TaskPool.class);
-
-            String threadType = xo.getAttribute(THREAD_TYPE, PARALLEL);
-            ThreadUseProvider threadProvider;
-
-            if (threadType.equalsIgnoreCase(PARALLEL)) {
-                threadProvider = ThreadUseProvider.PARALLEL;
-            } else if (threadType.equalsIgnoreCase(SERIAL)) {
-                threadProvider = ThreadUseProvider.SERIAL;
-            } else {
-                throw new XMLParseException("The attribute " + THREAD_TYPE + " must have values \"" + PARALLEL +
-                        "\" or \"" + SERIAL + "\".");
-            }
-
-            String remComp = xo.getAttribute(REMAINDER_COMPUTATION, SKIP);
-            RemainderCompProvider remainderCompProvider;
-
-            if (remComp.equalsIgnoreCase(SKIP)) {
-                remainderCompProvider = RemainderCompProvider.SKIP;
-            } else if (remComp.equalsIgnoreCase(FULL)) {
-                remainderCompProvider = RemainderCompProvider.FULL;
-            } else {
-                throw new XMLParseException("The attribute " + REMAINDER_COMPUTATION + " must have values \"" + SKIP +
-                        "\" or \"" + FULL + "\".");
-            }
-
-
-            if (TIMING) {
-                System.out.println("WARNING: " + PARSER_NAME + " is running serially (not in parallel).");
-            }
-
-            if (taskPool != null && threadType != PARALLEL) {
-                throw new XMLParseException("Cannot simultaneously provide " + TaskPoolParser.TASK_PARSER_NAME +
-                        " and " + THREAD_TYPE + "=\"" + threadType + "\". Please either change to " + THREAD_TYPE +
-                        "=\"" + PARALLEL + "\" or remove the " + TaskPoolParser.TASK_PARSER_NAME + " element.");
-            }
-
-            // TODO Check dimensions, parameters, etc.
-
-            return factory(
-                    treeDataLikelihood,
-                    continuousDataLikelihoodDelegate,
-                    factorAnalysis,
-                    taskPool,
-                    threadProvider,
-                    remainderCompProvider);
-
-        }
-
-        protected IntegratedLoadingsGradient factory(TreeDataLikelihood treeDataLikelihood,
-                                                     ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                                     IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                                     TaskPool taskPool,
-                                                     ThreadUseProvider threadUseProvider,
-                                                     RemainderCompProvider remainderCompProvider) {
-            return new IntegratedLoadingsGradient(
-                    treeDataLikelihood,
-                    likelihoodDelegate,
-                    factorAnalysisLikelihood,
-                    taskPool,
-                    threadUseProvider,
-                    remainderCompProvider);
-
-        }
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        @Override
-        public String getParserDescription() {
-            return "Generates a gradient provider for the loadings matrix when factors are integrated out";
-        }
-
-        @Override
-        public Class getReturnType() {
-            return IntegratedLoadingsGradient.class;
-        }
-
-        @Override
-        public String getParserName() {
-            return PARSER_NAME;
-        }
-
-        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(IntegratedFactorAnalysisLikelihood.class),
-                new ElementRule(TreeDataLikelihood.class),
-                new ElementRule(TaskPool.class, true),
-                AttributeRule.newStringRule(THREAD_TYPE, true),
-                AttributeRule.newStringRule(REMAINDER_COMPUTATION, true)
-
-        };
-    };
 
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {

@@ -130,7 +130,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
             @Override
             public void setParameterValue(int index, double value) {
                 for (int i = 0; i < dim; ++i) {
-                    setParameterValueQuietly(i, i == index ? value : distribution.getIncrement(index) );
+                    setParameterValueQuietly(i, i == index ? value : distribution.getIncrement(i));
                 }
 
                 fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);

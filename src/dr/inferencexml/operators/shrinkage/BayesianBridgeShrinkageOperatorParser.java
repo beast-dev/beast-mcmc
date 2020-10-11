@@ -9,6 +9,7 @@ import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
+import static dr.evoxml.MaskedPatternsParser.MASK;
 import static dr.inference.operators.MCMCOperator.WEIGHT;
 
 public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectParser {
@@ -38,8 +39,12 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
             }
         }
 
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASK)) {
+            mask = (Parameter) xo.getElementFirstChild(MASK);
+        }
 
-        return new BayesianBridgeShrinkageOperator(bayesianBridge, globalScalePrior, weight);
+        return new BayesianBridgeShrinkageOperator(bayesianBridge, globalScalePrior, mask, weight);
     }
 
     private BayesianBridgeStatisticsProvider parseAutoCorrelatedRates(XMLObject xo) throws XMLParseException {
@@ -92,6 +97,10 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
                     new ElementRule(AutoCorrelatedBranchRatesDistribution.class)
             ),
             new ElementRule(DistributionLikelihood.class, true),
+            new ElementRule(MASK, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class),
+
+            }, true),
     };
 
     @Override

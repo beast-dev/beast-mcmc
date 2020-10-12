@@ -1,5 +1,7 @@
 package dr.inference.model;
 
+import dr.xml.*;
+
 public class ScaledMatrixParameter extends CompoundParameter implements MatrixParameterInterface, VariableListener {
 
     private final MatrixParameterInterface matrixParameter;
@@ -117,4 +119,52 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
         super.variableChangedEvent(variable, index, type);
         valuesKnown = false; //TODO: do only update necessary indices
     }
+
+    public static final String SCALED_MATRIX = "scaledMatrixParameter";
+    public static final String SCALE = "scale";
+    public static final String MATRIX = "matrix";
+
+
+    public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            Parameter scale = (Parameter) xo.getChild(SCALE).getChild(Parameter.class);
+            MatrixParameterInterface matrix =
+                    (MatrixParameterInterface) xo.getChild(MATRIX).getChild(MatrixParameterInterface.class);
+
+            final String name = xo.hasId() ? xo.getId() : null;
+
+
+            return new ScaledMatrixParameter(name, matrix, scale);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    new ElementRule(SCALE, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }),
+                    new ElementRule(MATRIX, new XMLSyntaxRule[]{
+                            new ElementRule(MatrixParameterInterface.class)
+                    })
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "parameter that scales each column of a matrix";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return ScaledMatrixParameter.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return SCALED_MATRIX;
+        }
+    };
 }

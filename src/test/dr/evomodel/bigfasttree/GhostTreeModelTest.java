@@ -1,0 +1,77 @@
+package test.dr.evomodel.bigfasttree;
+
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evomodel.bigfasttree.BigFastTreeModel;
+import dr.evomodel.bigfasttree.CladeNodeModel;
+import dr.evomodel.bigfasttree.GhostTreeModel;
+import dr.evomodel.operators.SubtreeJumpOperator;
+import dr.evomodel.operators.SubtreeLeapOperator;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.AdaptationMode;
+import dr.math.MathUtils;
+import junit.framework.TestCase;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class GhostTreeModelTest extends TestCase {
+    private GhostTreeModel ghostTree;
+    private TreeModel corporealTree;
+    public void setUp() throws Exception {
+        super.setUp();
+        Taxa ghostTaxa = new Taxa("ghost");
+        ghostTaxa.addTaxon(new Taxon("g1"));
+        ghostTaxa.addTaxon(new Taxon("g2"));
+
+        Taxa corporealTaxa = new Taxa("corporeal");
+        corporealTaxa.addTaxon(new Taxon("0"));
+        corporealTaxa.addTaxon(new Taxon("1"));
+        corporealTaxa.addTaxon(new Taxon("2"));
+
+        Taxa allTaxa = new Taxa(ghostTaxa);
+        allTaxa.addTaxa(corporealTaxa);
+
+        NewickImporter importer = new NewickImporter("(((g1:0.5,0:1):0.5,1:1):1,(g2:1,2:1):0.5)");
+        Tree superTree = importer.importTree(allTaxa);
+
+        ghostTree = new GhostTreeModel(superTree, ghostTaxa);
+        corporealTree = ghostTree.getCorporealTreeModel();
+    }
+    private void checkState(){
+        System.out.println(ghostTree);
+        System.out.println(corporealTree);
+    }
+
+    public void testSetup(){
+        checkState();
+        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(0)));
+        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(1)));
+        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(2)));
+        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(3)));
+        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(4)));
+        assertEquals(1,ghostTree.getCorporealDegree(ghostTree.getNode(5)));
+        assertEquals(2,ghostTree.getCorporealDegree(ghostTree.getNode(6)));
+        assertEquals(1,ghostTree.getCorporealDegree(ghostTree.getNode(7)));
+        assertEquals(2,ghostTree.getCorporealDegree(ghostTree.getNode(8)));
+    }
+    public void testOperation(){
+        MathUtils.setSeed(1);
+        checkState();
+        SubtreeLeapOperator op = new SubtreeLeapOperator(ghostTree,1,1, SubtreeLeapOperator.DistanceKernelType.CAUCHY, AdaptationMode.ADAPTATION_OFF,0.5);
+        for (int i = 0; i < 10; i++) {
+            System.out.println(i);
+            op.doOperation();
+            checkState();
+        }
+
+    }
+
+}
+
+

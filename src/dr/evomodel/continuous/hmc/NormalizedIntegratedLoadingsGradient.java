@@ -11,16 +11,16 @@ public class NormalizedIntegratedLoadingsGradient extends IntegratedLoadingsGrad
 
     private final ScaledMatrixParameter scaledMatrix;
 
-    NormalizedIntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
-                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                         IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                         TaskPool taskPool,
-                                         ThreadUseProvider threadUseProvider,
-                                         RemainderCompProvider remainderCompProvider) {
+    public NormalizedIntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
+                                                ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                                TaskPool taskPool,
+                                                ThreadUseProvider threadUseProvider,
+                                                RemainderCompProvider remainderCompProvider) {
         super(treeDataLikelihood, likelihoodDelegate, factorAnalysisLikelihood, taskPool, threadUseProvider,
                 remainderCompProvider);
 
-        this.scaledMatrix = (ScaledMatrixParameter) factorAnalysisLikelihood.getParameter();
+        this.scaledMatrix = (ScaledMatrixParameter) factorAnalysisLikelihood.getLoadings();
 
     }
 

@@ -895,7 +895,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
     };
 
-    private static final String INTEGRATED_FACTOR_Model = "integratedFactorModel";
+    public static final String INTEGRATED_FACTOR_Model = "integratedFactorModel";
     private static final String LOADINGS = "loadings";
     private static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";

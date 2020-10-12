@@ -77,12 +77,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.missingDataMask = getMissingDataMask();
         checkParameterBounds(parameter);
 
-        long flags = NativeZigZag.Flag.PRECISION_DOUBLE.getMask() |
-                NativeZigZag.Flag.FRAMEWORK_TBB.getMask();
+        long flags = 128;
         long nativeSeed = MathUtils.nextLong();
         int nThreads = 4;
-        
-        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || CPP_NEXT_BOUNCE) {
+
+        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || USE_NATIVE_BOUNCE || CPP_NEXT_BOUNCE) {
 
             NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
 
@@ -446,8 +445,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private final static boolean TEST_NATIVE_OPERATOR = false;
     final static boolean TEST_NATIVE_BOUNCE = false;
+    final static boolean USE_NATIVE_BOUNCE = true;
 //    final static boolean TEST_CRITICAL_REGION = false;
-    final static boolean TEST_NATIVE_INNER_BOUNCE = false;
+    final static boolean TEST_NATIVE_INNER_BOUNCE = true;
 
     NativeZigZagWrapper nativeZigZag;
 }

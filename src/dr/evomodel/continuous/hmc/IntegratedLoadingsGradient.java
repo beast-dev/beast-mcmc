@@ -34,8 +34,8 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
     private final IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood;
-    private final int dimTrait;
-    private final int dimFactors;
+    protected final int dimTrait;
+    protected final int dimFactors;
     private final Tree tree;
     private final Likelihood likelihood;
     private final double[] data;
@@ -44,12 +44,12 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final RemainderCompProvider remainderCompProvider;
     private final TaskPool taskPool;
 
-    private IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
-                                       ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                       TaskPool taskPool,
-                                       ThreadUseProvider threadUseProvider,
-                                       RemainderCompProvider remainderCompProvider) {
+    protected IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
+                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                         IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                         TaskPool taskPool,
+                                         ThreadUseProvider threadUseProvider,
+                                         RemainderCompProvider remainderCompProvider) {
 
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
@@ -361,7 +361,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return new WrappedNormalSufficientStatistics(buffer, 0, dimFactors, null, PrecisionType.FULL);
     }
 
-    private enum ThreadUseProvider {
+    protected enum ThreadUseProvider {
         PARALLEL {
             @Override
             boolean usePool() {
@@ -410,7 +410,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return sb.toString();
     }
 
-    private enum RemainderCompProvider {
+    protected enum RemainderCompProvider {
 
         FULL {
             @Override

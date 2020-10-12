@@ -43,6 +43,22 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
     }
 
     @Override
+    public double getParameterValue(int row, int col) {
+        updateBuffer();
+        return columnBuffers[col][row];
+    }
+
+    @Override
+    public double getParameterValue(int dim) {
+        updateBuffer();
+        int col = dim / matrixParameter.getRowDimension();
+        int row = dim - col * matrixParameter.getRowDimension();
+
+        return columnBuffers[col][row];
+
+    }
+
+    @Override
     public void setParameterValue(int row, int col, double value) {
         throw new RuntimeException("Not implemented");
     }
@@ -67,6 +83,11 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
     public double[][] getParameterAsMatrix() {
         updateBuffer();
         return columnBuffers.clone();
+    }
+
+    @Override
+    public int getDimension() {
+        return matrixParameter.getDimension();
     }
 
     @Override

@@ -7,7 +7,9 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
     private final MatrixParameterInterface matrixParameter;
     private final Parameter scaleParameter;
     private final double[][] columnBuffers;
+    private final double[][] storedColumnBuffers;
     private Boolean valuesKnown = false;
+    private Boolean storedValuesKnown = false;
 
     public ScaledMatrixParameter(String name, MatrixParameterInterface matrixParameter, Parameter scaleParameter) {
         super(name, new Parameter[]{matrixParameter, scaleParameter});
@@ -15,6 +17,7 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
         this.matrixParameter = matrixParameter;
         this.scaleParameter = scaleParameter;
         this.columnBuffers = new double[matrixParameter.getColumnDimension()][matrixParameter.getRowDimension()];
+        this.storedColumnBuffers = new double[matrixParameter.getColumnDimension()][matrixParameter.getRowDimension()];
 
         addParameter(matrixParameter);
         addParameter(scaleParameter);
@@ -139,6 +142,31 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         super.variableChangedEvent(variable, index, type);
         valuesKnown = false; //TODO: do only update necessary indices
+    }
+
+    private void transferBuffer(double[][] src, double[][] dest) {
+        for (int i = 0; i < src.length; i++) {
+            System.arraycopy(src[i], 0, dest[i], 0, src[i].length);
+        }
+    }
+
+    @Override
+    protected void storeValues() {
+        super.storeValues();
+
+        if (valuesKnown) {
+            transferBuffer(columnBuffers, storedColumnBuffers);
+        }
+        storedValuesKnown = valuesKnown;
+    }
+
+    @Override
+    protected void restoreValues() {
+        super.restoreValues();
+        if (storedValuesKnown) {
+            transferBuffer(storedColumnBuffers, columnBuffers);
+        }
+        valuesKnown = storedValuesKnown;
     }
 
     public static final String SCALED_MATRIX = "scaledMatrixParameter";

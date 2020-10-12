@@ -85,7 +85,9 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                                                  IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
                                                  TaskPool taskPool,
                                                  IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
-                                                 IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider) {
+                                                 IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider)
+            throws XMLParseException {
+
         return new IntegratedLoadingsGradient(
                 treeDataLikelihood,
                 likelihoodDelegate,
@@ -116,7 +118,7 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
         return PARSER_NAME;
     }
 
-    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    protected final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(IntegratedFactorAnalysisLikelihood.class),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(TaskPool.class, true),

@@ -1,7 +1,7 @@
 /*
  * DataSimulationDelegate.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,19 +36,19 @@ import dr.math.matrixAlgebra.WrappedVector;
 import java.util.List;
 
 /**
- * AbstractDiscreteTraitDelegate - interface for a plugin delegate for data simulation on a tree.
+ * AbstractBeagleGradientDelegate - interface for a plugin delegate for data simulation on a tree.
  *
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDelegate.AbstractDelegate {
+public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDelegate.AbstractDelegate {
 
     private static final String GRADIENT_TRAIT_NAME = "Gradient";
     private static final String HESSIAN_TRAIT_NAME = "Hessian";
 
-    public AbstractDiscreteTraitDelegate(String name,
-                                         Tree tree,
-                                         BeagleDataLikelihoodDelegate likelihoodDelegate) {
+    protected AbstractBeagleGradientDelegate(String name,
+                                             Tree tree,
+                                             BeagleDataLikelihoodDelegate likelihoodDelegate) {
         super(name, tree);
         this.likelihoodDelegate = likelihoodDelegate;
         this.beagle = likelihoodDelegate.getBeagleInstance();
@@ -153,45 +153,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return HESSIAN_TRAIT_NAME;
     }
 
-    @Override
-    protected void constructTraits(Helper treeTraitHelper) {
-
-        treeTraitHelper.addTrait(new TreeTrait.DA() {
-            @Override
-            public String getTraitName() {
-                return getGradientTraitName();
-            }
-
-            @Override
-            public Intent getIntent() {
-                return Intent.BRANCH;
-            }
-
-            @Override
-            public double[] getTrait(Tree tree, NodeRef node) {
-                return getGradient(node);
-            }
-        });
-
-        treeTraitHelper.addTrait(new TreeTrait.DA() {
-            @Override
-            public String getTraitName() {
-                return getHessianTraitName();
-            }
-
-            @Override
-            public Intent getIntent() {
-                return Intent.BRANCH;
-            }
-
-            @Override
-            public double[] getTrait(Tree tree, NodeRef node) {
-                return getHessian(tree, node);
-            }
-        });
-    }
-
-    private double[] getHessian(Tree tree, NodeRef node) {
+    double[] getHessian(Tree tree, NodeRef node) {
 
         //update all preOrder partials first
         simulationProcess.cacheSimulatedTraits(node);
@@ -202,7 +164,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return second;
     }
 
-    private double[] getGradient(NodeRef node) {
+    protected double[] getGradient(NodeRef node) {
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++getTraitCount;
@@ -213,109 +175,7 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return gradient.clone();
     }
 
-    abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
-
-    private void getNodeDerivatives(Tree tree, double[] first, double[] second) {
-
-        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
-        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
-        final int[] firstDervIndices = new int[tree.getNodeCount() - 1];
-        final int[] secondDeriveIndices = new int[tree.getNodeCount() - 1];
-
-        boolean needsUpdate = !substitutionProcessKnown || second != null;
-        if (needsUpdate) {
-            cacheDifferentialMassMatrix(tree, second != null);
-            substitutionProcessKnown = true;
-        }
-
-        int u = 0;
-        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
-            if (!tree.isRoot(tree.getNode(nodeNum))) {
-                postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
-                preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
-                firstDervIndices[u]  = getFirstDerivativeMatrixBufferIndex(nodeNum);
-                secondDeriveIndices[u] = getSecondDerivativeMatrixBufferIndex(nodeNum);
-                u++;
-            }
-        }
-
-        double[] firstSquared = (second != null) ? new double[second.length] : null;
-
-        beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
-                firstDervIndices, new int[] { 0 }, tree.getNodeCount() - 1,
-                null, first, firstSquared);
-
-        if (second != null) {
-            beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
-                    secondDeriveIndices, new int[] { 0 }, tree.getNodeCount() - 1,
-                    null, second, null);
-
-            for (int i = 0; i < second.length; ++i) {
-                second[i] -= firstSquared[i];
-            }
-        }
-
-        if (DEBUG) {
-            checkReduction(first);
-        }
-
-    }
-
-    private void checkReduction(double[] array) {
-        for (int i = 0; i < array.length; i++) {
-            if (Double.isNaN(array[i])) {
-                double[] postPartial = new double[patternCount * stateCount * categoryCount];
-                double[] rootPostPartial = new double[patternCount * stateCount * categoryCount];
-                double[] prePartial = new double[patternCount * stateCount * categoryCount];
-                double[] differentialMatrix = new double[stateCount * stateCount * categoryCount];
-                beagle.getPartials(getPostOrderPartialIndex(0), Beagle.NONE, postPartial);
-                beagle.getPartials(getPostOrderPartialIndex(tree.getRoot().getNumber()), Beagle.NONE, rootPostPartial);
-                beagle.getPartials(getPreOrderPartialIndex(0), Beagle.NONE, prePartial);
-                beagle.getTransitionMatrix(getFirstDerivativeMatrixBufferIndex(0), differentialMatrix);
-
-                double[] grandNumerator = new double[patternCount];
-                double[] grandDenominator = new double[patternCount];
-
-                for (int category = 0; category < categoryCount; category++) {
-                    final double weight = siteRateModel.getProportionForCategory(category);
-                    for (int pattern = 0; pattern < patternCount; pattern++) {
-                        double numerator = 0.0;
-                        double denominator = 0.0;
-                        for (int j = 0; j < stateCount; j++) {
-                            double sumOverState = 0.0;
-                            for (int k = 0; k < stateCount; k++) {
-                                sumOverState += differentialMatrix[stateCount * stateCount * category + stateCount * j + k]
-                                        * postPartial[stateCount * patternCount * category + stateCount * pattern + k];
-
-                            }
-                            numerator += sumOverState * prePartial[stateCount * patternCount * category + stateCount * pattern + j];
-                            denominator += postPartial[stateCount * patternCount * category + stateCount * pattern + j] * prePartial[stateCount * patternCount * category + stateCount * pattern + j];
-                        }
-
-                        grandNumerator[pattern] += weight * numerator;
-                        grandDenominator[pattern] += weight * denominator;
-                    }
-                }
-
-                double sumDeriv = 0.0;
-                for (int j = 0; j < patternCount; j++) {
-                    sumDeriv += grandNumerator[j] / grandDenominator[j] * patternList.getPatternWeight(j);
-                }
-                double[] rootFrequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
-                double[] patternProb = new double[patternCount];
-                for (int category = 0; category < categoryCount; category++) {
-                    final double weight = siteRateModel.getProportionForCategory(category);
-                    for (int pattern = 0; pattern < patternCount; pattern++) {
-                        double sumOverState = 0.0;
-                        for (int j = 0; j < stateCount; j++) {
-                            sumOverState += rootPostPartial[stateCount * patternCount * category + stateCount * pattern + j] * rootFrequencies[j];
-                        }
-                        patternProb[pattern] += sumOverState * siteRateModel.getProportionForCategory(category);
-                    }
-                }
-            }
-        }
-    }
+    abstract protected void getNodeDerivatives(Tree tree, double[] first, double[] second);
 
     protected int getFirstDerivativeMatrixBufferIndex(int nodeNum) {
         return evolutionaryProcessDelegate.getInfinitesimalMatrixBufferIndex(nodeNum);
@@ -356,11 +216,11 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
         return Beagle.OPERATION_TUPLE_SIZE;
     }
 
-    private int getPostOrderPartialIndex(final int nodeNumber) {
+    protected int getPostOrderPartialIndex(final int nodeNumber) {
         return likelihoodDelegate.getPartialBufferIndex(nodeNumber);
     }
 
-    private int getPreOrderPartialIndex(final int nodeNumber) {
+    protected int getPreOrderPartialIndex(final int nodeNumber) {
         return preOrderPartialOffset + nodeNumber;
     }
 
@@ -393,10 +253,10 @@ public abstract class AbstractDiscreteTraitDelegate extends ProcessSimulationDel
 
     protected final double[] gradient;
 
-    private boolean substitutionProcessKnown;
+    protected boolean substitutionProcessKnown;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
-    private final boolean DEBUG = false;
+    final boolean DEBUG = false;
     private long simulateCount = 0;
     private long getTraitCount = 0;
     private long updatePrePartialCount = 0;

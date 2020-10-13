@@ -67,8 +67,6 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double logJacobian;
     private double savedLogJacobian;
 
-    private double priorRateAsIncrement;
-
     private final int dim;
     private double[] increments;
     private double[] savedIncrements;
@@ -368,7 +366,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double inverseTransformGradient(double gradient, double value) { return gradient; }
 
             @Override
-            boolean needsIncrementCorrection(boolean wrtIncrementsdummy) { return false; }
+            boolean needsIncrementCorrection(boolean wrtIncrements) { return false; }
         },
 
         STRICTLY_POSITIVE("strictlyPositive") {

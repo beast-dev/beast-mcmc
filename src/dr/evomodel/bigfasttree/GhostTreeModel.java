@@ -36,13 +36,13 @@ import dr.util.Citation;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 /**
  * A model component for trees that allows ghost lineages as a supertree of another TreeModel.
  *
- * @author Andrew Rambaut
  * @author JT McCrone
+ * @author Andrew Rambaut
  */
 public class GhostTreeModel extends BigFastTreeModel {
 
@@ -59,21 +59,121 @@ public class GhostTreeModel extends BigFastTreeModel {
     public GhostTreeModel(String name, Tree tree, TaxonList ghostLineages) {
 
         super(name, tree, false, false);
-
         this.ghostLineages = ghostLineages.asList();
         this.corporealToGhostNodeMap = new int[2 * (super.getExternalNodeCount() - ghostLineages.getTaxonCount()) - 1];
         this.ghostToCorporealNodeMap = new int[super.getNodeCount()];
-
+        this.ghostToNextOfKinMap = new int[super.getNodeCount()];
 
         for (int i = 0; i < super.getNodeCount(); i++) {
             this.ghostToCorporealNodeMap[i] = -1;
+            this.ghostToNextOfKinMap[i] = -1;
         }
         createCorporealTree();
-        this.updatedCorporealNodes= new boolean[corporealTreeModel.getNodeCount()];
-        Arrays.fill(updatedCorporealNodes, false);
-
+        this.updatedNodes = new boolean[super.getNodeCount()];
+        Arrays.fill(updatedNodes, false);
     }
 
+    /**
+     * Set update flag for node in ghost tree.
+     *
+     * @param node - node in ghost tree
+     */
+    protected void updateNode(NodeRef node) {
+        updatedNodes[node.getNumber()] = true;
+        if (!super.isExternal(node)) {
+            int corpNode = ghostToCorporealNodeMap[node.getNumber()];
+            if (corpNode > -1) {
+                availableNodeNumbers.add(corpNode);
+                ghostToCorporealNodeMap[node.getNumber()] = -1;
+                corporealToGhostNodeMap[corpNode] = -1;
+            }
+        }
+        NodeRef parent = super.getParent(node);
+        if (parent != null && !updatedNodes[parent.getNumber()]) {
+            updateNode(parent);
+        }
+    }
+
+    /**
+     * Set update flag for all nodes
+     */
+    protected void updateAllNodes() {
+        for (int i = 0; i < super.getNodeCount(); i++) {
+            updatedNodes[i] = true;
+        }
+        availableNodeNumbers = IntStream.range(getExternalNodeCount(), getNodeCount())
+                .boxed().collect(Collectors.toCollection(LinkedList::new));
+    }
+
+
+    /**
+     * Return the ghost node that mirros a corporeal node
+     *
+     * @param corporealNode
+     * @return ghostNode
+     */
+    private NodeRef getSpectralCounterPart(NodeRef corporealNode) {
+        return super.getNode(corporealToGhostNodeMap[corporealNode.getNumber()]);
+    }
+
+    /**
+     * get the corporeal node that mirros a ghost node
+     *
+     * @param ghostNode
+     * @return corporealNode
+     */
+    private NodeRef getCorporealCounterPart(NodeRef ghostNode) {
+        int corporealNodeIndex = ghostToCorporealNodeMap[ghostNode.getNumber()];
+        if (corporealNodeIndex == -1) {
+            return null;
+        }
+        return corporealTreeModel.getNode(corporealNodeIndex);
+    }
+
+    private NodeRef getNextCorporealDescendent(NodeRef ghostNode){
+        if(hasCorporealCounterPart(ghostNode)){
+            throw new IllegalArgumentException("Expected a node with degree 0 or 1 in corporeal tree but found degree 2");
+        }
+        int nodeNumber = ghostToNextOfKinMap[ghostNode.getNumber()];
+        return nodeNumber==-1?null: super.getNode(nodeNumber);
+    }
+
+    /**
+     * Helper function to check if a ghost node mirrors a corporeal node
+     *
+     * @param ghostNode
+     * @return boolean
+     */
+    private boolean hasCorporealCounterPart(NodeRef ghostNode) {
+        return ghostToCorporealNodeMap[ghostNode.getNumber()] != -1;
+    }
+
+    /**
+     * Get the descendent ghost node(s) that mirror corporealNodes
+     *
+     * @param ghostNode
+     * @return List of ghost nodes
+     */
+    //TODO cache
+    private List<NodeRef> getDescendentsInCorporealTree(NodeRef ghostNode) {
+        ArrayList<NodeRef> corporealNodes = new ArrayList<>();
+        for (int i = 0; i < super.getChildCount(ghostNode); i++) {
+            NodeRef child = super.getChild(ghostNode, i);
+            if (super.isExternal(child)) {
+                if (ghostToCorporealNodeMap[child.getNumber()] > -1) {
+                    corporealNodes.add(child);
+                }
+            } else {
+                List<NodeRef> childDescendents = getDescendentsInCorporealTree(child);
+                if (childDescendents.size() == 2) {
+                    corporealNodes.add(child);
+                } else if (childDescendents.size() == 1) {
+                    corporealNodes.addAll(childDescendents);
+                }
+            }
+        }
+        return corporealNodes;
+    }
     // *****************************************************************
     // Interface MutableTree
     // *****************************************************************
@@ -83,52 +183,16 @@ public class GhostTreeModel extends BigFastTreeModel {
      */
     public void setRoot(NodeRef newRoot) {
         super.setRoot(newRoot);
+        updateNode(newRoot);
     }
 
     public void addChild(NodeRef p, NodeRef c) {
         super.addChild(p, c);
-
+        updateNode(c);
     }
-
-    private List<NodeRef> getDescendentsInCorporealTree(NodeRef n) {
-        ArrayList<NodeRef> corporealNodes = new ArrayList<>();
-        for (int i = 0; i < super.getChildCount(n); i++) {
-            NodeRef child = getChild(n, i);
-            if (isExternal(child)) {
-                if (!ghostLineages.contains(super.getNodeTaxon(child))) {
-                    corporealNodes.add(child);
-                }
-            }else{
-                List<NodeRef> childDescendents = getDescendentsInCorporealTree(child);
-                if(childDescendents.size()==2){
-                    corporealNodes.add(child);
-                }else if (childDescendents.size()==1){
-                    corporealNodes.addAll(childDescendents);
-                }
-            }
-        }
-        return corporealNodes;
-    }
-
-
-    private NodeRef getSpectralCounterPart(NodeRef n) {
-        return super.getNode(corporealToGhostNodeMap[n.getNumber()]);
-    }
-
-    private NodeRef getCorporealCounterPart(NodeRef n) {
-        int corporealNodeIndex = ghostToCorporealNodeMap[n.getNumber()];
-        if(corporealNodeIndex==-1){
-            return null;
-        }
-        return corporealTreeModel.getNode(corporealNodeIndex);
-    }
-
-    private boolean hasCorporealCounterPart(NodeRef n) {
-        return ghostToCorporealNodeMap[n.getNumber()] != -1;
-    }
-
 
     public void removeChild(NodeRef p, NodeRef c) {
+        updateNode(c);
         super.removeChild(p, c);
 
     }
@@ -138,25 +202,22 @@ public class GhostTreeModel extends BigFastTreeModel {
     }
 
     public void endTreeEdit() {
-        // and cleanup
         super.endTreeEdit();
-        corporealTreeModel.beginTreeEdit();
         updateCorporealTreeModel();
-        corporealTreeModel.endTreeEdit();
     }
 
 
     public void setNodeHeight(NodeRef n, double height) {
         super.setNodeHeight(n, height);
         if (hasCorporealCounterPart(n)) {
-            corporealTreeModel.setNodeHeight(getCorporealCounterPart(n), height);
+            corporealTreeModel.adjustNodeHeight(getCorporealCounterPart(n), height);
         }
     }
 
     public void setNodeHeightQuietly(NodeRef n, double height) {
         super.setNodeHeightQuietly(n, height);
         if (hasCorporealCounterPart(n)) {
-            corporealTreeModel.setNodeHeightQuietly(getSpectralCounterPart(n), height);
+            corporealTreeModel.adjustNodeHeightQuietly(getSpectralCounterPart(n), height);
         }
     }
 
@@ -172,157 +233,129 @@ public class GhostTreeModel extends BigFastTreeModel {
         throw new UnsupportedOperationException("Function not available in GhostTreeModel");
     }
 
-    public int getCorporealDegree(NodeRef nodeRef) {
-       return getDescendentsInCorporealTree(nodeRef).size();
+//    public void makeDirty() {
+//        updateCorporealTreeModelFromScratch();
+//    }
+
+    /**
+     * Update the corporeal tree model topology
+     */
+    private void updateCorporealTreeModel() {
+        //do the update;
+        corporealTreeModel.beginTreeEdit();
+        // Should return only 1 node
+        List<NodeRef> relevantDescendents = updateCorporealTreeModel(super.getRoot());
+        NodeRef corporealRoot;
+        if(relevantDescendents.size()==2){
+            //at the the root
+            corporealRoot = getCorporealCounterPart(super.getRoot());
+        }else if(relevantDescendents.size()==1){
+            corporealRoot = getCorporealCounterPart(relevantDescendents.get(0));
+        }else{
+            throw new RuntimeException("Ghost tree root is out of sync. Root should be degree 1 or 2 in corporeal tree");
+        }
+        if (corporealRoot != corporealTreeModel.getRoot()) {
+            corporealTreeModel.makeRoot(corporealRoot);
+        }
+        //TODO set root with output from above
+        corporealTreeModel.endTreeEdit();
     }
 
-    public void makeDirty(){
-        updateCorporealTreeModelFromScratch();
-    }
+    /**
+     * Recursive version that traverses the ghost tree from the root and updates mappings between the trees and topology
+     * in the corporeal tree.
+     *
+     * @param ghostNode
+     */
+    private List<NodeRef> updateCorporealTreeModel(NodeRef ghostNode) {
+        ArrayList<NodeRef> relevantDescendents = new ArrayList<>();
+        if (updatedNodes[ghostNode.getNumber()]) { //TODO update this
 
-    private void updateCorporealTreeModel(){
-        vistNode(super.getRoot());
-    }
-
-    private void vistNode(NodeRef nodeRef) {
-        int corporealDegree = getCorporealDegree(nodeRef);
-        boolean inCorporealTree = hasCorporealCounterPart(nodeRef);
-
-
-
-        if (corporealDegree == 2) {
-            List<NodeRef> corporealDescendents = getDescendentsInCorporealTree(nodeRef)
-                    .stream()
-                    .map(this::getCorporealCounterPart)
-                    .collect(Collectors.toList());
-            if (inCorporealTree) {
-                NodeRef corporealNode = getCorporealCounterPart(nodeRef);
-                List<NodeRef> cachedCorporealDescendents = new ArrayList<>();
-                for (int i = 0; i < corporealTreeModel.getChildCount(corporealNode); i++) {
-                    cachedCorporealDescendents.add(corporealTreeModel.getChild(corporealNode, i));
-                }
-                boolean updated = false;
-                for (NodeRef cachedDescendent :
-                        cachedCorporealDescendents) {
-                    if(!corporealDescendents.contains(cachedDescendent)){
-                        corporealTreeModel.removeChild(corporealNode,cachedDescendent);
-                        updated =true;
+            for (int i = 0; i < super.getChildCount(ghostNode); i++) {
+                NodeRef child = super.getChild(ghostNode, i);
+                if (super.isExternal(child)) {
+                    if (ghostToCorporealNodeMap[child.getNumber()] > -1) {
+                        relevantDescendents.add(child);
+                        //mark updated as false for child since wont visit?
+                    }
+                } else {
+                    List<NodeRef> childDescendents = updateCorporealTreeModel(child);
+                    if (childDescendents.size() == 2) {
+                        relevantDescendents.add(child);
+                    } else if (childDescendents.size() == 1) {
+                        relevantDescendents.addAll(childDescendents);
                     }
                 }
-                for (NodeRef corporealDescendent :corporealDescendents) {
-                    if(!cachedCorporealDescendents.contains(corporealDescendent)){
+            }
+            //vist me
+            if(relevantDescendents.size()==0){
+                ghostToNextOfKinMap[ghostNode.getNumber()]=-1;
+            }else if(relevantDescendents.size()==1){
+                ghostToNextOfKinMap[ghostNode.getNumber()]=relevantDescendents.get(0).getNumber();
+            }else if (relevantDescendents.size() == 2) {
+                Integer number = availableNodeNumbers.poll();
+                updateNodeMaps(ghostNode.getNumber(), number);
+                NodeRef me = corporealTreeModel.getNode(number);
 
-                        NodeRef oldParent = corporealTreeModel.getParent(corporealDescendent);
-                        if(oldParent!=null){
-                            corporealTreeModel.removeChild(oldParent,corporealDescendent);
-
-                        }
-                        corporealTreeModel.addChild(corporealNode,corporealDescendent);
-
-                        if(corporealDescendent==corporealTreeModel.getRoot()){
-                            corporealTreeModel.setRoot(corporealNode);
-                        }
-                        updated =true;
-                    }
-                }
-                if(updated){
-                    corporealTreeModel.setNodeHeight(corporealNode,super.getNodeHeight(nodeRef));
-                }
-            }else{
-                boolean isNewNodeRoot = false;
-// presumably we "looked past" a degree 1 corporeal node when we looked for the children
-                    List<NodeRef> cachedDegree1Parents = corporealDescendents
-                            .stream()
-                            .map(n->corporealTreeModel.getParent(n))
-                            .filter(Objects::nonNull)
-                            .map(this::getSpectralCounterPart)
-                            .filter(n->getCorporealDegree(n)==1)
-                            .map(this::getCorporealCounterPart)
-                            .collect(Collectors.toList());
-                    assert cachedDegree1Parents.size()==1;
-
-                NodeRef corporealNode =  cachedDegree1Parents.get(0);
-                corporealTreeModel.setNodeHeight(corporealNode,super.getNodeHeight(nodeRef));
-                updateNodeMaps(nodeRef,corporealNode);
-
+                List<NodeRef> corporealDescendents = relevantDescendents
+                        .stream()
+                        .map(this::getCorporealCounterPart)
+                        .collect(Collectors.toList());
                 List<NodeRef> cachedCorporealDescendents = new ArrayList<>();
-                for (int i = 0; i < corporealTreeModel.getChildCount(corporealNode); i++) {
-                    cachedCorporealDescendents.add(corporealTreeModel.getChild(corporealNode, i));
+                for (int i = 0; i < corporealTreeModel.getChildCount(me); i++) {
+                    cachedCorporealDescendents.add(corporealTreeModel.getChild(me, i));
                 }
                 for (NodeRef cachedDescendent :
                         cachedCorporealDescendents) {
-                    if(!corporealDescendents.contains(cachedDescendent)){
-                        corporealTreeModel.removeChild(corporealNode,cachedDescendent);
+                    if (!corporealDescendents.contains(cachedDescendent)) {
+                        corporealTreeModel.disownChild(me, cachedDescendent);
                     }
                 }
-                for (NodeRef corporealDescendent :corporealDescendents) {
-                    if(!cachedCorporealDescendents.contains(corporealDescendent)){
-
+                for (NodeRef corporealDescendent : corporealDescendents) {
+                    if (!cachedCorporealDescendents.contains(corporealDescendent)) {
                         NodeRef oldParent = corporealTreeModel.getParent(corporealDescendent);
-                        if(oldParent!=null){
-                            corporealTreeModel.removeChild(oldParent,corporealDescendent);
-
+                        if (oldParent != null) {
+                            corporealTreeModel.disownChild(oldParent, corporealDescendent);
                         }
-                        corporealTreeModel.addChild(corporealNode,corporealDescendent);
-
-                        if(corporealDescendent==corporealTreeModel.getRoot()){
-                            corporealTreeModel.setRoot(corporealNode);
-                        }
+                        corporealTreeModel.adoptChild(me, corporealDescendent);
                     }
                 }
-
-
-            }
-        }else if(corporealDegree==1){
-            if(inCorporealTree){
-                NodeRef corpNode = getCorporealCounterPart(nodeRef);
-                if(corpNode==corporealTreeModel.getRoot()){
-                    //move up
-                    NodeRef lineageToCorpRoot = getDescendentsInCorporealTree(nodeRef).get(0);
-                    corporealTreeModel.setNodeHeight(corpNode,super.getNodeHeight(lineageToCorpRoot));
-                    updateNodeMaps(lineageToCorpRoot,corpNode);
-                }else { //free for use later
-                    NodeRef corpChild = getCorporealCounterPart(getDescendentsInCorporealTree(nodeRef).get(0));
-                    NodeRef corpParent = corporealTreeModel.getParent(corpNode);
-
-                    corporealTreeModel.removeChild(corpParent, corpNode);
-                    corporealTreeModel.removeChild(corpNode, corpChild);
-                    corporealTreeModel.addChild(corpParent, corpChild);
+                if(corporealTreeModel.getNodeHeight(me)!=super.getNodeHeight(ghostNode)){
+                    corporealTreeModel.adjustNodeHeight(me, super.getNodeHeight(ghostNode));
                 }
             }
-        }else if(corporealDegree==0){
-            if(inCorporealTree){
-                NodeRef corpNode = getCorporealCounterPart(nodeRef);
-                NodeRef corpP = corporealTreeModel.getParent(corpNode);
-                corporealTreeModel.removeChild(corpP, corpNode);
-
+        } else {
+            if (hasCorporealCounterPart(ghostNode)) {
+                relevantDescendents.add(ghostNode);
+            } else {
+                //either we are a degree 1 or degree 0 corpNode;
+                NodeRef nextOfKin = getNextCorporealDescendent(ghostNode);
+                if (nextOfKin != null) {
+                    relevantDescendents.add(nextOfKin);
+                }
             }
         }
 
-        for (int i = 0; i < getChildCount(nodeRef); i++) {
-            NodeRef child = getChild(nodeRef, i);
-            if(!isExternal(child)){
-                vistNode(child);
-            }
-        }
+        updatedNodes[ghostNode.getNumber()] = false;
+        return relevantDescendents;
 
     }
 
-    private void updateNodeMaps(NodeRef ghostNode,NodeRef corpNode){
-        ghostToCorporealNodeMap[corporealToGhostNodeMap[corpNode.getNumber()]]=-1;
-        ghostToCorporealNodeMap[ghostNode.getNumber()] = corpNode.getNumber();
-        corporealToGhostNodeMap[corpNode.getNumber()] = ghostNode.getNumber();
+
+    /**
+     * Helper funciton to update node maps
+     *
+     * @param ghostNodeNumber
+     * @param corpNodeNumber
+     */
+    private void updateNodeMaps(int ghostNodeNumber, int corpNodeNumber) {
+        ghostToCorporealNodeMap[ghostNodeNumber] = corpNodeNumber;
+        corporealToGhostNodeMap[corpNodeNumber] = ghostNodeNumber;
     }
 
-    private NodeRef getSibling(Tree tree,NodeRef node){
-        NodeRef parent = tree.getParent(node);
-        if(tree.getChild(parent,0)==node){
-            return tree.getChild(parent,1);
-        }
-        return tree.getChild(parent, 0);
-    }
-
-
+    /**
+     * Rebuild the corporeal tree from scratch
+     */
     private void updateCorporealTreeModelFromScratch() {
 
         Map<NodeRef, NodeRef> temporaryMap = new HashMap<>();
@@ -340,14 +373,16 @@ public class GhostTreeModel extends BigFastTreeModel {
         }
     }
 
-
+    /**
+     * Create the corporeal tree model and node maps
+     */
     private void createCorporealTree() {
         //Traverse the tree and build the flexibleTree
         Map<NodeRef, NodeRef> temporaryMap = new HashMap<>();
         FlexibleNode corporealRootNode = createCorporealTree(this.getRoot(), temporaryMap);
         FlexibleTree flexibleTree = new FlexibleTree(corporealRootNode);
         flexibleTree.adoptTreeModelOrdering();
-        corporealTreeModel = new BigFastTreeModel(this.getModelName() + "CorporealTree", flexibleTree);
+        corporealTreeModel = new CorporealTreeModel(this.getModelName() + "CorporealTree", flexibleTree);
         for (Map.Entry<NodeRef, NodeRef> entry :
                 temporaryMap.entrySet()) {
             int ghostNodeInt = entry.getKey().getNumber();
@@ -355,8 +390,27 @@ public class GhostTreeModel extends BigFastTreeModel {
             ghostToCorporealNodeMap[ghostNodeInt] = corporealNodeInt;
             corporealToGhostNodeMap[corporealNodeInt] = ghostNodeInt;
         }
+
+
+        for (int j : corporealToGhostNodeMap) {
+            NodeRef ghostNode = super.getNode(j);
+            NodeRef ghostParent = super.getParent(ghostNode);
+            while (ghostParent != null && !hasCorporealCounterPart(ghostParent)) {
+                ghostToNextOfKinMap[ghostParent.getNumber()] = j;
+                ghostNode = ghostParent;
+                ghostParent = super.getParent(ghostNode);
+            }
+        }
+
     }
 
+    /**
+     * Recursive helper function
+     *
+     * @param nodeRef
+     * @param nodeMap
+     * @return
+     */
     private FlexibleNode createCorporealTree(NodeRef nodeRef, Map<NodeRef, NodeRef> nodeMap) {
         if (this.isExternal(nodeRef)) {
             if (this.ghostLineages.contains(this.getNodeTaxon(nodeRef))) {
@@ -398,11 +452,13 @@ public class GhostTreeModel extends BigFastTreeModel {
     }
 
     private final List<Taxon> ghostLineages;
-    private BigFastTreeModel corporealTreeModel;
-    private boolean[] updatedCorporealNodes;
+    private CorporealTreeModel corporealTreeModel;
+    private final boolean[] updatedNodes;
+    private boolean seenRoot = false;
+    Queue<Integer> availableNodeNumbers = new LinkedList<>();
     private final int[] corporealToGhostNodeMap;
     private final int[] ghostToCorporealNodeMap;
-
+    private final int[] ghostToNextOfKinMap;
 
     @Override
 

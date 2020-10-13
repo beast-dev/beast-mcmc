@@ -46,26 +46,22 @@ public class GhostTreeModelTest extends TestCase {
     private void checkState(){
         System.out.println(ghostTree);
         System.out.println(corporealTree);
+//        String currentText = corporealTree.toString();
+//        ghostTree.makeDirty();
+//        String textFromScratch = corporealTree.toString();
+//        assertEquals(textFromScratch,currentText);
     }
 
     public void testSetup(){
         checkState();
-        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(0)));
-        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(1)));
-        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(2)));
-        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(3)));
-        assertEquals(0,ghostTree.getCorporealDegree(ghostTree.getNode(4)));
-        assertEquals(1,ghostTree.getCorporealDegree(ghostTree.getNode(5)));
-        assertEquals(2,ghostTree.getCorporealDegree(ghostTree.getNode(6)));
-        assertEquals(1,ghostTree.getCorporealDegree(ghostTree.getNode(7)));
-        assertEquals(2,ghostTree.getCorporealDegree(ghostTree.getNode(8)));
+
     }
     public void testOperation(){
         MathUtils.setSeed(1);
         checkState();
-        SubtreeLeapOperator op = new SubtreeLeapOperator(ghostTree,1,1, SubtreeLeapOperator.DistanceKernelType.CAUCHY, AdaptationMode.ADAPTATION_OFF,0.5);
-        for (int i = 0; i < 10; i++) {
-            System.out.println(i);
+        SubtreeLeapOperator op = new SubtreeLeapOperator(ghostTree,1,0.5, SubtreeLeapOperator.DistanceKernelType.CAUCHY, AdaptationMode.ADAPTATION_OFF,0.5);
+
+        for (int i = 0; i < 100; i++) {
             op.doOperation();
             checkState();
         }

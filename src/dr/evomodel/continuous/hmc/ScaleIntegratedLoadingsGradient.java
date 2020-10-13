@@ -11,16 +11,16 @@ public class ScaleIntegratedLoadingsGradient extends IntegratedLoadingsGradient 
 
     private final ScaledMatrixParameter scaledMatrix;
 
-    ScaleIntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
-                                    ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                    IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                    TaskPool taskPool,
-                                    IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
-                                    IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider) {
+    public ScaleIntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
+                                           ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                           IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                           TaskPool taskPool,
+                                           IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
+                                           IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider) {
         super(treeDataLikelihood, likelihoodDelegate, factorAnalysisLikelihood, taskPool, threadUseProvider,
                 remainderCompProvider);
 
-        this.scaledMatrix = (ScaledMatrixParameter) factorAnalysisLikelihood.getParameter();
+        this.scaledMatrix = (ScaledMatrixParameter) factorAnalysisLikelihood.getLoadings();
 
     }
 
@@ -30,9 +30,21 @@ public class ScaleIntegratedLoadingsGradient extends IntegratedLoadingsGradient 
     }
 
     @Override
+    public int getDimension() {
+        return dimFactors;
+    }
+
+    @Override
     public double[] getGradientLogDensity() {
-        double[] loadingsGradient = super.getGradientLogDensity();
-        double[] scaleGradient = new double[scaledMatrix.getColumnDimension()];
+        double[] loadingsGradient = null;
+        try {
+            loadingsGradient = super.getGradientLogDensity();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        double[] scaleGradient = new double[dimFactors];
 
         int offset = 0;
         for (int factor = 0; factor < dimFactors; factor++) {

@@ -128,6 +128,10 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
         return dimFactors * dimTrait;
     }
 
+    private int getGradientDimension() {
+        return dimFactors * dimTrait;
+    }
+
     private ReadableMatrix shiftToSecondMoment(WrappedMatrix variance, ReadableVector mean) {
 
         assert (variance.getMajorDim() == variance.getMinorDim());
@@ -175,7 +179,7 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
             stopWatches[2].start();
         }
 
-        final double[][] gradients = new double[this.taskPool.getNumThreads()][getDimension()];
+        final double[][] gradients = new double[this.taskPool.getNumThreads()][getGradientDimension()];
 
         final ReadableVector gamma = new WrappedVector.Parameter(factorAnalysisLikelihood.getPrecision());
         final ReadableMatrix loadings = ReadableMatrix.Utils.transposeProxy(

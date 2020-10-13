@@ -82,7 +82,7 @@ public class AutoCorrelatedGradientWrtIncrements implements GradientWrtParameter
     public double[] getGradientLogDensity() {
 
         double[] gradientWrtIncrements = distribution.getGradientWrtIncrements();
-        if (units.needsIncrementCorrection()) {
+        if (units.needsIncrementCorrection(distribution.wrtIncrements)) {
             recursePostOrderToCorrectGradient(tree.getRoot(), gradientWrtIncrements);
         }
 

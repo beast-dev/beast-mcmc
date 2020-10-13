@@ -67,13 +67,11 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
     private double logJacobian;
     private double savedLogJacobian;
 
-    private double priorRateAsIncrement;
-
     private final int dim;
     private double[] increments;
     private double[] savedIncrements;
 
-    private boolean wrtIncrements;
+    public boolean wrtIncrements;
 
     public AutoCorrelatedBranchRatesDistribution(String name,
                                                  DifferentiableBranchRates  branchRateModel,
@@ -368,7 +366,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             double inverseTransformGradient(double gradient, double value) { return gradient; }
 
             @Override
-            boolean needsIncrementCorrection() { return false; }
+            boolean needsIncrementCorrection(boolean wrtIncrements) { return false; }
         },
 
         STRICTLY_POSITIVE("strictlyPositive") {
@@ -402,7 +400,9 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
             }
 
             @Override
-            boolean needsIncrementCorrection() { return true; }
+            boolean needsIncrementCorrection(boolean wrtIncrements) {
+                return (!wrtIncrements);
+            }
         };
 
         BranchRateUnits(String name) { this.name = name; }
@@ -421,7 +421,7 @@ public class AutoCorrelatedBranchRatesDistribution extends AbstractModelLikeliho
 
         abstract double inverseTransformGradient(double gradient, double value);
 
-        abstract boolean needsIncrementCorrection();
+        abstract boolean needsIncrementCorrection(boolean wrtIncrements);
     }
 
     public enum BranchVarianceScaling {

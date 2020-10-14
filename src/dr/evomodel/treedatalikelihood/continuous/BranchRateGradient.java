@@ -639,14 +639,6 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
     @Override
     public LogColumn[] getColumns() {
 
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new LogColumn.Default("gradient report", new Object() {
-            @Override
-            public String toString() {
-                return "\n" + getReport();
-            }
-        });
-
-        return columns;
+        return Loggable.getColumnsFromReport(this, "BranchRateGradient report");
     }
 }

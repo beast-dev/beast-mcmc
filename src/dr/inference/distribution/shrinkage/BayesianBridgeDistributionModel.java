@@ -43,13 +43,15 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
     
     BayesianBridgeDistributionModel(Parameter globalScale,
                                     Parameter exponent,
-                                    int dim) {
+                                    int dim,
+                                    boolean includeNormalizingConstant) {
 
         super(BAYESIAN_BRIDGE);
 
         this.globalScale = globalScale;
         this.exponent = exponent;
         this.dim = dim;
+        this.includeNormalizingConstant = includeNormalizingConstant;
 
         addVariable(globalScale);
         addVariable(exponent);
@@ -128,6 +130,7 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
     final Parameter globalScale;
     final Parameter exponent;
     final int dim;
+    final boolean includeNormalizingConstant;
 
     private static final String TYPE = "BayesianBridge";
 }

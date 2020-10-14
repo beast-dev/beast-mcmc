@@ -73,9 +73,26 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 TreeTraversal.TraversalType.PRE_ORDER);
 
 
-        addModel(treeModel);
+        updateRatios();
         addVariable(ratios);
         constructEpochs();
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+        epochKnown = false;
+        ratiosKnown = false;
+    }
+
+
+    @Override
+    public void storeState() {
+        ratios.storeParameterValues();
+    }
+
+    @Override
+    public void restoreState() {
+        ratios.restoreParameterValues();
     }
 
     private void constructEpochs() {
@@ -140,6 +157,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     public double[] getRatios() {
+        updateRatios();
         return ratios.getParameterValues();
     }
 
@@ -147,6 +165,14 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
         ratiosKnown = false;
+    }
+
+    private void checkNan(double[] values) {
+        for (int i = 0; i < values.length; i++) {
+            if (Double.isNaN(values[i])) {
+                System.err.println("wrong");
+            }
+        }
     }
 
     protected void updateRatios() {
@@ -271,7 +297,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 logJacobian += Math.log(getNodePartial(node));
             }
         }
-        return logJacobian;
+        return -logJacobian;
     }
 
     protected int getNodeHeightGradientIndex(NodeRef node) {
@@ -284,7 +310,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         double[] gradientLogJacobianDeterminant = updateGradientUnWeightedLogDensity(logTime);
         double[] gradientLogDensity = updateGradientUnWeightedLogDensity(gradient);
         for (int i = 0; i < ratios.getDimension(); i++) {
-            gradientLogDensity[i] -= gradientLogJacobianDeterminant[i] - 1.0 / ratios.getParameterValue(i);
+            gradientLogDensity[i] += gradientLogJacobianDeterminant[i] - 1.0 / ratios.getParameterValue(i);
         }
         return gradientLogDensity;
     }
@@ -306,6 +332,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     private double[] updateGradientUnWeightedLogDensity(double[] gradient) {
+        updateRatios();
         // gradient is wrt nodeHeight, value = ratios
         double[] ratiosGradientUnweightedLogDensity = new double[ratios.getDimension()];
         postOrderTraversal.updateAllNodes();

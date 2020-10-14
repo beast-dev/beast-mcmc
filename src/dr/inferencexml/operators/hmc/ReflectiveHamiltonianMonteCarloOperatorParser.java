@@ -45,7 +45,7 @@ import dr.xml.XMLSyntaxRule;
  */
 public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
 
-    private final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
+    public final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
     private GraphicalParameterBound graphicalParameterBound;
 
     @Override
@@ -57,12 +57,12 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
     @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner,
                                                     ReversibleHMCProvider reversibleHMCprovider) {
 
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioningType, graphicalParameterBound);
+                runtimeOptions, preconditioner, graphicalParameterBound);
     }
 
     @Override

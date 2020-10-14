@@ -25,8 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
+import dr.evomodel.branchratemodel.*;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.xml.*;
 
@@ -37,6 +36,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     private static final String AUTO_CORRELATED_RATES = "autoCorrelatedRatesPrior";
     private static final String SCALING = "scaling";
     private static final String LOG = "log";
+    private static final String OPERATE_ON_INCREMENTS = "operateOnIncrements";
 
     public String getParserName() {
         return AUTO_CORRELATED_RATES;
@@ -44,7 +44,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
+        DifferentiableBranchRates branchRates = (DifferentiableBranchRates) xo.getChild(BranchRateModel.class);
 
         ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
                            xo.getChild(ParametricMultivariateDistributionModel.class);
@@ -53,8 +53,11 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
         boolean log = xo.getAttribute(LOG, false);
 
+        boolean operateOnIncrements = xo.getAttribute(OPERATE_ON_INCREMENTS, false);
+
+        // TODO Change parser to accept Tree and then pass to ACBRD
         return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
-                scaling, log);
+                scaling, log, operateOnIncrements);
     }
 
     //************************************************************************
@@ -91,9 +94,10 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(ArbitraryBranchRates.class),
+            new ElementRule(DifferentiableBranchRates.class),
             new ElementRule(ParametricMultivariateDistributionModel.class),
             AttributeRule.newStringRule(SCALING, true),
             AttributeRule.newBooleanRule(LOG, true),
+            AttributeRule.newBooleanRule(OPERATE_ON_INCREMENTS, true),
     };
 }

@@ -1,7 +1,7 @@
 /*
- * SumDerivativeParser.java
+ * GMRFSkyrideLikelihoodParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,46 +23,27 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.hmc;
 
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+package dr.evomodelxml.coalescent;
+
+import dr.evolution.coalescent.CoalescentGradient;
+import dr.evomodel.coalescent.CoalescentLikelihood;
+import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * @author Max Tolkoff
+ * @author Xiang Ji
  * @author Marc A. Suchard
  */
+public class CoalescentGradientParser extends AbstractXMLObjectParser {
 
-public class SumDerivativeParser extends AbstractXMLObjectParser{
-    public final static String SUM_DERIVATIVE = "sumDerivative";
-    public final static String SUM_DERIVATIVE2 = "jointGradient";
-
-
-    @Override
-    public String getParserName() {
-        return SUM_DERIVATIVE;
-    }
-
-    @Override
-    public String[] getParserNames() {
-        return new String[] { SUM_DERIVATIVE, SUM_DERIVATIVE2 };
-    }
+    private static final String NAME = "coalescentGradient";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-        List<GradientWrtParameterProvider> derivativeList = new ArrayList<GradientWrtParameterProvider>();
-
-        for (int i = 0; i < xo.getChildCount(); i++) {
-            GradientWrtParameterProvider grad = (GradientWrtParameterProvider) xo.getChild(i);
-            derivativeList.add(grad);
-        }
-
-        return new SumDerivative(derivativeList);
+        CoalescentLikelihood likelihood = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        return new CoalescentGradient(likelihood, tree);
     }
 
     @Override
@@ -71,8 +52,10 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(GradientWrtParameterProvider.class, 1, Integer.MAX_VALUE),
+            new ElementRule(CoalescentLikelihood.class),
+            new ElementRule(TreeModel.class),
     };
+
 
     @Override
     public String getParserDescription() {
@@ -81,6 +64,11 @@ public class SumDerivativeParser extends AbstractXMLObjectParser{
 
     @Override
     public Class getReturnType() {
-        return SumDerivative.class;
+        return CoalescentGradient.class;
+    }
+
+    @Override
+    public String getParserName() {
+        return NAME;
     }
 }

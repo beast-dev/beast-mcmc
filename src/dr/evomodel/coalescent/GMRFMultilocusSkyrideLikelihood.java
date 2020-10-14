@@ -467,7 +467,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         int currentTimeIndex = lastTimeIndex;
         double currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
         double nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
-        while (nextTime <= currentTime) {
+        while (nextTime <= currentTime && currentTimeIndex + 2 < intervalsList.get(treeIndex).getIntervalCount()) {
             currentTimeIndex++;
             currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
             nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);

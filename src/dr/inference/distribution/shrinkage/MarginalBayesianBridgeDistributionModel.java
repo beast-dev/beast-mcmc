@@ -12,8 +12,9 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
 
     public MarginalBayesianBridgeDistributionModel(Parameter globalScale,
                                                    Parameter exponent,
-                                                   int dim) {
-        super(globalScale, exponent, dim);
+                                                   int dim,
+                                                   boolean includeNormalizingConstant) {
+        super(globalScale, exponent, dim, includeNormalizingConstant);
     }
 
     @Override
@@ -40,14 +41,16 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
         final double scale = globalScale.getParameterValue(0);
         final double alpha = exponent.getParameterValue(0);
 
-        return logPdf(v, scale, alpha);
-    }
-
-    static double logPdf(double[] v, double scale, double alpha) {
         double sum = 0.0;
         for (double x : v) {
             sum += MarginalizedAlphaStableDistribution.logPdf(x, scale, alpha);
         }
+
+        if (includeNormalizingConstant) {
+            // TODO Add
+            throw new RuntimeException("Not yet implemented");
+        }
+
         return sum;
     }
 }

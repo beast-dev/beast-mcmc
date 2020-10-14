@@ -42,7 +42,7 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
     private final GradientWrtParameterProvider rateGradientProvider;
     private final AutoCorrelatedGradientWrtIncrements priorGradientProvider;
 
-    private final ArbitraryBranchRates branchRates;
+    private final DifferentiableBranchRates branchRates;
     private final Tree tree;
 
     private final AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling;

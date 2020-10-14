@@ -79,7 +79,8 @@ public class BranchSubstitutionParameterGradient
                                                BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                CompoundParameter branchParameter,
                                                BranchRateModel branchRateModel,
-                                               boolean useHessian) {
+                                               boolean useHessian,
+                                               int dim) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchParameter = branchParameter;
@@ -104,7 +105,7 @@ public class BranchSubstitutionParameterGradient
 
                 Parameter parameter = branchParameter.getParameter(branch.getNumber());
 
-                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter);
+                DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, dim);
 
                 differentialMassProviderList.add(new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter));
             }

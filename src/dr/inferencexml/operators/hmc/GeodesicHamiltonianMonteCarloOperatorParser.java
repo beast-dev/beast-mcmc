@@ -28,11 +28,11 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
     @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner,
                                                     ReversibleHMCProvider reversibleHMCprovider) {
         return new GeodesicHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioningType);
+                runtimeOptions, preconditioner);
     }
 
     @Override

@@ -280,6 +280,10 @@ public interface Transform {
 
         abstract public int getDimension();
 
+        abstract public int getInputDimension();
+
+        abstract public int getOutputDimension();
+
         public double transform(double value) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
@@ -338,8 +342,28 @@ public interface Transform {
 
         protected int dim;
 
+        protected int inputDimension;
+
+        protected int outputDimension;
+
         public MultivariateTransform(int dim){
-            this.dim = dim;
+            this(dim, dim);
+        }
+
+        public MultivariateTransform(int inputDimension, int outputDimension) {
+            this.inputDimension = inputDimension;
+            this.outputDimension = outputDimension;
+            this.dim = outputDimension;
+        }
+
+        @Override
+        public int getInputDimension() {
+            return inputDimension;
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return outputDimension;
         }
 
         @Override
@@ -516,6 +540,16 @@ public interface Transform {
 
         public int getDimension() {
             return -1;
+        }
+
+        @Override
+        public int getInputDimension() {
+            return getDimension();
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return getDimension();
         }
 
         public double[] transform(double[] values, int from, int to) {
@@ -1099,6 +1133,16 @@ public interface Transform {
         }
 
         @Override
+        public int getInputDimension() {
+            return getDimension();
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return getDimension();
+        }
+
+        @Override
         public String getTransformName() {
             return "NoTransformMultivariate";
         }
@@ -1268,6 +1312,16 @@ public interface Transform {
 
         public int getDimension() {
             return outer.getDimension();
+        }
+
+        @Override
+        public int getInputDimension() {
+            return inner.getInputDimension();
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return outer.getOutputDimension();
         }
 
         @Override
@@ -1527,6 +1581,16 @@ public interface Transform {
         }
 
         private final MultivariateTransform inner;
+
+        @Override
+        public int getInputDimension() {
+            return getDimension();
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return getDimension();
+        }
     }
 
     class Array extends MultivariableTransformWithParameter {
@@ -1557,7 +1621,17 @@ public interface Transform {
               return array.size();
           }
 
-          public Parameter getParameter() { return parameter; }
+        @Override
+        public int getInputDimension() {
+            return getDimension();
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return getDimension();
+        }
+
+        public Parameter getParameter() { return parameter; }
 
           @Override
           public double[] transform(double[] values, int from, int to) {
@@ -1706,6 +1780,16 @@ public interface Transform {
 
         public int getDimension() {
             return parameter.getDimension();
+        }
+
+        @Override
+        public int getInputDimension() {
+            return getDimension();
+        }
+
+        @Override
+        public int getOutputDimension() {
+            return getDimension();
         }
 
         public Parameter getParameter() { return parameter; }
@@ -1938,7 +2022,7 @@ public interface Transform {
         private final List<MultivariableTransform> array;
 
         public MultivariateArray(List<MultivariableTransform> array) {
-            super(getDimensionArray(array));
+            super(getInputDimensionArray(array), getOutputDimensionArray(array));
             this.array = array;
         }
 
@@ -1950,6 +2034,22 @@ public interface Transform {
                 dim += dimArray;
             }
             return dim;
+        }
+
+        private static int getInputDimensionArray(List<MultivariableTransform> array) {
+            int inputDimension = 0;
+            for (MultivariableTransform anArray : array) {
+                inputDimension += anArray.getInputDimension();
+            }
+            return inputDimension;
+        }
+
+        private static int getOutputDimensionArray(List<MultivariableTransform> array) {
+            int outputDimension = 0;
+            for (MultivariableTransform anArray : array) {
+                outputDimension += anArray.getOutputDimension();
+            }
+            return outputDimension;
         }
 
         @Override
@@ -2023,15 +2123,18 @@ public interface Transform {
 
             final double[] result = values.clone();
 
-            int offset = 0;
+            int inputOffset = 0;
+            int outputOffset = 0;
             for (MultivariableTransform anArray : array) {
-                int dim = anArray.getDimension();
-                double[] tmpVal = new double[dim];
-                System.arraycopy(values, offset, tmpVal, 0, dim);
-                double[] tmpGrad = new double[dim];
-                System.arraycopy(gradient, offset, tmpGrad, 0, dim);
-                System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal, 0, dim), 0, result, offset, dim);
-                offset += dim;
+                int inputDimension = anArray.getInputDimension();
+                int outputDimension = anArray.getOutputDimension();
+                double[] tmpVal = new double[outputDimension];
+                System.arraycopy(values, inputOffset, tmpVal, 0, outputDimension);
+                double[] tmpGrad = new double[inputDimension];
+                System.arraycopy(gradient, inputOffset, tmpGrad, 0, inputDimension);
+                System.arraycopy(anArray.updateGradientLogDensity(tmpGrad, tmpVal, 0, outputDimension), 0, result, outputOffset, outputDimension);
+                inputOffset += inputDimension;
+                outputOffset += outputDimension;
             }
             return result;
         }

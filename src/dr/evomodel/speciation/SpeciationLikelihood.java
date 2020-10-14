@@ -187,6 +187,10 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         }
     }
 
+    public SpeciationModel getSpeciationModel() {
+        return speciationModel;
+    }
+
     // **************************************************************
     // Units IMPLEMENTATION
     // **************************************************************

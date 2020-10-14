@@ -38,6 +38,7 @@ import dr.inference.model.Variable;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
+@Deprecated
 public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightTransformDelegate {
 
     private OldGMRFSkyrideLikelihood skyrideLikelihood;

@@ -120,11 +120,19 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             totalGetLogLikelihoodCount++;
 
         if (!likelihoodKnown) {
+            long startTime;
             if (COUNT_TOTAL_OPERATIONS) {
                 totalCalculateLikelihoodCount++;
+                startTime = System.nanoTime();
             }
 
             logLikelihood = calculateLogLikelihood();
+
+            if (COUNT_TOTAL_OPERATIONS) {
+                long endTime = System.nanoTime();
+                totalLikelihoodTime += (endTime - startTime) / 1000000;
+            }
+
             setAllNodesUpdated();
             likelihoodKnown = true;
         }
@@ -143,11 +151,12 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
 
             likelihoodDelegate.setComputePostOrderStatisticsOnly(true);
-            calculateLogLikelihood(); // after traverse all nodes and patterns have been updated --
-            //so change flags to reflect this.
+            double tmp = calculateLogLikelihood();
             likelihoodDelegate.setComputePostOrderStatisticsOnly(false);
 
             if (!likelihoodDelegate.providesPostOrderStatisticsOnly()) {
+                setAllNodesUpdated();
+                logLikelihood = tmp;
                 likelihoodKnown = true;
             }
         }
@@ -375,15 +384,16 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
             if (COUNT_TOTAL_OPERATIONS)
                 sb.append("\n  total operations = ").append(totalOperationCount).append(
-                        "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
-                        "\n  model changes = ").append(totalModelChangedCount).append(
-                        "\n  make dirties = ").append(totalMakeDirtyCount).append(
-                        "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
-                        "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
-                        "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
-                        "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
-                        "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
-                        "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics);
+                          "\n  matrix updates = ").append(totalMatrixUpdateCount).append(
+                          "\n  model changes = ").append(totalModelChangedCount).append(
+                          "\n  make dirties = ").append(totalMakeDirtyCount).append(
+                          "\n  calculate likelihoods = ").append(totalCalculateLikelihoodCount).append(
+                          "\n  get likelihoods = ").append(totalGetLogLikelihoodCount).append(
+                          "\n  all rate updates = ").append(totalRateUpdateAllCount).append(
+                          "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
+                          "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
+                          "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics).append(
+                          "\n  average likelihood time = ").append(totalLikelihoodTime / totalCalculateLikelihoodCount);
 
             return sb.toString();
         } else {
@@ -507,4 +517,5 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private int totalRateUpdateSingleCount = 0;
     private int totalPostOrderStatistics = 0;
     private int totalCalculatePostOrderStatistics = 0;
+    private long totalLikelihoodTime = 0;
 }

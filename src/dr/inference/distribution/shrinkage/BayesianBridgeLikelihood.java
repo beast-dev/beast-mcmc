@@ -26,8 +26,6 @@
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
@@ -56,21 +54,13 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
         addVariable(coefficients);
     }
 
-    public Parameter getGlobalScale() {
-        return distribution.getGlobalScale();
-    }
+    public Parameter getGlobalScale() { return distribution.getGlobalScale(); }
 
-    public Parameter getExponent() {
-        return distribution.getExponent();
-    }
+    public Parameter getExponent() { return distribution.getExponent(); }
 
-    public Parameter getLocalScale() {
-        return distribution.getLocalScale();
-    }
+    public Parameter getLocalScale() {return distribution.getLocalScale(); }
 
-    public double getCoefficient(int i) {
-        return coefficients.getParameterValue(i);
-    }
+    public double getCoefficient(int i) { return coefficients.getParameterValue(i); }
 
     @Override
     public double getLogLikelihood() {
@@ -114,12 +104,12 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
 
     @Override
     public final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // no intermediates need to be recalculated...
+       // no intermediates need to be recalculated...
     }
 
     @Override
     public void storeState() {
-        // Do nothing
+       // Do nothing
     }
 
     @Override
@@ -130,32 +120,6 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     @Override
     public void acceptState() {
     } // no additional state needs accepting
-
-    public LogColumn[] getColumns() {
-
-        LogColumn[] originalColumns = super.getColumns();
-
-        boolean isJointModel = distribution instanceof JointBayesianBridgeDistributionModel;
-
-        LogColumn[] columns = new LogColumn[originalColumns.length + (isJointModel ? 1 : 0)];
-        System.arraycopy(originalColumns, 0, columns, 0, originalColumns.length);
-
-        if (isJointModel) {
-            columns[originalColumns.length] = new NumberColumn(getId() + ".marginalized") {
-                @Override
-                public double getDoubleValue() {
-
-                    double[] parameters = coefficients.getParameterValues();
-                    double scale = distribution.getGlobalScale().getParameterValue(0);
-                    double alpha = distribution.getExponent().getParameterValue(0);
-
-                    return MarginalBayesianBridgeDistributionModel.logPdf(parameters, scale, alpha);
-                }
-            };
-        }
-
-        return columns;
-    }
 
     private final Parameter coefficients;
     private final BayesianBridgeDistributionModel distribution;

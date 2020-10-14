@@ -20,8 +20,8 @@ import org.ejml.ops.CommonOps;
 
 public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
-    public GeodesicHamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider, Parameter parameter, Transform transform, Parameter maskParameter, Options runtimeOptions, MassPreconditioner.Type preconditioningType) {
-        super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioningType);
+    public GeodesicHamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider, Parameter parameter, Transform transform, Parameter maskParameter, Options runtimeOptions, MassPreconditioner preconditioner) {
+        super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner);
         this.leapFrogEngine = new GeodesicLeapFrogEngine(parameter, getDefaultInstabilityHandler(), preconditioning, mask);
     }
 

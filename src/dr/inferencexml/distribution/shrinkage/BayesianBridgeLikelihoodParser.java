@@ -38,6 +38,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String LOCAL_SCALE = "localScale";
     public static final String EXPONENT = "exponent";
     public static final String SLAB_WIDTH = "slabWidth";
+    public static final String NORMALIZATION_CONSTANT = "includeNormalization";
     private static final String OLD = "old";
 
     public String getParserName() {
@@ -71,6 +72,8 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        boolean includeNormalizingConstant = xo.getAttribute(NORMALIZATION_CONSTANT, false);
+
         boolean old = xo.getAttribute(OLD, false);
 
         if (localScale != null) {
@@ -79,7 +82,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
                         new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
-                                coefficients.getDimension()));
+                                coefficients.getDimension(), includeNormalizingConstant));
             }
         } else {
             if (old) {
@@ -87,7 +90,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
                         new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
-                                coefficients.getDimension()));
+                                coefficients.getDimension(), includeNormalizingConstant));
             }
         }
     }

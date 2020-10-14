@@ -29,6 +29,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
@@ -54,12 +55,17 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
+    private final static String PRECONDITIONER = "preconditioner";
+    private final static String PRIOR_PRECONDITIONER = "priorPreconditioner";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
-    private final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
+    public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
     private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
+    private final static String INSTABILITY_HANDLER = "instabilityHandler";
     private final static String MASK = "mask";
+
+    private MassPreconditioner preconditioner;
 
     @Override
     public String getParserName() {
@@ -114,7 +120,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
 
         boolean dimensionMismatch = derivative.getDimension() != parameter.getDimension();
-        if (transform != null && transform instanceof Transform.MultivariableTransform) {
+        if (transform instanceof Transform.MultivariableTransform) {
             dimensionMismatch = ((Transform.MultivariableTransform) transform).getDimension() != parameter.getDimension();
         }
 
@@ -139,27 +145,54 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         double reductionFactor = xo.getAttribute(REDUCTION_FACTOR, 0.1);
         double targetAcceptanceProbability = xo.getAttribute(TARGET_ACCEPTANCE_PROBABILITY,
                 0.8); // Stan default
+        String instabilityHandlerCase = xo.getAttribute(INSTABILITY_HANDLER, "reject");
+        HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
                 preconditioningUpdateFrequency, preconditioningDelay, preconditioningMemory,
                 gradientCheckCount, gradientCheckTolerance,
                 maxIterations, reductionFactor,
-                targetAcceptanceProbability
+                targetAcceptanceProbability,
+                instabilityHandler
         );
 
-        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioningType, reversibleHMCprovider);
+        if (xo.hasChildNamed(PRECONDITIONER)) {
+            if (preconditioningType != MassPreconditioner.Type.NONE) {
+                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
+            }
+            XMLObject cxo = xo.getChild(PRECONDITIONER);
+
+            if (cxo.hasChildNamed(PRIOR_PRECONDITIONER)) {
+                XMLObject ccxo = cxo.getChild(PRIOR_PRECONDITIONER);
+                PriorPreconditioningProvider priorDistribution = (PriorPreconditioningProvider) ccxo.getChild(0);
+                preconditioner = new MassPreconditioner.PriorPreconditioner(priorDistribution, transform);
+            } else {
+                throw new XMLParseException("Unknown preconditioner specified");
+            }
+        } else {
+            preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
+        }
+
+
+        if (xo.hasChildNamed(PRECONDITIONER)) {
+            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
+                    parameter, transform, mask,
+                    runtimeOptions, preconditioner);
+        } else {
+            return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, reversibleHMCprovider);
+        }
 
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner,
                                                     ReversibleHMCProvider reversibleHMCprovider) {
 
         return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioningType);
+                runtimeOptions, preconditioner);
 
     }
 
@@ -184,6 +217,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                     new ElementRule(Parameter.class),
 
             }, true),
+            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
+                    new ElementRule(MassPreconditioner.class)
+            }, true),
+
     };
 
     @Override

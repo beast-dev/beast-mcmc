@@ -130,7 +130,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected abstract double calculateLogLikelihood();
 
 
-    protected final IntervalList getIntervalList() {
+    public IntervalList getIntervalList() {
             return intervalList;
     }
 

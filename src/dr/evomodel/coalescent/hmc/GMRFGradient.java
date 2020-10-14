@@ -1,34 +1,42 @@
 package dr.evomodel.coalescent.hmc;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.util.ComparableDouble;
+import dr.util.HeapSort;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Marc A. Suchard
  * @author Mandev Gill
  */
-public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
+public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
     private final GMRFMultilocusSkyrideLikelihood skygridLikelihood;
     private final WrtParameter wrtParameter;
     private final Parameter parameter;
+    private final Double tolerance;
 
     public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood,
-                        WrtParameter wrtParameter) {
+                        WrtParameter wrtParameter,
+                        Double tolerance) {
         this.skygridLikelihood = skygridLikelihood;
         this.wrtParameter = wrtParameter;
         parameter = wrtParameter.getParameter(skygridLikelihood);
+        this.tolerance = tolerance;
     }
 
     @Override
@@ -69,9 +77,16 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
                 tolerance) + " \n";
 
-        header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance);
+        if (wrtParameter != WrtParameter.NODE_HEIGHT) {
+            header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance) + "\n";
+        } 
 
         return header;
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        return Loggable.getColumnsFromReport(this, "GMRFGradient report");
     }
 
     public enum WrtParameter {
@@ -162,7 +177,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
                 if (parameter == null) {
                     TreeModel treeModel = (TreeModel) likelihood.getTree(0);
-                    parameter = treeModel.createNodeHeightsParameter(true, true, false);
+                    parameter = new NodeHeightProxyParameter("allInternalNode", treeModel, true);
                 }
                 return parameter;
             }
@@ -201,22 +216,25 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 final TreeIntervals intervals = likelihood.getTreeIntervals(0);
 
-                int[] gridIndices = getGridIndexForInternalNodes(likelihood, 0);
+                int[] intervalIndices = new int[tree.getInternalNodeCount()];
+                int[] gridIndices = new int[tree.getInternalNodeCount()];
 
-                for (int i = 0; i < intervals.getIntervalCount(); i++) {
-                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                getGridIndexForInternalNodes(likelihood, 0, intervalIndices, gridIndices);
 
-                        final int nodeIndex = getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree);
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
 
-                        final int numLineage = intervals.getLineageCount(i);
+                    final int nodeIndex = getNodeHeightParameterIndex(node, tree);
 
-                        gradient[nodeIndex] += -Math.exp(-currentGamma[gridIndices[nodeIndex]]) * numLineage * (numLineage - 1);
+                    final int numLineage = intervals.getLineageCount(intervalIndices[i]);
 
-                        if (!tree.isRoot(intervals.getCoalescentNode(i))) {
-                            final int nextNumLineage = intervals.getLineageCount(i + 1);
-                            gradient[nodeIndex] -= -Math.exp(-currentGamma[gridIndices[nodeIndex] + 1]) * nextNumLineage * (nextNumLineage - 1);
-                        }
+                    final double currentPopSize = Math.exp(-currentGamma[gridIndices[nodeIndex]]);
 
+                    gradient[nodeIndex] += -currentPopSize * numLineage * (numLineage - 1);
+
+                    if (!tree.isRoot(node)) {
+                        final int nextNumLineage = intervals.getLineageCount(intervalIndices[i] + 1);
+                        gradient[nodeIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
                     }
                 }
 
@@ -232,27 +250,48 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 return node.getNumber() - tree.getExternalNodeCount();
             }
 
-            private int[] getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex) {
+            private void getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex,
+                                                       int[] intervalIndices, int[] gridIndices) {
                 Tree tree = likelihood.getTree(treeIndex);
-                TreeIntervals intervals = likelihood.getTreeIntervals(treeIndex);
-
-                int[] indices = new int[tree.getInternalNodeCount()];
+                double[] sortedValues = new double[tree.getInternalNodeCount()];
+                double[] nodeHeights = new double[tree.getInternalNodeCount()];
+                int[] nodeIndices = new int[tree.getInternalNodeCount()];
+                sortNodeHeights(tree, sortedValues, nodeHeights, nodeIndices);
 
                 int gridIndex = 0;
                 double[] gridPoints = likelihood.getGridPoints();
-                for (int i = 0; i < intervals.getIntervalCount(); i++) {
-                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                        while(gridPoints[gridIndex] < intervals.getInterval(i)) {
-                            gridIndex++;
-                        }
-                        indices[getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree)] = gridIndex;
+                int intervalIndex = 0;
+                final TreeIntervals intervals = likelihood.getTreeIntervals(treeIndex);
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    while(gridIndex < gridPoints.length && gridPoints[gridIndex] < sortedValues[i]) {
+                        gridIndex++;
                     }
-                }
+                    gridIndices[nodeIndices[i]] = gridIndex;
 
-                return indices;
+                    while(intervalIndex < intervals.getIntervalCount() - 1 && intervals.getIntervalTime(intervalIndex) < sortedValues[i]) {
+                        intervalIndex++;
+                    }
+                    intervalIndices[nodeIndices[i]] = intervalIndex;
+                }
             }
 
         };
+
+        public static void sortNodeHeights(Tree tree,
+                                           double[] sortedValues,
+                                           double[] nodeHeights,
+                                           int[] nodeIndices) {
+            ArrayList<ComparableDouble> sortedInternalNodes = new ArrayList<ComparableDouble>();
+            for (int i = 0; i < nodeIndices.length; i++) {
+                final double nodeHeight = tree.getNodeHeight(tree.getNode(tree.getExternalNodeCount() + i));
+                sortedInternalNodes.add(new ComparableDouble(nodeHeight));
+                nodeHeights[i] = nodeHeight;
+            }
+            HeapSort.sort(sortedInternalNodes, nodeIndices);
+            for (int i = 0; i < nodeIndices.length; i++) {
+                sortedValues[i] = nodeHeights[nodeIndices[i]];
+            }
+        }
 
         WrtParameter(String name) {
             this.name = name;
@@ -279,6 +318,4 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             return null;
         }
     }
-
-    private final static Double tolerance = 1E-4;
 }

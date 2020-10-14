@@ -454,9 +454,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                                         ArrayList<Integer> nodeNumbers) {
 
         times.add(new ComparableDouble(tree.getNodeHeight(top)));
-        if (Double.isNaN(tree.getNodeHeight(top))) {
-            System.err.println("why");
-        }
         childs.add(tree.getChildCount(top));
         nodeNumbers.add(top.getNumber());
 
@@ -520,9 +517,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             }
 
             public void addNode(int nodeNumber) {
-                if (nextIndex > 500) {
-                    System.err.println("why");
-                }
                 nodeNumbersInIntervals[nextIndex] = nodeNumber;
                 nextIndex++;
             }

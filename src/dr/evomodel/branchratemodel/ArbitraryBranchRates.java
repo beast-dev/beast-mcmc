@@ -40,6 +40,7 @@ import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * Allows branch rates to take on any double value
@@ -48,7 +49,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Alexei Drummond
  */
-public class ArbitraryBranchRates extends AbstractBranchRateModel implements Citable {
+public class ArbitraryBranchRates extends AbstractBranchRateModel implements DifferentiableBranchRates, Citable {
 
     // The rates of each branch
     private final TreeParameterModel rates;
@@ -95,6 +96,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         rates.setNodeValue(tree, node, value);
     }
 
+    @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
         double raw = rates.getNodeValue(tree, node);
         return transform.differential(raw, tree, node);
@@ -102,6 +104,27 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
 
     public BranchRateTransform getTransform() {
         return transform;
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        return gradient;
+    }
+
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
+        return diagonalHessian;
+    }
+
+    @Override
+    public void forEachOverRates(NodeRateMap map) {
+        rates.forEach(map);
+    }
+
+    @Override
+    public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
+        return rates.mapReduce(map, reduce, initial);
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
@@ -112,7 +135,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         return transform.transform(getUntransformedBranchRate(tree, node), tree, node);
     }
 
-    double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+    public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
         return rates.getNodeValue(tree, node);
     }
 
@@ -138,6 +161,10 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Cit
         } else {
             throw new RuntimeException("Unknown model");
         }
+    }
+
+    public double getPriorRateAsIncrement(Tree tree){
+        return 0;
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }

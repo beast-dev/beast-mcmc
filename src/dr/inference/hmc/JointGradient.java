@@ -1,5 +1,5 @@
 /*
- * SumDerivative.java
+ * JointGradient.java
  *
  * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -39,7 +39,7 @@ import java.util.List;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
-public class SumDerivative implements GradientWrtParameterProvider, HessianWrtParameterProvider,
+public class JointGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider,
         DerivativeWrtParameterProvider, Reportable {
 
     private final int dimension;
@@ -51,7 +51,7 @@ public class SumDerivative implements GradientWrtParameterProvider, HessianWrtPa
     private final List<DerivativeWrtParameterProvider> newDerivativeList;
     private final DerivativeOrder highestOrder;
 
-    public SumDerivative(List<GradientWrtParameterProvider> derivativeList){
+    public JointGradient(List<GradientWrtParameterProvider> derivativeList){
 
         this.derivativeList = derivativeList;
 

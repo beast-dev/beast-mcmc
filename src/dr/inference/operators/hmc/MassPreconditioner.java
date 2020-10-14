@@ -424,7 +424,7 @@ public interface MassPreconditioner {
             double diagonal[] = new double[(bridge.getDimension())];
 
             for (int i = 0; i < bridge.getDimension(); i++){
-                diagonal[i] = bridge.getGlobalLocalProduct(i);
+                diagonal[i] = Math.pow(bridge.getStandardDeviation(i), 2);
             }
             return diagonal;
         }

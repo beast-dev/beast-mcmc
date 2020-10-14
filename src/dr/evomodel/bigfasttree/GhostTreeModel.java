@@ -61,8 +61,14 @@ public class GhostTreeModel extends BigFastTreeModel {
         super(name, tree, false, false);
         this.ghostLineages = ghostLineages.asList();
         this.corporealToGhostNodeMap = new int[2 * (super.getExternalNodeCount() - ghostLineages.getTaxonCount()) - 1];
+        this.storedCorporealToGhostNodeMap = new int[2 * (super.getExternalNodeCount() - ghostLineages.getTaxonCount()) - 1];
+
         this.ghostToCorporealNodeMap = new int[super.getNodeCount()];
+        this.storedGhostToCorporealNodeMap = new int[super.getNodeCount()];
+
         this.ghostToNextOfKinMap = new int[super.getNodeCount()];
+        this.storedGhostToNextOfKinMap = new int[super.getNodeCount()];
+
 
         for (int i = 0; i < super.getNodeCount(); i++) {
             this.ghostToCorporealNodeMap[i] = -1;
@@ -174,6 +180,32 @@ public class GhostTreeModel extends BigFastTreeModel {
         }
         return corporealNodes;
     }
+
+
+    protected void storeState(){
+        super.storeState();
+        System.arraycopy(corporealToGhostNodeMap, 0, storedCorporealToGhostNodeMap, 0, corporealToGhostNodeMap.length);
+        System.arraycopy(ghostToCorporealNodeMap, 0, storedGhostToCorporealNodeMap, 0, ghostToCorporealNodeMap.length);
+        System.arraycopy(ghostToNextOfKinMap, 0, storedGhostToNextOfKinMap, 0, ghostToNextOfKinMap.length);
+    }
+
+    protected  void restoreState(){
+        super.restoreState();
+
+        int[] tmp = storedCorporealToGhostNodeMap;
+        storedCorporealToGhostNodeMap = corporealToGhostNodeMap;
+        corporealToGhostNodeMap = tmp;
+
+        int[] tmp2 = storedGhostToCorporealNodeMap;
+        storedGhostToCorporealNodeMap = ghostToCorporealNodeMap;
+        ghostToCorporealNodeMap = tmp2;
+
+        int[] tmp3 = storedGhostToNextOfKinMap;
+        storedGhostToNextOfKinMap = ghostToNextOfKinMap;
+        ghostToNextOfKinMap = tmp3;
+
+    }
+
     // *****************************************************************
     // Interface MutableTree
     // *****************************************************************
@@ -296,7 +328,7 @@ public class GhostTreeModel extends BigFastTreeModel {
                 Integer number = availableNodeNumbers.poll();
                 updateNodeMaps(ghostNode.getNumber(), number);
                 NodeRef me = corporealTreeModel.getNode(number);
-
+                boolean updated = false;
                 List<NodeRef> corporealDescendents = relevantDescendents
                         .stream()
                         .map(this::getCorporealCounterPart)
@@ -309,6 +341,7 @@ public class GhostTreeModel extends BigFastTreeModel {
                         cachedCorporealDescendents) {
                     if (!corporealDescendents.contains(cachedDescendent)) {
                         corporealTreeModel.disownChild(me, cachedDescendent);
+                        updated=true;
                     }
                 }
                 for (NodeRef corporealDescendent : corporealDescendents) {
@@ -318,9 +351,10 @@ public class GhostTreeModel extends BigFastTreeModel {
                             corporealTreeModel.disownChild(oldParent, corporealDescendent);
                         }
                         corporealTreeModel.adoptChild(me, corporealDescendent);
+                        updated = true;
                     }
                 }
-                if(corporealTreeModel.getNodeHeight(me)!=super.getNodeHeight(ghostNode)){
+                if(corporealTreeModel.getNodeHeight(me)!=super.getNodeHeight(ghostNode) || updated){
                     corporealTreeModel.adjustNodeHeight(me, super.getNodeHeight(ghostNode));
                 }
             }
@@ -382,7 +416,7 @@ public class GhostTreeModel extends BigFastTreeModel {
         FlexibleNode corporealRootNode = createCorporealTree(this.getRoot(), temporaryMap);
         FlexibleTree flexibleTree = new FlexibleTree(corporealRootNode);
         flexibleTree.adoptTreeModelOrdering();
-        corporealTreeModel = new CorporealTreeModel(this.getModelName() + "CorporealTree", flexibleTree);
+        corporealTreeModel = new CorporealTreeModel(this.getModelName() + "CorporealTree", flexibleTree,this);
         for (Map.Entry<NodeRef, NodeRef> entry :
                 temporaryMap.entrySet()) {
             int ghostNodeInt = entry.getKey().getNumber();
@@ -456,9 +490,12 @@ public class GhostTreeModel extends BigFastTreeModel {
     private final boolean[] updatedNodes;
     private boolean seenRoot = false;
     Queue<Integer> availableNodeNumbers = new LinkedList<>();
-    private final int[] corporealToGhostNodeMap;
-    private final int[] ghostToCorporealNodeMap;
-    private final int[] ghostToNextOfKinMap;
+    private  int[] corporealToGhostNodeMap;
+    private  int[] storedCorporealToGhostNodeMap;
+    private  int[] ghostToCorporealNodeMap;
+    private  int[] storedGhostToCorporealNodeMap;
+    private  int[] ghostToNextOfKinMap;
+    private  int[] storedGhostToNextOfKinMap;
 
     @Override
 

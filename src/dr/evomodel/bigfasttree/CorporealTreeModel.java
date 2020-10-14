@@ -12,11 +12,12 @@ import dr.evolution.tree.Tree;
 public class CorporealTreeModel extends BigFastTreeModel {
     public static final String CORPOREAL_TREE_MODEL = "corporealTreeModel";
 
-    public CorporealTreeModel(String name, Tree tree) {
+    public CorporealTreeModel(String name, Tree tree,GhostTreeModel ghostTreeModel) {
         super(name, tree);
+        addModel(ghostTreeModel);
     }
-    public CorporealTreeModel(Tree tree) {
-        this(CORPOREAL_TREE_MODEL, tree);
+    public CorporealTreeModel(Tree tree,GhostTreeModel ghostTreeModel) {
+        this(CORPOREAL_TREE_MODEL, tree,ghostTreeModel);
     }
 
     // *****************************************************************

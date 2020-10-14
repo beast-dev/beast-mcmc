@@ -1,6 +1,7 @@
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.math.distributions.NormalDistribution;
 
 /**
@@ -8,7 +9,8 @@ import dr.math.distributions.NormalDistribution;
  * @author Akihiko Nishimura
  */
 
-public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel {
+public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel
+implements PriorPreconditioningProvider {
 
     public JointBayesianBridgeDistributionModel(Parameter globalScale,
                                                 Parameter localScale,

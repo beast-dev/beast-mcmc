@@ -196,8 +196,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         } else {
 
-            firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
-
+            if (USE_NATIVE_BOUNCE){
+                firstBounce = getNextBounceNative(position, velocity, action, gradient, momentum);
+            } else {
+                firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
+            }
         }
 
         if (TIMING) {
@@ -338,6 +341,27 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             System.err.println(mti + " ?= " + firstBounce + "\n");
             System.exit(-1);
         }
+    }
+
+    private MinimumTravelInformation getNextBounceNative(
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient,
+                            WrappedVector momentum) {
+
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
+
+        final MinimumTravelInformation mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        return mti;
     }
 
 //    @Override

@@ -166,7 +166,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             if (cxo.hasChildNamed(SHRINKAGE_PRECONDITIONER)) {
                 XMLObject ccxo = cxo.getChild(SHRINKAGE_PRECONDITIONER);
                 JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) ccxo.getChild(JointBayesianBridgeDistributionModel.class);
-                preconditioningUpdateFrequency = 1;
                 preconditioner = new MassPreconditioner.ShrinkagePreconditioner(bridge, transform);
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");

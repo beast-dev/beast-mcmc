@@ -1,6 +1,7 @@
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.math.distributions.NormalDistribution;
 
 /**
@@ -8,7 +9,8 @@ import dr.math.distributions.NormalDistribution;
  * @author Akihiko Nishimura
  */
 
-public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel {
+public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel
+implements PriorPreconditioningProvider {
 
     public JointBayesianBridgeDistributionModel(Parameter globalScale,
                                                 Parameter localScale,
@@ -59,17 +61,12 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         return pdf;
     }
 
-    private double getStandardDeviation(int index) {
+    public double getStandardDeviation(int index) {
         double globalLocalProduct = globalScale.getParameterValue(0) * localScale.getParameterValue(index);
         if (slabWidth != null) {
             double ratio = globalLocalProduct / slabWidth.getParameterValue(0);
             globalLocalProduct /= Math.sqrt(1.0 + ratio * ratio);
         }
-        return globalLocalProduct;
-    }
-
-    public double getGlobalLocalProduct(int index) {
-        double globalLocalProduct = globalScale.getParameterValue(0) * localScale.getParameterValue(index);
         return globalLocalProduct;
     }
 

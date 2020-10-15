@@ -9,6 +9,7 @@ import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
@@ -63,15 +64,15 @@ public interface MassPreconditioner {
                 return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay);
             }
         },
-        SHRINKAGE_DIAGONAL("shrinkageDiagonal") {
+        PRIOR_DIAGONAL("priorDiagonal") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
 
-                if (!(gradient instanceof JointBayesianBridgeDistributionModel)) {
-                    throw new RuntimeException("Gradient must be a JointBayesianBridgeDistributionModel for shrinkageDisgonal preconditioning!");
+                if (!(gradient instanceof PriorPreconditioningProvider)) {
+                    throw new RuntimeException("Gradient must be a PriorPreconditioningProvider for prior preconditioning!");
                 }
 
-                return new ShrinkagePreconditioner((JointBayesianBridgeDistributionModel) gradient, transform);
+                return new PriorPreconditioner((PriorPreconditioningProvider) gradient, transform);
 
             }
         },
@@ -405,26 +406,26 @@ public interface MassPreconditioner {
         }
     }
 
-    class ShrinkagePreconditioner extends DiagonalPreconditioning {
+    class PriorPreconditioner extends DiagonalPreconditioning {
 
-        JointBayesianBridgeDistributionModel bridge;
+        PriorPreconditioningProvider priorDistribution;
 
-        public ShrinkagePreconditioner(JointBayesianBridgeDistributionModel bridge, Transform transform){
-            super(bridge.getDimension(), transform);
-            this.bridge = bridge;
+        public PriorPreconditioner(PriorPreconditioningProvider priorDistribution, Transform transform){
+            super(priorDistribution.getDimension(), transform);
+            this.priorDistribution = priorDistribution;
             inverseMass = computeInverseMass();
         }
 
-        public MassPreconditioner factory(JointBayesianBridgeDistributionModel bridge, Transform transform) {
-            return new ShrinkagePreconditioner(bridge, transform);
+        public MassPreconditioner factory(PriorPreconditioningProvider priorDistribution, Transform transform) {
+            return new PriorPreconditioner(priorDistribution, transform);
         }
 
         @Override
         protected double[] computeInverseMass() {
-            double diagonal[] = new double[(bridge.getDimension())];
+            double diagonal[] = new double[(priorDistribution.getDimension())];
 
-            for (int i = 0; i < bridge.getDimension(); i++){
-                diagonal[i] = bridge.getGlobalLocalProduct(i);
+            for (int i = 0; i < priorDistribution.getDimension(); i++){
+                diagonal[i] = Math.pow(priorDistribution.getStandardDeviation(i), 2);
             }
             return diagonal;
         }

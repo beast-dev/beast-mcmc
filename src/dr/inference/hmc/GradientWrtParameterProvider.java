@@ -95,12 +95,14 @@ public interface GradientWrtParameterProvider {
 
         @Override
         public String getReport() {
-            return getReportAndCheckForError(this, parameter.getBounds().getLowerLimit(0),
+            return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                    parameter.getBounds().getLowerLimit(0),
                     parameter.getBounds().getUpperLimit(0), null);
         }
     }
 
-    class MismatchException extends Exception { }
+    class MismatchException extends Exception {
+    }
 
     class CheckGradientNumerically {
 
@@ -114,9 +116,9 @@ public interface GradientWrtParameterProvider {
         private final double smallThreshold;
 
         CheckGradientNumerically(GradientWrtParameterProvider provider,
-                                        double lowerBound, double upperBound,
-                                        Double nullableTolerance,
-                                        Double nullableSmallNumberThreshold) {
+                                 double lowerBound, double upperBound,
+                                 Double nullableTolerance,
+                                 Double nullableSmallNumberThreshold) {
             this.provider = provider;
             this.parameter = provider.getParameter();
             this.lowerBound = lowerBound;

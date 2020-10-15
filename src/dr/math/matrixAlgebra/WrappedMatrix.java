@@ -570,5 +570,4 @@ public interface WrappedMatrix extends ReadableMatrix, WritableVector, WritableM
     }
 
 
-
 }

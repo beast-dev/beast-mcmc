@@ -45,6 +45,8 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
 
     private final PrecisionType precisionType;
 
+    private String tipTraitName;
+
     public ElementaryVectorDataModel(String name,
                                      Parameter tipIndicator,
                                      Parameter dimIndicator,
@@ -78,6 +80,16 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     @Override
     public int getTraitDimension() {
         return dimTrait;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
     }
 
     @Override

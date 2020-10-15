@@ -25,11 +25,11 @@
 
 package dr.inferencexml.operators.hmc;
 
-import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
+import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
@@ -56,7 +56,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
-    private final static String SHRINKAGE_PRECONDITIONER = "shrinkagePreconditioner";
+    private final static String PRIOR_PRECONDITIONER = "priorPreconditioner";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -163,11 +163,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             }
             XMLObject cxo = xo.getChild(PRECONDITIONER);
 
-            if (cxo.hasChildNamed(SHRINKAGE_PRECONDITIONER)) {
-                XMLObject ccxo = cxo.getChild(SHRINKAGE_PRECONDITIONER);
-                JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) ccxo.getChild(JointBayesianBridgeDistributionModel.class);
-                preconditioningUpdateFrequency = 1;
-                preconditioner = new MassPreconditioner.ShrinkagePreconditioner(bridge, transform);
+            if (cxo.hasChildNamed(PRIOR_PRECONDITIONER)) {
+                XMLObject ccxo = cxo.getChild(PRIOR_PRECONDITIONER);
+                PriorPreconditioningProvider priorDistribution = (PriorPreconditioningProvider) ccxo.getChild(0);
+                preconditioner = new MassPreconditioner.PriorPreconditioner(priorDistribution, transform);
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");
             }

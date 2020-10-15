@@ -44,6 +44,10 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitDimension();
 
+    String getTipTraitName();
+
+    void setTipTraitName(String name);
+
     default int getDataDimension() {
         return getTraitDimension();
     }
@@ -72,6 +76,8 @@ public interface ContinuousTraitPartialsProvider {
     default boolean suppliesWishartStatistics() {
         return true;
     }
+
+    default int[] getPartitionDimensions() { return null;}
 
     default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
         // Do nothing

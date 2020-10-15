@@ -23,18 +23,14 @@ public class NormalExtensionGibbsProviderParser extends AbstractXMLObjectParser 
 
         TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
-        String treeTraitName = xo.getStringAttribute(TREE_TRAIT_NAME);
-
-        return new GammaGibbsProvider.NormalExtensionGibbsProvider(
-                dataModel, likelihood, treeTraitName);
+        return new GammaGibbsProvider.NormalExtensionGibbsProvider(dataModel, likelihood);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class),
-                new ElementRule(TreeDataLikelihood.class),
-                AttributeRule.newStringRule(TREE_TRAIT_NAME)
+                new ElementRule(TreeDataLikelihood.class)
         };
     }
 

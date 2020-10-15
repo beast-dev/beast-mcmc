@@ -95,7 +95,7 @@
         <repeatedMeasuresModel idref = "X.repeatedMeasures"/>
         <multivariateDiffusionModel idref = "X.diffusionModel"/>
     </varianceProportionStatistic>
-    
+
     <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="{}">
         <message>
             Check trait variance
@@ -104,10 +104,10 @@
             <varianceProportionStatistic idref="varianceLog"/>
         </actual>
         <expected>
-			0.5218158 9.21057e-05 0.03876025 0.0107205 
-			9.21057e-05 0.9815479 0.04469211 0.006160916 
-			0.03876025 0.04469211 0.03743257 -0.0165531 
-			0.0107205 0.006160916 -0.0165531 0.7170905 
+			0.999268 0.00012865 0.2744264 0.01751629
+			0.00012865 0.999985 0.2307963 0.007342278
+			0.2744264 0.2307963 0.9798587 -0.0999956
+			0.01751629 0.007342278 -0.0999956 0.9996847
         </expected>
     </assertEqual>
 
@@ -120,7 +120,7 @@
     <report>
         <diffusionGradient idref="errorModel.gradient"/>
     </report>
-
+    
     <assertEqual tolerance="1e-3" verbose="true">
         <message>
             Check log likelihood of observed data
@@ -254,7 +254,7 @@ file_results <- file.path(results_folder, "testRepeatedMeasuresTreeScaled.log")
 
 ## Parameters
 dimTrait <- 4
-sampleSizeRoot <- Inf
+sampleSizeRoot <- 0.001
 traitName <- "X"
 tree_scaled = TRUE
 

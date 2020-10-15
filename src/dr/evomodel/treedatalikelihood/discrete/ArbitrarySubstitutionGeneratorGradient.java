@@ -75,22 +75,19 @@ public class ArbitrarySubstitutionGeneratorGradient implements GradientWrtParame
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
         if (test == null) {
+            
+            DifferentialMassProvider differentialMassProvider = time -> {
 
-//            DifferentialMassProvider.DifferentialWrapper.WrtParameter wrtParameter = substitutionModel.factory(parameter, 1);
+                double[] differential = new double[stateCount * stateCount];
+                double[] generator = new double[stateCount * stateCount];
 
-//            DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider.DifferentialWrapper(substitutionModel, wrtParameter);
+                substitutionModel.getInfinitesimalMatrix(generator);
+                differential[0] = generator[0];
+                differential[1] = generator[1];
+                differential[2] = generator[2]; // Comment out for irreversible case
+                differential[3] = generator[3]; // Comment out for irreversible case
 
-            DifferentialMassProvider differentialMassProvider = new DifferentialMassProvider() {
-                @Override
-                public double[] getDifferentialMassMatrix(double time) {
-
-                    double[] differential = new double[stateCount * stateCount];
-
-                    substitutionModel.getInfinitesimalMatrix(differential);
-                    differential[2] = differential[3] = 0.0;
-
-                    return differential;
-                }
+                return differential;
             };
 
             List<DifferentialMassProvider> differentialMassProviderList = new ArrayList<DifferentialMassProvider>();

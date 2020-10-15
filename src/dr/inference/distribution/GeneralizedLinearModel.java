@@ -250,6 +250,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return designMatrix.get(j).getParameterAsMatrix();
     }
 
+    public DesignMatrix getDesignMatrix(int j) { return designMatrix.get(j); }
 
     public double[] getScale() {
 

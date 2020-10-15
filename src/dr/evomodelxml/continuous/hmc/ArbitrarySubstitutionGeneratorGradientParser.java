@@ -1,7 +1,7 @@
 /*
- * NodeHeightGradientParser.java
+ * BranchSubstitutionParameterGradientParser.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,41 +25,53 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.substmodel.GLMSubstitutionModel;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.discrete.GlmSubstitutionModelGradient;
+import dr.evomodel.treedatalikelihood.discrete.ArbitrarySubstitutionGeneratorGradient;
+import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
+import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Marc A. Suchard
+ * @author Xiang Ji
  */
+public class ArbitrarySubstitutionGeneratorGradientParser extends AbstractXMLObjectParser {
 
-public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser {
-
-    private static final String PARSER_NAME = "glmSubstitutionModelGradient";
+    private static final String NAME = "substitutionGeneratorGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String HOMOGENEOUS_PROCESS = "homogeneous";
+    private static final String DIMENSION = "dim";
+    public static final String USE_HESSIAN = "useHessian";
 
-    public String getParserName(){ return PARSER_NAME; }
+    @Override
+    public String getParserName() {
+        return NAME;
+    }
 
+    @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
+
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+
+        BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
+
         OldGLMSubstitutionModel substitutionModel = (OldGLMSubstitutionModel) xo.getChild(OldGLMSubstitutionModel.class);
 
-        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-        if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
-            throw new XMLParseException("Unknown likelihood delegate type");
-        }
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+        return new ArbitrarySubstitutionGeneratorGradient(traitName, treeDataLikelihood, beagleData, substitutionModel);
 
-        return new GlmSubstitutionModelGradient(traitName, treeDataLikelihood,
-                (BeagleDataLikelihoodDelegate)delegate, substitutionModel);
     }
 
     @Override
@@ -68,7 +80,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(TRAIT_NAME, true),
+            AttributeRule.newStringRule(TRAIT_NAME),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(OldGLMSubstitutionModel.class),
     };
@@ -80,6 +92,6 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
 
     @Override
     public Class getReturnType() {
-        return GlmSubstitutionModelGradient.class;
+        return ArbitrarySubstitutionGeneratorGradient.class;
     }
 }

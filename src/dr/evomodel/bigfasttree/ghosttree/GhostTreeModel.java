@@ -23,11 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.ghosttree;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.bigfasttree.BigFastTreeModel;
 import dr.evomodel.tree.TreeModel;
 
 import dr.util.Citation;
@@ -128,7 +129,7 @@ public class GhostTreeModel extends BigFastTreeModel {
      * @param ghostNode
      * @return corporealNode
      */
-    private NodeRef getCorporealCounterPart(NodeRef ghostNode) {
+    public NodeRef getCorporealCounterPart(NodeRef ghostNode) {
         int corporealNodeIndex = ghostToCorporealNodeMap[ghostNode.getNumber()];
         if (corporealNodeIndex == -1) {
             return null;
@@ -136,7 +137,7 @@ public class GhostTreeModel extends BigFastTreeModel {
         return corporealTreeModel.getNode(corporealNodeIndex);
     }
 
-    private NodeRef getNextCorporealDescendent(NodeRef ghostNode){
+    public NodeRef getNextCorporealDescendent(NodeRef ghostNode){
         if(hasCorporealCounterPart(ghostNode)){
             throw new IllegalArgumentException("Expected a node with degree 0 or 1 in corporeal tree but found degree 2");
         }
@@ -150,7 +151,7 @@ public class GhostTreeModel extends BigFastTreeModel {
      * @param ghostNode
      * @return boolean
      */
-    private boolean hasCorporealCounterPart(NodeRef ghostNode) {
+    public boolean hasCorporealCounterPart(NodeRef ghostNode) {
         return ghostToCorporealNodeMap[ghostNode.getNumber()] != -1;
     }
 
@@ -387,25 +388,6 @@ public class GhostTreeModel extends BigFastTreeModel {
         corporealToGhostNodeMap[corpNodeNumber] = ghostNodeNumber;
     }
 
-    /**
-     * Rebuild the corporeal tree from scratch
-     */
-    private void updateCorporealTreeModelFromScratch() {
-
-        Map<NodeRef, NodeRef> temporaryMap = new HashMap<>();
-        FlexibleNode corporealRootNode = createCorporealTree(this.getRoot(), temporaryMap);
-        FlexibleTree flexibleTree = new FlexibleTree(corporealRootNode);
-        flexibleTree.adoptTreeModelOrdering();
-        corporealTreeModel.copyTopology(flexibleTree);
-
-        for (Map.Entry<NodeRef, NodeRef> entry :
-                temporaryMap.entrySet()) {
-            int ghostNodeInt = entry.getKey().getNumber();
-            int corporealNodeInt = entry.getValue().getNumber();
-            ghostToCorporealNodeMap[ghostNodeInt] = corporealNodeInt;
-            corporealToGhostNodeMap[corporealNodeInt] = ghostNodeInt;
-        }
-    }
 
     /**
      * Create the corporeal tree model and node maps
@@ -481,7 +463,7 @@ public class GhostTreeModel extends BigFastTreeModel {
         }
     }
 
-    public TreeModel getCorporealTreeModel() {
+    public CorporealTreeModel getCorporealTreeModel() {
         return corporealTreeModel;
     }
 

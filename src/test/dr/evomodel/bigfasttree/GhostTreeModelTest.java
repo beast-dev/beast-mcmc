@@ -1,24 +1,15 @@
 package test.dr.evomodel.bigfasttree;
 
-import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.bigfasttree.BigFastTreeModel;
-import dr.evomodel.bigfasttree.CladeNodeModel;
-import dr.evomodel.bigfasttree.GhostTreeModel;
-import dr.evomodel.operators.SubtreeJumpOperator;
+import dr.evomodel.bigfasttree.ghosttree.GhostTreeModel;
 import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
-
-import java.io.IOException;
-import java.util.ArrayList;
 
 public class GhostTreeModelTest extends TestCase {
     private GhostTreeModel ghostTree;

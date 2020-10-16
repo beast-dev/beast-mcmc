@@ -4,10 +4,8 @@ package dr.evomodelxml.bigfasttree;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.ApproximatePoissonTreeLikelihood;
-import dr.evomodel.bigfasttree.BranchLengthProvider;
-import dr.evomodel.bigfasttree.ConstrainedTreeBranchLengthProvider;
-import dr.evomodel.bigfasttree.RzhetskyNeiBranchLengthProvider;
+import dr.evolution.tree.TreeUtils;
+import dr.evomodel.bigfasttree.*;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
@@ -36,11 +34,20 @@ public class ApproximatePoissonTreeLikelihoodParser extends AbstractXMLObjectPar
         BranchLengthProvider branchLengthProvider;
         if(xo.getElementFirstChild(DATA) instanceof  Tree){
             Tree dataTree = (Tree) xo.getElementFirstChild(DATA);
-            branchLengthProvider = new ConstrainedTreeBranchLengthProvider(dataTree,treeModel);
+            CladeNodeModel cladeNodeModel = null;
+            try {
+                cladeNodeModel = new CladeNodeModel(dataTree, treeModel);
+            } catch (TreeUtils.MissingTaxonException e) {
+                e.printStackTrace();
+            }
+            branchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeNodeModel);
+        }else if(xo.getElementFirstChild(DATA) instanceof  CladeNodeModel) {
+            CladeNodeModel cladeNodeModel = (CladeNodeModel) xo.getElementFirstChild(DATA);
+            branchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeNodeModel);
         }else{
-            DistanceMatrix dataMatrix = (DistanceMatrix)xo.getElementFirstChild(DATA);
-            branchLengthProvider = new RzhetskyNeiBranchLengthProvider(dataMatrix,treeModel);
-        }
+                DistanceMatrix dataMatrix = (DistanceMatrix)xo.getElementFirstChild(DATA);
+                branchLengthProvider = new RzhetskyNeiBranchLengthProvider(dataMatrix,treeModel);
+            }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 

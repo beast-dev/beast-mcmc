@@ -27,7 +27,7 @@ package dr.evomodelxml.bigfasttree;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.bigfasttree.GhostTreeModel;
+import dr.evomodel.bigfasttree.ghosttree.GhostTreeModel;
 
 import dr.xml.*;
 

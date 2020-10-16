@@ -1,7 +1,9 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.ghosttree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BigFastTreeModel;
+import dr.evomodel.bigfasttree.ghosttree.GhostTreeModel;
 
 /**
  * A tree model that does not allow for the usual edits so that it's unlikely to be
@@ -12,14 +14,19 @@ import dr.evolution.tree.Tree;
 public class CorporealTreeModel extends BigFastTreeModel {
     public static final String CORPOREAL_TREE_MODEL = "corporealTreeModel";
 
+    private final GhostTreeModel ghostTreeModel;
     public CorporealTreeModel(String name, Tree tree,GhostTreeModel ghostTreeModel) {
         super(name, tree);
+        this.ghostTreeModel = ghostTreeModel;
         addModel(ghostTreeModel);
     }
-    public CorporealTreeModel(Tree tree,GhostTreeModel ghostTreeModel) {
+    public CorporealTreeModel(Tree tree, GhostTreeModel ghostTreeModel) {
         this(CORPOREAL_TREE_MODEL, tree,ghostTreeModel);
     }
 
+    public GhostTreeModel getGhostTreeModel(){
+        return this.ghostTreeModel;
+    }
     // *****************************************************************
     // Interface MutableTree
     // *****************************************************************

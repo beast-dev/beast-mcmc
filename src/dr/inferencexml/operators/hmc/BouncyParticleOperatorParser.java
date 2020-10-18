@@ -47,6 +47,10 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String MASKING = "mask";
 
+    private final static String TEST_NATIVE_BOUNCE = "testNativeFindBounce";
+    private final static String USE_NATIVE_BOUNCE = "useNativeFindBounce";
+    private final static String USE_NATIVE_UPDATE_DYNAMICS = "useNativeUpdateDynamics";
+
     @Override
     public String getParserName() {
         return BPO_OPERATOR;
@@ -60,7 +64,9 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
                 (PrecisionMatrixVectorProductProvider) xo.getChild(PrecisionMatrixVectorProductProvider.class),
                 (PrecisionColumnProvider) xo.getChild(PrecisionColumnProvider.class),
                 xo.getDoubleAttribute(MCMCOperator.WEIGHT),
-                parseRuntimeOptions(xo), parseMask(xo));
+                parseRuntimeOptions(xo),
+                parseNativeCodeOptions(xo),
+                parseMask(xo));
     }
 
     static Parameter parseMask(XMLObject xo) throws XMLParseException {
@@ -79,6 +85,15 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
 
         return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency);
+    }
+
+    static AbstractParticleOperator.NativeCodeOptions parseNativeCodeOptions(XMLObject xo) throws XMLParseException {
+
+        boolean testNativeFindNextBounce = xo.getAttribute(TEST_NATIVE_BOUNCE, false);
+        boolean useNativeFindNextBounce = xo.getAttribute(USE_NATIVE_BOUNCE, false);
+        boolean useNativeUpdateDynamics = xo.getAttribute(USE_NATIVE_UPDATE_DYNAMICS, false);
+
+        return new AbstractParticleOperator.NativeCodeOptions(testNativeFindNextBounce, useNativeFindNextBounce, useNativeUpdateDynamics);
     }
 
     @Override

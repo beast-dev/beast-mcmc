@@ -50,10 +50,10 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     public ReversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                     PrecisionColumnProvider columnProvider,
-                                    double weight, Options runtimeOptions, Parameter mask,
+                                    double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask,
                                     int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask, threadCount);
     }
 
     @Override
@@ -196,7 +196,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         } else {
 
-            if (USE_NATIVE_BOUNCE){
+            if (nativeCodeOptions.useNativeFindNextBounce){
                 firstBounce = getNextBounceNative(position, velocity, action, gradient, momentum);
             } else {
                 firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
@@ -207,7 +207,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             timer.stopTimer("getNext");
         }
 
-        if (TEST_NATIVE_BOUNCE) {
+        if (nativeCodeOptions.testNativeFindNextBounce) {
             testNative(firstBounce, position, velocity, action, gradient, momentum);
         }
 
@@ -509,7 +509,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                         int eventIndex,
                         Type eventType) {
 
-        if (!TEST_NATIVE_INNER_BOUNCE) {
+        if (!nativeCodeOptions.useNativeUpdateDynamics) {
 
             updateDynamics(position.getBuffer(), velocity.getBuffer(),
                     action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),

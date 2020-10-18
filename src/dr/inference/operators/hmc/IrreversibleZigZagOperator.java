@@ -46,10 +46,10 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public IrreversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                       PrecisionMatrixVectorProductProvider multiplicationProvider,
                                       PrecisionColumnProvider columnProvider,
-                                      double weight, Options runtimeOptions, Parameter mask,
+                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask,
                                       int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask, threadCount);
     }
 
 
@@ -138,7 +138,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             timer.startTimer("getNext");
         }
 
-        if (USE_NATIVE_BOUNCE) {
+        if (nativeCodeOptions.useNativeFindNextBounce) {
             firstBounce = getNextBounceNative(position, velocity, action, gradient);
         } else {
             firstBounce = getNextBounceImpl(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
@@ -149,7 +149,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             timer.stopTimer("getNext");
         }
 
-        if (TEST_NATIVE_BOUNCE) {
+        if (nativeCodeOptions.testNativeFindNextBounce) {
             testNative(firstBounce, position, velocity, action, gradient);
         }
 

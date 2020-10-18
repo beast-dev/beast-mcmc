@@ -48,8 +48,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
                                   PrecisionColumnProvider columnProvider,
-                                  double weight, Options runtimeOptions, Parameter mask) {
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask);
+                                  double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask) {
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask);
     }
 
     @Override

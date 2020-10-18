@@ -60,7 +60,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
-                             double weight, Options runtimeOptions, Parameter mask) {
+                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -70,6 +70,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.maskVector = mask != null ? mask.getParameterValues() : null;
 
         this.runtimeOptions = runtimeOptions;
+        this.nativeCodeOptions = nativeOptions;
         this.preconditioning = setupPreconditioning();
         this.meanVector = getMeanVector(gradientProvider);
 
@@ -81,7 +82,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         long nativeSeed = MathUtils.nextLong();
         int nThreads = 4;
 
-        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || USE_NATIVE_BOUNCE || CPP_NEXT_BOUNCE) {
+        if (nativeOptions.testNativeFindNextBounce || nativeOptions.useNativeFindNextBounce || nativeOptions.useNativeUpdateDynamics) {
 
             NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
 
@@ -366,6 +367,18 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
+    public static class NativeCodeOptions {
+        final boolean testNativeFindNextBounce;
+        final boolean useNativeFindNextBounce;
+        final boolean useNativeUpdateDynamics;
+
+        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce, boolean useNativeUpdateDynamics){
+            this.testNativeFindNextBounce = testNativeFindNextBounce;
+            this.useNativeFindNextBounce = useNativeFindNextBounce;
+            this.useNativeUpdateDynamics = useNativeUpdateDynamics;
+        }
+    }
+
     protected class Preconditioning {
 
         final WrappedVector mass;
@@ -433,6 +446,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;
     private final Options runtimeOptions;
+    protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
     private final double[] maskVector;
     int numEvents;
@@ -443,11 +457,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 
-    private final static boolean TEST_NATIVE_OPERATOR = false;
-    final static boolean TEST_NATIVE_BOUNCE = false;
-    final static boolean USE_NATIVE_BOUNCE = true;
-//    final static boolean TEST_CRITICAL_REGION = false;
-    final static boolean TEST_NATIVE_INNER_BOUNCE = true;
-
+//  final static boolean TEST_CRITICAL_REGION = false;
     NativeZigZagWrapper nativeZigZag;
 }

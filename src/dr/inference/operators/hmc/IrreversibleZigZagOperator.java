@@ -80,12 +80,31 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         updatePosition(position.getBuffer(), velocity.getBuffer(), time);
     }
 
+    private MinimumTravelInformation getNextBounceNative(
+            WrappedVector position,
+            WrappedVector velocity,
+            WrappedVector action,
+            WrappedVector gradient) {
 
-    private MinimumTravelInformation testNative(WrappedVector position,
-                                                WrappedVector velocity,
-                                                WrappedVector action,
-                                                WrappedVector gradient) {
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
 
+        final MinimumTravelInformation mti = nativeZigZag.getNextIrreversibleEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        return mti;
+    }
+
+    private void testNative(MinimumTravelInformation firstBounce,
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient) {
         if (TIMING) {
             timer.startTimer("getNextC++");
         }
@@ -99,7 +118,10 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             timer.stopTimer("getNextC++");
         }
 
-        return mti;
+        if (!firstBounce.equals(mti)) {
+            System.err.println(mti + " ?= " + firstBounce + "\n");
+            System.exit(-1);
+        }
     }
 
     @SuppressWarnings("Duplicates")
@@ -116,15 +138,19 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             timer.startTimer("getNext");
         }
 
-        firstBounce = getNextBounceImpl(position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer());
+        if (USE_NATIVE_BOUNCE) {
+            firstBounce = getNextBounceNative(position, velocity, action, gradient);
+        } else {
+            firstBounce = getNextBounceImpl(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
+                    gradient.getBuffer());
+        }
 
         if (TIMING) {
             timer.stopTimer("getNext");
         }
 
         if (TEST_NATIVE_BOUNCE) {
-            firstBounce = testNative(position, velocity, action, gradient);
+            testNative(firstBounce, position, velocity, action, gradient);
         }
 
         return firstBounce;

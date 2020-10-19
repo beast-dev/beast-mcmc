@@ -537,6 +537,7 @@
             <parameter idref="traits.precision"/>
         </log>
     </mcmc>
+
     <report>
         <property name="timer">
             <mcmc idref="mcmc"/>

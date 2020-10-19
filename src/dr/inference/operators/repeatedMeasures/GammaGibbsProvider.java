@@ -187,20 +187,15 @@ public interface GammaGibbsProvider {
         // TODO: add citation to "Sparse Bayesian infinite factor models BY A. BHATTACHARYA AND D. B. DUNSON, Biometrika (2011)"
 
         private final CompoundParameter rowMultipliers;
-        private final MatrixShrinkageLikelihood shrinkageLikelihood; // TODO: change to NormalStatisticsProvider
-        private final MatrixParameterInterface matParam;
+        private final MultiplicativeGammaGibbsHelper helper;
         private final int index;
 
         public MultiplicativeGammaGibbsProvider(CompoundParameter rowMultipliers,
-                                                MatrixShrinkageLikelihood shrinkageLikelihood,
-                                                MatrixParameterInterface matParam,
+                                                MultiplicativeGammaGibbsHelper helper,
                                                 int index) {
             this.rowMultipliers = rowMultipliers;
-            this.shrinkageLikelihood = shrinkageLikelihood;
-            this.matParam = matParam;
+            this.helper = helper;
             this.index = index;
-
-
         }
 
 
@@ -210,18 +205,14 @@ public interface GammaGibbsProvider {
 
             double rateSum = 0;
 
-            int k = matParam.getColumnDimension();
-            int p = matParam.getRowDimension();
+            int k = helper.getColumnDimension();
+            int p = helper.getRowDimension();
+
             for (int i = index; i < k; i++) {
                 double globalConst = gpMult(i + 1, index);
-                double sum = 0;
-                for (int j = 0; j < p; j++) {
-                    double localSD = shrinkageLikelihood.getLikelihood(i).getLocalScale().getParameterValue(j);
-                    double loadEl = matParam.getParameterValue(j, i);
-                    double x = loadEl / localSD;
-                    sum += x * x;
-                }
-                rateSum += globalConst * sum;
+                double sumSquares = helper.computeSumSquaredErrors(i);
+
+                rateSum += globalConst * sumSquares;
             }
 
             return new SufficientStatistics(p * (k - index), rateSum);

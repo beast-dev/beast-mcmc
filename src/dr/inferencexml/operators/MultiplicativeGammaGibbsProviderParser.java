@@ -5,6 +5,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
+import dr.inference.operators.repeatedMeasures.MultiplicativeGammaGibbsHelper;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -36,24 +37,23 @@ public class MultiplicativeGammaGibbsProviderParser extends AbstractXMLObjectPar
             }
         }
 
-        MatrixShrinkageLikelihood shrinkageLikelihood =
-                (MatrixShrinkageLikelihood) xo.getChild(MatrixShrinkageLikelihood.class);
+        MultiplicativeGammaGibbsHelper helper =
+                (MultiplicativeGammaGibbsHelper) xo.getChild(MultiplicativeGammaGibbsHelper.class);
 
 //        MatrixParameterInterface matParam = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         int row = xo.getIntegerAttribute(ROW);
 
         int k = rowMultList.size();
-//        if (shrinkageLikelihood.getDimension() != k) {
+//        if (helper.getDimension() != k) {
 //            throw new XMLParseException("Dimension mismatch: the `" + ROW_MULTS + "` element has dimension " + k +
 //                    ", while the `" + MatrixShrinkageLikelihoodParser.MATRIX_SHRINKAGE + "` element has dimension " +
-//                    shrinkageLikelihood.getDimension() + ".");
+//                    helper.getDimension() + ".");
 //
 //        }
-        MatrixParameterInterface matParam = (MatrixParameterInterface) shrinkageLikelihood.getParameter();
-        if (matParam.getColumnDimension() != k) {
+        if (helper.getColumnDimension() != k) {
             throw new XMLParseException("Dimension mismatch: the `" + ROW_MULTS + "` element has dimension " + k +
                     ", while the matrix parameter element has " +
-                    shrinkageLikelihood.getDimension() + " rows.");
+                    helper.getColumnDimension() + " columns.");
         }
 
         Parameter[] rowParams = new Parameter[k];
@@ -62,7 +62,7 @@ public class MultiplicativeGammaGibbsProviderParser extends AbstractXMLObjectPar
         }
         CompoundParameter multParam = new CompoundParameter(ROW_MULTS, rowParams);
 
-        return new GammaGibbsProvider.MultiplicativeGammaGibbsProvider(multParam, shrinkageLikelihood, matParam, row - 1);
+        return new GammaGibbsProvider.MultiplicativeGammaGibbsProvider(multParam, helper, row - 1);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class MultiplicativeGammaGibbsProviderParser extends AbstractXMLObjectPar
                 new ElementRule(ROW_MULTS, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
                 }),
-                new ElementRule(MatrixShrinkageLikelihood.class),
+                new ElementRule(MultiplicativeGammaGibbsHelper.class),
 //                new ElementRule(MatrixParameterInterface.class),
                 AttributeRule.newIntegerRule(ROW)
         };

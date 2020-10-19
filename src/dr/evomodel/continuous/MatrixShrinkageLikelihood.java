@@ -4,6 +4,7 @@ import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.distribution.shrinkage.BayesianBridgeLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
+import dr.inference.operators.repeatedMeasures.MultiplicativeGammaGibbsHelper;
 import dr.xml.Reportable;
 
 import java.util.Arrays;
@@ -13,7 +14,7 @@ import java.util.Arrays;
  */
 
 public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implements GradientWrtParameterProvider,
-        NormalStatisticsProvider, Reportable {
+        NormalStatisticsProvider, Reportable, MultiplicativeGammaGibbsHelper {
 
     private final MatrixParameterInterface loadings;
     private final BayesianBridgeLikelihood[] rowPriors;
@@ -145,7 +146,7 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
     public String getReport() {
         StringBuilder sb = new StringBuilder("MatrixShrinkageLikelihood\n");
         int counter = 0;
-        for (BayesianBridgeLikelihood like: rowPriors) {
+        for (BayesianBridgeLikelihood like : rowPriors) {
             counter += 1;
             sb.append("\tLikelihood " + counter + ": ");
             sb.append(like.getLogLikelihood());
@@ -154,6 +155,30 @@ public class MatrixShrinkageLikelihood extends AbstractModelLikelihood implement
         sb.append("Likelihood: ");
         sb.append(getLogLikelihood());
         sb.append("\n");
-        return  sb.toString();
+        return sb.toString();
+    }
+
+    @Override
+    public double computeSumSquaredErrors(int column) {
+        int p = loadings.getRowDimension();
+
+        double sumSquares = 0;
+        for (int j = 0; j < p; j++) {
+            double localSD = getLikelihood(column).getLocalScale().getParameterValue(j);
+            double loadEl = loadings.getParameterValue(j, column);
+            double x = loadEl / localSD;
+            sumSquares += x * x;
+        }
+        return sumSquares;
+    }
+
+    @Override
+    public int getRowDimension() {
+        return loadings.getRowDimension();
+    }
+
+    @Override
+    public int getColumnDimension() {
+        return loadings.getColumnDimension();
     }
 }

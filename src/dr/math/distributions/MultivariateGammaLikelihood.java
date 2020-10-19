@@ -61,7 +61,7 @@ public class MultivariateGammaLikelihood extends AbstractModelLikelihood impleme
     public double logPdf(double[] x) {
         double sum = 0;
         for (int i = 0; i < dim; i++) {
-            sum += GammaDistribution.logPdf(x[i], scale.getParameterValue(i), shape.getParameterValue(i));
+            sum += GammaDistribution.logPdf(x[i], shape.getParameterValue(i), scale.getParameterValue(i));
         }
         return sum;
     }

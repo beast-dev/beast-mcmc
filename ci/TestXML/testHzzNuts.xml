@@ -82,7 +82,7 @@
                 </report>
         </actual>
         <expected>
-        	-22.479977866599285
+        	-15.899541972202282
         </expected>
     </assertEqual>
 
@@ -144,7 +144,7 @@
                 </report>
         </actual>
         <expected>
-        	-16.817552909712706
+        	-16.529828825452256
         </expected>
     </assertEqual>
 

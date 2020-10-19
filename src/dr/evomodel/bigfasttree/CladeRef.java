@@ -9,5 +9,4 @@ import java.util.BitSet;
  */
 public interface CladeRef {
     int getNumber();
-    BitSet getBits();
 }

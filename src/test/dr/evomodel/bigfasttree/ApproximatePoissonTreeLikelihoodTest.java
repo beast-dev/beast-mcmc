@@ -28,7 +28,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
         cladeModel = new CladeNodeModel(tree, treeModel);
-        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeModel);
 
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
                 1,
@@ -116,7 +116,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         treeModel.addChild(polytomyRoot0, tip1);
         treeModel.endTreeEdit();
 
-        cladeModel.setRootNode(cladeModel.getClade(polytomyRoot1),polytomyRoot1);
+//        cladeModel.setRootNode(cladeModel.getClade(polytomyRoot1),polytomyRoot1);
 
         double LL = approximatePoissonTreeLikelihood.getLogLikelihood();
         approximatePoissonTreeLikelihood.makeDirty();
@@ -138,7 +138,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
        treeModel = new BigFastTreeModel(importer2.importTree(null));
 
        CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
-       BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+       BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeModel);
 
        approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
                1,
@@ -176,7 +176,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
        treeModel.endTreeEdit();
 
 
-       cladeModel.setRootNode(clade,rootNode1);
+//       cladeModel.setRootNode(clade,rootNode1);
 
        double LL = approximatePoissonTreeLikelihood.getLogLikelihood();
        approximatePoissonTreeLikelihood.makeDirty();
@@ -196,7 +196,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
         CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
-        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeModel);
 
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
                 1,
@@ -268,7 +268,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
         CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
-        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeModel);
 
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
                 1,
@@ -293,7 +293,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
         treeModel.setNodeHeight(parent,treeModel.getNodeHeight(root)+1);
         treeModel.setRoot(parent);
-        cladeModel.setRootNode(clade, parent);
+//        cladeModel.setRootNode(clade, parent);
         treeModel.addChild(parent,root);
 
         treeModel.addChild(grandparent,sibling);
@@ -318,7 +318,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
         treeModel = new BigFastTreeModel(importer2.importTree(null));
 
         CladeNodeModel cladeModel = new CladeNodeModel(tree, treeModel);
-        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(tree,treeModel);
+        BranchLengthProvider constrainedBranchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeModel);
 
         approximatePoissonTreeLikelihood = new ApproximatePoissonTreeLikelihood("approximateTreeLikelihood",
                 1,
@@ -343,7 +343,7 @@ public class ApproximatePoissonTreeLikelihoodTest extends TestCase {
 
         treeModel.setNodeHeight(parent,treeModel.getNodeHeight(root)+1);
         treeModel.setRoot(parent);
-        cladeModel.setRootNode(clade, parent);
+//        cladeModel.setRootNode(clade, parent);
         treeModel.addChild(parent,root);
 
         treeModel.addChild(grandparent,sibling);

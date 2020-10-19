@@ -86,6 +86,11 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
 
+        if(operatorType==NodeHeightOperator.OperatorType.UNIFORM){
+            //TODO log that there is no adaptation on the uniform operator
+            mode =AdaptationMode.ADAPTATION_OFF;
+        }
+
         return new NodeHeightOperator(treeModel, weight, tuningParameter, operatorType, mode, targetAcceptance);
     }
 

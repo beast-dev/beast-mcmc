@@ -43,6 +43,7 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
 
     private CladeRef getRelevantClade(NodeRef nodeRef) {
         if (isGhostTree) {
+            //TODO test this branch
             GhostTreeModel ghostTreeModel = ((GhostTreeModel) tree);
             CorporealTreeModel corporealTreeModel = ghostTreeModel.getCorporealTreeModel();
             if (((GhostTreeModel) tree).hasCorporealCounterPart(nodeRef)) {
@@ -66,7 +67,7 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
                 return getRelevantClade(tree.getParent(nodeRef));
             }
         } else {
-            return cladeModel.getClade(nodeRef);
+            return cladeModel.getClade(tree.getParent(nodeRef));
         }
     }
 
@@ -79,8 +80,10 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
     @Override
     public double doOperation() {
 
+
         if (DEBUG) {
             System.out.println("Before move ");
+            System.out.println(tree.toString());
         }
 
         // choose a random nodes avoiding root and root's children
@@ -91,14 +94,17 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
         CladeRef eligibleClade = null;
         do {
             node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-            eligibleClade = getRelevantClade(node);
+
 
         } while (node == root || tree.getParent(node) == root);
 
         //Set clade and update number of draws if needed
+        eligibleClade = getRelevantClade(node);
         final NodeRef parent = tree.getParent(node);
+
         final NodeRef sibling = getOtherChild(tree, parent, node);
         final NodeRef grandParent = tree.getParent(parent);
+
 
         if (DEBUG) {
             System.out.println("removing parent");
@@ -132,7 +138,7 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
         if (isGhostTree && eligibleClade == cladeModel.getRootClade()) {
             startingNode = tree.getRoot();
         } else {
-            startingNode = cladeModel.getRootNode(eligibleClade);
+            startingNode = parent == cladeModel.getRootNode(eligibleClade)? sibling : cladeModel.getRootNode(eligibleClade);
         }
 
         getDistances(tree.getNodeHeight(node), startingNode, eligibleClade, nodeDistances, effectiveNodeHeights, nodes);
@@ -164,11 +170,11 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
 
 
         if (DEBUG) {
-            System.out.println("node = " + node);
-            System.out.println("parent= " + parent);
-            System.out.println("sibling = " + sibling);
-            System.out.println("newHeight: " + newHeight);
-            System.out.println("destination" + j);
+            System.out.println("node = " + node.getNumber());
+            System.out.println("parent= " + parent.getNumber());
+            System.out.println("sibling = " + sibling.getNumber());
+            System.out.println("newHeight = " + newHeight);
+            System.out.println("destination = " + j.getNumber());
         }
 
         NodeRef jParent = tree.getParent(j);
@@ -177,7 +183,7 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
             // parent will be the root
             tree.addChild(parent, j);
             tree.setRoot(parent);
-            cladeModel.setRootNode(eligibleClade, parent);
+//            cladeModel.setRootNode(eligibleClade, parent);
 
             assert cladeModel.getParent(eligibleClade) == null;
         } else {
@@ -190,11 +196,11 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
             // and add the parent of i as a child of the former parent of j
             tree.addChild(jParent, parent);
 
-            if (cladeModel.getClade(jParent) != eligibleClade) {
-                assert cladeModel.getClade(jParent) == cladeModel.getParent(eligibleClade);
-                assert cladeModel.getRootNode(eligibleClade) == j;
-                cladeModel.setRootNode(eligibleClade, parent);
-            }
+//            if (cladeModel.getClade(jParent) != eligibleClade) {
+//                assert cladeModel.getClade(jParent) == cladeModel.getParent(eligibleClade);
+//                assert cladeModel.getRootNode(eligibleClade) == j;
+//                cladeModel.setRootNode(eligibleClade, parent);
+//            }
         }
 
         tree.setNodeHeight(parent, newHeight);
@@ -219,7 +225,6 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
             System.out.println("after Move");
             System.out.println(tree.toString());
         }
-
 
         return 0;
     }

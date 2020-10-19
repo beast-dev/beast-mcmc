@@ -68,14 +68,14 @@ public class ApproximatePoissonTreeLikelihoodParser extends AbstractXMLObjectPar
 
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule("sequenceLength", false),
-            new OrRule(
-                    new ElementRule(DATA, new XMLSyntaxRule[]{
-                            new ElementRule(Tree.class)
-                    }),
-                    new ElementRule(DATA, new XMLSyntaxRule[]{
-                            new ElementRule(DistanceMatrix.class)
-                    })
-            ),
+//            new OrRule(
+//                    new ElementRule(DATA, new XMLSyntaxRule[]{
+//                            new ElementRule(Tree.class)
+//                    }),
+//                    new ElementRule(DATA, new XMLSyntaxRule[]{
+//                            new ElementRule(DistanceMatrix.class)
+//                    }),
+//            ),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class, true),
     };

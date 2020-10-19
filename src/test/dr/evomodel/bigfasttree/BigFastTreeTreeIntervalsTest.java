@@ -150,7 +150,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         IntervalList intervals = new TreeIntervals(tree,null,null);
         BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
 
-        CladeAwareSubtreePruneRegraft op = new CladeAwareSubtreePruneRegraft(clades, 1,1);
+        CladeAwareSubtreePruneRegraft op = new CladeAwareSubtreePruneRegraft(clades, 1);
         NodeHeightOperator nh = new NodeHeightOperator(tree,1,1000000, NodeHeightOperator.OperatorType.UNIFORM, AdaptationMode.ADAPTATION_OFF,0.25);
         NodeHeightOperator root = new NodeHeightOperator(tree,1,0.75, NodeHeightOperator.OperatorType.SCALEROOT, AdaptationMode.ADAPTATION_OFF,0.25);
         boolean pass = true;

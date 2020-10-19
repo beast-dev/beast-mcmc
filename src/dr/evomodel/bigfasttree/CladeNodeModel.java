@@ -3,6 +3,7 @@ package dr.evomodel.bigfasttree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -13,8 +14,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * A  model class maintains a map between nodes in an potentially unresolved tree and a resolved timetree that
- * is constrained to match the clades present in the unresolved tree.
+ * A  model class maintains a map between nodes an resolved tree and internal nodes in a static, compatible, potentially
+ * unresolved tree.
+ * <p>
  * NB: It is currently assumed that external nodes
  * never leave the clade. The model will only update internal nodes that may move about the tree while respecting the
  * clades.
@@ -43,23 +45,25 @@ public class CladeNodeModel extends AbstractModel {
         }
         this.cladeTree = cladeTree;
 
-
-
         this.treeModel = treeModel;
-        treeModel.addModel(this);
-//        addModel(treeModel); //could make smart enough to update its self instead of having operators do it
+        // need store restore to trigger here
+        // but also need to listen to the tree for changes
 
+        addModel(treeModel);
         nodeCladeMap = new int[treeModel.getNodeCount()];
         storedNodeCladeMap = new int[treeModel.getNodeCount()];
         cladeRoots = new int[cladeTree.getInternalNodeCount()];
         storedCladeRoots = new int[cladeTree.getInternalNodeCount()];
         clades = new CladeRef[cladeTree.getInternalNodeCount()];
 
+        cladesKnown = false;
+        storedCladesKnown = false;
+
         updatedNode = new boolean[treeModel.getNodeCount()];
         storedUpdatedNode = new boolean[treeModel.getNodeCount()];
 
-        Arrays.fill(updatedNode, false);
-        Arrays.fill(storedUpdatedNode, false);
+        Arrays.fill(updatedNode, true);
+        Arrays.fill(storedUpdatedNode, true);
 
         // Get clades in cladeTree
         Set<BitSet> cladesInCladeTree = getClades(cladeTree, treeModel);
@@ -78,12 +82,13 @@ public class CladeNodeModel extends AbstractModel {
         if (!allFound) {
             throw new IllegalArgumentException("Tree model is not compatible with constraints tree");
         }
-        // find matching clades in tree model
-        setupClades(cladesInCladeTree, treeModel);
 
-        rootClade = getClade(treeModel.getRoot());
-        cladesKnown = true;
-        storedCladesKnown =true;
+
+        // find matching clades in tree model
+        setUpClades(cladeTree.getRoot(),null);
+        updateClades();
+        rootClade = clades[cladeTree.getRoot().getNumber()-cladeTree.getExternalNodeCount()];
+
     }
 
     public CladeNodeModel(Tree cladeTree, TreeModel treeModel) throws TreeUtils.MissingTaxonException {
@@ -97,7 +102,8 @@ public class CladeNodeModel extends AbstractModel {
     public Tree getCladeTree() {
         return cladeTree;
     }
-    public CladeRef getRootClade(){
+
+    public CladeRef getRootClade() {
         return rootClade;
     }
 
@@ -121,18 +127,23 @@ public class CladeNodeModel extends AbstractModel {
     }
 
     public NodeRef getRootNode(CladeRef c) {
-        if(!cladesKnown){
+        if (!cladesKnown) {
             updateClades();
         }
         return treeModel.getNode(cladeRoots[c.getNumber()]);
     }
 
     public void setRootNode(CladeRef c, NodeRef n) {
+//        cladeRoots[c.getNumber()] = n.getNumber();
+        throw new UnsupportedOperationException("no longer in use");
+    }
+
+    private void setCladeRootNode(CladeRef c, NodeRef n) {
         cladeRoots[c.getNumber()] = n.getNumber();
     }
 
     public CladeRef getClade(NodeRef nodeRef) {
-        if(!cladesKnown){
+        if (!cladesKnown) {
             updateClades();
         }
         return getClade(nodeCladeMap[(nodeRef.getNumber())]);
@@ -143,7 +154,7 @@ public class CladeNodeModel extends AbstractModel {
     }
 
     public List<NodeRef> getCladeRoots() {
-        if(!cladesKnown){
+        if (!cladesKnown) {
             updateClades();
         }
         List<NodeRef> roots = new ArrayList<>();
@@ -158,10 +169,10 @@ public class CladeNodeModel extends AbstractModel {
     }
 
 
-
     private void updateClades() {
         CladeRef rootClade = updateClades(treeModel.getRoot());
-        setRootNode(rootClade,treeModel.getRoot());
+        setCladeRootNode(rootClade, treeModel.getRoot());
+        cladesKnown = true;
         //TODO set make this the root clade
     }
 
@@ -179,35 +190,39 @@ public class CladeNodeModel extends AbstractModel {
                 } else {//Either one child clade is the parent of the other or they are siblings
                     if (child0Clade == getParent(child1Clade)) {
                         setClade(nodeRef, child0Clade);
-                        setRootNode(child1Clade, treeModel.getChild(nodeRef, 1));
+                        setCladeRootNode(child1Clade, treeModel.getChild(nodeRef, 1));
                     } else if (child1Clade == getParent(child0Clade)) {
                         setClade(nodeRef, child1Clade);
-                        setRootNode(child0Clade, treeModel.getChild(nodeRef, 0));
-                    }else  {   // else this belongs to the parent of both clades and both kids are the child clade root
+                        setCladeRootNode(child0Clade, treeModel.getChild(nodeRef, 0));
+                    } else {   // else this belongs to the parent of both clades and both kids are the child clade root
                         assert getParent(child0Clade) == getParent(child1Clade);
                         setClade(nodeRef, getParent(child0Clade));
-                        setRootNode(child0Clade, treeModel.getChild(nodeRef, 0));
-                        setRootNode(child1Clade, treeModel.getChild(nodeRef, 1));
+                        setCladeRootNode(child0Clade, treeModel.getChild(nodeRef, 0));
+                        setCladeRootNode(child1Clade, treeModel.getChild(nodeRef, 1));
                     }
                 }
+            }else{
+                Taxon taxon = treeModel.getNodeTaxon(nodeRef);
+                NodeRef nodeInCladeTree =  cladeTree.getExternalNode(cladeTree.getTaxonIndex(taxon.getId()));
+                setClade(nodeRef,clades[cladeTree.getParent(nodeInCladeTree).getNumber()-cladeTree.getExternalNodeCount()]);
             }
         }
-    updatedNode[nodeRef.getNumber()]=false;
-        return getClade(nodeRef);
-}
+        updatedNode[nodeRef.getNumber()] = false;
+        return clades[nodeCladeMap[(nodeRef.getNumber())]];
+    }
 
-    private void updateNode(NodeRef node){
-        updatedNode[node.getNumber()]=true;
-        cladesKnown=false;
+    private void updateNode(NodeRef node) {
+        updatedNode[node.getNumber()] = true;
+        cladesKnown = false;
         NodeRef parent = treeModel.getParent(node);
-        if(parent!=null && !updatedNode[parent.getNumber()]){
+        if (parent != null && !updatedNode[parent.getNumber()]) {
             updateNode(parent);
         }
     }
 
-    private void updateAllNodes(){
-        Arrays.fill(updatedNode,true);
-        cladesKnown=false;
+    private void updateAllNodes() {
+        Arrays.fill(updatedNode, true);
+        cladesKnown = false;
     }
     // *****************************************************************************************************************
     // ********                                 Setup helpers                                                   ********
@@ -250,71 +265,19 @@ public class CladeNodeModel extends AbstractModel {
         return clade;
     }
 
-    private void setupClades(Set<BitSet> targetClades, Tree tree) {
-        Map<NodeRef, BitSet> nodeCladeMap = getBitSetNodeMap(tree);
+    //pre-order traversal that makes a clade for each internal node of the clade defining tree
+    private Clade setUpClades(NodeRef nodeRef,Clade parentClade) {
+        int internalNodeIndex = nodeRef.getNumber() - cladeTree.getExternalNodeCount();
+        Clade clade = new Clade(internalNodeIndex, parentClade);
+        clades[internalNodeIndex] = clade;
 
-        setupClades(targetClades, tree, tree.getRoot(), nodeCladeMap, null);
-    }
-
-    private void setupClades(Set<BitSet> targetClades, Tree tree, NodeRef node, Map<NodeRef, BitSet> refBitSetMap, Clade parentClade) {
-        Clade clade;
-        BitSet cladeSet = refBitSetMap.get(node);
-
-        if (targetClades.contains(cladeSet)) {
-            clade = new Clade(cladeSet, node.getNumber()-tree.getExternalNodeCount() , parentClade);
-            if (node != tree.getRoot()) {
-                parentClade.addChild(clade);
-            }
-            cladeRoots[node.getNumber()-tree.getExternalNodeCount()] = node.getNumber();
-            clades[node.getNumber()-tree.getExternalNodeCount()]=clade;
-            targetClades.remove(cladeSet);
-        } else {
-            clade = parentClade;
-        }
-        nodeCladeMap[node.getNumber()] = clade.getNumber();
-
-        for (int i = 0; i < tree.getChildCount(node); i++) {
-            NodeRef child = tree.getChild(node, i);
-            setupClades(targetClades, tree, child, refBitSetMap, clade);
-        }
-
-    }
-
-    /**
-     * Gets a HashMap of clade bitsets to nodes in tree. This is useful for comparing the topology of trees
-     *
-     * @param tree the tree for which clades are being defined
-     * @return A HashMap with a BitSet of descendent taxa as the key and a node as value
-     */
-    private HashMap<NodeRef, BitSet> getBitSetNodeMap(Tree tree) {
-        HashMap<NodeRef, BitSet> map = new HashMap<>();
-        getBitSetNodeMap(tree, tree.getRoot(), map);
-        return map;
-    }
-
-    /**
-     * A private recursive function used by getBitSetNodeMap
-     * This is modeled after the addClades in CladeSet and getClades in compatibility statistic
-     *
-     * @param tree the tree for which clades are being defined
-     * @param node current node
-     * @param map  map that is being appended to
-     */
-    private BitSet getBitSetNodeMap(Tree tree, NodeRef node, HashMap<NodeRef, BitSet> map) {
-        BitSet bits = new BitSet();
-        if (tree.isExternal(node)) {
-            String taxonId = tree.getNodeTaxon(node).getId();
-            bits.set(tree.getTaxonIndex(taxonId));
-
-
-        } else {
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                NodeRef node1 = tree.getChild(node, i);
-                bits.or(getBitSetNodeMap(tree, node1, map));
+        for (int i = 0; i < cladeTree.getChildCount(nodeRef); i++) {
+            NodeRef child = cladeTree.getChild(nodeRef, i);
+            if(!cladeTree.isExternal(child)){
+                clade.addChild(setUpClades(child,clade));
             }
         }
-        map.put(node, bits);
-        return bits;
+        return clade;
     }
 
 
@@ -322,7 +285,9 @@ public class CladeNodeModel extends AbstractModel {
     // *****                             Model implementation                                *******
     // *********************************************************************************************
 
-
+    public void makeDirty(){
+        updateAllNodes();
+    }
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int i) {
         fireModelChanged();
@@ -337,7 +302,10 @@ public class CladeNodeModel extends AbstractModel {
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
                     NodeRef node = ((TreeChangedEvent) object).getNode();
-                    updateNode(node);
+                    //external nodes can't change clades
+                    if(!treeModel.isExternal(node)){
+                        updateNode(node);
+                    }
                 } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
                     // This event type is now used for EmpiricalTreeDistributions.
@@ -346,7 +314,7 @@ public class CladeNodeModel extends AbstractModel {
                     updateAllNodes();
                 }
             }
-        }else{
+        } else {
             throw new RuntimeException("Unknown componentChangedEvent");
         }
     }
@@ -359,9 +327,9 @@ public class CladeNodeModel extends AbstractModel {
     @Override
     protected void storeState() {
         System.arraycopy(cladeRoots, 0, storedCladeRoots, 0, cladeRoots.length);
-        System.arraycopy(nodeCladeMap, 0, storedNodeCladeMap, 0, cladeRoots.length);
+        System.arraycopy(nodeCladeMap, 0, storedNodeCladeMap, 0, nodeCladeMap.length);
         System.arraycopy(updatedNode, 0, storedUpdatedNode, 0, updatedNode.length);
-        storedCladesKnown=cladesKnown;
+        storedCladesKnown = cladesKnown;
     }
 
     @Override
@@ -379,7 +347,7 @@ public class CladeNodeModel extends AbstractModel {
         storedUpdatedNode = updatedNode;
         updatedNode = tmp3;
 
-        cladesKnown= storedCladesKnown;
+        cladesKnown = storedCladesKnown;
     }
 
     @Override
@@ -403,47 +371,42 @@ public class CladeNodeModel extends AbstractModel {
     private Tree cladeTree;
 
 
-/**
- * A private helper clade class.
- */
-class Clade implements CladeRef {
-    //TODO figure out what in interface and what just here.
-    public final static String CLADE = "clade";
+    /**
+     * A private helper clade class.
+     */
+    class Clade implements CladeRef {
+        //TODO figure out what in interface and what just here.
+        public final static String CLADE = "clade";
 
-    public Clade(BitSet bits, int number, Clade parent) {
-        this.bits = bits;
-        this.number = number;
-        this.parent = parent;
+        public Clade(int number, Clade parent) {
+            this.number = number;
+            this.parent = parent;
+        }
+
+        public void addChild(Clade clade) {
+            this.children.add(clade);
+        }
+
+
+        public int getNumber() {
+            return number;
+        }
+
+        public int getChildCount() {
+            return children.size();
+        }
+
+        public Clade getChild(int i) {
+            return children.get(i);
+        }
+
+        public Clade getParent() {
+            return parent;
+        }
+
+
+        public final List<Clade> children = new ArrayList<>();
+        private final Clade parent;
+        private final int number;
     }
-
-    public void addChild(Clade clade) {
-        this.children.add(clade);
-    }
-
-
-    public int getNumber() {
-        return number;
-    }
-
-    public int getChildCount() {
-        return children.size();
-    }
-
-    public Clade getChild(int i) {
-        return children.get(i);
-    }
-
-    public Clade getParent() {
-        return parent;
-    }
-
-    public BitSet getBits() {
-        return bits;
-    }
-
-    public final List<Clade> children = new ArrayList<>();
-    private final Clade parent;
-    private final int number;
-    private final BitSet bits;
-}
 }

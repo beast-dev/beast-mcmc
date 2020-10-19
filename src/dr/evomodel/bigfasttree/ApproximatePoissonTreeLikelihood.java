@@ -71,6 +71,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         addModel(branchRateModel);
 
         this.branchLengthProvider = branchLengthProvider;
+        addModel(branchLengthProvider);
 
         updateNode = new boolean[treeModel.getNodeCount()];
 

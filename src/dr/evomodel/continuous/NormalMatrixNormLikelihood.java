@@ -34,7 +34,7 @@ public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood impl
 
     @Override
     public double computeSumSquaredErrors(int column) {
-        return 1.0;
+        return data.getParameterValue(column);
     }
 
     @Override

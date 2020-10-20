@@ -9,7 +9,7 @@ import dr.util.TaskPool;
 
 public class ScaleIntegratedLoadingsGradient extends IntegratedLoadingsGradient {
 
-    private final ScaledMatrixParameter scale;
+    private final ScaledMatrixParameter scaledMatrix;
 
     public ScaleIntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                            ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -20,13 +20,13 @@ public class ScaleIntegratedLoadingsGradient extends IntegratedLoadingsGradient 
         super(treeDataLikelihood, likelihoodDelegate, factorAnalysisLikelihood, taskPool, threadUseProvider,
                 remainderCompProvider);
 
-        this.scale = (ScaledMatrixParameter) factorAnalysisLikelihood.getLoadings();
+        this.scaledMatrix = (ScaledMatrixParameter) factorAnalysisLikelihood.getLoadings();
 
     }
 
     @Override
     public Parameter getParameter() {
-        return scale.getScaleParameter();
+        return scaledMatrix.getScaleParameter();
     }
 
     @Override
@@ -51,7 +51,7 @@ public class ScaleIntegratedLoadingsGradient extends IntegratedLoadingsGradient 
 
             for (int trait = 0; trait < dimTrait; trait++) {
                 scaleGradient[factor] += loadingsGradient[offset + trait] *
-                        scale.getMatrixParameter().getParameterValue(trait, factor);
+                        scaledMatrix.getMatrixParameter().getParameterValue(trait, factor);
             }
             offset += dimTrait;
         }

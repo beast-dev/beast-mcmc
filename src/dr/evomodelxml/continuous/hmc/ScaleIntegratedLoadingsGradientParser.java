@@ -7,7 +7,6 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
 import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
 import dr.inference.model.ScaledMatrixParameter;
 import dr.util.TaskPool;
 import dr.xml.XMLObject;
@@ -29,8 +28,7 @@ public class ScaleIntegratedLoadingsGradientParser extends IntegratedLoadingsGra
                                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
                                                       TaskPool taskPool,
                                                       IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
-                                                      IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider,
-                                                      Parameter multipliers)
+                                                      IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider)
             throws XMLParseException {
 
         MatrixParameterInterface parameter = factorAnalysisLikelihood.getLoadings();

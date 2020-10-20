@@ -28,6 +28,7 @@ package dr.evomodelxml.continuous.hmc;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
@@ -73,7 +74,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
             return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData, dim);
         } else {
-            BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+            DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
             CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
                     branchParameter, branchRateModel, useHessian, dim);
@@ -91,7 +92,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             new XORRule(
                     new AndRule(
                             new ElementRule(BranchSpecificSubstitutionParameterBranchModel.class),
-                            new ElementRule(BranchRateModel.class)),
+                            new ElementRule(DifferentiableBranchRates.class)),
                     new ElementRule(Parameter.class)),
             AttributeRule.newBooleanRule(HOMOGENEOUS_PROCESS, true),
             AttributeRule.newIntegerRule(DIMENSION, true)

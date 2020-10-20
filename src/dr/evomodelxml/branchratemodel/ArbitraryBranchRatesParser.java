@@ -91,7 +91,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         double scale = xo.getAttribute(RANDOM_SCALE, 1.0);
         if (randomizeRates) {
             for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-                rateCategoryParameter.setValue(i, Math.exp(MathUtils.nextGaussian() * scale));
+                double increment = MathUtils.nextGaussian() * scale;
+                double x = transform.randomize(increment);
+                rateCategoryParameter.setValue(i, x);
             }
         }
 

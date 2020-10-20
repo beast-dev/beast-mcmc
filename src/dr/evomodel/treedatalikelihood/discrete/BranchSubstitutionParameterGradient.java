@@ -30,6 +30,7 @@ import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.tree.TreeParameterModel;
@@ -66,7 +67,7 @@ public class BranchSubstitutionParameterGradient
     protected final boolean useHessian;
 
     protected final CompoundParameter branchParameter;
-    private final BranchRateModel branchRateModel;
+    private final DifferentiableBranchRates branchRateModel;
     protected final TreeParameterModel parameterIndexHelper;
 
     private static final boolean DEBUG = true;
@@ -78,7 +79,7 @@ public class BranchSubstitutionParameterGradient
                                                TreeDataLikelihood treeDataLikelihood,
                                                BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                CompoundParameter branchParameter,
-                                               BranchRateModel branchRateModel,
+                                               DifferentiableBranchRates branchRateModel,
                                                boolean useHessian,
                                                int dim) {
         this.treeDataLikelihood = treeDataLikelihood;

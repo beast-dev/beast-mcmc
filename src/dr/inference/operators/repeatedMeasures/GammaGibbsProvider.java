@@ -186,16 +186,13 @@ public interface GammaGibbsProvider {
     class MultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
         // TODO: add citation to "Sparse Bayesian infinite factor models BY A. BHATTACHARYA AND D. B. DUNSON, Biometrika (2011)"
 
-        private final CompoundParameter rowMultipliers;
+        private final Parameter rowMultipliers;
         private final MultiplicativeGammaGibbsHelper helper;
-        private final int index;
 
-        public MultiplicativeGammaGibbsProvider(CompoundParameter rowMultipliers,
-                                                MultiplicativeGammaGibbsHelper helper,
-                                                int index) {
+        public MultiplicativeGammaGibbsProvider(Parameter rowMultipliers,
+                                                MultiplicativeGammaGibbsHelper helper) {
             this.rowMultipliers = rowMultipliers;
             this.helper = helper;
-            this.index = index;
         }
 
 
@@ -208,20 +205,20 @@ public interface GammaGibbsProvider {
             int k = helper.getColumnDimension();
             int p = helper.getRowDimension();
 
-            for (int i = index; i < k; i++) {
-                double globalConst = gpMult(i + 1, index);
+            for (int i = dim; i < k; i++) {
+                double globalConst = gpMult(i + 1, dim);
                 double sumSquares = helper.computeSumSquaredErrors(i);
 
                 rateSum += globalConst * sumSquares;
             }
 
-            return new SufficientStatistics(p * (k - index), rateSum);
+            return new SufficientStatistics(p * (k - dim), rateSum);
 
         }
 
         @Override
         public Parameter getPrecisionParameter() {
-            return rowMultipliers.getParameter(index);
+            return rowMultipliers;
         }
 
         @Override
@@ -233,7 +230,7 @@ public interface GammaGibbsProvider {
             double value = 1.0;
             for (int i = 0; i < multTo; i++) {
                 if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
-                    value *= rowMultipliers.getParameter(i).getParameterValue(0);
+                    value *= rowMultipliers.getParameterValue(i);
                 }
             }
             return value;

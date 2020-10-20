@@ -7,7 +7,8 @@ import dr.inference.model.*;
 import dr.xml.*;
 
 public class MultivariateGammaLikelihood extends AbstractModelLikelihood
-        implements ParametricMultivariateDistributionModel, GradientWrtParameterProvider, GammaStatisticsProvider {
+        implements ParametricMultivariateDistributionModel, GradientWrtParameterProvider, GammaStatisticsProvider,
+        Reportable {
 
     protected final Parameter shape;
     protected final Parameter scale;
@@ -188,4 +189,20 @@ public class MultivariateGammaLikelihood extends AbstractModelLikelihood
             return MULTIVARIATE_GAMMA_LIKELIHOOD;
         }
     };
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder("MultivariateGammaLikelihood report:\n");
+        double logLikelihood = getLogLikelihood();
+        sb.append("\tloglikelihood: " + logLikelihood + "\n");
+
+        double[] gradient = getGradientLogDensity();
+        sb.append("\tgradient:");
+        for (int i = 0; i < dim; i++) {
+            sb.append(" " + gradient[i]);
+        }
+        sb.append("\n\n");
+
+        return sb.toString();
+    }
 }

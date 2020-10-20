@@ -137,52 +137,35 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
 
-        double[] gradient = new double[1];
+        double[] gradient = new double[allCoefficients.getDimension()];
 
-        DesignMatrix designMatrix = glm.getDesignMatrix(0);
-        double[] covariate = designMatrix.getColumnValues(0);
-        double[] covariateT = transposeOffDiagonal(covariate);
+        for (int i = 0; i < allCoefficients.getDimension(); ++i) {
 
-//        double[] chainDifferential = new double[stateCount * stateCount];
-//
-//        chainDifferential[0]  = -generator[2];
-//        chainDifferential[2]  =  generator[2];
-//        chainDifferential[5]  = -generator[7] - generator[6];
-//        chainDifferential[6]  =  generator[6];
-//        chainDifferential[7]  =  generator[7];
-//        chainDifferential[8]  =  generator[8];
-//        chainDifferential[10] = -generator[8];
-//        chainDifferential[13] =  generator[13];
-//        chainDifferential[15] = -generator[13];
-//
-//        double normalizationDifferential = calculateNormalizationDifferential(generator, covariate, pi);
-//
-//        for (int i = 0; i < stateCount * stateCount; ++i) {
-//            chainDifferential[i] -= generator[i] * normalizationDifferential;
-//        }
+            DesignMatrix designMatrix = glm.getDesignMatrix(i);
+            double[] covariate = designMatrix.getColumnValues(0);
+            double[] covariateT = transposeOffDiagonal(covariate);
 
-//        double[] chainDifferential = calculateCovariateDifferential(generator, differentials, covariate, pi,   false);
+            double x = calculateCovariateDifferential(generator, differentials, covariate, pi, substitutionModel.getNormalization());
 
-//        gradient[0] = dotProduct(differentials, chainDifferential);
-        double x = calculateCovariateDifferential(generator, differentials, covariate, pi, substitutionModel.getNormalization());
+//            System.err.println("x1: " + x);
+//            System.err.println("x2: " + calculateCovariateDifferential(
+//                    transposeAll(generator), transposeAll(differentials), transposeOffDiagonal(covariate), pi, false));
+//            System.err.println("x3: " + calculateCovariateDifferential(
+//                    generator, transposeAll(differentials), transposeOffDiagonal(covariate), pi, false));
+//            System.err.println("x4: " + calculateCovariateDifferential(
+//                    transposeAll(generator), differentials, transposeOffDiagonal(covariate), pi, false));
+//            System.err.println("x5: " + calculateCovariateDifferential(
+//                    transposeAll(generator), transposeAll(differentials), covariate, pi, false));
+//            System.err.println("x6: " + calculateCovariateDifferential(
+//                    transposeAll(generator), differentials, covariate, pi, false));
+//            System.err.println("x7: " + calculateCovariateDifferential(
+//                    generator, transposeAll(differentials), covariate, pi, false));
+//            System.err.println("x8: " + calculateCovariateDifferential(
+//                    generator, differentials, transposeOffDiagonal(covariate), pi, false));
 
-        System.err.println("x1: " + x);
-        System.err.println("x2: " + calculateCovariateDifferential(
-                transposeAll(generator), transposeAll(differentials), transposeOffDiagonal(covariate), pi, false));
-        System.err.println("x3: " + calculateCovariateDifferential(
-                generator, transposeAll(differentials), transposeOffDiagonal(covariate), pi, false));
-        System.err.println("x4: " + calculateCovariateDifferential(
-                 transposeAll(generator), differentials, transposeOffDiagonal(covariate), pi, false));
-        System.err.println("x5: " + calculateCovariateDifferential(
-                 transposeAll(generator), transposeAll(differentials), covariate, pi, false));
-        System.err.println("x6: " + calculateCovariateDifferential(
-                 transposeAll(generator), differentials, covariate, pi, false));
-        System.err.println("x7: " + calculateCovariateDifferential(
-                 generator, transposeAll(differentials), covariate, pi, false));
-        System.err.println("x8: " + calculateCovariateDifferential(
-                 generator, differentials, transposeOffDiagonal(covariate), pi, false));
+            gradient[i] = x;
 
-        gradient[0] = x;
+        }
 
 
 //        double normalization = g

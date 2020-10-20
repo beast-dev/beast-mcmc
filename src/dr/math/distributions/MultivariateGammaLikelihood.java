@@ -1,11 +1,13 @@
 package dr.math.distributions;
 
+import dr.inference.distribution.GammaStatisticsProvider;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.xml.*;
 
-public class MultivariateGammaLikelihood extends AbstractModelLikelihood implements ParametricMultivariateDistributionModel, GradientWrtParameterProvider {
+public class MultivariateGammaLikelihood extends AbstractModelLikelihood
+        implements ParametricMultivariateDistributionModel, GradientWrtParameterProvider, GammaStatisticsProvider {
 
     protected final Parameter shape;
     protected final Parameter scale;
@@ -124,6 +126,17 @@ public class MultivariateGammaLikelihood extends AbstractModelLikelihood impleme
     @Override
     public void makeDirty() {
         // do nothing
+    }
+
+
+    @Override
+    public double getShape(int dim) {
+        return shape.getParameterValue(dim);
+    }
+
+    @Override
+    public double getRate(int dim) {
+        return 1.0 / scale.getParameterValue(dim);
     }
 
     private static final String SCALE = "scale";

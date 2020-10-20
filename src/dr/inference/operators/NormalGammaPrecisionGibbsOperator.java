@@ -197,23 +197,33 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
+        private GammaStatisticsProvider getGammaStatisticsProvider(Object obj) throws XMLParseException {
+            final GammaStatisticsProvider gammaStats;
+            if (obj instanceof DistributionLikelihood) {
+                DistributionLikelihood priorLike = (DistributionLikelihood) obj;
+                checkGammaDistribution(priorLike);
+                gammaStats = new GammaParametrization(priorLike.getDistribution());
+            } else if (obj instanceof GammaStatisticsProvider) {
+                gammaStats = (GammaStatisticsProvider) obj;
+            } else {
+                throw new XMLParseException("Prior must be gamma");
+            }
+
+            return gammaStats;
+        }
+
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
-            final DistributionLikelihood prior = (DistributionLikelihood) xo.getElementFirstChild(PRIOR);
+            final Object prior = xo.getElementFirstChild(PRIOR);
+            GammaStatisticsProvider priorDistribution = getGammaStatisticsProvider(prior);
 
-            checkGammaDistribution(prior);
 
-            GammaParametrization priorDistribution = new GammaParametrization(prior.getDistribution());
+            final Object working = xo.hasChildNamed(WORKING) ? xo.getElementFirstChild(WORKING) : null;
 
-            final DistributionLikelihood working = (xo.hasChildNamed(WORKING) ?
-                    (DistributionLikelihood) xo.getElementFirstChild(WORKING) :
-                    null);
-
-            GammaParametrization workingDistribution = null;
+            GammaStatisticsProvider workingDistribution = null;
             if (working != null) {
-                checkGammaDistribution(working);
-                workingDistribution = new GammaParametrization(working.getDistribution());
+                workingDistribution = getGammaStatisticsProvider(working);
             }
 
             final GammaGibbsProvider gammaGibbsProvider;
@@ -261,7 +271,10 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 new XORRule(
                         new ElementRule(LIKELIHOOD,
                                 new XMLSyntaxRule[]{
-                                        new ElementRule(DistributionLikelihood.class)
+                                        new XORRule(
+                                                new ElementRule(DistributionLikelihood.class),
+                                                new ElementRule(GammaStatisticsProvider.class)
+                                        )
                                 }),
 
                         new ElementRule(GammaGibbsProvider.class)

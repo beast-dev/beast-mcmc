@@ -7,10 +7,10 @@ import dr.xml.*;
 
 public class MultivariateGammaLikelihood extends AbstractModelLikelihood implements ParametricMultivariateDistributionModel, GradientWrtParameterProvider {
 
-    private final Parameter shape;
-    private final Parameter scale;
-    private final Parameter data;
-    private final int dim;
+    protected final Parameter shape;
+    protected final Parameter scale;
+    protected final Parameter data;
+    protected final int dim;
     public static final String TYPE = "multivariateGamma";
 
 

@@ -25,12 +25,7 @@
 
 package dr.inference.operators;
 
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.distribution.LogNormalDistributionModel;
-import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.distribution.*;
 import dr.inference.model.Parameter;
 import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.math.MathUtils;
@@ -50,26 +45,19 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
 
-    public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, Distribution prior,
+    public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, GammaStatisticsProvider prior,
                                              double weight) {
         this(gammaGibbsProvider, prior, null, weight);
     }
 
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider,
-                                             Distribution prior, Distribution working,
+                                             GammaStatisticsProvider prior, GammaStatisticsProvider working,
                                              double weight) {
         this.gammaGibbsProvider = gammaGibbsProvider;
         this.precisionParameter = gammaGibbsProvider.getPrecisionParameter();
 
-        this.priorParametrization = new GammaParametrization(
-                prior.mean(), prior.variance());
-
-        if (working != null) {
-            this.workingParametrization = new GammaParametrization(
-                    working.mean(), working.variance());
-        } else {
-            this.workingParametrization = null;
-        }
+        this.prior = prior;
+        this.working = working;
 
         setWeight(weight);
     }
@@ -108,7 +96,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         return sb.toString();
     }
 
-    static class GammaParametrization {
+    static class GammaParametrization implements GammaStatisticsProvider {
         private final double rate;
         private final double shape;
 
@@ -122,12 +110,26 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
+        GammaParametrization(Distribution distribution) {
+            this(distribution.mean(), distribution.variance());
+        }
+
         double getRate() {
             return rate;
         }
 
         double getShape() {
             return shape;
+        }
+
+        @Override
+        public double getShape(int dim) {
+            return getShape();
+        }
+
+        @Override
+        public double getRate(int dim) {
+            return getRate();
         }
     }
 
@@ -146,15 +148,15 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             double shape = pathParameter * statistics.observationCount / 2;
             double rate = pathParameter * statistics.sumOfSquaredErrors / 2;
 
-            if (workingParametrization == null) {
+            if (working == null) {
 
-                shape += priorParametrization.getShape();
-                rate += priorParametrization.getRate();
+                shape += prior.getShape(dim);
+                rate += prior.getRate(dim);
 
             } else {
 
-                shape += weigh(priorParametrization.getShape(), priorParametrization.getShape());
-                rate += weigh(priorParametrization.getRate(), priorParametrization.getShape());
+                shape += weigh(prior.getShape(dim), prior.getShape(dim)); //TODO: shouldn't these include the working?
+                rate += weigh(prior.getRate(dim), prior.getShape(dim));
 
             }
 
@@ -202,14 +204,16 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
             checkGammaDistribution(prior);
 
+            GammaParametrization priorDistribution = new GammaParametrization(prior.getDistribution());
+
             final DistributionLikelihood working = (xo.hasChildNamed(WORKING) ?
                     (DistributionLikelihood) xo.getElementFirstChild(WORKING) :
                     null);
 
-            Distribution workingDistribution = null;
+            GammaParametrization workingDistribution = null;
             if (working != null) {
                 checkGammaDistribution(working);
-                workingDistribution = working.getDistribution();
+                workingDistribution = new GammaParametrization(working.getDistribution());
             }
 
             final GammaGibbsProvider gammaGibbsProvider;
@@ -232,7 +236,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
 
             return new NormalGammaPrecisionGibbsOperator(gammaGibbsProvider,
-                    prior.getDistribution(), workingDistribution,
+                    priorDistribution, workingDistribution,
                     weight);
         }
 
@@ -277,8 +281,8 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     private final GammaGibbsProvider gammaGibbsProvider;
     private final Parameter precisionParameter;
 
-    private final GammaParametrization priorParametrization;
-    private final GammaParametrization workingParametrization;
+    private final GammaStatisticsProvider prior;
+    private final GammaStatisticsProvider working;
 
     private double pathParameter = 1.0;
 }

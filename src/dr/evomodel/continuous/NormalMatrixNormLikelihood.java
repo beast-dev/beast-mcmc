@@ -51,7 +51,6 @@ public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood impl
 
 
         private static final String NORMAL_NORM_LIKELIHOOD = "normalMatrixNormLikelihood";
-        //        private static final String NORM = "norm";
         private static final String GLOBAL_PRECISION = "globalPrecision";
         private static final String MATRIX = "matrix";
 
@@ -65,18 +64,23 @@ public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood impl
             XMLObject mxo = xo.getChild(MATRIX);
             ScaledMatrixParameter matrix = (ScaledMatrixParameter) mxo.getChild(ScaledMatrixParameter.class);
 
-            // TODO: check compatible dimensions
+            Parameter scaleParameter = matrix.getScaleParameter();
 
-            return new NormalMatrixNormLikelihood(id, globalPrecision, matrix.getScaleParameter(),
+            if (scaleParameter.getDimension() != globalPrecision.getDimension()) {
+                throw new XMLParseException("incompatible dimensions: the " + GLOBAL_PRECISION + " parameter in with id `" +
+                        globalPrecision.getId() + "` had dimension " + globalPrecision.getDimension() +
+                        ", while the " + MATRIX + " parameter with id `" + matrix.getId() + "` has " +
+                        scaleParameter.getDimension() + " columns."
+                );
+            }
+
+            return new NormalMatrixNormLikelihood(id, globalPrecision, scaleParameter,
                     matrix.getRowDimension());
         }
 
         @Override
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
-//                    new ElementRule(NORM, new XMLSyntaxRule[] {
-//                            new ElementRule(Parameter.class)
-//                    }),
                     new ElementRule(GLOBAL_PRECISION, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     }),

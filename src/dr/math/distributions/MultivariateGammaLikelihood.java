@@ -20,6 +20,9 @@ public class MultivariateGammaLikelihood extends AbstractModelLikelihood impleme
         this.shape = shape;
         this.scale = scale;
         this.dim = data.getDimension();
+        addVariable(shape);
+        addVariable(scale);
+        addVariable(data);
     }
 
     @Override

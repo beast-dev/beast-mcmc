@@ -271,10 +271,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 new XORRule(
                         new ElementRule(LIKELIHOOD,
                                 new XMLSyntaxRule[]{
-                                        new XORRule(
-                                                new ElementRule(DistributionLikelihood.class),
-                                                new ElementRule(GammaStatisticsProvider.class)
-                                        )
+                                        new ElementRule(DistributionLikelihood.class)
                                 }),
 
                         new ElementRule(GammaGibbsProvider.class)
@@ -282,11 +279,17 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 ),
                 new ElementRule(PRIOR,
                         new XMLSyntaxRule[]{
-                                new ElementRule(DistributionLikelihood.class)
+                                new XORRule(
+                                        new ElementRule(DistributionLikelihood.class),
+                                        new ElementRule(GammaStatisticsProvider.class)
+                                )
                         }),
                 new ElementRule(WORKING,
                         new XMLSyntaxRule[]{
-                                new ElementRule(DistributionLikelihood.class)
+                                new XORRule(
+                                        new ElementRule(DistributionLikelihood.class),
+                                        new ElementRule(GammaStatisticsProvider.class)
+                                )
                         }, true),
         };
     };

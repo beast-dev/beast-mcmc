@@ -1,6 +1,7 @@
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.continuous.hmc.IntegratedLoadingsGradient;
+import dr.evomodel.continuous.hmc.MultiplicativeScaleLoadingsGradient;
 import dr.evomodel.continuous.hmc.NormalizedIntegratedLoadingsGradient;
 import dr.evomodel.continuous.hmc.ScaleIntegratedLoadingsGradient;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -14,8 +15,8 @@ import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
-public class ScaleIntegratedLoadingsGradientParser extends IntegratedLoadingsGradientParser {
-    private static final String SCALE_GRADIENT = "scaleIntegratedLoadingsGradient";
+public class MultiplicativeLoadingsGradientParser extends ScaleIntegratedLoadingsGradientParser {
+    private static final String SCALE_GRADIENT = "multIntegratedLoadingsGradient";
 
 
     @Override
@@ -24,13 +25,13 @@ public class ScaleIntegratedLoadingsGradientParser extends IntegratedLoadingsGra
     }
 
     @Override
-    protected ScaleIntegratedLoadingsGradient factory(TreeDataLikelihood treeDataLikelihood,
-                                                      ContinuousDataLikelihoodDelegate likelihoodDelegate,
-                                                      IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
-                                                      TaskPool taskPool,
-                                                      IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
-                                                      IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider,
-                                                      Parameter multipliers)
+    protected MultiplicativeScaleLoadingsGradient factory(TreeDataLikelihood treeDataLikelihood,
+                                                          ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                                                          IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                                          TaskPool taskPool,
+                                                          IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
+                                                          IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider,
+                                                          Parameter multipliers)
             throws XMLParseException {
 
         MatrixParameterInterface parameter = factorAnalysisLikelihood.getLoadings();
@@ -39,13 +40,14 @@ public class ScaleIntegratedLoadingsGradientParser extends IntegratedLoadingsGra
                     " element must be constructed with a " + ScaledMatrixParameter.SCALED_MATRIX + ".");
         }
 
-        return new ScaleIntegratedLoadingsGradient(
+        return new MultiplicativeScaleLoadingsGradient(
                 treeDataLikelihood,
                 likelihoodDelegate,
                 factorAnalysisLikelihood,
                 taskPool,
                 threadUseProvider,
-                remainderCompProvider);
+                remainderCompProvider,
+                multipliers);
     }
 
     @Override

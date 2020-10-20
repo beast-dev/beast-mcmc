@@ -5,6 +5,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
+import dr.inference.model.Parameter;
 import dr.util.TaskPool;
 import dr.xml.*;
 
@@ -69,6 +70,11 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
         }
 
         // TODO Check dimensions, parameters, etc.
+        Parameter multipliers = null;
+        if (xo.hasChildNamed("multipliers")) {
+            XMLObject cxo = xo.getChild("multipliers");
+            multipliers = (Parameter) cxo.getChild(Parameter.class);
+        }
 
         return factory(
                 treeDataLikelihood,
@@ -76,7 +82,8 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                 factorAnalysis,
                 taskPool,
                 threadProvider,
-                remainderCompProvider);
+                remainderCompProvider,
+                multipliers);
 
     }
 
@@ -85,7 +92,8 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                                                  IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
                                                  TaskPool taskPool,
                                                  IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
-                                                 IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider)
+                                                 IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider,
+                                                 Parameter multipliers)
             throws XMLParseException {
 
         return new IntegratedLoadingsGradient(

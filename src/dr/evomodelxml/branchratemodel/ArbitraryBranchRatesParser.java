@@ -48,6 +48,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String CENTER_AT_ONE = "centerAtOne";
     private static final String RANDOMIZE_RATES = "randomizeRates";
     private static final String RANDOM_SCALE = "randomScale";
+    private static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others
     static final String LOCATION = "location";
     static final String SCALE = "scale";
 
@@ -80,6 +81,24 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             rateCategoryParameter.setDimension(numBranches);
         }
 
+        Parameter randomIndicator;
+
+        if(xo.hasChildNamed(RANDOM_INDICATOR)) {
+            randomIndicator = (Parameter) xo.getElementFirstChild(RANDOM_INDICATOR);
+
+            if(!randomizeRates) {
+                throw new XMLParseException("Cannot provide indicator for randomized rates without randomizeRates=true");
+            }
+
+            if (randomIndicator.getDimension() != rateCategoryParameter.getDimension()) {
+                throw new XMLParseException("randomIndicator (" + randomIndicator.getDimension()
+                        + ") must be the same dimension as the rate parameter (" + rateCategoryParameter.getDimension() + ")");
+            }
+        }
+        else {
+            randomIndicator = new Parameter.Default(rateCategoryParameter.getDimension());
+        }
+
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
         Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on "
@@ -91,7 +110,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
         double scale = xo.getAttribute(RANDOM_SCALE, 1.0);
         if (randomizeRates) {
             for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-                rateCategoryParameter.setValue(i, Math.exp(MathUtils.nextGaussian() * scale));
+                if(randomIndicator.getParameterValue(i) == 1.0) {
+                    rateCategoryParameter.setValue(i, Math.exp(MathUtils.nextGaussian() * scale));
+                }
             }
         }
 

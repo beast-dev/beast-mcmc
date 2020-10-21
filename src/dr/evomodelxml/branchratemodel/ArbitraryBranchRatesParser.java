@@ -85,9 +85,10 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             rateCategoryParameter.setDimension(numBranches);
         }
 
-        Parameter randomIndicator = (Parameter) xo.getElementFirstChild(RANDOM_INDICATOR);
+        Parameter randomIndicator = null;
+        if (xo.hasChildNamed(RANDOM_INDICATOR)) {
+            randomIndicator = (Parameter) xo.getElementFirstChild(RANDOM_INDICATOR);
 
-       if (randomIndicator != null) {
             if (!randomizeRates) {
                 throw new XMLParseException("Cannot provide indicator for randomized rates without randomizeRates=true");
             }
@@ -176,5 +177,8 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(RANDOM_SCALE, true),
             new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
             new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),
+            new ElementRule(RANDOM_INDICATOR, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class),
+            }, true),
     };
 }

@@ -130,13 +130,13 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     public double[] getDiagonal() {
 
         double[] diagonal = new double[dim];
-        diagonal[0] = 1.0;
+        diagonal[0] = precisionScale;
 
         for (int i = 1; i < dim - 1; ++i) {
-            diagonal[i] = 1 + decay * decay;
+            diagonal[i] = (1 + decay * decay) * precisionScale;
         }
 
-        diagonal[dim - 1] = 1.0;
+        diagonal[dim - 1] = precisionScale;
 
         return diagonal;
     }

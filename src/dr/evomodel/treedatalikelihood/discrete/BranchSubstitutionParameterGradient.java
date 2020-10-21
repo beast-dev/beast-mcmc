@@ -142,7 +142,7 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public Parameter getParameter() {
-        return branchParameter;
+        return branchRateModel.getRateParameter();
     }
 
     @Override
@@ -152,7 +152,7 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public double[] getGradientLogDensity() {
-        double[] result = new double[tree.getNodeCount() - 1];
+        double[] result = new double[branchParameter.getDimension()];
 
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
@@ -163,6 +163,7 @@ public class BranchSubstitutionParameterGradient
                 result[destinationIndex] = gradient[destinationIndex] *
                         branchRateModel.getBranchRateDifferential(tree, node);
             }
+            // TODO Handle root node at most point
         }
 
         if (COUNT_TOTAL_OPERATIONS) {

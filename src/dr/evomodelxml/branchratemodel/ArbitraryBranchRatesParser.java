@@ -28,6 +28,7 @@ package dr.evomodelxml.branchratemodel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -48,6 +49,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String CENTER_AT_ONE = "centerAtOne";
     private static final String RANDOMIZE_RATES = "randomizeRates";
     private static final String RANDOM_SCALE = "randomScale";
+    private static final String INCLUDE_ROOT = "includeRoot";
     static final String LOCATION = "location";
     static final String SCALE = "scale";
 
@@ -97,7 +99,10 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             }
         }
 
-        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
+        TreeParameterModel.Type includeRoot = xo.getAttribute(INCLUDE_ROOT, false) ?
+                TreeParameterModel.Type.WITH_ROOT : TreeParameterModel.Type.WITHOUT_ROOT;
+
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne, includeRoot);
     }
 
     //************************************************************************

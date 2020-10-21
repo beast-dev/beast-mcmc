@@ -49,7 +49,10 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String CENTER_AT_ONE = "centerAtOne";
     private static final String RANDOMIZE_RATES = "randomizeRates";
     private static final String RANDOM_SCALE = "randomScale";
+
     private static final String INCLUDE_ROOT = "includeRoot";
+    private static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others
+
     static final String LOCATION = "location";
     static final String SCALE = "scale";
 
@@ -69,7 +72,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
 
-        if(centerAtOne && randomizeRates) {
+        if (centerAtOne && randomizeRates) {
             throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
         }
 
@@ -82,20 +85,34 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             rateCategoryParameter.setDimension(numBranches);
         }
 
+        Parameter randomIndicator = (Parameter) xo.getElementFirstChild(RANDOM_INDICATOR);
+
+       if (randomIndicator != null) {
+            if (!randomizeRates) {
+                throw new XMLParseException("Cannot provide indicator for randomized rates without randomizeRates=true");
+            }
+
+            if (randomIndicator.getDimension() != rateCategoryParameter.getDimension()) {
+                throw new XMLParseException("randomIndicator (" + randomIndicator.getDimension()
+                        + ") must be the same dimension as the rate parameter (" + rateCategoryParameter.getDimension() + ")");
+            }
+        }
+
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
         Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on "
                 + rateCategoryParameter.getId());
-
 
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
 
         double scale = xo.getAttribute(RANDOM_SCALE, 1.0);
         if (randomizeRates) {
             for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-                double increment = MathUtils.nextGaussian() * scale;
-                double x = transform.randomize(increment);
-                rateCategoryParameter.setValue(i, x);
+                if (randomIndicator == null || randomIndicator.getParameterValue(i) == 1.0) {
+                    double increment = MathUtils.nextGaussian() * scale;
+                    double x = transform.randomize(increment);
+                    rateCategoryParameter.setValue(i, x);
+                }
             }
         }
 

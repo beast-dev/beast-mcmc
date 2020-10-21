@@ -66,13 +66,14 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         this.preOrderPartialOffset = likelihoodDelegate.getPartialBufferCount();
 
         this.patternList = likelihoodDelegate.getPatternList();
-        this.gradient = new double[tree.getNodeCount() - 1];
 
         likelihoodDelegate.addModelListener(this);
         likelihoodDelegate.addModelRestoreListener(this);
 
         this.substitutionProcessKnown = false;
     }
+
+    abstract protected int getGradientLength();
 
     private void printMatrix(double[] matrix) {
         for (int rate = 0; rate < siteRateModel.getCategoryCount(); ++rate) {
@@ -114,6 +115,10 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
 
         beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
+
+        if (gradient == null) {
+            gradient = new double[getGradientLength()];
+        }
 
         getNodeDerivatives(tree, gradient, null);
 
@@ -251,7 +256,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected final int categoryCount;
     private int preOrderPartialOffset;
 
-    protected final double[] gradient;
+    protected double[] gradient;
 
     protected boolean substitutionProcessKnown;
 

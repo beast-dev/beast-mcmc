@@ -125,7 +125,52 @@ public class DifferentiableSubstitutionModelUtil {
             }
         }
 
-        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+        WrappedMatrix differential = new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+
+        if (CHECK_COMMUTABILITY) {
+            boolean valid = checkCommutability(differential, new WrappedMatrix.Raw(Q, 0, stateCount, stateCount));
+        }
+
+        return differential;
+    }
+
+    private static final boolean CHECK_COMMUTABILITY = true;
+
+    private static boolean checkCommutability(WrappedMatrix x, WrappedMatrix y) {
+
+        WrappedMatrix xy = product(x, y);
+        WrappedMatrix yx = product(y, x);
+
+        System.err.println(xy);
+        System.err.println(yx);
+        System.err.println();
+
+        return true;
+    }
+
+    private static WrappedMatrix product(WrappedMatrix x, WrappedMatrix y) {
+        final int majorDim = x.getMajorDim();
+        final int minorDim = y.getMinorDim();
+
+        final int innerDim = x.getMinorDim();
+
+        if (innerDim != y.getMajorDim()) {
+            return null;
+        }
+
+        WrappedMatrix result = new WrappedMatrix.Raw(new double[majorDim * minorDim], 0, majorDim, minorDim);
+
+        for (int i = 0; i < majorDim; ++i) {
+            for (int j = 0; j < minorDim; ++j) {
+                double total = 0.0;
+                for (int k = 0; k < innerDim; ++k) {
+                    total += x.get(i, k) * y.get(k, j);
+                }
+                result.set(i, j, total);
+            }
+        }
+
+        return result;
     }
 
 }

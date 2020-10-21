@@ -231,6 +231,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
 
         double upper();
 
+        double randomize(double raw);
+
         abstract class Base implements BranchRateTransform {
             @Override
             public double center() {
@@ -246,6 +248,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
         }
 
         class None extends Base {
@@ -282,6 +287,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double transform(double raw, Tree tree, NodeRef node) {
                 return 1.0 / raw;
             }
+
+            @Override
+            public double randomize(double raw) { return -Math.exp(raw); }
         }
 
         class Exponentiate implements BranchRateTransform {
@@ -300,6 +308,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double transform(double raw, Tree tree, NodeRef node) {
                 return Math.exp(raw);
             }
+
+            @Override
+            public double randomize(double raw) { return raw; }
 
             @Override
             public double center() {
@@ -359,6 +370,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
 
             @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -498,6 +512,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
 
             @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {

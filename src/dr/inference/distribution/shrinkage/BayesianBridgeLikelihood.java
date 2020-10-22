@@ -39,7 +39,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  */
 
 public class BayesianBridgeLikelihood extends AbstractModelLikelihood
-        implements BayesianBridgeStatisticsProvider, GradientWrtParameterProvider {
+        implements BayesianBridgeStatisticsProvider, PriorPreconditioningProvider, GradientWrtParameterProvider {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
                                     BayesianBridgeDistributionModel distribution) {
@@ -120,6 +120,15 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     @Override
     public void acceptState() {
     } // no additional state needs accepting
+
+    @Override
+    public double getStandardDeviation(int index) {
+        if (distribution instanceof PriorPreconditioningProvider) {
+            return ((PriorPreconditioningProvider) distribution).getStandardDeviation(index);
+        } else {
+            throw new RuntimeException("Not a prior conditioner");
+        }
+    }
 
     private final Parameter coefficients;
     private final BayesianBridgeDistributionModel distribution;

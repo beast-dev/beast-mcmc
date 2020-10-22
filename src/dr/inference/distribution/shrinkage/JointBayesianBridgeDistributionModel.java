@@ -10,7 +10,7 @@ import dr.math.distributions.NormalDistribution;
  */
 
 public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistributionModel
-implements PriorPreconditioningProvider {
+        implements PriorPreconditioningProvider {
 
     public JointBayesianBridgeDistributionModel(Parameter globalScale,
                                                 Parameter localScale,

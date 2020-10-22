@@ -2,7 +2,7 @@ package dr.inference.model;
 
 import dr.xml.*;
 
-public class ScaledMatrixParameter extends CompoundParameter implements MatrixParameterInterface, VariableListener {
+public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixParameterInterface, VariableListener {
 
     private final MatrixParameterInterface matrixParameter;
     private final Parameter scaleParameter;
@@ -10,17 +10,18 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
     private final double[][] storedColumnBuffers;
     private Boolean valuesKnown = false;
     private Boolean storedValuesKnown = false;
+    private final String name;
 
     public ScaledMatrixParameter(String name, MatrixParameterInterface matrixParameter, Parameter scaleParameter) {
-        super(name, new Parameter[]{matrixParameter, scaleParameter});
+        this.name = name;
 
         this.matrixParameter = matrixParameter;
         this.scaleParameter = scaleParameter;
         this.columnBuffers = new double[matrixParameter.getColumnDimension()][matrixParameter.getRowDimension()];
         this.storedColumnBuffers = new double[matrixParameter.getColumnDimension()][matrixParameter.getRowDimension()];
 
-        addParameter(matrixParameter);
-        addParameter(scaleParameter);
+        scaleParameter.addParameterListener(this);
+        matrixParameter.addParameterListener(this);
     }
 
     private void updateBuffer() {
@@ -52,6 +53,11 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
     }
 
     @Override
+    public Parameter getParameter(int column) {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    @Override
     public double getParameterValue(int dim) {
         updateBuffer();
         int col = dim / matrixParameter.getRowDimension();
@@ -59,6 +65,46 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
 
         return columnBuffers[col][row];
 
+    }
+
+    @Override
+    public void setParameterValue(int dim, double value) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public void setParameterValueQuietly(int dim, double value) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public void setParameterValueNotifyChangedAll(int dim, double value) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public String getParameterName() {
+        return name;
+    }
+
+    @Override
+    public void addBounds(Bounds<Double> bounds) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public Bounds<Double> getBounds() {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public void addDimension(int index, double value) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public double removeDimension(int index) {
+        throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -140,7 +186,7 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
 
     @Override
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        super.variableChangedEvent(variable, index, type);
+        fireParameterChangedEvent();
         valuesKnown = false; //TODO: do only update necessary indices
     }
 
@@ -152,7 +198,8 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
 
     @Override
     protected void storeValues() {
-        super.storeValues();
+        scaleParameter.storeParameterValues();
+        matrixParameter.storeParameterValues();
 
         if (valuesKnown) {
             transferBuffer(columnBuffers, storedColumnBuffers);
@@ -162,11 +209,31 @@ public class ScaledMatrixParameter extends CompoundParameter implements MatrixPa
 
     @Override
     protected void restoreValues() {
-        super.restoreValues();
+        scaleParameter.restoreParameterValues();
+        matrixParameter.restoreParameterValues();
+
         if (storedValuesKnown) {
             transferBuffer(storedColumnBuffers, columnBuffers);
         }
         valuesKnown = storedValuesKnown;
+    }
+
+    @Override
+    protected void acceptValues() {
+        scaleParameter.acceptParameterValues();
+        matrixParameter.acceptParameterValues();
+    }
+
+    @Override
+    public String getDimensionName(int dim) {
+        int column = dim / matrixParameter.getRowDimension();
+        int row = dim - (column * matrixParameter.getRowDimension());
+        return getStatisticName() + "." + (column + 1) + "." + (row + 1);
+    }
+
+    @Override
+    protected void adoptValues(Parameter source) {
+        throw new RuntimeException("not implemented");
     }
 
     public static final String SCALED_MATRIX = "scaledMatrixParameter";

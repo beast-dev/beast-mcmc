@@ -39,7 +39,7 @@
     </NoUTurnOperator>
 
   </operators>
-  <mcmc id="mcmc.hmc" chainLength="10000" autoOptimize="true">
+  <mcmc id="mcmc.hmc" chainLength="1000" autoOptimize="true">
     <posterior>
       <likelihood id="likelihood.hmc">
         <distributionLikelihood idref="distribution"/>
@@ -47,7 +47,7 @@
     </posterior>
     <operators idref="operators.HZZ"/>
 
-    <log logEvery="1000">
+    <log logEvery="100">
 			<column label="posterior" dp="4" width="12">
 				<likelihood idref="likelihood.hmc"/>
 			</column>
@@ -82,7 +82,7 @@
                 </report>
         </actual>
         <expected>
-        	-15.899541972202282
+            -9.27982337130807
         </expected>
     </assertEqual>
 
@@ -101,7 +101,7 @@
     </zigZagOperator>
   </operators>
 
-  <mcmc id="mcmc.mc" chainLength="100000" autoOptimize="true">
+  <mcmc id="mcmc.mc" chainLength="1000" autoOptimize="true">
     <posterior>
       <likelihood id="likelihood.mc">
         <distributionLikelihood idref="distribution"/>
@@ -110,7 +110,7 @@
     <operators idref="operators.MZZ"/>
 
 
-    <log logEvery="10000">
+    <log logEvery="100">
 			<column label="posterior" dp="4" width="12">
 				<likelihood idref="likelihood.hmc"/>
 			</column>
@@ -119,7 +119,7 @@
 			</column>
 	</log>
 
-    <log logEvery="10" fileName="MZZ_ar1_trunc_d10.log">
+    <log logEvery="1" fileName="MZZ_ar1_trunc_d10.log">
       <likelihood idref="likelihood.mc"/>
       <parameter idref="parameter"/>
     </log>
@@ -144,7 +144,7 @@
                 </report>
         </actual>
         <expected>
-        	-16.529828825452256
+            -5.814616435598384
         </expected>
     </assertEqual>
 

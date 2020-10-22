@@ -56,7 +56,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
-    private final static String PRIOR_PRECONDITIONER = "priorPreconditioner";
+   
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -209,9 +209,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             new ElementRule(PRECONDITIONER, new XMLSyntaxRule[] {
                     new XORRule(
                             new ElementRule(MassPreconditioner.class),
-                            new ElementRule(PRIOR_PRECONDITIONER, new XMLSyntaxRule[]{
-                                    new ElementRule(PriorPreconditioningProvider.class),
-                            })
+                            new ElementRule(PriorPreconditioningProvider.class)
                     ),
             }, true),
 

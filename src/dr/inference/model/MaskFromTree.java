@@ -2,19 +2,14 @@ package dr.inference.model;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.inferencexml.model.MaskedParameterParser;
 import dr.xml.*;
 
 /**
  * @author Alexander Fisher
  */
 public class MaskFromTree {
-    // needs to take in a tip from the tree
-    // needs to be 'essentially' a mask parameter
-    // can currently work by just auto masking root branch
-    // will need access to the tree
+
     public static final String MASK_FROM_TREE = "maskFromTree";
-//    public static final String TREE = "tree";
     private TreeModel tree;
     private Taxon taxon;
     private boolean ancestralMaskBranchKnown = false;
@@ -37,9 +32,11 @@ public class MaskFromTree {
        int nodeNumber =  tree.getTaxonIndex(taxon.getId());
        NodeRef node = tree.getNode(nodeNumber);
        NodeRef root = tree.getRoot();
+
        while(tree.getParent(node) != root){
            node = tree.getParent(node);
        }
+
         int maskIndex = node.getNumber();
         mask.setParameterValue(maskIndex, 0.0);
         ancestralMaskBranchKnown = true;

@@ -2,6 +2,7 @@ package dr.inference.model;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
+import dr.inferencexml.model.MaskedParameterParser;
 import dr.xml.*;
 
 /**
@@ -14,10 +15,37 @@ public class MaskFromTree {
     // will need access to the tree
     public static final String MASK_FROM_TREE = "maskFromTree";
 //    public static final String TREE = "tree";
+    private TreeModel tree;
+    private Taxon taxon;
+    private boolean ancestralMaskBranchKnown = false;
+    private Parameter mask;
 
-    public MaskFromTree() {
-
+    public MaskFromTree(TreeModel tree, Taxon referenceTaxon) {
+        this.tree = tree;
+        this.taxon = referenceTaxon;
+        int numBranches = tree.getNodeCount() - 1;
+        this.mask = new Parameter.Default(numBranches, 1.0);
+        updateMask();
     }
+
+    Parameter getAncestralMaskBranch() {
+        if (!ancestralMaskBranchKnown) { updateMask(); }
+        return (mask);
+    }
+
+    void updateMask() {
+       int nodeNumber =  tree.getTaxonIndex(taxon.getId());
+       NodeRef node = tree.getNode(nodeNumber);
+       NodeRef root = tree.getRoot();
+       while(tree.getParent(node) != root){
+           node = tree.getParent(node);
+       }
+        int maskIndex = node.getNumber();
+        mask.setParameterValue(maskIndex, 0.0);
+        ancestralMaskBranchKnown = true;
+    }
+
+
 
 
     // **************************************************************
@@ -37,7 +65,7 @@ public class MaskFromTree {
             Taxon referenceTaxon = (Taxon) xo.getChild(Taxon.class);
 
 
-            MaskFromTree maskFromTree = new MaskFromTree();
+            MaskFromTree maskFromTree = new MaskFromTree(tree, referenceTaxon);
             return maskFromTree;
         }
 
@@ -48,15 +76,12 @@ public class MaskFromTree {
         public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-//                new StringAttributeRule(TRAIT_NAME, "The name to be given to the trait to be simulated"),
-//                AttributeRule.newBooleanRule(CLONE),
-//                AttributeRule.newDoubleRule(INITIAL_VALUE),
                 new ElementRule(TreeModel.class),
                 new ElementRule(Taxon.class)
         };
 
         public String getParserDescription() {
-            return "Simulates a trait on a tree";
+            return "Masks ancestral (off-root) branch to a specific reference taxon on a random tree";
         }
 
         public Class getReturnType() { return MaskFromTree.class; }

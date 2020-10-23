@@ -1,5 +1,7 @@
 package dr.inference.model;
+import dr.evolution.tree.MutableTreeListener;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
@@ -7,25 +9,27 @@ import dr.xml.*;
 /**
  * @author Alexander Fisher
  */
-public class MaskFromTree {
+public class MaskFromTree extends Parameter.Abstract implements ModelListener {
 
     public static final String MASK_FROM_TREE = "maskFromTree";
     private TreeModel tree;
     private Taxon taxon;
     private boolean ancestralMaskBranchKnown = false;
-    private Parameter mask;
+    private Parameter maskParameter;
 
     public MaskFromTree(TreeModel tree, Taxon referenceTaxon) {
         this.tree = tree;
         this.taxon = referenceTaxon;
         int numBranches = tree.getNodeCount() - 1;
-        this.mask = new Parameter.Default(numBranches, 1.0);
+        this.maskParameter = new Parameter.Default(numBranches, 1.0);
+        tree.addModelListener(this);
+        tree.addModelRestoreListener(this);
         updateMask();
     }
 
     Parameter getAncestralMaskBranch() {
         if (!ancestralMaskBranchKnown) { updateMask(); }
-        return (mask);
+        return (maskParameter);
     }
 
     void updateMask() {
@@ -38,11 +42,90 @@ public class MaskFromTree {
        }
 
         int maskIndex = node.getNumber();
-        mask.setParameterValue(maskIndex, 0.0);
+        maskParameter.setParameterValue(maskIndex, 0.0);
         ancestralMaskBranchKnown = true;
     }
 
 
+    public int getDimension(){
+        return maskParameter.getDimension();
+    }
+
+    @Override
+    public double getParameterValue(int dim) {
+        if (!ancestralMaskBranchKnown) { updateMask(); }
+        return maskParameter.getParameterValue(dim);
+    }
+
+    @Override
+    public void setParameterValue(int dim, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void setParameterValueQuietly(int dim, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void setParameterValueNotifyChangedAll(int dim, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public String getParameterName() {
+        return null;
+    }
+
+    @Override
+    public void addBounds(Bounds<Double> bounds) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Bounds<Double> getBounds() {
+        return null;
+    }
+
+    @Override
+    public void addDimension(int index, double value) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double removeDimension(int index) {
+        return 0;
+    }
+
+    @Override
+    protected void storeValues() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    protected void restoreValues() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    protected void acceptValues() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    protected void adoptValues(Parameter source) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void modelChangedEvent(Model model, Object object, int index) {
+        ancestralMaskBranchKnown=false;
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+        ancestralMaskBranchKnown=false;
+    }
 
 
     // **************************************************************
@@ -83,5 +166,4 @@ public class MaskFromTree {
 
         public Class getReturnType() { return MaskFromTree.class; }
     };
-
 }

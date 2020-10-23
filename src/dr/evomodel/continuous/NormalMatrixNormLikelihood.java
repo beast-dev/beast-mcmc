@@ -9,9 +9,11 @@ import dr.xml.*;
 public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood implements MultiplicativeGammaGibbsHelper {
 
     private final int rowDimension;
+    private final Parameter columnNorms;
 
     public NormalMatrixNormLikelihood(String name, Parameter normalPrecision, Parameter columnNorms, int rowDimension) {
         super(name, setupShape(rowDimension, columnNorms.getDimension()), setupScale(normalPrecision), setupSquaredNorms(columnNorms));
+        this.columnNorms = columnNorms;
 
         this.rowDimension = rowDimension;
     }
@@ -35,6 +37,20 @@ public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood impl
     @Override
     public double computeSumSquaredErrors(int column) {
         return data.getParameterValue(column);
+    }
+
+    @Override
+    public Parameter getParameter() {
+        return columnNorms;
+    }
+
+    @Override
+    public double[] getGradientLogDensity() {
+        double[] grad = super.getGradientLogDensity();
+        for (int i = 0; i < dim; i++) {
+            grad[i] *= 2 * columnNorms.getParameterValue(i);
+        }
+        return grad;
     }
 
     @Override

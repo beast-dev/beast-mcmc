@@ -1,7 +1,5 @@
 package dr.inference.model;
-import dr.evolution.tree.MutableTreeListener;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
@@ -25,11 +23,6 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
         tree.addModelListener(this);
         tree.addModelRestoreListener(this);
         updateMask();
-    }
-
-    Parameter getAncestralMaskBranch() {
-        if (!ancestralMaskBranchKnown) { updateMask(); }
-        return (maskParameter);
     }
 
     void updateMask() {

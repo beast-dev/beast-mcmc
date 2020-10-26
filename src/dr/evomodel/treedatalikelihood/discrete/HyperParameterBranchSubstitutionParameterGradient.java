@@ -56,9 +56,10 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
                                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                              BranchParameter branchParameter,
                                                              Parameter hyperParameter,
+                                                             Double tolerance,
                                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, useHessian, 0);
+        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, tolerance, useHessian, 0);
 
         throw new RuntimeException("Not yet fixed.");
 //        locationScaleTransform = branchParameter.getTransform();

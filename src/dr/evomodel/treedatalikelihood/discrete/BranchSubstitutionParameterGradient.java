@@ -70,6 +70,7 @@ public class BranchSubstitutionParameterGradient
     private final DifferentiableBranchRates branchRateModel;
     protected final TreeParameterModel parameterIndexHelper;
 
+    private final Double nullableTolerance;
     private static final boolean DEBUG = true;
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
@@ -80,6 +81,7 @@ public class BranchSubstitutionParameterGradient
                                                BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                CompoundParameter branchParameter,
                                                DifferentiableBranchRates branchRateModel,
+                                               Double tolerance,
                                                boolean useHessian,
                                                int dim) {
         this.treeDataLikelihood = treeDataLikelihood;
@@ -88,6 +90,7 @@ public class BranchSubstitutionParameterGradient
         this.branchRateModel = branchRateModel;
         this.useHessian = useHessian;
         this.parameterIndexHelper = new TreeParameterModel((MutableTreeModel) tree, new Parameter.Default(tree.getNodeCount() - 1), false);
+        this.nullableTolerance = tolerance;
 
         String name = BranchSubstitutionParameterDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
@@ -184,7 +187,7 @@ public class BranchSubstitutionParameterGradient
     protected double getChainGradient(Tree tree, NodeRef node) {
         final double raw = branchParameter.getParameterValue(node.getNumber());
         if (branchRateModel instanceof ArbitraryBranchRates) {
-            return ((ArbitraryBranchRates) branchRateModel).getTransform().differential(raw, tree, node);
+            return branchRateModel.getTransform().differential(raw, tree, node);
         } else {
             return 1.0;
         }
@@ -192,16 +195,7 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public LogColumn[] getColumns() {
-
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new LogColumn.Default("gradient report", new Object() {
-            @Override
-            public String toString() {
-                return "\n" + getReport();
-            }
-        });
-
-        return columns;
+        return Loggable.getColumnsFromReport(this, "BranchSubstitutionParameterGradientReport");
     }
 
     private MultivariateFunction numericWrap(final Parameter parameter) {
@@ -277,18 +271,15 @@ public class BranchSubstitutionParameterGradient
             parameter.setParameterValue(i, savedValues[i]);
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Gradient Peeling: ").append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity()));
-        sb.append("\n");
+        String headLine = "BranchSubstitutionParameterGradient check\n";
 
-        if (testGradient != null && largeEnoughValues) {
-            sb.append("Gradient numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
-        } else {
-            sb.append("Gradient mumeric: too close to 0");
+        try {
+            return GradientWrtParameterProvider.makeReport(headLine, getGradientLogDensity(), testGradient, nullableTolerance != null, nullableTolerance == null ? 0.0 : nullableTolerance, 0.0);
+        } catch (MismatchException e) {
+            e.printStackTrace();
         }
-        sb.append("\n");
 
-        return sb.toString();
+        return null;
     }
 
     @Override

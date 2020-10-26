@@ -50,6 +50,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
     private static final String HOMOGENEOUS_PROCESS = "homogeneous";
     private static final String DIMENSION = "dim";
+    public static final String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     public static final String USE_HESSIAN = "useHessian";
 
     @Override
@@ -63,6 +64,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final Double tolerance = xo.hasAttribute(GRADIENT_CHECK_TOLERANCE) ? xo.getDoubleAttribute(GRADIENT_CHECK_TOLERANCE) : null;
         BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
@@ -77,7 +79,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
             CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
-                    branchParameter, branchRateModel, useHessian, dim);
+                    branchParameter, branchRateModel, tolerance, useHessian, dim);
         }
     }
 
@@ -95,7 +97,8 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
                             new ElementRule(DifferentiableBranchRates.class)),
                     new ElementRule(Parameter.class)),
             AttributeRule.newBooleanRule(HOMOGENEOUS_PROCESS, true),
-            AttributeRule.newIntegerRule(DIMENSION, true)
+            AttributeRule.newIntegerRule(DIMENSION, true),
+            AttributeRule.newDoubleRule(GRADIENT_CHECK_TOLERANCE, true),
     };
 
     @Override

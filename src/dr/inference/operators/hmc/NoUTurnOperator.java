@@ -41,7 +41,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             stepSizeInformation = findReasonableStepSize(initialPosition,
                     hmcProvider.getGradientProvider().getGradientLogDensity(), hmcProvider.getStepSize());
         }
-
+        initializeBaseEnvents();
         double[] position = takeOneStep(getCount() + 1, initialPosition);
 
         hmcProvider.setParameter(position);
@@ -120,7 +120,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, double[] inGradient, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
-
+        recordBaseEvents();
         // Make deep copy of position and momentum
         WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(inPosition, inPosition.length));
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
@@ -357,8 +357,17 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         private int numAcceptProbStates;
     }
 
+    private void initializeBaseEnvents(){
+        numBaseEvents = 0;
+    }
+
+    private void recordBaseEvents(){
+        numBaseEvents++;
+    }
+
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
+    private int numBaseEvents;
 }
 

@@ -1,7 +1,7 @@
 /*
  * TreeParameterModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,6 +46,11 @@ import java.util.function.*;
  */
 public class TreeParameterModel extends AbstractModel implements TreeTrait<Double>, TreeDoubleTraitProvider {
 
+    public enum Type {
+        WITHOUT_ROOT,
+        WITH_ROOT
+    }
+
     protected final MutableTreeModel tree;
 
     // The tree parameter;
@@ -69,6 +74,10 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
      */
     public TreeParameterModel(MutableTreeModel tree, Parameter parameter, boolean includeRoot) {
         this(tree, parameter, includeRoot, Intent.NODE);
+    }
+
+    public TreeParameterModel(MutableTreeModel tree, Parameter parameter, Type includeRoot) {
+        this(tree, parameter, includeRoot == Type.WITH_ROOT, Intent.NODE);
     }
 
     /**

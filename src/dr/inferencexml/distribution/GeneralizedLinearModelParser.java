@@ -262,7 +262,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                                     new XMLSyntaxRule[]{
                                             new ElementRule(Parameter.class)
                                     }, true),
-                    }, 1, 3),
+                    }, 1, 10),
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
 //				new ElementRule(BASIS_MATRIX,

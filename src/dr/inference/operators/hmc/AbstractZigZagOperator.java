@@ -19,10 +19,11 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     AbstractZigZagOperator(GradientWrtParameterProvider gradientProvider,
                            PrecisionMatrixVectorProductProvider multiplicationProvider,
                            PrecisionColumnProvider columnProvider,
-                           double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask,
+                           double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                           boolean refreshVelocity, Parameter mask,
                            int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask);
         this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
     }
 
@@ -60,6 +61,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
             timer.stopTimer("integrateTrajectory");
         }
 
+        storeVelocity(velocity);
         return 0.0;
     }
 

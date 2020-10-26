@@ -60,7 +60,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
-                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask) {
+                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -71,6 +71,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         this.runtimeOptions = runtimeOptions;
         this.nativeCodeOptions = nativeOptions;
+        this.refreshVelocity = refreshVelocity;
         this.preconditioning = setupPreconditioning();
         this.meanVector = getMeanVector(gradientProvider);
 
@@ -332,6 +333,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         numEvents++;
     }
 
+    void storeVelocity(WrappedVector velocity){
+        storedVelocity = velocity;
+    }
+
     double[] getMeanVector(GradientWrtParameterProvider gradientProvider) {
 
         double[] mean = new double[parameter.getDimension()];
@@ -446,10 +451,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;
     private final Options runtimeOptions;
+    protected boolean refreshVelocity;
     protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
     private final double[] maskVector;
     int numEvents;
+    protected WrappedVector storedVelocity;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
     private final double[] meanVector;

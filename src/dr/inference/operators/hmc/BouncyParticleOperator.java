@@ -48,8 +48,8 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
                                   PrecisionColumnProvider columnProvider,
-                                  double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask) {
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask);
+                                  double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
 
             recordOneMoreEvent();
         }
-        storedVelocity = velocity;
+        storeVelocity(velocity);
         return 0.0;
     }
 
@@ -149,18 +149,22 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
 
     private WrappedVector drawInitialVelocity() {
 
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[mass.getDim()];
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
+            double[] velocity = new double[mass.getDim()];
 
-        for (int i = 0, len = velocity.length; i < len; i++) {
-            velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
+            for (int i = 0, len = velocity.length; i < len; i++) {
+                velocity[i] = MathUtils.nextGaussian() / Math.sqrt(mass.get(i));
+            }
+
+            if (mask != null) {
+                applyMask(velocity);
+            }
+
+            return new WrappedVector.Raw(velocity);
         }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
     }
 
     private MinimumTravelInformation getTimeToBoundary(ReadableVector position, ReadableVector velocity) {

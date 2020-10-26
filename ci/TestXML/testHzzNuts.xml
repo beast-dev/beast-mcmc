@@ -72,7 +72,7 @@
 
   <traceAnalysis fileName="HZZNUTS_ar1_trunc_d10.log" stdError="true"/>
 
-    <assertEqual tolerance="1e-10" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-5" verbose="true" charactersToStrip="\[\],">
         <message>
             Check log-likelihood
         </message>
@@ -101,7 +101,7 @@
     </zigZagOperator>
   </operators>
 
-  <mcmc id="mcmc.mc" chainLength="1000" autoOptimize="true">
+  <mcmc id="mcmc.mc" chainLength="300" autoOptimize="true">
     <posterior>
       <likelihood id="likelihood.mc">
         <distributionLikelihood idref="distribution"/>
@@ -134,7 +134,7 @@
 
 	<traceAnalysis fileName="MZZ_ar1_trunc_d10.log" stdError="true"/>
 
-    <assertEqual tolerance="1e-10" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-5" verbose="true" charactersToStrip="\[\],">
         <message>
             Check log-likelihood
         </message>
@@ -144,7 +144,7 @@
                 </report>
         </actual>
         <expected>
-            -5.814616435598384
+            -7.796707619719140
         </expected>
     </assertEqual>
 

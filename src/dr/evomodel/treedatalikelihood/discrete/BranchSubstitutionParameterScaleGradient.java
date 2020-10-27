@@ -56,7 +56,7 @@ public class BranchSubstitutionParameterScaleGradient extends HyperParameterBran
 
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
-        double rate = branchParameter.getParameterValue(node.getNumber());
+        double rate = branchRateModel.getBranchRate(tree, node);
         double tmp = (Math.log(rate / locationScaleTransform.getLocation(tree, node)) - locationScaleTransform.getTransformMu())
                 /(locationScaleTransform.getTransformSigma() * locationScaleTransform.getTransformSigma()) - 1.0;
 

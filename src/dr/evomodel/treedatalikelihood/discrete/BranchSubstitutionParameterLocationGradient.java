@@ -57,7 +57,7 @@ public class BranchSubstitutionParameterLocationGradient extends HyperParameterB
 
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
-        double rate = branchParameter.getParameterValue(node.getNumber());
+        double rate = branchRateModel.getBranchRate(tree, node);
         double[] results = fixedEffects.getDifferential(rate, tree, node);
 
         return results;

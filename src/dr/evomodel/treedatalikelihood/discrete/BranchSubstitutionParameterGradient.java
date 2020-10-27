@@ -65,9 +65,9 @@ public class BranchSubstitutionParameterGradient
     protected final boolean useHessian;
 
     protected final CompoundParameter branchParameter;
-    private final DifferentiableBranchRates branchRateModel;
+    protected final DifferentiableBranchRates branchRateModel;
 
-    private final Double nullableTolerance;
+    protected final Double nullableTolerance;
     private static final boolean DEBUG = true;
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
@@ -150,12 +150,12 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public int getDimension() {
-        return branchParameter.getDimension();
+        return getParameter().getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        double[] result = new double[branchParameter.getDimension()];
+        double[] result = new double[getDimension()];
 
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
@@ -177,8 +177,8 @@ public class BranchSubstitutionParameterGradient
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
-        final double raw = branchParameter.getParameterValue(node.getNumber());
         if (branchRateModel instanceof ArbitraryBranchRates) {
+            final double raw = getParameter().getParameterValue(branchRateModel.getParameterIndexFromNode(node));
             return branchRateModel.getTransform().differential(raw, tree, node);
         } else {
             return 1.0;
@@ -190,47 +190,7 @@ public class BranchSubstitutionParameterGradient
         return Loggable.getColumnsFromReport(this, "BranchSubstitutionParameterGradientReport");
     }
 
-    private MultivariateFunction numericWrap(final Parameter parameter) {
-        return new MultivariateFunction() {
-            @Override
-            public double evaluate(double[] argument) {
 
-                if (!(branchRateModel instanceof ArbitraryBranchRates)) {
-                    throw new RuntimeException("Not yet tested with ProxyParameter.");
-                }
-
-                ArbitraryBranchRates branchRates = (ArbitraryBranchRates) branchRateModel;
-                Tree tree = treeDataLikelihood.getTree();
-
-                for (int i = 0; i < argument.length; ++i) {
-                    NodeRef node = tree.getNode(i);
-                    if (!tree.isRoot(node)) {
-                        branchRates.setBranchRate(tree, tree.getNode(i), argument[i]);
-                    }
-                }
-
-//            treeDataLikelihood.makeDirty();
-                return treeDataLikelihood.getLogLikelihood();
-            }
-
-            @Override
-            public int getNumArguments() {
-                return parameter.getDimension();
-            }
-
-            @Override
-            public double getLowerBound(int n) {
-                return 0;
-            }
-
-            @Override
-            public double getUpperBound(int n) {
-                return Double.POSITIVE_INFINITY;
-            }
-        };
-    }
-
-    protected MultivariateFunction numeric;
 
     protected boolean valuesAreSufficientlyLarge(double[] vector) {
         for (double x : vector) {
@@ -242,40 +202,8 @@ public class BranchSubstitutionParameterGradient
         return true;
     }
 
-    protected String getReport(final Parameter parameter) {
-        double[] savedValues = parameter.getParameterValues();
-        double[] testGradient = null;
-        double[] testHessian = null;
-
-        boolean largeEnoughValues = valuesAreSufficientlyLarge(parameter.getParameterValues());
-        numeric = numericWrap(parameter);
-
-        if (DEBUG && largeEnoughValues) {
-            testGradient = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
-        }
-
-        if (DEBUG && useHessian && largeEnoughValues) {
-            testHessian = NumericalDerivative.diagonalHessian(numeric, parameter.getParameterValues());
-        }
-
-
-        for (int i = 0; i < savedValues.length; ++i) {
-            parameter.setParameterValue(i, savedValues[i]);
-        }
-
-        String headLine = "BranchSubstitutionParameterGradient check\n";
-
-        try {
-            return GradientWrtParameterProvider.makeReport(headLine, getGradientLogDensity(), testGradient, nullableTolerance != null, nullableTolerance == null ? 0.0 : nullableTolerance, 0.0);
-        } catch (MismatchException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
     @Override
     public String getReport() {
-        return getReport(branchParameter);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, nullableTolerance);
     }
 }

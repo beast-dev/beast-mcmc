@@ -1,4 +1,5 @@
 package dr.inference.model;
+
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
@@ -14,7 +15,7 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
     private Taxon taxon;
     private boolean ancestralMaskBranchKnown = false;
     private Parameter maskParameter;
-
+// TODO: remove maskParameter, use store/restore machinery
     public MaskFromTree(TreeModel tree, Taxon referenceTaxon) {
         this.tree = tree;
         this.taxon = referenceTaxon;
@@ -26,13 +27,13 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
     }
 
     void updateMask() {
-       int nodeNumber =  tree.getTaxonIndex(taxon.getId());
-       NodeRef node = tree.getNode(nodeNumber);
-       NodeRef root = tree.getRoot();
+        int nodeNumber = tree.getTaxonIndex(taxon.getId());
+        NodeRef node = tree.getNode(nodeNumber);
+        NodeRef root = tree.getRoot();
 
-       while(tree.getParent(node) != root){
-           node = tree.getParent(node);
-       }
+        while (tree.getParent(node) != root) {
+            node = tree.getParent(node);
+        }
 
         int maskIndex = node.getNumber();
         maskParameter.setParameterValue(maskIndex, 0.0);
@@ -40,13 +41,15 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
     }
 
 
-    public int getDimension(){
+    public int getDimension() {
         return maskParameter.getDimension();
     }
 
     @Override
     public double getParameterValue(int dim) {
-        if (!ancestralMaskBranchKnown) { updateMask(); }
+        if (!ancestralMaskBranchKnown) {
+            updateMask();
+        }
         return maskParameter.getParameterValue(dim);
     }
 
@@ -112,12 +115,12 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        ancestralMaskBranchKnown=false;
+        ancestralMaskBranchKnown = false;
     }
 
     @Override
     public void modelRestored(Model model) {
-        ancestralMaskBranchKnown=false;
+        ancestralMaskBranchKnown = false;
     }
 
 
@@ -146,9 +149,11 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
         // AbstractXMLObjectParser implementation
         //************************************************************************
 
-        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 new ElementRule(Taxon.class)
         };
@@ -157,6 +162,8 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
             return "Masks ancestral (off-root) branch to a specific reference taxon on a random tree";
         }
 
-        public Class getReturnType() { return MaskFromTree.class; }
+        public Class getReturnType() {
+            return MaskFromTree.class;
+        }
     };
 }

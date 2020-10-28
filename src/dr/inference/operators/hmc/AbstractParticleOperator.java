@@ -25,7 +25,6 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evomodel.operators.NativeZigZag;
 import dr.evomodel.operators.NativeZigZagOptions;
 import dr.evomodel.operators.NativeZigZagWrapper;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -44,7 +43,6 @@ import dr.xml.Reportable;
 
 import java.util.Arrays;
 
-import static dr.inference.operators.hmc.IrreversibleZigZagOperator.CPP_NEXT_BOUNCE;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -63,6 +61,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                              double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
+        this.parameterSign = setParameterSign(gradientProvider);
         this.productProvider = multiplicationProvider;
         this.columnProvider = columnProvider;
         this.parameter = gradientProvider.getParameter();
@@ -90,6 +89,20 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), options,
                     maskVector, getObservedDataMask());
         }
+    }
+
+    private double[] setParameterSign(GradientWrtParameterProvider gradientProvider) {
+
+        double[] startingValue = gradientProvider.getParameter().getParameterValues();
+        double[] sign = new double[startingValue.length];
+
+        for (int i = 0; i < startingValue.length; i++) {
+            if (startingValue[i] == 0) {
+                throw new RuntimeException("must start from either positive or negative value!");
+            }
+            sign[i] = startingValue[i] > 0 ? 1 : -1;
+        }
+        return sign;
     }
 
     private boolean[] getMissingDataMask() {
@@ -281,12 +294,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
+    boolean headingTowardsBoundary(double velocity, int positionIndex) {
 
         if (missingDataMask[positionIndex]) {
             return false;
         } else {
-            return position * velocity < 0.0;
+            return parameterSign[positionIndex] * velocity < 0.0;
         }
     }
 
@@ -454,6 +467,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     protected boolean refreshVelocity;
     protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
+    final double[] parameterSign;
     private final double[] maskVector;
     int numEvents;
     protected WrappedVector storedVelocity;

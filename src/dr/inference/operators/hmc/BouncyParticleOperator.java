@@ -183,7 +183,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
             // if (travelTime > 0.0 && missingDataMask[positionIndex] == 0.0)
 
             double travelTime = Math.abs(position.get(i) / velocity.get(i));
-            if (travelTime > 0.0 && headingTowardsBoundary(position.get(i), velocity.get(i), i)) {
+            if (travelTime > 0.0 && headingTowardsBoundary(velocity.get(i), i)) {
 
                 if (travelTime < minTime) {
                     index = i;

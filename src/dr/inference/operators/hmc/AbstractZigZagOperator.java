@@ -141,7 +141,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
         double time = Double.POSITIVE_INFINITY;
 
-        if (headingTowardsBoundary(position, velocity, index)) { // Also ensures x != 0.0
+        if (headingTowardsBoundary(velocity, index)) {
             time = Math.abs(position / velocity);
         }
 

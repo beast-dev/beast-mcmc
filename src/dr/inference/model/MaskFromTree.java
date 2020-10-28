@@ -1,5 +1,4 @@
 package dr.inference.model;
-
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
@@ -8,60 +7,55 @@ import dr.xml.*;
 /**
  * @author Alexander Fisher
  */
-public class MaskFromTree extends Parameter.Abstract implements ModelListener {
+public class MaskFromTree extends Parameter.Default implements ModelListener {
 
     public static final String MASK_FROM_TREE = "maskFromTree";
     private TreeModel tree;
     private Taxon taxon;
-    private boolean ancestralMaskBranchKnown = false;
-    private Parameter maskParameter;
-// TODO: remove maskParameter, use store/restore machinery
-    public MaskFromTree(TreeModel tree, Taxon referenceTaxon) {
+//    private boolean ancestralMaskBranchKnown = false;
+
+    public MaskFromTree(TreeModel tree, Taxon referenceTaxon, int dim) {
+        super(dim);
         this.tree = tree;
         this.taxon = referenceTaxon;
-        int numBranches = tree.getNodeCount() - 1;
-        this.maskParameter = new Parameter.Default(numBranches, 1.0);
         tree.addModelListener(this);
         tree.addModelRestoreListener(this);
         updateMask();
     }
 
     void updateMask() {
-        int nodeNumber = tree.getTaxonIndex(taxon.getId());
+        // todo: make sure this sets the old 0.0 to 1.0 smarter
+        for(int i = 0; i < this.getDimension(); i++) {
+            setParameterValueQuietly(i, 1.0);
+        }
+        int nodeNumber =  tree.getTaxonIndex(taxon.getId());
         NodeRef node = tree.getNode(nodeNumber);
         NodeRef root = tree.getRoot();
 
-        while (tree.getParent(node) != root) {
+        while(tree.getParent(node) != root){
             node = tree.getParent(node);
         }
 
         int maskIndex = node.getNumber();
-        maskParameter.setParameterValue(maskIndex, 0.0);
-        ancestralMaskBranchKnown = true;
+        this.setParameterValue(maskIndex, 0.0);
+//        ancestralMaskBranchKnown = true;
     }
 
 
-    public int getDimension() {
-        return maskParameter.getDimension();
-    }
+//    public int getDimension(){
+//        return this.getDimension();
+//    }
 
-    @Override
-    public double getParameterValue(int dim) {
-        if (!ancestralMaskBranchKnown) {
-            updateMask();
-        }
-        return maskParameter.getParameterValue(dim);
-    }
+//    @Override
+//    public double getParameterValue(int dim) {
+//        if (!ancestralMaskBranchKnown) { updateMask(); }
+//        return this.getParameterValue(dim);
+//    }
 
-    @Override
-    public void setParameterValue(int dim, double value) {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    public void setParameterValueQuietly(int dim, double value) {
-        throw new RuntimeException("Not yet implemented");
-    }
+//    @Override
+//    public void setParameterValueQuietly(int dim, double value) {
+//        throw new RuntimeException("Not yet implemented");
+//    }
 
     @Override
     public void setParameterValueNotifyChangedAll(int dim, double value) {
@@ -93,34 +87,37 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
         return 0;
     }
 
-    @Override
-    protected void storeValues() {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    protected void restoreValues() {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    protected void acceptValues() {
-        throw new RuntimeException("Not yet implemented");
-    }
-
-    @Override
-    protected void adoptValues(Parameter source) {
-        throw new RuntimeException("Not yet implemented");
-    }
+//    @Override
+//    protected void storeValues() {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+//
+//    @Override
+//    protected void restoreValues() {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+//
+//    @Override
+//    protected void acceptValues() {
+//        throw new RuntimeException("Not yet implemented");
+//    }
+//
+//    @Override
+//    protected void adoptValues(Parameter source) {
+//        throw new RuntimeException("Not yet implemented");
+//    }
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        ancestralMaskBranchKnown = false;
+        super.storeParameterValues();
+//        ancestralMaskBranchKnown=false;
+        updateMask();
     }
 
     @Override
     public void modelRestored(Model model) {
-        ancestralMaskBranchKnown = false;
+        super.restoreParameterValues();
+//        ancestralMaskBranchKnown=false;
     }
 
 
@@ -140,8 +137,9 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
 
             Taxon referenceTaxon = (Taxon) xo.getChild(Taxon.class);
 
+            int numBranches = tree.getNodeCount() - 1;
 
-            MaskFromTree maskFromTree = new MaskFromTree(tree, referenceTaxon);
+            MaskFromTree maskFromTree = new MaskFromTree(tree, referenceTaxon, numBranches);
             return maskFromTree;
         }
 
@@ -149,11 +147,9 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
         // AbstractXMLObjectParser implementation
         //************************************************************************
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+        public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
                 new ElementRule(TreeModel.class),
                 new ElementRule(Taxon.class)
         };
@@ -162,8 +158,6 @@ public class MaskFromTree extends Parameter.Abstract implements ModelListener {
             return "Masks ancestral (off-root) branch to a specific reference taxon on a random tree";
         }
 
-        public Class getReturnType() {
-            return MaskFromTree.class;
-        }
+        public Class getReturnType() { return MaskFromTree.class; }
     };
 }

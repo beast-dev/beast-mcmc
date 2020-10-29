@@ -72,6 +72,7 @@ public class BranchSubstitutionParameterGradient
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     protected long getGradientLogDensityCount = 0;
+    private final double smallGradientThreshold = 0.5;
 
     public BranchSubstitutionParameterGradient(String traitName,
                                                TreeDataLikelihood treeDataLikelihood,
@@ -204,6 +205,6 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, nullableTolerance);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, nullableTolerance, smallGradientThreshold);
     }
 }

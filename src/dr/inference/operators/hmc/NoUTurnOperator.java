@@ -1,6 +1,9 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.ReversibleHMCProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -8,7 +11,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
-public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator, Loggable {
 
     class Options {
         private double logProbErrorTol = 100.0;
@@ -363,6 +366,18 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private void recordBaseEvents(){
         numBaseEvents++;
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[1];
+        columns[0] = new NumberColumn("number of base calls") {
+            @Override
+            public double getDoubleValue() {
+                return numBaseEvents;
+            }
+        };
+        return columns;
     }
 
     private ReversibleHMCProvider hmcProvider;

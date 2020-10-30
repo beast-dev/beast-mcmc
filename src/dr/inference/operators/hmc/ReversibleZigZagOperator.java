@@ -578,6 +578,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public int getNumGradientEvent() {
+        return numGradientEvents;
+    }
+
+    @Override
+    public int getNumBoundaryEvent() {
+        return numBoundaryEvents;
+    }
+
+    @Override
     public Transform getTransform() {
         return null;
     }

@@ -44,7 +44,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             stepSizeInformation = findReasonableStepSize(initialPosition,
                     hmcProvider.getGradientProvider().getGradientLogDensity(), hmcProvider.getStepSize());
         }
-        initializeBaseEnvents();
+        initializeNumEvents();
         double[] position = takeOneStep(getCount() + 1, initialPosition);
 
         hmcProvider.setParameter(position);
@@ -123,7 +123,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, double[] inGradient, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
-        recordBaseEvents();
+        recordOneBaseCall();
         // Make deep copy of position and momentum
         WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(inPosition, inPosition.length));
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
@@ -133,6 +133,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         // "one reversibleHMC integral
         hmcProvider.reversiblePositionMomentumUpdate(position, momentum, gradient, direction, stepSize);
+
+        recordEvents();
 
         double logJointProbAfter = hmcProvider.getJointProbability(momentum);
 
@@ -360,21 +362,40 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         private int numAcceptProbStates;
     }
 
-    private void initializeBaseEnvents(){
-        numBaseEvents = 0;
+    private void initializeNumEvents(){
+        numBaseCalls = 0;
+        numBoundaryEvents = 0;
+        numGradientEvents = 0;
     }
 
-    private void recordBaseEvents(){
-        numBaseEvents++;
+    private void recordOneBaseCall(){
+        numBaseCalls++;
+    }
+
+    private void recordEvents(){
+        numGradientEvents += hmcProvider.getNumGradientEvent();
+        numBoundaryEvents += hmcProvider.getNumBoundaryEvent();
     }
 
     @Override
     public LogColumn[] getColumns() {
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new NumberColumn("number of base calls") {
+        LogColumn[] columns = new LogColumn[3];
+        columns[0] = new NumberColumn("base calls") {
             @Override
             public double getDoubleValue() {
-                return numBaseEvents;
+                return numBaseCalls;
+            }
+        };
+        columns[1] = new NumberColumn("gradient events") {
+            @Override
+            public double getDoubleValue() {
+                return numGradientEvents;
+            }
+        };
+        columns[2] = new NumberColumn("boundary events") {
+            @Override
+            public double getDoubleValue() {
+                return numBoundaryEvents;
             }
         };
         return columns;
@@ -383,6 +404,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
-    private int numBaseEvents;
+    private int numBaseCalls;
+    private int numBoundaryEvents;
+    private int numGradientEvents;
 }
 

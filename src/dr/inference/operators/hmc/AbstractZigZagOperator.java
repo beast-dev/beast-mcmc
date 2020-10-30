@@ -53,8 +53,6 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
             MinimumTravelInformation firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-
-            recordOneMoreEvent();
         }
 
         if (TIMING) {
@@ -96,6 +94,8 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
             reflectVelocity(velocity, eventIndex);
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+
+            recordEvents(eventType);
         }
 
         if (TIMING) {
@@ -254,11 +254,23 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     public LogColumn[] getColumns() {
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new NumberColumn("number of event") {
+        LogColumn[] columns = new LogColumn[3];
+        columns[0] = new NumberColumn("total events") {
             @Override
             public double getDoubleValue() {
                 return numEvents;
+            }
+        };
+        columns[1] = new NumberColumn("gradient events") {
+            @Override
+            public double getDoubleValue() {
+                return numGradientEvents;
+            }
+        };
+        columns[2] = new NumberColumn("boundary events") {
+            @Override
+            public double getDoubleValue() {
+                return numBoundaryEvents;
             }
         };
         return columns;

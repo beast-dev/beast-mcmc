@@ -340,10 +340,21 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void initializeNumEvent(){
         numEvents = 0;
+        numBoundaryEvents = 0;
+        numGradientEvents = 0;
     }
 
     void recordOneMoreEvent(){
         numEvents++;
+    }
+
+    void recordEvents(Type eventType){
+        numEvents++;
+        if (eventType == Type.BOUNDARY){
+            numBoundaryEvents++;
+        } else if (eventType == Type.GRADIENT){
+            numGradientEvents++;
+        }
     }
 
     void storeVelocity(WrappedVector velocity){
@@ -470,6 +481,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final double[] parameterSign;
     private final double[] maskVector;
     int numEvents;
+    int numBoundaryEvents;
+    int numGradientEvents;
     protected WrappedVector storedVelocity;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;

@@ -43,7 +43,7 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
  * @author Marc A. Suchard
  */
 
-public class BouncyParticleOperator extends AbstractParticleOperator implements Loggable { //todo: temporarily loggable
+public class BouncyParticleOperator extends AbstractParticleOperator implements Loggable {
 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,

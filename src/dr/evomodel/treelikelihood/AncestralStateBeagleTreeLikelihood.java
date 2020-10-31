@@ -52,7 +52,6 @@ import java.util.Set;
  */
 
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider, AncestralStateTraitProvider {
-    private static final boolean CONDITIONAL_PROBABILITIES_IN_LOG_SPACE = true;
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
 //                                              BranchRateModel branchRateModel, boolean useAmbiguities,
@@ -77,11 +76,12 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               final String tag,
 //                                              SubstitutionModel substModel,
                                               boolean useMAP,
-                                              boolean returnML) {
+                                              boolean returnML,
+                                              boolean conditionalProbabilitiesInLogSpace) {
 
         super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme, delayRescalingUntilUnderflow,
                 partialsRestrictions);
-
+        this.conditionalProbabilitiesInLogSpace = conditionalProbabilitiesInLogSpace;
         this.dataType = dataType;
 //        this.tag = tag;
 
@@ -139,6 +139,24 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         });
 
     }
+    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+                                              BranchModel branchModel,
+                                              SiteRateModel siteRateModel,
+                                              BranchRateModel branchRateModel,
+                                              TipStatesModel tipStatesModel,
+                                              boolean useAmbiguities,
+                                              PartialsRescalingScheme scalingScheme,
+                                              boolean delayRescalingUntilUnderflow,
+                                              Map<Set<String>, Parameter> partialsRestrictions,
+                                              final DataType dataType,
+                                              final String tag,
+//                                              SubstitutionModel substModel,
+                                              boolean useMAP,
+                                              boolean returnML){
+        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
+                scalingScheme, delayRescalingUntilUnderflow, partialsRestrictions, dataType, tag, useMAP, returnML, false);
+    }
+
 
     private double[] getPartials(PatternList patternList, int sequenceIndex) {
         double[] partials = new double[patternCount * stateCount];
@@ -234,7 +252,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             }
             return choice;
         } else {
-            if(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE){
+            if(conditionalProbabilitiesInLogSpace){
                 return MathUtils.randomChoiceLogPDF(measure);
             }
             return MathUtils.randomChoicePDF(measure);
@@ -432,7 +450,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     double[] frequencies = substitutionModelDelegate.getRootStateFrequencies(); // TODO May have more than one set of frequencies
 
                     for (int i = 0; i < stateCount; i++) {
-                         if (CONDITIONAL_PROBABILITIES_IN_LOG_SPACE) {
+                         if (conditionalProbabilitiesInLogSpace) {
                              conditionalProbabilities[i] = Math.log(partials[partialsIndex + i]) + Math.log(frequencies[i]);
                          } else {
                              conditionalProbabilities[i] = partials[partialsIndex + i] * frequencies[i];
@@ -482,7 +500,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int partialIndex = category * stateCount * patternCount;
 
                     for (int i = 0; i < stateCount; i++) {
-                        if (CONDITIONAL_PROBABILITIES_IN_LOG_SPACE) {
+                        if (conditionalProbabilitiesInLogSpace) {
                             conditionalProbabilities[i] = Math.log(partialLikelihood[partialIndex + childIndex + i])
                                     + Math.log(probabilities[matrixIndex + parentIndex + i]);
                         } else {
@@ -526,7 +544,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                     int probabilityIndex = parentIndex + matrixIndex;
                     for (int k = 0; k < stateCount; k++) {
-                        if(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE){
+                        if(conditionalProbabilitiesInLogSpace){
                             conditionalProbabilities[k] = Math.log(probabilities[probabilityIndex + k])+ Math.log(partials[j * stateCount + k]);
                         }else{
                             conditionalProbabilities[k] = probabilities[probabilityIndex + k]* partials[j * stateCount + k];
@@ -569,7 +587,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                             }
                         }
 
-                        if (CONDITIONAL_PROBABILITIES_IN_LOG_SPACE) {
+                        if (conditionalProbabilitiesInLogSpace) {
                             for (int k = 0; k < stateCount; k++) {
                                 conditionalProbabilities[k] = Math.log(conditionalProbabilities[k]);
                             }
@@ -618,6 +636,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     private double[] partials;
 
     protected int[] rateCategory = null;
+    private final boolean conditionalProbabilitiesInLogSpace;
 //    private double[] rootPartials;
 //    private int[][] cumulativeScaleBuffers;
 //    private int scaleBufferIndex;

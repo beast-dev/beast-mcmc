@@ -57,6 +57,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
     public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
+    public static final String CONDITIONAL_PROBABILITIES_IN_LOG_SPACE = "conditionalProbabilitiesInLogSpace";
 
     public String getParserName() {
         return RECONSTRUCTING_TREE_LIKELIHOOD;
@@ -87,6 +88,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+        boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
 
         if (patternList.areUnique()) {
             throw new XMLParseException("Ancestral state reconstruction cannot be used with compressed (unique) patterns.");
@@ -106,7 +108,8 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 dataType,
                 tag,
                 useMAP,
-                useMarginalLogLikelihood
+                useMarginalLogLikelihood,
+                conditionalProbabilitiesInLogSpace
         );
     }
 

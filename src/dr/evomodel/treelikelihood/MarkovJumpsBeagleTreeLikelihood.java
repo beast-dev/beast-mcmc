@@ -76,10 +76,12 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            boolean returnMarginalLikelihood,
                                            boolean useUniformization,
                                            boolean reportUnconditionedColumns,
-                                           int nSimulants) {
+                                           int nSimulants,
+                                           boolean conditionalProbabilitiesInLogSpace) {
 
         super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
-                scalingScheme, delayScaling, partialsRestrictions, dataType, stateTag, useMAP, returnMarginalLikelihood);
+                scalingScheme, delayScaling, partialsRestrictions, dataType, stateTag, useMAP, returnMarginalLikelihood,
+                conditionalProbabilitiesInLogSpace);
 
         this.useUniformization = useUniformization;
         this.reportUnconditionedColumns = reportUnconditionedColumns;
@@ -96,6 +98,26 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         condJumps = new double[categoryCount][stateCount * stateCount];
     }
 
+    public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+                                           BranchModel branchModel,
+                                           SiteRateModel siteRateModel,
+                                           BranchRateModel branchRateModel,
+                                           TipStatesModel tipStatesModel,
+                                           boolean useAmbiguities,
+                                           PartialsRescalingScheme scalingScheme,
+                                           boolean delayScaling,
+                                           Map<Set<String>, Parameter> partialsRestrictions,
+                                           DataType dataType, String stateTag,
+                                           boolean useMAP,
+                                           boolean returnMarginalLikelihood,
+                                           boolean useUniformization,
+                                           boolean reportUnconditionedColumns,
+                                           int nSimulants){
+        this(patternList,  treeModel,branchModel,siteRateModel,branchRateModel,tipStatesModel,useAmbiguities,
+                scalingScheme, delayScaling,partialsRestrictions,dataType, stateTag, useMAP,returnMarginalLikelihood,
+                useUniformization, reportUnconditionedColumns, nSimulants,false);
+    }
+
     public void addRegister(Parameter addRegisterParameter,
                             MarkovJumpsType type,
                             boolean scaleByTime) {
@@ -104,7 +126,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 addRegisterParameter.getDimension() != stateCount * stateCount) ||
                 (type == MarkovJumpsType.REWARDS &&
                         addRegisterParameter.getDimension() != stateCount)
-                ) {
+        ) {
             throw new RuntimeException("Register parameter of wrong dimension");
         }
         addVariable(addRegisterParameter);

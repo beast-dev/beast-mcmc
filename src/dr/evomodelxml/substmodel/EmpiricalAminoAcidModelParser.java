@@ -72,6 +72,10 @@ public class EmpiricalAminoAcidModelParser extends AbstractXMLObjectParser {
             rateMatrix = LG.INSTANCE;
         } else if (type.equals(AminoAcidModelType.FLU.getXMLName())) {
             rateMatrix = FLU.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTVER.getXMLName())) {
+            rateMatrix = MTVER.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTPRO.getXMLName())) {
+            rateMatrix = MTPRO.INSTANCE;
         } else {
             throw new XMLParseException("Unrecognized empirical amino acid model: " + type);
         }

@@ -750,9 +750,15 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         switch (model.getAaSubstitutionModel()) {
 
                             case LG:
+                            case BLOSUM_62:
                             case FLU:
                             case JTT:
                             case WAG:
+                            case MT_REV_24:
+                            case CP_REV_45:
+                            case DAYHOFF:
+                            case MTVER:
+                            case MTPRO:
                                 //do nothing
                                 break;
 

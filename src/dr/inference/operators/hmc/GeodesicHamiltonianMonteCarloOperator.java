@@ -90,18 +90,44 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         private final int nRows;
         private final int nCols;
 
+        private final int[] subRows;
+        private final int[] subColumns;
+
 
         GeodesicLeapFrogEngine(Parameter parameter, HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler,
                                MassPreconditioner preconditioning, double[] mask) {
             super(parameter, instabilityHandler, preconditioning, mask);
             this.matrixParameter = (MatrixParameterInterface) parameter;
-            this.nRows = matrixParameter.getRowDimension();
-            this.nCols = matrixParameter.getColumnDimension();
+
+            this.subRows = new int[matrixParameter.getRowDimension()];
+            for (int i = 0; i < matrixParameter.getRowDimension(); i++) {
+                subRows[i] = i;
+            }
+
+            this.subColumns = new int[matrixParameter.getColumnDimension()];
+            for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
+                subColumns[i] = i;
+            }
+            //TODO: make sure mask is compatible (or use mask to inform subRows and subColumns)
+
+            this.nRows = subRows.length;
+            this.nCols = subColumns.length;
             this.positionMatrix = new DenseMatrix64F(nCols, nRows);
             this.innerProduct = new DenseMatrix64F(nCols, nCols);
             this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
             this.projection = new DenseMatrix64F(nCols, nRows);
             this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
+        }
+
+        private void setBlockMatrix(double[] src, DenseMatrix64F dest) {
+            int nRowsOriginal = matrixParameter.getRowDimension();
+            int nColsOriginal = matrixParameter.getColumnDimension();
+            for (int row = 0; row < nRowsOriginal; row++) {
+                for (int col = 0; col < nColsOriginal; col++) {
+                    int ind = nRowsOriginal * subColumns[col] + subRows[row];
+                    dest.set(col, row, src[ind]);
+                }
+            }
         }
 
         @Override
@@ -196,8 +222,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         @Override
         public void projectMomentum(double[] momentum, double[] position) {
-            positionMatrix.setData(position);
-            momentumMatrix.setData(momentum);
+            setBlockMatrix(position, positionMatrix);
+            setBlockMatrix(momentum, momentumMatrix);
+//            positionMatrix.setData(position);
+//            momentumMatrix.setData(momentum);
 
             CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
             EJMLUtils.addWithTransposed(innerProduct);

@@ -61,12 +61,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                              double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
-        this.parameterSign = setParameterSign(gradientProvider);
         this.productProvider = multiplicationProvider;
         this.columnProvider = columnProvider;
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
         this.maskVector = mask != null ? mask.getParameterValues() : null;
+        this.parameterSign = setParameterSign(gradientProvider);
 
         this.runtimeOptions = runtimeOptions;
         this.nativeCodeOptions = nativeOptions;
@@ -97,7 +97,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         double[] sign = new double[startingValue.length];
 
         for (int i = 0; i < startingValue.length; i++) {
-            if (startingValue[i] == 0) {
+            if (startingValue[i] == 0 && mask.getParameterValue(i) == 1) {
                 throw new RuntimeException("must start from either positive or negative value!");
             }
             sign[i] = startingValue[i] > 0 ? 1 : -1;

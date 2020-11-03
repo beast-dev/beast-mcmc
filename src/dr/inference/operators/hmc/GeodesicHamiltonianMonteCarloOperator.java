@@ -118,25 +118,33 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
         }
 
-        private void setSubMatrix(double[] src, DenseMatrix64F dest) {
+        private void setSubMatrix(double[] src, int srcOffset, DenseMatrix64F dest) {
             int nRowsOriginal = matrixParameter.getRowDimension();
             int nColsOriginal = matrixParameter.getColumnDimension();
             for (int row = 0; row < nRowsOriginal; row++) {
                 for (int col = 0; col < nColsOriginal; col++) {
-                    int ind = nRowsOriginal * subColumns[col] + subRows[row];
+                    int ind = nRowsOriginal * subColumns[col] + subRows[row] + srcOffset;
                     dest.set(col, row, src[ind]);
                 }
             }
         }
 
-        private void unwrapSubMatrix(DenseMatrix64F src, double[] dest) {
+        private void setSubMatrix(double[] src, DenseMatrix64F dest) {
+            setSubMatrix(src, 0, dest);
+        }
+
+        private void unwrapSubMatrix(DenseMatrix64F src, double[] dest, int destOffset) {
             int nRowsOriginal = matrixParameter.getRowDimension();
             for (int row = 0; row < nRows; row++) {
                 for (int col = 0; col < nCols; col++) {
-                    int ind = nRowsOriginal * subColumns[col] + subRows[row];
+                    int ind = nRowsOriginal * subColumns[col] + subRows[row] + destOffset;
                     dest[ind] = src.get(col, row);
                 }
             }
+        }
+
+        private void unwrapSubMatrix(DenseMatrix64F src, double[] dest) {
+            unwrapSubMatrix(src, dest, 0);
         }
 
         @Override
@@ -151,8 +159,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
         public void updatePosition(double[] position, WrappedVector momentum,
                                    double functionalStepSize) throws HamiltonianMonteCarloOperator.NumericInstabilityException {
 
-            positionMatrix.setData(position);
-            System.arraycopy(momentum.getBuffer(), momentum.getOffset(), momentumMatrix.data, 0, momentum.getDim());
+//            positionMatrix.setData(position);
+            setSubMatrix(position, positionMatrix);
+            setSubMatrix(momentum.getBuffer(), momentum.getOffset(), momentumMatrix);
+//            System.arraycopy(momentum.getBuffer(), momentum.getOffset(), momentumMatrix.data, 0, momentum.getDim());
             CommonOps.multTransB(positionMatrix, momentumMatrix, innerProduct);
             CommonOps.multTransB(momentumMatrix, momentumMatrix, innerProduct2);
 
@@ -220,13 +230,13 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             CommonOps.mult(innerProduct, positionMatrix, projection);
             System.arraycopy(projection.data, 0, positionMatrix.data, 0, positionMatrix.data.length);
 
-            System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
-            System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
+            unwrapSubMatrix(positionMatrix, position);
+            unwrapSubMatrix(momentumMatrix, momentum.getBuffer(), momentum.getOffset());
+//            System.arraycopy(positionMatrix.data, 0, position, 0, position.length);
+//            System.arraycopy(momentumMatrix.data, 0, momentum.getBuffer(), momentum.getOffset(), momentum.getDim());
 
             matrixParameter.setAllParameterValuesQuietly(position, 0);
             matrixParameter.fireParameterChangedEvent();
-
-
         }
 
         @Override

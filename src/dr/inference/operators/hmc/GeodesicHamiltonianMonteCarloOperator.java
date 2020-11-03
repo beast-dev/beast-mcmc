@@ -1,7 +1,6 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
@@ -119,13 +118,23 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
         }
 
-        private void setBlockMatrix(double[] src, DenseMatrix64F dest) {
+        private void setSubMatrix(double[] src, DenseMatrix64F dest) {
             int nRowsOriginal = matrixParameter.getRowDimension();
             int nColsOriginal = matrixParameter.getColumnDimension();
             for (int row = 0; row < nRowsOriginal; row++) {
                 for (int col = 0; col < nColsOriginal; col++) {
                     int ind = nRowsOriginal * subColumns[col] + subRows[row];
                     dest.set(col, row, src[ind]);
+                }
+            }
+        }
+
+        private void unwrapSubMatrix(DenseMatrix64F src, double[] dest) {
+            int nRowsOriginal = matrixParameter.getRowDimension();
+            for (int row = 0; row < nRows; row++) {
+                for (int col = 0; col < nCols; col++) {
+                    int ind = nRowsOriginal * subColumns[col] + subRows[row];
+                    dest[ind] = src.get(col, row);
                 }
             }
         }
@@ -222,8 +231,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         @Override
         public void projectMomentum(double[] momentum, double[] position) {
-            setBlockMatrix(position, positionMatrix);
-            setBlockMatrix(momentum, momentumMatrix);
+            setSubMatrix(position, positionMatrix);
+            setSubMatrix(momentum, momentumMatrix);
 //            positionMatrix.setData(position);
 //            momentumMatrix.setData(momentum);
 
@@ -232,6 +241,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
             CommonOps.mult(0.5, innerProduct, positionMatrix, projection);
             CommonOps.subtractEquals(momentumMatrix, projection);
+
+            unwrapSubMatrix(momentumMatrix, momentum);
         }
     }
 }

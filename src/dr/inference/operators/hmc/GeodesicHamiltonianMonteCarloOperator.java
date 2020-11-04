@@ -182,6 +182,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
                     isSubRow = false;
                 }
 
+                subColInd = 0;
+
                 for (int col = 0; col < originalColumns; col++) {
                     if (col == cols[subColInd]) {
                         isSubCol = true;
@@ -212,9 +214,8 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
 
         private void setSubMatrix(double[] src, int srcOffset, DenseMatrix64F dest) {
             int nRowsOriginal = matrixParameter.getRowDimension();
-            int nColsOriginal = matrixParameter.getColumnDimension();
-            for (int row = 0; row < nRowsOriginal; row++) {
-                for (int col = 0; col < nColsOriginal; col++) {
+            for (int row = 0; row < subRows.length; row++) {
+                for (int col = 0; col < subColumns.length; col++) {
                     int ind = nRowsOriginal * subColumns[col] + subRows[row] + srcOffset;
                     dest.set(col, row, src[ind]);
                 }

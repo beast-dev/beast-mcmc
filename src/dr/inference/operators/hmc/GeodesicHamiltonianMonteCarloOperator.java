@@ -17,6 +17,8 @@ import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.CholeskyDecomposition;
 import org.ejml.ops.CommonOps;
 
+import java.util.ArrayList;
+
 public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
     public GeodesicHamiltonianMonteCarloOperator(AdaptationMode mode, double weight, GradientWrtParameterProvider gradientProvider, Parameter parameter, Transform transform, Parameter maskParameter, Options runtimeOptions, MassPreconditioner preconditioner) {
@@ -98,16 +100,10 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             super(parameter, instabilityHandler, preconditioning, mask);
             this.matrixParameter = (MatrixParameterInterface) parameter;
 
-            this.subRows = new int[matrixParameter.getRowDimension()];
-            for (int i = 0; i < matrixParameter.getRowDimension(); i++) {
-                subRows[i] = i;
-            }
 
-            this.subColumns = new int[matrixParameter.getColumnDimension()];
-            for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
-                subColumns[i] = i;
-            }
-            //TODO: make sure mask is compatible (or use mask to inform subRows and subColumns)
+            this.subRows = parseSubRowsFromMask();
+            this.subColumns = parseSubColumnsFromMask();
+            if (mask != null) checkMask(subRows, subColumns);
 
             this.nRows = subRows.length;
             this.nCols = subColumns.length;
@@ -116,6 +112,102 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
             this.innerProduct2 = new DenseMatrix64F(nCols, nCols);
             this.projection = new DenseMatrix64F(nCols, nRows);
             this.momentumMatrix = new DenseMatrix64F(nCols, nRows);
+        }
+
+        private int[] parseSubColumnsFromMask() {
+
+            int originalRows = matrixParameter.getRowDimension();
+            int originalColumns = matrixParameter.getColumnDimension();
+
+            ArrayList<Integer> subArray = new ArrayList<Integer>();
+
+            for (int col = 0; col < originalColumns; col++) {
+                int offset = col * originalRows;
+                for (int row = 0; row < originalRows; row++) {
+                    int ind = offset + row;
+                    if (mask == null || mask[ind] == 1.0) {
+                        subArray.add(col);
+                        break;
+                    }
+                }
+            }
+
+            int[] subColumns = new int[subArray.size()];
+            for (int i = 0; i < subColumns.length; i++) {
+                subColumns[i] = subArray.get(i);
+            }
+
+            return subColumns;
+        }
+
+        private int[] parseSubRowsFromMask() {
+            int originalRows = matrixParameter.getRowDimension();
+            int originalColumns = matrixParameter.getColumnDimension();
+
+            ArrayList<Integer> subArray = new ArrayList<Integer>();
+
+            for (int row = 0; row < originalRows; row++) {
+                for (int col = 0; col < originalColumns; col++) {
+                    int ind = col * originalRows + row;
+                    if (mask == null || mask[ind] == 1.0) {
+                        subArray.add(row);
+                        break;
+                    }
+                }
+            }
+
+            int[] subRows = new int[subArray.size()];
+            for (int i = 0; i < subRows.length; i++) {
+                subRows[i] = subArray.get(i);
+            }
+
+            return subRows;
+        }
+
+        private void checkMask(int[] rows, int[] cols) {
+            int originalRows = matrixParameter.getRowDimension();
+            int originalColumns = matrixParameter.getColumnDimension();
+
+            int subRowInd = 0;
+            int subColInd = 0;
+
+            Boolean isSubRow;
+            Boolean isSubCol;
+
+            for (int row = 0; row < originalRows; row++) {
+                if (row == rows[subRowInd]) {
+                    isSubRow = true;
+                    subRowInd++;
+                } else {
+                    isSubRow = false;
+                }
+
+                for (int col = 0; col < originalColumns; col++) {
+                    if (col == cols[subColInd]) {
+                        isSubCol = true;
+                        subColInd++;
+                    } else {
+                        isSubCol = false;
+                    }
+
+                    int ind = originalRows * col + row;
+
+                    if (isSubCol && isSubRow) {
+                        if (mask[ind] != 1.0) {
+                            throw new RuntimeException("mask is incompatible with " +
+                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
+                                    ". All elements in sub-matrix must be set to 1.");
+                        }
+                    } else {
+                        if (mask[ind] != 0.0) {
+                            throw new RuntimeException("mask is incompatible with " +
+                                    GeodesicHamiltonianMonteCarloOperatorParser.OPERATOR_NAME +
+                                    ". All elements outside of sub-matrix must be set to 0.");
+                        }
+                    }
+
+                }
+            }
         }
 
         private void setSubMatrix(double[] src, int srcOffset, DenseMatrix64F dest) {

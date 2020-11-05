@@ -38,8 +38,9 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  * @author Xiang Ji
  */
 
-public abstract class BayesianBridgeDistributionModel extends AbstractModel
-        implements ParametricMultivariateDistributionModel, GradientProvider {
+public abstract class BayesianBridgeDistributionModel extends AbstractModel implements
+        ParametricMultivariateDistributionModel,
+        GradientProvider, HessianProvider {
     
     BayesianBridgeDistributionModel(Parameter globalScale,
                                     Parameter exponent,
@@ -76,6 +77,16 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
     @Override
     public int getDimension() {
         return dim;
+    }
+
+    abstract double[] hessianLogPdf(double[] x);
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) { return hessianLogPdf((double[]) obj); }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

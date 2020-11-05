@@ -62,7 +62,7 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     }
 
     private double getLogDet() {
-        return  Math.log(1.0 - decay * decay);
+        return  (dim - 1) * Math.log(1.0 - decay * decay);
     }
 
     @Override
@@ -105,9 +105,11 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
             SSE -= 2 * decay * x[i - 1] * x[i];
         }
 
+        SSE = SSE * precisionScale;
+
         final double logDet = getLogDet();
 
-        return dim * logNormalize + 0.5 * (logDet - SSE);
+        return dim * logNormalize + 0.5 * (-logDet - SSE);
     }
 
     private double[] scaledPrecisionVectorProduct(double[] x, double scale) {

@@ -797,6 +797,15 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         return stepSize;
     }
 
+    public int getNumGradientEvent(){
+        return 0;
+    }
+
+    @Override
+    public int getNumBoundaryEvent() {
+        return 0;
+    }
+
     protected void handleInstability() {
         throw new RuntimeException("Numerical instability; need to handle"); // TODO
     }

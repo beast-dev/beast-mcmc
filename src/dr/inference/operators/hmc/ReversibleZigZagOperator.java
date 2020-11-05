@@ -50,10 +50,10 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     public ReversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                     PrecisionColumnProvider columnProvider,
-                                    double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask,
+                                    double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
                                     int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask, threadCount);
     }
 
     @Override
@@ -308,15 +308,18 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     final WrappedVector drawInitialVelocity(WrappedVector momentum) {
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
+            double[] velocity = new double[momentum.getDim()];
 
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[momentum.getDim()];
+            for (int i = 0, len = momentum.getDim(); i < len; ++i) {
+                velocity[i] = sign(momentum.get(i)) / Math.sqrt(mass.get(i));
+            }
 
-        for (int i = 0, len = momentum.getDim(); i < len; ++i) {
-            velocity[i] = sign(momentum.get(i)) / Math.sqrt(mass.get(i));
+            return new WrappedVector.Raw(velocity);
         }
-
-        return new WrappedVector.Raw(velocity);
     }
 
     private void testNative(MinimumTravelInformation firstBounce,
@@ -572,6 +575,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public double getParameterLogJacobian() { // transform is not allowed yet.
         return 0;
+    }
+
+    @Override
+    public int getNumGradientEvent() {
+        return numGradientEvents;
+    }
+
+    @Override
+    public int getNumBoundaryEvent() {
+        return numBoundaryEvents;
     }
 
     @Override

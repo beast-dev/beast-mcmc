@@ -147,22 +147,29 @@ public class CompoundSymmetryNormalDistributionModel extends AbstractModel imple
 
     @Override
     public double[][] getPrecisionMatrix() {
-
-        double[][] variance = new double[dim][dim];
+        // with the formula precision = (1 / (1 - rho)) * [I - (rho /(1 - rho + rho * d)) * J], J is all one matrix.
+        double[][] precision = new double[dim][dim];
         double rhoValue = rho.getParameterValue(0);
         double marginalValue = marginal.getParameterValue(0);
+
+        if (marginalValue != 1) {
+            throw new RuntimeException("not yet implemented!");
+        }
+
+        double denom = (1 - rhoValue) * (1 - rhoValue + rhoValue * dim);
+        double diagonalTerm = (1 - 2 * rhoValue + dim * rhoValue) / denom;
+        double offDiagonalTerm = (-rhoValue) / denom;
+
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
                 if (i != j) {
-                    variance[i][j] = rhoValue;
+                    precision[i][j] = offDiagonalTerm;
                 } else {
-                    variance[i][j] = marginalValue;
+                    precision[i][j] = diagonalTerm;
                 }
             }
         }
-        Matrix varianceMatrix = new Matrix(variance);
-        Matrix precisionMatrix = varianceMatrix.inverse();
-        return precisionMatrix.toComponents();
+        return precision;
     }
 
     @Override

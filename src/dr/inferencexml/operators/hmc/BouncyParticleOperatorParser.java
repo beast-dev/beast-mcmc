@@ -46,6 +46,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
     private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
     private final static String MASKING = "mask";
+    private final static String REFRESH_VELOCITY = "refreshVelocity";
 
     private final static String TEST_NATIVE_BOUNCE = "testNativeFindBounce";
     private final static String USE_NATIVE_BOUNCE = "useNativeFindBounce";
@@ -58,6 +59,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        boolean refreshVelocity = xo.getAttribute(REFRESH_VELOCITY, true);
 
         return new BouncyParticleOperator(
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class),
@@ -66,6 +68,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
                 xo.getDoubleAttribute(MCMCOperator.WEIGHT),
                 parseRuntimeOptions(xo),
                 parseNativeCodeOptions(xo),
+                refreshVelocity,
                 parseMask(xo));
     }
 

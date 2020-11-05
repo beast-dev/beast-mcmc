@@ -513,6 +513,28 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
         },
 
+        FIRST_ROW("firstRow") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return 1;
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                return 0;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                precisionArray.add(new double[1][1]);
+                midMeanArray.add(new double[1]);
+                meanArray.add(new double[1]);
+
+            }
+        },
+
         HYBRID("hybrid") {
             @Override
             int getColumnDim(int colIndex, int nRows) {
@@ -576,7 +598,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             throw new IllegalArgumentException("Unknown dimension provider type");
         }
 
-        }
+    }
 
     @Override
     public String getReport() {

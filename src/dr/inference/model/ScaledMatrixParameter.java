@@ -11,6 +11,8 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
     private Boolean valuesKnown = false;
     private Boolean storedValuesKnown = false;
     private final String name;
+    private final boolean[] renormalize;
+    private boolean doNotPropogateChangesUp = false;
 
     public ScaledMatrixParameter(String name, MatrixParameterInterface matrixParameter, Parameter scaleParameter) {
         this.name = name;
@@ -19,6 +21,8 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
         this.scaleParameter = scaleParameter;
         this.columnBuffers = new double[matrixParameter.getColumnDimension()][matrixParameter.getRowDimension()];
         this.storedColumnBuffers = new double[matrixParameter.getColumnDimension()][matrixParameter.getRowDimension()];
+
+        this.renormalize = new boolean[scaleParameter.getDimension()];
 
         scaleParameter.addParameterListener(this);
         matrixParameter.addParameterListener(this);
@@ -114,7 +118,8 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
 
     @Override
     public void setParameterValueQuietly(int row, int col, double value) {
-        throw new RuntimeException("Not implemented");
+        matrixParameter.setParameterValueQuietly(row, col, value);
+        renormalize[col] = true;
     }
 
     @Override
@@ -186,8 +191,37 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
 
     @Override
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        fireParameterChangedEvent();
+        if (!doNotPropogateChangesUp) fireParameterChangedEvent();
+
         valuesKnown = false; //TODO: do only update necessary indices
+    }
+
+    @Override
+    public void fireParameterChangedEvent() {
+        for (int col = 0; col < renormalize.length; col++) {
+            if (renormalize[col]) {
+                doNotPropogateChangesUp = true;
+                double norm = 0.0;
+                for (int row = 0; row < matrixParameter.getRowDimension(); row++) {
+                    double val = matrixParameter.getParameterValue(row, col);
+                    norm += val * val;
+                }
+
+                norm = Math.sqrt(norm);
+
+                scaleParameter.setParameterValueQuietly(col, norm);
+                for (int row = 0; row < matrixParameter.getRowDimension(); row++) {
+                    matrixParameter.setParameterValue(row, col, matrixParameter.getParameterValue(row, col) / norm);
+                }
+            }
+        }
+        if (doNotPropogateChangesUp) {
+            scaleParameter.fireParameterChangedEvent();
+            matrixParameter.fireParameterChangedEvent();
+            doNotPropogateChangesUp = false;
+        }
+
+        fireParameterChangedEvent(-1, Parameter.ChangeType.VALUE_CHANGED);
     }
 
     private void transferBuffer(double[][] src, double[][] dest) {

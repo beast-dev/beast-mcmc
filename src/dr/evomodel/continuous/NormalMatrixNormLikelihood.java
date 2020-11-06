@@ -1,12 +1,13 @@
 package dr.evomodel.continuous;
 
+import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.*;
 import dr.inference.operators.repeatedMeasures.MultiplicativeGammaGibbsHelper;
 import dr.math.distributions.MultivariateGammaLikelihood;
 import dr.util.Transform;
 import dr.xml.*;
 
-public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood implements MultiplicativeGammaGibbsHelper {
+public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood implements MultiplicativeGammaGibbsHelper, NormalStatisticsProvider {
 
     private final int rowDimension;
     private final Parameter columnNorms;
@@ -122,4 +123,15 @@ public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood impl
             return NORMAL_NORM_LIKELIHOOD;
         }
     };
+
+    @Override
+    public double getNormalMean(int dim) {
+        return 0;
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        int row = dim / rowDimension;
+        return Math.sqrt(scale.getParameterValue(row) / 2);
+    }
 }

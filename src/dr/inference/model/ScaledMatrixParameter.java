@@ -213,6 +213,7 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
                 for (int row = 0; row < matrixParameter.getRowDimension(); row++) {
                     matrixParameter.setParameterValue(row, col, matrixParameter.getParameterValue(row, col) / norm);
                 }
+                renormalize[col] = false;
             }
         }
         if (doNotPropogateChangesUp) {

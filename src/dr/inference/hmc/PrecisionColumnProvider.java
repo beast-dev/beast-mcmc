@@ -26,6 +26,7 @@
 package dr.inference.hmc;
 
 import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
+import dr.inference.distribution.CompoundSymmetryNormalDistributionModel;
 import dr.inference.model.*;
 
 import java.util.HashMap;
@@ -123,6 +124,21 @@ public interface PrecisionColumnProvider {
         @Override
         double[] getColumnWithoutCache(int index) {
             return ar.getPrecisionColumn(index);
+        }
+    }
+
+    class CompoundSymmetry extends Base {
+        private final CompoundSymmetryNormalDistributionModel cs;
+
+        public CompoundSymmetry(CompoundSymmetryNormalDistributionModel cs, boolean useCache) {
+            super("precisionColumnProvider.CompoundSymmetry", useCache);
+
+            this.cs = cs;
+            addModel(cs);
+        }
+
+        double[] getColumnWithoutCache(int index) {
+            return cs.getPrecisionColumn(index);
         }
     }
 }

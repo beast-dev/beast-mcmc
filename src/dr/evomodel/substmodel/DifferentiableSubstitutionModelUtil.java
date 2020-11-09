@@ -134,7 +134,8 @@ public class DifferentiableSubstitutionModelUtil {
         return differential;
     }
 
-    private static final boolean CHECK_COMMUTABILITY = false;
+    private static final boolean CHECK_COMMUTABILITY = true;
+    private static final double COMMUTABILITY_CHECK_THRESHOLD = 0.01;
 
     public static boolean checkCommutability(WrappedMatrix x, WrappedMatrix y) {
 
@@ -145,7 +146,20 @@ public class DifferentiableSubstitutionModelUtil {
         System.err.println(yx);
         System.err.println();
 
-        return true;
+        boolean isCommutable = true;
+        for (int i = 0; i < xy.getDim(); i++) {
+            if (Math.abs(2.0 * (xy.get(i) - yx.get(i)) /  (xy.get(i) + yx.get(i)))> COMMUTABILITY_CHECK_THRESHOLD) {
+                isCommutable = false;
+            }
+        }
+
+        if (isCommutable) {
+            System.err.println("Generator and its differential matrix commute.");
+        } else {
+            System.err.println("Generator and its differential matrix do not commute.");
+        }
+
+        return isCommutable;
     }
 
     private static WrappedMatrix product(WrappedMatrix x, WrappedMatrix y) {

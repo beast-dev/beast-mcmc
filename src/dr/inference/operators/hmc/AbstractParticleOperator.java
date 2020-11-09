@@ -25,7 +25,6 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evomodel.operators.NativeZigZag;
 import dr.evomodel.operators.NativeZigZagOptions;
 import dr.evomodel.operators.NativeZigZagWrapper;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -44,7 +43,6 @@ import dr.xml.Reportable;
 
 import java.util.Arrays;
 
-import static dr.inference.operators.hmc.IrreversibleZigZagOperator.CPP_NEXT_BOUNCE;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -60,7 +58,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
-                             double weight, Options runtimeOptions, Parameter mask) {
+                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -68,8 +66,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
         this.maskVector = mask != null ? mask.getParameterValues() : null;
+        this.parameterSign = setParameterSign(gradientProvider);
 
         this.runtimeOptions = runtimeOptions;
+        this.nativeCodeOptions = nativeOptions;
+        this.refreshVelocity = refreshVelocity;
         this.preconditioning = setupPreconditioning();
         this.meanVector = getMeanVector(gradientProvider);
 
@@ -81,13 +82,27 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         long nativeSeed = MathUtils.nextLong();
         int nThreads = 4;
 
-        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || USE_NATIVE_BOUNCE || CPP_NEXT_BOUNCE) {
+        if (nativeOptions.testNativeFindNextBounce || nativeOptions.useNativeFindNextBounce || nativeOptions.useNativeUpdateDynamics) {
 
             NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
 
             nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), options,
                     maskVector, getObservedDataMask());
         }
+    }
+
+    private double[] setParameterSign(GradientWrtParameterProvider gradientProvider) {
+
+        double[] startingValue = gradientProvider.getParameter().getParameterValues();
+        double[] sign = new double[startingValue.length];
+
+        for (int i = 0; i < startingValue.length; i++) {
+            if (startingValue[i] == 0 && mask.getParameterValue(i) == 1) {
+                throw new RuntimeException("must start from either positive or negative value!");
+            }
+            sign[i] = startingValue[i] > 0 ? 1 : -1;
+        }
+        return sign;
     }
 
     private boolean[] getMissingDataMask() {
@@ -279,12 +294,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
+    boolean headingTowardsBoundary(double velocity, int positionIndex) {
 
         if (missingDataMask[positionIndex]) {
             return false;
         } else {
-            return position * velocity < 0.0;
+            return parameterSign[positionIndex] * velocity < 0.0;
         }
     }
 
@@ -325,10 +340,25 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void initializeNumEvent(){
         numEvents = 0;
+        numBoundaryEvents = 0;
+        numGradientEvents = 0;
     }
 
     void recordOneMoreEvent(){
         numEvents++;
+    }
+
+    void recordEvents(Type eventType){
+        numEvents++;
+        if (eventType == Type.BOUNDARY){
+            numBoundaryEvents++;
+        } else if (eventType == Type.GRADIENT){
+            numGradientEvents++;
+        }
+    }
+
+    void storeVelocity(WrappedVector velocity){
+        storedVelocity = velocity;
     }
 
     double[] getMeanVector(GradientWrtParameterProvider gradientProvider) {
@@ -363,6 +393,18 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         public Options(double randomTimeWidth, int preconditioningUpdateFrequency) {
             this.randomTimeWidth = randomTimeWidth;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+        }
+    }
+
+    public static class NativeCodeOptions {
+        final boolean testNativeFindNextBounce;
+        final boolean useNativeFindNextBounce;
+        final boolean useNativeUpdateDynamics;
+
+        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce, boolean useNativeUpdateDynamics){
+            this.testNativeFindNextBounce = testNativeFindNextBounce;
+            this.useNativeFindNextBounce = useNativeFindNextBounce;
+            this.useNativeUpdateDynamics = useNativeUpdateDynamics;
         }
     }
 
@@ -433,9 +475,15 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;
     private final Options runtimeOptions;
+    protected boolean refreshVelocity;
+    protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
+    final double[] parameterSign;
     private final double[] maskVector;
     int numEvents;
+    int numBoundaryEvents;
+    int numGradientEvents;
+    protected WrappedVector storedVelocity;
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
     private final double[] meanVector;
@@ -443,11 +491,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 
-    private final static boolean TEST_NATIVE_OPERATOR = false;
-    final static boolean TEST_NATIVE_BOUNCE = false;
-    final static boolean USE_NATIVE_BOUNCE = true;
-//    final static boolean TEST_CRITICAL_REGION = false;
-    final static boolean TEST_NATIVE_INNER_BOUNCE = true;
-
+//  final static boolean TEST_CRITICAL_REGION = false;
     NativeZigZagWrapper nativeZigZag;
 }

@@ -37,7 +37,6 @@ import dr.util.Citation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.DoubleBinaryOperator;
 
 import org.ejml.data.DenseMatrix64F;

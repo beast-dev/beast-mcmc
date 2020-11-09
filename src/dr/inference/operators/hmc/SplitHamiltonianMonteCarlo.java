@@ -96,6 +96,16 @@ public class SplitHamiltonianMonteCarlo implements ReversibleHMCProvider {
     }
 
     @Override
+    public int getNumGradientEvent() {
+        return 0;
+    }
+
+    @Override
+    public int getNumBoundaryEvent() {
+        return 0;
+    }
+
+    @Override
     public Transform getTransform() {
         return null;
     }

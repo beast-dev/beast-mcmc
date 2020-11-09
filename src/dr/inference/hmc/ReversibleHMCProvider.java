@@ -15,6 +15,10 @@ public interface ReversibleHMCProvider {
 
     double getParameterLogJacobian();
 
+    int getNumGradientEvent();
+
+    int getNumBoundaryEvent();
+
     Transform getTransform();
 
     GradientWrtParameterProvider getGradientProvider();

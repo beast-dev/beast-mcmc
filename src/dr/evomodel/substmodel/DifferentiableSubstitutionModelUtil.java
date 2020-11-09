@@ -136,7 +136,7 @@ public class DifferentiableSubstitutionModelUtil {
 
     private static final boolean CHECK_COMMUTABILITY = false;
 
-    private static boolean checkCommutability(WrappedMatrix x, WrappedMatrix y) {
+    public static boolean checkCommutability(WrappedMatrix x, WrappedMatrix y) {
 
         WrappedMatrix xy = product(x, y);
         WrappedMatrix yx = product(y, x);

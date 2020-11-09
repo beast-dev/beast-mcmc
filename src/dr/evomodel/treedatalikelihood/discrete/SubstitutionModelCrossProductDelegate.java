@@ -34,6 +34,8 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 
+import java.util.Arrays;
+
 import static dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchRateDelegate.scaleInfinitesimalMatrixByRates;
 
 /**
@@ -100,6 +102,7 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
             }
         }
 
+        Arrays.fill(first, 0, first.length, 0.0);
         double[] firstSquared = (second != null) ? new double[second.length] : null;
 
         beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,

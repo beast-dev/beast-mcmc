@@ -162,8 +162,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             return leapFrog();
         } catch (NumericInstabilityException e) {
             return Double.NEGATIVE_INFINITY;
+        } catch (ArithmeticException e) {
+            if (REJECT_ARITHMETIC_EXCEPTION) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                throw e;
+            }
         }
     }
+
+    private static final boolean REJECT_ARITHMETIC_EXCEPTION = true;
 
     @Override
     public void setPathParameter(double beta) {
@@ -352,7 +360,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    static class NumericInstabilityException extends Exception {
+    public static class NumericInstabilityException extends Exception {
     }
 
     private int getNumberOfSteps() {

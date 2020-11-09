@@ -86,6 +86,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         addVariable(effect);
         randomEffects.add(effect);
         numRandomEffects++;
+        if (N == 0) {
+            N = effect.getDimension();
+        }
     }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {

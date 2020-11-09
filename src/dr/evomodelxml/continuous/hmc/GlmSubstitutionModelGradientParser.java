@@ -25,12 +25,12 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.substmodel.GLMSubstitutionModel;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.GlmSubstitutionModelGradient;
+import dr.evomodel.treedatalikelihood.discrete.RandomEffectsSubstitutionModelGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.xml.*;
 
@@ -44,6 +44,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
 
     private static final String PARSER_NAME = "glmSubstitutionModelGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String EFFECTS = "effects";
 
     public String getParserName(){ return PARSER_NAME; }
 
@@ -58,8 +59,22 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
-        return new GlmSubstitutionModelGradient(traitName, treeDataLikelihood,
-                (BeagleDataLikelihoodDelegate)delegate, substitutionModel);
+        String effectsString = xo.getAttribute(EFFECTS, "fixed");
+        if (effectsString.equalsIgnoreCase("fixed")) {
+            if (substitutionModel.getGeneralizedLinearModel().getNumberOfFixedEffects() < 1) {
+                throw new XMLParseException("No fixed effects in '" + substitutionModel.getId() + "'");
+            }
+            return new GlmSubstitutionModelGradient(traitName, treeDataLikelihood,
+                                (BeagleDataLikelihoodDelegate)delegate, substitutionModel);
+        } else if (effectsString.equalsIgnoreCase("random")) {
+            if (substitutionModel.getGeneralizedLinearModel().getNumberOfRandomEffects() < 1) {
+                throw new XMLParseException("No random effects in '" + substitutionModel.getId() + "'");
+            }
+            return new RandomEffectsSubstitutionModelGradient(traitName, treeDataLikelihood,
+                                (BeagleDataLikelihoodDelegate)delegate, substitutionModel);
+        } else {
+            throw new XMLParseException("Unknown effects type '" + effectsString + "'");
+        }
     }
 
     @Override
@@ -71,6 +86,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
             AttributeRule.newStringRule(TRAIT_NAME, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(OldGLMSubstitutionModel.class),
+            AttributeRule.newStringRule(EFFECTS, true),
     };
 
     @Override

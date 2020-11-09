@@ -121,7 +121,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //        System.err.println("START 2");
 
         boolean checkIdentifiability = xo.getAttribute(CHECK_IDENTIFIABILITY, true);
-        if (checkIdentifiability) {
+        if (glm.getNumberOfFixedEffects() > 0 && checkIdentifiability) {
             if (!glm.getAllIndependentVariablesIdentifiable()) {
                 throw new XMLParseException("All design matrix predictors are not identifiable in "+  xo.getId());
             }
@@ -262,7 +262,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                                     new XMLSyntaxRule[]{
                                             new ElementRule(Parameter.class)
                                     }, true),
-                    }, 1, 10),
+                    }, 0, 10),
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
 //				new ElementRule(BASIS_MATRIX,

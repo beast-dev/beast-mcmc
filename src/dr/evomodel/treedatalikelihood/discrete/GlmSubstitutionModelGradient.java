@@ -38,15 +38,16 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,14 +56,21 @@ import java.util.List;
  */
 public class GlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable, Loggable, Citable {
 
-    private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
-    private final Tree tree;
+    protected final TreeDataLikelihood treeDataLikelihood;
+    protected final TreeTrait treeTraitProvider;
+    protected final Tree tree;
 
-    private final OldGLMSubstitutionModel substitutionModel;
-    private final GeneralizedLinearModel glm;
-    private final Parameter allCoefficients;
-    private final int stateCount;
+    protected final OldGLMSubstitutionModel substitutionModel;
+    protected final GeneralizedLinearModel glm;
+//    protected final Parameter allCoefficients;
+    protected final ParameterMap parameterMap;
+    protected final int stateCount;
+
+    interface ParameterMap {
+        double[] getCovariateColumn(int i);
+        Parameter getParameter();
+    }
+
 
 
     public GlmSubstitutionModelGradient(String traitName,
@@ -74,7 +82,8 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         this.tree = treeDataLikelihood.getTree();
         this.substitutionModel = substitutionModel;
         this.glm = substitutionModel.getGeneralizedLinearModel();
-        this.allCoefficients = makeCompoundParameter(glm);
+//        this.allCoefficients = makeCompoundParameter(glm);
+        this.parameterMap = makeParameterMap(glm);
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
@@ -94,7 +103,37 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         assert (treeTraitProvider != null);
     }
 
-    public static Parameter makeCompoundParameter(GeneralizedLinearModel glm) {
+    ParameterMap makeParameterMap(GeneralizedLinearModel glm) {
+
+        final List<Integer> whichBlock = new ArrayList<>();
+        final List<Integer> whichIndex = new ArrayList<>();
+
+        CompoundParameter cp = new CompoundParameter("fixedEffects");
+        boolean multi = glm.getNumberOfFixedEffects() > 1;
+
+        for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+            Parameter p = glm.getFixedEffect(i);
+            if (multi) {
+                cp.addParameter(p);
+            }
+            for (int j = 0; j < p.getDimension(); ++j) {
+                whichBlock.add(i);
+                whichIndex.add(j);
+            }
+        }
+
+        final Parameter whichParameter = multi ? cp : glm.getFixedEffect(0);
+        return new ParameterMap() {
+
+            public double[] getCovariateColumn(int i) {
+                return glm.getDesignMatrix(whichBlock.get(i)).getColumnValues(whichIndex.get(i));
+            }
+
+            public Parameter getParameter() { return whichParameter; }
+        };
+    }
+
+    Parameter makeCompoundParameter(GeneralizedLinearModel glm) {
         CompoundParameter parameter = new CompoundParameter("test");
         for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
             parameter.addParameter(glm.getFixedEffect(i));
@@ -109,7 +148,7 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
     @Override
     public Parameter getParameter() {
-        return allCoefficients;
+        return parameterMap.getParameter();
     }
 
     @Override
@@ -129,48 +168,17 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         double[] generator = new double[differentials.length];
 
         substitutionModel.getInfinitesimalMatrix(generator);
-
-        System.err.println("D: " + new WrappedVector.Raw(differentials));
-        System.err.println("G: " + new WrappedVector.Raw(generator));
-
-//        System.err.println("length = " + differentials.length);
-
         double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
 
-        double[] gradient = new double[allCoefficients.getDimension()];
+        double normalizationConstant = preProcessNormalization(differentials, generator,
+                substitutionModel.getNormalization());
 
-        for (int i = 0; i < allCoefficients.getDimension(); ++i) {
-
-            DesignMatrix designMatrix = glm.getDesignMatrix(i);
-            double[] covariate = designMatrix.getColumnValues(0);
-            double[] covariateT = transposeOffDiagonal(covariate);
-
-            double x = calculateCovariateDifferential(generator, differentials, covariate, pi, substitutionModel.getNormalization());
-
-//            System.err.println("x1: " + x);
-//            System.err.println("x2: " + calculateCovariateDifferential(
-//                    transposeAll(generator), transposeAll(differentials), transposeOffDiagonal(covariate), pi, false));
-//            System.err.println("x3: " + calculateCovariateDifferential(
-//                    generator, transposeAll(differentials), transposeOffDiagonal(covariate), pi, false));
-//            System.err.println("x4: " + calculateCovariateDifferential(
-//                    transposeAll(generator), differentials, transposeOffDiagonal(covariate), pi, false));
-//            System.err.println("x5: " + calculateCovariateDifferential(
-//                    transposeAll(generator), transposeAll(differentials), covariate, pi, false));
-//            System.err.println("x6: " + calculateCovariateDifferential(
-//                    transposeAll(generator), differentials, covariate, pi, false));
-//            System.err.println("x7: " + calculateCovariateDifferential(
-//                    generator, transposeAll(differentials), covariate, pi, false));
-//            System.err.println("x8: " + calculateCovariateDifferential(
-//                    generator, differentials, transposeOffDiagonal(covariate), pi, false));
-
-            gradient[i] = x;
-
+        final double[] gradient = new double[getParameter().getDimension()];
+        for (int i = 0; i < getParameter().getDimension(); ++i) {
+            gradient[i] = processSingleGradientDimension(i, differentials, generator, pi,
+                    substitutionModel.getNormalization(),
+                    normalizationConstant);
         }
-
-
-//        double normalization = g
-
-//        gradient[0] = grad;
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++gradientCount;
@@ -181,29 +189,45 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         return gradient;
     }
 
-    private double[] transposeOffDiagonal(double[] x) {
-        double[] result = new double[x.length];
-        int half = x.length / 2;
-        System.arraycopy(x, half, result, 0, half);
-        System.arraycopy(x, 0, result, half, half);
-
-        return result;
+    double preProcessNormalization(double[] differentials, double[] generator,
+                                   boolean normalize) {
+        return 0.0;
     }
 
-    private double[] transposeAll(double[] x) {
-        double[] result = new double[stateCount * stateCount];
+    double processSingleGradientDimension(int i,
+                                          double[] differentials, double[] generator, double[] pi,
+                                          boolean normalize, double normalizationConstant) {
+//        DesignMatrix designMatrix = glm.getDesignMatrix(i);
+//        double[] covariate = designMatrix.getColumnValues(0);
 
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = 0; j < stateCount; ++j) {
-                result[index(j,i)] = x[index(i,j)];
-            }
-        }
+        double[] covariate = parameterMap.getCovariateColumn(i);
 
-        return result;
+        return calculateCovariateDifferential(generator, differentials, covariate, pi, normalize);
     }
 
+//    private double[] transposeOffDiagonal(double[] x) {
+//        double[] result = new double[x.length];
+//        int half = x.length / 2;
+//        System.arraycopy(x, half, result, 0, half);
+//        System.arraycopy(x, 0, result, half, half);
+//
+//        return result;
+//    }
+//
+//    private double[] transposeAll(double[] x) {
+//        double[] result = new double[stateCount * stateCount];
+//
+//        for (int i = 0; i < stateCount; ++i) {
+//            for (int j = 0; j < stateCount; ++j) {
+//                result[index(j,i)] = x[index(i,j)];
+//            }
+//        }
+//
+//        return result;
+//    }
 
-    private double calculateCovariateDifferential(double[] generator, double[] differential, double[] covariate, double[] pi,
+    private double calculateCovariateDifferential(double[] generator, double[] differential,
+                                                  double[] covariate, double[] pi,
                                                   boolean doNormalization) {
 
         double normalization = 0.0;
@@ -247,7 +271,7 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         return total;
     }
 
-    private int index(int i, int j) {
+    int index(int i, int j) {
         return i * stateCount + j;
     }
 
@@ -344,4 +368,6 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
             "Phylogeographic GLM random effects",
             "",
             Citation.Status.IN_PREPARATION);
+
+    private static final boolean RETHROW_DECOMPOSITION_ERROR = true;
 }

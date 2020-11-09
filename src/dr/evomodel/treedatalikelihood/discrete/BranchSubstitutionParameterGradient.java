@@ -45,11 +45,13 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil.checkCommutability;
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
 
 /**
@@ -73,6 +75,8 @@ public class BranchSubstitutionParameterGradient
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
     protected long getGradientLogDensityCount = 0;
     private final double smallGradientThreshold = 0.5;
+
+    private BranchDifferentialMassProvider save;
 
     public BranchSubstitutionParameterGradient(String traitName,
                                                TreeDataLikelihood treeDataLikelihood,
@@ -109,6 +113,8 @@ public class BranchSubstitutionParameterGradient
 
             BranchDifferentialMassProvider branchDifferentialMassProvider =
                     new BranchDifferentialMassProvider(branchRateModel, differentialMassProviderList);
+
+            this.save = branchDifferentialMassProvider;
 
             ProcessSimulationDelegate gradientDelegate = new BranchSubstitutionParameterDelegate(traitName,
                     treeDataLikelihood.getTree(),
@@ -205,6 +211,20 @@ public class BranchSubstitutionParameterGradient
 
     @Override
     public String getReport() {
+
+        BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel)
+                ((BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate()).getBranchModel();
+
+                DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) branchModel.getSubstitutionModel(tree.getNode(0));
+
+//                substitutionModel.getInfinitesimalDifferentialMatrix()
+        double[] differential = save.getDifferentialMassMatrixForBranch(tree.getNode(0), tree.getBranchLength(tree.getNode(0)));
+        double[] generator = new double[differential.length];
+        substitutionModel.getInfinitesimalMatrix(generator);
+        int len = substitutionModel.getFrequencyModel().getDataType().getStateCount();
+
+        checkCommutability(new WrappedMatrix.Raw(generator, 0, len, len), new WrappedMatrix.Raw(differential, 0, len, len));
+
         return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, nullableTolerance, smallGradientThreshold);
     }
 }

@@ -46,6 +46,8 @@ import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.discrete.GlmSubstitutionModelGradient.makeCompoundParameter;
 
+//import static dr.evomodel.treedatalikelihood.discrete.GlmSubstitutionModelGradient.makeCompoundParameter;
+
 /**
  * @author Marc A. Suchard
  */

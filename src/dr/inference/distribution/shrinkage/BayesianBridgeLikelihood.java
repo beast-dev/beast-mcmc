@@ -26,6 +26,7 @@
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
@@ -38,8 +39,9 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  * @author Xiang Ji
  */
 
-public class BayesianBridgeLikelihood extends AbstractModelLikelihood
-        implements BayesianBridgeStatisticsProvider, PriorPreconditioningProvider, GradientWrtParameterProvider {
+public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
+        BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
+        GradientWrtParameterProvider, HessianWrtParameterProvider {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
                                     BayesianBridgeDistributionModel distribution) {
@@ -70,6 +72,16 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     @Override
     public double[] getGradientLogDensity() {
         return distribution.gradientLogPdf(coefficients.getParameterValues());
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return distribution.getDiagonalHessianLogDensity(coefficients.getParameterValues());
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

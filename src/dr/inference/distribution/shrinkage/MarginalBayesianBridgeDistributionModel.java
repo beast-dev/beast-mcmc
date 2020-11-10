@@ -53,4 +53,9 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
 
         return sum;
     }
+
+    @Override
+    public double[] hessianLogPdf(double[] x) {
+        throw new RuntimeException("Not yet implemented");
+    }
 }

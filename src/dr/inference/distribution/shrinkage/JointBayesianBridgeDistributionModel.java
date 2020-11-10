@@ -61,6 +61,7 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         return pdf;
     }
 
+    @Override
     public double getStandardDeviation(int index) {
         double globalLocalProduct = globalScale.getParameterValue(0) * localScale.getParameterValue(index);
         if (slabWidth != null) {
@@ -68,6 +69,16 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
             globalLocalProduct /= Math.sqrt(1.0 + ratio * ratio);
         }
         return globalLocalProduct;
+    }
+
+    @Override
+    public double[] hessianLogPdf(double[] x) {
+
+        double[] hessian = new double[dim];
+        for (int i = 0; i < dim; ++i) {
+            hessian[i] = NormalDistribution.hessianLogPdf(x[i], 0, getStandardDeviation(i));
+        }
+        return hessian;
     }
 
     private final Parameter localScale;

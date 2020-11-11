@@ -27,10 +27,7 @@ package dr.evolution.util;
 
 import dr.util.Identifiable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Class for a list of taxa.
@@ -44,8 +41,9 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 
 	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
+	Map<String, Integer> taxonIndexMap = new HashMap<>();
 
-    private String id = null;
+	private String id = null;
 
 	public Taxa() {
 	}
@@ -113,6 +111,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 
     public void removeAllTaxa() {
 		taxa.clear();
+		taxonIndexMap.clear();
 		fireTaxonRemoved(null);
 	}
 
@@ -142,6 +141,7 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 	 */
 	public void setTaxonId(int taxonIndex, String id) {
 		(taxa.get(taxonIndex)).setId(id);
+		taxonIndexMap.put(id, taxonIndex);
 		fireTaxaChanged();
 	}
 
@@ -149,20 +149,22 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 	 * returns the index of the taxon with the given id.
 	 */
 	public int getTaxonIndex(String id) {
-		for (int i = 0; i < taxa.size(); i++) {
-			if (getTaxonId(i).equals(id)) return i;
-		}
-		return -1;
+		return taxonIndexMap.getOrDefault(id, -1);
+//		for (int i = 0; i < taxa.size(); i++) {
+//			if (getTaxonId(i).equals(id)) return i;
+//		}
+//		return -1;
 	}
 
 	/**
 	 * returns the index of the given taxon.
 	 */
 	public int getTaxonIndex(Taxon taxon) {
-		for (int i = 0; i < taxa.size(); i++) {
-			if (getTaxon(i) == taxon) return i;
-		}
-		return -1;
+		return getTaxonIndex(taxon.id);
+//		for (int i = 0; i < taxa.size(); i++) {
+//			if (getTaxon(i) == taxon) return i;
+//		}
+//		return -1;
 	}
 
     public List<Taxon> asList() {

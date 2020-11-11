@@ -762,6 +762,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             case MTMET:
                             case MTINV:
                             case MTDEU:
+                            case MTMAM:
                                 //do nothing
                                 break;
 

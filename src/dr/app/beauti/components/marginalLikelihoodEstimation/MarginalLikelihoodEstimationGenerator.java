@@ -759,6 +759,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             case DAYHOFF:
                             case MTVER:
                             case MTPRO:
+                            case MTMET:
+                            case MTINV:
+                            case MTDEU:
                                 //do nothing
                                 break;
 

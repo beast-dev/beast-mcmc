@@ -50,11 +50,19 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
         return scaleParameter;
     }
 
+    private void throwInvalidException() {
+        throw new RuntimeException("Not a valid state. Must call fireParameterChanged before getting value.");
+    }
+
     @Override
     public double getParameterValue(int row, int col) {
+        if (renormalize[col]) {
+            throwInvalidException();
+        }
         updateBuffer();
         return columnBuffers[col][row];
     }
+
 
     @Override
     public Parameter getParameter(int column) {
@@ -65,6 +73,9 @@ public class ScaledMatrixParameter extends Parameter.Abstract implements MatrixP
     public double getParameterValue(int dim) {
         updateBuffer();
         int col = dim / matrixParameter.getRowDimension();
+        if (renormalize[col]) {
+            throwInvalidException();
+        }
         int row = dim - col * matrixParameter.getRowDimension();
 
         return columnBuffers[col][row];

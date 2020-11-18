@@ -28,8 +28,8 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     private ReversibleHMCProvider outer;
     protected final Parameter parameter;
 
-    int dimA;
-    int dimB;
+    int dimInner;
+    int dimOuter;
 
     private int nSteps;
     private int nSplitOuter;
@@ -48,8 +48,8 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         setWeight(weight);
         this.inner = inner;
         this.outer = outer;
-        dimA = inner.getInitialPosition().length;
-        dimB = outer.getInitialPosition().length;
+        dimInner = inner.getInitialPosition().length;
+        dimOuter = outer.getInitialPosition().length;
         this.parameter = parameter;
 
         this.stepSize = stepSize;
@@ -69,7 +69,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     }
 
     void checkGradient(final Likelihood joint) {
-        if (parameter.getDimension() != dimA + dimB) {
+        if (parameter.getDimension() != dimInner + dimOuter) {
             throw new RuntimeException("Unequal dimensions");
         }
 
@@ -149,35 +149,35 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     private double mergedUpdate() {
 
-        double[] positionAbuffer = inner.getInitialPosition();
-        double[] positionBbuffer = outer.getInitialPosition();
+        double[] positionInnerbuffer = inner.getInitialPosition();
+        double[] positionOuterbuffer = outer.getInitialPosition();
 
-        WrappedVector positionA = new WrappedVector.Raw(positionAbuffer);
-        WrappedVector positionB = new WrappedVector.Raw(positionBbuffer);
+        WrappedVector positionInner = new WrappedVector.Raw(positionInnerbuffer);
+        WrappedVector positionOuter = new WrappedVector.Raw(positionOuterbuffer);
 
-        WrappedVector momentumA = inner.drawMomentum();
-        WrappedVector momentumB = outer.drawMomentum();
+        WrappedVector momentumInner = inner.drawMomentum();
+        WrappedVector momentumOuter = outer.drawMomentum();
 
-        WrappedVector gradientA = new WrappedVector.Raw(inner.getGradientProvider().getGradientLogDensity());
-        WrappedVector gradientB = new WrappedVector.Raw(outer.getGradientProvider().getGradientLogDensity());
+        WrappedVector gradientInner = new WrappedVector.Raw(inner.getGradientProvider().getGradientLogDensity());
+        WrappedVector gradientOuter = new WrappedVector.Raw(outer.getGradientProvider().getGradientLogDensity());
 
         final double prop =
-                inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB) + inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
+                inner.getKineticEnergy(momentumInner) + outer.getKineticEnergy(momentumOuter) + inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
 
         for (int i = 0; i < nSteps; i++) {
             for (int j = 0; j < nSplitOuter; j++) {
-                outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradientB,1, .5 * stepSize / nSplitOuter);
+                outer.reversiblePositionMomentumUpdate(positionOuter, momentumOuter, gradientOuter,1, .5 * stepSize / nSplitOuter);
             }
-            inner.reversiblePositionMomentumUpdate(positionA, momentumA, gradientA, 1,
+            inner.reversiblePositionMomentumUpdate(positionInner, momentumInner, gradientInner, 1,
                     relativeScale * stepSize);
-            updateOuterGradient(gradientB);
+            updateOuterGradient(gradientOuter);
             for (int j = 0; j < nSplitOuter; j++) {
-                outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradientB,1, .5 * stepSize / nSplitOuter);
+                outer.reversiblePositionMomentumUpdate(positionOuter, momentumOuter, gradientOuter,1, .5 * stepSize / nSplitOuter);
             }
         }
 
         final double res =
-                inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB) + inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
+                inner.getKineticEnergy(momentumInner) + outer.getKineticEnergy(momentumOuter) + inner.getParameterLogJacobian() + outer.getParameterLogJacobian();
 
         return prop - res;
     }
@@ -225,94 +225,80 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
 
-        double[] positionAbuffer = new double[dimA];
-        double[] positionBbuffer = new double[dimB];
+        double[] positionInnerbuffer = new double[dimInner];
+        double[] positionOuterbuffer = new double[dimOuter];
 
-        double[] momentumAbuffer = new double[dimA];
-        double[] momentumBbuffer = new double[dimB];
+        double[] momentumAbuffer = new double[dimInner];
+        double[] momentumBbuffer = new double[dimOuter];
 
         //1:split the position
-        splitWrappedVector(position, positionAbuffer, positionBbuffer);
+        splitWrappedVector(position, positionInnerbuffer, positionOuterbuffer);
 
         //2:split the momentum
         splitWrappedVector(momentum, momentumAbuffer, momentumBbuffer);
 
-        WrappedVector positionA = new WrappedVector.Raw(positionAbuffer);
-        WrappedVector positionB = new WrappedVector.Raw(positionBbuffer);
+        WrappedVector positionInner = new WrappedVector.Raw(positionInnerbuffer);
+        WrappedVector positionOuter = new WrappedVector.Raw(positionOuterbuffer);
         WrappedVector momentumA = new WrappedVector.Raw(momentumAbuffer);
         WrappedVector momentumB = new WrappedVector.Raw(momentumBbuffer);
 
         //2:update them
         for (int i = 0; i < nSplitOuter; i++) {
-            outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradient, direction, .5 * time / nSplitOuter);
+            outer.reversiblePositionMomentumUpdate(positionOuter, momentumB, gradient, direction, .5 * time / nSplitOuter);
         }
-        inner.reversiblePositionMomentumUpdate(positionA, momentumA, gradient, direction, relativeScale * time);
+        inner.reversiblePositionMomentumUpdate(positionInner, momentumA, gradient, direction, relativeScale * time);
         updateOuterGradient(gradient);
         for (int i = 0; i < nSplitOuter; i++) {
-            outer.reversiblePositionMomentumUpdate(positionB, momentumB, gradient, direction, .5 * time / nSplitOuter);
+            outer.reversiblePositionMomentumUpdate(positionOuter, momentumB, gradient, direction, .5 * time / nSplitOuter);
         }
         //3:merge the position and momentum, update position and momentum
-        updateMergedVector(positionA, positionB, position);
+        updateMergedVector(positionInner, positionOuter, position);
         updateMergedVector(momentumA, momentumB, momentum);
-
-        // TODO Avoid all these unncessary copies via
-
-//        WrappedVector positionA = new WrappedVector.View(position, 0, dimA);
-//        WrappedVector momentumA = new WrappedVector.View(momentum, 0, dimA);
-//
-//        WrappedVector positionB = new WrappedVector.View(position, dimA, dimB);
-//        WrappedVector momentumB = new WrappedVector.View(momentum, dimA, dimB);
-//
-//        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
-//        inner.reversiblePositionMomentumUpdate(positionA, momentumA, direction, relativeScale * time);
-//        outer.reversiblePositionMomentumUpdate(positionB, momentumB, direction, time);
-        //throw new RuntimeException("must correct gradient inner and outer before using this!");
-
     }
 
     public double[] jointTransformInverse(double[] argument) {
-        double[] jointUntransformedPosition = new double[dimA + dimB];
-        double[] transformedPositionB = new double[dimB];
+        double[] jointUntransformedPosition = new double[dimInner + dimOuter];
+        double[] transformedPositionB = new double[dimOuter];
 
-        System.arraycopy(argument, dimA, transformedPositionB, 0, dimB);
-        double[] unTransformedPositionB = outer.getTransform().inverse(transformedPositionB, 0, dimB);
+        System.arraycopy(argument, dimInner, transformedPositionB, 0, dimOuter);
+        double[] unTransformedPositionB = outer.getTransform().inverse(transformedPositionB, 0, dimOuter);
 
-        System.arraycopy(argument, 0, jointUntransformedPosition, 0, dimA);
-        System.arraycopy(unTransformedPositionB, 0, jointUntransformedPosition, dimA, dimB);
+        System.arraycopy(argument, 0, jointUntransformedPosition, 0, dimInner);
+        System.arraycopy(unTransformedPositionB, 0, jointUntransformedPosition, dimInner, dimOuter);
 
         return jointUntransformedPosition;
     }
 
     public double transformGetLogJacobian(double[] untransformedValue) {
-        double[] untransformedPositionB = new double[dimB];
-        System.arraycopy(untransformedValue, dimA, untransformedPositionB, 0, dimB);
-        return outer.getTransform().getLogJacobian(untransformedPositionB, 0, dimB);
+        double[] untransformedPositionB = new double[dimOuter];
+        System.arraycopy(untransformedValue, dimInner, untransformedPositionB, 0, dimOuter);
+        return outer.getTransform().getLogJacobian(untransformedPositionB, 0, dimOuter);
     }
 
     public double[] transformupdateGradientLogDensity(double[] analyticalGradientOriginal, Parameter parameter) {
 
-        double[] analyticalGradientOriginalA = new double[dimA];
-        double[] analyticalGradientOriginalB = new double[dimB];
-        double[] parameterValueB = new double[dimB];
-        double[] updatedGradientAB = new double[dimA + dimB];
-        System.arraycopy(analyticalGradientOriginal, 0, analyticalGradientOriginalA, 0, dimA);
-        System.arraycopy(analyticalGradientOriginal, dimA, analyticalGradientOriginalB, 0, dimB);
-        System.arraycopy(parameter.getParameterValues(), dimA, parameterValueB, 0, dimB);
+        double[] analyticalGradientOriginalInner = new double[dimInner];
+        double[] analyticalGradientOriginalOuter = new double[dimOuter];
+        double[] parameterValueOuter = new double[dimOuter];
+        double[] updatedGradientJoint = new double[dimInner + dimOuter];
+        System.arraycopy(analyticalGradientOriginal, 0, analyticalGradientOriginalInner, 0, dimInner);
+        System.arraycopy(analyticalGradientOriginal, dimInner, analyticalGradientOriginalOuter, 0, dimOuter);
+        System.arraycopy(parameter.getParameterValues(), dimInner, parameterValueOuter, 0, dimOuter);
 
-        double[] updatedGradientB =
-                outer.getTransform().updateGradientLogDensity(analyticalGradientOriginalB,
-                        parameterValueB, 0, dimB);
-        System.arraycopy(analyticalGradientOriginalA, 0, updatedGradientAB, 0, dimA);
-        System.arraycopy(updatedGradientB, 0, updatedGradientAB, dimA, dimB);
-        return updatedGradientAB;
+        double[] updatedGradientOuter =
+                outer.getTransform().updateGradientLogDensity(analyticalGradientOriginalOuter,
+                        parameterValueOuter, 0, dimOuter);
+        System.arraycopy(analyticalGradientOriginalInner, 0, updatedGradientJoint, 0, dimInner);
+        System.arraycopy(updatedGradientOuter, 0, updatedGradientJoint, dimInner, dimOuter);
+        return updatedGradientJoint;
     }
 
     @Override
     public double[] getInitialPosition() {
 
-        double[] jointPosition = new double[dimA + dimB];
-        System.arraycopy(inner.getInitialPosition(), 0, jointPosition, 0, dimA);
-        System.arraycopy(outer.getInitialPosition(), 0, jointPosition, dimA, dimB);
+        double[] jointPosition = new double[dimInner + dimOuter];
+        System.arraycopy(inner.getInitialPosition(), 0, jointPosition, 0, dimInner);
+        System.arraycopy(outer.getInitialPosition(), 0, jointPosition, dimInner, dimOuter);
         return jointPosition;
     }
 
@@ -342,22 +328,22 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     }
 
     private double[] mergeGradient() {
-        double[] jointPosition = new double[dimA + dimB];
+        double[] jointPosition = new double[dimInner + dimOuter];
         System.arraycopy(inner.getGradientProvider().getGradientLogDensity(), 0, jointPosition, 0,
-                dimA);
-        System.arraycopy(outer.getGradientProvider().getGradientLogDensity(), 0, jointPosition, dimA
-                , dimB);
+                dimInner);
+        System.arraycopy(outer.getGradientProvider().getGradientLogDensity(), 0, jointPosition, dimInner
+                , dimOuter);
         return jointPosition;
     }
 
 
     @Override
     public void setParameter(double[] position) {
-        double[] bufferA = new double[dimA];
-        double[] bufferB = new double[dimB];
+        double[] bufferA = new double[dimInner];
+        double[] bufferB = new double[dimOuter];
 
-        System.arraycopy(position, 0, bufferA, 0, dimA);
-        System.arraycopy(position, dimA, bufferB, 0, dimB);
+        System.arraycopy(position, 0, bufferA, 0, dimInner);
+        System.arraycopy(position, dimInner, bufferB, 0, dimOuter);
 
         inner.setParameter(bufferA);
         outer.setParameter(bufferB);
@@ -370,8 +356,8 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     @Override
     public double getJointProbability(WrappedVector momentum) {
-        double[] momentumAbuffer = new double[dimA];
-        double[] momentumBbuffer = new double[dimB];
+        double[] momentumAbuffer = new double[dimInner];
+        double[] momentumBbuffer = new double[dimOuter];
         //2:split the momentum
         splitWrappedVector(momentum, momentumAbuffer, momentumBbuffer);
         //todo: better solution. Now only part B has a prior.
@@ -386,11 +372,11 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     @Override
     public double getKineticEnergy(ReadableVector momentum) {
-        double[] bufferA = new double[dimA];
-        double[] bufferB = new double[dimB];
+        double[] bufferA = new double[dimInner];
+        double[] bufferB = new double[dimOuter];
 
-        System.arraycopy(((WrappedVector) momentum).getBuffer(), 0, bufferA, 0, dimA);
-        System.arraycopy(((WrappedVector) momentum).getBuffer(), dimA, bufferB, 0, dimB);
+        System.arraycopy(((WrappedVector) momentum).getBuffer(), 0, bufferA, 0, dimInner);
+        System.arraycopy(((WrappedVector) momentum).getBuffer(), dimInner, bufferB, 0, dimOuter);
 
         ReadableVector momentumA = new WrappedVector.Raw(bufferA);
         ReadableVector momentumB = new WrappedVector.Raw(bufferB);
@@ -413,17 +399,17 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         return new WrappedVector.Raw(buffer);
     }
 
-    private void splitWrappedVector(WrappedVector vectorAB, double[] bufferA, double[] bufferB) {
-        System.arraycopy(vectorAB.getBuffer(), 0, bufferA, 0, dimA);
-        System.arraycopy(vectorAB.getBuffer(), dimA, bufferB, 0, dimB);
+    private void splitWrappedVector(WrappedVector vectorJoint, double[] bufferLHS, double[] bufferRHS) {
+        System.arraycopy(vectorJoint.getBuffer(), 0, bufferLHS, 0, dimInner);
+        System.arraycopy(vectorJoint.getBuffer(), dimInner, bufferRHS, 0, dimOuter);
     }
 
-    private void updateMergedVector(WrappedVector vectorA, WrappedVector vectorB, WrappedVector vectorAB) {
-        for (int i = 0; i < dimA + dimB; i++) {
-            if (i < dimA) {
-                vectorAB.set(i, vectorA.get(i));
+    private void updateMergedVector(WrappedVector vectorLHS, WrappedVector vectorRHS, WrappedVector vectorJoint) {
+        for (int i = 0; i < dimInner + dimOuter; i++) {
+            if (i < dimInner) {
+                vectorJoint.set(i, vectorLHS.get(i));
             } else {
-                vectorAB.set(i, vectorB.get(i - dimA));
+                vectorJoint.set(i, vectorRHS.get(i - dimInner));
             }
         }
     }

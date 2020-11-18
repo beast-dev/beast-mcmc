@@ -127,7 +127,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             }
 
             // Shouldn't get here as the MLE switch in the MCMC tab already checks.
-            for (AbstractPartitionData partition : options.getDataPartitions()) {
+            /*for (AbstractPartitionData partition : options.getDataPartitions()) {
                 if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
                     throw new GeneratorException(
                             "Generalized stepping-stone sampling is not currently\n" +
@@ -135,7 +135,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     "for nucleotide data. \n\n" +
                                     BeautiFrame.MCMC);
                 }
-            }
+            }*/
 
         }
     }
@@ -746,6 +746,32 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         break;//NUCLEOTIDES
 
                     case DataType.AMINO_ACIDS:
+
+                        switch (model.getAaSubstitutionModel()) {
+
+                            case LG:
+                            case BLOSUM_62:
+                            case FLU:
+                            case JTT:
+                            case WAG:
+                            case MT_REV_24:
+                            case CP_REV_45:
+                            case DAYHOFF:
+                            case MTVER:
+                            case MTPRO:
+                            case MTMET:
+                            case MTINV:
+                            case MTDEU:
+                            case MTMAM:
+                                //do nothing
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown amino acid model");
+
+                        }
+
+                        break; //AMINO ACIDS
 
                     case DataType.TWO_STATES:
 

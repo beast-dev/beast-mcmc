@@ -4,6 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.xml.*;
 
 /**
@@ -20,14 +21,14 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
     public static final String MASK_FROM_TREE = "maskFromTree";
     private TreeModel tree;
     private Taxon taxon;
-    private ArbitraryBranchRates branchRates;
+    private TreeParameterModel branchRates;
 //    private boolean ancestralMaskBranchKnown = false;
 
-    public MaskFromTree(TreeModel tree, Taxon referenceTaxon, int dim, ArbitraryBranchRates rates) {
+    public MaskFromTree(TreeModel tree, Taxon referenceTaxon, int dim) {
         super(dim);
         this.tree = tree;
         this.taxon = referenceTaxon;
-        this.branchRates = rates;
+        this.branchRates = new TreeParameterModel(tree, this, false); //default includeRoot = false
         tree.addModelListener(this);
         tree.addModelRestoreListener(this);
         updateMask();
@@ -47,7 +48,7 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
         }
 
 //        int maskIndex = node.getNumber();
-        int maskIndex = branchRates.getParameterIndexFromNode(node);
+        int maskIndex = branchRates.getParameterIndexFromNodeNumber(node.getNumber());
 //        if(maskIndex==82){
 //            System.out.println("stop here");
 //        }
@@ -113,11 +114,9 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
 
             Taxon referenceTaxon = (Taxon) xo.getChild(Taxon.class);
 
-            ArbitraryBranchRates rates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
-
             int numBranches = tree.getNodeCount() - 1;
 
-            MaskFromTree maskFromTree = new MaskFromTree(tree, referenceTaxon, numBranches, rates);
+            MaskFromTree maskFromTree = new MaskFromTree(tree, referenceTaxon, numBranches);
             return maskFromTree;
         }
 
@@ -132,7 +131,6 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(TreeModel.class),
                 new ElementRule(Taxon.class),
-                new ElementRule(ArbitraryBranchRates.class)
         };
 
         public String getParserDescription() {

@@ -8,6 +8,8 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -15,27 +17,37 @@ import java.util.Set;
  */
 
 /**
- * This statistic reports weighted and unweighted averages of arbitraryBranchRates across a user-specified clade.
- * NOTE: could potentially be refactored into CladeMeanAttributeStatistic?
+ * This statistic reports weighted and unweighted averages of arbitraryBranchRates across a all user-specified clades in a tree.
+ * NOTE: current implementation requires cladeList to be disjoint set of clades such that their union is the entire tree
+ * could still implement option 2: keep track of branches already visited and traverse pre-order, but it would be more computationally expensive
+ * todo: get statistic name right in logger
  */
+
 public class CladeRateStatistic extends TreeStatistic {
     public static final String CLADE_RATE_STATISTIC = "cladeRateStatistic";
-    private Taxa subTreeLeafSet;
+    public static final String CLADE_LIST = "cladeList";
+    private List<Taxa> cladeSet;
     private ArbitraryBranchRates branchRateModel;
     private Tree tree;
     private Boolean weightByBranchTime;
-    private int numNodesInClade;
-    private NodeRef MRCANode;
+    private int[] numNodesInClade;
+    private List<NodeRef> MRCANodeList;
+    private int dim;
 
-    // todo: currently BROKEN -- two options, 1. create MRCA set and traverse post order until you hit a different MRCA
-    // todo: option 2: keep track of branches already visited and traverse pre-order
-    public CladeRateStatistic(String name, ArbitraryBranchRates branchRateModel, Taxa subTreeLeafSet, Boolean weightByBranchTime) {
+    public CladeRateStatistic(String name, ArbitraryBranchRates branchRateModel, List<Taxa> cladeSet, Boolean weightByBranchTime, int dim) {
         super(name);
         this.branchRateModel = branchRateModel;
-        this.subTreeLeafSet = subTreeLeafSet;
+        this.cladeSet = cladeSet;
         this.tree = branchRateModel.getTree();
         this.weightByBranchTime = weightByBranchTime;
-        this.numNodesInClade = 2 * subTreeLeafSet.getTaxonCount() - 2;
+        this.dim = dim;
+        //todo: update MRCA index list on every tree change
+        this.MRCANodeList = new ArrayList<>(dim);
+        this.numNodesInClade = new int[dim];
+        for (int i = 0; i < dim; i ++){
+            numNodesInClade[i] = 2 * cladeSet.get(i).getTaxonCount() - 2;
+        }
+        updateMRCAList();
     }
 
     public void setTree(Tree tree) {
@@ -47,24 +59,36 @@ public class CladeRateStatistic extends TreeStatistic {
     }
 
     public int getDimension() {
-        return 1;
+        return dim;
     }
 
     @Override
-    public double getStatisticValue(int dim) {
+    public double getStatisticValue(int i) {
+//        try {
+//            Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, cladeSet.get(i));
+//            node = TreeUtils.getCommonAncestorNode(tree, leafSet);
+//            if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
+//            MRCANode = node;
+//        } catch (TreeUtils.MissingTaxonException e) {
+//            throw new RuntimeException("Missing taxon!");
+//        }
+
+        double rateAverage = recurseToAccumulateRate(MRCANodeList.get(i));
+        return rateAverage / numNodesInClade[i];
+    }
+
+    private void updateMRCAList() {
         NodeRef node;
-        try {
-            Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, subTreeLeafSet);
-            node = TreeUtils.getCommonAncestorNode(tree, leafSet);
-            if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
-            MRCANode = node;
-        } catch (TreeUtils.MissingTaxonException e) {
-            throw new RuntimeException("Missing taxon!");
+        for (int i = 0; i < dim; i++) {
+            try {
+                Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, cladeSet.get(i));
+                node = TreeUtils.getCommonAncestorNode(tree, leafSet);
+                if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
+                MRCANodeList.add(node);
+            } catch (TreeUtils.MissingTaxonException e) {
+                throw new RuntimeException("Missing taxon!");
+            }
         }
-
-        double rateAverage = recurseToAccumulateRate(node);
-
-        return rateAverage / numNodesInClade;
     }
 
     private double recurseToAccumulateRate(NodeRef node) {
@@ -77,7 +101,7 @@ public class CladeRateStatistic extends TreeStatistic {
             total += recurseToAccumulateRate(tree.getChild(node, 1));
         }
 
-        if (!tree.isRoot(node) && (node != MRCANode)) {
+        if (!tree.isRoot(node) && (!MRCANodeList.contains(node))) {
             total += branchRateModel.getUntransformedBranchRate(tree, node);
         }
         return total;
@@ -99,12 +123,26 @@ public class CladeRateStatistic extends TreeStatistic {
 
             ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
 
-            Taxa subTreeLeafSet = (Taxa) xo.getChild(Taxa.class);
+            List<Taxa> cladeSet = new ArrayList<>();
+
+            Taxa clade;
+
+            if (xo.hasChildNamed(CLADE_LIST)) {
+                XMLObject cxo = xo.getChild(CLADE_LIST);
+                for (int i = 0; i < cxo.getChildCount(); i++) {
+                    clade = (Taxa) cxo.getChild(i);
+                    cladeSet.add(clade);
+                }
+            }
+
+//            Taxa subTreeLeafSet = (Taxa) xo.getChild(Taxa.class);
+
+            int dim = cladeSet.size();
 
             Boolean weightByBranchTime = false;
 
             // TODO: add optional weightByBranchTime
-            CladeRateStatistic cladeRateStatistic = new CladeRateStatistic(name, branchRateModel, subTreeLeafSet, weightByBranchTime);
+            CladeRateStatistic cladeRateStatistic = new CladeRateStatistic(name, branchRateModel, cladeSet, weightByBranchTime, dim);
             return cladeRateStatistic;
         }
 
@@ -118,7 +156,9 @@ public class CladeRateStatistic extends TreeStatistic {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(ArbitraryBranchRates.class),
-                new ElementRule(Taxa.class),
+                new ElementRule(CLADE_LIST, new XMLSyntaxRule[] {
+                        new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
+                }),
         };
 
         public String getParserDescription() {

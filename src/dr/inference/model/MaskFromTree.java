@@ -2,7 +2,6 @@ package dr.inference.model;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.xml.*;

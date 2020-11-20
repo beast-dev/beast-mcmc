@@ -21,6 +21,7 @@ import java.util.Set;
  * NOTE: current implementation requires cladeList to be disjoint set of clades such that their union is the entire tree
  * could still implement option 2: keep track of branches already visited and traverse pre-order, but it would be more computationally expensive
  * todo: get statistic name right in logger
+ * todo: rename everything to "paraphyletic'
  */
 
 public class CladeRateStatistic extends TreeStatistic {
@@ -44,7 +45,7 @@ public class CladeRateStatistic extends TreeStatistic {
         //todo: update MRCA index list on every tree change
         this.MRCANodeList = new ArrayList<>(dim);
         this.numNodesInClade = new int[dim];
-        for (int i = 0; i < dim; i ++){
+        for (int i = 0; i < dim; i++) {
             numNodesInClade[i] = 2 * cladeSet.get(i).getTaxonCount() - 2;
         }
         updateMRCAList();
@@ -156,7 +157,7 @@ public class CladeRateStatistic extends TreeStatistic {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(ArbitraryBranchRates.class),
-                new ElementRule(CLADE_LIST, new XMLSyntaxRule[] {
+                new ElementRule(CLADE_LIST, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
                 }),
         };

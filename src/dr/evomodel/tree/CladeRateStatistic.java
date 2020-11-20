@@ -20,19 +20,22 @@ import java.util.Set;
  */
 public class CladeRateStatistic extends TreeStatistic {
     public static final String CLADE_RATE_STATISTIC = "cladeRateStatistic";
-    Taxa subTreeLeafSet;
-    ArbitraryBranchRates branchRateModel;
-    Tree tree;
-    Boolean weightByBranchTime;
-    int numNodesInClade;
+    private Taxa subTreeLeafSet;
+    private ArbitraryBranchRates branchRateModel;
+    private Tree tree;
+    private Boolean weightByBranchTime;
+    private int numNodesInClade;
+    private NodeRef MRCANode;
 
+    // todo: currently BROKEN -- two options, 1. create MRCA set and traverse post order until you hit a different MRCA
+    // todo: option 2: keep track of branches already visited and traverse pre-order
     public CladeRateStatistic(String name, ArbitraryBranchRates branchRateModel, Taxa subTreeLeafSet, Boolean weightByBranchTime) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.subTreeLeafSet = subTreeLeafSet;
         this.tree = branchRateModel.getTree();
         this.weightByBranchTime = weightByBranchTime;
-        this.numNodesInClade = 2 * subTreeLeafSet.getTaxonCount() - 1;
+        this.numNodesInClade = 2 * subTreeLeafSet.getTaxonCount() - 2;
     }
 
     public void setTree(Tree tree) {
@@ -49,14 +52,12 @@ public class CladeRateStatistic extends TreeStatistic {
 
     @Override
     public double getStatisticValue(int dim) {
-//        Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, subTreeLeafSet);
-
-//        TreeUtils.getCommonAncestorNode(tree, TreeUtils.getLeavesForTaxa(tree, leafSet));
         NodeRef node;
         try {
             Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, subTreeLeafSet);
             node = TreeUtils.getCommonAncestorNode(tree, leafSet);
             if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
+            MRCANode = node;
         } catch (TreeUtils.MissingTaxonException e) {
             throw new RuntimeException("Missing taxon!");
         }
@@ -69,14 +70,16 @@ public class CladeRateStatistic extends TreeStatistic {
     private double recurseToAccumulateRate(NodeRef node) {
         double total = 0.0;
 
-        // curent default behavior includes stem
+        // curent default behavior does not include stem
         // todo: set stem inclusion as optional attribute
         if (!tree.isExternal(node)) {
             total += recurseToAccumulateRate(tree.getChild(node, 0));
             total += recurseToAccumulateRate(tree.getChild(node, 1));
         }
 
-        total += branchRateModel.getUntransformedBranchRate(tree, node);
+        if (!tree.isRoot(node) && (node != MRCANode)) {
+            total += branchRateModel.getUntransformedBranchRate(tree, node);
+        }
         return total;
     }
 

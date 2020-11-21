@@ -4,7 +4,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
@@ -28,14 +30,14 @@ public class CladeRateStatistic extends TreeStatistic {
     public static final String CLADE_RATE_STATISTIC = "cladeRateStatistic";
     public static final String CLADE_LIST = "cladeList";
     private List<Taxa> cladeSet;
-    private ArbitraryBranchRates branchRateModel;
+    private DifferentiableBranchRates branchRateModel;
     private Tree tree;
     private Boolean weightByBranchTime;
     private int[] numNodesInClade;
     private List<NodeRef> MRCANodeList;
     private int dim;
 
-    public CladeRateStatistic(String name, ArbitraryBranchRates branchRateModel, List<Taxa> cladeSet, Boolean weightByBranchTime, int dim) {
+    public CladeRateStatistic(String name, DifferentiableBranchRates branchRateModel, List<Taxa> cladeSet, Boolean weightByBranchTime, int dim) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.cladeSet = cladeSet;
@@ -122,7 +124,10 @@ public class CladeRateStatistic extends TreeStatistic {
 
             final String name = xo.getAttribute(Statistic.NAME, xo.getId());
 
-            ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
+            List<String> names = new ArrayList<>();
+
+
+            DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
 
             List<Taxa> cladeSet = new ArrayList<>();
 
@@ -156,7 +161,7 @@ public class CladeRateStatistic extends TreeStatistic {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(ArbitraryBranchRates.class),
+                new ElementRule(DifferentiableBranchRates.class),
                 new ElementRule(CLADE_LIST, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
                 }),

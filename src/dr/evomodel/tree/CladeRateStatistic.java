@@ -17,8 +17,8 @@ import java.util.Set;
  */
 
 /**
- * This statistic reports weighted and unweighted averages of arbitraryBranchRates across a all user-specified clades in a tree.
- * NOTE: current implementation requires cladeList to be disjoint set of clades such that their union is the entire tree
+ * This statistic reports weighted and unweighted averages of arbitraryBranchRates across all user-specified clades in a tree.
+ * NOTE: current implementation requires cladeList to be disjoint set of tips that define paraphylies such that their union is the entire tree
  * could still implement option 2: keep track of branches already visited and traverse pre-order, but it would be more computationally expensive
  * todo: get statistic name right in logger
  * todo: rename everything to "paraphyletic'
@@ -43,7 +43,6 @@ public class CladeRateStatistic extends TreeStatistic {
         this.tree = branchRateModel.getTree();
         this.weightByBranchTime = weightByBranchTime;
         this.dim = dim;
-        //todo: update MRCA index list on every tree change
         this.MRCANodeList = new ArrayList<NodeRef>(dim);
         for (int i = 0; i < dim; i++) {
             MRCANodeList.add(null);
@@ -51,7 +50,7 @@ public class CladeRateStatistic extends TreeStatistic {
 
         this.numNodesInClade = new int[dim];
         for (int i = 0; i < dim; i++) {
-            numNodesInClade[i] = 2 * cladeSet.get(i).getTaxonCount() - 2;
+            numNodesInClade[i] = 2 * cladeSet.get(i).getTaxonCount() - 1;
         }
     }
 
@@ -72,8 +71,8 @@ public class CladeRateStatistic extends TreeStatistic {
         updateMRCAList();
         List<NodeRef> MRCANodeListComplement = new ArrayList<>(dim - 1); // all MRCA nodes except current paraphyly
 
-        for (int j = 0; j < dim; j++){
-            if(j != i) {
+        for (int j = 0; j < dim; j++) {
+            if (j != i) {
                 MRCANodeListComplement.add(MRCANodeList.get(j));
             }
         }
@@ -98,8 +97,7 @@ public class CladeRateStatistic extends TreeStatistic {
 
     private double recurseToAccumulateRate(NodeRef node, List<NodeRef> complement) {
         double total = 0.0;
-        // curent default behavior does not include stem
-        // todo: set stem inclusion as optional attribute
+        // curent default behavior includes "stem" of MRCA
         if (!tree.isExternal(node)) {
             if (!complement.contains(node)) {
                 total += recurseToAccumulateRate(tree.getChild(node, 0), complement);
@@ -107,7 +105,7 @@ public class CladeRateStatistic extends TreeStatistic {
             }
         }
 
-        if (!MRCANodeList.contains(node)) {
+        if (!complement.contains(node) && !tree.isRoot(node)) {
             total += branchRateModel.getUntransformedBranchRate(tree, node);
         }
         return total;

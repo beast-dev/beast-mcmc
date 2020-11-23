@@ -169,7 +169,7 @@ public class CladeRateStatistic extends TreeStatistic {
         };
 
         public String getParserDescription() {
-            return "Masks ancestral (off-root) branch to a specific reference taxon on a random tree";
+            return "Reports average branch-rate parameter across complete disjoint set of user-specified paraphylies";
         }
 
         public Class getReturnType() {

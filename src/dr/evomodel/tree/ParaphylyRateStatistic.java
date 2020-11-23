@@ -17,18 +17,17 @@ import java.util.Set;
  */
 
 /**
- * This statistic reports weighted and unweighted averages of arbitraryBranchRates across all user-specified clades in a tree.
- * NOTE: current implementation requires cladeList to be disjoint set of tips that define paraphylies such that their union is the entire tree
- * could still implement option 2: keep track of branches already visited and traverse pre-order, but it would be more computationally expensive
+ * NOTE: current implementation requires paraphylyList to be disjoint set of tips that define paraphylies such that their union is the entire tree.
+ * Could still implement option 2: keep track of branches already visited and traverse pre-order, but it may be more computationally expensive
  * todo: get statistic name right in logger
- * todo: rename everything to "paraphyletic'
  * todo: add location option
+ * todo: add optional weightByBranchTime
  */
 
-public class CladeRateStatistic extends TreeStatistic {
-    public static final String CLADE_RATE_STATISTIC = "cladeRateStatistic";
-    public static final String CLADE_LIST = "cladeList";
-    private List<Taxa> cladeSet;
+public class ParaphylyRateStatistic extends TreeStatistic {
+    public static final String PARAPHYLY_RATE_STATISTIC = "paraphylyRateStatistic";
+    public static final String PARAPHYLY_LIST = "paraphylyList";
+    private List<Taxa> paraphylySet;
     private DifferentiableBranchRates branchRateModel;
     private Tree tree;
     private Boolean weightByBranchTime;
@@ -36,10 +35,10 @@ public class CladeRateStatistic extends TreeStatistic {
     private List<NodeRef> MRCANodeList;
     private int dim;
 
-    public CladeRateStatistic(String name, DifferentiableBranchRates branchRateModel, List<Taxa> cladeSet, Boolean weightByBranchTime, int dim) {
+    public ParaphylyRateStatistic(String name, DifferentiableBranchRates branchRateModel, List<Taxa> paraphylySet, Boolean weightByBranchTime, int dim) {
         super(name);
         this.branchRateModel = branchRateModel;
-        this.cladeSet = cladeSet;
+        this.paraphylySet = paraphylySet;
         this.tree = branchRateModel.getTree();
         this.weightByBranchTime = weightByBranchTime;
         this.dim = dim;
@@ -50,7 +49,7 @@ public class CladeRateStatistic extends TreeStatistic {
 
         this.numNodesInClade = new int[dim];
         for (int i = 0; i < dim; i++) {
-            numNodesInClade[i] = 2 * cladeSet.get(i).getTaxonCount() - 1;
+            numNodesInClade[i] = 2 * paraphylySet.get(i).getTaxonCount() - 1;
         }
     }
 
@@ -85,7 +84,7 @@ public class CladeRateStatistic extends TreeStatistic {
         NodeRef node;
         for (int i = 0; i < dim; i++) {
             try {
-                Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, cladeSet.get(i));
+                Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, paraphylySet.get(i));
                 node = TreeUtils.getCommonAncestorNode(tree, leafSet);
                 if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
                 MRCANodeList.set(i, node);
@@ -105,6 +104,7 @@ public class CladeRateStatistic extends TreeStatistic {
             }
         }
 
+        //ensures you don't add a root stem
         if (!complement.contains(node) && !tree.isRoot(node)) {
             total += branchRateModel.getUntransformedBranchRate(tree, node);
         }
@@ -118,7 +118,7 @@ public class CladeRateStatistic extends TreeStatistic {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return CLADE_RATE_STATISTIC;
+            return PARAPHYLY_RATE_STATISTIC;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -130,27 +130,24 @@ public class CladeRateStatistic extends TreeStatistic {
 
             DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
 
-            List<Taxa> cladeSet = new ArrayList<>();
+            List<Taxa> paraphylySet = new ArrayList<>();
 
-            Taxa clade;
+            Taxa paraphyly;
 
-            if (xo.hasChildNamed(CLADE_LIST)) {
-                XMLObject cxo = xo.getChild(CLADE_LIST);
+            if (xo.hasChildNamed(PARAPHYLY_LIST)) {
+                XMLObject cxo = xo.getChild(PARAPHYLY_LIST);
                 for (int i = 0; i < cxo.getChildCount(); i++) {
-                    clade = (Taxa) cxo.getChild(i);
-                    cladeSet.add(clade);
+                    paraphyly = (Taxa) cxo.getChild(i);
+                    paraphylySet.add(paraphyly);
                 }
             }
 
-//            Taxa subTreeLeafSet = (Taxa) xo.getChild(Taxa.class);
-
-            int dim = cladeSet.size();
+            int dim = paraphylySet.size();
 
             Boolean weightByBranchTime = false;
 
-            // TODO: add optional weightByBranchTime
-            CladeRateStatistic cladeRateStatistic = new CladeRateStatistic(name, branchRateModel, cladeSet, weightByBranchTime, dim);
-            return cladeRateStatistic;
+            ParaphylyRateStatistic paraphylyRateStatistic = new ParaphylyRateStatistic(name, branchRateModel, paraphylySet, weightByBranchTime, dim);
+            return paraphylyRateStatistic;
         }
 
         //************************************************************************
@@ -163,17 +160,17 @@ public class CladeRateStatistic extends TreeStatistic {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(DifferentiableBranchRates.class),
-                new ElementRule(CLADE_LIST, new XMLSyntaxRule[]{
+                new ElementRule(PARAPHYLY_LIST, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
                 }),
         };
 
         public String getParserDescription() {
-            return "Reports average branch-rate parameter across complete disjoint set of user-specified paraphylies";
+            return "Reports weighted or unweighted average branch-rate parameter across complete disjoint set of user-specified paraphylies";
         }
 
         public Class getReturnType() {
-            return CladeRateStatistic.class;
+            return ParaphylyRateStatistic.class;
         }
     };
 }

@@ -4,8 +4,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
-import dr.evomodel.branchratemodel.AbstractBranchRateModel;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.inference.model.Statistic;
 import dr.xml.*;
@@ -24,6 +22,7 @@ import java.util.Set;
  * could still implement option 2: keep track of branches already visited and traverse pre-order, but it would be more computationally expensive
  * todo: get statistic name right in logger
  * todo: rename everything to "paraphyletic'
+ * todo: add location option
  */
 
 public class CladeRateStatistic extends TreeStatistic {
@@ -45,12 +44,15 @@ public class CladeRateStatistic extends TreeStatistic {
         this.weightByBranchTime = weightByBranchTime;
         this.dim = dim;
         //todo: update MRCA index list on every tree change
-        this.MRCANodeList = new ArrayList<>(dim);
+        this.MRCANodeList = new ArrayList<NodeRef>(dim);
+        for (int i = 0; i < dim; i++) {
+            MRCANodeList.add(null);
+        }
+
         this.numNodesInClade = new int[dim];
         for (int i = 0; i < dim; i++) {
             numNodesInClade[i] = 2 * cladeSet.get(i).getTaxonCount() - 2;
         }
-        updateMRCAList();
     }
 
     public void setTree(Tree tree) {
@@ -67,16 +69,16 @@ public class CladeRateStatistic extends TreeStatistic {
 
     @Override
     public double getStatisticValue(int i) {
-//        try {
-//            Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, cladeSet.get(i));
-//            node = TreeUtils.getCommonAncestorNode(tree, leafSet);
-//            if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
-//            MRCANode = node;
-//        } catch (TreeUtils.MissingTaxonException e) {
-//            throw new RuntimeException("Missing taxon!");
-//        }
+        updateMRCAList();
+        List<NodeRef> MRCANodeListComplement = new ArrayList<>(dim - 1); // all MRCA nodes except current paraphyly
 
-        double rateAverage = recurseToAccumulateRate(MRCANodeList.get(i));
+        for (int j = 0; j < dim; j++){
+            if(j != i) {
+                MRCANodeListComplement.add(MRCANodeList.get(j));
+            }
+        }
+
+        double rateAverage = recurseToAccumulateRate(MRCANodeList.get(i), MRCANodeListComplement);
         return rateAverage / numNodesInClade[i];
     }
 
@@ -87,24 +89,25 @@ public class CladeRateStatistic extends TreeStatistic {
                 Set<String> leafSet = TreeUtils.getLeavesForTaxa(tree, cladeSet.get(i));
                 node = TreeUtils.getCommonAncestorNode(tree, leafSet);
                 if (node == null) throw new RuntimeException("No clade found that contains " + leafSet);
-                MRCANodeList.add(node);
+                MRCANodeList.set(i, node);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new RuntimeException("Missing taxon!");
             }
         }
     }
 
-    private double recurseToAccumulateRate(NodeRef node) {
+    private double recurseToAccumulateRate(NodeRef node, List<NodeRef> complement) {
         double total = 0.0;
-
         // curent default behavior does not include stem
         // todo: set stem inclusion as optional attribute
         if (!tree.isExternal(node)) {
-            total += recurseToAccumulateRate(tree.getChild(node, 0));
-            total += recurseToAccumulateRate(tree.getChild(node, 1));
+            if (!complement.contains(node)) {
+                total += recurseToAccumulateRate(tree.getChild(node, 0), complement);
+                total += recurseToAccumulateRate(tree.getChild(node, 1), complement);
+            }
         }
 
-        if (!tree.isRoot(node) && (!MRCANodeList.contains(node))) {
+        if (!MRCANodeList.contains(node)) {
             total += branchRateModel.getUntransformedBranchRate(tree, node);
         }
         return total;

@@ -21,36 +21,38 @@ import java.util.Set;
  * Could still implement option 2: keep track of branches already visited and traverse pre-order, but it may be more computationally expensive
  * todo: get statistic name right in logger
  * todo: add location option
- * todo: add optional weightByBranchTime
  */
 
 public class ParaphylyRateStatistic extends TreeStatistic {
     public static final String PARAPHYLY_RATE_STATISTIC = "paraphylyRateStatistic";
     public static final String PARAPHYLY_LIST = "paraphylyList";
+    public static final String WEIGHTING = "weighting";
+
     private List<Taxa> paraphylySet;
     private DifferentiableBranchRates branchRateModel;
     private Tree tree;
-    private Boolean weightByBranchTime;
-    private int[] numNodesInClade;
+//    private int[] numNodesInClade;
+    private double totalTime;
     private List<NodeRef> MRCANodeList;
     private int dim;
+    private BranchWeighting branchWeighting;
 
-    public ParaphylyRateStatistic(String name, DifferentiableBranchRates branchRateModel, List<Taxa> paraphylySet, Boolean weightByBranchTime, int dim) {
+    public ParaphylyRateStatistic(String name, DifferentiableBranchRates branchRateModel, List<Taxa> paraphylySet, BranchWeighting branchWeighting, int dim) {
         super(name);
         this.branchRateModel = branchRateModel;
         this.paraphylySet = paraphylySet;
         this.tree = branchRateModel.getTree();
-        this.weightByBranchTime = weightByBranchTime;
+        this.branchWeighting = branchWeighting;
         this.dim = dim;
         this.MRCANodeList = new ArrayList<NodeRef>(dim);
         for (int i = 0; i < dim; i++) {
             MRCANodeList.add(null);
         }
 
-        this.numNodesInClade = new int[dim];
-        for (int i = 0; i < dim; i++) {
-            numNodesInClade[i] = 2 * paraphylySet.get(i).getTaxonCount() - 1;
-        }
+//        this.numNodesInClade = new int[dim];
+//        for (int i = 0; i < dim; i++) {
+//            numNodesInClade[i] = 2 * paraphylySet.get(i).getTaxonCount() - 1;
+//        }
     }
 
     public void setTree(Tree tree) {
@@ -76,8 +78,11 @@ public class ParaphylyRateStatistic extends TreeStatistic {
             }
         }
 
+        this.totalTime = 0.0;
         double rateAverage = recurseToAccumulateRate(MRCANodeList.get(i), MRCANodeListComplement);
-        return rateAverage / numNodesInClade[i];
+//        System.out.println(rateAverage);
+//        System.out.println(totalTime);
+        return rateAverage / totalTime;
     }
 
     private void updateMRCAList() {
@@ -106,9 +111,57 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
         //ensures you don't add a root stem
         if (!complement.contains(node) && !tree.isRoot(node)) {
-            total += branchRateModel.getUntransformedBranchRate(tree, node);
+//            total += branchRateModel.getUntransformedBranchRate(tree, node);
+            total += branchWeighting.getBranchRate(branchRateModel, tree, node);
+            this.totalTime += branchWeighting.getDenominator(tree, node);
         }
         return total;
+    }
+
+    public enum BranchWeighting {
+
+        NONE("none") {
+            @Override
+            double getBranchRate(DifferentiableBranchRates branchRateModel, Tree tree, NodeRef node) {
+                return branchRateModel.getUntransformedBranchRate(tree, node);
+            }
+
+            @Override
+            double getDenominator(Tree tree, NodeRef node){
+                return 1.0;
+            }
+        },
+
+        BY_TIME("byTime") {
+            @Override
+            double getBranchRate(DifferentiableBranchRates branchRateModel, Tree tree, NodeRef node) {
+                return branchRateModel.getUntransformedBranchRate(tree, node) * tree.getBranchLength(node);
+            }
+
+            @Override
+            double getDenominator(Tree tree, NodeRef node){
+                return tree.getBranchLength(node);
+            }
+        };
+
+        BranchWeighting(String name) { this.name = name; }
+
+        public String getName() { return name; }
+
+        private final String name;
+
+        abstract double getBranchRate(DifferentiableBranchRates branchRateModel, Tree tree, NodeRef node);
+
+        abstract double getDenominator(Tree tree, NodeRef node);
+
+        public static BranchWeighting parse(String name) {
+            for (BranchWeighting weighting : BranchWeighting.values()) {
+                if (weighting.getName().equalsIgnoreCase(name)) {
+                    return weighting;
+                }
+            }
+            return null;
+        }
     }
 
     // **************************************************************
@@ -127,7 +180,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
             List<String> names = new ArrayList<>();
 
-
             DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
 
             List<Taxa> paraphylySet = new ArrayList<>();
@@ -144,15 +196,31 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
             int dim = paraphylySet.size();
 
-            Boolean weightByBranchTime = false;
+            BranchWeighting branchWeighting = parseWeighting(xo);
 
-            ParaphylyRateStatistic paraphylyRateStatistic = new ParaphylyRateStatistic(name, branchRateModel, paraphylySet, weightByBranchTime, dim);
+            ParaphylyRateStatistic paraphylyRateStatistic = new ParaphylyRateStatistic(name, branchRateModel, paraphylySet, branchWeighting, dim);
             return paraphylyRateStatistic;
         }
 
         //************************************************************************
         // AbstractXMLObjectParser implementation
         //************************************************************************
+
+        private ParaphylyRateStatistic.BranchWeighting parseWeighting(XMLObject xo)
+                throws XMLParseException {
+
+            String defaultName = ParaphylyRateStatistic.BranchWeighting.NONE.getName();
+            String name = xo.getAttribute(WEIGHTING, defaultName);
+
+            ParaphylyRateStatistic.BranchWeighting weighting =
+                    ParaphylyRateStatistic.BranchWeighting.parse(name);
+
+            if (weighting == null) {
+                throw new XMLParseException("Unknown weighting type");
+            }
+
+            return weighting;
+        }
 
         public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
@@ -163,6 +231,8 @@ public class ParaphylyRateStatistic extends TreeStatistic {
                 new ElementRule(PARAPHYLY_LIST, new XMLSyntaxRule[]{
                         new ElementRule(Taxa.class, 1, Integer.MAX_VALUE),
                 }),
+                AttributeRule.newStringRule(WEIGHTING, true),
+
         };
 
         public String getParserDescription() {

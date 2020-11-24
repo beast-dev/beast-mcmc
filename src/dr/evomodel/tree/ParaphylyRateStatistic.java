@@ -31,7 +31,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
     private List<Taxa> paraphylySet;
     private DifferentiableBranchRates branchRateModel;
     private Tree tree;
-//    private int[] numNodesInClade;
     private double totalTime;
     private List<NodeRef> MRCANodeList;
     private int dim;
@@ -48,11 +47,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
         for (int i = 0; i < dim; i++) {
             MRCANodeList.add(null);
         }
-
-//        this.numNodesInClade = new int[dim];
-//        for (int i = 0; i < dim; i++) {
-//            numNodesInClade[i] = 2 * paraphylySet.get(i).getTaxonCount() - 1;
-//        }
     }
 
     public void setTree(Tree tree) {
@@ -80,8 +74,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
         this.totalTime = 0.0;
         double rateAverage = recurseToAccumulateRate(MRCANodeList.get(i), MRCANodeListComplement);
-//        System.out.println(rateAverage);
-//        System.out.println(totalTime);
         return rateAverage / totalTime;
     }
 
@@ -111,7 +103,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
         //ensures you don't add a root stem
         if (!complement.contains(node) && !tree.isRoot(node)) {
-//            total += branchRateModel.getUntransformedBranchRate(tree, node);
             total += branchWeighting.getBranchRate(branchRateModel, tree, node);
             this.totalTime += branchWeighting.getDenominator(tree, node);
         }
@@ -127,7 +118,7 @@ public class ParaphylyRateStatistic extends TreeStatistic {
             }
 
             @Override
-            double getDenominator(Tree tree, NodeRef node){
+            double getDenominator(Tree tree, NodeRef node) {
                 return 1.0;
             }
         },
@@ -139,14 +130,18 @@ public class ParaphylyRateStatistic extends TreeStatistic {
             }
 
             @Override
-            double getDenominator(Tree tree, NodeRef node){
+            double getDenominator(Tree tree, NodeRef node) {
                 return tree.getBranchLength(node);
             }
         };
 
-        BranchWeighting(String name) { this.name = name; }
+        BranchWeighting(String name) {
+            this.name = name;
+        }
 
-        public String getName() { return name; }
+        public String getName() {
+            return name;
+        }
 
         private final String name;
 

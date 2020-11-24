@@ -26,7 +26,6 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
@@ -101,11 +100,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
-
-        if (preconditioningType != MassPreconditioner.Type.NONE &&
-                !(derivative instanceof HessianWrtParameterProvider)) {
-            throw new XMLParseException("Unable precondition without a Hessian provider");
-        }
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 

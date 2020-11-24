@@ -54,6 +54,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_SCHEDULE = "preconditioningSchedule";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+    private final static String PRECONDITIONING_MAX_UPDATE = "preconditioningMaxUpdate";
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
@@ -105,6 +106,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         int preconditioningUpdateFrequency = xo.getAttribute(PRECONDITIONING_UPDATE_FREQUENCY, 0);
 
+        int preconditioningMaxUpdate = xo.getAttribute(PRECONDITIONING_MAX_UPDATE, 0);
+
         int preconditioningDelay = xo.getAttribute(PRECONDITIONING_DELAY, 0);
 
         int preconditioningMemory = xo.getAttribute(PRECONDITIONING_MEMORY, 0);
@@ -155,7 +158,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
-                preconditioningUpdateFrequency, preconditioningDelay, preconditioningMemory,
+                preconditioningUpdateFrequency, preconditioningMaxUpdate, preconditioningDelay, preconditioningMemory,
                 gradientCheckCount, gradientCheckTolerance,
                 maxIterations, reductionFactor,
                 targetAcceptanceProbability,

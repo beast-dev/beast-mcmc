@@ -328,6 +328,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final int nSteps;
         final double randomStepCountFraction;
         final int preconditioningUpdateFrequency;
+        final int preconditioningMaxUpdate;
         final int preconditioningDelay;
         final int preconditioningMemory;
         final int gradientCheckCount;
@@ -338,7 +339,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final InstabilityHandler instabilityHandler;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
-                       int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
+                       int preconditioningUpdateFrequency, int preconditioningMaxUpdate, int preconditioningDelay, int preconditioningMemory,
                        int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
                        double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
@@ -346,6 +347,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.preconditioningMaxUpdate = preconditioningMaxUpdate;
             this.preconditioningDelay = preconditioningDelay;
             this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;

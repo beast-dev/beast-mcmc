@@ -92,6 +92,7 @@ public interface MassPreconditionScheduler {
 
         private HamiltonianMonteCarloOperator.Options options;
         private AdaptableMCMCOperator operator;
+        private int totalUpdates = 0;
 
         Default(HamiltonianMonteCarloOperator.Options options,
                 AdaptableMCMCOperator operator) {
@@ -101,9 +102,17 @@ public interface MassPreconditionScheduler {
 
         @Override
         public boolean shouldUpdatePreconditioning() {
-            return ((options.preconditioningUpdateFrequency > 0)
+
+            boolean shouldUpdate = ((options.preconditioningUpdateFrequency > 0)
                     && (((operator.getCount() % options.preconditioningUpdateFrequency == 0)
-                    && (operator.getCount() > options.preconditioningDelay))));
+                        && (operator.getCount() > options.preconditioningDelay)))
+                    && (options.preconditioningMaxUpdate == 0 || totalUpdates < options.preconditioningMaxUpdate));
+
+            if (shouldUpdate) {
+                totalUpdates++;
+            }
+
+            return shouldUpdate;
         }
 
         @Override

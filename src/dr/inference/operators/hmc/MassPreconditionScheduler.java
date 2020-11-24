@@ -50,7 +50,7 @@ public interface MassPreconditionScheduler {
             @Override
             public MassPreconditionScheduler factory(HamiltonianMonteCarloOperator.Options options,
                                                      AdaptableMCMCOperator operator) {
-                return null;
+                return new Default(options, operator);
             }
         };
 

@@ -55,6 +55,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
+    protected final MassPreconditionScheduler preconditionScheduler;
     private final Options runtimeOptions;
     protected final double[] mask;
     protected final Transform transform;
@@ -79,12 +80,21 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //
 //        this.leapFrogEngine = constructLeapFrogEngine(transform);
 //    }
+public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+                                     GradientWrtParameterProvider gradientProvider,
+                                     Parameter parameter, Transform transform, Parameter maskParameter,
+                                     Options runtimeOptions,
+                                     MassPreconditioner preconditioner) {
+    this(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions,
+            preconditioner, MassPreconditionScheduler.Type.DEFAULT);
+}
 
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
-                                         MassPreconditioner preconditioner) {
+                                         MassPreconditioner preconditioner,
+                                         MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         super(mode, runtimeOptions.targetAcceptanceProbability);
 
@@ -94,6 +104,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
         this.preconditioning = preconditioner;
+        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, this);
         this.parameter = parameter;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
@@ -112,12 +123,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     @Override
     public String getOperatorName() {
         return "VanillaHMC(" + parameter.getParameterName() + ")";
-    }
-
-    private boolean shouldUpdatePreconditioning() {
-        return ((runtimeOptions.preconditioningUpdateFrequency > 0)
-                && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                && (getCount() > runtimeOptions.preconditioningDelay))));
     }
 
     private static double[] buildMask(Parameter maskParameter) {
@@ -149,10 +154,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             checkGradient(joint);
         }
 
-        if (shouldUpdatePreconditioning()) {
+        if (preconditionScheduler.shouldUpdatePreconditioning()) {
             double[] lastGradient = leapFrogEngine.getLastGradient();
             double[] lastPosition = leapFrogEngine.getLastPosition();
-            if (lastGradient != null && lastPosition != null) {
+            if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
                 preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
             }
             preconditioning.updateMass();

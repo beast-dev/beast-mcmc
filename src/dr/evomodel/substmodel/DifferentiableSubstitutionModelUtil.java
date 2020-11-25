@@ -35,10 +35,10 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
  */
 public class DifferentiableSubstitutionModelUtil {
 
-    public static double[] getDifferentialMassMatrix(double time,
-                                                     int stateCount,
-                                                     WrappedMatrix differentialMassMatrix,
-                                                     EigenDecomposition eigenDecomposition) {
+    static double[] getDifferentialMassMatrix(double time,
+                                              int stateCount,
+                                              WrappedMatrix differentialMassMatrix,
+                                              EigenDecomposition eigenDecomposition) {
 
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
@@ -68,7 +68,7 @@ public class DifferentiableSubstitutionModelUtil {
 
     }
 
-    public static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
+    private static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
                                                       WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
 
         double[][] tmpMatrix = new double[stateCount][stateCount];
@@ -128,7 +128,7 @@ public class DifferentiableSubstitutionModelUtil {
         WrappedMatrix differential = new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
 
         if (CHECK_COMMUTABILITY) {
-            boolean valid = checkCommutability(differential, new WrappedMatrix.Raw(Q, 0, stateCount, stateCount));
+            checkCommutability(differential, new WrappedMatrix.Raw(Q, 0, stateCount, stateCount));
         }
 
         return differential;

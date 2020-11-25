@@ -44,10 +44,6 @@ import dr.xml.Reportable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodel.treedatalikelihood.discrete.GlmSubstitutionModelGradient.makeCompoundParameter;
-
-//import static dr.evomodel.treedatalikelihood.discrete.GlmSubstitutionModelGradient.makeCompoundParameter;
-
 /**
  * @author Marc A. Suchard
  */
@@ -70,7 +66,7 @@ public class ArbitrarySubstitutionGeneratorGradient implements GradientWrtParame
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.substitutionModel = substitutionModel;
-        this.parameter = makeCompoundParameter(substitutionModel.getGeneralizedLinearModel());
+        this.parameter = null;
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
         final String name = BranchSubstitutionParameterDelegate.getName(traitName);

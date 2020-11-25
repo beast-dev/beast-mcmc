@@ -550,8 +550,9 @@ public interface MassPreconditioner {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
-                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
-                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+//                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+//                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+                return normalizeVector(new WrappedVector.Raw(newVariance), dim);
             } else {
                 return inverseMass;
             }

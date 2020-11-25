@@ -321,10 +321,10 @@
 
 	<arbitraryBranchRates id="branchSpecific.alphas" exp="false"
 			randomScale="1.0"
-			randomizeRates="false" centerAtOne="false">
+			randomizeRates="true" centerAtOne="false">
 		<treeModel idref="treeModel"/>
 		<rates>
-			<parameter id="branchSpecific.alpha" value="1.0"/>
+			<parameter id="branchSpecific.alpha" value="2.0"/>
 		</rates>
 	</arbitraryBranchRates>
 

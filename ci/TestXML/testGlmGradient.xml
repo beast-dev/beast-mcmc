@@ -56,8 +56,8 @@
 	<generalDataType id="loc.dataType">
 		<state code="A"/>
 		<state code="B"/>
-<!--
 		<state code="C"/>
+<!--
 		<state code="D"/>
  -->
 	</generalDataType>
@@ -89,26 +89,75 @@
 
 	<strictClockBranchRates id="loc.branchRates">
 		<rate>
-			<parameter id="loc.clock.rate" value="1.0" lower="0.0"/>
+			<parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 
-	<glmSubstitutionModel id="loc.model" normalize="false">
+	<glmSubstitutionModel id="loc.model" normalize="true">
 		<generalDataType idref="loc.dataType"/>
 		<rootFrequencies>
 			<frequencyModel id="loc.frequencyModel" normalize="true">
 				<generalDataType idref="loc.dataType"/>
 				<frequencies>
-					<parameter id="loc.frequencies" dimension="2"/>
+					<parameter id="loc.frequencies" dimension="3"/>
 				</frequencies>
 			</frequencyModel>
 		</rootFrequencies>
 		<glmModel family="logLinear" checkIdentifiability="true">
+<!--
+			<randomEffects>
+				<parameter id="randomEffects" value="1 2 -1 -2 1 -1"/>
+			</randomEffects>
+ -->
 			<independentVariables>
-				<parameter id="loc.coefficients" value="1.0"/>
-				<designMatrix id="loc.designMatrix">
-					<parameter value="1
-								      1"/>
+				<parameter id="loc.coefficients0" value="1.0"/>
+				<designMatrix id="loc.designMatrix0">
+					<parameter value="1 1 1
+								      1 1 1"/>
+				</designMatrix>
+			</independentVariables>
+<!--
+			<independentVariables>
+				<parameter id="loc.coefficients1" value="1.0"/>
+				<designMatrix id="loc.designMatrix1">
+					<parameter value="1 0 0
+								      0 0 0"/>
+				</designMatrix>
+			</independentVariables>
+ -->
+			<independentVariables>
+				<parameter id="loc.coefficients2" value="2.0"/>
+				<designMatrix id="loc.designMatrix2">
+					<parameter value="0 1 0
+								      0 0 0"/>
+				</designMatrix>
+			</independentVariables>
+			<independentVariables>
+				<parameter id="loc.coefficients3" value="-1.0"/>
+				<designMatrix id="loc.designMatrix3">
+					<parameter value="0 0 1
+								      0 0 0"/>
+				</designMatrix>
+			</independentVariables>
+			<independentVariables>
+				<parameter id="loc.coefficients4" value="-2.0"/>
+				<designMatrix id="loc.designMatrix4">
+					<parameter value="0 0 0
+								      1 0 0"/>
+				</designMatrix>
+			</independentVariables>
+			<independentVariables>
+				<parameter id="loc.coefficients5" value="1.0"/>
+				<designMatrix id="loc.designMatrix5">
+					<parameter value="0 0 0
+								      0 1 0"/>
+				</designMatrix>
+			</independentVariables>
+			<independentVariables>
+				<parameter id="loc.coefficients6" value="-1.0"/>
+				<designMatrix id="loc.designMatrix6">
+					<parameter value="0 0 0
+								      0 0 1"/>
 				</designMatrix>
 			</independentVariables>
 		</glmModel>
@@ -129,23 +178,27 @@
         <strictClockBranchRates idref="loc.branchRates"/>
     </treeDataLikelihood>
 
-    <glmSubstitutionModelGradient id="gradient1" traitName="loc">
+    <glmSubstitutionModelGradient id="gradient1" traitName="loc" effects="fixed">
     	<treeDataLikelihood idref="treeLikelihood"/>
     	<glmSubstitutionModel idref="loc.model"/>
     </glmSubstitutionModelGradient>
 
-
-    <substitutionGeneratorGradient id="gradient2" traitName="loc">
+<!--
+    <glmSubstitutionModelGradient id="gradient2" traitName="loc" effects="random">
     	<treeDataLikelihood idref="treeLikelihood"/>
     	<glmSubstitutionModel idref="loc.model"/>
-    </substitutionGeneratorGradient>
+    </glmSubstitutionModelGradient>
+ -->
 
     <report>
     	<glmSubstitutionModelGradient idref="gradient1"/>
     </report>
 
+<!--
     <report>
     	<substitutionGeneratorGradient idref="gradient2"/>
     </report>
+ -->
+
 
 </beast>

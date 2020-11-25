@@ -359,7 +359,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        fireModelChanged();
+        fireModelChanged();
     }
 
     protected void storeState() {

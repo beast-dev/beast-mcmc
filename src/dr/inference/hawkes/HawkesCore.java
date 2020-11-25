@@ -61,6 +61,11 @@ public interface HawkesCore {
     void setTimesData(double[] timesData);
 
     /**
+     *
+     */
+    void setRandomRates(double[] randomRates);
+
+    /**
      * Updates the location of a single entity
      */
     void updateLocation(int locationIndex, double[] location);

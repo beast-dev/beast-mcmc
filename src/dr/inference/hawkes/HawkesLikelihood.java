@@ -29,14 +29,13 @@ import dr.evolution.util.Taxa;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
-import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 import dr.xml.*;
-import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
 
 /**
  * @author Andrew Holbrook
@@ -58,6 +57,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                             final Parameter omega,
                             final Parameter theta,
                             final Parameter mu0,
+                            final HawkesRateProvider rateProvider,
                             final MatrixParameterInterface locationsParameter,
                             final double[] times,
                             final Double tolerance,
@@ -65,7 +65,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         super(HAWKES_LIKELIHOOD);
 
-        this.hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times, byIncrement);
+        this.hawkesModel = new HawkesModel(tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, rateProvider, locationsParameter, times, byIncrement);
 
         this.hphDimension = hphDimension;
         this.locationCount = hawkesModel.getLocationCount();
@@ -82,6 +82,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final Parameter omega;
         final Parameter theta;
         final Parameter mu0;
+        final HawkesRateProvider rateProvider;
         final MatrixParameterInterface locationsParameter;
         final double[] times;
         final static String HAWKES_MODEL = "HawkesModel";
@@ -93,6 +94,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                            final Parameter omega,
                            final Parameter theta,
                            final Parameter mu0,
+                           final HawkesRateProvider rateProvider,
                            final MatrixParameterInterface locationsParameter,
                            final double[] times,
                            boolean byIncrement) {
@@ -104,6 +106,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             this.omega = omega;
             this.theta = theta;
             this.mu0 = mu0;
+            this.rateProvider = rateProvider;
             this.locationsParameter = locationsParameter;
             this.times = times;
 
@@ -125,6 +128,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             if (getTotalDimension() != 6) {
                 throw new RuntimeException("Parameter dimension is wrong.");
             }
+        }
+
+        public HawkesRateProvider getRateProvider() {
+            return rateProvider;
         }
 
         public MatrixParameterInterface getLocationsParameter() {
@@ -360,6 +367,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             updateAllLocations(hawkesModel.getLocationsParameter());
             hphCore.setTimesData(hawkesModel.getTimes());
             hphCore.setParameters(hawkesModel.getParameterValues());
+            hawkesModel.getRateProvider().setRandomRates(hphCore);
             logLikelihood = hphCore.calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -384,6 +392,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String OMEGA = "omega";
         final static String THETA = "theta";
         final static String MU = "mu0";
+        final static String RANDOM_RATES = "randomRates";
         final static String TOLERANCE = GRADIENT_CHECK_TOLERANCE;
         final static String JITTER = TreeTraitParserUtilities.JITTER;
 
@@ -415,10 +424,17 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Parameter theta = (Parameter) xo.getElementFirstChild(THETA);
             Parameter mu0 = (Parameter) xo.getElementFirstChild(MU);
 
+            HawkesRateProvider rateProvider;
+            if (xo.hasChildNamed(RANDOM_RATES)) {
+                rateProvider = new HawkesRateProvider.Default((Parameter) xo.getElementFirstChild(RANDOM_RATES));
+            } else {
+                rateProvider = new HawkesRateProvider.None();
+            }
+
             boolean byIncrement = xo.getAttribute(BY_INCREMENT, false);
             Double tolerance = xo.getAttribute(TOLERANCE, 1e-4);
 
-            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, locationsParameter, times, tolerance, byIncrement);
+            return new HawkesLikelihood(hphDimension, tauXprec, sigmaXprec, tauTprec, omega, theta, mu0, rateProvider, locationsParameter, times, tolerance, byIncrement);
 
         }
 
@@ -470,6 +486,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 new ElementRule(OMEGA, Parameter.class),
                 new ElementRule(THETA, Parameter.class),
                 new ElementRule(MU, Parameter.class),
+                new ElementRule(RANDOM_RATES, Parameter.class, "The random rate parameter.", true),
                 AttributeRule.newDoubleRule(TOLERANCE, true),
                 TreeTraitParserUtilities.jitterRules(true),
         };

@@ -138,6 +138,8 @@ public class NativeHPHSingleton {
 
     public native void setTimesData(int instance, double[] timesData);
 
+    public native void setRandomRates(int instance, double[] randomRates);
+
     public native void getLocationGradient(int instance, double[] gradient);
 
     public native int getInternalDimension(int instance);

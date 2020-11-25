@@ -90,6 +90,11 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
     }
 
     @Override
+    public void setRandomRates(double[] randomRates) {
+        singleton.setRandomRates(instance, randomRates);
+    }
+
+    @Override
     public void setParameters(double[] parameters) {
         sigmaXprec = parameters[0];
         tauXprec = parameters[1];

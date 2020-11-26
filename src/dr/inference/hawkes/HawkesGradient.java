@@ -35,24 +35,34 @@ import dr.inference.model.Parameter;
  * @author Marc Suchard
  */
 public class HawkesGradient implements GradientWrtParameterProvider {
+
+    final private WrtParameter wrtParameter;
+    final private HawkesLikelihood likelihood;
+
+    public HawkesGradient(WrtParameter wrtParameter,
+                          HawkesLikelihood likelihood) {
+        this.wrtParameter = wrtParameter;
+        this.likelihood = likelihood;
+    }
+
     @Override
     public Likelihood getLikelihood() {
-        return null;
+        return likelihood;
     }
 
     @Override
     public Parameter getParameter() {
-        return null;
+        return wrtParameter.getParameter(likelihood);
     }
 
     @Override
     public int getDimension() {
-        return 0;
+        return wrtParameter.getParameter(likelihood).getDimension();
     }
 
     @Override
     public double[] getGradientLogDensity() {
-        return new double[0];
+        return wrtParameter.getGradientLogDensity(likelihood);
     }
 
     enum WrtParameter {

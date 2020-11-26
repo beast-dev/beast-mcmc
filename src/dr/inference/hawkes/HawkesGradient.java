@@ -28,13 +28,14 @@ package dr.inference.hawkes;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.xml.*;
 
 /**
  * @author Andrew Holbrook
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class HawkesGradient implements GradientWrtParameterProvider {
+public class HawkesGradient implements GradientWrtParameterProvider, Reportable {
 
     final private WrtParameter wrtParameter;
     final private HawkesLikelihood likelihood;
@@ -63,6 +64,11 @@ public class HawkesGradient implements GradientWrtParameterProvider {
     @Override
     public double[] getGradientLogDensity() {
         return wrtParameter.getGradientLogDensity(likelihood);
+    }
+
+    @Override
+    public String getReport() {
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, null);
     }
 
     enum WrtParameter {
@@ -109,4 +115,50 @@ public class HawkesGradient implements GradientWrtParameterProvider {
             return null;
         }
     }
+
+    // **************************************************************
+    // XMLObjectParser
+    // **************************************************************
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        final static String HAWKES_GRADIENT = "hawkesGradient";
+        final static String WRT_PARAMETER = "wrtParameter";
+
+        public String getParserName() {
+            return HAWKES_GRADIENT;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            HawkesLikelihood likelihood = (HawkesLikelihood) xo.getChild(HawkesLikelihood.class);
+            String wrtParameter = (String) xo.getAttribute(WRT_PARAMETER);
+
+            WrtParameter wrt = WrtParameter.factory(wrtParameter);
+
+            return new HawkesGradient(wrt, likelihood);
+
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Gradient w.r.t. parameters of HawkesLikelihood.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule(WRT_PARAMETER),
+                new ElementRule(HawkesLikelihood.class)
+        };
+
+        public Class getReturnType() {
+            return HawkesGradient.class;
+        }
+    };
 }

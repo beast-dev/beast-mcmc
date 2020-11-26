@@ -74,7 +74,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         initialize(hphDimension, hawkesModel);
     }
 
-    private class HawkesModel extends AbstractModel{
+    public class HawkesModel extends AbstractModel{
 
         final Parameter tauXprec;
         final Parameter sigmaXprec;
@@ -227,6 +227,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     @Override
     public Likelihood getLikelihood() {
         return this;
+    }
+
+    public HawkesModel getHawkesModel() {
+        return hawkesModel;
     }
 
     @Override

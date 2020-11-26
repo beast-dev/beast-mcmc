@@ -100,6 +100,11 @@ public interface HawkesCore {
      */
     void getLocationGradient(double[] location);
 
+    /**
+     * Get gradient of HPH likelihood w.r.t. randomRates
+     */
+    void getRandomRatesGradient(double[] rate);
+
     int getInternalDimension();
 
     int DEFAULT_DEVICE = -1;

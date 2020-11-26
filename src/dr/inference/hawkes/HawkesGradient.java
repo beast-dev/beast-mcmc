@@ -87,7 +87,7 @@ public class HawkesGradient implements GradientWrtParameterProvider {
 
             @Override
             double[] getGradientLogDensity(HawkesLikelihood likelihood) {
-                return new double[0];
+                return likelihood.getRandomRateGradient();
             }
         };
         WrtParameter(String name) {

@@ -149,10 +149,24 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
         singleton.getLocationGradient(instance, location);
 
         if (CHECK_GRADIENT) {
-            for (double x : location) {
+            checkGradient(location);
+        }
+    }
+
+    @Override
+    public void getRandomRatesGradient(double[] rate) {
+        singleton.getLocationGradient(instance, rate);
+
+        if (CHECK_GRADIENT) {
+            checkGradient(rate);
+        }
+    }
+
+    private void checkGradient(double[] array) {
+        for (double x : array) {
                 if (Double.isNaN(x) || Double.isInfinite(x)) {
                     System.err.println("Poor gradient value: " + x);
-                    System.err.println(new Vector(location));
+                    System.err.println(new Vector(array));
                     if (CHECK_GRADIENT_KILL) {
                         System.exit(-1);
                     } else {
@@ -160,7 +174,6 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
                     }
                 }
             }
-        }
     }
 
     @Override

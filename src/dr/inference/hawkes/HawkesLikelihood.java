@@ -256,6 +256,17 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         return gradient; // TODO Do not expose internals
     }
 
+    public double[] getRandomRateGradient() {
+
+        double[] gradient = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
+
+        getLogLikelihood();
+
+        hphCore.getRandomRatesGradient(gradient);
+
+        return gradient;
+    }
+
     public enum ObservationType {
         POINT,
         UPPER_BOUND,

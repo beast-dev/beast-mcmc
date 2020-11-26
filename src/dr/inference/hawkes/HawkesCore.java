@@ -98,7 +98,7 @@ public interface HawkesCore {
     /**
      * Get gradient of HPH likelihood w.r.t. locations
      */
-    void getGradient(double[] location);
+    void getLocationGradient(double[] location);
 
     int getInternalDimension();
 

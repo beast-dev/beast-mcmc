@@ -251,7 +251,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         getLogLikelihood();
 
-        hphCore.getGradient(gradient);
+        hphCore.getLocationGradient(gradient);
 
         return gradient; // TODO Do not expose internals
     }

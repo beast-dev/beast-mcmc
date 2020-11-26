@@ -36,11 +36,18 @@ public interface HawkesRateProvider {
 
     void setRandomRates(HawkesCore hawkesCore);
 
+    Parameter getParameter();
+
     class None implements HawkesRateProvider {
 
         @Override
         public void setRandomRates(HawkesCore hawkesCore) {
             // do nothing
+        }
+
+        @Override
+        public Parameter getParameter() {
+            throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
         }
     }
 
@@ -55,6 +62,11 @@ public interface HawkesRateProvider {
         @Override
         public void setRandomRates(HawkesCore hawkesCore) {
             hawkesCore.setRandomRates(rate.getParameterValues());
+        }
+
+        @Override
+        public Parameter getParameter() {
+            return rate;
         }
     }
 

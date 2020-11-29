@@ -69,7 +69,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
 
         int[] pattern = new int[taxa.getTaxonCount()];
 
-        boolean attributeFound = false;
+        boolean attributeFound = true;
 
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);
@@ -83,9 +83,8 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("State for attribute, " + attributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + value.toString());
                     }
                     pattern[i] = state;
-                    attributeFound = true;
                 } else {
-                    pattern[i] = dataType.getUnknownState();
+                    attributeFound = false;
                 }
             } else {
                 Object value1 = taxon.getAttribute(attributeName);
@@ -98,15 +97,14 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("State for attributes, " + attributeName + " & " + secondaryAttributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + code);
                     }
                     pattern[i] = state;
-                    attributeFound = true;
                 } else {
-                    pattern[i] = dataType.getUnknownState();
+                    attributeFound = false;
                 }
             }
         }
 
         if (!attributeFound) {
-            throw new XMLParseException("The attribute, " + attributeName + " was missing in all taxa. Check the name of the attribute.");
+            throw new XMLParseException("The attribute, " + attributeName + " was not found in all taxa. Check the name of the attribute.");
         }
 
         patterns.addPattern(pattern);

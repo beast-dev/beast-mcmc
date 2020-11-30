@@ -155,7 +155,7 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
 
     @Override
     public void getRandomRatesGradient(double[] rate) {
-        singleton.getLocationGradient(instance, rate);
+        singleton.getRandomRatesGradient(instance, rate);
 
         if (CHECK_GRADIENT) {
             checkGradient(rate);

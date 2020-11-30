@@ -123,7 +123,7 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         final static String HAWKES_GRADIENT = "hawkesGradient";
-        final static String WRT_PARAMETER = "wrtParameter";
+        final static String WRT_PARAMETER = "wrt";
 
         public String getParserName() {
             return HAWKES_GRADIENT;

@@ -1,20 +1,17 @@
-
 package dr.evomodelxml.bigfasttree;
 
-import dr.evolution.coalescent.IntervalList;
-import dr.evolution.distance.DistanceMatrix;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.*;
+import dr.evomodel.bigfasttree.ApproximatePoissonTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
-import dr.matrix.Matrix;
 import dr.xml.*;
+
+import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
- * @author JT McCrone
  * @version $Id$
  */
 public class ApproximatePoissonTreeLikelihoodParser extends AbstractXMLObjectParser {
@@ -22,36 +19,55 @@ public class ApproximatePoissonTreeLikelihoodParser extends AbstractXMLObjectPar
     public static final String TREE_LIKELIHOOD = "approximatePoissonTreeLikelihood";
     public static final String DATA = "data";
 
-
     public String getParserName() {
         return TREE_LIKELIHOOD;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         int sequenceLength = xo.getIntegerAttribute("sequenceLength");
-
+        Tree dataTree = (Tree) xo.getElementFirstChild("data");
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        BranchLengthProvider branchLengthProvider;
-        if(xo.getElementFirstChild(DATA) instanceof  Tree){
-            Tree dataTree = (Tree) xo.getElementFirstChild(DATA);
-            CladeNodeModel cladeNodeModel = null;
-            try {
-                cladeNodeModel = new CladeNodeModel(dataTree, treeModel);
-            } catch (TreeUtils.MissingTaxonException e) {
-                e.printStackTrace();
-            }
-            branchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeNodeModel);
-        }else if(xo.getElementFirstChild(DATA) instanceof  CladeNodeModel) {
-            CladeNodeModel cladeNodeModel = (CladeNodeModel) xo.getElementFirstChild(DATA);
-            branchLengthProvider = new ConstrainedTreeBranchLengthProvider(cladeNodeModel);
-        }else{
-                DistanceMatrix dataMatrix = (DistanceMatrix)xo.getElementFirstChild(DATA);
-                branchLengthProvider = new RzhetskyNeiBranchLengthProvider(dataMatrix,treeModel);
-            }
-
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        return new ApproximatePoissonTreeLikelihood(TREE_LIKELIHOOD, sequenceLength, treeModel, branchRateModel,branchLengthProvider);
+        checkTreesMatch(dataTree, treeModel);
+
+        return new ApproximatePoissonTreeLikelihood(TREE_LIKELIHOOD, dataTree, sequenceLength, treeModel, branchRateModel);
+    }
+
+    /**
+     * Helper function used in checkTreesMatch
+     * @param tree
+     * @return ArrayList of taxon ids
+     */
+    private static ArrayList<String> getTaxon(Tree tree) {
+        ArrayList<String> taxa= new ArrayList<>();
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef n = tree.getExternalNode(i);
+            taxa.add((tree.getNodeTaxon(n).getId()));
+        }
+        return taxa;
+    }
+
+    /**
+     * A helper function that ensures the data tree and tree model have the same taxa
+     * @param dataTree
+     * @param tree
+     * @throws XMLParseException
+     */
+    private static void checkTreesMatch(Tree dataTree, Tree tree) throws XMLParseException {
+        ArrayList<String> referenceTaxon = getTaxon(dataTree);
+        ArrayList<String> treeTaxon = getTaxon(tree);
+
+        if(treeTaxon.size()!=referenceTaxon.size()){
+            throw new XMLParseException("TreeModel and data tree must have the same taxa");
+        }
+
+        for (String taxonName :
+                treeTaxon) {
+            if (!referenceTaxon.contains(taxonName)) {
+                throw new XMLParseException("TreeModel and data tree must have the same taxa");
+            }
+        }
     }
 
     //************************************************************************
@@ -68,14 +84,9 @@ public class ApproximatePoissonTreeLikelihoodParser extends AbstractXMLObjectPar
 
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule("sequenceLength", false),
-//            new OrRule(
-//                    new ElementRule(DATA, new XMLSyntaxRule[]{
-//                            new ElementRule(Tree.class)
-//                    }),
-//                    new ElementRule(DATA, new XMLSyntaxRule[]{
-//                            new ElementRule(DistanceMatrix.class)
-//                    }),
-//            ),
+            new ElementRule(DATA, new XMLSyntaxRule[] {
+                    new ElementRule(Tree.class)
+            }),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class, true),
     };

@@ -44,9 +44,8 @@ public class CladeNodeModel extends AbstractModel {
             }
         }
         this.cladeTree = cladeTree;
-
         this.treeModel = treeModel;
-        // need store restore to trigger here
+        // need store restore to trigger here so add as dummy likelihood
         // but also need to listen to the tree for changes
 
         addModel(treeModel);

@@ -118,6 +118,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             addVariable(theta);
             addVariable(mu0);
             addVariable(locationsParameter);
+            if (rateProvider instanceof Model) {
+                addModel((Model) rateProvider);
+            }
         }
 
         private void checkDimensions() {
@@ -164,12 +167,12 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         @Override
         protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+            likelihoodKnown = false;
         }
 
         @Override
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+            likelihoodKnown = false;
         }
 
         @Override
@@ -206,6 +209,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
 
         hphCore.setParameters(hawkesModel.getParameterValues());
+        hawkesModel.getRateProvider().setRandomRates(hphCore);
 
         updateAllLocations(hawkesModel.getLocationsParameter());
 

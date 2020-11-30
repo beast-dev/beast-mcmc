@@ -25,7 +25,10 @@
 
 package dr.inference.hawkes;
 
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Andrew Holbrook
@@ -51,12 +54,14 @@ public interface HawkesRateProvider {
         }
     }
 
-    class Default implements HawkesRateProvider {
+    class Default extends AbstractModel implements HawkesRateProvider {
 
         Parameter rate;
 
         Default(Parameter rate) {
+            super("HawkesRateProvider$Default");
             this.rate = rate;
+            addVariable(rate);
         }
 
         @Override
@@ -67,6 +72,31 @@ public interface HawkesRateProvider {
         @Override
         public Parameter getParameter() {
             return rate;
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
         }
     }
 

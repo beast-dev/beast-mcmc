@@ -103,10 +103,7 @@ public interface MassPreconditionScheduler {
         @Override
         public boolean shouldUpdatePreconditioning() {
 
-            boolean shouldUpdate = ((options.preconditioningUpdateFrequency > 0)
-                    && (((operator.getCount() % options.preconditioningUpdateFrequency == 0)
-                        && (operator.getCount() > options.preconditioningDelay)))
-                    && (options.preconditioningMaxUpdate == 0 || totalUpdates < options.preconditioningMaxUpdate));
+            boolean shouldUpdate = shouldUpdate();
 
             if (shouldUpdate) {
                 totalUpdates++;
@@ -115,9 +112,23 @@ public interface MassPreconditionScheduler {
             return shouldUpdate;
         }
 
+        protected boolean shouldUpdate() {
+            return ((options.preconditioningUpdateFrequency > 0)
+                    && (((operator.getCount() % options.preconditioningUpdateFrequency == 0)
+                    && (operator.getCount() > options.preconditioningDelay)))
+                    && (options.preconditioningMaxUpdate == 0 || totalUpdates < options.preconditioningMaxUpdate));
+        }
+
         @Override
         public boolean shouldStoreSecant(double[] lastGradient, double[] lastPosition) {
             return lastGradient != null && lastPosition != null;
+        }
+    }
+
+    class UpdateByProbability extends Default {
+
+        UpdateByProbability(HamiltonianMonteCarloOperator.Options options, AdaptableMCMCOperator operator) {
+            super(options, operator);
         }
     }
 

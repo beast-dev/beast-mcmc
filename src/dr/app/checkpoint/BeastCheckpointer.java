@@ -447,7 +447,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.out.print("restoring " + fields[1] + " with values ");
                     }
                     for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                        try {
+                            parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                        } catch (RuntimeException rte) {
+                            System.err.println(rte);
+                            continue;
+                        }
                         if (DEBUG) {
                             System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
                         }

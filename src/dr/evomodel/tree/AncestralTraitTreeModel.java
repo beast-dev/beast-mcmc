@@ -927,12 +927,12 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     @Override
     public String getDescription() {
-        return "Bayesian estimation of Pagel's lambda";
+        return "TreeModel with ghost / travel history lineages";
     }
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
+        return Collections.singletonList(CommonCitations.LEMEY_2020_ACCOMMODATING);
     }
 
     private Taxon getTaxonByTreeIndex(int index) {

@@ -182,6 +182,30 @@ public class CommonCitations {
             "e100392"
     );
 
+    public static Citation LEMEY_2020_ACCOMMODATING = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("SL", "Hong"),
+                    new Author("V", "Hill"),
+                    new Author("G", "Baele"),
+                    new Author("C", "Poletto"),
+                    new Author("V", "Colizza"),
+                    new Author("A", "O'Toole"),
+                    new Author("JT", "McCrone"),
+                    new Author("KG", "Andersen"),
+                    new Author("M", "Worobey"),
+                    new Author("MI", "Nelson"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard"),
+            },
+            "Accommodating individual travel history and unsampled diversity in Bayesian phylogeographic inference of SARS-CoV-2",
+            2020,
+            "Nature Communications",
+            11,
+            5110, -1,
+            Citation.Status.PUBLISHED
+    );
+
     public static Citation MININ_2008_COUNTING = new Citation(
             new Author[] {
                     new Author("VN", "Minin"),
@@ -297,6 +321,27 @@ public class CommonCitations {
             "Syst Biol",
             61, 170, 173,
             "10.1093/sysbio/syr100");
+
+    public static Citation AYRES_2019_BEAGLE = new Citation(
+            new Author[] {
+                    new Author("DL", "Ayres"),
+                    new Author("MP", "Cummings"),
+                    new Author("G", "Baele"),
+                    new Author("AE", "Darling"),
+                    new Author("PO", "Lewis"),
+                    new Author("DL", "Swofford"),
+                    new Author("JP", "Huelsenbeck"),
+                    new Author("P", "Lemey"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard")
+            },
+            "BEAGLE 3: Improved performance, scaling and usability for a high-performance computing library for statistical phylogenetics",
+            2019,
+            "Systematic Biology",
+            68,
+            1052, 1061,
+            Citation.Status.PUBLISHED
+    );
 
     public static Citation VRANCKEN_2015_SIMULTANEOUSLY = new Citation(
             new Author[] {

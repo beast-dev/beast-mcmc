@@ -1078,7 +1078,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************

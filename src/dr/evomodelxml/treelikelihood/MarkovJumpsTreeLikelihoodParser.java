@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -70,7 +71,9 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         return MARKOV_JUMP_TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+
+
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,

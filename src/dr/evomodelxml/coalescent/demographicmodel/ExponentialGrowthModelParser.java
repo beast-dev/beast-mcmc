@@ -100,7 +100,7 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[] {
-                            AttributeRule.newBooleanRule(LOG_SPACE, false, "Is this parameter in log space?"),
+                            AttributeRule.newBooleanRule(LOG_SPACE, true, "Is this parameter in log space?"),
                             new ElementRule(Parameter.class)}),
             new XORRule(
 

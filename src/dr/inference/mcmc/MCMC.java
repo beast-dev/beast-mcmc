@@ -180,7 +180,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             //assume that saved state has passed the adaptationDelay
             //TODO: discuss whether we want to save the adaptationDelay or chainLength to file
-            System.out.println("adaptationDelay = " + adaptationDelay + " vs. loadedState = " +loadedState);
+//            System.out.println("adaptationDelay = " + adaptationDelay + " vs. loadedState = " +loadedState);
             if (adaptationDelay > loadedState) {
                 mc.runChain(adaptationDelay - loadedState, true);
                 chainLength -= adaptationDelay;

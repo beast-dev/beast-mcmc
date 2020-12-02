@@ -28,6 +28,7 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
     private Taxon taxon;
     private TreeParameterModel branchRates;
     private int maskLength; //maskLength determines number of 'daughter' branches to mask as well
+//    private int flag = 1;
 
     public MaskFromTree(TreeModel tree, Taxon referenceTaxon, int dim, int maskLength) {
         super(dim);
@@ -43,36 +44,54 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
 
     void updateMask() {
         // todo: make sure this sets the old 0.0 to 1.0 smarter
-        // todo: remove code duplication from maskLength > 1
         for (int i = 0; i < this.getDimension(); i++) {
             setParameterValueQuietly(i, 1.0);
         }
+
         int nodeNumber = tree.getTaxonIndex(taxon.getId());
         NodeRef node = tree.getNode(nodeNumber);
         NodeRef root = tree.getRoot();
+        NodeRef[] nodeCache = new NodeRef[maskLength + 1];
 
-        while (tree.getParent(node) != root) {
-            node = tree.getParent(node);
+        //set node cache to all be the same node
+        for (int i = 0; i < nodeCache.length; i++) {
+            nodeCache[i] = node;
         }
-        int maskIndex = branchRates.getParameterIndexFromNodeNumber(node.getNumber());
-        this.setParameterValue(maskIndex, 0.0);
 
-        List<NodeRef> nodeList = new ArrayList<>();
-        // only happens if maskLength > 0 :
-        for (int i = 0; i < maskLength; i++) {
-
-            if (!tree.isExternal(node)) {
-                node = tree.getChild(node, 0);
-                nodeList.add(node);
+        int update = 0;
+        while (tree.getParent(nodeCache[0]) != root) {
+            update = update + 1;
+            for (int i = maskLength; i > 0; i--) {
+                if (update > i) {
+                    nodeCache[i] = nodeCache[i - 1];
+                }
             }
-
-//            maskIndex = branchRates.getParameterIndexFromNodeNumber(node.getNumber())
+            nodeCache[0] = tree.getParent(nodeCache[0]);
         }
-        for (int i = 0; i < nodeList.size(); i++) {
-            maskIndex = branchRates.getParameterIndexFromNodeNumber(nodeList.get(i).getNumber());
+
+
+        int maskIndex;// = branchRates.getParameterIndexFromNodeNumber(node.getNumber());
+//        this.setParameterValue(maskIndex, 0.0);
+//
+//        List<NodeRef> nodeList = new ArrayList<>();
+        // only happens if maskLength > 0 :
+//        for (int i = 0; i < maskLength; i++) {
+//
+//            if (!tree.isExternal(node)) {
+//                node = tree.getChild(node, 0);
+//                nodeList.add(node);
+//            }
+//
+////            maskIndex = branchRates.getParameterIndexFromNodeNumber(node.getNumber())
+//        }
+        for (int i = 0; i < nodeCache.length; i++) {
+            maskIndex = branchRates.getParameterIndexFromNodeNumber(nodeCache[i].getNumber());
             this.setParameterValue(maskIndex, 0.0);
+//            System.out.println(maskIndex);
         }
-
+//        System.out.println("\n NEXT: ");
+//        System.out.println(flag);
+//        flag = flag + 1;
     }
 
     @Override
@@ -108,7 +127,6 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
         super.storeParameterValues();
-
         updateMask();
     }
 

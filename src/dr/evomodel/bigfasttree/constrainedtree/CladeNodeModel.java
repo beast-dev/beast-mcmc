@@ -1,4 +1,4 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.constrainedtree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -11,7 +11,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Variable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * A  model class maintains a map between nodes an resolved tree and internal nodes in a static, compatible, potentially

@@ -1,7 +1,10 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.constrainedtree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.bigfasttree.BranchLengthProvider;
+import dr.evomodel.bigfasttree.constrainedtree.CladeNodeModel;
+import dr.evomodel.bigfasttree.constrainedtree.CladeRef;
 import dr.inference.model.*;
 
 

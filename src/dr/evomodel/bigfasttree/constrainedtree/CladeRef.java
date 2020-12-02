@@ -1,4 +1,4 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.constrainedtree;
 
 import java.util.BitSet;
 

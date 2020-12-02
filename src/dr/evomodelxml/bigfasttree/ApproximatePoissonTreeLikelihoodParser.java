@@ -1,15 +1,15 @@
 
 package dr.evomodelxml.bigfasttree;
 
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.*;
+import dr.evomodel.bigfasttree.constrainedtree.CladeNodeModel;
+import dr.evomodel.bigfasttree.constrainedtree.ConstrainedTreeBranchLengthProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
-import dr.matrix.Matrix;
 import dr.xml.*;
 
 /**

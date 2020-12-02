@@ -1,7 +1,7 @@
-package dr.evomodelxml.bigfasttree;
+package dr.evomodelxml.bigfasttree.constrainedtree;
 
-import dr.evomodel.bigfasttree.CladeAwareSubtreePruneRegraft;
-import dr.evomodel.bigfasttree.CladeNodeModel;
+import dr.evomodel.bigfasttree.constrainedtree.CladeAwareSubtreePruneRegraft;
+import dr.evomodel.bigfasttree.constrainedtree.CladeNodeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 

@@ -1,4 +1,4 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.constrainedtree;
 
 /*
  * SubtreeLeapOperator.java
@@ -30,7 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.operators.AbstractAdaptableTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.bigfasttree.CladeAwareSubtreeLeapOperatorParser;
+import dr.evomodelxml.bigfasttree.constrainedtree.CladeAwareSubtreeLeapOperatorParser;
 import dr.inference.distribution.CauchyDistribution;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
@@ -383,7 +383,6 @@ public class CladeAwareSubtreeLeap extends AbstractAdaptableTreeOperator {
                 tree.removeChild(parent, sibling);
                 tree.setRoot(sibling);
                 assert cladeModel.getParent(clade)==null;
-                cladeModel.setRootNode(clade,sibling);
 
             } else {
                 // remove the parent of node by connecting its sibling to its grandparent.
@@ -397,7 +396,6 @@ public class CladeAwareSubtreeLeap extends AbstractAdaptableTreeOperator {
                 // adding the node to the root of the tree
                 tree.addChild(parent, j);
                 tree.setRoot(parent);
-                cladeModel.setRootNode(clade,parent);
                 assert cladeModel.getParent(clade)==null;
 
                 if(DEBUG){
@@ -422,15 +420,10 @@ public class CladeAwareSubtreeLeap extends AbstractAdaptableTreeOperator {
                 // and add the parent of i as a child of the former parent of j
                 tree.addChild(jParent, parent);
 
-                if (parent == cladeModel.getRootNode(clade)) {
-                    cladeModel.setRootNode(clade,sibling);
-                }
                 // should never be called if the if above is called
                 if(cladeModel.getClade(jParent)!=clade){
                     assert cladeModel.getClade(jParent) == cladeModel.getParent(clade);
                     assert cladeModel.getRootNode(clade) == j;
-                    cladeModel.setRootNode(clade,parent);
-
                 }
             }
 
@@ -453,9 +446,8 @@ public class CladeAwareSubtreeLeap extends AbstractAdaptableTreeOperator {
 
         }
 
-
+        tree.setNodeHeight(parent, newHeight);
         tree.endTreeEdit();
-        assert tree==cladeModel.getTreeModel();
 
         if (DEBUG) {
             System.out.println("#############--------- edit done -----------############");
@@ -487,7 +479,7 @@ public class CladeAwareSubtreeLeap extends AbstractAdaptableTreeOperator {
             }
         }
 
-        tree.setNodeHeight(parent, newHeight);
+
 
         if (DEBUG) {
             System.out.println("#############--------- height set -----------############");

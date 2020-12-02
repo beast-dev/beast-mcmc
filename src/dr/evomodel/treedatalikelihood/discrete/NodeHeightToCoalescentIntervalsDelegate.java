@@ -27,6 +27,8 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Model;
@@ -39,13 +41,13 @@ import dr.inference.model.Variable;
  */
 public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightTransformDelegate {
 
-    private GMRFSkyrideLikelihood skyrideLikelihood;
+    private OldGMRFSkyrideLikelihood skyrideLikelihood;
     private Parameter coalescentIntervals;
     private OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
 
     public NodeHeightToCoalescentIntervalsDelegate(TreeModel treeModel,
                                                    Parameter nodeHeights,
-                                                   GMRFSkyrideLikelihood skyrideLikelihood) {
+                                                   OldGMRFSkyrideLikelihood skyrideLikelihood) {
 
         super(treeModel, nodeHeights);
 
@@ -76,8 +78,9 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         for (int i = 0; i < values.length; i++) {
             int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
             currentHeight += values[i];
-            TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
-            node.heightParameter.setParameterValueQuietly(0, currentHeight);
+//            TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
+//            node.heightParameter.setParameterValueQuietly(0, currentHeight);
+            tree.setNodeHeightQuietly(tree.getNode(nodeNumbers[nodeNumbers.length - 1]), currentHeight);
         }
         tree.pushTreeChangedEvent();
         return nodeHeights.getParameterValues();

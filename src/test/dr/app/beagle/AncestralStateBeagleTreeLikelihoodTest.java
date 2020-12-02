@@ -3,6 +3,7 @@ package test.dr.app.beagle;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.TreeTraitProvider;
@@ -55,7 +56,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
 
     public void testJointLikelihood() {
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        TreeModel treeModel = new DefaultTreeModel("treeModel", tree);
 
         Sequence[] sequence = new Sequence[3];
 

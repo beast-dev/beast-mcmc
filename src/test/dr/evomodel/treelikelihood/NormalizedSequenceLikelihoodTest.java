@@ -6,6 +6,7 @@ import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.math.matrixAlgebra.Vector;
 
@@ -60,7 +61,7 @@ public class NormalizedSequenceLikelihoodTest extends SequenceLikelihoodTest {
         Tree tree = new SimpleTree(root);
         tree.setUnits(Units.Type.YEARS);
 
-        return new TreeModel(tree); //treeModel
+        return new DefaultTreeModel(tree); //treeModel
     }
 
     public void testAllPossibleAlignments() {

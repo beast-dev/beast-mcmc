@@ -72,8 +72,20 @@ public class EmpiricalAminoAcidModelParser extends AbstractXMLObjectParser {
             rateMatrix = LG.INSTANCE;
         } else if (type.equals(AminoAcidModelType.FLU.getXMLName())) {
             rateMatrix = FLU.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTVER.getXMLName())) {
+            rateMatrix = MTVER.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTPRO.getXMLName())) {
+            rateMatrix = MTPRO.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTMET.getXMLName())) {
+            rateMatrix = MTMET.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTINV.getXMLName())) {
+            rateMatrix = MTINV.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTDEU.getXMLName())) {
+            rateMatrix = MTDEU.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.MTMAM.getXMLName())) {
+            rateMatrix = MTMAM.INSTANCE;
         } else {
-            throw new XMLParseException("Unrecognized empirical amino acid model: " + type);
+                throw new XMLParseException("Unrecognized empirical amino acid model: " + type);
         }
 
         return new EmpiricalAminoAcidModel(rateMatrix, freqModel);

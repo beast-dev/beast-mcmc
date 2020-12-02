@@ -127,13 +127,19 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-    public static Citation SUCHARD_2012 = new Citation(
+    public static Citation SUCHARD_2020_MMM = new Citation(
             new Author[]{
-                    new Author("MA", "Suchard"),
+                    new Author("G", "Baele"),
+                    new Author("MS", "Gill"),
+                    new Author("P", "Bastide"),
                     new Author("P", "Lemey"),
-                    new Author("V", "Minin"),
+                    new Author("MA", "Suchard")
             },
-            Citation.Status.IN_PREPARATION
+            "Markov-modulated continuous-time Markov chains to identify site- and branch-specific evolutionary variation in BEAST",
+            2020,
+            "Systematic Biology",
+            "https://doi.org/10.1093/sysbio/syaa037",
+            "10.1093/sysbio/syaa037"
     );
 
     public static Citation SHAPIRO_2012 = new Citation(

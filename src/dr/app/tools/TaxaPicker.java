@@ -284,24 +284,20 @@ public class TaxaPicker {
 
     }
 
-    private String[] getTreeNames(List<Tree> trees) {
-        List<String> names = new ArrayList<>();
-        for (Tree tree : trees) {
-            names.add(tree.getId());
-        }
-        return names.toArray(new String[0]);
-    }
+//    private String[] getTreeNames(List<Tree> trees) {
+//        List<String> names = new ArrayList<>();
+//        for (Tree tree : trees) {
+//            names.add(tree.getId());
+//        }
+//        return names.toArray(new String[0]);
+//    }
 
     public static void printTitle() {
         progressStream.println();
-        centreLine("TreePruner " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("TaxaPicker " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("Tree pruning tool", 60);
         centreLine("by", 60);
         centreLine("Philippe Lemey, Andrew Rambaut and Marc Suchard", 60);
-//        progressStream.println();
-//        centreLine("Institute of Evolutionary Biology", 60);
-//        centreLine("University of Edinburgh", 60);
-//        centreLine("a.rambaut@ed.ac.uk", 60);
         progressStream.println();
         progressStream.println();
     }

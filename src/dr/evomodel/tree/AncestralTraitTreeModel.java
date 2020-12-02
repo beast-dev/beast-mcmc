@@ -340,7 +340,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
     private Parameter getNodeHeightParameter(NodeRef iNode) {
         assert (iNode != null);
-        return  ((TreeModel.Node) iNode).getHeightParameter();
+        return  ((DefaultTreeModel.Node) iNode).getHeightParameter();
     }
 
     public double getNodeHeight(NodeRef iNode) {
@@ -491,6 +491,9 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
 
         @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
 
+        @Override
+        public boolean isNodeOrderChanged() { return event.isNodeOrderChanged(); }
+
         @Override public boolean isNodeParameterChanged() { return event.isNodeParameterChanged(); }
 
         @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
@@ -514,7 +517,7 @@ public class AncestralTraitTreeModel extends AbstractModel implements MutableTre
                     }
 
                     validShadowTree = false;
-                    fireModelChanged(new TreeChangedEvent.WholeTree());
+                    fireModelChanged(TreeChangedEvent.create());
 
                 } else if (treeChangedEvent.isNodeChanged()) {
 

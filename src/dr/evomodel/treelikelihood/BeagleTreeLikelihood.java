@@ -30,38 +30,38 @@ import dr.evolution.datatype.HiddenDataType;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.branchmodel.EpochBranchModel;
-import dr.evomodel.branchmodel.HomogeneousBranchModel;
+//import dr.evomodel.branchmodel.EpochBranchModel;
+//import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser;
-import dr.evomodel.siteratemodel.GammaSiteRateModel;
+//import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.nucleotide.HKY;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.tools.BeagleSequenceSimulator;
-import dr.app.beagle.tools.Partition;
-import dr.evolution.alignment.Alignment;
+//import dr.evomodel.substmodel.FrequencyModel;
+//import dr.evomodel.substmodel.nucleotide.HKY;
+//import dr.evomodel.substmodel.SubstitutionModel;
+//import dr.app.beagle.tools.BeagleSequenceSimulator;
+//import dr.app.beagle.tools.Partition;
+//import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.io.NewickImporter;
+//import dr.evolution.datatype.Nucleotides;
+//import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
+//import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.ThreadAwareLikelihood;
-import dr.math.MathUtils;
+//import dr.math.MathUtils;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -1417,91 +1417,91 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
      */
     protected final boolean useAmbiguities;
 
-    public static void main(String[] args) {
-
-        try {
-
-            MathUtils.setSeed(666);
-
-            System.out.println("Test case 1: simulateOnePartition");
-
-            int sequenceLength = 1000;
-            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-            // create tree
-            NewickImporter importer = new NewickImporter(
-                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            Tree tree = importer.importTree(null);
-            TreeModel treeModel = new TreeModel(tree);
-
-            // create Frequency Model
-            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
-                    0.25, 0.25});
-            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-                    freqs);
-
-            // create branch model
-            Parameter kappa1 = new Parameter.Default(1, 1);
-            Parameter kappa2 = new Parameter.Default(1, 1);
-
-            HKY hky1 = new HKY(kappa1, freqModel);
-            HKY hky2 = new HKY(kappa2, freqModel);
-
-            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(
-                    hky1);
-
-            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-            substitutionModels.add(hky1);
-            substitutionModels.add(hky2);
-            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
-            freqModels.add(freqModel);
-
-            Parameter epochTimes = new Parameter.Default(1, 20);
-
-            // create branch rate model
-            Parameter rate = new Parameter.Default(1, 0.001);
-            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
-
-            // create site model
-            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-                    "siteModel");
-
-            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);
-
-            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
-
-            // create partition
-            Partition partition1 = new Partition(treeModel, //
-                    homogenousBranchSubstitutionModel,//
-                    siteRateModel, //
-                    branchRateModel, //
-                    freqModel, //
-                    0, // from
-                    sequenceLength - 1, // to
-                    1 // every
-            );
-
-            partitionsList.add(partition1);
-
-            // feed to sequence simulator and generate data
-            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
-//            		, sequenceLength
-            );
-            Alignment alignment = simulator.simulate(false, false);
-
-            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
-
-            System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
-
-            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
-
-            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } // END: try-catch block
-    }
+//    public static void main(String[] args) {
+//
+//        try {
+//
+//            MathUtils.setSeed(666);
+//
+//            System.out.println("Test case 1: simulateOnePartition");
+//
+//            int sequenceLength = 1000;
+//            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+//
+//            // create tree
+//            NewickImporter importer = new NewickImporter(
+//                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+//            Tree tree = importer.importTree(null);
+//            TreeModel treeModel = new TreeModel(tree);
+//
+//            // create Frequency Model
+//            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+//                    0.25, 0.25});
+//            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+//                    freqs);
+//
+//            // create branch model
+//            Parameter kappa1 = new Parameter.Default(1, 1);
+//            Parameter kappa2 = new Parameter.Default(1, 1);
+//
+//            HKY hky1 = new HKY(kappa1, freqModel);
+//            HKY hky2 = new HKY(kappa2, freqModel);
+//
+//            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(
+//                    hky1);
+//
+//            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+//            substitutionModels.add(hky1);
+//            substitutionModels.add(hky2);
+//            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
+//            freqModels.add(freqModel);
+//
+//            Parameter epochTimes = new Parameter.Default(1, 20);
+//
+//            // create branch rate model
+//            Parameter rate = new Parameter.Default(1, 0.001);
+//            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
+//
+//            // create site model
+//            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//                    "siteModel");
+//
+//            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);
+//
+//            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
+//
+//            // create partition
+//            Partition partition1 = new Partition(treeModel, //
+//                    homogenousBranchSubstitutionModel,//
+//                    siteRateModel, //
+//                    branchRateModel, //
+//                    freqModel, //
+//                    0, // from
+//                    sequenceLength - 1, // to
+//                    1 // every
+//            );
+//
+//            partitionsList.add(partition1);
+//
+//            // feed to sequence simulator and generate data
+//            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
+////            		, sequenceLength
+//            );
+//            Alignment alignment = simulator.simulate(false, false);
+//
+//            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
+//
+//            System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
+//
+//            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
+//
+//            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            System.exit(-1);
+//        } // END: try-catch block
+//    }
 
     public Double getUpdateTimer() {
         return Double.valueOf(substitutionModelDelegate.updateTime);

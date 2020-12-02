@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 
 /**
  */
+@Deprecated
 public class VariableDemographicModelParser extends AbstractXMLObjectParser {
     public static final String MODEL_NAME = "variableDemographic";
     public static final String POPULATION_SIZES = "populationSizes";

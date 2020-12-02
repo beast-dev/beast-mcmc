@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.Tree;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
@@ -39,8 +40,8 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  */
 public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
-	public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
-		super(tree, popParameter, null, precParameter, lambda, beta, design, false, true);
+	public GMRFTestLikelihood(IntervalList intervalList, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
+		super(intervalList, popParameter, null, precParameter, lambda, beta, design, false, true);
 	}
 
 

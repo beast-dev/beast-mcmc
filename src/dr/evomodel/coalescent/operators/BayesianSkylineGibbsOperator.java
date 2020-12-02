@@ -72,7 +72,7 @@ import dr.math.distributions.GammaDistribution;
  *
  * @author Gerton Lunter
  */
-
+@Deprecated
 public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 
     public static final int STEPWISE_TYPE = 0;

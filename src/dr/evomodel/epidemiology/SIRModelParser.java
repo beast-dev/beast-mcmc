@@ -26,7 +26,6 @@
 package dr.evomodel.epidemiology;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ExponentialGrowthModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;

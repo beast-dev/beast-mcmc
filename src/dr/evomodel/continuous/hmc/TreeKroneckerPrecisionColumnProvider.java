@@ -43,7 +43,7 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
     private final int precisionDim;
     private final MatrixParameterInterface diffusionPrecision;
     private final double[] buffer;
-    private final Map<Integer, double[]> kroneckerCache = new HashMap<Integer, double[]>();
+    private final Map<Integer, double[]> kroneckerCache = new HashMap<>();
 
     public TreeKroneckerPrecisionColumnProvider(TreePrecisionTraitProductProvider productProvider,
                                                 MultivariateDiffusionModel diffusionModel) {

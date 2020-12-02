@@ -13,6 +13,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Parameter;
@@ -24,7 +25,7 @@ import test.dr.math.MathTestCase;
  */
 public class TraceCorrelationAssert extends MathTestCase {
 
-    protected static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
+    protected static final String TREE_HEIGHT = DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
 
     protected TreeModel treeModel;
     protected SimpleAlignment alignment;
@@ -83,7 +84,7 @@ public class TraceCorrelationAssert extends MathTestCase {
     private void createTreeModel (ConstantPopulation constant) {
         CoalescentSimulator simulator = new CoalescentSimulator();
         Tree tree = simulator.simulateTree(alignment, constant);
-        treeModel = new TreeModel(tree);//treeModel
+        treeModel = new DefaultTreeModel(tree);//treeModel
     }
 
     protected void createSpecifiedTree(String t) throws Exception {
@@ -92,7 +93,7 @@ public class TraceCorrelationAssert extends MathTestCase {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);          
 
-        treeModel = new TreeModel(tree);//treeModel
+        treeModel = new DefaultTreeModel(tree);//treeModel
     }
 
     /**
@@ -158,7 +159,7 @@ public class TraceCorrelationAssert extends MathTestCase {
         Tree tree = new SimpleTree(root);
         tree.setUnits(Units.Type.YEARS);
 
-        return new TreeModel(tree); //treeModel
+        return new DefaultTreeModel(tree); //treeModel
     }
 
     protected static final String[][] PRIMATES_TAXON_SEQUENCE = {{"human", "chimp", "bonobo", "gorilla", "orangutan", "siamang"},

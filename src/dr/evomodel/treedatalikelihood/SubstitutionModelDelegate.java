@@ -247,11 +247,6 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getEigenIndex(int bufferIndex) {
-
-        if (bufferIndex == 5) {
-            System.err.println();
-        }
-
         return eigenBufferHelper.getOffsetIndex(bufferIndex);
     }
 

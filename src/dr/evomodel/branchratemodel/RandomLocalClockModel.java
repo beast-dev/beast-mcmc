@@ -60,11 +60,22 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
                                  Parameter rateIndicatorParameter,
                                  Parameter ratesParameter,
                                  boolean ratesAreMultipliers,
-                                 double threshold) {
+                                 double threshold){
+        this(treeModel, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers, threshold, false);
+    }
+
+    public RandomLocalClockModel(TreeModel treeModel,
+                                 Parameter meanRateParameter,
+                                 Parameter rateIndicatorParameter,
+                                 Parameter ratesParameter,
+                                 boolean ratesAreMultipliers,
+                                 double threshold,
+                                 boolean simulation) {
 
         super(RandomLocalClockModelParser.LOCAL_BRANCH_RATES);
 
         this.ratesAreMultipliers = ratesAreMultipliers;
+        this.simulation = simulation;
 
         indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, false);
         rates = new TreeParameterModel(treeModel, ratesParameter, false);
@@ -72,8 +83,14 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         if (Double.isNaN(threshold)) { // NaN == binary values
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
             this.threshold = 0.5;
-            for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
-                rateIndicatorParameter.setParameterValue(i, 0.0);
+            if(simulation){
+                for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
+                    rateIndicatorParameter.setParameterValue(i, 1.0);
+                }
+            }else {
+                for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
+                    rateIndicatorParameter.setParameterValue(i, 0.0);
+                }
             }
         } else {
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, rateIndicatorParameter.getDimension()));
@@ -81,8 +98,14 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         }
         ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, ratesParameter.getDimension()));
 
-        for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
-            ratesParameter.setParameterValue(i, 1.0);
+        if(simulation){
+            for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
+                ratesParameter.setParameterValue(i, treeModel.getNodeRate(treeModel.getNode(i)));
+            }
+        }else {
+            for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
+                ratesParameter.setParameterValue(i, 1.0);
+            }
         }
 
         this.meanRateParameter = meanRateParameter;
@@ -250,6 +273,8 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     private boolean recalculationNeeded = true;
 
     private final double threshold;
+
+    private boolean simulation;
 
     @Override
     public Citation.Category getCategory() {

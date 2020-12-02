@@ -25,6 +25,7 @@
 
 package dr.app.beauti.components.discrete;
 
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -533,7 +534,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
 
         if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST) {

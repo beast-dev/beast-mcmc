@@ -26,6 +26,7 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -447,7 +448,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.out.print("restoring " + fields[1] + " with values ");
                     }
                     for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                        try {
+                            parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                        } catch (RuntimeException rte) {
+                            System.err.println(rte);
+                            continue;
+                        }
                         if (DEBUG) {
                             System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
                         }
@@ -608,13 +614,13 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         }
 
                         //adopt the loaded tree structure;
-                        ((TreeModel) model).beginTreeEdit();
-                        ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                        ((DefaultTreeModel) model).beginTreeEdit();
+                        ((DefaultTreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
                         if (traitModels.size() > 0) {
                             System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel)model).getId());
-                            ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
+                            ((DefaultTreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);
                         }
-                        ((TreeModel) model).endTreeEdit();
+                        ((DefaultTreeModel) model).endTreeEdit();
 
                         expectedTreeModelNames.remove(model.getModelName());
 

@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Model;
@@ -77,8 +78,9 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         for (int i = 0; i < values.length; i++) {
             int[] nodeNumbers = intervalNodeMapping.getNodeNumbersForInterval(i);
             currentHeight += values[i];
-            TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
-            node.heightParameter.setParameterValueQuietly(0, currentHeight);
+//            TreeModel.Node node = (TreeModel.Node) tree.getNode(nodeNumbers[nodeNumbers.length - 1]);
+//            node.heightParameter.setParameterValueQuietly(0, currentHeight);
+            tree.setNodeHeightQuietly(tree.getNode(nodeNumbers[nodeNumbers.length - 1]), currentHeight);
         }
         tree.pushTreeChangedEvent();
         return nodeHeights.getParameterValues();

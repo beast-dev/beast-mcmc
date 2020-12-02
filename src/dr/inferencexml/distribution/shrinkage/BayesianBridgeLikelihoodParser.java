@@ -26,16 +26,17 @@
 package dr.inferencexml.distribution.shrinkage;
 
 import dr.inference.distribution.shrinkage.*;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
 public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BAYESIAN_BRIDGE = "bayesianBridge";
-    static final String GLOBAL_SCALE = "globalScale";
-    static final String LOCAL_SCALE = "localScale";
-    static final String EXPONENT = "exponent";
+    public static final String GLOBAL_SCALE = "globalScale";
+    public static final String LOCAL_SCALE = "localScale";
+    public static final String EXPONENT = "exponent";
+    public static final String SLAB_WIDTH = "slabWidth";
     private static final String OLD = "old";
 
     public String getParserName() {
@@ -60,6 +61,12 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
+        Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
+
+        if (localScale == null && slabWidth != null) {
+            throw new XMLParseException("Slab-regularization is only available under the joint Bayesian bridge");
+        }
+
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
@@ -70,7 +77,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
                 return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
-                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent,
+                        new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
                                 coefficients.getDimension()));
             }
         } else {
@@ -99,7 +106,9 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(EXPONENT,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
-                    new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SLAB_WIDTH,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newBooleanRule(OLD, true),
     };
 

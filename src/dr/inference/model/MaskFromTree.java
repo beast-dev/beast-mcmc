@@ -6,9 +6,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Alexander Fisher
  */
@@ -27,8 +24,7 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
     private TreeModel tree;
     private Taxon taxon;
     private TreeParameterModel branchRates;
-    private int maskLength; //maskLength determines number of 'daughter' branches to mask as well
-//    private int flag = 1;
+    private int maskLength; //maskLength determines number of additional 'daughter' branches (off-root) to mask as well
 
     public MaskFromTree(TreeModel tree, Taxon referenceTaxon, int dim, int maskLength) {
         super(dim);
@@ -43,7 +39,7 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
     }
 
     void updateMask() {
-        // todo: make sure this sets the old 0.0 to 1.0 smarter
+        // todo: set the old 0.0 to 1.0 smarter
         for (int i = 0; i < this.getDimension(); i++) {
             setParameterValueQuietly(i, 1.0);
         }
@@ -69,29 +65,11 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
             nodeCache[0] = tree.getParent(nodeCache[0]);
         }
 
-
-        int maskIndex;// = branchRates.getParameterIndexFromNodeNumber(node.getNumber());
-//        this.setParameterValue(maskIndex, 0.0);
-//
-//        List<NodeRef> nodeList = new ArrayList<>();
-        // only happens if maskLength > 0 :
-//        for (int i = 0; i < maskLength; i++) {
-//
-//            if (!tree.isExternal(node)) {
-//                node = tree.getChild(node, 0);
-//                nodeList.add(node);
-//            }
-//
-////            maskIndex = branchRates.getParameterIndexFromNodeNumber(node.getNumber())
-//        }
+        int maskIndex;
         for (int i = 0; i < nodeCache.length; i++) {
             maskIndex = branchRates.getParameterIndexFromNodeNumber(nodeCache[i].getNumber());
             this.setParameterValue(maskIndex, 0.0);
-//            System.out.println(maskIndex);
         }
-//        System.out.println("\n NEXT: ");
-//        System.out.println(flag);
-//        flag = flag + 1;
     }
 
     @Override
@@ -175,7 +153,7 @@ public class MaskFromTree extends Parameter.Default implements ModelListener {
         };
 
         public String getParserDescription() {
-            return "Masks ancestral (off-root) branch to a specific reference taxon on a random tree";
+            return "Masks ancestral (off-root) branch (and optional addnl branches) to a specific reference taxon on a random tree";
         }
 
         public Class getReturnType() {

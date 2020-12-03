@@ -1,4 +1,4 @@
-package test.dr.evomodel.bigFastTree;
+package test.dr.evomodel.bigfasttree;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.io.Importer;
@@ -6,12 +6,14 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigFastTree.BigFastTreeIntervals;
-import dr.evomodel.bigFastTree.BigFastTreeModel;
-import dr.evomodel.bigFastTree.CladeAwareSubtreePruneRegraft;
-import dr.evomodel.bigFastTree.CladeNodeModel;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.bigfasttree.BigFastTreeModel;
+import dr.evomodel.bigfasttree.CladeAwareSubtreePruneRegraft;
+import dr.evomodel.bigfasttree.CladeNodeModel;
 import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.operators.NodeHeightOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
 
@@ -148,16 +150,23 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         IntervalList intervals = new TreeIntervals(tree,null,null);
         BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
 
-        CladeAwareSubtreePruneRegraft op = new CladeAwareSubtreePruneRegraft(clades, 1,1);
+        CladeAwareSubtreePruneRegraft op = new CladeAwareSubtreePruneRegraft(clades, 1);
+        NodeHeightOperator nh = new NodeHeightOperator(tree,1,1000000, NodeHeightOperator.OperatorType.UNIFORM, AdaptationMode.ADAPTATION_OFF,0.25);
+        NodeHeightOperator root = new NodeHeightOperator(tree,1,0.75, NodeHeightOperator.OperatorType.SCALEROOT, AdaptationMode.ADAPTATION_OFF,0.25);
         boolean pass = true;
 
         MathUtils.setSeed(2);
         for (int i = 0; i < 10000; i++) {
-            op.doOperation();
+            if(MathUtils.nextBoolean()){
+//                op.doOperation();
+                root.doOperation();
+            }else{
+                nh.doOperation();
+            }
             intervals.calculateIntervals();
 //            bigFastIntervals.makeDirty();
             bigFastTreeIntervals.calculateIntervals();
-            for (int j = 0; j < intervals.getIntervalCount(); j++) {
+            for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
                 if(intervals.getInterval(j)!= bigFastTreeIntervals.getInterval(j)){
                     System.out.println(i);
                     System.out.println("interval wrong");
@@ -165,7 +174,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
                     break;
                 }
             }
-            for (int j = 0; j < intervals.getIntervalCount(); j++) {
+            for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
                 if(intervals.getLineageCount(j)!= bigFastTreeIntervals.getLineageCount(j)){
                     System.out.println(i);
                     System.out.println("lineage Counts wrong: " +j);
@@ -176,7 +185,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
                     break;
                 }
             }
-            for (int j = 0; j < intervals.getIntervalCount(); j++) {
+            for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
                 if(intervals.getIntervalTime(j)!= bigFastTreeIntervals.getIntervalTime(j)){
                     System.out.println(i);
                     System.out.println("times wrong");

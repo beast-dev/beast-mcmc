@@ -26,7 +26,6 @@
 package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -56,7 +55,7 @@ import java.util.Map;
  */
 
 public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood implements Reportable {
-    public ApproximatePoissonTreeLikelihood(String name, Tree dataTree, int sequenceLength, TreeModel treeModel, BranchRateModel branchRateModel) {
+    public ApproximatePoissonTreeLikelihood(String name, int sequenceLength, TreeModel treeModel, BranchRateModel branchRateModel, BranchLengthProvider branchLengthProvider) {
 
         super(name);
 
@@ -71,115 +70,20 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         this.branchRateModel = branchRateModel;
         addModel(branchRateModel);
 
-
-        HashMap<BitSet, NodeRef> dataTreeMap = getBitSetNodeMap(dataTree,dataTree);
-
-        HashMap<BitSet, NodeRef> treeModelMap = getBitSetNodeMap(dataTree,treeModel);
-        // reverse map to be <NodeRef, BitSet>
-        HashMap <NodeRef, BitSet> treeModelNodeMap = new HashMap<>();
-        for (Map.Entry<BitSet, NodeRef> entry: treeModelMap.entrySet()){
-            treeModelNodeMap.put(entry.getValue(), entry.getKey());
-        }
-        // An array where the entry points to the node in the data tree that maps to the node in the time tree
-        // Nodes that result from resolving a polytomy in the data tree will point to the polytomy node.
-        this.nodeInDataTree = new int[this.treeModel.getNodeCount()];
-
-
-        setUpNodeMap(treeModelNodeMap,dataTreeMap,treeModel.getRoot(),null);
-
+        this.branchLengthProvider = branchLengthProvider;
+        addModel(branchLengthProvider);
 
         updateNode = new boolean[treeModel.getNodeCount()];
-        branchLengths = new double[dataTree.getNodeCount()];
 
-        for (int i = 0; i < dataTree.getNodeCount(); i++) {
-                double x = dataTree.getBranchLength(dataTree.getNode(i)) * sequenceLength;
-                branchLengths[i] = Math.round(x);
-        }
         for (int i = 0; i <this.treeModel.getNodeCount() ; i++) {
             updateNode[i] = true;
         }
-
-//        distanceMatrix = new double[treeModel.getExternalNodeCount()][];
-//        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
-//            distanceMatrix[i] = new double[treeModel.getExternalNodeCount()];
-//            for (int j = i + 1; j < treeModel.getExternalNodeCount(); j++) {
-//                distanceMatrix[i][j] = distanceMatrix[j][i] = TreeUtils.getPathLength(dataTree, dataTree.getNode(i), dataTree.getNode(j));
-//            }
-//        }
 
         branchLogL = new double[treeModel.getNodeCount()];
         storedBranchLogL = new double[treeModel.getNodeCount()];
         likelihoodKnown = false;
     }
 
-    /**
-     * A private recursive method that sets the map from the treemodel to the data tree. If the data tree is resolved it
-     * will be a 1 to 1 map. If there are polytomies in the data tree all inserted nodes will map to the polytomy node.
-      * @param treeModelNodeMap
-     * @param dataTreeMap
-     * @param node
-     * @param parentsClade
-     */
-    private void setUpNodeMap(HashMap <NodeRef, BitSet> treeModelNodeMap, HashMap<BitSet, NodeRef> dataTreeMap,NodeRef node, BitSet parentsClade){
-        BitSet clade = treeModelNodeMap.get(node);
-        int j = node.getNumber();
-        if(!dataTreeMap.containsKey(clade)){
-           clade=parentsClade;
-        }
-        nodeInDataTree[j] = dataTreeMap.get(clade).getNumber();
-        for (int i = 0; i <treeModel.getChildCount(node) ; i++) {
-            NodeRef child = treeModel.getChild(node,i);
-            setUpNodeMap(treeModelNodeMap,dataTreeMap,child,clade);
-        }
-
-    }
-
-    private double getNumberOfMutations(int i) {
-        int dataNode = nodeInDataTree[i];
-        int dataParentNode = nodeInDataTree[treeModel.getParent(treeModel.getNode(i)).getNumber()];
-        if(dataNode==dataParentNode){
-            return 0d;
-        }else{
-            return branchLengths[dataNode];
-        }
-
-    }
-    /**
-     * Gets a HashMap of clade bitsets to nodes in tree. This is useful for comparing the topology of trees
-     * @param referenceTree  the tree that will be used to define taxa and tip numbers
-     * @param tree the tree for which clades are being defined
-     * @return A HashMap with a BitSet of descendent taxa as the key and a node as value
-     */
-    private HashMap<BitSet, NodeRef> getBitSetNodeMap(Tree referenceTree,Tree  tree) {
-        HashMap<BitSet, NodeRef> map = new HashMap<>();
-        addBits(referenceTree,tree,tree.getRoot(),map);
-        return map;
-    }
-
-    /**
-     *  A private recursive function used by getBitSetNodeMap
-     *  This is modeled after the addClades in CladeSet and getClades in compatibility statistic
-     * @param referenceTree  the tree that will be used to define taxa and tip numbers
-     * @param tree the tree for which clades are being defined
-     * @param node current node
-     * @param map map that is being appended to
-     */
-    private BitSet addBits(Tree referenceTree, Tree tree, NodeRef node, HashMap map) {
-        BitSet bits = new BitSet();
-        if (tree.isExternal(node)) {
-            String taxonId = tree.getNodeTaxon(node).getId();
-            bits.set(referenceTree.getTaxonIndex(taxonId));
-
-        } else {
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                NodeRef node1 = tree.getChild(node, i);
-                bits.or(addBits(referenceTree,tree, node1, map));
-            }
-        }
-
-        map.put(bits, node);
-        return bits;
-    }
 
     /**
      * Set update flag for node and remove it's old contribution to the likelihood.
@@ -298,7 +202,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
             }
 
         } else {
-
             throw new RuntimeException("Unknown componentChangedEvent");
         }
     }
@@ -354,13 +257,13 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
             }else{
                 double expected = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
 
-                double x = getNumberOfMutations(nodeIndex);
+                double x = Math.round(branchLengthProvider.getBranchLength(treeModel,node)*sequenceLength);
 
                 if (nodeIndex == rootChild1) {
                     // sum the branches on both sides of the root
                     NodeRef node2 = treeModel.getNode(rootChild2);
                     expected += treeModel.getBranchLength(node2) * branchRateModel.getBranchRate(treeModel, node2);
-                    x += getNumberOfMutations(rootChild2);
+                    x += Math.round(branchLengthProvider.getBranchLength(treeModel,node2)*sequenceLength);
                 }
                 double mean = expected * sequenceLength;
 
@@ -394,13 +297,13 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
                 // skip the root and the second child of the root (this is added to the first child)
 
                 double expected = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
-                double x = getNumberOfMutations(i);
+                double x = Math.round(branchLengthProvider.getBranchLength(treeModel,node) * sequenceLength);
 
                 if (i == rootChild1) {
                     // sum the branches on both sides of the root
                     NodeRef node2 = treeModel.getNode(rootChild2);
                     expected += treeModel.getBranchLength(node2) * branchRateModel.getBranchRate(treeModel, node2);
-                    x += getNumberOfMutations(rootChild2);
+                    x += Math.round(branchLengthProvider.getBranchLength(treeModel,node2));
                 }
                 double mean = expected * sequenceLength;
 
@@ -417,7 +320,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     private double calculateLogLikelihood() {
 
 
-//Could make this faster by only adding the changed values
         int root = treeModel.getRoot().getNumber();
         int rootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
         int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
@@ -472,10 +374,10 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     private final TreeModel treeModel;
 
     private final BranchRateModel branchRateModel;
+    private final BranchLengthProvider branchLengthProvider;
 
     private final int sequenceLength;
 
-    private final double[] branchLengths;
     //private final double[][] distanceMatrix;
 
     /**
@@ -490,7 +392,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
 
     private double[] branchLogL;
     private double[] storedBranchLogL;
-    private final int[] nodeInDataTree;
     private int cachedRoot;
     private int storedCachedRoot;
     private int cachedRootChild1;

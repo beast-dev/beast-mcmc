@@ -162,7 +162,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             //first perform a simple check for equality of two doubles
             //when this test fails, go over the digits
             if (forceResume) {
-                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values.");
+                System.out.println("Forcing analysis to resume regardless of recomputed likelihood values ("  + lnL + " vs. " + savedLnL + ").");
             } else if (lnL != savedLnL) {
 
                 System.out.println("COMPARING LIKELIHOODS: " + lnL + " vs. " + savedLnL);
@@ -448,7 +448,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         System.out.print("restoring " + fields[1] + " with values ");
                     }
                     for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                        try {
+                            parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                        } catch (RuntimeException rte) {
+                            System.err.println(rte);
+                            continue;
+                        }
                         if (DEBUG) {
                             System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
                         }
@@ -469,7 +474,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 line = in.readLine();
                 fields = line.split("\t");
                 if (!fields[1].equals(operator.getOperatorName())) {
-                    throw new RuntimeException("Unable to match operator: " + fields[1]);
+                    throw new RuntimeException("Unable to match " + operator.getOperatorName() + " operator: " + fields[1]);
                 }
                 if (fields.length < 4) {
                     throw new RuntimeException("Operator missing values: " + fields[1]);

@@ -96,7 +96,17 @@ public class TreePruner extends BaseTreeTool {
 
         if (parent == tree.getRoot()) {
 
-            throw new RuntimeException("Still need to handle this situation");
+            //sibling must become new root
+            NodeRef sibling = getSibling(tree, parent, tip);
+
+            FlexibleNode siblingNode = (FlexibleNode) sibling;
+            siblingNode.setParent(null);
+
+            tree.beginTreeEdit();
+            tree.setRoot(sibling);
+            tree.endTreeEdit();
+
+            //throw new RuntimeException("Still need to handle this situation");
 
         } else {
 
@@ -106,7 +116,7 @@ public class TreePruner extends BaseTreeTool {
             FlexibleNode grandParentNode = (FlexibleNode)grandParent;
             FlexibleNode parentNode = (FlexibleNode) parent;
             FlexibleNode siblingNode = (FlexibleNode) sibling;
-//            FlexibleNode tipNode = (FlexibleNode) tip;
+            //FlexibleNode tipNode = (FlexibleNode) tip;
 
             // Remove from topology
             siblingNode.setParent(grandParentNode);

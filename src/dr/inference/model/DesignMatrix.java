@@ -30,6 +30,8 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.util.logging.Logger;
+
 /**
  * @author Marc Suchard
  */
@@ -41,6 +43,7 @@ public class DesignMatrix extends MatrixParameter {
     public static final String COL_DIMENSION = "colDimension";
     public static final String CHECK_IDENTIFABILITY = "checkIdentifiability";
     public static final String STANDARDIZE = "standardize";
+    private static final String IGNORE_STANDARDIZATION_COLUMN = "ignoreStandardizationColumn";
     public static final String DYNAMIC_STANDARDIZATION = "dynamicStandardization";
 
     public static final String INTERCEPT = "intercept";
@@ -211,23 +214,29 @@ public class DesignMatrix extends MatrixParameter {
                 }
             }
 
-            if (standardize) {
-                // Standardize all covariates except intercept
-                for (int j = 0; j < designMatrix.getColumnDimension(); ++j) {
-                    Parameter columnParameter = designMatrix.getParameter(j);
-                    double[] column = columnParameter.getParameterValues();
-                    standardize(column);
-                    for (int i = 0; i < column.length; ++i) {
-                        columnParameter.setParameterValueQuietly(i, column[i]);
-                    }
-                    columnParameter.setParameterValueNotifyChangedAll(0, columnParameter.getParameterValue(0));
-                }
-            }
-
             if (addIntercept) {
                 Parameter intercept = new Parameter.Default(dim);
                 intercept.setId(INTERCEPT);
                 designMatrix.addParameter(intercept);
+            }
+
+            if (standardize) {
+                // Standardize all covariates except intercept
+                for (int j = 0; j < designMatrix.getColumnDimension(); ++j) {
+                    Parameter columnParameter = designMatrix.getParameter(j);
+
+                    if ((columnParameter.getId()).toLowerCase().indexOf(INTERCEPT) >= 0) {
+                        Logger.getLogger("dr.inference.model").info("\nNot standardizing column '" + columnParameter.getId() +
+                                "' in design matrix '" + designMatrix.getId() + "'\n");
+                    } else {
+                        double[] column = columnParameter.getParameterValues();
+                        standardize(column);
+                        for (int i = 0; i < column.length; ++i) {
+                            columnParameter.setParameterValueQuietly(i, column[i]);
+                        }
+                        columnParameter.setParameterValueNotifyChangedAll(0, columnParameter.getParameterValue(0));
+                    }
+                }
             }
 
             return designMatrix;

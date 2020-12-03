@@ -47,6 +47,10 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
         throwError("setDimension()");
     }
 
+    public Parameter getVector() { return vector; }
+
+    public MatrixParameter getMatrix() { return matrix; }
+
     protected void storeValues() {
         matrix.storeParameterValues();
         vector.storeParameterValues();

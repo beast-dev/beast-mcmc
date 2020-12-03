@@ -35,6 +35,7 @@ import dr.evomodel.substmodel.codon.CodonOptions;
 import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.codon.MG94K80CodonModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -212,7 +213,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
             // create tree
             NewickImporter importer = new NewickImporter(
                     "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            TreeModel tree = new TreeModel(importer.importTree(null));
+            TreeModel tree = new DefaultTreeModel(importer.importTree(null));
 
             // create site model
             GammaSiteRateModel siteRateModel = new GammaSiteRateModel(

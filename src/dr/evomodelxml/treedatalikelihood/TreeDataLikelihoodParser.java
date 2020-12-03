@@ -26,6 +26,7 @@
 package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -80,7 +81,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     protected Likelihood createTreeDataLikelihood(List<PatternList> patternLists,
                                                   List<BranchModel> branchModels,
                                                   List<SiteRateModel> siteRateModels,
-                                                  TreeModel treeModel,
+                                                  Tree treeModel,
                                                   BranchRateModel branchRateModel,
                                                   TipStatesModel tipStatesModel,
                                                   boolean useAmbiguities,
@@ -295,7 +296,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Either a single set of patterns should be given or multiple 'partitions' elements within DataTreeLikelihood: "+xo.getId());
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        Tree treeModel = (Tree) xo.getChild(Tree.class);
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         if (branchRateModel == null) {
@@ -368,7 +369,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     }, 1, Integer.MAX_VALUE)),
 
             new ElementRule(BranchRateModel.class, true),
-            new ElementRule(TreeModel.class),
+            new ElementRule(Tree.class),
             new ElementRule(TipStatesModel.class, true)
     };
 

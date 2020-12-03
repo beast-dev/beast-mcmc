@@ -38,6 +38,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.likelihood.ARGLikelihood;
+import dr.evomodel.tree.NewTreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.loggers.LogColumn;
@@ -1142,9 +1143,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         final int index;
 
         int size = 0;
+        final boolean nodeOrderChanged;
 
         public ARGTreeChangedEvent() {
-            this(null, null, -1);
+            this(null, null, -1,false);
         }
 
 //        public TreeChangedEvent(ARGModel arg) {
@@ -1153,17 +1155,21 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 //        }
 
         public ARGTreeChangedEvent(Node node) {
-            this(node, null, -1);
+            this(node, null, -1,false);
         }
 
         public ARGTreeChangedEvent(Node node, Parameter parameter, int index) {
+            this(node, parameter, index,false);
+        }
+
+        public ARGTreeChangedEvent(Node node, Parameter parameter, int index, boolean nodeOrderChanged) {
             this.node = node;
             this.parameter = parameter;
             this.index = index;
+            this.nodeOrderChanged = nodeOrderChanged;
         }
-
         public ARGTreeChangedEvent(int sizeChanged) {
-            this(null, null, -1);
+            this(null, null, -1,false);
             size = sizeChanged;
         }
 
@@ -1210,6 +1216,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         public boolean isTraitChanged() {
             return parameter == node.traitParameter;
         }
+
+        public boolean isNodeOrderChanged(){ return nodeOrderChanged;}
     }
 
     // *****

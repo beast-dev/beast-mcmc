@@ -39,10 +39,12 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 
 public abstract class AbstractSinglePartitionTreeLikelihood extends AbstractTreeLikelihood {
-    public AbstractSinglePartitionTreeLikelihood(String name, PatternList patternList, TreeModel treeModel) {
+    public AbstractSinglePartitionTreeLikelihood(String name, PatternList patternList, MutableTreeModel treeModel) {
         super(name, treeModel);
 
         this.patternList = patternList;

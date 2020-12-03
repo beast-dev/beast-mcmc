@@ -27,6 +27,7 @@ package dr.evomodel.treelikelihood;
 
 import beagle.*;
 import dr.evolution.datatype.HiddenDataType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
 //import dr.evomodel.branchmodel.EpochBranchModel;
@@ -128,7 +129,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     }
 
     public BeagleTreeLikelihood(PatternList patternList,
-                                TreeModel treeModel,
+                                MutableTreeModel treeModel,
                                 BranchModel branchModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
@@ -544,7 +545,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return patternList;
     }
 
-    public TreeModel getTreeModel() {
+    public MutableTreeModel getTreeModel() {
         return treeModel;
     }
 
@@ -1197,7 +1198,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             final double branchLength = branchRate * (parentHeight - nodeHeight);
             if (branchLength < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchLength + " (parent: " + parent +
-                        "; height: " + parentHeight + " - child: " + node + "height: " + nodeHeight + ")");
+                        "; height: " + parentHeight + " - child: " + node + " height: " + nodeHeight + ")");
             }
 
             if (flip) {
@@ -1538,7 +1539,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
 }//END: class

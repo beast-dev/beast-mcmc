@@ -25,11 +25,8 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.evolution.tree.TreeUtils;
+import dr.evolution.tree.*;
 import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -101,7 +98,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
     public abstract class BranchCategoryModel extends TreeParameterModel implements CountableBranchCategoryProvider {
 
-        public BranchCategoryModel(TreeModel tree, Parameter parameter) {
+        public BranchCategoryModel(MutableTreeModel tree, Parameter parameter) {
             super(tree, parameter, false, Intent.BRANCH);
 
             this.categoryParameter = parameter;
@@ -145,7 +142,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
         protected int categoryCount;
         protected final Parameter categoryParameter;
-        protected final TreeModel treeModel;
+        protected final MutableTreeModel treeModel;
     }
 
     public class IndependentBranchCategoryModel extends BranchCategoryModel {
@@ -155,7 +152,8 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
         }
 
         public void randomize() {
-            for (NodeRef node : treeModel.getNodes()) {
+            for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+                NodeRef node = treeModel.getNode(i);
                 if (node != treeModel.getRoot()) {
                     int index = MathUtils.nextInt(categoryCount);
                     setNodeValue(treeModel, node, index);
@@ -212,7 +210,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             }
         }
 
-        private void recurseDownClade(final NodeRef node, final TreeModel treeModel, final CladeContainer clade, boolean include) {
+        private void recurseDownClade(final NodeRef node, final MutableTreeModel treeModel, final CladeContainer clade, boolean include) {
 
             if (include && !treeModel.isRoot(node)) {
                 setNodeValue(treeModel, node, clade.getRateCategory());
@@ -229,7 +227,8 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
         private void updateCladeRateCategories() {
             if (leafSetList != null) {
                 // Set all to zero
-                for (NodeRef node : treeModel.getNodes()) {
+                for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+                    NodeRef node = treeModel.getNode(i);
                     if (node != treeModel.getRoot()) {
                         setNodeValue(treeModel, node, 0.0);
                     }
@@ -252,7 +251,8 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             if (trunkSetList != null) {
                 //we keep the default rates assignments by clade definitions if they exist (leafSetList != null), if they do not exist, set default to 0.0
                 if (leafSetList == null) {
-                    for (NodeRef node : treeModel.getNodes()) {
+                    for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+                        NodeRef node = treeModel.getNode(i);
                         if (node != treeModel.getRoot()) {
                             setNodeValue(treeModel, node, 0.0);
                         }
@@ -261,7 +261,8 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
                 // currently, specific backbone rates will overwrite branch assignments by clade definitions
                 //TODO: think about turning this around. One can imagine setting backbone rates and then additional rates based on clade definitions
                 for (CladeContainer trunk : trunkSetList) {
-                    for (NodeRef node : treeModel.getNodes()) {
+                    for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+                        NodeRef node = treeModel.getNode(i);
                         //TODO: add xml argument for tip exclusion
                         if (onAncestralPath(treeModel, node, trunk.getLeafSet(), trunk.getExcludeClade(), false)) {
                             if (node != treeModel.getRoot()) {

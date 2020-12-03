@@ -305,6 +305,15 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
         }
     }
 
+    public static Parameter getOptionalParameter(XMLObject xo, String name) {
+        Parameter parameter = null;
+        if (xo.hasChildNamed(name)) {
+            XMLObject slabXo = xo.getChild(name);
+            parameter = (Parameter) slabXo.getChild(Parameter.class);
+        }
+        return parameter;
+    }
+
 //    static public Parameter getParameter(XMLObject xo) throws XMLParseException {
 //
 //        int paramCount = 0;

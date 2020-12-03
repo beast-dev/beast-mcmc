@@ -25,7 +25,9 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -62,7 +64,7 @@ import java.util.*;
 public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood
         implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider {
 
-    public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                            BranchModel branchModel,
                                            SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel,
@@ -134,6 +136,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
         for (int i = 0; i < substitutionModelDelegate.getSubstitutionModelCount(); ++i) {
 
+            boolean isEpochModel = branchModel instanceof EpochBranchModel;
+
             registerParameter.add(addRegisterParameter);
             MarkovJumpsSubstitutionModel mjModel;
             SubstitutionModel substitutionModel = substitutionModelDelegate.getSubstitutionModel(i);
@@ -199,105 +203,116 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                 new TreeTrait.SumOverTreeDA(da)));
 
             } else {
-                if (histories == null) {
-                    histories = new String[treeModel.getNodeCount()][patternCount];
-                } else {
-                    throw new RuntimeException("Only one complete history per markovJumpTreeLikelihood is allowed");
-                }
-                if (nSimulants > 1) {
-                    throw new RuntimeException("Only one simulant allowed when saving complete history");
-                }
 
-                // Add total number of changes over tree trait
-                TreeTrait da = new TreeTrait.DA() {
+                if (i == 0 || !isEpochModel) {
 
-                    final int registerNumber = numRegisters;
 
-                    public String getTraitName() {
-                        return tag;
+                    if (histories == null) {
+                        histories = new String[treeModel.getNodeCount()][patternCount];
+                    } else {
+                        throw new RuntimeException("Only one complete history per markovJumpTreeLikelihood is allowed");
+                    }
+                    if (nSimulants > 1) {
+                        throw new RuntimeException("Only one simulant allowed when saving complete history");
                     }
 
-                    public Intent getIntent() {
-                        return Intent.BRANCH;
-                    }
+                    // Add total number of changes over tree trait
+                    TreeTrait da = new TreeTrait.DA() {
 
-                    public double[] getTrait(Tree tree, NodeRef node) {
-                        return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
-                    }
-                };
+                        final int registerNumber = numRegisters;
 
-                treeTraits.addTrait(addRegisterParameter.getId(), new TreeTrait.SumOverTreeDA(da));
-
-                historyRegisterNumber = numRegisters; // Record the complete history for this register
-                ((UniformizedSubstitutionModel) mjModel).setSaveCompleteHistory(true);
-
-                if (useCompactHistory && logHistory) {
-
-                    treeTraits.addTrait(ALL_HISTORY, new TreeTrait.SA() {
                         public String getTraitName() {
-                            return ALL_HISTORY;
+                            return tag;
                         }
 
                         public Intent getIntent() {
                             return Intent.BRANCH;
                         }
 
-                        public boolean getFormatAsArray() {
-                            return true;
+                        public double[] getTrait(Tree tree, NodeRef node) {
+                            return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
                         }
+                    };
 
-                        public String[] getTrait(Tree tree, NodeRef node) {
+                    treeTraits.addTrait(addRegisterParameter.getId(), new TreeTrait.SumOverTreeDA(da));
 
-                            List<String> events = new ArrayList<String>();
-                            for (int i = 0; i < patternCount; i++) {
-                                String eventString = getHistoryForNode(tree, node, i);
-                                if (eventString != null && eventString.compareTo("{}") != 0) {
-                                    eventString = eventString.substring(1, eventString.length() - 1);
-                                    if (eventString.contains("},{")) { // There are multiple events
-                                        String[] elements = eventString.split("(?<=\\}),(?=\\{)");
-                                        for (String e : elements) {
-                                            events.add(e);
+                    historyRegisterNumber = numRegisters; // Record the complete history for this register
+                    ((UniformizedSubstitutionModel) mjModel).setSaveCompleteHistory(true);
+
+                    if (useCompactHistory && logHistory) {
+
+                        treeTraits.addTrait(ALL_HISTORY, new TreeTrait.SA() {
+                            public String getTraitName() {
+                                return ALL_HISTORY;
+                            }
+
+                            public Intent getIntent() {
+                                return Intent.BRANCH;
+                            }
+
+                            public boolean getFormatAsArray() {
+                                return true;
+                            }
+
+                            public String[] getTrait(Tree tree, NodeRef node) {
+
+                                List<String> events = new ArrayList<String>();
+                                for (int i = 0; i < patternCount; i++) {
+                                    String eventString = getHistoryForNode(tree, node, i);
+                                    if (eventString != null && eventString.compareTo("{}") != 0) {
+                                        eventString = eventString.substring(1, eventString.length() - 1);
+                                        if (eventString.contains("},{")) { // There are multiple events
+                                            String[] elements = eventString.split("(?<=\\}),(?=\\{)");
+                                            for (String e : elements) {
+                                                events.add(e);
+                                            }
+                                        } else {
+                                            events.add(eventString);
                                         }
-                                    } else {
-                                        events.add(eventString);
                                     }
                                 }
+                                String[] array = new String[events.size()];
+                                events.toArray(array);
+                                return array;
                             }
-                            String[] array = new String[events.size()];
-                            events.toArray(array);
-                            return array;
-                        }
 
-                        public boolean getLoggable() {
-                            return true;
-                        }
-                    });
+                            public boolean getLoggable() {
+                                return true;
+                            }
+                        });
+                    }
+
+                    for (int site = 0; site < patternCount; ++site) {
+
+                        final String anonName = (patternCount == 1) ? HISTORY : HISTORY + "_" + (site + 1);
+                        final int anonSite = site;
+
+                        treeTraits.addTrait(anonName, new TreeTrait.S() {
+
+                            public String getTraitName() {
+                                return anonName;
+                            }
+
+                            public Intent getIntent() {
+                                return Intent.BRANCH;
+                            }
+
+                            public String getTrait(Tree tree, NodeRef node) {
+                                String history = getHistoryForNode(tree, node, anonSite);
+                                return (history.compareTo("{}") != 0) ? history : null; // Return null if empty
+                            }
+
+                            public boolean getLoggable() {
+                                return logHistory && !useCompactHistory;
+                            }
+                        });
+                    }
                 }
 
-                for (int site = 0; site < patternCount; ++site) {
-
-                    final String anonName = (patternCount == 1) ? HISTORY : HISTORY + "_" + (site + 1);
-                    final int anonSite = site;
-
-                    treeTraits.addTrait(anonName, new TreeTrait.S() {
-
-                        public String getTraitName() {
-                            return anonName;
-                        }
-
-                        public Intent getIntent() {
-                            return Intent.BRANCH;
-                        }
-
-                        public String getTrait(Tree tree, NodeRef node) {
-                            String history = getHistoryForNode(tree, node, anonSite);
-                            return (history.compareTo("{}") != 0) ? history : null; // Return null if empty
-                        }
-
-                        public boolean getLoggable() {
-                            return logHistory && !useCompactHistory;
-                        }
-                    });
+                if (isEpochModel) {
+                    for (int j = 0; j < markovjumps.size(); ++j) {
+                        ((UniformizedSubstitutionModel)markovjumps.get(j)).setSaveCompleteHistory(true);
+                    }
                 }
             }
 
@@ -422,7 +437,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 if (useUniformization) {
                     computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
                             branchRate, childNum, parentStates, childStates, parentTime, childTime, probabilities, scaleByTime[r],
-                            expectedJumps.get(r), rateCategory, r == historyRegisterNumber);
+                            expectedJumps.get(r), rateCategory,
+                            true
+//                            r == historyRegisterNumber
+                    );
                 } else {
                     computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
                             childStates, probabilities, condJumps, scaleByTime[r], expectedJumps.get(r), rateCategory);

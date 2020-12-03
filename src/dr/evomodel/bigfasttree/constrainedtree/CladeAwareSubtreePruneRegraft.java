@@ -1,4 +1,4 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.bigfasttree.constrainedtree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.bigfasttree.ghosttree.CorporealTreeModel;

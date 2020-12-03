@@ -1,4 +1,4 @@
-package test.dr.evomodel.bigfasttree;
+package test.dr.evomodel.bigfasttree.constrainedtree;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -6,6 +6,10 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.*;
+import dr.evomodel.bigfasttree.constrainedtree.CladeAwareSubtreeLeap;
+import dr.evomodel.bigfasttree.constrainedtree.CladeNodeModel;
+import dr.evomodel.bigfasttree.constrainedtree.CladeRef;
+import dr.evomodel.bigfasttree.constrainedtree.ConstraintsTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
@@ -32,7 +36,7 @@ public class CladeAwareSubtreeLeapTest extends TestCase {
 
 //    clade * 0-3 root 8
 //    clade & 4-5 root 10
-//                                                                      1.0
+//    height in []                                                        1.0
 //                                              1.0           +----------------------- 0 * [1]
 //                                   +----------------------- |(7) *  [2]                          1.0
 //                     1.0           |                        |        1.0             +----------------------- 1 * [0]
@@ -93,7 +97,9 @@ public class CladeAwareSubtreeLeapTest extends TestCase {
         NodeRef sibling = tree.getNode(2);
         NodeRef j = tree.getNode(8);
         CladeRef clade = cladeNodeModel.getClade(parent);
+
         operator.doOperation(node,parent, sibling, j,clade,3.5);
+
         assertEquals(6,cladeNodeModel.getRootNode(clade).getNumber());
 
         assertTrue(noNodeLeftBehind(tree));

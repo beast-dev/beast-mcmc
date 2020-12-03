@@ -25,6 +25,58 @@ public interface TreeChangedEvent {
 
     boolean isHeightChanged();
 
+    class WholeTree implements TreeChangedEvent {
+
+        @Override public int getIndex() { return -1; }
+
+        @Override public NodeRef getNode() { return null; }
+
+        @Override public Parameter getParameter() { return null; }
+
+        @Override public boolean isNodeChanged() { return false; }
+
+        @Override public boolean isNodeOrderChanged() { return true; } // TODO MAS: guessing on this
+
+        @Override public boolean isTreeChanged() { return true; }
+
+        @Override public boolean isNodeParameterChanged() { return false; }
+
+        @Override public boolean isHeightChanged() { return false; }
+    }
+
+    class NodeOnTree implements TreeChangedEvent {
+
+        private final NodeRef node;
+
+        NodeOnTree(NodeRef node) {
+            this.node = node;
+        }
+
+        @Override
+        public int getIndex() { return -1; }
+
+        @Override
+        public NodeRef getNode() { return node; }
+
+        @Override
+        public Parameter getParameter() { return null; }
+
+        @Override
+        public boolean isNodeChanged() { return true; }
+
+        @Override
+        public boolean isNodeOrderChanged() { return true; } // TODO MAS: guessing on this
+
+        @Override
+        public boolean isTreeChanged() { return false; }
+
+        @Override
+        public boolean isNodeParameterChanged() { return false; }
+
+        @Override
+        public boolean isHeightChanged() { return false; }
+    }
+
     static TreeChangedEvent create() {
         return new TreeChangedEvent() {
             @Override public int getIndex() { return -1; }
@@ -45,7 +97,7 @@ public interface TreeChangedEvent {
         };
     }
 
-    public static TreeChangedEvent create(final boolean isNodeOrderChanged, final boolean isHeightChanged) {
+    static TreeChangedEvent create(final boolean isNodeOrderChanged, final boolean isHeightChanged) {
         return new TreeChangedEvent() {
             @Override public int getIndex() { return -1; }
 
@@ -66,7 +118,7 @@ public interface TreeChangedEvent {
     }
 
 
-    public static TreeChangedEvent create(final NodeRef node, final boolean isHeightChanged) {
+    static TreeChangedEvent create(final NodeRef node, final boolean isHeightChanged) {
         return new TreeChangedEvent() {
             @Override public int getIndex() { return -1; }
 
@@ -86,7 +138,7 @@ public interface TreeChangedEvent {
         };
     }
 
-    public static TreeChangedEvent create(final NodeRef node, final Parameter parameter, final boolean isHeightChanged) {
+    static TreeChangedEvent create(final NodeRef node, final Parameter parameter, final boolean isHeightChanged) {
         return new TreeChangedEvent() {
             @Override public int getIndex() { return -1; }
 
@@ -106,7 +158,7 @@ public interface TreeChangedEvent {
         };
     }
 
-    public static TreeChangedEvent create(final NodeRef node, final Parameter parameter, final int index, final boolean isHeightChanged) {
+    static TreeChangedEvent create(final NodeRef node, final Parameter parameter, final int index, final boolean isHeightChanged) {
         return new TreeChangedEvent() {
             @Override public int getIndex() { return index; }
 
@@ -125,5 +177,4 @@ public interface TreeChangedEvent {
             @Override public boolean isHeightChanged() { return isHeightChanged; }
         };
     }
-
 }

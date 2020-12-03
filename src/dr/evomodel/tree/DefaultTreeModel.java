@@ -1177,6 +1177,8 @@ public class DefaultTreeModel extends TreeModel {
             }
         }
 
+        public final Parameter getHeightParameter() { return heightParameter; }
+
         public final double getHeight() {
             return heightParameter.getParameterValue(0);
         }

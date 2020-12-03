@@ -27,8 +27,10 @@ package dr.evomodelxml.treelikelihood;
 
 //import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -78,7 +80,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -115,7 +117,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
@@ -133,6 +135,11 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        if (branchModel instanceof EpochBranchModel && rootFreqModel != null) {
+            EpochBranchModel epochBranchModel = (EpochBranchModel) branchModel;
+            epochBranchModel.setRootFrequencyModel(rootFreqModel);
+        }
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 //        if (xo.getChild(TipStatesModel.class) != null) {

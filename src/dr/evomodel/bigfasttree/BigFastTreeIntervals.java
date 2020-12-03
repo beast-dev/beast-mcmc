@@ -126,7 +126,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 
     @Override
     public void calculateIntervals() {
-        //If dirty we rebuild the evens and sort them using parrelle sort
+        //If dirty we rebuild the evens and sort them using parallel sort
         if (dirty) {
             // Resort nodes by heights
             // will this update the tree nodes?
@@ -235,7 +235,9 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, Interv
 
     @Override
     protected void storeState() {
-        Collections.copy(storedUpdatedNodes, updatedNodes);
+        storedUpdatedNodes = new ArrayList<>();
+        storedUpdatedNodes.addAll(updatedNodes);
+//        Collections.copy(storedUpdatedNodes, updatedNodes);
         storedIntervalsKnown = intervalsKnown;
         storedEvents.copyEvents(events);
         storedOnlyUpdateTimes = onlyUpdateTimes;

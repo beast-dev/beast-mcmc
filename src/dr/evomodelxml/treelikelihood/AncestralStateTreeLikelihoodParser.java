@@ -25,6 +25,8 @@
 
 package dr.evomodelxml.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -65,7 +67,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 
     protected BeagleTreeLikelihood createTreeLikelihood(
             PatternList patternList, //
-            TreeModel treeModel, //
+            MutableTreeModel treeModel, //
             BranchModel branchModel, //
             GammaSiteRateModel siteRateModel, //
             BranchRateModel branchRateModel, //
@@ -118,7 +120,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
                 AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                 new ElementRule(PatternList.class),
-                new ElementRule(TreeModel.class),
+                new ElementRule(MutableTreeModel.class),
                 new ElementRule(GammaSiteRateModel.class),
                 new ElementRule(BranchModel.class, true),
                 new ElementRule(BranchRateModel.class, true),

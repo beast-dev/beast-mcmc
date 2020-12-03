@@ -1,5 +1,5 @@
 /*
- * CoalescentLikelihoodParser.java
+ * DiscretizedBranchRatesParser.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,35 +23,30 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.bigfasttree;
+package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.ConstraintsTreeLikelihood;
+import dr.evomodel.branchratemodel.AncestralTraitBranchRateModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.AncestralTraitTreeModel;
 import dr.xml.*;
 
 /**
+ * @author Marc A. Suchard
  */
-public class ConstraintsTreeLikelihoodParser extends AbstractXMLObjectParser {
+public class AncestralTraitBranchRatesParser extends AbstractXMLObjectParser {
 
-    public static final String CONSTRAINTS_TREE_LIKELIHOOD = "constraintsTreeLikelihood";
-    public static final String CONSTRAINTS = "constraints";
-    public static final String TREE = "tree";
+    private static final String ANCESTRAL_TRAIT_BRANCH_RATES = "ancestralTraitBranchRates";
 
     public String getParserName() {
-        return CONSTRAINTS_TREE_LIKELIHOOD;
+        return ANCESTRAL_TRAIT_BRANCH_RATES;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Tree constraintsTree = (Tree) xo.getElementFirstChild(CONSTRAINTS);
-        Tree targetTree = (Tree) xo.getChild(Tree.class);
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        AncestralTraitTreeModel treeModel = (AncestralTraitTreeModel) xo.getChild(AncestralTraitTreeModel.class);
 
-        try {
-            return new ConstraintsTreeLikelihood(CONSTRAINTS_TREE_LIKELIHOOD, targetTree, constraintsTree);
-        } catch (TreeUtils.MissingTaxonException e) {
-            throw new XMLParseException("Target tree and constraints tree do not contain the same taxa");
-        }
+        return new AncestralTraitBranchRateModel(branchRateModel, treeModel);
     }
 
     //************************************************************************
@@ -59,11 +54,11 @@ public class ConstraintsTreeLikelihoodParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This binary likelihood that assesses whether a resolved tree is compatible with a constraints tree.";
+        return "This element returns an branch rate model for use with an AncestralTraitTree.";
     }
 
     public Class getReturnType() {
-        return ConstraintsTreeLikelihood.class;
+        return AncestralTraitBranchRateModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -71,11 +66,7 @@ public class ConstraintsTreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(CONSTRAINTS, new XMLSyntaxRule[]{
-                    new ElementRule(Tree.class)
-            }, "Less resolved tree to provide constraints"),
-
-            new ElementRule(Tree.class,"Tree to assess for compatibility with constraints")
-
+            new ElementRule(BranchRateModel.class),
+            new ElementRule(AncestralTraitTreeModel.class),
     };
 }

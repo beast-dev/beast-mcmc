@@ -460,6 +460,16 @@ public class BigFastTreeModel extends TreeModel {
         throw new UnsupportedOperationException("BigFastTreeModel does not use NodeAttributes");
     }
 
+    /**
+     * Modifies the current tree by adopting the provided collection of edges
+     * @param edges Edges are provided as index: child number; parent: array entry
+     * @param nodeHeights Also sets the node heights to the provided values
+     * @param childOrder Array that contains whether a child node is left or right child
+     */
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames) {
+
+    }
+
     // *****************************************************************
     // Interface ModelComponent
     // *****************************************************************

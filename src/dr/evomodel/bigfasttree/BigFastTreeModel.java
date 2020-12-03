@@ -28,6 +28,7 @@ package dr.evomodel.bigfasttree;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -468,6 +469,88 @@ public class BigFastTreeModel extends TreeModel {
      */
     public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames) {
 
+        int[] nodeMap = createNodeMap(taxaNames);
+
+        if (this.nodeCount != edges.length) {
+            throw new RuntimeException("Incorrect number of edges provided: " + edges.length + " versus " + this.nodeCount + " nodes.");
+        }
+
+        //first remove all the child nodes of the internal nodes
+        for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
+            int childCount = this.getChildCount(nodes[i]);
+            for (int j = 0; j < childCount; j++) {
+                this.removeChild(nodes[i],this.getChild(nodes[i],0)); // nodes move into the first spot when it's filled
+            }
+        }
+
+        //start with setting the external node heights
+        for (int i = 0; i < this.getExternalNodeCount(); i++) {
+            this.setNodeHeight(this.getExternalNode(nodeMap[i]), nodeHeights[i]);
+        }
+        //set the internal node heights
+        for (int i = 0; i < (this.getExternalNodeCount() - 1); i++) {
+            //No just restart counting, will fix later on in the code by adding additionalTaxa variable
+            this.setNodeHeight(this.getInternalNode(i), nodeHeights[this.getExternalNodeCount() + i]);
+        }
+
+        int newRootIndex = -1;
+        //now add the parent-child links again to ALL the nodes
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] != -1) {
+                //make distinction between external nodes and internal nodes
+                if (i < this.getExternalNodeCount()) {
+                    //external node
+                    this.addChild(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
+                    System.out.println("external: " + edges[i] + " > " + nodeMap[i]);
+                } else {
+                    //internal node
+                    this.addChild(this.getNode(edges[i]), this.getNode(i));
+                    System.out.println("internal: " + edges[i] + " > " + i);
+                }
+            } else {
+                newRootIndex = i;
+            }
+        }
+
+        //not possible to determine correct ordering of child nodes in the loop where they're being assigned
+        //hence perform possible swaps in a separate loop
+
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] != -1) {
+                if(i < this.externalNodeCount) {
+                    if (childOrder[i] == 0 && getChild(nodes[edges[i]],0) != nodes[nodeMap[i]]) {
+                        //swap child nodes
+                        NodeRef node = getNode(edges[i]);
+
+                        NodeRef childOne = getChild(node,0);
+                        NodeRef childTwo = getChild(node,1);
+
+                        removeChild(node,childOne);
+                        removeChild(node,childTwo);
+
+                        addChild(node,childTwo);
+                        addChild(node,childOne);
+                    }
+                }else{
+                    if (childOrder[i] == 0 && getChild(nodes[edges[i]],0) != nodes[i]) {
+                        //swap child nodes
+                        NodeRef node = getNode(edges[i]);
+
+                        NodeRef childOne = getChild(node,0);
+                        NodeRef childTwo = getChild(node,1);
+
+                        removeChild(node,childOne);
+                        removeChild(node,childTwo);
+
+                        addChild(node,childTwo);
+                        addChild(node,childOne);
+                    }
+                }
+            }
+
+        }
+
+        this.setRoot(nodes[newRootIndex]);
     }
 
     // *****************************************************************

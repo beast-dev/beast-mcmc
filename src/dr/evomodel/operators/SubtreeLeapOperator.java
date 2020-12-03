@@ -263,7 +263,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         tree.setNodeHeight(parent, newHeight);
 
         tree.endTreeEdit();
-        
+
         if (tree.getParent(parent) != null && newHeight > tree.getNodeHeight(tree.getParent(parent))) {
             throw new IllegalArgumentException("height error");
         }

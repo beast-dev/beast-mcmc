@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
@@ -64,7 +66,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         return OPTIMIZED_BEAGLE_TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -129,7 +131,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         int[] siteCounts = new int[childCount];
         //store everything for later use
         SitePatterns[] patterns = new SitePatterns[childCount];
-        TreeModel[] treeModels = new TreeModel[childCount];
+        MutableTreeModel[] treeModels = new TreeModel[childCount];
         BranchModel[] branchModels = new BranchModel[childCount];
         GammaSiteRateModel[] siteRateModels = new GammaSiteRateModel[childCount];
         BranchRateModel[] branchRateModels = new BranchRateModel[childCount];
@@ -833,7 +835,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
     }
 
     private void unregisterAllModels(BeagleTreeLikelihood btl) {
-        btl.removeModel(btl.getTreeModel());
+        if (btl.getTreeModel() instanceof Model) {
+            btl.removeModel((Model)btl.getTreeModel());
+        }
         btl.removeModel(btl.getBranchRateModel());
         btl.removeModel(btl.getBranchModel());
         btl.removeModel(btl.getSiteRateModel());

@@ -84,6 +84,38 @@ public class CoalescentSimulator {
         return tree;
     }
 
+    /**
+     * A recursive method that simulates a coalescent tree from a constraints tree
+     * @param constraintsTree - Tree providing the topology for the coalescent tree - does not have to be resolved
+     * @param root - The root of the current subtree
+     * @param model - Demographic model
+     * @return SimpleTree
+     */
+
+    public SimpleTree simulateTree(Tree constraintsTree, NodeRef root ,DemographicModel model){
+
+        SimpleNode[] roots = new SimpleNode[constraintsTree.getChildCount(root)];
+        SimpleTree tree;
+
+        for (int i = 0; i < constraintsTree.getChildCount(root); i++) {
+            NodeRef child = constraintsTree.getChild(root,i);
+            if(constraintsTree.isExternal(child)){
+                roots[i] = new SimpleNode(constraintsTree,child);
+            }else{
+                Tree subTree = simulateTree(constraintsTree, child, model);
+                roots[i] = new SimpleNode(subTree, subTree.getRoot());
+            }
+        }
+        // if just one taxonList then finished
+        if (roots.length == 1) {
+            tree = new SimpleTree(roots[0]);
+        } else {
+            tree = new SimpleTree(simulator.simulateCoalescent(roots, model.getDemographicFunction()));
+        }
+        return tree;
+    }
+
+
 
     /**
      * Simulates a coalescent tree, given a taxon list.

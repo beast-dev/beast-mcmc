@@ -317,4 +317,12 @@ public class Trace {
     public Filter getFilter() {
         return filter;
     }
+
+    public static double[] toArray(List<Double> list) {
+        double[] primitive = new double[list.size()];
+        for (int i = 0; i < list.size(); ++i) {
+            primitive[i] = list.get(i);
+        }
+        return primitive;
+    }
 }

@@ -25,17 +25,17 @@
 
 package dr.inferencexml.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.AbstractParticleOperator;
-import dr.inference.operators.hmc.ZigZagOperator;
+import dr.inference.operators.hmc.IrreversibleZigZagOperator;
+import dr.inference.operators.hmc.ReversibleZigZagOperator;
 import dr.xml.*;
 
+import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
 import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseMask;
 import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRuntimeOptions;
 
@@ -48,6 +48,7 @@ import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRu
 public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String ZIG_ZAG_PARSER = "zigZagOperator";
+    private final static String REVERSIBLE_FLG = "reversibleFlag";
 
     @Override
     public String getParserName() {
@@ -58,8 +59,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-
-        @SuppressWarnings("unused") AdaptationMode coercionMode = AdaptationMode.parseMode(xo);
 
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
@@ -72,9 +71,18 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
-        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
+        int threadCount = xo.getAttribute(THREAD_COUNT, 1);
+
+        boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
+
+        if (reversible){
+            return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
+                    runtimeOptions, mask, threadCount);
+        } else {
+            return new IrreversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
+                    runtimeOptions, mask, threadCount);
+        }
     }
 
     @Override
@@ -84,6 +92,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] additionalRules = {
             new ElementRule(PrecisionColumnProvider.class),
+            AttributeRule.newIntegerRule(THREAD_COUNT, true),
     };
 
     @Override
@@ -93,6 +102,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return ZigZagOperator.class;
+        return ReversibleZigZagOperator.class;
     }
 }

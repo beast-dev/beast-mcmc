@@ -25,6 +25,8 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 
@@ -35,7 +37,7 @@ public interface AncestralStateTraitProvider {
 
     public String getId();
 
-    public TreeModel getTreeModel();
+    public MutableTreeModel getTreeModel();
 
     public TreeTrait getTreeTrait(String key);
 

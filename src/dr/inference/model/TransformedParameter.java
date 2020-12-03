@@ -172,7 +172,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //        }
 //        System.err.println("\n");
 //
-        parameter.addBounds(transformedBounds);
+//        parameter.addBounds(transformedBounds);
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
     }
 

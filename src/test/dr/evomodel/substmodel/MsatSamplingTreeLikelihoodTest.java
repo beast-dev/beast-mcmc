@@ -6,6 +6,7 @@ import dr.evolution.datatype.Microsatellite;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
@@ -66,7 +67,7 @@ public class MsatSamplingTreeLikelihoodTest extends TestCase {
         Tree tree =  importer.importTree(null);
 
         //treeModel
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         //msatsubstModel
         AsymmetricQuadraticModel eu1 = new AsymmetricQuadraticModel(msat, null);

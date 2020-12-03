@@ -29,7 +29,7 @@ import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.continuous.hmc.TaxonTaskPool;
+import dr.util.TaskPool;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
@@ -65,7 +65,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
                                               MatrixParameterInterface loadings,
                                               Parameter traitPrecision,
                                               double nuggetPrecision,
-                                              TaxonTaskPool taxonTaskPool) {
+                                              TaskPool taskPool) {
         super(name);
 
         this.traitParameter = traitParameter;
@@ -96,14 +96,14 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
         }
 
         this.nuggetPrecision = nuggetPrecision;
-        this.taxonTaskPool = (taxonTaskPool != null) ? taxonTaskPool : new TaxonTaskPool(numTaxa, 1);
+        this.taxonTaskPool = (taskPool != null) ? taskPool : new TaskPool(numTaxa, 1);
 
         if (USE_PRECISION_CACHE && this.taxonTaskPool.getNumThreads() > 1) {
             throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
         }
 
         if (this.taxonTaskPool.getNumTaxon() != numTaxa) {
-            throw new IllegalArgumentException("Incorrectly specified TaxonTaskPool");
+            throw new IllegalArgumentException("Incorrectly specified TaskPool");
         }
     }
 
@@ -319,7 +319,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
     }
 
     private final double nuggetPrecision;
-    private final TaxonTaskPool taxonTaskPool;
+    private final TaskPool taxonTaskPool;
 
     @Override
     public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
@@ -751,10 +751,10 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
 
             double nugget = xo.getAttribute(NUGGET, 0.0);
 
-            TaxonTaskPool taxonTaskPool = (TaxonTaskPool) xo.getChild(TaxonTaskPool.class);
+            TaskPool taskPool = (TaskPool) xo.getChild(TaskPool.class);
 
             return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndices,
-                    loadings, traitPrecision, nugget, taxonTaskPool);
+                    loadings, traitPrecision, nugget, taskPool);
         }
 
         @Override
@@ -801,7 +801,7 @@ public class IntegratedFactorAnalysisLikelihood extends AbstractModelLikelihood
             }, true),
             AttributeRule.newDoubleRule(NUGGET, true),
             AttributeRule.newBooleanRule(STANDARDIZE, true),
-            new ElementRule(TaxonTaskPool.class, true),
+            new ElementRule(TaskPool.class, true),
             AttributeRule.newDoubleRule(TARGET_SD, true),
 
     };

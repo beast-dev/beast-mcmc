@@ -26,6 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.RateExchangeOperatorParser;
 import dr.inference.operators.MCMCOperator;
@@ -44,13 +45,13 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
 
     private static final String TRAIT = "trait";
 
-    private final TreeModel tree;
+    private final DefaultTreeModel tree;
     private final boolean swapRates;
     private final boolean swapTraits;
     private final boolean swapAtRoot;
     private final boolean moveHeight;
 
-    public RateExchangeOperator(TreeModel tree, double weight, boolean swapRates, boolean swapTraits, boolean swapAtRoot, boolean moveHeight) {
+    public RateExchangeOperator(DefaultTreeModel tree, double weight, boolean swapRates, boolean swapTraits, boolean swapAtRoot, boolean moveHeight) {
         this.tree = tree;
         setWeight(weight);
         this.swapRates = swapRates;

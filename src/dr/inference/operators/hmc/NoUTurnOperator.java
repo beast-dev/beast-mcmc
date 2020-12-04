@@ -1,6 +1,9 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.ReversibleHMCProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -8,7 +11,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
-public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator, Loggable {
 
     class Options {
         private double logProbErrorTol = 100.0;
@@ -41,7 +44,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             stepSizeInformation = findReasonableStepSize(initialPosition,
                     hmcProvider.getGradientProvider().getGradientLogDensity(), hmcProvider.getStepSize());
         }
-
+        initializeNumEvents();
         double[] position = takeOneStep(getCount() + 1, initialPosition);
 
         hmcProvider.setParameter(position);
@@ -120,7 +123,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, double[] inGradient, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
-
+        recordOneBaseCall();
         // Make deep copy of position and momentum
         WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(inPosition, inPosition.length));
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
@@ -130,6 +133,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         // "one reversibleHMC integral
         hmcProvider.reversiblePositionMomentumUpdate(position, momentum, gradient, direction, stepSize);
+
+        recordEvents();
 
         double logJointProbAfter = hmcProvider.getJointProbability(momentum);
 
@@ -357,8 +362,50 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         private int numAcceptProbStates;
     }
 
+    private void initializeNumEvents(){
+        numBaseCalls = 0;
+        numBoundaryEvents = 0;
+        numGradientEvents = 0;
+    }
+
+    private void recordOneBaseCall(){
+        numBaseCalls++;
+    }
+
+    private void recordEvents(){
+        numGradientEvents += hmcProvider.getNumGradientEvent();
+        numBoundaryEvents += hmcProvider.getNumBoundaryEvent();
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[3];
+        columns[0] = new NumberColumn("base calls") {
+            @Override
+            public double getDoubleValue() {
+                return numBaseCalls;
+            }
+        };
+        columns[1] = new NumberColumn("gradient events") {
+            @Override
+            public double getDoubleValue() {
+                return numGradientEvents;
+            }
+        };
+        columns[2] = new NumberColumn("boundary events") {
+            @Override
+            public double getDoubleValue() {
+                return numBoundaryEvents;
+            }
+        };
+        return columns;
+    }
+
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
+    private int numBaseCalls;
+    private int numBoundaryEvents;
+    private int numGradientEvents;
 }
 

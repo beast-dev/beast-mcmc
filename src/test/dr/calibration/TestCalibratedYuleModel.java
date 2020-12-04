@@ -49,7 +49,7 @@ import java.util.List;
 
 public class TestCalibratedYuleModel {
     protected static final String TL = "TL";
-    protected static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
+    protected static final String TREE_HEIGHT = DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
     //    private final int treeSize;
     private final BufferedWriter out;
     Taxa taxa;
@@ -60,7 +60,7 @@ public class TestCalibratedYuleModel {
         this.out = out;
 //        out.write(Integer.toString(treeSize) + "\t");
 
-        TreeModel treeModel = createTreeModel(treeSize);
+        DefaultTreeModel treeModel = createTreeModel(treeSize);
 
         Parameter brParameter = new Parameter.Default("birthRate", 2.0, 0.0, 100.0);
 
@@ -82,7 +82,7 @@ public class TestCalibratedYuleModel {
     }
 
 
-    protected TreeModel createTreeModel(int treeSize) throws Exception {
+    protected DefaultTreeModel createTreeModel(int treeSize) throws Exception {
         taxa = new Taxa();
         for (int i = 0; i < treeSize; i++) {
             taxa.addTaxon(new Taxon("T" + Integer.toString(i)));
@@ -96,7 +96,7 @@ public class TestCalibratedYuleModel {
 
         Tree tree = calibration(taxa, startingTree);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     private Tree calibration(final TaxonList taxa, DemographicModel demoModel) throws Exception {

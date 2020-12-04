@@ -224,19 +224,24 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
         final Node node;
         final Parameter parameter;
         final int index;
+        final boolean nodeOrderChanged;
 
         public TreeChangedEvent() {
-            this(null, null, -1);
+            this(null, null, -1,false);
         }
 
         public TreeChangedEvent(Node node) {
-            this(node, null, -1);
+            this(node, null, -1,false);
+        }
+        public TreeChangedEvent(Node node, Parameter parameter, int index) {
+            this(node, parameter, -index,false);
         }
 
-        public TreeChangedEvent(Node node, Parameter parameter, int index) {
+        public TreeChangedEvent(Node node, Parameter parameter, int index,boolean nodeOrderChanged) {
             this.node = node;
             this.parameter = parameter;
             this.index = index;
+            this.nodeOrderChanged = nodeOrderChanged;
         }
 
         @Override
@@ -260,6 +265,8 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
         public boolean isNodeChanged() {
             return node != null;
         }
+        public boolean isNodeOrderChanged(){return nodeOrderChanged;};
+
 
         public boolean isNodeParameterChanged() {
             return parameter != null;

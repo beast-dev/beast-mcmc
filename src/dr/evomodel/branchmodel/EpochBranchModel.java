@@ -149,7 +149,9 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     }
 
     public FrequencyModel getRootFrequencyModel() {
-        return getRootSubstitutionModel().getFrequencyModel();
+        return rootFrequencyModel == null ?
+                getRootSubstitutionModel().getFrequencyModel() :
+                rootFrequencyModel;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -190,4 +192,10 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     private final TreeModel tree;
     private final List<SubstitutionModel> substitutionModels;
     private final Parameter epochTimes;
+
+    public void setRootFrequencyModel(FrequencyModel rootFreqModel) {
+        this.rootFrequencyModel = rootFreqModel;
+    }
+
+    private FrequencyModel rootFrequencyModel;
 }// END: class

@@ -56,7 +56,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
-    private final static String PRIOR_PRECONDITIONER = "priorPreconditioner";
+   
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -64,8 +64,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
     private final static String INSTABILITY_HANDLER = "instabilityHandler";
     private final static String MASK = "mask";
-
-    private MassPreconditioner preconditioner;
 
     @Override
     public String getParserName() {
@@ -157,32 +155,24 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 instabilityHandler
         );
 
+        MassPreconditioner preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
+
         if (xo.hasChildNamed(PRECONDITIONER)) {
-            if (preconditioningType != MassPreconditioner.Type.NONE) {
+
+            if (xo.hasAttribute(PRECONDITIONING)) {
                 throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
             }
-            XMLObject cxo = xo.getChild(PRECONDITIONER);
 
-            if (cxo.hasChildNamed(PRIOR_PRECONDITIONER)) {
-                XMLObject ccxo = cxo.getChild(PRIOR_PRECONDITIONER);
-                PriorPreconditioningProvider priorDistribution = (PriorPreconditioningProvider) ccxo.getChild(0);
-                preconditioner = new MassPreconditioner.PriorPreconditioner(priorDistribution, transform);
+            Object cxo = xo.getElementFirstChild(PRECONDITIONER);
+
+            if (cxo instanceof PriorPreconditioningProvider) {
+                preconditioner = new MassPreconditioner.PriorPreconditioner((PriorPreconditioningProvider)cxo, transform);
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");
             }
-        } else {
-            preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
         }
 
-
-        if (xo.hasChildNamed(PRECONDITIONER)) {
-            return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
-                    parameter, transform, mask,
-                    runtimeOptions, preconditioner);
-        } else {
-            return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, reversibleHMCprovider);
-        }
-
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, reversibleHMCprovider);
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
@@ -213,12 +203,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
-            new ElementRule(MASK, new XMLSyntaxRule[]{
+            new ElementRule(MASK, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class),
-
             }, true),
-            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
-                    new ElementRule(MassPreconditioner.class)
+            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[] {
+                    new XORRule(
+                            new ElementRule(MassPreconditioner.class),
+                            new ElementRule(PriorPreconditioningProvider.class)
+                    ),
             }, true),
 
     };

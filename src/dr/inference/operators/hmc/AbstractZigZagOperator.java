@@ -19,10 +19,11 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     AbstractZigZagOperator(GradientWrtParameterProvider gradientProvider,
                            PrecisionMatrixVectorProductProvider multiplicationProvider,
                            PrecisionColumnProvider columnProvider,
-                           double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask,
+                           double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                           boolean refreshVelocity, Parameter mask,
                            int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask);
         this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
     }
 
@@ -52,14 +53,13 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
             MinimumTravelInformation firstBounce = getNextBounce(position, velocity, action, gradient, momentum);
             bounceState = doBounce(bounceState, firstBounce, position, velocity, action, gradient, momentum);
-
-            recordOneMoreEvent();
         }
 
         if (TIMING) {
             timer.stopTimer("integrateTrajectory");
         }
 
+        storeVelocity(velocity);
         return 0.0;
     }
 
@@ -94,6 +94,8 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
             reflectVelocity(velocity, eventIndex);
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
+
+            recordEvents(eventType);
         }
 
         if (TIMING) {
@@ -139,7 +141,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
 
         double time = Double.POSITIVE_INFINITY;
 
-        if (headingTowardsBoundary(position, velocity, index)) { // Also ensures x != 0.0
+        if (headingTowardsBoundary(velocity, index)) {
             time = Math.abs(position / velocity);
         }
 
@@ -252,11 +254,23 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     public LogColumn[] getColumns() {
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new NumberColumn("number of event") {
+        LogColumn[] columns = new LogColumn[3];
+        columns[0] = new NumberColumn("total events") {
             @Override
             public double getDoubleValue() {
                 return numEvents;
+            }
+        };
+        columns[1] = new NumberColumn("gradient events") {
+            @Override
+            public double getDoubleValue() {
+                return numGradientEvents;
+            }
+        };
+        columns[2] = new NumberColumn("boundary events") {
+            @Override
+            public double getDoubleValue() {
+                return numBoundaryEvents;
             }
         };
         return columns;

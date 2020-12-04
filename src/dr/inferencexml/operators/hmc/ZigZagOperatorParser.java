@@ -48,6 +48,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String ZIG_ZAG_PARSER = "zigZagOperator";
     private final static String REVERSIBLE_FLG = "reversibleFlag";
+    private final static String REFRESH_VELOCITY = "refreshVelocity";
 
     @Override
     public String getParserName() {
@@ -75,13 +76,14 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
         int threadCount = xo.getAttribute(THREAD_COUNT, 1);
 
         boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
+        boolean refreshVelocity = xo.getAttribute(REFRESH_VELOCITY, true);
 
         if (reversible){
             return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
-                    runtimeOptions, nativeCodeOptions, mask, threadCount);
+                    runtimeOptions, nativeCodeOptions, refreshVelocity, mask, threadCount);
         } else {
             return new IrreversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
-                    runtimeOptions, nativeCodeOptions, mask, threadCount);
+                    runtimeOptions, nativeCodeOptions, refreshVelocity, mask, threadCount);
         }
     }
 

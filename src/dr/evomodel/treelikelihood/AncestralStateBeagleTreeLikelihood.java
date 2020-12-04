@@ -27,7 +27,6 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
-
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
@@ -139,7 +138,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         });
 
     }
-    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    public AncestralStateBeagleTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                               BranchModel branchModel,
                                               SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel,

@@ -49,9 +49,9 @@ public class DummyLikelihoodParser extends AbstractXMLObjectParser {
             model = new DefaultModel();
         }
         final DummyLikelihood likelihood = new DummyLikelihood(model);
-
-        ((DefaultModel)model).addVariable(parameter);
-
+        if(parameter!=null) {
+            ((DefaultModel) model).addVariable(parameter);
+        }
         return likelihood;
     }
 

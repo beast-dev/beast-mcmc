@@ -46,28 +46,31 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public IrreversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                       PrecisionMatrixVectorProductProvider multiplicationProvider,
                                       PrecisionColumnProvider columnProvider,
-                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, Parameter mask,
+                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
                                       int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask, threadCount);
     }
 
 
     @Override
     WrappedVector drawInitialVelocity(WrappedVector momentum) {
-        ReadableVector mass = preconditioning.mass;
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
 
-        double[] velocity = new double[mass.getDim()];
+            double[] velocity = new double[mass.getDim()];
 
-        for (int i = 0, len = mass.getDim(); i < len; ++i) {
-            velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
+            for (int i = 0, len = mass.getDim(); i < len; ++i) {
+                velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
+            }
+
+            if (mask != null) {
+                applyMask(velocity);
+            }
+            return new WrappedVector.Raw(velocity);
         }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
     }
 
     @Override

@@ -27,6 +27,7 @@ package dr.app.tools;
 
 
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
@@ -898,7 +899,7 @@ public class AncestralSequenceAnnotator {
         flexTree.adoptTreeModelOrdering();
         FlexibleTree finalTree = new FlexibleTree(tree);
         finalTree.adoptTreeModelOrdering();
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         // Turn off noisy logging by TreeLikelihood constructor
         Logger logger = Logger.getLogger("dr.evomodel");

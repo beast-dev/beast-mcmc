@@ -37,7 +37,6 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -71,8 +70,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         return MARKOV_JUMP_TREE_LIKELIHOOD;
     }
 
-
-
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
@@ -92,6 +89,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+        boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
 
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
@@ -118,7 +116,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 useMarginalLogLikelihood,
                 useUniformization,
                 reportUnconditionedColumns,
-                nSimulants
+                nSimulants,
+                conditionalProbabilitiesInLogSpace
         );
 
         int registersFound = parseAllChildren(xo, treeLikelihood, dataType.getStateCount(), jumpTag,
@@ -233,7 +232,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             new ElementRule(Parameter.class),
                     }, true),
                     new ElementRule(PatternList.class),
-                    new ElementRule(TreeModel.class),
+                    new ElementRule(MutableTreeModel.class),
                     new ElementRule(GammaSiteRateModel.class),
                     new ElementRule(BranchModel.class, true),
                     new ElementRule(SubstitutionModel.class, true),

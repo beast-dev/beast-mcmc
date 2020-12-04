@@ -773,7 +773,7 @@ public class FlexibleTree implements MutableTree {
     }
 
     public boolean removeTaxon(Taxon taxon) {
-        throw new IllegalArgumentException("Cannot add taxon to a MutableTree");
+        throw new IllegalArgumentException("Cannot remove taxon to a MutableTree");
     }
 
     /**

@@ -25,6 +25,7 @@
 
 package dr.app.beauti.generator;
 
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
@@ -139,7 +140,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         }
 
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
 
@@ -253,7 +254,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
         }
 
-        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
 
         if (num > 0) {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);

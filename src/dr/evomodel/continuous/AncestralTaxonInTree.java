@@ -63,7 +63,7 @@ public class AncestralTaxonInTree extends AbstractModel {
                                 Parameter priorSampleSize,
                                 Parameter height,
                                 NodeRef node, int index,
-                                boolean relativeHeight) throws TreeUtils.MissingTaxonException {
+                                double offset) throws TreeUtils.MissingTaxonException {
 
         super(ancestor.getId());
 
@@ -72,14 +72,20 @@ public class AncestralTaxonInTree extends AbstractModel {
         this.descendents = descendents;
         this.pseudoBranchLength = priorSampleSize;
         this.height = height;
-        this.relativeHeight = relativeHeight;
+        this.offset = offset;
         this.index = index;
         this.node = node;
 
         this.tips = TreeUtils.getTipsForTaxa(treeModel, descendents);
         this.tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, descendents);
 
-        addVariable(priorSampleSize);
+        if (priorSampleSize != null) {
+            addVariable(priorSampleSize);
+        }
+
+        if (height != null) {
+            addVariable(height);
+        }
     }
 
     // Public API
@@ -90,18 +96,20 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final public double getHeight() { // TODO Refactor into subclasses
         if (height != null) {
-            double h = height.getParameterValue(0);
-            if (relativeHeight) {
-                h += ancestor.getHeight();
-            }
-            return h;
+            return height.getParameterValue(0) + offset;
         } else {
             return 0.0;
         }
     }
 
+    final public boolean isOnAncestralPath() { return height != null; } // TODO Refactor into subclass
+
+    final public NodeRef getTipNode() { return tipNode; } // TODO Refactor into subclass
+
+    final public void setTipNode(NodeRef tipNode) { this.tipNode = tipNode; }
+
     final MutableTreeModel getTreeModel() { return treeModel; }
-    
+
     final public int getIndex() { return index; }
 
     final public void setIndex(int index) { this.index = index; }
@@ -109,6 +117,15 @@ public class AncestralTaxonInTree extends AbstractModel {
     final public NodeRef getNode() { return node; }
 
     final public void setNode(NodeRef node) { this.node = node; }
+
+    final public void setNode(NodeRef node, int pathViaChildNumber) {
+        this.node = node;
+        this.pathViaChildNumber = pathViaChildNumber;
+    }
+
+    final public int getPathChildNumber() {
+        return pathViaChildNumber;
+    }
 
     // AbstractModel implementation
 
@@ -119,12 +136,18 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void storeState() {
-
+        storedIndex = index;
+        storedPathViaChildNumber = pathViaChildNumber;
+        storedNode = node;
+        storedTipNodel = tipNode;
     }
 
     @Override
     protected void restoreState() {
-
+        index = storedIndex;
+        pathViaChildNumber = storedPathViaChildNumber;
+        node = storedNode;
+        tipNode = storedTipNodel;
     }
 
     @Override
@@ -134,7 +157,7 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        fireModelChanged(variable, index);
+        // Do nothing (handled in AbstractModel)
     }
 
     final private Taxon ancestor;
@@ -146,10 +169,17 @@ public class AncestralTaxonInTree extends AbstractModel {
 
     final private Parameter pseudoBranchLength;
     final private Parameter height;
-    final private boolean relativeHeight;
+    final private double offset;
 
     private int index;
     private NodeRef node;
+    private NodeRef tipNode;
+    private int pathViaChildNumber = -1;
+
+    private int storedIndex;
+    private NodeRef storedNode;
+    private NodeRef storedTipNodel;
+    private int storedPathViaChildNumber;
 
     public TaxonList getTaxonList() {
         return descendents;

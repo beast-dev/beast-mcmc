@@ -35,6 +35,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
 import dr.evomodelxml.branchratemodel.*;
@@ -127,7 +128,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             }
 
             // Shouldn't get here as the MLE switch in the MCMC tab already checks.
-            for (AbstractPartitionData partition : options.getDataPartitions()) {
+            /*for (AbstractPartitionData partition : options.getDataPartitions()) {
                 if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
                     throw new GeneratorException(
                             "Generalized stepping-stone sampling is not currently\n" +
@@ -135,7 +136,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     "for nucleotide data. \n\n" +
                                     BeautiFrame.MCMC);
                 }
-            }
+            }*/
 
         }
     }
@@ -272,7 +273,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 attributes.add(new Attribute.Default<String>("dimension", "" + (beautiOptions.taxonList.getTaxonCount()-1)));
 
                 writer.writeOpenTag(TreeWorkingPriorParsers.PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS, attributes);
-                writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(TreeWorkingPriorParsers.PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS);
 
             } else if (options.choiceTreeWorkingPrior.equals("Matching coalescent model")) {
@@ -321,7 +322,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "constantReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, modelPrefix + DefaultTreeModel.TREE_MODEL);
                         writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 
@@ -357,7 +358,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "exponentialReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, modelPrefix + DefaultTreeModel.TREE_MODEL);
                         writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 
@@ -396,7 +397,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "logisticReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, modelPrefix + DefaultTreeModel.TREE_MODEL);
                         writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 
@@ -435,7 +436,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(ExpansionModelParser.EXPANSION_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "expansionReference");
                         writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                         writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, modelPrefix + DefaultTreeModel.TREE_MODEL);
                         writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                         writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 
@@ -486,7 +487,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeIDref(YuleModelParser.YULE_MODEL, beautiOptions.getPartitionTreePriors().get(0).getPrefix() + "yuleReference");
                         writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
                         writer.writeOpenTag(SpeciesTreeModelParser.SPECIES_TREE);
-                        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, modelPrefix + DefaultTreeModel.TREE_MODEL);
                         writer.writeCloseTag(SpeciesTreeModelParser.SPECIES_TREE);
                         writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
 
@@ -746,6 +747,32 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         break;//NUCLEOTIDES
 
                     case DataType.AMINO_ACIDS:
+
+                        switch (model.getAaSubstitutionModel()) {
+
+                            case LG:
+                            case BLOSUM_62:
+                            case FLU:
+                            case JTT:
+                            case WAG:
+                            case MT_REV_24:
+                            case CP_REV_45:
+                            case DAYHOFF:
+                            case MTVER:
+                            case MTPRO:
+                            case MTMET:
+                            case MTINV:
+                            case MTDEU:
+                            case MTMAM:
+                                //do nothing
+                                break;
+
+                            default:
+                                throw new IllegalArgumentException("Unknown amino acid model");
+
+                        }
+
+                        break; //AMINO ACIDS
 
                     case DataType.TWO_STATES:
 

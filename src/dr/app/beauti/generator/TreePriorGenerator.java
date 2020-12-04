@@ -33,6 +33,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.coalescent.*;
@@ -443,7 +444,7 @@ public class TreePriorGenerator extends Generator {
                 writeNodeHeightPriorModelRef(prior, writer);
                 writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
                 writer.writeOpenTag(SpeciationLikelihoodParser.TREE);
-                writer.writeIDref(TreeModel.TREE_MODEL, prefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
 
                 if (treePrior == TreePriorType.YULE_CALIBRATION) {
@@ -526,7 +527,7 @@ public class TreePriorGenerator extends Generator {
 //	            writeNodeHeightPriorModelRef(prior, writer);
 //	            writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
 //	            writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-//	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+//	            writer.writeIDref(DefaultTreeModel.TREE_MODEL, modelPrefix + DefaultTreeModel.TREE_MODEL);
 //	            writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
 //	            writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 //
@@ -559,7 +560,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeCloseTag(BayesianSkylineLikelihoodParser.GROUP_SIZES);
 
                 writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                writer.writeIDref(TreeModel.TREE_MODEL, prefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
 
                 writer.writeCloseTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
@@ -602,7 +603,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeCloseTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
 
                 writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
-                writer.writeIDref(TreeModel.TREE_MODEL, prefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
 
                 writer.writeCloseTag(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
@@ -623,7 +624,7 @@ public class TreePriorGenerator extends Generator {
                 writeNodeHeightPriorModelRef(prior, writer);
                 writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
                 writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-                writer.writeIDref(TreeModel.TREE_MODEL, prefix + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
                 writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
         }
@@ -718,10 +719,10 @@ public class TreePriorGenerator extends Generator {
             // TODO Add all linked trees
             if (options.isShareSameTreePrior()) {
                 for (PartitionTreeModel thisModel : options.getPartitionTreeModels()) {
-                    writer.writeIDref(TreeModel.TREE_MODEL, thisModel.getPrefix() + TreeModel.TREE_MODEL);
+                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, thisModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
                 }
             } else {
-                writer.writeIDref(TreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + DefaultTreeModel.TREE_MODEL);
             }
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
 
@@ -770,7 +771,7 @@ public class TreePriorGenerator extends Generator {
                             new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(model.getPloidyType().getValue()))
                     }
                     );
-                    writer.writeIDref(TreeModel.TREE_MODEL, model.getPrefix() + TreeModel.TREE_MODEL);
+                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, model.getPrefix() + DefaultTreeModel.TREE_MODEL);
                     writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
                 }
             } else {//TODO correct for not sharing same prior?
@@ -778,7 +779,7 @@ public class TreePriorGenerator extends Generator {
                         new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(options.getPartitionTreeModels(prior).get(0).getPloidyType().getValue()))
                 }
                 );
-                writer.writeIDref(TreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
             }
 

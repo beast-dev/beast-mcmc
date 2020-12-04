@@ -23,11 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treelikelihood;
+package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -35,10 +33,13 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.distributions.GammaDistribution;
 import dr.xml.Reportable;
 import org.apache.commons.math.special.Gamma;
 import org.apache.commons.math.util.FastMath;
+
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ApproximatePoissonTreeLikelihood - a tree likelihood which uses an ML tree as expected number
@@ -50,11 +51,11 @@ import org.apache.commons.math.util.FastMath;
  * And more recently Didelot et al (2018) BioRxiv
  *
  * @author Andrew Rambaut
+ * @author JT McCrone
  */
 
 public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood implements Reportable {
-
-    public ApproximatePoissonTreeLikelihood(String name, Tree dataTree, int sequenceLength, TreeModel treeModel, BranchRateModel branchRateModel) {
+    public ApproximatePoissonTreeLikelihood(String name, int sequenceLength, TreeModel treeModel, BranchRateModel branchRateModel, BranchLengthProvider branchLengthProvider) {
 
         super(name);
 
@@ -62,44 +63,40 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
 
         this.treeModel = treeModel;
         addModel(treeModel);
+        cachedRoot = treeModel.getRoot().getNumber();
+        cachedRootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
+        cachedRootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
 
         this.branchRateModel = branchRateModel;
         addModel(branchRateModel);
 
+        this.branchLengthProvider = branchLengthProvider;
+        addModel(branchLengthProvider);
+
         updateNode = new boolean[treeModel.getNodeCount()];
-        branchLengths = new double[treeModel.getNodeCount()];
 
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+        for (int i = 0; i <this.treeModel.getNodeCount() ; i++) {
             updateNode[i] = true;
-
-            if (!dataTree.isRoot(dataTree.getNode(i))) {
-                // Adding a small epsilon to avoid zeros.
-                double x = dataTree.getBranchLength(dataTree.getNode(i)) * sequenceLength;
-                branchLengths[i] = Math.round(x);
-            }
         }
-
-//        distanceMatrix = new double[treeModel.getExternalNodeCount()][];
-//        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
-//            distanceMatrix[i] = new double[treeModel.getExternalNodeCount()];
-//            for (int j = i + 1; j < treeModel.getExternalNodeCount(); j++) {
-//                distanceMatrix[i][j] = distanceMatrix[j][i] = TreeUtils.getPathLength(dataTree, dataTree.getNode(i), dataTree.getNode(j));
-//            }
-//        }
 
         branchLogL = new double[treeModel.getNodeCount()];
         storedBranchLogL = new double[treeModel.getNodeCount()];
-
         likelihoodKnown = false;
-
-        gamma = new GammaDistribution(1.0, 1.0);
     }
 
+
     /**
-     * Set update flag for a node only
+     * Set update flag for node and remove it's old contribution to the likelihood.
+     * Also handle the root and children so that the 1 branch between children is marked as updated.
+     * @param node
      */
     protected void updateNode(NodeRef node) {
+
         updateNode[node.getNumber()] = true;
+        NodeRef parent = treeModel.getParent(node);
+        if (parent != null && !updateNode[parent.getNumber()]) {
+            updateNode(parent);
+        }
         likelihoodKnown = false;
     }
 
@@ -107,14 +104,18 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
      * Set update flag for a node and its direct children
      */
     protected void updateNodeAndChildren(NodeRef node) {
-        updateNode[node.getNumber()] = true;
+
+        updateNode(node);
 
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
             NodeRef child = treeModel.getChild(node, i);
-            updateNode[child.getNumber()] = true;
+            updateNode(child);
         }
-        likelihoodKnown = false;
+
+//        likelihoodKnown = false;
     }
+
+
 
     /**
      * Set update flag for a node and all its descendents
@@ -168,7 +169,18 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
                     // above being updated as well. Node events occur when a node
                     // is added to a branch, removed from a branch or its height or
                     // rate changes.
-                    updateNodeAndChildren(((TreeChangedEvent) object).getNode());
+                    NodeRef node= ((TreeChangedEvent) object).getNode();
+                    updateNodeAndChildren(node);
+                    if(treeModel.getRoot()== node){
+                        // If the root is changed then the old root's children must be updated so that they are
+                        // no longer counted as 1 branch in the likelihood
+                        // This currently updates more often than needed.
+                        NodeRef oldRootNode = treeModel.getNode(cachedRoot);
+                        if(oldRootNode!=node){
+                            updateNodeAndChildren(oldRootNode);
+
+                        }
+                    }
 
                 } else if (((TreeChangedEvent) object).isTreeChanged()) {
                     // Full tree events result in a complete updating of the tree likelihood
@@ -190,7 +202,6 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
             }
 
         } else {
-
             throw new RuntimeException("Unknown componentChangedEvent");
         }
     }
@@ -201,6 +212,11 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     protected void storeState() {
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
+
+        storedCachedRoot = cachedRoot;
+        storedCachedRootChild1 = cachedRootChild1;
+        storedCachedRootChild2 = cachedRootChild2;
+
 
         System.arraycopy(branchLogL, 0, storedBranchLogL, 0, branchLogL.length);
     }
@@ -213,68 +229,108 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
 
-        System.arraycopy(storedBranchLogL, 0, branchLogL, 0, branchLogL.length);
+        cachedRoot = storedCachedRoot;
+        cachedRootChild1 = storedCachedRootChild1;
+        cachedRootChild2 = storedCachedRootChild2;
+        double[] tmp = storedBranchLogL;
+        storedBranchLogL = branchLogL;
+        branchLogL = tmp;
     }
 
     protected void acceptState() {
-    } // nothing to do
+        cachedRoot = treeModel.getRoot().getNumber();
+        cachedRootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
+        cachedRootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
+    }
 
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    private double calculateLogLikelihood() {
+    private double calculateLogLikelihood(NodeRef node,int root, int rootChild1, int rootChild2) {
+        int nodeIndex = node.getNumber();
+
+        if (updateNode[nodeIndex]) {
+            double logL;
+            if(nodeIndex==root || nodeIndex==rootChild2){
+                logL=0;
+            }else{
+                double expected = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
+
+                double x = Math.round(branchLengthProvider.getBranchLength(treeModel,node)*sequenceLength);
+
+                if (nodeIndex == rootChild1) {
+                    // sum the branches on both sides of the root
+                    NodeRef node2 = treeModel.getNode(rootChild2);
+                    expected += treeModel.getBranchLength(node2) * branchRateModel.getBranchRate(treeModel, node2);
+                    x += Math.round(branchLengthProvider.getBranchLength(treeModel,node2)*sequenceLength);
+                }
+                double mean = expected * sequenceLength;
+
+//                gamma.setScale(1.0);
+//                branchLogL[i] = gamma.logPdf(x);
+                logL = SaddlePointExpansion.logPoissonProbability(mean, (int) x); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+            }
+
+            for (int i = 0; i < treeModel.getChildCount(node); i++) {
+                logL += calculateLogLikelihood(treeModel.getChild(node, i),root,rootChild1,rootChild2);
+            }
+            branchLogL[nodeIndex] = logL;
+            updateNode[nodeIndex] = false;
+        }
+        return branchLogL[nodeIndex];
+    }
+
+    private double calculateLogLikelihoodLinearTraversal() {
 
 //        makeDirty();
-
+//Could make this faster by only adding the changed values
         int root = treeModel.getRoot().getNumber();
         int rootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
         int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
 
-        //
-        updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2];
 
         double logL = 0.0;
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            if (updateNode[i] && i != root && i != rootChild2) {
+            if ( i != root && i != rootChild2) {
                 NodeRef node = treeModel.getNode(i);
                 // skip the root and the second child of the root (this is added to the first child)
 
                 double expected = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
-                double x = branchLengths[i];
+                double x = Math.round(branchLengthProvider.getBranchLength(treeModel,node) * sequenceLength);
 
                 if (i == rootChild1) {
                     // sum the branches on both sides of the root
                     NodeRef node2 = treeModel.getNode(rootChild2);
                     expected += treeModel.getBranchLength(node2) * branchRateModel.getBranchRate(treeModel, node2);
-                    x += branchLengths[rootChild2];
+                    x += Math.round(branchLengthProvider.getBranchLength(treeModel,node2));
                 }
-                double shape = expected * sequenceLength;
-//                gamma.setShape(shape);
+                double mean = expected * sequenceLength;
+
 //                gamma.setScale(1.0);
 //                branchLogL[i] = gamma.logPdf(x);
 
-                branchLogL[i] = SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+                logL += SaddlePointExpansion.logPoissonProbability(mean,(int)x); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
             }
-            updateNode[i] = false;
-            logL += branchLogL[i];
         }
 
         return logL;
     }
 
-    private void calculateLogLikelihood(NodeRef node) {
-        NodeRef c1 = treeModel.getChild(node, 0);
-        if (!treeModel.isExternal(c1)) {
-            calculateLogLikelihood(c1);
-        }
-        NodeRef c2 = treeModel.getChild(node, 1);
-        if (!treeModel.isExternal(c2)) {
-            calculateLogLikelihood(c2);
-        }
+    private double calculateLogLikelihood() {
 
+
+        int root = treeModel.getRoot().getNumber();
+        int rootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
+        int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
+        updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2] ;
+        assert updateNode[root];
+
+
+        return calculateLogLikelihood(treeModel.getRoot(), root, rootChild1, rootChild2);
 
     }
+
 
     public final Model getModel() {
         return this;
@@ -283,6 +339,13 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     public final double getLogLikelihood() {
         if (!likelihoodKnown) {
             logLikelihood = calculateLogLikelihood();
+            if(testing){
+                makeDirty();
+                assert logLikelihood==calculateLogLikelihood();
+                double linearLL = calculateLogLikelihoodLinearTraversal();
+                assert linearLL !=logLikelihood;
+                assert Math.abs(linearLL-logLikelihood)<1E-10;
+            }
             likelihoodKnown = true;
         }
         return logLikelihood;
@@ -300,6 +363,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         return getClass().getName() + "(" + getLogLikelihood() + ")";
     }
 
+
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
@@ -310,13 +374,11 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     private final TreeModel treeModel;
 
     private final BranchRateModel branchRateModel;
+    private final BranchLengthProvider branchLengthProvider;
 
     private final int sequenceLength;
 
-    private final double[] branchLengths;
     //private final double[][] distanceMatrix;
-
-    private final GammaDistribution gamma;
 
     /**
      * Flags to specify which nodes are to be updated
@@ -330,12 +392,18 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
 
     private double[] branchLogL;
     private double[] storedBranchLogL;
-
-
+    private int cachedRoot;
+    private int storedCachedRoot;
+    private int cachedRootChild1;
+    private int cachedRootChild2;
+    private int storedCachedRootChild1;
+    private int storedCachedRootChild2;
+    private final boolean testing =false;
 }
 
 // Grabbed some stuff from Commons Maths as it is not public
 // This code is under the Apache License 2.0
+
 final class SaddlePointExpansion {
     private static final double HALF_LOG_2_PI = 0.5D * FastMath.log(6.283185307179586D);
     private static final double[] EXACT_STIRLING_ERRORS = new double[]{0.0D, 0.15342640972002736D, 0.08106146679532726D, 0.05481412105191765D, 0.0413406959554093D, 0.03316287351993629D, 0.02767792568499834D, 0.023746163656297496D, 0.020790672103765093D, 0.018488450532673187D, 0.016644691189821193D, 0.015134973221917378D, 0.013876128823070748D, 0.012810465242920227D, 0.01189670994589177D, 0.011104559758206917D, 0.010411265261972096D, 0.009799416126158804D, 0.009255462182712733D, 0.008768700134139386D, 0.00833056343336287D, 0.00793411456431402D, 0.007573675487951841D, 0.007244554301320383D, 0.00694284010720953D, 0.006665247032707682D, 0.006408994188004207D, 0.006171712263039458D, 0.0059513701127588475D, 0.0057462165130101155D, 0.005554733551962801D};
@@ -406,5 +474,20 @@ final class SaddlePointExpansion {
         }
 
         return ret;
+    }
+
+    static public double logPoissonProbability(double mean,int x) {
+        double ret;
+        if (x >= 0 && x != 2147483647) {
+            if (x == 0) {
+                ret = FastMath.exp(-mean);
+            } else {
+                ret = FastMath.exp(-getStirlingError((double)x) - getDeviancePart((double)x, mean)) / FastMath.sqrt(6.283185307179586D * (double)x);
+            }
+        } else {
+            ret = 0.0D;
+        }
+
+        return Math.log(ret);
     }
 }

@@ -29,6 +29,7 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -50,7 +51,6 @@ import static dr.evomodelxml.tree.TreeModelParser.*;
 public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
     private static final String ANCESTRAL_TRAIT_TREE_MODEL = "ancestralTraitTreeModel";
-//    public static final String PSEUDO_BRANCH_LENGTH_NAME = "pseudoBranchLengthName";
     private static final String ANCESTOR = "ancestor";
     private static final String ANCESTRAL_PATH = "ancestralPath";
     private static final String RELATIVE_HEIGHT = "relativeToTipHeight";
@@ -83,8 +83,6 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
             });
         }
 
-//        if (xo.hasChildNamed())
-
         if (xo.hasChildNamed(NODE_TRAITS)) {
             for (XMLObject cxo : xo.getAllChildren(NODE_TRAITS)) {
                 parseNodeTraits(cxo, tree, ancestors);
@@ -97,22 +95,14 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
     private static void parseNodeTraits(XMLObject cxo, Tree tree, List<AncestralTaxonInTree> ancestors)
             throws XMLParseException {
 
-//        boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
-//        boolean internalNodes = cxo.getAttribute(INTERNAL_NODES, false);
-//        boolean leafNodes = cxo.getAttribute(LEAF_NODES, false);
-//        boolean fireTreeEvents = cxo.getAttribute(FIRE_TREE_EVENTS, false);
-//        boolean asMatrix = cxo.getAttribute(AS_MATRIX, false);
         String name = cxo.getAttribute(NAME, "trait");
         int dim = cxo.getAttribute(MULTIVARIATE_TRAIT, 1);
 
-        double[] initialValues = null;
-        if (cxo.hasAttribute(INITIAL_VALUE)) {
-            initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
-        }
-
-//        if (!rootNode && !internalNodes && !leafNodes) {
-//            throw new XMLParseException("one or more of root, internal or leaf nodes must be selected for the nodeTraits element");
+//        double[] initialValues = null;
+//        if (cxo.hasAttribute(INITIAL_VALUE)) {
+//            initialValues = cxo.getDoubleArrayAttribute(INITIAL_VALUE);
 //        }
+
 
         final int rowDim = dim;
         final int colDim = tree.getExternalNodeCount() + ancestors.size();
@@ -172,7 +162,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendants, pseudoBranchLength,
-                        null, node, index, false);
+                        null, node, index, 0.0);
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -184,10 +174,23 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
             Parameter time = (Parameter) cxo.getChild(Parameter.class);
 
             boolean relativeHeight = cxo.getAttribute(RELATIVE_HEIGHT, false);
+            double offset = 0;
 
-            if (time.getParameterValue(0) <= taxon.getHeight()) {
-                throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
-                        taxon.getId() + "'");
+            if (relativeHeight) {
+
+                Object date = taxon.getAttribute("date");
+                if (date != null && date instanceof Date) {
+                    offset = taxon.getHeight();
+                } else {
+                    throw new XMLParseException("Taxon '" + taxon.getId() + "' has no specified date");
+                }
+
+            } else {
+
+                if (time.getParameterValue(0) <= taxon.getHeight()) {
+                    throw new XMLParseException("Ancestral path time must be > sampling time for taxon '" +
+                            taxon.getId() + "'");
+                }
             }
 
             Taxa descendent = new Taxa();
@@ -195,7 +198,7 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
 
             try {
                 ancestorInTree = new AncestralTaxonInTree(ancestor, tree, descendent, pseudoBranchLength,
-                        time, node, index, relativeHeight); // TODO Refactor into separate class from MRCA version
+                        time, node, index, offset); // TODO Refactor into separate class from MRCA version
             } catch (TreeUtils.MissingTaxonException e) {
                 throw new XMLParseException("Unable to find taxa for " + ancestor.getId());
             }
@@ -223,7 +226,6 @@ public class AncestralTraitTreeModelParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules =
             new XMLSyntaxRule[]{
                     new ElementRule(MutableTreeModel.class),
-//                    AttributeRule.newStringRule(PSEUDO_BRANCH_LENGTH_NAME),
                     new ElementRule(ANCESTOR, new XMLSyntaxRule[] {
                             new ElementRule(Taxon.class),
                             new ElementRule(Parameter.class),

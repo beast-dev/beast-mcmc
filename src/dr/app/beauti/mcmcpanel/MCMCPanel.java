@@ -291,7 +291,7 @@ public class MCMCPanel extends BeautiPanel {
                     updateMLEFileNameStem();
                 } else if (performMLECombo.getSelectedIndex() == 2) {
                     // Generalized stepping-stone sampling
-                    for (AbstractPartitionData partition : options.getDataPartitions()) {
+                    /*for (AbstractPartitionData partition : options.getDataPartitions()) {
                         if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
                             JOptionPane.showMessageDialog(frame,
                                     "Generalized stepping-stone sampling is not currently\n" +
@@ -305,7 +305,7 @@ public class MCMCPanel extends BeautiPanel {
                             return;
 
                         }
-                    }
+                    }*/
                     mleOptions.performMLE = false;
                     mleOptions.performMLEGSS = true;
                     //set to true because product of exponentials is the default option

@@ -4,6 +4,7 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -11,10 +12,13 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixVectorProductParameter;
 import dr.inference.model.Parameter;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 import dr.xml.Reportable;
+import dr.xml.XMLParseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +81,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY,
                 tolerance) + " \n";
 
-        if (wrtParameter != WrtParameter.NODE_HEIGHT) {
+        if (wrtParameter != WrtParameter.NODE_HEIGHT && wrtParameter != WrtParameter.DETERMINISTIC_SKYGRID) {
             header += HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance) + "\n";
         } 
 
@@ -111,8 +115,67 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
 
             @Override
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+                if (likelihood.getPopSizeParameter() instanceof MatrixVectorProductParameter) {
+                    throw new XMLParseException("Cannot use 'logPopulationSizes' with deterministic skygrid");
+                }
+            }
+        },
+        DETERMINISTIC_SKYGRID("deterministicSkygrid") {
+            @Override
+            Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
+                MatrixVectorProductParameter product = (MatrixVectorProductParameter) likelihood.getPopSizeParameter();
+                return product.getVector();
+            }
 
+            @Override
+            double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                return multiplyMatrixByDifferential(
+                        likelihood.getGradientWrtLogPopulationSize(),
+                        (MatrixVectorProductParameter) likelihood.getPopSizeParameter());
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
+                MatrixVectorProductParameter product = (MatrixVectorProductParameter) likelihood.getPopSizeParameter();
+                double[] hessian = likelihood.getDiagonalHessianWrtLogPopulationSize();
+
+                throw new RuntimeException("Not yet implemented");
+//                return multiplyMatrixByDifferential(hessian, product); // TODO
+            }
+
+            private double[] multiplyMatrixByDifferential(double[] differential, MatrixVectorProductParameter product) {
+
+                MatrixParameter matrix = product.getMatrix();
+                Parameter vector = product.getVector();
+
+                int N = matrix.getRowDimension();
+                int P = matrix.getColumnDimension();
+
+                assert (N == differential.length);
+                assert (P == vector.getDimension());
+
+                double[] result = new double[P];
+
+                for (int j = 0; j < P; ++j) {
+                    double total = 0.0;
+                    for (int i = 0; i < N; ++i) {
+                        total += matrix.getParameterValue(i, j) * differential[i];
+                    }
+                    result[j] = total;
+                }
+
+                return result;
+            }
+
+            @Override
+            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+
+            @Override
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+                if (!(likelihood.getPopSizeParameter() instanceof MatrixVectorProductParameter)) {
+                    throw new XMLParseException("Cannot use 'deterministicSkygrid' with stochastic skygrid");
+                }
             }
         },
         PRECISION("precision") {
@@ -165,8 +228,10 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
 
             @Override
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
-
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+                if (likelihood.getBetaParameter() == null) {
+                    throw new XMLParseException("Cannot use 'regressionCoefficients' with deterministic skygrid");
+                }
             }
         },
         NODE_HEIGHT("nodeHeight") {
@@ -178,6 +243,8 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 if (parameter == null) {
                     TreeModel treeModel = (TreeModel) likelihood.getTree(0);
                     parameter = new NodeHeightProxyParameter("allInternalNode", treeModel, true);
+//                    DefaultTreeModel treeModel = (DefaultTreeModel) likelihood.getTree(0);
+//                    parameter = treeModel.createNodeHeightsParameter(true, true, false);
                 }
                 return parameter;
             }
@@ -197,9 +264,9 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 return 0.0;
             }
 
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
                 if (likelihood.nLoci() > 1) {
-                    throw new RuntimeException("Not yet implemented for multiple loci.");
+                    throw new XMLParseException("Not yet implemented for multiple loci.");
                 }
             }
 
@@ -305,7 +372,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
         abstract double getParameterLowerBound();
 
-        public abstract void getWarning(GMRFMultilocusSkyrideLikelihood likelihood);
+        public abstract void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException;
 
         private final String name;
 

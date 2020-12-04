@@ -30,6 +30,7 @@ package dr.evomodelxml.treelikelihood;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -134,6 +135,11 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        if (branchModel instanceof EpochBranchModel && rootFreqModel != null) {
+            EpochBranchModel epochBranchModel = (EpochBranchModel) branchModel;
+            epochBranchModel.setRootFrequencyModel(rootFreqModel);
+        }
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 //        if (xo.getChild(TipStatesModel.class) != null) {

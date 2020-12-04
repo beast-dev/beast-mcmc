@@ -164,9 +164,9 @@ public class DesignMatrix extends MatrixParameter {
         throw new RuntimeException("Not implemented yet!");
     }
 
-    public static void standardize(double[] vector) {
+    public static void standardize(double[] vector, boolean withScale) {
         double mean = DiscreteStatistics.mean(vector);
-        double stDev = Math.sqrt(DiscreteStatistics.variance(vector, mean));
+        double stDev = withScale ? Math.sqrt(DiscreteStatistics.variance(vector, mean)) : 1.0;
         for (int i = 0; i < vector.length; ++i) {
             vector[i] = (vector[i] - mean) / stDev;
         }
@@ -187,6 +187,7 @@ public class DesignMatrix extends MatrixParameter {
             DesignMatrix designMatrix = new DesignMatrix(name, dynamicStandardization);
             boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
             boolean standardize = xo.getAttribute(STANDARDIZE, false);
+            boolean centerOnly = xo.getAttribute("centerOnly", false);
 
             int dim = 0;
 
@@ -230,7 +231,7 @@ public class DesignMatrix extends MatrixParameter {
                                 "' in design matrix '" + designMatrix.getId() + "'\n");
                     } else {
                         double[] column = columnParameter.getParameterValues();
-                        standardize(column);
+                        standardize(column, !centerOnly);
                         for (int i = 0; i < column.length; ++i) {
                             columnParameter.setParameterValueQuietly(i, column[i]);
                         }

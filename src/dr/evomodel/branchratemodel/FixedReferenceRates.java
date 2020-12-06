@@ -10,6 +10,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.*;
 
+//import java.util.List;
 import java.util.function.DoubleBinaryOperator;
 
 /**
@@ -25,60 +26,153 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     private final DifferentiableBranchRates differentiableBranchRateModel;
     private final Taxon referenceTaxon;
     private final int fixedLength;
+    private final MaskFromTree maskParameter;
+//    private final Parameter rateParameter;
+//    private List<NodeRef> nodeList;
+    private NodeRef oneNode;
+    private ArbitraryBranchRates arbitraryBranchRateModel;
 
-    public FixedReferenceRates(TreeModel treeModel, BranchRateModel branchRateModel, Taxon referenceTaxon, int fixedLength) {
-        super(this.FIXED_REFERENCE_RATES);
+
+    public FixedReferenceRates(String name, TreeModel treeModel, BranchRateModel branchRateModel, Taxon referenceTaxon, int fixedLength, MaskFromTree maskParameter) {
+        super(name);
         this.treeModel = treeModel;
         this.branchRateModel = branchRateModel;
-        this.referenceTaxon = referenceTaxon;
-        this.fixedLength = fixedLength;
+        this.referenceTaxon = referenceTaxon; //currently redundant
+        this.fixedLength = fixedLength; //todo: add implementation for this optional parameter
         this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
                 (DifferentiableBranchRates) branchRateModel : null;
+        this.maskParameter = maskParameter;
+
+        checkDifferentiability(); //makes all the rest redundant
+//        this.rateParameter = differentiableBranchRateModel.getRateParameter();
+//        updateNodeList(treeModel, this.referenceTaxon);
+
+        NodeRef node = updateNodeList(treeModel, this.referenceTaxon);
+        assert(branchRateModel instanceof ArbitraryBranchRates);
+
+        this.arbitraryBranchRateModel = (branchRateModel instanceof ArbitraryBranchRates) ?
+                (ArbitraryBranchRates) branchRateModel : null;
+
+//        arbitraryBranchRateModel.setBranchRate(treeModel, node, 1.0);
+
+
+        addModel(treeModel);
+        addModel(branchRateModel);
+
+    }
+
+    public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+//        if (nodeList.contains(node)) {
+        updateNodeList(tree, referenceTaxon);
+        if (node == oneNode) {
+            return 1.0;
+        }
+        else {
+            return arbitraryBranchRateModel.getUntransformedBranchRate(tree, node);
+//            return 1.0;
+        }
+    }
+
+    NodeRef updateNodeList(Tree tree, Taxon taxon) {
+
+        int nodeNumber = tree.getTaxonIndex(taxon.getId());
+        NodeRef node = tree.getNode(nodeNumber);
+        NodeRef root = tree.getRoot();
+//        NodeRef[] nodeCache = new NodeRef[maskLength + 1];
+
+        //set node cache to all be the same node
+//        for (int i = 0; i < nodeCache.length; i++) {
+//            nodeCache[i] = node;
+//        }
+
+//        int update = 0;
+        while (tree.getParent(node) != root) {
+//            update = update + 1;
+//            for (int i = maskLength; i > 0; i--) {
+//                if (update > i) {
+//                    nodeCache[i] = nodeCache[i - 1];
+//                }
+//            }
+            node= tree.getParent(node);
+        }
+
+        oneNode = node;
+        return oneNode;
+//        this.nodeList.add(node);
+
+//        int maskIndex;
+//        for (int i = 0; i < nodeCache.length; i++) {
+//            maskIndex = branchRates.getParameterIndexFromNodeNumber(nodeCache[i].getNumber());
+//            this.setParameterValue(maskIndex, 0.0);
+//        }
+    }
+
+//    private void setRateParameter(){
+//        for(int i = 0; i < rateParameter.getDimension(); i++) {
+//            if(maskParameter.getValue(i) == 0.0) {
+//                rateParameter.setParameterValue(i, 1.0);
+//            }
+//        }
+//    }
+
+    public Tree getTree() {
+        return treeModel;
     }
 
     @Override
-    public double getBranchRateDifferential(Tree tree, NodeRef node) {
-        return 0;
+    public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
+        checkDifferentiability();
+        return differentiableBranchRateModel.getBranchRateDifferential(tree, node);
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
-        return 0;
+        checkDifferentiability();
+        return differentiableBranchRateModel.getBranchRateSecondDifferential(tree, node);
     }
 
     @Override
     public Parameter getRateParameter() {
-        return null;
+        checkDifferentiability();
+        return differentiableBranchRateModel.getRateParameter();
     }
 
     @Override
     public int getParameterIndexFromNode(NodeRef node) {
-        return 0;
+        checkDifferentiability();
+        return differentiableBranchRateModel.getParameterIndexFromNode(node);
+    }
+
+    private void checkDifferentiability() {
+        if (differentiableBranchRateModel == null) {
+            throw new RuntimeException("Non-differentiable base BranchRateModel");
+        }
     }
 
     @Override
     public ArbitraryBranchRates.BranchRateTransform getTransform() {
-        return null;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        return new double[0];
+        return differentiableBranchRateModel.updateGradientLogDensity(gradient, value, from, to);
     }
 
     @Override
     public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
-        return new double[0];
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public double mapReduceOverRates(NodeRateMap map, DoubleBinaryOperator reduce, double initial) {
-        return 0;
-    }
+        checkDifferentiability();
+        return differentiableBranchRateModel.mapReduceOverRates(map, reduce, initial);    }
 
     @Override
     public void forEachOverRates(NodeRateMap map) {
-
+        checkDifferentiability();
+        differentiableBranchRateModel.forEachOverRates(map);
     }
 
     @Override
@@ -88,17 +182,31 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
-        return 0;
+//        this.nodeList.clear();
+//        updateNodeList(tree, this.referenceTaxon);
+
+//        if(nodeList.contains(node)){
+//        if (oneNode == node) {
+//            return 1.0;
+//        }
+//        else {
+//            return branchRateModel.getBranchRate(tree, node);
+        return getUntransformedBranchRate(tree, node);
+//        }
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+//        setRateParameter();
+//        NodeRef node = updateNodeList(treeModel, this.referenceTaxon);
+//        arbitraryBranchRateModel.setBranchRate(treeModel, node, 1.0);
+        fireModelChanged();
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+//        setRateParameter();
+        fireModelChanged();
     }
 
     @Override
@@ -134,11 +242,13 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
             Taxon referenceTaxon = (Taxon) xo.getChild(Taxon.class);
 
+            MaskFromTree maskParameter = (MaskFromTree) xo.getChild(MaskFromTree.class);
+
             int fixedLength = xo.getAttribute(FIXED_LENGTH, 0);
 
 //            int numBranches = tree.getNodeCount() - 1;
 
-            FixedReferenceRates fixedReferenceRates = new FixedReferenceRates(tree, model, referenceTaxon, fixedLength);
+            FixedReferenceRates fixedReferenceRates = new FixedReferenceRates(FIXED_REFERENCE_RATES, tree, model, referenceTaxon, fixedLength, maskParameter);
             return fixedReferenceRates;
         }
 
@@ -154,6 +264,7 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class),
                 new ElementRule(Taxon.class),
+                new ElementRule(MaskFromTree.class),
                 AttributeRule.newStringRule(FIXED_LENGTH, true),
         };
 

@@ -108,6 +108,10 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
                 whichBlock.add(i);
                 whichIndex.add(j);
             }
+
+            if (glm.getFixedEffectIndicator(i) != null) {
+                throw new IllegalArgumentException("GLM fixed effects gradients do not currently work with indicator variables");
+            }
         }
 
         final Parameter whichParameter = multi ? cp : glm.getFixedEffect(0);

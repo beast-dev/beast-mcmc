@@ -512,13 +512,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     protected double getTreeLength() {
-        double treeLength = 0;
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            NodeRef node = treeModel.getNode(i);
-            if (!treeModel.isRoot(node))
-                treeLength += treeModel.getBranchLength(node); // Bug was here
-        }
-        return treeLength;
+        return Tree.getTreeLength(treeModel);
     }
 
     public void recalculateTreeLength() {

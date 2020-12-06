@@ -223,7 +223,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
             }
         }
-        tree.pushTreeChangedEvent();
+        tree.pushTreeChangedEvent(TreeChangedEvent.create());
     }
 
     protected int getNodeHeightIndex(NodeRef node) {
@@ -238,7 +238,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
             if (object instanceof TreeChangedEvent) {
-                TreeModel.TreeChangedEvent changedEvent = (TreeModel.TreeChangedEvent) object;
+                TreeChangedEvent changedEvent = (TreeChangedEvent) object;
                 if (changedEvent.isTreeChanged()) {
                     ratiosKnown = false;
                     epochKnown = false;

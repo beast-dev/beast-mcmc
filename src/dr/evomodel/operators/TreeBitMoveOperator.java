@@ -26,6 +26,7 @@
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -41,7 +42,7 @@ import java.util.List;
  */
 public class TreeBitMoveOperator extends SimpleMCMCOperator {
 
-    public TreeBitMoveOperator(TreeModel tree, String t1, String t2, double weight) {
+    public TreeBitMoveOperator(DefaultTreeModel tree, String t1, String t2, double weight) {
         this.tree = tree;
         this.indicatorTrait = t1;
         this.trait2 = t2;
@@ -107,7 +108,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-    public final int rateChange(TreeModel tree, NodeRef node) {
+    public final int rateChange(DefaultTreeModel tree, NodeRef node) {
         return (int) Math.round(tree.getNodeTrait(node, indicatorTrait));
     }
 
@@ -126,7 +127,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
     }
     // Private instance variables
 
-    private TreeModel tree;
+    private DefaultTreeModel tree;
     private String indicatorTrait;
     private String trait2;
 }

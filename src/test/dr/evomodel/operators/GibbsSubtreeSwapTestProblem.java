@@ -6,6 +6,7 @@ package test.dr.evomodel.operators;
 import java.io.IOException;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.inference.operators.*;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -71,7 +72,7 @@ public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
 
         for (int i = 0; i < reps; i++) {
 
-            TreeModel treeModel = new TreeModel("treeModel", tree5);
+            DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree5);
             GibbsSubtreeSwap operator = new GibbsSubtreeSwap(treeModel, false, 1.0);
             double hr = operator.operate(null);
 
@@ -95,7 +96,7 @@ public class GibbsSubtreeSwapTestProblem extends OperatorAssert{
         assertExpectation(0.1, p_1, reps);
     }
 
-    public OperatorSchedule getOperatorSchedule(TreeModel treeModel) {
+    public OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel) {
 
         Parameter rootParameter = treeModel.createNodeHeightsParameter(true, false, false);
         Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);

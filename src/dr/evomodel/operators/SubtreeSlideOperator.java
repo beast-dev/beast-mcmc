@@ -27,6 +27,7 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
 import dr.inference.model.Statistic;
@@ -46,7 +47,7 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
     private static final boolean DEBUG = false;
 
-    private TreeModel tree = null;
+    private DefaultTreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
@@ -55,7 +56,7 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
     private AdaptationMode mode = AdaptationMode.DEFAULT;
     private final double targetAcceptance;
 
-    public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
+    public SubtreeSlideOperator(DefaultTreeModel tree, double weight, double size, boolean gaussian,
                                 boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches,
                                 AdaptationMode mode, double targetAcceptance) {
         super(mode, targetAcceptance);

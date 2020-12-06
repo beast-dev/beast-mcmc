@@ -46,7 +46,7 @@ public class StateHistory {
 //        this(0.0, startingState, stateCount);
 //    }
 
-    protected StateHistory(double startingTime, int startingState, int stateCount) {
+    public StateHistory(double startingTime, int startingState, int stateCount) {
         stateList = new ArrayList<StateChange>();
         stateList.add(new StateChange(startingTime, startingState));
         this.stateCount = stateCount;

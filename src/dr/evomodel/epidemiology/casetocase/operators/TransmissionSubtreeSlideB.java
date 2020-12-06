@@ -30,8 +30,10 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
 import dr.evomodel.operators.AbstractAdaptableTreeOperator;
 import dr.evomodel.operators.AbstractTreeOperator;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -49,7 +51,7 @@ import java.util.List;
 public class TransmissionSubtreeSlideB extends AbstractAdaptableTreeOperator {
 
     private CaseToCaseTreeLikelihood c2cLikelihood;
-    private TreeModel tree;
+    private PartitionedTreeModel tree;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;

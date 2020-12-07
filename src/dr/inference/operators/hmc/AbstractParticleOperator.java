@@ -98,14 +98,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         for (int i = 0; i < startingValue.length; i++) {
 
-            if (startingValue[i] == 0) {
-                if (mask == null) {
-                    throw new RuntimeException("must start from either positive or negative value!");
-                } else {
-                    if (mask.getParameterValue(i) == 1) {
-                        throw new RuntimeException("must start from either positive or negative value!");
-                    }
-                }
+            if (startingValue[i] == 0 && (mask == null || mask.getParameterValue(i) == 1)) {
+                throw new RuntimeException("Must start from either positive or negative value!");
             }
             sign[i] = startingValue[i] > 0 ? 1 : -1;
         }

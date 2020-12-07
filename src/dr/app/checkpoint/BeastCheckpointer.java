@@ -26,6 +26,7 @@
 package dr.app.checkpoint;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
@@ -204,8 +205,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                                 "Try resuming the analysis by using the same starting seed as for the original BEAST run.");
                     } else {
                         System.out.println("Saved lnL does not match recomputed value for loaded state: stored lnL: " + savedLnL +
-                        ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
-                        "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL - lnL) + ")." +
+                                "\nThreshold of " + threshold + " for restarting analysis not exceeded; continuing ...");
                     }
                 }
 
@@ -253,8 +254,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         out.print("\t");
                         out.print(parameter.getParameterUntransformedValue(dim));
                     }
-                    out.print("\n");
                 }
+                out.print("\n");
             }
 
             for (int i = 0; i < operatorSchedule.getOperatorCount(); i++) {
@@ -448,7 +449,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
                             System.out.print("restoring " + fields[1] + " with values ");
                         }
                         for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                            parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                            try {
+                                parameter.setParameterUntransformedValue(dim, Double.parseDouble(fields[dim + 3]));
+                            } catch (RuntimeException rte) {
+                                System.err.println(rte);
+                                continue;
+                            }
                             if (DEBUG) {
                                 System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
                             }

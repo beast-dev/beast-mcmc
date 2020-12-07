@@ -875,6 +875,7 @@ public class BeastMain {
         }
 
         additionalParsers.add("beagle");
+        additionalParsers.add("old");
 
         if (beagleFlags != 0) {
             System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));

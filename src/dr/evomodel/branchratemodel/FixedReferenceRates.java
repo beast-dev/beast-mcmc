@@ -16,6 +16,10 @@ import java.util.function.DoubleBinaryOperator;
  * @author Alexander Fisher
  */
 
+
+/**
+ * NOTE: if you log this class when it wraps around a locationScaledBranchRateModel you will be logging the 'location-scaled' branch-rates
+ */
 public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
     public static final String FIXED_REFERENCE_RATES = "fixedReferenceRates";
     public static final String FIXED_LENGTH = "fixedLength";
@@ -34,6 +38,13 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
         this.fixedLength = fixedLength; //todo: add implementation for this optional parameter
         this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
                 (DifferentiableBranchRates) branchRateModel : null;
+
+        if(differentiableBranchRateModel instanceof ArbitraryBranchRates){
+            ArbitraryBranchRates arbitraryBranchRateModel = (ArbitraryBranchRates) differentiableBranchRateModel;
+            if (( arbitraryBranchRateModel.getTransform() instanceof ArbitraryBranchRates.BranchRateTransform.None )== false){
+                throw new RuntimeException("Transformed arbitrary branch rates not yet implemented.");
+            }
+        }
 
         checkDifferentiability();
         //todo: just feed this a differentiableBranchRateModel
@@ -143,7 +154,14 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
-        return getUntransformedBranchRate(tree, node);
+        updateNodeList(tree, referenceTaxon);
+
+        double branchRate = differentiableBranchRateModel.getBranchRate(tree, node);
+        if (node == oneNode) {
+            return branchRate / differentiableBranchRateModel.getUntransformedBranchRate(tree, node); // returns 1.0 as long as there are no transforms or returns location
+        } else {
+            return branchRate;
+        }
     }
 
     @Override

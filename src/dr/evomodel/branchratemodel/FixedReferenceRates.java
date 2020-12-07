@@ -4,6 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Bounds;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -18,7 +19,7 @@ import java.util.function.DoubleBinaryOperator;
 
 
 /**
- * NOTE: if you log this class when it wraps around a locationScaledBranchRateModel you will be logging the 'location-scaled' branch-rates
+ * NOTE: if you log this class to a tree log file when it wraps around a locationScaledBranchRateModel you will be logging the 'location-scaled' branch-rates
  */
 public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
     public static final String FIXED_REFERENCE_RATES = "fixedReferenceRates";
@@ -30,6 +31,8 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     private final int fixedLength;
     //    private List<NodeRef> nodeList;
     private NodeRef oneNode; // node to be set to 1.0
+
+    private Parameter parameter;
 
     public FixedReferenceRates(String name, TreeModel treeModel, BranchRateModel branchRateModel, Taxon referenceTaxon, int fixedLength) {
         super(name);
@@ -187,6 +190,15 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     @Override
     protected void acceptState() {
 
+    }
+
+    //to log these rates
+    public Parameter getParameter() {
+//        updateNodeList(treeModel, referenceTaxon);
+        parameter = differentiableBranchRateModel.getRateParameter();
+        int index = differentiableBranchRateModel.getParameterIndexFromNode(oneNode);
+        parameter.setValue(index, 1.0);
+        return parameter;
     }
 
     // **************************************************************

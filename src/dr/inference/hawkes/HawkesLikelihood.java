@@ -224,8 +224,12 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
     @Override
     public String getReport() {
-        return getId() + ": " + getLogLikelihood() + "\n" +
-                GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
+        StringBuilder sb = new StringBuilder();
+
+        double loglik = getLogLikelihood();
+        sb.append(getClass().getName()).append("(").append(loglik).append(")");
+
+        return sb.toString();
     }
 
     @Override

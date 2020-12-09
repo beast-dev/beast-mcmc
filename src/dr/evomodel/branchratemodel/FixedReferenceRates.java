@@ -4,7 +4,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -17,7 +16,8 @@ import java.util.function.DoubleBinaryOperator;
  * @author Alexander Fisher
  */
 
-public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates, Loggable {
+// todo: match gradient -- numerical != 0?
+public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
     public static final String FIXED_REFERENCE_RATES = "fixedReferenceRates";
     public static final String FIXED_LENGTH = "fixedLength";
 
@@ -56,7 +56,7 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     }
 
     public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
-
+        updateNodeList(tree, referenceTaxon); //todo: figure out why this is necessary
         if (!nodeKnown) {
             updateNodeList(tree, referenceTaxon);
         }

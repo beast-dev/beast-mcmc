@@ -37,7 +37,7 @@ import dr.inference.model.*;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
-public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units /*, CoalescentIntervalProvider*/ {
+public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units, CoalescentIntervalProvider {
 
     // PUBLIC STUFF
 
@@ -131,30 +131,11 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
 
     protected final IntervalList getIntervalList() {
-            return intervalList;
+        return intervalList;
     }
-
-//    public double getCoalescentEventsStatisticValue(int i) {
-//        if (i == 0) {
-//            for (int j = 0; j < coalescentEventStatisticValues.length; j++) {
-//                coalescentEventStatisticValues[j] = 0.0;
-//            }
-//            int counter = 0;
-//            for (int j = 0; j < getCoalescentIntervalDimension(); j++) {
-//                if (getCoalescentIntervalType(j) == IntervalType.COALESCENT) {
-//                    this.coalescentEventStatisticValues[counter] += getCoalescentInterval(j) * (getCoalescentIntervalLineageCount(j) * (getCoalescentIntervalLineageCount(j) - 1.0)) / 2.0;
-//                    counter++;
-//                } else {
-//                    this.coalescentEventStatisticValues[counter] += getCoalescentInterval(j) * (getCoalescentIntervalLineageCount(j) * (getCoalescentIntervalLineageCount(j) - 1.0)) / 2.0;
-//                }
-//            }
-//        }
-//        return coalescentEventStatisticValues[i];
-//    }
 
     public String toString() {
         return Double.toString(logLikelihood);
-
     }
 
     // ****************************************************************
@@ -191,5 +172,4 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected boolean intervalsKnown = false;
     protected boolean storedIntervalsKnown = false;
 
-//    private double[] coalescentEventStatisticValues;
 }

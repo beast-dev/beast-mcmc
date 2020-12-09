@@ -53,7 +53,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
-public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implements CoalescentIntervalProvider, Citable {
+public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF
 

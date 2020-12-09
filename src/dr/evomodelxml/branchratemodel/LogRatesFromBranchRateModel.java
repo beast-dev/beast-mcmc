@@ -37,7 +37,7 @@ public class LogRatesFromBranchRateModel implements Loggable {
 
 
     private String getName(int dim) {
-        return "rate." + dim + 1;
+        return "rate." + (dim + 1);
     }
 
     private class RateColumn extends NumberColumn {

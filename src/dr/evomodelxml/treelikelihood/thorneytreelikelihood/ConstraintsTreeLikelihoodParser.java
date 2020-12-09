@@ -23,11 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.bigfasttree.constrainedtree;
+package dr.evomodelxml.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.constrainedtree.ConstraintsTreeLikelihood;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstraintsTreeLikelihood;
 import dr.xml.*;
 
 /**

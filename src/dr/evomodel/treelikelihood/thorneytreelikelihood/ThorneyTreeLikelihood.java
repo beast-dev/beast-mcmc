@@ -1,4 +1,4 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.treelikelihood.thorneytreelikelihood;
 /*
  * AbstractTreeLikelihood.java
  *
@@ -26,8 +26,6 @@ package dr.evomodel.bigfasttree;
 
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
@@ -35,12 +33,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.Reportable;
-import org.apache.commons.math.special.Gamma;
-import org.apache.commons.math.util.FastMath;
 
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 /**
  * ApproximatePoissonTreeLikelihood - a tree likelihood which uses an ML tree as expected number
@@ -54,55 +48,20 @@ import java.util.Map;
  * @author Andrew Rambaut
  */
 
-public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood implements Reportable {
+public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
-    public ApproximatePoissonTreeLikelihood(String name, Tree dataTree, int sequenceLength, TreeModel treeModel, BranchRateModel branchRateModel) {
+    public ThorneyTreeLikelihood(String name, TreeModel treeModel, BranchLengthProvider branchLengthProvider, ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate) {
 
         super(name);
 
-        this.sequenceLength = sequenceLength;
-
         this.treeModel = treeModel;
         addModel(treeModel);
-
-        this.branchRateModel = branchRateModel;
-        addModel(branchRateModel);
-
-
-        HashMap<BitSet, NodeRef> dataTreeMap = getBitSetNodeMap(dataTree,dataTree);
-
-        HashMap<BitSet, NodeRef> treeModelMap = getBitSetNodeMap(dataTree,treeModel);
-        // reverse map to be <NodeRef, BitSet>
-        HashMap <NodeRef, BitSet> treeModelNodeMap = new HashMap<>();
-        for (Map.Entry<BitSet, NodeRef> entry: treeModelMap.entrySet()){
-            treeModelNodeMap.put(entry.getValue(), entry.getKey());
-        }
-        // An array where the entry points to the node in the data tree that maps to the node in the time tree
-        // Nodes that result from resolving a polytomy in the data tree will point to the polytomy node.
-        this.nodeInDataTree = new int[this.treeModel.getNodeCount()];
-
-
-        setUpNodeMap(treeModelNodeMap,dataTreeMap,treeModel.getRoot(),null);
-
+        this.thorneyBranchLengthLikelihoodDelegate = thorneyBranchLengthLikelihoodDelegate;
+        addModel(thorneyBranchLengthLikelihoodDelegate);
+        this.branchLengthProvider = branchLengthProvider;
 
         updateNode = new boolean[treeModel.getNodeCount()];
-        branchLengths = new double[dataTree.getNodeCount()];
-
-        for (int i = 0; i < dataTree.getNodeCount(); i++) {
-            double x = dataTree.getBranchLength(dataTree.getNode(i)) * sequenceLength;
-            branchLengths[i] = Math.round(x);
-        }
-        for (int i = 0; i <this.treeModel.getNodeCount() ; i++) {
-            updateNode[i] = true;
-        }
-
-//        distanceMatrix = new double[treeModel.getExternalNodeCount()][];
-//        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
-//            distanceMatrix[i] = new double[treeModel.getExternalNodeCount()];
-//            for (int j = i + 1; j < treeModel.getExternalNodeCount(); j++) {
-//                distanceMatrix[i][j] = distanceMatrix[j][i] = TreeUtils.getPathLength(dataTree, dataTree.getNode(i), dataTree.getNode(j));
-//            }
-//        }
+        Arrays.fill(updateNode, true);
 
         branchLogL = new double[treeModel.getNodeCount()];
         storedBranchLogL = new double[treeModel.getNodeCount()];
@@ -113,74 +72,8 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
         cachedRootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
     }
 
-    /**
-     * A private recursive method that sets the map from the treemodel to the data tree. If the data tree is resolved it
-     * will be a 1 to 1 map. If there are polytomies in the data tree all inserted nodes will map to the polytomy node.
-     * @param treeModelNodeMap
-     * @param dataTreeMap
-     * @param node
-     * @param parentsClade
-     */
-    private void setUpNodeMap(HashMap <NodeRef, BitSet> treeModelNodeMap, HashMap<BitSet, NodeRef> dataTreeMap,NodeRef node, BitSet parentsClade){
-        BitSet clade = treeModelNodeMap.get(node);
-        int j = node.getNumber();
-        if(!dataTreeMap.containsKey(clade)){
-            clade=parentsClade;
-        }
-        nodeInDataTree[j] = dataTreeMap.get(clade).getNumber();
-        for (int i = 0; i <treeModel.getChildCount(node) ; i++) {
-            NodeRef child = treeModel.getChild(node,i);
-            setUpNodeMap(treeModelNodeMap,dataTreeMap,child,clade);
-        }
 
-    }
 
-    private double getNumberOfMutations(int i) {
-        int dataNode = nodeInDataTree[i];
-        int dataParentNode = nodeInDataTree[treeModel.getParent(treeModel.getNode(i)).getNumber()];
-        if(dataNode==dataParentNode){
-            return 0d;
-        }else{
-            return branchLengths[dataNode];
-        }
-
-    }
-    /**
-     * Gets a HashMap of clade bitsets to nodes in tree. This is useful for comparing the topology of trees
-     * @param referenceTree  the tree that will be used to define taxa and tip numbers
-     * @param tree the tree for which clades are being defined
-     * @return A HashMap with a BitSet of descendent taxa as the key and a node as value
-     */
-    private HashMap<BitSet, NodeRef> getBitSetNodeMap(Tree referenceTree,Tree  tree) {
-        HashMap<BitSet, NodeRef> map = new HashMap<>();
-        addBits(referenceTree,tree,tree.getRoot(),map);
-        return map;
-    }
-
-    /**
-     *  A private recursive function used by getBitSetNodeMap
-     *  This is modeled after the addClades in CladeSet and getClades in compatibility statistic
-     * @param referenceTree  the tree that will be used to define taxa and tip numbers
-     * @param tree the tree for which clades are being defined
-     * @param node current node
-     * @param map map that is being appended to
-     */
-    private BitSet addBits(Tree referenceTree, Tree tree, NodeRef node, HashMap map) {
-        BitSet bits = new BitSet();
-        if (tree.isExternal(node)) {
-            String taxonId = tree.getNodeTaxon(node).getId();
-            bits.set(referenceTree.getTaxonIndex(taxonId));
-
-        } else {
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                NodeRef node1 = tree.getChild(node, i);
-                bits.or(addBits(referenceTree,tree, node1, map));
-            }
-        }
-
-        map.put(bits, node);
-        return bits;
-    }
     /**
      * Set update flag for a node only
      */
@@ -277,15 +170,11 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
                 }
             }
 
-        } else if (model == branchRateModel) {
+        } else if (model == thorneyBranchLengthLikelihoodDelegate) {
             if (index == -1) {
                 updateAllNodes();
-            } else {
-                updateNode(treeModel.getNode(index));
             }
-
         } else {
-
             throw new RuntimeException("Unknown componentChangedEvent");
         }
     }
@@ -347,21 +236,22 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
                 NodeRef node = treeModel.getNode(i);
                 // skip the root and the second child of the root (this is added to the first child)
 
-                double expected = treeModel.getBranchLength(node) * branchRateModel.getBranchRate(treeModel, node);
-                double x = getNumberOfMutations(i);
+                double time = treeModel.getBranchLength(node);
+                double mutations = branchLengthProvider.getBranchLength(treeModel, node);
 
                 if (i == rootChild1) {
                     // sum the branches on both sides of the root
                     NodeRef node2 = treeModel.getNode(rootChild2);
-                    expected += treeModel.getBranchLength(node2) * branchRateModel.getBranchRate(treeModel, node2);
-                    x += getNumberOfMutations(rootChild2);
+                    time += treeModel.getBranchLength(node2);
+                    mutations += branchLengthProvider.getBranchLength(treeModel, node2);
                 }
-                double mean = expected * sequenceLength;
+//                double mean = expected * sequenceLength;
 
 //                gamma.setScale(1.0);
 //                branchLogL[i] = gamma.logPdf(x);
 
-                branchLogL[i] = SaddlePointExpansion.logPoissonProbability(mean,(int)x); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+                branchLogL[i] = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations,time);
+            //SaddlePointExpansion.logPoissonProbability(mean,(int)x); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
             }
             updateNode[i] = false;
             logL += branchLogL[i];
@@ -416,11 +306,9 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
      */
     private final TreeModel treeModel;
 
-    private final BranchRateModel branchRateModel;
+    private final ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate;
+    private final BranchLengthProvider branchLengthProvider;
 
-    private final int sequenceLength;
-
-    private final double[] branchLengths;
     //private final double[][] distanceMatrix;
 
     /**
@@ -440,98 +328,7 @@ public class ApproximatePoissonTreeLikelihood extends AbstractModelLikelihood im
     private int storedCachedRootChild2;
     private double[] branchLogL;
     private double[] storedBranchLogL;
-    private final int[] nodeInDataTree;
 
 
 }
 
-// Grabbed some stuff from Commons Maths as it is not public
-// This code is under the Apache License 2.0
-
-final class SaddlePointExpansion {
-    private static final double HALF_LOG_2_PI = 0.5D * FastMath.log(6.283185307179586D);
-    private static final double[] EXACT_STIRLING_ERRORS = new double[]{0.0D, 0.15342640972002736D, 0.08106146679532726D, 0.05481412105191765D, 0.0413406959554093D, 0.03316287351993629D, 0.02767792568499834D, 0.023746163656297496D, 0.020790672103765093D, 0.018488450532673187D, 0.016644691189821193D, 0.015134973221917378D, 0.013876128823070748D, 0.012810465242920227D, 0.01189670994589177D, 0.011104559758206917D, 0.010411265261972096D, 0.009799416126158804D, 0.009255462182712733D, 0.008768700134139386D, 0.00833056343336287D, 0.00793411456431402D, 0.007573675487951841D, 0.007244554301320383D, 0.00694284010720953D, 0.006665247032707682D, 0.006408994188004207D, 0.006171712263039458D, 0.0059513701127588475D, 0.0057462165130101155D, 0.005554733551962801D};
-
-    private SaddlePointExpansion() {
-    }
-
-    static double getStirlingError(double z) {
-        double ret;
-        double z2;
-        if (z < 15.0D) {
-            z2 = 2.0D * z;
-            if (FastMath.floor(z2) == z2) {
-                ret = EXACT_STIRLING_ERRORS[(int)z2];
-            } else {
-                ret = Gamma.logGamma(z + 1.0D) - (z + 0.5D) * FastMath.log(z) + z - HALF_LOG_2_PI;
-            }
-        } else {
-            z2 = z * z;
-            ret = (0.08333333333333333D - (0.002777777777777778D - (7.936507936507937E-4D - (5.952380952380953E-4D - 8.417508417508417E-4D / z2) / z2) / z2) / z2) / z;
-        }
-
-        return ret;
-    }
-
-    static double getDeviancePart(double x, double mu) {
-        double ret;
-        if (FastMath.abs(x - mu) < 0.1D * (x + mu)) {
-            double d = x - mu;
-            double v = d / (x + mu);
-            double s1 = v * d;
-            double s = 0.0D / 0.0;
-            double ej = 2.0D * x * v;
-            v *= v;
-
-            for(int j = 1; s1 != s; ++j) {
-                s = s1;
-                ej *= v;
-                s1 += ej / (double)(j * 2 + 1);
-            }
-
-            ret = s1;
-        } else {
-            ret = x * FastMath.log(x / mu) + mu - x;
-        }
-
-        return ret;
-    }
-
-    static double logBinomialProbability(int x, int n, double p, double q) {
-        double ret;
-        if (x == 0) {
-            if (p < 0.1D) {
-                ret = -getDeviancePart((double)n, (double)n * q) - (double)n * p;
-            } else {
-                ret = (double)n * FastMath.log(q);
-            }
-        } else if (x == n) {
-            if (q < 0.1D) {
-                ret = -getDeviancePart((double)n, (double)n * p) - (double)n * q;
-            } else {
-                ret = (double)n * FastMath.log(p);
-            }
-        } else {
-            ret = getStirlingError((double)n) - getStirlingError((double)x) - getStirlingError((double)(n - x)) - getDeviancePart((double)x, (double)n * p) - getDeviancePart((double)(n - x), (double)n * q);
-            double f = 6.283185307179586D * (double)x * (double)(n - x) / (double)n;
-            ret += -0.5D * FastMath.log(f);
-        }
-
-        return ret;
-    }
-
-    static public double logPoissonProbability(double mean,int x) {
-        double ret;
-        if (x >= 0 && x != 2147483647) {
-            if (x == 0) {
-                ret = FastMath.exp(-mean);
-            } else {
-                ret = FastMath.exp(-getStirlingError((double)x) - getDeviancePart((double)x, mean)) / FastMath.sqrt(6.283185307179586D * (double)x);
-            }
-        } else {
-            ret = 0.0D;
-        }
-
-        return Math.log(ret);
-    }
-}

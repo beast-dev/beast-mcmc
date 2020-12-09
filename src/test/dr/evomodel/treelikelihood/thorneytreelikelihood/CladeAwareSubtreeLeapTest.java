@@ -1,4 +1,4 @@
-package test.dr.evomodel.bigfasttree.constrainedtree;
+package test.dr.evomodel.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -6,10 +6,10 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.*;
-import dr.evomodel.bigfasttree.constrainedtree.CladeAwareSubtreeLeap;
-import dr.evomodel.bigfasttree.constrainedtree.CladeNodeModel;
-import dr.evomodel.bigfasttree.constrainedtree.CladeRef;
-import dr.evomodel.bigfasttree.constrainedtree.ConstraintsTreeLikelihood;
+import dr.evomodel.bigfasttree.wip.CladeAwareSubtreeLeap;
+import dr.evomodel.bigfasttree.wip.CladeNodeModel;
+import dr.evomodel.bigfasttree.wip.CladeRef;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstraintsTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
 import junit.framework.TestCase;

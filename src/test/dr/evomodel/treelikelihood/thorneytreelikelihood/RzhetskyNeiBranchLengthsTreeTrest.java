@@ -1,11 +1,10 @@
-package test.dr.evomodel.bigfasttree;
+package test.dr.evomodel.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
-import dr.evomodel.bigfasttree.BranchLengthProvider;
-import dr.evomodel.bigfasttree.RzhetskyNeiBranchLengthProvider;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.BranchLengthProvider;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.RzhetskyNeiBranchLengthProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
 import junit.framework.TestCase;

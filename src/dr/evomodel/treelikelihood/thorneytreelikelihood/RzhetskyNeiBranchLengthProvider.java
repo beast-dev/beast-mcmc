@@ -1,4 +1,4 @@
-package dr.evomodel.bigfasttree;
+package dr.evomodel.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.tree.NodeRef;

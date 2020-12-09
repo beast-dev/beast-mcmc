@@ -4,7 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Bounds;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -17,11 +17,7 @@ import java.util.function.DoubleBinaryOperator;
  * @author Alexander Fisher
  */
 
-
-/**
- * NOTE: if you log this class to a tree log file when it wraps around a locationScaledBranchRateModel you will be logging the 'location-scaled' branch-rates
- */
-public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates {
+public class FixedReferenceRates extends AbstractBranchRateModel implements DifferentiableBranchRates, Loggable {
     public static final String FIXED_REFERENCE_RATES = "fixedReferenceRates";
     public static final String FIXED_LENGTH = "fixedLength";
 
@@ -31,26 +27,26 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     private final int fixedLength;
     //    private List<NodeRef> nodeList;
     private NodeRef oneNode; // node to be set to 1.0
-
-    private Parameter parameter;
+    private boolean nodeKnown = false;
+    private boolean storedNodeKnown;
+    private NodeRef storedOneNode;
 
     public FixedReferenceRates(String name, TreeModel treeModel, BranchRateModel branchRateModel, Taxon referenceTaxon, int fixedLength) {
         super(name);
         this.treeModel = treeModel;
-        this.referenceTaxon = referenceTaxon; //currently redundant
+        this.referenceTaxon = referenceTaxon;
         this.fixedLength = fixedLength; //todo: add implementation for this optional parameter
         this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
                 (DifferentiableBranchRates) branchRateModel : null;
 
-        if(differentiableBranchRateModel instanceof ArbitraryBranchRates){
-            ArbitraryBranchRates arbitraryBranchRateModel = (ArbitraryBranchRates) differentiableBranchRateModel;
-            if (( arbitraryBranchRateModel.getTransform() instanceof ArbitraryBranchRates.BranchRateTransform.None )== false){
-                throw new RuntimeException("Transformed arbitrary branch rates not yet implemented.");
-            }
-        }
+//        if (differentiableBranchRateModel instanceof ArbitraryBranchRates) {
+//            ArbitraryBranchRates arbitraryBranchRateModel = (ArbitraryBranchRates) differentiableBranchRateModel;
+//            if ((arbitraryBranchRateModel.getTransform() instanceof ArbitraryBranchRates.BranchRateTransform.None) == false) {
+//                throw new RuntimeException("Transformed arbitrary branch rates not yet implemented.");
+//            }
+//        }
 
         checkDifferentiability();
-        //todo: just feed this a differentiableBranchRateModel
 
         updateNodeList(treeModel, this.referenceTaxon);
 
@@ -61,7 +57,9 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
 
-        updateNodeList(tree, referenceTaxon);
+        if (!nodeKnown) {
+            updateNodeList(tree, referenceTaxon);
+        }
         if (node == oneNode) {
             return 1.0;
         } else {
@@ -70,7 +68,7 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     }
 
     void updateNodeList(Tree tree, Taxon taxon) {
-
+        nodeKnown = true;
         int nodeNumber = tree.getTaxonIndex(taxon.getId());
         NodeRef node = tree.getNode(nodeNumber);
         NodeRef root = tree.getRoot();
@@ -157,34 +155,42 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
-        updateNodeList(tree, referenceTaxon);
-
-        double branchRate = differentiableBranchRateModel.getBranchRate(tree, node);
+        if (!nodeKnown) {
+            updateNodeList(tree, referenceTaxon);
+        }
         if (node == oneNode) {
-            return branchRate / differentiableBranchRateModel.getUntransformedBranchRate(tree, node); // returns 1.0 as long as there are no transforms or returns location
+            return 1.0;
         } else {
-            return branchRate;
+            return differentiableBranchRateModel.getBranchRate(tree, node);
         }
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged();
+        if (model == differentiableBranchRateModel) {
+            fireModelChanged();
+        } else if (model == treeModel) {
+            nodeKnown = false;
+        } else {
+            throw new RuntimeException("Should only watch branchRates or treeModel");
+        }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        fireModelChanged();
+        throw new RuntimeException("Should not be variable changed event");
     }
 
     @Override
     protected void storeState() {
-
+        storedNodeKnown = nodeKnown;
+        storedOneNode = oneNode;
     }
 
     @Override
     protected void restoreState() {
-
+        nodeKnown = storedNodeKnown;
+        oneNode = storedOneNode;
     }
 
     @Override
@@ -192,14 +198,12 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     }
 
-    //to log these rates
-    public Parameter getParameter() {
-//        updateNodeList(treeModel, referenceTaxon);
-        parameter = differentiableBranchRateModel.getRateParameter();
-        int index = differentiableBranchRateModel.getParameterIndexFromNode(oneNode);
-        parameter.setValue(index, 1.0);
-        return parameter;
-    }
+//    @Override
+//    LogColumn[] getColumns() {
+//        return new LogColumn[differentiableBranchRateModel.getRateParameter().getDimension()] {
+//            new LikelihoodColumn(getId())
+//        }
+//    }
 
     // **************************************************************
     // XMLObjectParser

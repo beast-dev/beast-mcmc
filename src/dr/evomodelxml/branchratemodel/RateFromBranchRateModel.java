@@ -4,7 +4,7 @@ import dr.evomodel.branchratemodel.FixedReferenceRates;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class RateParameterFromFixedReferenceRates extends AbstractXMLObjectParser {
+public class RateFromBranchRateModel extends AbstractXMLObjectParser {
 
     private static final String RATE_PARAMETER = "rateParameter";
 
@@ -16,7 +16,7 @@ public class RateParameterFromFixedReferenceRates extends AbstractXMLObjectParse
 
         FixedReferenceRates fixedReferenceRates = (FixedReferenceRates) xo.getChild(FixedReferenceRates.class);
 
-        return fixedReferenceRates.getParameter();
+        return null;
     }
 
     //************************************************************************

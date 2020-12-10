@@ -75,10 +75,17 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 
 
     /**
-     * Set update flag for a node only
+     * Set update flag for node and remove it's old contribution to the likelihood.
+     * Also handle the root and children so that the 1 branch between children is marked as updated.
+     * @param node
      */
     protected void updateNode(NodeRef node) {
+
         updateNode[node.getNumber()] = true;
+        NodeRef parent = treeModel.getParent(node);
+        if (parent != null && !updateNode[parent.getNumber()]) {
+            updateNode(parent);
+        }
         likelihoodKnown = false;
     }
 
@@ -86,13 +93,18 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
      * Set update flag for a node and its direct children
      */
     protected void updateNodeAndChildren(NodeRef node) {
-        updateNode[node.getNumber()] = true;
+
+        updateNode(node);
+
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
             NodeRef child = treeModel.getChild(node, i);
-            updateNode[child.getNumber()] = true;
+            updateNode(child);
         }
-        likelihoodKnown = false;
+
+//        likelihoodKnown = false;
     }
+
+
 
     /**
      * Set update flag for a node and all its descendents
@@ -215,8 +227,37 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
+    private double calculateLogLikelihood(NodeRef node, int root, int rootChild1, int rootChild2) {
+        int nodeIndex = node.getNumber();
 
-    private double calculateLogLikelihood() {
+        if (updateNode[nodeIndex]) {
+            double logL;
+            if(nodeIndex==root || nodeIndex==rootChild2){
+                logL=0;
+            }else{
+                double time = treeModel.getBranchLength(node);
+                double mutations = branchLengthProvider.getBranchLength(treeModel, node);
+
+                if (nodeIndex == rootChild1) {
+                    // sum the branches on both sides of the root
+                    NodeRef node2 = treeModel.getNode(rootChild2);
+                    time += treeModel.getBranchLength(node2);
+                    mutations += branchLengthProvider.getBranchLength(treeModel, node2);
+                }
+//                gamma.setScale(1.0);
+//                branchLogL[i] = gamma.logPdf(x);
+                logL = thorneyBranchLengthLikelihoodDelegate.getLogLikelihood(mutations,time); //SaddlePointExpansion.logBinomialProbability((int)x, sequenceLength, expected, 1.0D - expected);
+            }
+
+            for (int i = 0; i < treeModel.getChildCount(node); i++) {
+                logL += calculateLogLikelihood(treeModel.getChild(node, i),root,rootChild1,rootChild2);
+            }
+            branchLogL[nodeIndex] = logL;
+            updateNode[nodeIndex] = false;
+        }
+        return branchLogL[nodeIndex];
+    }
+    private double calculateLogLikelihoodLinear() {
 
 //        makeDirty();
 //Could make this faster by only adding the changed values
@@ -260,19 +301,17 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
         return logL;
     }
 
-    private void calculateLogLikelihood(NodeRef node) {
-        NodeRef c1 = treeModel.getChild(node, 0);
-        if (!treeModel.isExternal(c1)) {
-            calculateLogLikelihood(c1);
-        }
-        NodeRef c2 = treeModel.getChild(node, 1);
-        if (!treeModel.isExternal(c2)) {
-            calculateLogLikelihood(c2);
-        }
+    private double calculateLogLikelihood() {
 
+        int root = treeModel.getRoot().getNumber();
+        int rootChild1 = treeModel.getChild(treeModel.getRoot(), 0).getNumber();
+        int rootChild2 = treeModel.getChild(treeModel.getRoot(), 1).getNumber();
+        updateNode[rootChild1] = updateNode[rootChild1] || updateNode[rootChild2] ;
+        assert updateNode[root];
+
+        return calculateLogLikelihood(treeModel.getRoot(), root, rootChild1, rootChild2);
 
     }
-
     public final Model getModel() {
         return this;
     }

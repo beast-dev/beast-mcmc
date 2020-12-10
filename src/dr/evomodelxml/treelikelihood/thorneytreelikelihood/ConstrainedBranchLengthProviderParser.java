@@ -1,9 +1,7 @@
 package dr.evomodelxml.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.*;
-import dr.inference.model.Likelihood;
 import dr.xml.*;
 
 public class ConstrainedBranchLengthProviderParser extends AbstractXMLObjectParser {

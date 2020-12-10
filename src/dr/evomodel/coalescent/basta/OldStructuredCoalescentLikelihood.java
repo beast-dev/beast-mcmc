@@ -721,6 +721,16 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
         matricesKnown = false;
     }
 
+    @Override
+    public int getNumberOfCoalescentEvents() {
+        throw new RuntimeException("Method getNumberOfCoalescentEvents() in OldStructuredCoalescentLikelihood not supported.");
+    }
+
+    @Override
+    public double getCoalescentEventsStatisticValue(int i) {
+        throw new RuntimeException("Method getNumberOfCoalescentEvents() in OldStructuredCoalescentLikelihood not supported.");
+    }
+
     /**
      * Private class that allows for objects that hold the computed probability distribution of lineages among demes
      */

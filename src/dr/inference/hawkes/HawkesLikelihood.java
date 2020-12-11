@@ -407,6 +407,10 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String TIMES = "times";
         final static String TIME_ATTRIBUTE_NAME = "timeTrait";
         final static String LOCATION_ATTRIBUTE_NAME = "locationTrait";
+        final static String LOCATION_MEAN = "locationMean";
+        final static String LOCATION_MEAN_NAME = "locationMeanTrait";
+        final static String LOCATION_VARIANCE = "locationVariance";
+        final static String LOCATION_VARIANCE_NAME = "locationVarianceTrait";
         final static String BY_INCREMENT = "byIncrement";
         final static String HPH_DIMENSION = "hphDimension";
         final static String SIGMA_PRECISON = "sigmaXprec";
@@ -427,12 +431,23 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
             int hphDimension = xo.getIntegerAttribute(HPH_DIMENSION);
 
-            MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
+            XMLObject cxo = xo.getChild(LOCATIONS);
+            MatrixParameterInterface locationsParameter = (MatrixParameterInterface) cxo.getChild(MatrixParameterInterface.class);
+
             String timeTraitName = xo.getStringAttribute(TIME_ATTRIBUTE_NAME);
             String locationTraitName = xo.getStringAttribute(LOCATION_ATTRIBUTE_NAME);
             Taxa taxa = (Taxa) xo.getElementFirstChild(TIMES);
             double[] times = parseTimes(taxa, timeTraitName, locationsParameter, locationTraitName);
-
+            MatrixParameterInterface locationMeans = null;
+            MatrixParameterInterface locationVariance = null;
+            if (cxo.hasChildNamed(LOCATION_MEAN) && cxo.hasChildNamed(LOCATION_VARIANCE)) {
+                locationMeans = (MatrixParameterInterface) cxo.getElementFirstChild(LOCATION_MEAN);
+                String locationMeanTraitName = cxo.getChild(LOCATION_MEAN).getStringAttribute(LOCATION_MEAN_NAME);
+                locationVariance = (MatrixParameterInterface) cxo.getElementFirstChild(LOCATION_VARIANCE);
+                String locationVarianceTraitName = cxo.getChild(LOCATION_VARIANCE).getStringAttribute(LOCATION_VARIANCE_NAME);
+                parseTimes(taxa, timeTraitName, locationMeans, locationMeanTraitName);
+                parseTimes(taxa, timeTraitName, locationVariance, locationVarianceTraitName);
+            }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
                 TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
@@ -498,7 +513,21 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(HPH_DIMENSION, false, "The dimension of the space for HPH"),
-                new ElementRule(LOCATIONS, MatrixParameterInterface.class),
+                new ElementRule(LOCATIONS,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(MatrixParameterInterface.class),
+                                new ElementRule("Optional location prior related trait construction",
+                                        new XMLSyntaxRule[] {
+                                                new AndRule( new XMLSyntaxRule[]{
+                                                        new ElementRule(LOCATION_MEAN, MatrixParameterInterface.class),
+                                                        AttributeRule.newStringRule(LOCATION_MEAN_NAME)}),
+                                                new AndRule( new XMLSyntaxRule[]{
+                                                        new ElementRule(LOCATION_VARIANCE, MatrixParameterInterface.class),
+                                                        AttributeRule.newStringRule(LOCATION_VARIANCE_NAME)})
+                                        },
+                                        true
+                                )
+                        }),
                 new ElementRule(TIMES, Taxa.class),
                 AttributeRule.newStringRule(TIME_ATTRIBUTE_NAME),
                 AttributeRule.newStringRule(LOCATION_ATTRIBUTE_NAME),

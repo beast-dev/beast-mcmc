@@ -439,14 +439,22 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             Taxa taxa = (Taxa) xo.getElementFirstChild(TIMES);
             double[] times = parseTimes(taxa, timeTraitName, locationsParameter, locationTraitName);
             MatrixParameterInterface locationMeans = null;
-            MatrixParameterInterface locationVariance = null;
+            MatrixParameterInterface locationPrecision = null;
             if (cxo.hasChildNamed(LOCATION_MEAN) && cxo.hasChildNamed(LOCATION_VARIANCE)) {
                 locationMeans = (MatrixParameterInterface) cxo.getElementFirstChild(LOCATION_MEAN);
                 String locationMeanTraitName = cxo.getChild(LOCATION_MEAN).getStringAttribute(LOCATION_MEAN_NAME);
-                locationVariance = (MatrixParameterInterface) cxo.getElementFirstChild(LOCATION_VARIANCE);
+                locationPrecision = (MatrixParameterInterface) cxo.getElementFirstChild(LOCATION_VARIANCE);
                 String locationVarianceTraitName = cxo.getChild(LOCATION_VARIANCE).getStringAttribute(LOCATION_VARIANCE_NAME);
                 parseTimes(taxa, timeTraitName, locationMeans, locationMeanTraitName);
-                parseTimes(taxa, timeTraitName, locationVariance, locationVarianceTraitName);
+
+                FastMatrixParameter tmpLocationVariance = new FastMatrixParameter("tmpLocationVariance", 1, locationPrecision.getColumnDimension(), 0.0, false);
+                parseTimes(taxa, timeTraitName, tmpLocationVariance, locationVarianceTraitName);
+
+                for (int row = 0; row < locationPrecision.getRowDimension(); row++) {
+                    for (int col = 0; col < locationPrecision.getColumnDimension(); col++) {
+                        locationPrecision.setParameterValue(row, col, 4.0 * Math.PI / tmpLocationVariance.getParameterValue(0, col));
+                    }
+                }
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {

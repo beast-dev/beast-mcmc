@@ -605,11 +605,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeComment("Using the binomialLikelihood we specify a 50% prior mass on no predictors being included.");
         writer.writeOpenTag(BinomialLikelihood.BINOMIAL_LIKELIHOOD);
         writer.writeOpenTag(BinomialLikelihoodParser.PROPORTION);
-        writer.writeTag("parameter", new Attribute.Default<Double>("value", proportion), true);
+        writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + BinomialLikelihoodParser.PROPORTION),
+                new Attribute.Default<Double>("value", proportion)
+        }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.PROPORTION);
         // the dimension of this parameter will be set automatically to be the same as the counts.
         writer.writeOpenTag(BinomialLikelihoodParser.TRIALS);
         writer.writeTag("parameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, prefix + BinomialLikelihoodParser.TRIALS),
                 new Attribute.Default<Double>("value", 1.0)
         }, true);
         writer.writeCloseTag(BinomialLikelihoodParser.TRIALS);

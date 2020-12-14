@@ -1,4 +1,4 @@
-package test.dr.evomodel.bigfasttree.constrainedtree;
+package test.dr.evomodel.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -7,7 +7,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
-import dr.evomodel.bigfasttree.constrainedtree.ConstraintsTreeLikelihood;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstraintsTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import junit.framework.TestCase;
 

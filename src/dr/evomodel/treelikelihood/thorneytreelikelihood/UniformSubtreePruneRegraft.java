@@ -1,8 +1,7 @@
-package dr.evomodel.bigfasttree.constrainedtree;
+package dr.evomodel.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.bigfasttree.ghosttree.CorporealTreeModel;
-import dr.evomodel.bigfasttree.ghosttree.GhostTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
@@ -11,74 +10,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An operator that prunes a node at random and then regrafts it uniformily
- * into the same clade
+ * An operator that prunes a node at random and then regrafts it a position choosen uniformily from valid branches and heights
  *
  * @author JT McCrone
  */
-public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
+
+public class UniformSubtreePruneRegraft extends AbstractTreeOperator implements ConstrainableTreeOperator{
 
     private final TreeModel tree;
-    private final CladeNodeModel cladeModel;
-    private final static String CLADE_AWARE_SUBTREE_PRUNE_REGRAFT = "CladeAwareSubtreePruneRegraft";
+    private final static String UNIFORM_SUBTREE_PRUNE_REGRAFT = "UniformSubtreePruneRegraft";
     private double totalDistanceTraversed = 0;
     private final static boolean DEBUG = false;
-    private final boolean isGhostTree;
 
-    public CladeAwareSubtreePruneRegraft(CladeNodeModel cladeModel, double weight) {
+    public UniformSubtreePruneRegraft(TreeModel tree, double weight) {
         setWeight(weight);
-        this.cladeModel = cladeModel;
+       this.tree = tree;
 
-        TreeModel treeModel = cladeModel.getTreeModel();
-        if (treeModel instanceof CorporealTreeModel) {
-            isGhostTree = true;
-            this.tree = ((CorporealTreeModel) treeModel).getGhostTreeModel();
-        } else {
-            isGhostTree = false;
-            this.tree = treeModel;
-
-        }
-
-    }
-
-    private CladeRef getRelevantClade(NodeRef nodeRef) {
-        if (isGhostTree) {
-            //TODO test this branch
-            GhostTreeModel ghostTreeModel = ((GhostTreeModel) tree);
-            CorporealTreeModel corporealTreeModel = ghostTreeModel.getCorporealTreeModel();
-            if (((GhostTreeModel) tree).hasCorporealCounterPart(nodeRef)) {
-                NodeRef corporealNode = ghostTreeModel.getCorporealCounterPart(nodeRef);
-                if (corporealTreeModel.isRoot(corporealNode)) {
-                    return cladeModel.getClade(corporealNode);
-                } else {
-                    return cladeModel.getClade(corporealTreeModel.getParent(corporealNode));
-                }
-            } else if (ghostTreeModel.getNextCorporealDescendent(nodeRef) != null) {
-                NodeRef corporealNode = ghostTreeModel.getNextCorporealDescendent(nodeRef);
-                if (corporealTreeModel.isRoot(corporealNode)) {
-                    return cladeModel.getClade(corporealNode);
-                } else {
-                    return cladeModel.getClade(corporealTreeModel.getParent(corporealNode));
-                }
-            } else {
-                if (tree.isRoot(nodeRef)) {
-                    return cladeModel.getClade(corporealTreeModel.getRoot());
-                }
-                return getRelevantClade(tree.getParent(nodeRef));
-            }
-        } else {
-            return cladeModel.getClade(tree.getParent(nodeRef));
-        }
     }
 
     @Override
     public String getOperatorName() {
-        return CLADE_AWARE_SUBTREE_PRUNE_REGRAFT;
+        return UNIFORM_SUBTREE_PRUNE_REGRAFT;
     }
 
+    public double doOperation() {
+        return doOperation(tree);
+    }
 
     @Override
-    public double doOperation() {
+    public double doOperation(TreeModel tree) {
 
 
         if (DEBUG) {
@@ -91,15 +51,13 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
 
         final NodeRef root = tree.getRoot();
         NodeRef node;
-        CladeRef eligibleClade = null;
+
         do {
             node = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
 
 
         } while (node == root || tree.getParent(node) == root);
 
-        //Set clade and update number of draws if needed
-        eligibleClade = getRelevantClade(node);
         final NodeRef parent = tree.getParent(node);
 
         final NodeRef sibling = getOtherChild(tree, parent, node);
@@ -134,14 +92,7 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
         List<Double> effectiveNodeHeights = new ArrayList<>();
         List<NodeRef> nodes = new ArrayList<>();
 
-        NodeRef startingNode;
-        if (isGhostTree && eligibleClade == cladeModel.getRootClade()) {
-            startingNode = tree.getRoot();
-        } else {
-            startingNode = parent == cladeModel.getRootNode(eligibleClade)? sibling : cladeModel.getRootNode(eligibleClade);
-        }
-
-        getDistances(tree.getNodeHeight(node), startingNode, eligibleClade, nodeDistances, effectiveNodeHeights, nodes);
+        getDistances(tree, tree.getNodeHeight(node), tree.getRoot(), nodeDistances, effectiveNodeHeights, nodes);
 
         if (DEBUG) {
             System.out.println("choosing node index");
@@ -185,7 +136,6 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
             tree.setRoot(parent);
 //            cladeModel.setRootNode(eligibleClade, parent);
 
-            assert cladeModel.getParent(eligibleClade) == null;
         } else {
             // remove destination edge j from its parent
             tree.removeChild(jParent, j);
@@ -229,7 +179,7 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
         return 0;
     }
 
-    private void getDistances(double height, NodeRef node, CladeRef clade, List<Double> nodeDistances, List<Double> effectiveNodeHeights, List<NodeRef> nodes) {
+    private void getDistances(Tree tree, double height, NodeRef node, List<Double> nodeDistances, List<Double> effectiveNodeHeights, List<NodeRef> nodes) {
         double effectiveHeight = Math.max(tree.getNodeHeight(node), height);
 
         if (tree.getParent(node) == null) {
@@ -242,21 +192,12 @@ public class CladeAwareSubtreePruneRegraft extends AbstractTreeOperator {
         nodes.add(node);
         effectiveNodeHeights.add(effectiveHeight);
 
-        boolean goOn;
-        if (isGhostTree) {
-            if (((GhostTreeModel) tree).hasCorporealCounterPart(node)) {
-                NodeRef corpNode = ((GhostTreeModel) tree).getCorporealCounterPart(node);
-                goOn = cladeModel.getClade(corpNode) == clade && tree.getNodeHeight(node) > height;
-            } else {
-                goOn = true; //if just a ghost node keep going
-            }
-        } else {
-            goOn = cladeModel.getClade(node) == clade && tree.getNodeHeight(node) > height;
-        }
+        boolean goOn =  tree.getNodeHeight(node) > height;
+
         if (goOn) {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef child = tree.getChild(node, i);
-                getDistances(height, child, clade, nodeDistances, effectiveNodeHeights, nodes);
+                getDistances(tree, height, child,  nodeDistances, effectiveNodeHeights, nodes);
             }
         }
     }

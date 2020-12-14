@@ -460,7 +460,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
                 TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
                 List<Integer> missingIndices = TreeTraitParserUtilities.parseMissingIndices(locationsParameter, locationsParameter.getParameterValues());
-                utilities.jitter(xo, hphDimension, missingIndices);
+                utilities.jitter(xo, hphDimension, missingIndices, locationsParameter.getDimension());
             }
 
             Parameter sigmaXprec = (Parameter) xo.getElementFirstChild(SIGMA_PRECISON);

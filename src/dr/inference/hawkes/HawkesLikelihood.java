@@ -452,7 +452,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
                 for (int row = 0; row < locationPrecision.getRowDimension(); row++) {
                     for (int col = 0; col < locationPrecision.getColumnDimension(); col++) {
-                        locationPrecision.setParameterValue(row, col, 6.0 * Math.PI / tmpLocationVariance.getParameterValue(0, col));
+                        locationPrecision.setParameterValue(row, col, Math.pow(110.5,2) * 6.0 * Math.PI / tmpLocationVariance.getParameterValue(0, col)); //TODO better way of transforming to/from lat/long
                     }
                 }
             }

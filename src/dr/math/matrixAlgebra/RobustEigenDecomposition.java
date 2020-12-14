@@ -818,6 +818,10 @@ private void tql2 () throws ArithmeticException  {
 
 			   // Implicit QL transformation.
 
+				if (m >= d.length) {
+					throw new ArithmeticException(ERROR_STRING);
+				}
+
 			   p = d[m];
 			   double c = 1.0;
 			   double c2 = c;

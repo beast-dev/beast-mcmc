@@ -86,6 +86,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         addVariable(effect);
         randomEffects.add(effect);
         numRandomEffects++;
+        if (N == 0) {
+            N = effect.getDimension();
+        }
     }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
@@ -250,6 +253,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return designMatrix.get(j).getParameterAsMatrix();
     }
 
+    public DesignMatrix getDesignMatrix(int j) { return designMatrix.get(j); }
 
     public double[] getScale() {
 
@@ -355,7 +359,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        fireModelChanged();
+        fireModelChanged();
     }
 
     protected void storeState() {

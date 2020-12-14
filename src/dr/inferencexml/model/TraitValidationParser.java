@@ -22,8 +22,9 @@ public class TraitValidationParser extends AbstractXMLObjectParser {
 
         boolean logSum = xo.getAttribute(CrossValidatorParser.LOG_SUM, false);
 
-        if (logSum) return new CrossValidationProvider.CrossValidatorSum(provider);
-        return new CrossValidationProvider.CrossValidator(provider);
+        if (logSum)
+            return new CrossValidationProvider.CrossValidatorSum(provider, CrossValidationProvider.ValidationType.SQUARED_ERROR);
+        return new CrossValidationProvider.CrossValidator(provider, CrossValidationProvider.ValidationType.SQUARED_ERROR);
     }
 
     @Override

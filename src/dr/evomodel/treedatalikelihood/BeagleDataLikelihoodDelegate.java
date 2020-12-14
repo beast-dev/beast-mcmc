@@ -114,6 +114,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                                         BranchModel branchModel,
                                         SiteRateModel siteRateModel,
                                         boolean useAmbiguities,
+                                        boolean preferGPU,
                                         PartialsRescalingScheme rescalingScheme,
                                         boolean delayRescalingUntilUnderflow,
                                         PreOrderSettings settings) {
@@ -239,6 +240,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 if (resourceList[0] > 0) {
                     preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
                 }
+            }
+            if (preferGPU) {
+                preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
             }
 
             if (preferredOrder.size() > 0) {
@@ -904,7 +908,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // next step
             flip = false;
             underflowHandling = 0;
-            throw new LikelihoodUnderflowException();
+
+            if (USE_CACHED_EXCEPTION) {
+                if (cachedException == null) {
+                    cachedException = new LikelihoodUnderflowException();
+                }
+                throw cachedException;
+            } else {
+                throw new LikelihoodUnderflowException();
+            }
 
         } else {
 
@@ -943,6 +955,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         updateSiteModel = true;
         updateSubstitutionModel = true;
         updateRootFrequency = true;
+        fireModelChanged();
     }
 
     @Override
@@ -1078,7 +1091,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************
@@ -1216,4 +1229,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * PreOrder related settings
      */
     private PreOrderSettings settings;
+
+    private static boolean USE_CACHED_EXCEPTION = true;
+    private LikelihoodUnderflowException cachedException = null; // new LikelihoodUnderflowException();
 }

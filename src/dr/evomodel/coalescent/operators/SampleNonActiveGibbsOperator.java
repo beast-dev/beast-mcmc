@@ -34,6 +34,7 @@ import dr.math.MathUtils;
 /**
 
  */
+@Deprecated
 public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     private final ParametricDistributionModel distribution;
     private final Parameter data;

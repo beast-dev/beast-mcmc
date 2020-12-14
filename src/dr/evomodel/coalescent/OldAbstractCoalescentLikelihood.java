@@ -31,6 +31,7 @@ import dr.evolution.coalescent.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.model.*;
@@ -56,6 +57,7 @@ import java.util.Arrays;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
+@Deprecated
 public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood implements  Units {
 
     // PUBLIC STUFF
@@ -452,9 +454,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                                         ArrayList<Integer> nodeNumbers) {
 
         times.add(new ComparableDouble(tree.getNodeHeight(top)));
-        if (Double.isNaN(tree.getNodeHeight(top))) {
-            System.err.println("why");
-        }
         childs.add(tree.getChildCount(top));
         nodeNumbers.add(top.getNumber());
 
@@ -518,9 +517,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             }
 
             public void addNode(int nodeNumber) {
-                if (nextIndex > 500) {
-                    System.err.println("why");
-                }
                 nodeNumbersInIntervals[nextIndex] = nodeNumber;
                 nextIndex++;
             }

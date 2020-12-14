@@ -1,10 +1,8 @@
 package dr.inference.operators.repeatedMeasures;
 
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.continuous.MatrixShrinkageLikelihood;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
-import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -16,7 +14,6 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Attribute;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.List;
 
@@ -121,13 +118,12 @@ public interface GammaGibbsProvider {
         private double[] tipValues;
 
         public NormalExtensionGibbsProvider(ModelExtensionProvider.NormalExtensionProvider dataModel,
-                                            TreeDataLikelihood treeLikelihood,
-                                            String traitName) {
+                                            TreeDataLikelihood treeLikelihood) {
             this.dataModel = dataModel;
             this.treeLikelihood = treeLikelihood;
             this.traitParameter = dataModel.getParameter();
-            this.tipTrait = treeLikelihood.getTreeTrait(REALIZED_TIP_TRAIT + "." + traitName);
-            this.missingVector = dataModel.getMissingIndicator();
+            this.tipTrait = treeLikelihood.getTreeTrait(dataModel.getTipTraitName());
+            this.missingVector = dataModel.getDataMissingIndicators();
 
             MatrixParameterInterface matrixParameter = dataModel.getExtensionPrecision();
 
@@ -186,5 +182,73 @@ public interface GammaGibbsProvider {
 
         private static final boolean DEBUG = false;
     }
+
+    class MultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
+        // TODO: add citation to "Sparse Bayesian infinite factor models BY A. BHATTACHARYA AND D. B. DUNSON, Biometrika (2011)"
+
+        private final CompoundParameter rowMultipliers;
+        private final MatrixShrinkageLikelihood shrinkageLikelihood; // TODO: change to NormalStatisticsProvider
+        private final MatrixParameterInterface matParam;
+        private final int index;
+
+        public MultiplicativeGammaGibbsProvider(CompoundParameter rowMultipliers,
+                                                MatrixShrinkageLikelihood shrinkageLikelihood,
+                                                MatrixParameterInterface matParam,
+                                                int index) {
+            this.rowMultipliers = rowMultipliers;
+            this.shrinkageLikelihood = shrinkageLikelihood;
+            this.matParam = matParam;
+            this.index = index;
+
+
+        }
+
+
+        @Override
+        public SufficientStatistics getSufficientStatistics(int dim) {
+
+
+            double rateSum = 0;
+
+            int k = matParam.getColumnDimension();
+            int p = matParam.getRowDimension();
+            for (int i = index; i < k; i++) {
+                double globalConst = gpMult(i + 1, index);
+                double sum = 0;
+                for (int j = 0; j < p; j++) {
+                    double localSD = shrinkageLikelihood.getLikelihood(i).getLocalScale().getParameterValue(j);
+                    double loadEl = matParam.getParameterValue(j, i);
+                    double x = loadEl / localSD;
+                    sum += x * x;
+                }
+                rateSum += globalConst * sum;
+            }
+
+            return new SufficientStatistics(p * (k - index), rateSum);
+
+        }
+
+        @Override
+        public Parameter getPrecisionParameter() {
+            return rowMultipliers.getParameter(index);
+        }
+
+        @Override
+        public void drawValues() {
+            // do nothing
+        }
+
+        private double gpMult(int multTo, int skip) { // TODO: probably could be more efficient
+            double value = 1.0;
+            for (int i = 0; i < multTo; i++) {
+                if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
+                    value *= rowMultipliers.getParameter(i).getParameterValue(0);
+                }
+            }
+            return value;
+        }
+
+    }
+
 
 }

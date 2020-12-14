@@ -223,6 +223,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         this.doNormalization = doNormalization;
     }
 
+    public boolean getNormalization() {
+        return doNormalization;
+    }
+
     public void makeDirty() {
 
     }

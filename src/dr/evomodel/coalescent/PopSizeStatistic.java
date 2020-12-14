@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
 import dr.xml.*;

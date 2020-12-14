@@ -83,9 +83,9 @@ public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
 
         }else if (model == treeModel) {
 
-            if (object instanceof TreeModel.TreeChangedEvent) {
+            if (object instanceof TreeChangedEvent) {
 
-                if(((TreeModel.TreeChangedEvent) object).areAllInternalHeightsChanged()){
+                if(((TreeChangedEvent) object).isTreeChanged()){
                     updateAllNodes();
                 } else if (((TreeChangedEvent) object).isNodeChanged()) {
                     // If a node event occurs the node and its two child nodes

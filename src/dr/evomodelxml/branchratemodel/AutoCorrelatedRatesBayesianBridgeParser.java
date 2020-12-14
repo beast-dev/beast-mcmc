@@ -33,10 +33,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
 
-import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.GLOBAL_SCALE;
-import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.LOCAL_SCALE;
-import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.EXPONENT;
-import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.SLAB_WIDTH;
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
 
 @Deprecated
 public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectParser {
@@ -71,9 +68,13 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
 
         Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
 
+        boolean includeNormalizingConstant = xo.getAttribute(NORMALIZATION_CONSTANT, false);
+
         BayesianBridgeDistributionModel distributionModel = (localScale != null) ?
-                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth, 1) :
-                new MarginalBayesianBridgeDistributionModel(globalScale, exponent, 1);
+                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
+                        1, includeNormalizingConstant) :
+                new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
+                        1, includeNormalizingConstant);
 
         return new AutoCorrelatedRatesWithBayesianBridge(ratesDistribution,
                 distributionModel);
@@ -97,6 +98,7 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
             new ElementRule(SLAB_WIDTH,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            AttributeRule.newBooleanRule(NORMALIZATION_CONSTANT, true),
     };
 
     public String getParserDescription() {

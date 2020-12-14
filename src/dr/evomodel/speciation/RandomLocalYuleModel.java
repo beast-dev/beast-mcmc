@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.randomlocalmodel.RandomLocalTreeVariable;
 import dr.evomodelxml.speciation.RandomLocalYuleModelParser;
@@ -107,11 +108,11 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
     }
 
     public final double getVariable(Tree tree, NodeRef node) {
-        return ((TreeModel)tree).getNodeTrait(node, birthRatesName);
+        return ((DefaultTreeModel)tree).getNodeTrait(node, birthRatesName);
     }
 
     public final boolean isVariableSelected(Tree tree, NodeRef node) {
-        return ((TreeModel)tree).getNodeTrait(node, indicatorsName) > 0.5;
+        return ((DefaultTreeModel)tree).getNodeTrait(node, indicatorsName) > 0.5;
     }
 
     //
@@ -231,4 +232,9 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
     private Parameter meanRate;
     private boolean birthRatesAreMultipliers = false;
     private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+
+    @Override
+    public double getNodeGradient(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
+    }
 }

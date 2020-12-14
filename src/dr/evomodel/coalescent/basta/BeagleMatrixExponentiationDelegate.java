@@ -355,7 +355,7 @@ public class BeagleMatrixExponentiationDelegate extends AbstractModel implements
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
     }
 
     // **************************************************************

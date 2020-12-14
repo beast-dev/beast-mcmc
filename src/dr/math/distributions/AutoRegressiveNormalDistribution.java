@@ -40,11 +40,13 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     private final int dim;
     private final double marginal;
     private final double decay;
+    private final double precisionScale; //scale term in the the formula to invert a AR1 matrix.
 
     public AutoRegressiveNormalDistribution(int dim, double marginal, double decay) {
         this.dim = dim;
         this.marginal = marginal;
         this.decay = decay;
+        this.precisionScale = 1 / (1 - decay * decay);
 
         if (marginal != 1.0) {
             throw new IllegalArgumentException("Not yet implemented");
@@ -60,7 +62,7 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     }
 
     private double getLogDet() {
-        return  Math.log(1.0 - decay * decay);
+        return  (dim - 1) * Math.log(1.0 - decay * decay);
     }
 
     @Override
@@ -76,15 +78,15 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
         double[] column = new double[dim];
 
         if (index == 0) {
-            column[0] = 1.0;
-            column[1] = -decay;
+            column[0] = 1.0 * precisionScale;
+            column[1] = -decay * precisionScale;
         } else if (index == dim - 1) {
-            column[dim - 2] = -decay;
-            column[dim - 1] = 1.0;
+            column[dim - 2] = -decay * precisionScale;
+            column[dim - 1] = 1.0 * precisionScale;
         } else {
-            column[index - 1] = -decay;
-            column[index] = 1.0 + decay * decay;
-            column[index + 1] = -decay;
+            column[index - 1] = -decay * precisionScale;
+            column[index] = (1.0 + decay * decay) * precisionScale;
+            column[index + 1] = -decay * precisionScale;
         }
 
         return column;
@@ -103,9 +105,11 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
             SSE -= 2 * decay * x[i - 1] * x[i];
         }
 
+        SSE = SSE * precisionScale;
+
         final double logDet = getLogDet();
 
-        return dim * logNormalize + 0.5 * (logDet - SSE);
+        return dim * logNormalize + 0.5 * (-logDet - SSE);
     }
 
     private double[] scaledPrecisionVectorProduct(double[] x, double scale) {
@@ -114,13 +118,13 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
 
         double[] product = new double[dim];
 
-        product[0] = scale * (x[0] - decay * x[1]);
+        product[0] = scale * (x[0] - decay * x[1]) * precisionScale;
 
         for (int i = 1; i < dim - 1; ++i) {
-            product[i] = scale * (-decay * x[i - 1] + (1 + decay * decay) * x[i] - decay * x[i + 1]);
+            product[i] = scale * (-decay * x[i - 1] + (1 + decay * decay) * x[i] - decay * x[i + 1]) * precisionScale;
         }
 
-        product[dim - 1] = scale * (-decay * x[dim - 2] + x[dim - 1]);
+        product[dim - 1] = scale * (-decay * x[dim - 2] + x[dim - 1]) * precisionScale;
 
         return product;
     }
@@ -128,13 +132,13 @@ public class AutoRegressiveNormalDistribution implements MultivariateDistributio
     public double[] getDiagonal() {
 
         double[] diagonal = new double[dim];
-        diagonal[0] = 1.0;
+        diagonal[0] = precisionScale;
 
         for (int i = 1; i < dim - 1; ++i) {
-            diagonal[i] = 1 + decay * decay;
+            diagonal[i] = (1 + decay * decay) * precisionScale;
         }
 
-        diagonal[dim - 1] = 1.0;
+        diagonal[dim - 1] = precisionScale;
 
         return diagonal;
     }

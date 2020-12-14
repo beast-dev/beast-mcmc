@@ -90,11 +90,13 @@ public class BeastUnitTest implements Reportable {
                 double[] rhs = parseArray(b);
 
                 if (lhs.length != rhs.length) {
+                    System.err.println("The dimensions of the \"actual\" and \"expected\" values are not the same.");
                     return false;
                 }
 
                 for (int i = 0; i < lhs.length; ++i) {
                     if (!toleranceType.close(lhs[i], rhs[i], tolerance)) {
+                        System.err.println("Dimension " + (i + 1) + " of \"actual\" does not match \" expected\". (" + lhs[i] + " != " + rhs[i] + ")");
                         return false;
                     }
                 }

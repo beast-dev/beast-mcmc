@@ -53,6 +53,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.aminoacid.*;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
@@ -279,10 +280,10 @@ public class PartitionData implements Serializable {
 	// //////////////////
 
 //	public Tree tree = null;
-	public String treeModelIdref = TreeModel.TREE_MODEL;
+	public String treeModelIdref = DefaultTreeModel.TREE_MODEL;
 
 	public void resetTreeModelIdref() {
-	this.treeModelIdref = TreeModel.TREE_MODEL;
+	this.treeModelIdref = DefaultTreeModel.TREE_MODEL;
 	}
 	
 	public TreeModel createTreeModel() {
@@ -290,19 +291,19 @@ public class PartitionData implements Serializable {
 		TreeModel treeModel = null;
 		if (this.demographicModelIndex == 0 && this.record.isTreeSet()) {
 			
-			treeModel = new TreeModel(this.record.getTree());
+			treeModel = new DefaultTreeModel(this.record.getTree());
 			
 		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTreeSet()) {
 			
 			Taxa taxa = new Taxa(this.record.getTree().asList()); 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));			
+			treeModel = new DefaultTreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
 			
 		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTaxaSet()) {
 			
 			Taxa taxa = this.record.getTaxa();
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
+			treeModel = new DefaultTreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
 		
 //			} else if (this.demographicModelIndex == 0 && this.record.taxaSet) { 
 //			throw new RuntimeException("Data and demographic model incompatible for partition ");	

@@ -34,7 +34,8 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -54,12 +55,12 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 
 	public static final String OPERATOR_NAME = "independentCoalescentSampler";
     
-    private TreeModel treeModel;
+    private DefaultTreeModel treeModel;
     private DemographicModel demoModel;
     private CoalescentLikelihood coalescent;
     private XMLObject xo;
 	
-	public IndependentCoalescentSampler(XMLObject xo, TreeModel treeModel, DemographicModel demoModel, CoalescentLikelihood coalescent, double weight) {
+	public IndependentCoalescentSampler(XMLObject xo, DefaultTreeModel treeModel, DemographicModel demoModel, CoalescentLikelihood coalescent, double weight) {
 		
 		this.xo = xo;
 		this.treeModel = treeModel;
@@ -145,8 +146,8 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
         }
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-			
-			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+
+			DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
 			double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 	        DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
 	        CoalescentLikelihood coalescent = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
@@ -166,7 +167,7 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
 				new ElementRule(Taxa.class),
-                new ElementRule(TreeModel.class),
+                new ElementRule(DefaultTreeModel.class),
                 new ElementRule(DemographicModel.class),
                 new ElementRule(CoalescentLikelihood.class)
         };

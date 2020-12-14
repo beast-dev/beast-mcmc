@@ -1342,10 +1342,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         while (matcher.find()) {
             String label = matcher.group(1);
-            if (label.charAt(0) == '\"') {
+            if (label.length() > 1 && label.startsWith("\"")) {
                 label = label.substring(1, label.length() - 1);
             }
-            if (label == null || label.trim().length() == 0) {
+            if (label.trim().length() == 0) {
                 throw new Importer.BadFormatException("Badly formatted attribute: '" + matcher.group() + "'");
             }
             final String value = matcher.group(2);

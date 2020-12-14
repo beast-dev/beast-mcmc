@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
@@ -133,7 +134,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -158,7 +161,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -458,7 +463,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 patterns,
                 branchModel,
-                siteRateModel, false,
+                siteRateModel,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -484,7 +491,9 @@ public class DataLikelihoodTester {
                 treeModel,
                 morePatterns,
                 branchModel2,
-                siteRateModel2, false,
+                siteRateModel2,
+                false,
+                false,
                 PartialsRescalingScheme.NONE,
                 false,
                 PreOrderSettings.getDefault());
@@ -621,7 +630,7 @@ public class DataLikelihoodTester {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     static private String sequences[][] = {

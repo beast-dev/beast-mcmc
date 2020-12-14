@@ -34,6 +34,7 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.TaskPool;
+import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.function.BinaryOperator;
@@ -49,10 +50,10 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     public ReversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                     PrecisionColumnProvider columnProvider,
-                                    double weight, Options runtimeOptions, Parameter mask,
+                                    double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
                                     int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask, threadCount);
     }
 
     @Override
@@ -195,15 +196,18 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         } else {
 
-            firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
-
+            if (nativeCodeOptions.useNativeFindNextBounce){
+                firstBounce = getNextBounceNative(position, velocity, action, gradient, momentum);
+            } else {
+                firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
+            }
         }
 
         if (TIMING) {
             timer.stopTimer("getNext");
         }
 
-        if (TEST_NATIVE_BOUNCE) {
+        if (nativeCodeOptions.testNativeFindNextBounce) {
             testNative(firstBounce, position, velocity, action, gradient, momentum);
         }
 
@@ -281,7 +285,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     final WrappedVector drawInitialMomentum() {
-
+        
+        // Definition of "mass matrix" is not standardized for non-Gaussian momentum.
+        // We choose mass_i = var(momentum_i) = mean(|momentum_i|)^2 so that the mass 
+        // can be tuned in a manner analogous to the Gaussian momentum case --- it is
+        // reasonable to tune $mass_i^{-1} = var(position_i) since |velocity_i| = mass_i^{-1/2}.
+        
         ReadableVector mass = preconditioning.mass;
         double[] momentum = new double[mass.getDim()];
 
@@ -299,15 +308,18 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
     @Override
     final WrappedVector drawInitialVelocity(WrappedVector momentum) {
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
+            double[] velocity = new double[momentum.getDim()];
 
-        ReadableVector mass = preconditioning.mass;
-        double[] velocity = new double[momentum.getDim()];
+            for (int i = 0, len = momentum.getDim(); i < len; ++i) {
+                velocity[i] = sign(momentum.get(i)) / Math.sqrt(mass.get(i));
+            }
 
-        for (int i = 0, len = momentum.getDim(); i < len; ++i) {
-            velocity[i] = sign(momentum.get(i)) / Math.sqrt(mass.get(i));
+            return new WrappedVector.Raw(velocity);
         }
-
-        return new WrappedVector.Raw(velocity);
     }
 
     private void testNative(MinimumTravelInformation firstBounce,
@@ -332,6 +344,27 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             System.err.println(mti + " ?= " + firstBounce + "\n");
             System.exit(-1);
         }
+    }
+
+    private MinimumTravelInformation getNextBounceNative(
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient,
+                            WrappedVector momentum) {
+
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
+
+        final MinimumTravelInformation mti = nativeZigZag.getNextReversibleEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer(), momentum.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        return mti;
     }
 
 //    @Override
@@ -479,7 +512,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                         int eventIndex,
                         Type eventType) {
 
-        if (!TEST_NATIVE_INNER_BOUNCE) {
+        if (!nativeCodeOptions.useNativeUpdateDynamics) {
 
             updateDynamics(position.getBuffer(), velocity.getBuffer(),
                     action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
@@ -516,7 +549,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
-    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient,
                                                  int direction, double time) {
 
         preconditioning.totalTravelTime = time;
@@ -545,6 +578,26 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public int getNumGradientEvent() {
+        return numGradientEvents;
+    }
+
+    @Override
+    public int getNumBoundaryEvent() {
+        return numBoundaryEvents;
+    }
+
+    @Override
+    public Transform getTransform() {
+        return null;
+    }
+
+    @Override
+    public GradientWrtParameterProvider getGradientProvider() {
+        return gradientProvider;
+    }
+
+    @Override
     public void setParameter(double[] position) {
         ReadableVector.Utils.setParameter(position, parameter);
     }
@@ -557,6 +610,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public double getJointProbability(WrappedVector momentum) {
         return gradientProvider.getLikelihood().getLogLikelihood() - getKineticEnergy(momentum) - getParameterLogJacobian();
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return gradientProvider.getLikelihood().getLogLikelihood();
     }
 
     @Override

@@ -25,6 +25,7 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
@@ -45,9 +46,12 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
                                                Parameter nodeHeights) {
         super(NodeHeightTransformParser.NAME);
         this.tree = treeModel;
-        this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, false);
+        this.nodeHeights = nodeHeights;
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
+        treeModel.addModel(this);
+        treeModel.addModelRestoreListener(this);
+        treeModel.addModelListener(this);
     }
 
     public void setNodeHeights(double[] nodeHeights) {
@@ -58,7 +62,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         for (int i = 0; i < nodeHeights.length; i++) {
             this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
         }
-        tree.pushTreeChangedEvent();
+        tree.pushTreeChangedEvent(TreeChangedEvent.create());
     }
 
     public Parameter getNodeHeights() {

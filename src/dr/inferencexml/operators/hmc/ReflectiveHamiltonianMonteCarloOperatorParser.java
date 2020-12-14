@@ -26,10 +26,12 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
+import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;
 import dr.util.Transform;
@@ -42,9 +44,9 @@ import dr.xml.XMLSyntaxRule;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser{
+public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
 
-    private final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
+    public final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
     private GraphicalParameterBound graphicalParameterBound;
 
     @Override
@@ -53,13 +55,16 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
         return super.parseXMLObject(xo);
     }
 
+    @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner.Type preconditioningType,
-                                                    int runMode) {
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions,
+                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType,
+                                                    ReversibleHMCProvider reversibleHMCprovider) {
+
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioningType, graphicalParameterBound);
+                runtimeOptions, preconditioner, graphicalParameterBound);
     }
 
     @Override

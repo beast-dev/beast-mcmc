@@ -280,6 +280,7 @@ public class DataModelImporter {
 
     public Map importFromTreeFile(String fileName, Map dataModel) throws IOException, Importer.ImportException {
         Tree tree = null;
+        List trees=new ArrayList();
         try {
             Reader reader = new FileReader(fileName);
 
@@ -293,10 +294,16 @@ public class DataModelImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                NexusImporter importer = new NexusImporter(reader);
-                tree = importer.importNextTree();
-
-            } else {
+                    NexusImporter importer = new NexusImporter(reader);
+                    while (importer.hasTree()) {
+                        tree = importer.importNextTree();
+                        HashMap<String, String> treeMap = new HashMap<String, String>();
+                        treeMap.put("id", tree.getId());
+                        treeMap.put("tree", TreeUtils.newick(tree));
+                        //TODO check that tree taxa are in the input list - if not throw a warning.
+                        trees.add(treeMap);
+                    }
+                } else {
                 NewickImporter importer = new NewickImporter(reader);
                 tree = importer.importNextTree();
             }
@@ -308,6 +315,9 @@ public class DataModelImporter {
 
         if (tree != null) {
             dataModel.put("tree", TreeUtils.newick(tree));
+        }
+        if (trees.size() > 0) {
+            dataModel.put("trees", trees);
         }
 
         return dataModel;
@@ -450,13 +460,13 @@ public class DataModelImporter {
                 while(attributeIterator.hasNext()){
                     String attributeName = attributeIterator.next();
                     if(!attributeMap.containsKey(attributeName)){
-                        attributeMap.put(attributeName,new HashSet<>());
+                        attributeMap.put(attributeName,new HashSet());
                     }
                    attributeMap.get(attributeName).add(taxon.getAttribute(attributeName));
                 }
             }
             // Now convert the map to the long form used in the dataModel
-            ArrayList<Map> taxaAttributes = new ArrayList<>();
+            ArrayList<Map> taxaAttributes = new ArrayList<Map>();
             for(Map.Entry<String,HashSet> attribute :attributeMap.entrySet()) {
                 Map thisAttribute =new HashMap();
                 thisAttribute.put("id",attribute.getKey());
@@ -537,11 +547,12 @@ public class DataModelImporter {
         t.put("id", taxon.getId());
         if (taxon.getDate() != null) {
             t.put("date", Double.toString(taxon.getDate().getTimeValue()));
+            t.put("uncertainty", Double.toString(taxon.getDate().getUncertainty()));
         }
 
         //Add attributes if present
         Iterator<String> attributeIterator = taxon.getAttributeNames();
-        ArrayList<Map> attributes = new ArrayList<>();
+        ArrayList<Map> attributes = new ArrayList<Map>();
         while(attributeIterator.hasNext()){
             String attributeName = attributeIterator.next();
             Map attribute = new HashMap();

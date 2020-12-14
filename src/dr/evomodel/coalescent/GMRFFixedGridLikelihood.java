@@ -28,6 +28,7 @@ package dr.evomodel.coalescent;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -40,8 +41,8 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	private Parameter covariateData;
 	private Parameter covariateTimes;
 
-	private ArrayList<CoalescentIntervalWithData> intervals;
-	private ArrayList<CoalescentIntervalWithData> storedIntervals;
+	//private ArrayList<CoalescentIntervalWithData> intervals;
+	//private ArrayList<CoalescentIntervalWithData> storedIntervals;
 
 	public static void main(String[] args){
 		
@@ -67,14 +68,14 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 			times[i] = times[i-1] + 0.1;
 		}
 		
-		GMRFFixedGridLikelihood like = new GMRFFixedGridLikelihood(tree,
+		/*GMRFFixedGridLikelihood like = new GMRFFixedGridLikelihood(tree,
 				new Parameter.Default(data),new Parameter.Default(times),4);
 		
-		System.out.println(like.getLogLikelihood());
+		System.out.println(like.getLogLikelihood());*/
 	}
 	
-	public GMRFFixedGridLikelihood(Tree tree, Parameter data, Parameter times, int tips){
-		super(tree, new Parameter.Default(tips), null, new Parameter.Default(5.0),
+	public GMRFFixedGridLikelihood(IntervalList intervalList, Parameter data, Parameter times, int tips){
+		super(intervalList, new Parameter.Default(tips), null, new Parameter.Default(5.0),
 				new Parameter.Default(1.0), null, null,false, true);
 				
 		covariateData = data;
@@ -82,20 +83,20 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		
 		fieldLength += covariateData.getDimension();
 		
-		intervals = new ArrayList<CoalescentIntervalWithData>(fieldLength);
-		storedIntervals = new ArrayList<CoalescentIntervalWithData>(fieldLength);
+		//intervals = new ArrayList<CoalescentIntervalWithData>(fieldLength);
+		//storedIntervals = new ArrayList<CoalescentIntervalWithData>(fieldLength);
 		
-		sSetupIntervals();
+		//sSetupIntervals();
 	}
 	
 	public void initializationReport() {
 		
 	}
 
-	public GMRFFixedGridLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
+	public GMRFFixedGridLikelihood(IntervalList intervalList, Parameter popParameter, Parameter precParameter,
 	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                                      Parameter data, Parameter times) {
-		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
+		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;
 		covariateTimes = times;
@@ -107,7 +108,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	}
 
 	//	@Override
-	public void sSetupIntervals() {
+	/*public void sSetupIntervals() {
 
 		intervals.clear();
 		intervals.ensureCapacity(fieldLength);
@@ -178,12 +179,12 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		}
 			
 		intervalsKnown = true;
-	}
+	} */
 	
 	public double calculateLogLikelihood(){
 		
 		double logLike = 0;
-		
+		/*
 		for(CoalescentIntervalWithData interval : intervals){
 			
 			if(interval.lineage > 1){
@@ -206,7 +207,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 			System.out.println(intervals);
 			System.out.println(tree.getNodeHeight(tree.getRoot()));
 			System.exit(-1);
-		}
+		}*/
 		
 		return logLike;
 	}
@@ -216,17 +217,18 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	}
 
 	public void storeState() {
+	    /*
 		storedIntervals = new ArrayList<CoalescentIntervalWithData>(intervals.size());
 		for (CoalescentIntervalWithData interval : intervals) {
 			storedIntervals.add(interval.clone());
-		}
+		} */
 	}
 
 	public void restoreState() {
-		intervals = storedIntervals;
-		storedIntervals.clear();
+		//intervals = storedIntervals;
+		//storedIntervals.clear();
 	}
-	
+	/*
 	public String toString(){
 		return intervals.toString();
 	}
@@ -234,12 +236,14 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	public int getNumberOfIntervals(){
 		return intervals.size();
 	}
-	
+    */
+	/*
 	public CoalescentIntervalWithData getDataInterval(int interval){
-		return intervals.get(interval);
-	}
 
-	public class CoalescentIntervalWithData implements Comparable<CoalescentIntervalWithData>, Cloneable {
+	    return intervals.get(interval);
+	}*/
+
+	/*public class CoalescentIntervalWithData implements Comparable<CoalescentIntervalWithData>, Cloneable {
 		public CoalescentEventType type;
 		public double length;
 		public int lineage;
@@ -273,6 +277,6 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 			return new CoalescentIntervalWithData(length, datum, lineage, type);
 		}
 
-	}
+	}*/
 	
 }

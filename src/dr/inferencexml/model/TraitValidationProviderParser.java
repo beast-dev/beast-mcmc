@@ -10,8 +10,6 @@ import dr.inference.model.Parameter;
 import dr.inference.model.TraitValidationProvider;
 import dr.xml.*;
 
-import java.util.List;
-
 /**
  * @author Gabriel Hassler
  */
@@ -31,7 +29,6 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
     }
 
     public static TraitValidationProvider parseTraitValidationProvider(XMLObject xo) throws XMLParseException {
-        String trueValuesName = xo.getStringAttribute(TreeTraitParserUtilities.TRAIT_NAME);
         String inferredValuesName = xo.getStringAttribute(INFERRED_NAME);
 
         TreeDataLikelihood treeLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
@@ -47,11 +44,11 @@ public class TraitValidationProviderParser extends AbstractXMLObjectParser {
 
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, trueValuesName,
+                utilities.parseTraitsFromTaxonAttributes(xo,
                         treeModel, true);
 
         Parameter trueParameter = returnValue.traitParameter;
-        List<Integer> trueMissing = returnValue.missingIndices;
+        boolean[] trueMissing = returnValue.getMissingIndicators();
         Parameter missingParameter = null;
         if (xo.hasChildNamed(MASK)) {
             missingParameter = (Parameter) xo.getElementFirstChild(MASK);

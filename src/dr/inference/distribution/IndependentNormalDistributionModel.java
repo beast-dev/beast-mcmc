@@ -1,25 +1,29 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
-import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.NormalDistribution;
 
-public class IndependentNormalDistributionModel extends AbstractModelLikelihood {
+/**
+ * @author Max Tolkoff
+ * @author Gabriel Hassler
+ * @author Marc Suchard
+ */
+
+public class IndependentNormalDistributionModel extends AbstractModelLikelihood implements NormalStatisticsProvider {
     Parameter mean;
     Parameter variance;
     Parameter precision;
     Parameter data;
     boolean usePrecision;
 
-    public IndependentNormalDistributionModel(String id, Parameter mean, Parameter variance, Parameter precision, Parameter data){
+    public IndependentNormalDistributionModel(String id, Parameter mean, Parameter variance, Parameter precision, Parameter data) {
         super(id);
         addVariable(mean);
         this.mean = mean;
-        if(precision != null){
+        if (precision != null) {
             usePrecision = true;
             addVariable(precision);
-        }
-        else{
+        } else {
             usePrecision = false;
             addVariable(variance);
         }
@@ -65,10 +69,9 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
         double sum = 0;
         for (int i = 0; i < data.getDimension(); i++) {
             double sd;
-            if(usePrecision){
+            if (usePrecision) {
                 sd = Math.sqrt(1 / precision.getParameterValue(i));
-            }
-            else{
+            } else {
                 sd = Math.sqrt(variance.getParameterValue(i));
             }
             sum += NormalDistribution.logPdf(data.getParameterValue(i),
@@ -83,6 +86,10 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
 
     }
 
+    public boolean precisionUsed() {
+        return usePrecision;
+    }
+
     public Parameter getPrecision() {
         return precision;
     }
@@ -93,5 +100,23 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
 
     public Parameter getMean() {
         return mean;
+    }
+
+    public Parameter getData() {
+        return data;
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return mean.getParameterValue(dim);
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        if (usePrecision) {
+            return 1 / Math.sqrt(precision.getParameterValue(dim));
+        } else {
+            return Math.sqrt(variance.getParameterValue(dim));
+        }
     }
 }

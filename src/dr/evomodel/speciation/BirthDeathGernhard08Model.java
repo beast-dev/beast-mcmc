@@ -32,9 +32,7 @@ import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.CommonCitations;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -130,6 +128,44 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel implem
         }
 
         this.type = type;
+    }
+
+    @Override
+    public double getNodeGradient(Tree tree, NodeRef node) {
+        final double height = tree.getNodeHeight(node);
+        final double r = getR();
+        final double mrh = -r * height;
+        final double a = getA();
+
+        if( ! conditionalOnRoot ) {
+            final double rho = getRho();
+            final double tmp = ((1 - rho) - a) * Math.exp(mrh);
+            final double zDeriv = tmp + rho == 1.0 ? 0.0 : -r * tmp / Math.log(rho + tmp);
+            double result = -2 * zDeriv - r;
+
+            if( tree.getRoot() == node ) {
+                result -= r + zDeriv;
+            }
+
+            return result;
+        } else {
+            double result;
+            if( tree.getRoot() != node ) {
+                final double tmp = a * Math.exp(mrh);
+                final double zDeriv = tmp == 0.0 ? 0.0 : r * tmp / Math.log(1.0 - tmp);
+                result = -2 * zDeriv - r;
+            } else {
+                // Root dependent coefficient from each internal node
+                final double ca = 1 - a;
+                final double emrh = Math.exp(-mrh);
+                if( emrh != 1.0 ) {
+                    result = -(tree.getTaxonCount() - 2) * r * ca * emrh / (emrh - 1.0) / (emrh - 1.0 + ca);
+                } else {  // use exp(x)-1 = x for x near 0
+                    result = -(tree.getTaxonCount() - 2) * ca / height / (r * height +ca);
+                }
+            }
+            return result;
+        }
     }
 
     @Override

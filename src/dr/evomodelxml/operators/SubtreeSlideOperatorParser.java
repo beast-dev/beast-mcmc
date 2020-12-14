@@ -26,6 +26,7 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeSlideOperator;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
@@ -63,7 +64,7 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
             }
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
@@ -103,7 +104,7 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SWAP_RATES, true),
             AttributeRule.newBooleanRule(SWAP_TRAITS, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
-            new ElementRule(TreeModel.class)
+            new ElementRule(DefaultTreeModel.class)
     };
 
 }

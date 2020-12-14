@@ -65,11 +65,13 @@ public class MaximizerWrtParameter implements Reportable {
         int numberIterations;
         boolean startAtCurrentState;
         boolean printToScreen;
+        boolean includeJacobian;
 
-        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen) {
+        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
             this.numberIterations = numberIterations;
             this.startAtCurrentState = startAtCurrentState;
             this.printToScreen = printToScreen;
+            this.includeJacobian = includeJacobian;
         }
     }
 
@@ -182,6 +184,10 @@ public class MaximizerWrtParameter implements Reportable {
                 }
 
                 setParameter(new WrappedVector.Raw(argument), parameter);
+
+                if (settings.includeJacobian) {
+                    return -evaluateLogLikelihood() - transform.getLogJacobian(argument, 0, argument.length);
+                }
                 return -evaluateLogLikelihood();
             }
 
@@ -198,7 +204,12 @@ public class MaximizerWrtParameter implements Reportable {
 
                 if (transform != null) {
 
-                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    if (settings.includeJacobian) {
+                        result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
+                    } else {
+                        result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    }
+
 
                 }
                 for (int i = 0; i < result.length; ++i) {

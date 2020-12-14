@@ -25,7 +25,7 @@
 
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
@@ -55,11 +55,11 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
 
-    GMRFSkyrideLikelihood gmrfField;
+    OldGMRFSkyrideLikelihood gmrfField;
 
     private double[] zeros;
 
-    public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
+    public GMRFSkyrideBlockUpdateOperator(OldGMRFSkyrideLikelihood gmrfLikelihood,
                                           double weight, AdaptationMode mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super(mode);

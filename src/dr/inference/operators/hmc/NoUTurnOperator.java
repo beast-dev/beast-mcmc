@@ -1,6 +1,9 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.ReversibleHMCProvider;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -8,7 +11,7 @@ import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.Arrays;
 
-public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator, Loggable {
 
     class Options {
         private double logProbErrorTol = 100.0;
@@ -38,9 +41,10 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         final double[] initialPosition = hmcProvider.getInitialPosition();
 
         if (stepSizeInformation == null) {
-            stepSizeInformation = findReasonableStepSize(initialPosition, hmcProvider.getStepSize());
+            stepSizeInformation = findReasonableStepSize(initialPosition,
+                    hmcProvider.getGradientProvider().getGradientLogDensity(), hmcProvider.getStepSize());
         }
-
+        initializeNumEvents();
         double[] position = takeOneStep(getCount() + 1, initialPosition);
 
         hmcProvider.setParameter(position);
@@ -56,7 +60,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         double logSliceU = Math.log(MathUtils.nextDouble()) + initialJointDensity;
 
-        TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum.getBuffer(), 1, true);
+        TreeState trajectoryTree = new TreeState(initialPosition, initialMomentum.getBuffer(),
+                hmcProvider.getGradientProvider().getGradientLogDensity(), 1, true);
 
         int height = 0;
 
@@ -72,7 +77,6 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
                 trajectoryTree.flagContinue = false;
             }
         }
-
         if (adaptiveStepsize) {
             stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
         }
@@ -86,9 +90,9 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         final double uniform1 = MathUtils.nextDouble();
         int direction = (uniform1 < 0.5) ? -1 : 1;
-
         TreeState nextTrajectoryTree = buildTree(
                 trajectoryTree.getPosition(direction), trajectoryTree.getMomentum(direction),
+                trajectoryTree.getGradient(direction),
                 direction, logSliceU, depth, stepSizeInformation.getStepSize(), initialJointDensity);
 
         if (nextTrajectoryTree.flagContinue) {
@@ -105,29 +109,32 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         return endPosition;
     }
 
-    private TreeState buildTree(double[] position, double[] momentum, int direction,
+    private TreeState buildTree(double[] position, double[] momentum, double[] gradient, int direction,
                                 double logSliceU, int height, double stepSize, double initialJointDensity) {
 
         if (height == 0) {
-            return buildBaseCase(position, momentum, direction, logSliceU, stepSize, initialJointDensity);
+            return buildBaseCase(position, momentum, gradient, direction, logSliceU, stepSize, initialJointDensity);
         } else {
-            return buildRecursiveCase(position, momentum, direction, logSliceU, height, stepSize, initialJointDensity);
+            return buildRecursiveCase(position, momentum, gradient, direction, logSliceU, height, stepSize,
+                    initialJointDensity);
         }
     }
 
 
-    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, int direction,
+    private TreeState buildBaseCase(double[] inPosition, double[] inMomentum, double[] inGradient, int direction,
                                     double logSliceU, double stepSize, double initialJointDensity) {
-
+        recordOneBaseCall();
         // Make deep copy of position and momentum
         WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(inPosition, inPosition.length));
-        //double[] position = Arrays.copyOf(inPosition, inPosition.length);
         WrappedVector momentum = new WrappedVector.Raw(Arrays.copyOf(inMomentum, inMomentum.length));
+        WrappedVector gradient = new WrappedVector.Raw(Arrays.copyOf(inGradient, inGradient.length));
 
         hmcProvider.setParameter(position.getBuffer());
 
         // "one reversibleHMC integral
-        hmcProvider.reversiblePositionMomentumUpdate(position, momentum, direction, stepSize);
+        hmcProvider.reversiblePositionMomentumUpdate(position, momentum, gradient, direction, stepSize);
+
+        recordEvents();
 
         double logJointProbAfter = hmcProvider.getJointProbability(momentum);
 
@@ -141,20 +148,22 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         hmcProvider.setParameter(inPosition);
 
-        return new TreeState(position.getBuffer(), momentum.getBuffer(), numNodes, flagContinue, acceptProb,
+        return new TreeState(position.getBuffer(), momentum.getBuffer(), gradient.getBuffer(), numNodes, flagContinue
+                , acceptProb,
                 numAcceptProbStates);
     }
 
-    private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, int direction,
+    private TreeState buildRecursiveCase(double[] inPosition, double[] inMomentum, double[] gradient, int direction,
                                          double logSliceU, int height, double stepSize, double initialJointDensity) {
 
-        TreeState subtree = buildTree(inPosition, inMomentum, direction, logSliceU,
+        TreeState subtree = buildTree(inPosition, inMomentum, gradient, direction, logSliceU,
                 height - 1, // Recursion
                 stepSize, initialJointDensity);
 
         if (subtree.flagContinue) {
 
-            TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction), direction,
+            TreeState nextSubtree = buildTree(subtree.getPosition(direction), subtree.getMomentum(direction),
+                    subtree.getGradient(direction), direction,
                     logSliceU, height - 1, stepSizeInformation.getStepSize(), initialJointDensity);
 
             subtree.mergeNextTree(nextSubtree, direction);
@@ -169,7 +178,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
                 state.getMomentum(1), state.getMomentum(-1));
     }
 
-    private StepSize findReasonableStepSize(double[] initialPosition, double forcedInitialStepSize) {
+    private StepSize findReasonableStepSize(double[] initialPosition, double[] initialGradient,
+                                            double forcedInitialStepSize) {
 
         if (forcedInitialStepSize != 0) {
             return new StepSize(forcedInitialStepSize);
@@ -180,10 +190,11 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             int count = 1;
             int dim = initialPosition.length;
             WrappedVector position = new WrappedVector.Raw(Arrays.copyOf(initialPosition, dim));
+            WrappedVector gradient = new WrappedVector.Raw(Arrays.copyOf(initialGradient, dim));
 
             double probBefore = hmcProvider.getJointProbability(momentum);
 
-            hmcProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
+            hmcProvider.reversiblePositionMomentumUpdate(position, momentum, gradient, 1, stepSize);
 
             double probAfter = hmcProvider.getJointProbability(momentum);
 
@@ -194,7 +205,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             while (Math.pow(probRatio, a) > Math.pow(2, -a)) {
 
                 probBefore = probAfter;
-                hmcProvider.reversiblePositionMomentumUpdate(position, momentum, 1, stepSize);
+                hmcProvider.reversiblePositionMomentumUpdate(position, momentum, gradient, 1, stepSize);
 
                 probAfter = hmcProvider.getJointProbability(momentum);
                 probRatio = Math.exp(probAfter - probBefore);
@@ -251,20 +262,22 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     private class TreeState {
 
-        private TreeState(double[] position, double[] moment,
+        private TreeState(double[] position, double[] moment, double[] gradient,
                           int numNodes, boolean flagContinue) {
-            this(position, moment, numNodes, flagContinue, 0.0, 0);
+            this(position, moment, gradient, numNodes, flagContinue, 0.0, 0);
         }
 
-        private TreeState(double[] position, double[] moment,
+        private TreeState(double[] position, double[] moment, double[] gradient,
                           int numNodes, boolean flagContinue,
                           double cumAcceptProb, int numAcceptProbStates) {
             this.position = new double[3][];
             this.momentum = new double[3][];
+            this.gradient = new double[3][]; //todo: (for gradient) no need for 3 but 2? If changed to 2, getIndex should also be changed
 
             for (int i = 0; i < 3; ++i) {
                 this.position[i] = position;
                 this.momentum[i] = moment;
+                this.gradient[i] = gradient;
             }
 
             // Recursion variables
@@ -284,6 +297,10 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             return momentum[getIndex(direction)];
         }
 
+        private double[] getGradient(int direction) {
+            return gradient[getIndex(direction)];
+        }
+
         private double[] getSample() {
             /*
             Returns a state chosen uniformly from the acceptable states along a hamiltonian dynamics trajectory tree.
@@ -300,6 +317,10 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
             this.momentum[getIndex(direction)] = momentum;
         }
 
+        private void setGradient(int direction, double[] gradient) {
+            this.gradient[getIndex(direction)] = gradient;
+        }
+
         private void setSample(double[] position) { setPosition(0, position); }
 
         private int getIndex(int direction) { // valid directions: -1, 0, +1
@@ -311,6 +332,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
             setPosition(direction, nextTree.getPosition(direction));
             setMomentum(direction, nextTree.getMomentum(direction));
+            setGradient(direction, nextTree.getGradient(direction));
 
             updateSample(nextTree);
 
@@ -331,6 +353,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         final private double[][] position;
         final private double[][] momentum;
+        final private double[][] gradient;
 
         private int numNodes;
         private boolean flagContinue;
@@ -339,9 +362,50 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         private int numAcceptProbStates;
     }
 
+    private void initializeNumEvents(){
+        numBaseCalls = 0;
+        numBoundaryEvents = 0;
+        numGradientEvents = 0;
+    }
+
+    private void recordOneBaseCall(){
+        numBaseCalls++;
+    }
+
+    private void recordEvents(){
+        numGradientEvents += hmcProvider.getNumGradientEvent();
+        numBoundaryEvents += hmcProvider.getNumBoundaryEvent();
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[3];
+        columns[0] = new NumberColumn("base calls") {
+            @Override
+            public double getDoubleValue() {
+                return numBaseCalls;
+            }
+        };
+        columns[1] = new NumberColumn("gradient events") {
+            @Override
+            public double getDoubleValue() {
+                return numGradientEvents;
+            }
+        };
+        columns[2] = new NumberColumn("boundary events") {
+            @Override
+            public double getDoubleValue() {
+                return numBoundaryEvents;
+            }
+        };
+        return columns;
+    }
 
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
+    private int numBaseCalls;
+    private int numBoundaryEvents;
+    private int numGradientEvents;
 }
 

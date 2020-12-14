@@ -46,28 +46,31 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public IrreversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                       PrecisionMatrixVectorProductProvider multiplicationProvider,
                                       PrecisionColumnProvider columnProvider,
-                                      double weight, Options runtimeOptions, Parameter mask,
+                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
                                       int threadCount) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask, threadCount);
     }
 
 
     @Override
     WrappedVector drawInitialVelocity(WrappedVector momentum) {
-        ReadableVector mass = preconditioning.mass;
+        if (!refreshVelocity && storedVelocity != null) {
+            return storedVelocity;
+        } else {
+            ReadableVector mass = preconditioning.mass;
 
-        double[] velocity = new double[mass.getDim()];
+            double[] velocity = new double[mass.getDim()];
 
-        for (int i = 0, len = mass.getDim(); i < len; ++i) {
-            velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
+            for (int i = 0, len = mass.getDim(); i < len; ++i) {
+                velocity[i] = (MathUtils.nextDouble() > 0.5) ? 1.0 : -1.0;
+            }
+
+            if (mask != null) {
+                applyMask(velocity);
+            }
+            return new WrappedVector.Raw(velocity);
         }
-
-        if (mask != null) {
-            applyMask(velocity);
-        }
-
-        return new WrappedVector.Raw(velocity);
     }
 
     @Override
@@ -80,12 +83,31 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         updatePosition(position.getBuffer(), velocity.getBuffer(), time);
     }
 
+    private MinimumTravelInformation getNextBounceNative(
+            WrappedVector position,
+            WrappedVector velocity,
+            WrappedVector action,
+            WrappedVector gradient) {
 
-    private MinimumTravelInformation testNative(WrappedVector position,
-                                                WrappedVector velocity,
-                                                WrappedVector action,
-                                                WrappedVector gradient) {
+        if (TIMING) {
+            timer.startTimer("getNextC++");
+        }
 
+        final MinimumTravelInformation mti = nativeZigZag.getNextIrreversibleEvent(position.getBuffer(), velocity.getBuffer(),
+                action.getBuffer(), gradient.getBuffer());
+
+        if (TIMING) {
+            timer.stopTimer("getNextC++");
+        }
+
+        return mti;
+    }
+
+    private void testNative(MinimumTravelInformation firstBounce,
+                            WrappedVector position,
+                            WrappedVector velocity,
+                            WrappedVector action,
+                            WrappedVector gradient) {
         if (TIMING) {
             timer.startTimer("getNextC++");
         }
@@ -99,7 +121,10 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             timer.stopTimer("getNextC++");
         }
 
-        return mti;
+        if (!firstBounce.equals(mti)) {
+            System.err.println(mti + " ?= " + firstBounce + "\n");
+            System.exit(-1);
+        }
     }
 
     @SuppressWarnings("Duplicates")
@@ -116,15 +141,19 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
             timer.startTimer("getNext");
         }
 
-        firstBounce = getNextBounceImpl(position.getBuffer(), velocity.getBuffer(),
-                action.getBuffer(), gradient.getBuffer());
+        if (nativeCodeOptions.useNativeFindNextBounce) {
+            firstBounce = getNextBounceNative(position, velocity, action, gradient);
+        } else {
+            firstBounce = getNextBounceImpl(position.getBuffer(), velocity.getBuffer(), action.getBuffer(),
+                    gradient.getBuffer());
+        }
 
         if (TIMING) {
             timer.stopTimer("getNext");
         }
 
-        if (TEST_NATIVE_BOUNCE) {
-            firstBounce = testNative(position, velocity, action, gradient);
+        if (nativeCodeOptions.testNativeFindNextBounce) {
+            testNative(firstBounce, position, velocity, action, gradient);
         }
 
         return firstBounce;

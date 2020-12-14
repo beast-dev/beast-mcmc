@@ -44,6 +44,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String N_ITERATIONS = "nIterations";
     private static final String INITIAL_GUESS = "startAtCurrentState";
     private static final String PRINT_SCREEN = "printToScreen";
+    private static final String INCLUDE_JACOBIAN = "includeJacobian";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -57,6 +58,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         int nIterations = Math.abs(xo.getAttribute(N_ITERATIONS, 0));
         boolean initialGuess = xo.getAttribute(INITIAL_GUESS, true);
         boolean printScreen = xo.getAttribute(PRINT_SCREEN, false);
+        boolean includeJacobian = xo.getAttribute(INCLUDE_JACOBIAN, false);
 
         if (gradient != null) {
             parameter = gradient.getParameter();
@@ -70,7 +72,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         Transform transform = (Transform) xo.getChild(Transform.class);
 
         MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
-                new MaximizerWrtParameter.Settings(nIterations, initialGuess, printScreen));
+                new MaximizerWrtParameter.Settings(nIterations, initialGuess, printScreen, includeJacobian));
         maximizer.maximize();
 
         return maximizer;
@@ -109,5 +111,6 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(N_ITERATIONS, true),
             AttributeRule.newBooleanRule(INITIAL_GUESS, true),
             AttributeRule.newBooleanRule(PRINT_SCREEN, true),
+            AttributeRule.newBooleanRule(INCLUDE_JACOBIAN, true),
     };
 }

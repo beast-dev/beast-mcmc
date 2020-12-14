@@ -29,7 +29,6 @@ import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inference.operators.hmc.ReversibleZigZagOperator;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
@@ -40,12 +39,12 @@ import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
 
 public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
 
-    private final static String NUTS_PARSER = "NoUTurnOperator";
+    private final static String NUTS = "NoUTurnOperator";
     private final static String ADAPTIVE_STEPSIZE_FLG = "adaptiveStepsize";
 
     @Override
     public String getParserName() {
-        return NUTS_PARSER;
+        return NUTS;
     }
 
     @Override
@@ -63,8 +62,7 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
     }
 
     final static XMLSyntaxRule[] rules = {
-            AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            new ElementRule(ReversibleHMCProvider.class)
+            AttributeRule.newDoubleRule(MCMCOperator.WEIGHT)
     };
 
     private final XMLSyntaxRule[] additionalRules = {
@@ -79,6 +77,6 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return ReversibleZigZagOperator.class;
+        return NoUTurnOperator.class;
     }
 }

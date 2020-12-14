@@ -397,6 +397,34 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         return logLikelihood;
     }
 
+    enum UnitConversion {
+
+        KM_TO_DEGREE("kmToDegree") {
+            @Override
+            double convert(double input) {
+                return Math.pow(110.5,2) * 6.0 * Math.PI / input;
+            }
+        };
+
+        UnitConversion(String name) {
+            this.name = name;
+        }
+
+        private final String name;
+
+        abstract double convert(double input);
+
+        public static UnitConversion factory(String match) {
+            for (UnitConversion type : UnitConversion.values()) {
+                if (match.equalsIgnoreCase(type.name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
+
+    }
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -411,6 +439,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String LOCATION_MEAN_NAME = "locationMeanTrait";
         final static String LOCATION_VARIANCE = "locationVariance";
         final static String LOCATION_VARIANCE_NAME = "locationVarianceTrait";
+        final static String LOCATION_VARIANCE_CONVERSION = "conversion";
         final static String BY_INCREMENT = "byIncrement";
         final static String HPH_DIMENSION = "hphDimension";
         final static String SIGMA_PRECISON = "sigmaXprec";
@@ -450,9 +479,11 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 FastMatrixParameter tmpLocationVariance = new FastMatrixParameter("tmpLocationVariance", 1, locationPrecision.getColumnDimension(), 0.0, false);
                 parseTimes(taxa, timeTraitName, tmpLocationVariance, locationVarianceTraitName);
 
+                UnitConversion conversion = UnitConversion.factory((String) cxo.getChild(LOCATION_VARIANCE).getAttribute(LOCATION_VARIANCE_CONVERSION));
+
                 for (int row = 0; row < locationPrecision.getRowDimension(); row++) {
                     for (int col = 0; col < locationPrecision.getColumnDimension(); col++) {
-                        locationPrecision.setParameterValue(row, col, Math.pow(110.5,2) * 6.0 * Math.PI / tmpLocationVariance.getParameterValue(0, col)); //TODO better way of transforming to/from lat/long
+                        locationPrecision.setParameterValue(row, col, conversion.convert(tmpLocationVariance.getParameterValue(0, col)));
                     }
                 }
             }
@@ -531,7 +562,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                                                         AttributeRule.newStringRule(LOCATION_MEAN_NAME)}),
                                                 new AndRule( new XMLSyntaxRule[]{
                                                         new ElementRule(LOCATION_VARIANCE, MatrixParameterInterface.class),
-                                                        AttributeRule.newStringRule(LOCATION_VARIANCE_NAME)})
+                                                        AttributeRule.newStringRule(LOCATION_VARIANCE_NAME)}),
+                                                AttributeRule.newStringRule(LOCATION_VARIANCE_CONVERSION)
                                         },
                                         true
                                 )

@@ -542,7 +542,28 @@ public interface MassPreconditioner {
             for (int i = 0; i < dim; i++) {
                 values[i] = Math.abs((gradientPlus[i] - gradientMinus[i]) / (2.0 * MachineAccuracy.SQRT_SQRT_EPSILON));
             }
+            fillZeros(values);
             inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);
+        }
+
+        private void fillZeros(double[] positives) {
+            double sum = 0.0;
+            double min = Double.POSITIVE_INFINITY;
+
+            for (int i = 0; i < positives.length; i++) {
+                sum += positives[i];
+                if (min > positives[i] && positives[i] > 0.0) min = positives[i];
+            }
+
+            if (sum == 0.0) {
+                Arrays.fill(positives, 1.0);
+            } else {
+                for (int i = 0; i < positives.length; i++) {
+                    if (positives[i] == 0.0) {
+                        positives[i] = min;
+                    }
+                }
+            }
         }
 
         @Override

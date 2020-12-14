@@ -35,11 +35,15 @@ public class ConstrainedTreeBranchLengthProvider  implements BranchLengthProvide
         // need to make subtrees to nodes in the dataTree Subtrees
         Map<BitSet, NodeRef> dataTreeMap = getBitSetNodeMap(dataTree,dataTree);
         Map<BitSet, NodeRef> treeModelMap = getBitSetNodeMap(dataTree,constrainedTreeModel);
+        HashMap <NodeRef, NodeRef> dataTreeNodeMap = new HashMap<>();
 
-        for (BitSet clade :
-                dataTreeMap.keySet()) {
-            NodeRef dataNode = dataTreeMap.get(clade);
-            NodeRef constrainedNode = treeModelMap.get(clade);
+        for (Map.Entry<BitSet, NodeRef> entry: dataTreeMap.entrySet()){
+            dataTreeNodeMap.put(entry.getValue(), treeModelMap.get(entry.getKey()));
+        }
+
+        for(int i=0; i<dataTree.getInternalNodeCount(); i++){
+            NodeRef dataNode = dataTree.getInternalNode(i);
+            NodeRef constrainedNode = dataTreeNodeMap.get(dataNode);
             cladeBranchLengths[constrainedTreeModel.getSubtreeIndex(constrainedNode)] = discrete? Math.round(dataTree.getBranchLength(dataNode)*scale):dataTree.getBranchLength(dataNode)*scale ;
         }
     }
@@ -53,7 +57,8 @@ public class ConstrainedTreeBranchLengthProvider  implements BranchLengthProvide
             return externalBranchLengths[node.getNumber()];
         }
         WrappedSubtree subtree = ((ConstrainedTreeModel) tree).getSubtree(node);
-        if (subtree.isRoot(node)) {
+        NodeRef nodeInSubtree = subtree.getUnWrappedNode(((ConstrainedTreeModel) tree).getNodeInWrappedTree(node));
+        if (subtree.isRoot(nodeInSubtree)) {
             int subtreeIndex = ((ConstrainedTreeModel) tree).getSubtreeIndex(node);
             return cladeBranchLengths[subtreeIndex];
         }else{

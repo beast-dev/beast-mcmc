@@ -158,7 +158,7 @@ public class TreeIntervals extends AbstractModel implements Units, IntervalList 
      */
     private Set<NodeRef> getExcludedMRCAs(Tree tree) {
 
-        if (excludedLeafSets.length == 0) return null;
+        if (excludedLeafSets==null || excludedLeafSets.length == 0) return null;
 
         Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
         for (Set<String> excludedLeafSet : excludedLeafSets) {

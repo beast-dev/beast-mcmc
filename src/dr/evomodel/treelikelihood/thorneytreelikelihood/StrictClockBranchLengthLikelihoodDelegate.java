@@ -24,8 +24,8 @@ public class StrictClockBranchLengthLikelihoodDelegate extends AbstractModel imp
 
 
     @Override
-    public double getGradientWrtTime(double mutations, double time) {
-        return SaddlePointExpansion.logPoissonDerivative(time * mutationRate.getValue(0) * scale, (int) Math.round(mutations));
+    public double getGradientWrtTime(double mutations, double time) { // TODO: better chain rule handling
+        return SaddlePointExpansion.logPoissonMeanDerivative(time * mutationRate.getValue(0) * scale, (int) Math.round(mutations)) * mutationRate.getValue(0) * scale;
     }
 
     @Override
@@ -197,5 +197,11 @@ final class SaddlePointExpansion {
             derivative = Double.NEGATIVE_INFINITY;
         }
         return derivative;
+    }
+
+    static public double logPoissonMeanDerivative(double mean, int x) {
+        final double result = x == 0 ? -1.0 : FastMath.log(((double) x) / mean) - 1.0;
+
+        return result;
     }
 }

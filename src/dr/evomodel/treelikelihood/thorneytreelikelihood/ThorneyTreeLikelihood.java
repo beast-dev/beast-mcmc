@@ -1,6 +1,6 @@
 package dr.evomodel.treelikelihood.thorneytreelikelihood;
 /*
- * AbstractTreeLikelihood.java
+ * ThorneyTreeLikelihood.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -334,6 +334,18 @@ public class ThorneyTreeLikelihood extends AbstractModelLikelihood implements Re
 
     public String getReport() {
         return getClass().getName() + "(" + getLogLikelihood() + ")";
+    }
+
+    public TreeModel getTreeModel() {
+        return treeModel;
+    }
+
+    public BranchLengthProvider getBranchLengthProvider() {
+        return branchLengthProvider;
+    }
+
+    public ThorneyBranchLengthLikelihoodDelegate getThorneyBranchLengthLikelihoodDelegate() {
+        return thorneyBranchLengthLikelihoodDelegate;
     }
 
     // **************************************************************

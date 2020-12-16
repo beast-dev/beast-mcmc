@@ -29,7 +29,6 @@ public abstract class AbstractWrappedTree extends TreeModel {
         setId(name);
 
         this.wrappedTree = tree;
-        addModel(tree);
 
         if(externalNodes==null){
             externalNodes = new HashSet<>();
@@ -62,7 +61,6 @@ public abstract class AbstractWrappedTree extends TreeModel {
         }
 
         NodeRef wrappedNode = TreeUtils.getCommonAncestor(tree, wrappedNodes);
-        NodeRef wrappedRoot = TreeUtils.getCommonAncestor(tree, wrappedNodes);
 
         traverseAndSetup(tree, wrappedNode, externalNodes, i);
 //        int visitedTips =0;
@@ -358,36 +356,6 @@ public abstract class AbstractWrappedTree extends TreeModel {
         super.endTreeEdit();
     }
 
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if(model==wrappedTree){
-            TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
-            NodeRef wrappedNode = treeChangedEvent.getNode();
-            NodeRef node = wrappedNode == null ? null : getUnWrappedNode(wrappedNode);
-            if(node!=null) {
-                pushTreeChangedEvent(new RemappedTreeChangeEvent(treeChangedEvent, node));
-            }
-        }else{
-            throw new RuntimeException("unknown model");
-        }
-    }
-
-    /**
-     * This method is called whenever a parameter is changed.
-     * <p/>
-     * It is strongly recommended that the model component sets a "dirty" flag and does no
-     * further calculations. Recalculation is typically done when the model component is asked for
-     * some information that requires them. This mechanism is 'lazy' so that this method
-     * can be safely called multiple times with minimal computational cost.
-     *
-     * @param variable
-     * @param index
-     * @param type
-     */
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
-    }
 
     /**
      * Additional state information, outside of the sub-model is stored by this call.
@@ -443,33 +411,6 @@ public abstract class AbstractWrappedTree extends TreeModel {
     private final int internalNodeCount;
     private AbstractWrappedTree parentTree=null;
 
-    private class RemappedTreeChangeEvent implements TreeChangedEvent {
-
-        final private TreeChangedEvent event;
-        final private NodeRef node;
-
-        private RemappedTreeChangeEvent(TreeChangedEvent event, NodeRef node) {
-            this.event = event;
-            this.node = node;
-        }
-
-        @Override public int getIndex() { return event.getIndex(); }
-
-        @Override public NodeRef getNode() { return node; }
-
-        @Override public Parameter getParameter() { return event.getParameter(); }
-
-        @Override public boolean isNodeChanged() { return event.isNodeChanged(); }
-
-        @Override public boolean isTreeChanged() { return event.isTreeChanged(); }
-
-        @Override
-        public boolean isNodeOrderChanged() { return event.isNodeOrderChanged(); }
-
-        @Override public boolean isNodeParameterChanged() { return event.isNodeParameterChanged(); }
-
-        @Override public boolean isHeightChanged() { return event.isHeightChanged(); }
-    }
     private class Node implements NodeRef {
 
         private Node(int number) {

@@ -56,7 +56,7 @@ public class ConstrainedTreeBranchLengthProvider  implements BranchLengthProvide
         if (tree.isExternal(node)) {
             return externalBranchLengths[node.getNumber()];
         }
-        WrappedSubtree subtree = ((ConstrainedTreeModel) tree).getSubtree(node);
+        AbstractWrappedTree subtree = ((ConstrainedTreeModel) tree).getSubtree(node);
         NodeRef nodeInSubtree = subtree.getUnWrappedNode(((ConstrainedTreeModel) tree).getNodeInWrappedTree(node));
         if (subtree.isRoot(nodeInSubtree)) {
             int subtreeIndex = ((ConstrainedTreeModel) tree).getSubtreeIndex(node);

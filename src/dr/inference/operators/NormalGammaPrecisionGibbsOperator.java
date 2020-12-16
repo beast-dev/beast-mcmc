@@ -44,20 +44,24 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     public static final String LIKELIHOOD = "likelihood";
     public static final String PRIOR = "prior";
     private static final String WORKING = "workingDistribution";
+    private static final String INDICES = "indices";
 
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider, GammaStatisticsProvider prior,
+                                             int[] indices,
                                              double weight) {
-        this(gammaGibbsProvider, prior, null, weight);
+        this(gammaGibbsProvider, prior, null, indices, weight);
     }
 
     public NormalGammaPrecisionGibbsOperator(GammaGibbsProvider gammaGibbsProvider,
                                              GammaStatisticsProvider prior, GammaStatisticsProvider working,
+                                             int[] indices,
                                              double weight) {
         this.gammaGibbsProvider = gammaGibbsProvider;
         this.precisionParameter = gammaGibbsProvider.getPrecisionParameter();
 
         this.prior = prior;
         this.working = working;
+        this.indices = indices;
 
         setWeight(weight);
     }
@@ -141,7 +145,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
         gammaGibbsProvider.drawValues();
 
-        for (int dim = 0; dim < precisionParameter.getDimension(); ++dim) {
+        for (int dim : indices) {
 
             final GammaGibbsProvider.SufficientStatistics statistics = gammaGibbsProvider.getSufficientStatistics(dim);
 
@@ -245,8 +249,24 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
                 gammaGibbsProvider = (GammaGibbsProvider) xo.getChild(GammaGibbsProvider.class);
             }
 
+
+            int[] indices;
+            if (xo.hasAttribute(INDICES)) {
+                indices = xo.getIntegerArrayAttribute(INDICES);
+                for (int i = 0; i < indices.length; i++) {
+                    indices[i] -= 1;
+                }
+            } else {
+                int n = gammaGibbsProvider.getPrecisionParameter().getDimension();
+                indices = new int[n];
+                for (int i = 0; i < n; i++) {
+                    indices[i] = i;
+                }
+            }
+
+
             return new NormalGammaPrecisionGibbsOperator(gammaGibbsProvider,
-                    priorDistribution, workingDistribution,
+                    priorDistribution, workingDistribution, indices,
                     weight);
         }
 
@@ -268,6 +288,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
+                AttributeRule.newStringRule(INDICES, true),
                 new XORRule(
                         new ElementRule(LIKELIHOOD,
                                 new XMLSyntaxRule[]{
@@ -301,4 +322,5 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
     private final GammaStatisticsProvider working;
 
     private double pathParameter = 1.0;
+    private final int[] indices;
 }

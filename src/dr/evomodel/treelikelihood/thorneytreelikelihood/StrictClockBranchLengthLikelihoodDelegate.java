@@ -182,23 +182,6 @@ final class SaddlePointExpansion {
         return result;
     }
 
-    /*
-    https://www.r-project.org/doc/reports/CLoader-dbinom-2002.pdf
-    ignoring many edge cases
-     */
-    static public double logPoissonDerivative(double mean, int x) {
-        double derivative;
-        if (x > 0 && x != Integer.MAX_VALUE) {
-            double z2 = (double) x * (double) x;
-            //1/12, 3/360, 5/1260, 7/1680, 9/1188
-            final double stirlingErrorDerivation = (-0.08333333333333333D + (0.00833333333333333D + (-3.96825396825397E-3 + (4.16666666666667E-3 - 7.57575757575758E-3 / z2) / z2) / z2) / z2) / z2;
-            derivative = -0.5 / ((double) x) - stirlingErrorDerivation - FastMath.log(((double) x) / mean);
-        } else {
-            derivative = Double.NEGATIVE_INFINITY;
-        }
-        return derivative;
-    }
-
     static public double logPoissonMeanDerivative(double mean, int x) {
         final double result = x == 0 ? -1.0 : FastMath.log(((double) x) / mean) - 1.0;
 

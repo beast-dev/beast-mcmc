@@ -183,7 +183,7 @@ final class SaddlePointExpansion {
     }
 
     static public double logPoissonMeanDerivative(double mean, int x) {
-        final double result = x == 0 ? -1.0 : FastMath.log(((double) x) / mean) - 1.0;
+        final double result = x == 0 ? -1.0 : (double) x / mean - 1.0;
 
         return result;
     }

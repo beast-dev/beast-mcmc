@@ -345,12 +345,14 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final double checkStepSizeReductionFactor;
         final double targetAcceptanceProbability;
         final InstabilityHandler instabilityHandler;
+        final boolean guessInitialMass;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
                        int preconditioningUpdateFrequency, int preconditioningMaxUpdate, int preconditioningDelay, int preconditioningMemory,
                        int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
-                       double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
+                       double targetAcceptanceProbability, InstabilityHandler instabilityHandler,
+                       boolean guessInitialMass) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
@@ -364,6 +366,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
             this.targetAcceptanceProbability = targetAcceptanceProbability;
             this.instabilityHandler = instabilityHandler;
+            this.guessInitialMass = guessInitialMass;
         }
     }
 

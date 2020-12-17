@@ -5,14 +5,16 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
-import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
 import java.util.ArrayList;
@@ -61,7 +63,7 @@ public interface MassPreconditioner {
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
                 int dimension = transform instanceof Transform.MultivariableTransform ?
                         ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
-                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay);
+                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay, options.guessInitialMass);
             }
         },
         PRIOR_DIAGONAL("priorDiagonal") {
@@ -513,12 +515,17 @@ public interface MassPreconditioner {
 
         AdaptiveDiagonalPreconditioning(int dim,
                                         GradientWrtParameterProvider gradient,
-                                        Transform transform, int preconditioningDelay) {
+                                        Transform transform, int preconditioningDelay,
+                                        boolean guessInitialMass) {
             super(dim, transform);
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.minimumUpdates = preconditioningDelay;
             this.gradient = gradient;
-            setInitialMass();
+            if (guessInitialMass) {
+                setInitialMass();
+            } else {
+                super.initializeMass();
+            }
         }
 
         @Override

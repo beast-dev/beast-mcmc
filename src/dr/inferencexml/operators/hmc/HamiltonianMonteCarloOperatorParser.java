@@ -58,6 +58,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
+    private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
    
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
@@ -155,6 +156,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 0.8); // Stan default
         String instabilityHandlerCase = xo.getAttribute(INSTABILITY_HANDLER, "reject");
         HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
+        boolean guessInitialMass = xo.getAttribute(PRECONDITIONING_GUESS_INIT_MASS, true);
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
@@ -162,7 +164,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 gradientCheckCount, gradientCheckTolerance,
                 maxIterations, reductionFactor,
                 targetAcceptanceProbability,
-                instabilityHandler
+                instabilityHandler,
+                guessInitialMass
         );
 
         MassPreconditioner preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);

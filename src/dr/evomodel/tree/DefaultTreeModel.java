@@ -651,65 +651,6 @@ public class DefaultTreeModel extends TreeModel {
         this.setRoot(nodes[newRootIndex]);
     }
 
-    private int[] createNodeMap(String[] taxaNames) {
-
-        System.out.println("Creating a node mapping:");
-
-        int external = this.getExternalNodeCount();
-
-        int[] nodeMap = new int[external];
-        for (int i = 0; i < taxaNames.length; i++) {
-            for (int j = 0; j < external; j++) {
-                if (taxaNames[i].equals(this.getNodeTaxon(this.getExternalNode(j)).getId())) {
-                    //taxon found
-                    nodeMap[i] = j;
-                }
-            }
-        }
-        return nodeMap;
-    }
-
-    /**
-     * Imports trait information from a file
-     * @param edges Edges are provided as index: child number; parent: array entry
-     * @param traitModels List of TreeParameterModel object that contain trait information
-     * @param traitValues Values to be copied into the List of TreeParameterModel objects
-     */
-    public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues, String[] taxaNames) {
-        int[] nodeMap = createNodeMap(taxaNames);
-        int index = 0;
-
-        for (TreeParameterModel tpm : traitModels) {
-
-            for (int i = 0; i < this.getRoot().getNumber(); i++) {
-                if (i < this.getExternalNodeCount()) {
-                        tpm.setNodeValue(this, this.getExternalNode(nodeMap[i]), traitValues[index][i]);
-                        System.out.println("Setting external node " + this.getExternalNode(nodeMap[i]) + " to " + traitValues[index][i]);
-
-                    } else {
-                        tpm.setNodeValue(this, this.getNode(i), traitValues[index][i]);
-                        System.out.println("Setting internal node " + this.getNode(i ) + " to " + traitValues[index][i]);
-                    }
-            }
-
-            // In TreeParameterModel, when this.getRoot.getNumber() and rootNodeNumber.getValue(0) are not equal,
-            // handleRootMove() will get called and move parameter/trait values to different indices.  Here, we
-            // preemptively move around trait values (if necessary) so that if handleRootMove() gets called, the
-            // trait values end up in the correct indices.
-            if(this.getRoot().getNumber() < edges.length-1){
-                tpm.setNodeValue(this, this.getNode(this.getRoot().getNumber()+1), traitValues[index][this.getNodeCount()-1]);
-               // System.out.println("Setting node " + this.getNode(this.getRoot().getNumber()+1) + " " + " to " + traitValues[index][this.getNodeCount()-1]);
-            }
-
-            for (int i = this.getRoot().getNumber()+2; i < edges.length; i++) {
-                    tpm.setNodeValue(this, this.getNode(i), traitValues[index][i-1]);
-                   // System.out.println("Setting node " + this.getNode(i ) + " to " + traitValues[index][i-1]);
-            }
-
-            index++;
-        }
-    }
-
     /**
      * Recursive algorithm to copy a proposed tree structure into the current treeModel.
      */

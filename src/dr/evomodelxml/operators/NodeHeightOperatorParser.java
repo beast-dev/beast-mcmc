@@ -25,7 +25,10 @@
 
 package dr.evomodelxml.operators;
 
-import dr.evomodel.operators.NodeHeightOperator;
+import dr.evomodel.operators.AbstractTreeOperator;
+import dr.evomodel.operators.RandomWalkNodeHeightOperator;
+import dr.evomodel.operators.ScaleNodeHeightOperator;
+import dr.evomodel.operators.UniformNodeHeightOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
@@ -36,6 +39,24 @@ import dr.xml.*;
  * @author Andrew Rambaut
  */
 public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
+
+    public enum OperatorType {
+        UNIFORM("uniform"),
+        RANDOMWALK("random walk"),
+        SCALEROOT("scale root"),
+        SCALEALL("scale all internal");
+
+        OperatorType(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        String name;
+    }
 
     public static final String NODE_HEIGHT_OPERATOR = "nodeHeightOperator";
 
@@ -50,48 +71,58 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        AdaptationMode mode = AdaptationMode.parseMode(xo);
-
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        double tuningParameter = 0.75;
-
-        if (xo.hasAttribute(SIZE)) {
-            tuningParameter = xo.getDoubleAttribute(SIZE);
-            if (tuningParameter <= 0.0) {
-                throw new XMLParseException("The NodeHeightOperator size attribute must be positive and non-zero.");
-            }
-        }
-        if (xo.hasAttribute(SCALE_FACTOR)) {
-            tuningParameter = xo.getDoubleAttribute(SCALE_FACTOR);
-            if (tuningParameter <= 0.0 || tuningParameter >= 1.0) {
-                throw new XMLParseException("The NodeHeightOperator scaleFactor attribute must be between 0 and 1.");
-            }
-        }
-
-        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
-
-        NodeHeightOperator.OperatorType operatorType = NodeHeightOperator.OperatorType.UNIFORM;
+        OperatorType operatorType = OperatorType.UNIFORM;
         if (xo.hasAttribute(OPERATOR_TYPE)) {
             try {
-                operatorType = NodeHeightOperator.OperatorType.valueOf(xo.getStringAttribute(OPERATOR_TYPE).trim().toUpperCase());
+                operatorType = OperatorType.valueOf(xo.getStringAttribute(OPERATOR_TYPE).trim().toUpperCase());
             } catch (IllegalArgumentException iae) {
                 throw new XMLParseException("Unrecognised operator type attribute: " + xo.getStringAttribute(OPERATOR_TYPE));
             }
         }
 
+        if (operatorType != OperatorType.UNIFORM) {
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
-        if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
-            throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
+            double tuningParameter = 0.75;
+
+            if (xo.hasAttribute(SIZE)) {
+                tuningParameter = xo.getDoubleAttribute(SIZE);
+                if (tuningParameter <= 0.0) {
+                    throw new XMLParseException("The UniformNodeHeightOperator size attribute must be positive and non-zero.");
+                }
+            }
+            if (xo.hasAttribute(SCALE_FACTOR)) {
+                tuningParameter = xo.getDoubleAttribute(SCALE_FACTOR);
+                if (tuningParameter <= 0.0 || tuningParameter >= 1.0) {
+                    throw new XMLParseException("The UniformNodeHeightOperator scaleFactor attribute must be between 0 and 1.");
+                }
+            }
+
+            final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
+
+            if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
+                throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
+            }
+
+            switch (operatorType) {
+                case RANDOMWALK:
+                    return new RandomWalkNodeHeightOperator(treeModel, weight, tuningParameter, mode, targetAcceptance);
+                case SCALEROOT:
+                case SCALEALL:
+                    return new ScaleNodeHeightOperator(treeModel, weight, tuningParameter, operatorType, mode, targetAcceptance);
+                default:
+                    throw new IllegalArgumentException("Unknown operator type");
+            }
         }
 
-        if(operatorType==NodeHeightOperator.OperatorType.UNIFORM){
-            //TODO log that there is no adaptation on the uniform operator
-            mode =AdaptationMode.ADAPTATION_OFF;
+        if (xo.hasAttribute(SIZE)|| xo.hasAttribute(SCALE_FACTOR) || xo.hasAttribute(TARGET_ACCEPTANCE) || xo.hasAttribute(AdaptableMCMCOperator.AUTO_OPTIMIZE)) {
+            throw new XMLParseException("Uniform node height operator does not take adaptable operator arguments");
         }
 
-        return new NodeHeightOperator(treeModel, weight, tuningParameter, operatorType, mode, targetAcceptance);
+        return new UniformNodeHeightOperator(treeModel, weight);
     }
 
     public String getParserDescription() {
@@ -99,7 +130,7 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return NodeHeightOperator.class;
+        return AbstractTreeOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

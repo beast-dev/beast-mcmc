@@ -30,6 +30,7 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     private boolean nodeKnown = false;
     private boolean storedNodeKnown;
     private NodeRef storedOneNode;
+//    private int i = 0;
 
     public FixedReferenceRates(String name, TreeModel treeModel, BranchRateModel branchRateModel, Taxon referenceTaxon, int fixedLength) {
         super(name);
@@ -56,14 +57,19 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     }
 
     public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
-        updateNodeList(tree, referenceTaxon); //todo: figure out why this is necessary
-        if (!nodeKnown) {
-            updateNodeList(tree, referenceTaxon);
-        }
-        if (node == oneNode) {
+        if (node.getNumber() == oneNode.getNumber()) {
             return 1.0;
         } else {
             return differentiableBranchRateModel.getUntransformedBranchRate(tree, node);
+        }
+    }
+
+    @Override
+    public double getBranchRate(Tree tree, NodeRef node) {
+        if (node.getNumber() == oneNode.getNumber()) {
+            return 1.0;
+        } else {
+            return differentiableBranchRateModel.getBranchRate(tree, node);
         }
     }
 
@@ -151,18 +157,6 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     @Override
     public double getPriorRateAsIncrement(Tree tree) {
         return 0;
-    }
-
-    @Override
-    public double getBranchRate(Tree tree, NodeRef node) {
-        if (!nodeKnown) {
-            updateNodeList(tree, referenceTaxon);
-        }
-        if (node == oneNode) {
-            return 1.0;
-        } else {
-            return differentiableBranchRateModel.getBranchRate(tree, node);
-        }
     }
 
     @Override

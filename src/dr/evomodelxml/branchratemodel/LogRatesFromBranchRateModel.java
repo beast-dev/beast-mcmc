@@ -8,6 +8,10 @@ import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.xml.*;
 
+/**
+ * @author Alexander Fisher
+ */
+
 public class LogRatesFromBranchRateModel implements Loggable {
 
     private static final String BRANCH_RATES = "ratesFromBranchRateModel";

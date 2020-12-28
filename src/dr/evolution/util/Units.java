@@ -40,7 +40,7 @@ public interface Units extends Serializable {
 
     public enum Type {
         SUBSTITUTIONS(XMLUnits.SUBSTITUTIONS), GENERATIONS(XMLUnits.GENERATIONS),
-        DAYS(XMLUnits.DAYS), MONTHS(XMLUnits.MONTHS), YEARS(XMLUnits.YEARS);
+        DAYS(XMLUnits.DAYS), WEEKS(XMLUnits.WEEKS), MONTHS(XMLUnits.MONTHS), YEARS(XMLUnits.YEARS);
 
         Type(String name) {
             this.name = name;

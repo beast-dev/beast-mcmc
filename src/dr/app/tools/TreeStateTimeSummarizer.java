@@ -135,10 +135,15 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
 
 
     private double clippedDuration(double end, double start) {
-        double clippedEnd = Math.min(endTime, end);
-        double clippedStart = Math.max(startTime, start);
 
-        return clippedEnd - clippedStart;
+        if (start > endTime || end < startTime) {
+            return 0.0;
+        } else {
+            double clippedEnd = Math.min(endTime, end);
+            double clippedStart = Math.max(startTime, start);
+
+            return clippedEnd - clippedStart;
+        }
     }
 
     private static Object[] readMJH(NodeRef node, Tree treeTime) {

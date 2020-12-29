@@ -105,7 +105,11 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
-        return differentiableBranchRateModel.getBranchRateDifferential(tree, node);
+        if (node.getNumber() == oneNode.getNumber()) {
+            return (0.0);
+        } else {
+            return differentiableBranchRateModel.getBranchRateDifferential(tree, node);
+        }
     }
 
     @Override

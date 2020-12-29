@@ -80,6 +80,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 //    protected List<Parameter> missingCov;
     private final List<MatrixParameter> covariates;
     private final List<Parameter> beta;
+    private final List<Parameter> delta;
     private final List<Parameter> covPrecParametersRecent;
     private final List<Parameter> covPrecParametersDistant;
 
@@ -203,6 +204,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
         this.covariates = null;
         this.beta = null;
+        this.delta = null;
         this.covPrecParametersRecent = null;
         this.covPrecParametersDistant = null;
     }
@@ -226,7 +228,8 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                                            List<Parameter> covPrecParametersDistant,
                                            Parameter recentIndices,
                                            Parameter distantIndices,
-                                           List<Parameter> betaList) {
+                                           List<Parameter> betaList,
+                                           List<Parameter> deltaList) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
@@ -301,6 +304,18 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         this.precisionParameter = precParameter;
         this.lambdaParameter = lambda;
         this.beta = betaList;
+
+        if(deltaList != null) {
+            this.delta = deltaList;
+        }else{
+            this.delta = new ArrayList<Parameter>();
+            for(int i = 0; i < betaList.size(); i++){
+                Parameter deltaParam = new Parameter.Default(1.0);
+                deltaParam.setParameterValue(0,1.0);
+                this.delta.add(deltaParam);
+            }
+        }
+
         this.dMatrix = dMatrix;
         if (dMatrix != null) {
             addVariable(dMatrix);
@@ -358,6 +373,11 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
             if (betaList != null) {
                 for (Parameter betaParam : betaList) {
                     addVariable(betaParam);
+                }
+            }
+            if(deltaList != null){
+                for (Parameter dParam : deltaList) {
+                    addVariable(dParam);
                 }
             }
             if (lastObservedIndexParameter != null || firstObservedIndexParameter != null) {
@@ -1184,6 +1204,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                     for (int k = 0; k < beta.size(); ++k) {
 
                         Parameter b = beta.get(k);
+                        Parameter d = delta.get(k);
                         final int J = b.getDimension();
                         MatrixParameter covariate = covariates.get(k);
 
@@ -1195,7 +1216,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
                         for (int i = 0; i < N; ++i) {
                             for (int j = 0; j < J; ++j) {
-                                update[i] += covariate.getParameterValue(j, i) * b.getParameterValue(j);
+                                update[i] += covariate.getParameterValue(j, i) * b.getParameterValue(j)*d.getParameterValue(j);
                             }
                         }
                     }
@@ -1209,7 +1230,7 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
                 DenseVector currentBeta = new DenseVector(beta.size());
 
                 for (int i = 0; i < beta.size(); i++) {
-                    currentBeta.set(i, beta.get(i).getParameterValue(0));
+                    currentBeta.set(i, beta.get(i).getParameterValue(0)*delta.get(i).getParameterValue(0));
                 }
 
                 //int numMissing = fieldLength - lastObservedIndex;

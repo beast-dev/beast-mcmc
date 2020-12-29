@@ -1,5 +1,6 @@
 package dr.app.tools;
 
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.util.Arguments;
 import dr.app.beast.BeastVersion;
 import dr.evolution.tree.NodeRef;
@@ -17,15 +18,14 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
     private final static Version version = new BeastVersion();
     private static final String BURN_IN = "burnIn";
     private static final String HISTORY = "history";
+    private static final String NODE_VALUE = "sampleLoc"; // TODO parse from command-line.
 
     private TreeStateTimeSummarizer(String inputFileName,
                                     String outputFileName,
                                     int burnIn,
                                     double startTime,
                                     double endTime,
-                                    String[] states
-//                                  String nodeStateAnnotation
-    ) throws IOException {
+                                    String[] states) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
 
@@ -45,9 +45,100 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
         }
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            //TODO: your magic
-            //processOneTree(tree, states);
+            processOneTree(tree, states);
         }
+    }
+
+    private void processOneTree(Tree tree, String[] states) {
+
+        String treeId = tree.getId();
+        if (treeId.startsWith("STATE_")) {
+            treeId = treeId.replaceFirst("STATE_", "");
+        }
+
+        NodeRef root = tree.getRoot();
+        String rootState = (String) tree.getNodeAttribute(root, NODE_VALUE);
+
+        StateHistory history = traversePostOrder(tree, root, treeId);
+
+        checkEqual(rootState, history.state);
+        Row row = new Row(treeId, history.state, history.duration);
+        ps.println(row);
+
+    }
+
+    private class StateHistory {
+        String state;
+        double duration;
+
+        StateHistory(String state, double duration) {
+            this.state = state;
+            this.duration = duration;
+        }
+    }
+
+    private void checkEqual(String lhs, String rhs) {
+        if (!lhs.equals(rhs)) {
+            System.err.println("State mismatch");
+            System.exit(-1);
+        }
+    }
+
+    private StateHistory traversePostOrder(Tree tree, NodeRef node, String treeId) {
+
+        StateHistory history;
+
+        // If the node is internal, update the partial likelihoods.
+        if (tree.isExternal(node)) {
+            history = new StateHistory((String) tree.getNodeAttribute(node, NODE_VALUE), 0.0);
+        } else {
+            StateHistory history0 = traversePostOrder(tree, tree.getChild(node, 0), treeId);
+            StateHistory history1 = traversePostOrder(tree, tree.getChild(node, 1), treeId);
+
+            checkEqual(history0.state, history1.state);
+
+            history = new StateHistory(history0.state, history0.duration + history1.duration);
+        }
+
+        if (!tree.isRoot(node)) {
+
+            double currentTime = tree.getNodeHeight(node);
+
+            Object[] jumps = readMJH(node, tree);
+            if (jumps != null) {
+                for (int i = jumps.length - 1; i >= 0; --i) {
+                    Object[] jump = (Object[]) jumps[i];
+
+                    checkEqual(history.state, (String) jump[2]);
+
+                    double jumpTime = (Double) jump[0];
+
+                    history.duration += clippedDuration(jumpTime, currentTime); //(jumpTime - currentTime);
+
+                    Row row = new Row(treeId, history.state, history.duration);
+                    ps.println(row);
+
+                    currentTime = jumpTime;
+                    history = new StateHistory((String) jump[1], 0.0);
+
+                }
+            }
+
+            double parentHeight = tree.getNodeHeight(tree.getParent(node));
+
+            history.duration += clippedDuration(parentHeight, currentTime); //parentHeight - currentTime;
+
+        }
+
+        return history;
+    }
+
+
+    private double clippedDuration(double end, double start) {
+        double clippedEnd = Math.min(endTime, end);
+        double clippedStart = Math.max(startTime, start);
+
+        return clippedEnd - clippedStart;
     }
 
     private static Object[] readMJH(NodeRef node, Tree treeTime) {
@@ -76,7 +167,7 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
         public String toString() {
             return treeId + DELIMITER
                     + state + DELIMITER
-                    + time + DELIMITER;
+                    + time;
         }
     }
 

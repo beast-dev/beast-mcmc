@@ -18,14 +18,13 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
     private final static Version version = new BeastVersion();
     private static final String BURN_IN = "burnIn";
     private static final String HISTORY = "history";
-    private static final String NODE_VALUE = "sampleLoc"; // TODO parse from command-line.
 
     private TreeStateTimeSummarizer(String inputFileName,
                                     String outputFileName,
                                     int burnIn,
                                     double startTime,
                                     double endTime,
-                                    String[] states) throws IOException {
+                                    String nodeStateAnnotation) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
 
@@ -33,23 +32,24 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
 
         this.startTime = startTime;
         this.endTime = endTime;
+        this.nodeStateAnnotation = nodeStateAnnotation;
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(trees, burnIn, states);
+        processTrees(trees, burnIn);
         closeOutputFile(ps);
     }
 
-    private void processTrees(List<Tree> trees, int burnIn, String[] states) {
+    private void processTrees(List<Tree> trees, int burnIn) {
         if (burnIn < 0) {
             burnIn = 0;
         }
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            processOneTree(tree, states);
+            processOneTree(tree);
         }
     }
 
-    private void processOneTree(Tree tree, String[] states) {
+    private void processOneTree(Tree tree) {
 
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
@@ -57,7 +57,12 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
         }
 
         NodeRef root = tree.getRoot();
-        String rootState = (String) tree.getNodeAttribute(root, NODE_VALUE);
+
+        String rootState = (String) tree.getNodeAttribute(root, nodeStateAnnotation);
+        if(rootState==null){
+            System.err.println("no annotation for "+nodeStateAnnotation);
+            System.exit(-1);
+        }
 
         StateHistory history = traversePostOrder(tree, root, treeId);
 
@@ -90,7 +95,7 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
 
         // If the node is internal, update the partial likelihoods.
         if (tree.isExternal(node)) {
-            history = new StateHistory((String) tree.getNodeAttribute(node, NODE_VALUE), 0.0);
+            history = new StateHistory((String) tree.getNodeAttribute(node, nodeStateAnnotation), 0.0);
         } else {
             StateHistory history0 = traversePostOrder(tree, tree.getChild(node, 0), treeId);
             StateHistory history1 = traversePostOrder(tree, tree.getChild(node, 1), treeId);
@@ -192,6 +197,7 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
     private double startTime;
     private double endTime;
     private PrintStream ps;
+    private String nodeStateAnnotation;
 
     public static void printTitle() {
         progressStream.println();
@@ -216,9 +222,7 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
         int burnIn = -1;
         double startTime = 0; //default start time considered to be time zero
         double endTime = Double.MAX_VALUE; //end time, backwards in time
-        String[] states = null;
-        //Perhaps not needed if we rely (entirely) on the Markov jump history?
-        //String nodeStateAnnotation = null;
+        String nodeStateAnnotation = "states";
 
         printTitle();
 
@@ -227,8 +231,7 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.RealOption("startTime", "The start time for to time summaries [default = 0] "),
                         new Arguments.RealOption("endTime", "The end time for to time summaries [default = Double.MAX_VALUE] "),
-                        new Arguments.StringOption("states", "String", "a comma-separated list of discrete states for which times need to be summarized"),
-                        //new Arguments.StringOption("nodeStateAnnotation", "String", "string used for node state annotations"),
+                        new Arguments.StringOption("nodeStateAnnotation", "String", "string used for node state annotations [default = states] "),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -247,24 +250,18 @@ public class TreeStateTimeSummarizer extends BaseTreeTool {
             System.err.println("Ignoring a burn-in of " + burnIn + " trees.");
         }
 
-        if (arguments.hasOption("states")) {
-            states = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("states"));
+        if (arguments.hasOption("nodeStateAnnotation")) {
+            nodeStateAnnotation = arguments.getStringOption("nodeStateAnnotation");
         } else {
-            System.err.print("no states provided for time summaries... nothing to summarize");
-            System.exit(-1);
+            System.err.print("no state annotation string provided... trying with 'states...\n");
         }
-
-//        if (arguments.hasOption("nodeStateAnnotation")) {
-//            nodeStateAnnotation = arguments.getStringOption("nodeStateAnnotation");
-//       }
 
         String[] fileNames = getInputOutputFileNames(arguments, TreeStateTimeSummarizer::printUsage);
 
         new TreeStateTimeSummarizer(fileNames[0], fileNames[1], burnIn,
                 startTime,
                 endTime,
-                states
-//                nodeStateAnnotation
+                nodeStateAnnotation
         );
         System.exit(0);
     }

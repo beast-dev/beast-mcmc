@@ -57,6 +57,9 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
     }
 
     public double getUntransformedBranchRate(final Tree tree, final NodeRef node) {
+        if(!nodeKnown){
+            updateNodeList(tree, referenceTaxon);
+        }
         if (node.getNumber() == oneNode.getNumber()) {
             return 1.0;
         } else {
@@ -66,6 +69,9 @@ public class FixedReferenceRates extends AbstractBranchRateModel implements Diff
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
+        if(!nodeKnown){
+            updateNodeList(tree, referenceTaxon);
+        }
         if (node.getNumber() == oneNode.getNumber()) {
             return 1.0;
         } else {

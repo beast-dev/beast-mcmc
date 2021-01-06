@@ -29,7 +29,9 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evomodel.coalescent.*;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.glm.GeneralizedLinearModel;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -54,6 +56,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String BUILD_MAPPING = "intervalNodeMapping";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
     public static final String BETA_PARAMETER = "betaParameter";
+    public static final String DELTA_PARAMETER = "deltaParameter";
     public static final String SINGLE_BETA = "singleBeta";
     public static final String COVARIATE_MATRIX = "covariateMatrix";
     public static final String RANDOMIZE_TREE = "randomizeTree";
@@ -75,7 +78,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String COV_PREC_DIST = "covariatePrecisionDistant";
     public static final String REC_INDICES = "covIndicesMissingRecent";
     public static final String DIST_INDICES = "covIndicesMissingDistant";
-
+    public static final String GLM_MODEL = "glmModel";
+    public static final String USE_GLM_MODEL = "useGlmModel";
 
     public String getParserName() {
         return SKYLINE_LIKELIHOOD;
@@ -232,6 +236,20 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
+        List<Parameter> deltaList = new ArrayList<Parameter>();
+        if (xo.getChild(DELTA_PARAMETER) != null) {
+            cxo = xo.getChild(DELTA_PARAMETER);
+            final int numDelta = cxo.getChildCount();
+            if(numDelta != betaList.size()){
+                throw new XMLParseException("Cannot have different number of delta and beta parameters");
+            }
+            for (int i = 0; i < numDelta; ++i) {
+                deltaList.add((Parameter) cxo.getChild(i));
+            }
+        }else{
+            deltaList = null;
+        }
+
         MatrixParameter dMatrix = null;
         if (xo.getChild(COVARIATE_MATRIX) != null) {
             cxo = xo.getChild(COVARIATE_MATRIX);
@@ -331,6 +349,39 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 (covariates == null &&  betaList != null))
             throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
 
+        boolean useGlmModel = xo.getAttribute(USE_GLM_MODEL, false);
+
+        if(useGlmModel) {
+
+            GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);
+            covariates = new ArrayList<MatrixParameter>();
+            betaList = new ArrayList<Parameter>();
+            List<DesignMatrix> designMat = glm.getDesignMatrix();
+            List<Parameter> indepParam = glm.getIndependentParameter();
+            List<Parameter> indepParamDelta = glm.getIndependentParameterDelta();
+            deltaList = new ArrayList<Parameter>();
+
+            for(int i = 0; i < indepParam.get(0).getSize(); i++){
+                MatrixParameter matParam = new MatrixParameter("covariate values", 1,designMat.get(0).getRowDimension());
+
+                for(int j = 0; j < matParam.getRowDimension(); j++){
+                    matParam.setParameterValue(0, j, designMat.get(0).getParameterValue(0, j));
+                }
+                covariates.add(matParam);
+
+                Parameter betaParam = new Parameter.Default(1);
+                betaParam.setParameterValue(0, indepParam.get(0).getParameterValue(i));
+                betaList.add(betaParam);
+
+                if(indepParamDelta != null){
+                    Parameter deltaParam = new Parameter.Default(1);
+                    deltaParam.setParameterValue(0, indepParamDelta.get(0).getParameterValue(i));
+                    deltaList.add(deltaParam);
+                }
+            }
+
+        }
+
         /*
         if (xo.getAttribute(RANDOMIZE_TREE, false)) {
             for (Tree tree : treeList) {
@@ -366,7 +417,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 if (xo.getChild(GRID_POINTS) != null) {
                     return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
+                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList, deltaList);
                 } else {
                     return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);

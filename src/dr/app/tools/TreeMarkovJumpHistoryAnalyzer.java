@@ -54,10 +54,12 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                                           String outputFileName,
                                           int burnIn,
                                           String[] taxaToIgnore,
+                                          String[] statesToIgnore,
                                           boolean basedOnNameContent,
                                           String[] mrcaTaxa,
                                           double mrsd,
-                                          String nodeStatAnnotation
+                                          String nodeStateAnnotation,
+                                          String checkMJforState
      ) throws IOException {
 
         List<Tree> trees = new ArrayList<>();
@@ -66,11 +68,12 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         Set ignoredTaxa = getTaxaSet(trees.get(0), taxaToIgnore, basedOnNameContent);
         Set commonAncestorTaxa = getTaxaSet(trees.get(0), mrcaTaxa, false);
+        Set ignoredStates = stringArrayToStateSet(statesToIgnore);
 
         this.mrsd = mrsd;
 
         this.ps = openOutputFile(outputFileName);
-        processTrees(trees, burnIn, ignoredTaxa, commonAncestorTaxa, nodeStatAnnotation);
+        processTrees(trees, burnIn, ignoredTaxa, ignoredStates, commonAncestorTaxa, nodeStateAnnotation, checkMJforState);
         closeOutputFile(ps);
     }
 
@@ -80,17 +83,18 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
         return taxa;
     }
 
-    private void processTrees(List<Tree> trees, int burnIn, Set ignoredTaxa, Set commonAncestorTaxa, String nodeStatAnnotation) {
+    private void processTrees(List<Tree> trees, int burnIn, Set ignoredTaxa, Set ignoredStates, Set commonAncestorTaxa, String nodeStateAnnotation, String checkMJforState) {
         if (burnIn < 0) {
             burnIn = 0;
         }
         for (int i = burnIn; i < trees.size(); ++i) {
             Tree tree = trees.get(i);
-            processOneTree(tree, ignoredTaxa, commonAncestorTaxa, nodeStatAnnotation);
+//            System.out.println(i);
+            processOneTree(tree, ignoredTaxa, ignoredStates, commonAncestorTaxa, nodeStateAnnotation, checkMJforState);
         }
     }
 
-    private void processOneTree(Tree tree, Set ignoredTaxa, Set commonAncestorTaxa, String nodeStatAnnotation) {
+    private void processOneTree(Tree tree, Set ignoredTaxa, Set ignoredStates, Set commonAncestorTaxa, String nodeStateAnnotation, String checkMJforState) {
 
         String treeId = tree.getId();
         if (treeId.startsWith("STATE_")) {
@@ -101,20 +105,41 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             NodeRef node = tree.getNode(i);
             if (inClade(tree, node, commonAncestorTaxa, ignoredTaxa)){
                 if (nodeToConsider(tree, node, ignoredTaxa)){
-                    if (nodeStatAnnotation==null) {
+                    if (nodeStateAnnotation==null) {
                         Object[] jumps = readCJH(node, tree);
+
+                        if(checkMJforState!=null){
+                            if(!tree.isRoot(node)){
+                                String nodeState = (String) tree.getNodeAttribute(node, checkMJforState);
+                                String parentNodeString = (String) tree.getNodeAttribute(tree.getParent(node), checkMJforState);
+                                if (!nodeState.equalsIgnoreCase(parentNodeString)){
+                                    if (jumps == null) {
+//                                        System.out.println(nodeState+"\t"+parentNodeString);
+                                        System.err.println("parent ("+parentNodeString+") and node ("+nodeState+") state are different, but no MJ????");
+//                                    System.exit(-1);
+                                    } else {
+                                        //System.out.println("all fine");
+                                    }
+                                }
+                            }
+                        }
+
                         if (jumps != null) {
                             for (int j = jumps.length - 1; j >= 0; j--) {
                                 Object[] jump = (Object[]) jumps[j];
-                                Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
-                                ps.println(row);
+                                if (!ignoredStates.contains(jump[1]) && !ignoredStates.contains(jump[2])){
+                                    Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
+                                    ps.println(row);
+                                }
                             }
                         }
                     } else {
-                        Object[] jump = getMJApproximation(node, tree, nodeStatAnnotation);
+                        Object[] jump = getMJApproximation(node, tree, nodeStateAnnotation);
                         if (jump != null) {
-                            Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
-                            ps.println(row);
+                            if (!ignoredStates.contains(jump[1]) && !ignoredStates.contains(jump[2])) {
+                                Row row = new Row(treeId, (String) jump[1], (String) jump[2], adjust((Double) jump[0]));
+                                ps.println(row);
+                            }
                         }
                     }
                 }
@@ -163,6 +188,18 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             taxaStrings.add(taxon);
         }
         return taxaStrings;
+    }
+
+    private Set stringArrayToStateSet(String[] states){
+        Set stateStringSet = new HashSet();
+        if (states==null){
+            return stateStringSet;
+        } else {
+            for (int i=0; i< states.length; i++){
+                stateStringSet.add(states[i]);
+            }
+        }
+        return stateStringSet;
     }
 
     private class Row {
@@ -257,10 +294,12 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
     public static void main(String[] args) throws IOException {
 
         String[] taxaToIgnore = null;
+        String[] statesToIgnore = null;
         double mrsd = Double.MAX_VALUE;
         int burnIn = -1;
         String[] mrcaTaxa = null;
         String nodeStateAnnotation = null;
+        String checkMJforState = null;
 
         printTitle();
 
@@ -268,11 +307,13 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
                         new Arguments.StringOption("taxaToIgnore", "list", "a list of taxon names that defines parts of trees to ignore in MJH processing"),
+                        new Arguments.StringOption("statesToIgnore", "list", "a list of location states to ignore in MJH processing"),
                         new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
                         new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
                                 "taxa names contain string [default = false])"),
                         new Arguments.StringOption("mrcaTaxa", "list", "a list of taxon names that defines a clade to focus on for MJH processing"),
                         new Arguments.StringOption("nodeStateAnnotation", "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
+                        new Arguments.StringOption("checkMJforState", "String", "check if there is a MJ on branches with different parent and node state for this annotation"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 
@@ -281,6 +322,10 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         if (arguments.hasOption("taxaToIgnore")) {
             taxaToIgnore = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("taxaToIgnore"));
+        }
+
+        if (arguments.hasOption("statesToIgnore")) {
+            statesToIgnore = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("statesToIgnore"));
         }
 
         if (arguments.hasOption("mrsd")) {
@@ -296,6 +341,9 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
             nodeStateAnnotation = arguments.getStringOption("nodeStateAnnotation");
         }
 
+        if (arguments.hasOption("checkMJforState")) {
+            checkMJforState = arguments.getStringOption("checkMJforState");
+        }
         if (arguments.hasOption("mrcaTaxa")) {
             mrcaTaxa = Branch2dRateToGrid.parseVariableLengthStringArray(arguments.getStringOption("mrcaTaxa"));
         }
@@ -307,10 +355,12 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         new TreeMarkovJumpHistoryAnalyzer(fileNames[0], fileNames[1], burnIn,
                 taxaToIgnore,
+                statesToIgnore,
                 basedOnNameContent,
                 mrcaTaxa,
                 mrsd,
-                nodeStateAnnotation
+                nodeStateAnnotation,
+                checkMJforState
         );
 
         System.exit(0);

@@ -11,10 +11,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This is a tree model that wraps another tree model and only provides access to a monophyletic subclade on that tree.
@@ -44,10 +41,9 @@ public abstract class AbstractWrappedTree extends TreeModel {
 
         nodes = new Node[nodeCount];
         nodeMap = new int [nodeCount];
-        storedNodeMap = new int [nodeCount];
-        reverseNodeMap = new int [tree.getNodeCount()];
-        storedReverseNodeMap = new int [tree.getNodeCount()];
-        Arrays.fill(reverseNodeMap, -1);
+//        storedNodeMap = new int [nodeCount];
+        reverseNodeMap = new HashMap<>();
+//        storedReverseNodeMap = new  HashMap<>();
         int[] wrappedNodes = new int[externalNodeCount];
 
         int i = 0;
@@ -55,7 +51,7 @@ public abstract class AbstractWrappedTree extends TreeModel {
             Node node = new Node(i);
             nodes[i]= node;
             nodeMap[i]= wrappedNode.getNumber();
-            reverseNodeMap[wrappedNode.getNumber()] = node.getNumber();
+            reverseNodeMap.put(wrappedNode.getNumber(), node.getNumber());
             wrappedNodes[i] = wrappedNode.getNumber();
             i++;
         }
@@ -100,7 +96,7 @@ public abstract class AbstractWrappedTree extends TreeModel {
         if(!externalNodes.contains(node)){
             nodes[currentIndex] = new Node(currentIndex);
             nodeMap[currentIndex]= node.getNumber();
-            reverseNodeMap[node.getNumber()] =  nodes[currentIndex].getNumber();
+            reverseNodeMap.put(node.getNumber(),  nodes[currentIndex].getNumber());
             currentIndex++;
             //new counter to count decendents;
             for (int i = 0; i < tree.getChildCount(node); i++) {
@@ -115,8 +111,8 @@ public abstract class AbstractWrappedTree extends TreeModel {
     }
 
     protected NodeRef getUnWrappedNode(NodeRef node) {
-        int index = reverseNodeMap[node.getNumber()];
-        if(index==-1){
+        Integer index = reverseNodeMap.get(node.getNumber());
+        if(index==null){
             return null;
         }
         return nodes[index] ;
@@ -272,7 +268,7 @@ public abstract class AbstractWrappedTree extends TreeModel {
         int count=0;
         for(int i=0;i<wrappedTree.getChildCount(wrappedNode);i++){
             NodeRef wrappedChild = wrappedTree.getChild(wrappedNode, i);
-            if(reverseNodeMap[wrappedChild.getNumber()]>-1){
+            if(reverseNodeMap.containsKey(wrappedChild.getNumber())){
                 count++;
             }
         }
@@ -297,7 +293,7 @@ public abstract class AbstractWrappedTree extends TreeModel {
         NodeRef wrappedJChild=null;
         for(int i=0;i<wrappedTree.getChildCount(wrappedNode);i++){
             NodeRef wrappedChild = wrappedTree.getChild(wrappedNode, i);
-            if(reverseNodeMap[wrappedChild.getNumber()]>-1){
+            if(reverseNodeMap.containsKey(wrappedChild.getNumber())){
                 if(currentChild==j){
                     wrappedJChild=wrappedChild;
                     break;
@@ -362,8 +358,8 @@ public abstract class AbstractWrappedTree extends TreeModel {
      */
     @Override
     protected void storeState() {
-        System.arraycopy(nodeMap,0,storedNodeMap,0,nodeMap.length);
-        System.arraycopy(reverseNodeMap,0,storedReverseNodeMap,0,reverseNodeMap.length);
+//        System.arraycopy(nodeMap,0,storedNodeMap,0,nodeMap.length);
+//        storedReverseNodeMap = new HashMap<>(reverseNodeMap);
         storeStateHook();
     }
     abstract protected void storeStateHook();
@@ -376,13 +372,13 @@ public abstract class AbstractWrappedTree extends TreeModel {
     @Override
     protected void restoreState() {
 
-        int[] tmp1 = storedNodeMap;
-        storedNodeMap= nodeMap;
-        nodeMap=tmp1;
-
-        int[] tmp2 = storedReverseNodeMap;
-        storedReverseNodeMap= reverseNodeMap;
-        reverseNodeMap=tmp2;
+//        int[] tmp1 = storedNodeMap;
+//        storedNodeMap= nodeMap;
+//        nodeMap=tmp1;
+//
+//        Map<Integer,Integer> tmp2 = storedReverseNodeMap;
+//        storedReverseNodeMap= reverseNodeMap;
+//        reverseNodeMap=tmp2;
         restoreStateHook();
     }
 
@@ -392,16 +388,17 @@ public abstract class AbstractWrappedTree extends TreeModel {
     protected void replaceNode(NodeRef currentWrappedNode,NodeRef replacement){
         NodeRef node = getUnWrappedNode(currentWrappedNode);
         nodeMap[node.getNumber()] = replacement.getNumber();
-        reverseNodeMap[currentWrappedNode.getNumber()]=-1;
-        reverseNodeMap[replacement.getNumber()] = node.getNumber();
+        reverseNodeMap.remove(currentWrappedNode.getNumber());
+
+        reverseNodeMap.put(replacement.getNumber(),node.getNumber());
     }
 
 
     //Private to be moved down later
     private  int[] nodeMap;
-    private  int[] storedNodeMap;
-    private  int[] reverseNodeMap;
-    private  int[] storedReverseNodeMap;
+//    private  int[] storedNodeMap;
+    private Map<Integer, Integer> reverseNodeMap;
+//    private Map<Integer, Integer> storedReverseNodeMap;
 
 
     protected final TreeModel wrappedTree;

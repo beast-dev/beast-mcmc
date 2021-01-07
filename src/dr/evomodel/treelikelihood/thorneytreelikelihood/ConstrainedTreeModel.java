@@ -41,7 +41,18 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
 
 
         this.subtrees = new ArrayList<>();
-        getSubtrees(constraintsTree, constraintsNodeToTreeNode, constraintsTree.getRoot(), this.subtrees);
+        for (int i = 0; i < constraintsTree.getInternalNodeCount(); i++) {
+            NodeRef node = constraintsTree.getInternalNode(i);
+            Set<NodeRef> tips = new HashSet<>();
+            for (int j = 0; j < constraintsTree.getChildCount(node); j++) {
+                NodeRef child = constraintsTree.getChild(node, j);
+                tips.add(constraintsNodeToTreeNode.get(child));
+            }
+            WrappedSubtree subtree = new WrappedSubtree(wrappedTree, tips);
+            subtrees.add(subtree);
+        }
+
+//        getSubtrees(constraintsTree, constraintsNodeToTreeNode, constraintsTree.getRoot(), this.subtrees);
 
         nodeToSubtreeMap = new int[getNodeCount()];
         Arrays.fill(nodeToSubtreeMap,-1);
@@ -64,6 +75,17 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
                 visitedNodes++;
             }
         }
+        //set up subtree parents
+//        for (int i=0; i<subtrees.size();i++) {
+//            WrappedSubtree subtree = subtrees.get(i);
+//            NodeRef root = subtree.getRoot();
+//            NodeRef nodeInThisTree = convertSubtreeNodeToConstrainedNode(subtree,root);
+//            if(!isRoot(nodeInThisTree)){
+//                NodeRef rootParent = getParent(nodeInThisTree);
+//                subtree.setParentTree(getSubtree(rootParent));
+//            }
+//        }
+
         if(visitedNodes!=getNodeCount()){
             throw new IllegalArgumentException("The subtrees in a constrained tree must include all nodes in the tree");
         }
@@ -71,6 +93,7 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
     }
 
     private WrappedSubtree getSubtrees(Tree contraintsTree,Map<NodeRef,NodeRef> treeMap,NodeRef node,List<WrappedSubtree>subtrees) {
+
         Set<NodeRef> tips = new HashSet<>();
         List<WrappedSubtree> childSubtrees = new ArrayList<>();
         for (int i = 0; i < contraintsTree.getChildCount(node); i++) {
@@ -369,7 +392,7 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
             NodeRef wrappedNode = TreeUtils.getCommonAncestor(tree, wrappedNodes);
 
             root = getUnWrappedNode(wrappedNode).getNumber();
-            equivalentRoots = tree.isRoot(wrappedNode);
+//            equivalentRoots = tree.isRoot(wrappedNode);
         }
         public WrappedSubtree(TreeModel tree, Set<NodeRef> externalNodes){
             this(WRAPPED_TREE_MODEL, tree, externalNodes);
@@ -486,20 +509,21 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
         }
 
         public void setRoot(NodeRef node){
-            int oldRoot = this.root;
-            root=node.getNumber();
-            if(equivalentRoots){
-                wrappedTree.setRoot(getNodeInWrappedTree(getNode(root)));
-            }else{
-                NodeRef oldRootNode = getNodeInWrappedTree(getNode(oldRoot));
-                NodeRef newRoodNode = getNodeInWrappedTree(getNode(root));
-                parentTree.replaceNode(oldRootNode,newRoodNode);
+//            This works in theory, but could change node mappings and  require some state management
+//            int oldRoot = this.root;
+//            root=node.getNumber();
+//            if(equivalentRoots){
+//                wrappedTree.setRoot(getNodeInWrappedTree(getNode(root)));
+//            }else{
+//                NodeRef oldRootNode = getNodeInWrappedTree(getNode(oldRoot));
+//                NodeRef newRoodNode = getNodeInWrappedTree(getNode(root));
+//                parentTree.replaceNode(oldRootNode,newRoodNode);
+//
+//                wrappedTree.addChild(wrappedTree.getNode(subtendingNode),getNodeInWrappedTree(getNode(root)));
+//                subtendingNode=-1;
+//            }
 
-                wrappedTree.addChild(wrappedTree.getNode(subtendingNode),getNodeInWrappedTree(getNode(root)));
-                subtendingNode=-1;
-            }
-
-//        throw new UnsupportedOperationException("wrapped trees can not change roots, yet");
+        throw new UnsupportedOperationException("wrapped trees can not change roots, yet");
         }
         public NodeRef getRoot(){
             return getNode(root);
@@ -509,9 +533,9 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
         }
 
 
-        public void setParentTree(WrappedSubtree tree) {
-            parentTree=tree;
-        }
+//        public void setParentTree(WrappedSubtree tree) {
+//            parentTree=tree;
+//        }
         @Override
         public void setNodeHeightQuietly(NodeRef node, double height) {
             NodeRef wrappedNode = getNodeInWrappedTree(node);
@@ -558,10 +582,10 @@ public class ConstrainedTreeModel extends AbstractWrappedTree {
         }
 
         private int subtendingNode = -1;
-        private final boolean equivalentRoots;
+//        private final boolean equivalentRoots;
         private int root;
         private int storedRoot = -1;
-        private WrappedSubtree parentTree;
+//        private WrappedSubtree parentTree;
     }
 
 

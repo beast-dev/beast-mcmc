@@ -739,6 +739,15 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             updateGradient(gradient);
             leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
                     mask(gradient.getBuffer(), mask), time * direction / 2);
+
+            if (shouldUpdatePreconditioning()) { //todo: delete after getMinEigValueSCM() is implemented
+                double[] lastGradient = leapFrogEngine.getLastGradient();
+                double[] lastPosition = leapFrogEngine.getLastPosition();
+                if (lastGradient != null && lastPosition != null) {
+                    preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+                }
+                preconditioning.updateMass();
+            }
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
@@ -795,6 +804,11 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     @Override
     public double getStepSize() {
         return stepSize;
+    }
+
+    @Override
+    public double getMinEigValueSCM() {
+        return 1;//todo
     }
 
     public int getNumGradientEvent(){

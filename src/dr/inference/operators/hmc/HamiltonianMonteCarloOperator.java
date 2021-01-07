@@ -55,6 +55,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     LeapFrogEngine leapFrogEngine;
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
+    protected final MassPreconditionScheduler preconditionScheduler;
     private final Options runtimeOptions;
     protected final double[] mask;
     protected final Transform transform;
@@ -79,12 +80,21 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
 //
 //        this.leapFrogEngine = constructLeapFrogEngine(transform);
 //    }
+public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
+                                     GradientWrtParameterProvider gradientProvider,
+                                     Parameter parameter, Transform transform, Parameter maskParameter,
+                                     Options runtimeOptions,
+                                     MassPreconditioner preconditioner) {
+    this(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions,
+            preconditioner, MassPreconditionScheduler.Type.DEFAULT);
+}
 
     public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                          GradientWrtParameterProvider gradientProvider,
                                          Parameter parameter, Transform transform, Parameter maskParameter,
                                          Options runtimeOptions,
-                                         MassPreconditioner preconditioner) {
+                                         MassPreconditioner preconditioner,
+                                         MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         super(mode, runtimeOptions.targetAcceptanceProbability);
 
@@ -94,6 +104,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
         this.preconditioning = preconditioner;
+        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, this);
         this.parameter = parameter;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
@@ -112,12 +123,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     @Override
     public String getOperatorName() {
         return "VanillaHMC(" + parameter.getParameterName() + ")";
-    }
-
-    private boolean shouldUpdatePreconditioning() {
-        return ((runtimeOptions.preconditioningUpdateFrequency > 0)
-                && (((getCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                && (getCount() > runtimeOptions.preconditioningDelay))));
     }
 
     private static double[] buildMask(Parameter maskParameter) {
@@ -149,10 +154,10 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             checkGradient(joint);
         }
 
-        if (shouldUpdatePreconditioning()) {
+        if (preconditionScheduler.shouldUpdatePreconditioning()) {
             double[] lastGradient = leapFrogEngine.getLastGradient();
             double[] lastPosition = leapFrogEngine.getLastPosition();
-            if (lastGradient != null && lastPosition != null) {
+            if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
                 preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
             }
             preconditioning.updateMass();
@@ -162,8 +167,16 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             return leapFrog();
         } catch (NumericInstabilityException e) {
             return Double.NEGATIVE_INFINITY;
+        } catch (ArithmeticException e) {
+            if (REJECT_ARITHMETIC_EXCEPTION) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                throw e;
+            }
         }
     }
+
+    private static final boolean REJECT_ARITHMETIC_EXCEPTION = true;
 
     @Override
     public void setPathParameter(double beta) {
@@ -323,6 +336,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final int nSteps;
         final double randomStepCountFraction;
         final int preconditioningUpdateFrequency;
+        final int preconditioningMaxUpdate;
         final int preconditioningDelay;
         final int preconditioningMemory;
         final int gradientCheckCount;
@@ -333,7 +347,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         final InstabilityHandler instabilityHandler;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
-                       int preconditioningUpdateFrequency, int preconditioningDelay, int preconditioningMemory,
+                       int preconditioningUpdateFrequency, int preconditioningMaxUpdate, int preconditioningDelay, int preconditioningMemory,
                        int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
                        double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
@@ -341,6 +355,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.preconditioningMaxUpdate = preconditioningMaxUpdate;
             this.preconditioningDelay = preconditioningDelay;
             this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;
@@ -352,7 +367,7 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
         }
     }
 
-    static class NumericInstabilityException extends Exception {
+    public static class NumericInstabilityException extends Exception {
     }
 
     private int getNumberOfSteps() {

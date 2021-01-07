@@ -31,6 +31,7 @@ import dr.inference.model.GraphicalParameterBound;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
+import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;
 import dr.util.Transform;
@@ -57,7 +58,8 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
     @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner,
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions,
+                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType,
                                                     ReversibleHMCProvider reversibleHMCprovider) {
 
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,

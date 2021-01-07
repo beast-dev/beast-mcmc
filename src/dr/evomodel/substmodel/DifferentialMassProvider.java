@@ -35,7 +35,7 @@ public interface DifferentialMassProvider {
 
     double[] getDifferentialMassMatrix(double time);
 
-    class DifferentialWrapper implements DifferentialMassProvider {
+    public class DifferentialWrapper implements DifferentialMassProvider {
 
 
         private final DifferentiableSubstitutionModel baseModel;

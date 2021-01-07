@@ -425,7 +425,8 @@ public interface MassPreconditioner {
             double diagonal[] = new double[(priorDistribution.getDimension())];
 
             for (int i = 0; i < priorDistribution.getDimension(); i++){
-                diagonal[i] = Math.pow(priorDistribution.getStandardDeviation(i), 2);
+                double stDev = priorDistribution.getStandardDeviation(i);
+                diagonal[i] = stDev * stDev;
             }
             return diagonal;
         }
@@ -436,7 +437,7 @@ public interface MassPreconditioner {
         }
     }
 
-        class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
+    class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
 
         final protected HessianWrtParameterProvider hessian;
 
@@ -549,8 +550,9 @@ public interface MassPreconditioner {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
-                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
-                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+//                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+//                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+                return normalizeVector(new WrappedVector.Raw(newVariance), dim);
             } else {
                 return inverseMass;
             }

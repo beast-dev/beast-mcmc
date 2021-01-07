@@ -48,6 +48,10 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
     abstract protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix);
 
     @Override
+    protected int getGradientLength() {
+        return tree.getNodeCount() - 1;
+    }
+    @Override
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];

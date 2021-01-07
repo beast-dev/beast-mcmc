@@ -755,7 +755,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
                     mask(gradient.getBuffer(), mask), time * direction / 2);
 
-            if (shouldUpdatePreconditioning()) { //todo: delete after getMinEigValueSCM() is implemented
+            if (preconditionScheduler.shouldUpdatePreconditioning()) { //todo: delete after getMinEigValueSCM() is implemented
                 double[] lastGradient = leapFrogEngine.getLastGradient();
                 double[] lastPosition = leapFrogEngine.getLastPosition();
                 if (lastGradient != null && lastPosition != null) {

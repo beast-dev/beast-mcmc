@@ -78,11 +78,14 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel
         fireModelChanged();
     }
 
-    protected void storeState() { }
+    protected void storeState() {
+    }
 
-    protected void restoreState() { }
+    protected void restoreState() {
+    }
 
-    protected void acceptState() { }
+    protected void acceptState() {
+    }
 
     @Override
     public double getBranchRateDifferential(final Tree tree, final NodeRef node) {
@@ -152,15 +155,20 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel
         return location.getEffect(tree, node) * branchRateModel.getBranchRate(tree, node);
     }
 
+    public double getLocation(final Tree tree, final NodeRef node) {
+        return location.getEffect(tree, node);
+    }
+
     public double getUntransformedBranchRate(Tree tree, NodeRef node) {
         // returns the rate scaled by the location
 //        return getBranchRate(tree, node);
 
         //returns just the rate
-        return branchRateModel.getBranchRate(tree, node);
+        checkDifferentiability();
+        return differentiableBranchRateModel.getUntransformedBranchRate(tree, node);
     }
 
-    public double getPriorRateAsIncrement(Tree tree){
+    public double getPriorRateAsIncrement(Tree tree) {
         return Math.log(location.getEffect(tree, null));
     }
 
@@ -182,7 +190,7 @@ public class LocationScaledBranchRateModel extends AbstractBranchRateModel
 
     @Override
     public List<Citation> getCitations() {
-        List<Citation> list = 
+        List<Citation> list =
                 (branchRateModel instanceof Citable) ?
                         new ArrayList<>(((Citable) branchRateModel).getCitations()) :
                         new ArrayList<>();

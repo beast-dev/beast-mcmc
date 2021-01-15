@@ -34,4 +34,6 @@ public interface ReversibleHMCProvider {
     double getKineticEnergy(ReadableVector momentum);
 
     double getStepSize();
+
+    double getMinEigValueSCM();
 }

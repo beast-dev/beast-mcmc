@@ -35,6 +35,7 @@ import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.math.AdaptableCovariance;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -73,6 +74,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.refreshVelocity = refreshVelocity;
         this.preconditioning = setupPreconditioning();
         this.meanVector = getMeanVector(gradientProvider);
+        this.sampleCov = new AdaptableCovariance(parameter.getDimension());
 
         setWeight(weight);
         this.missingDataMask = getMissingDataMask();
@@ -139,6 +141,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             preconditioning = setupPreconditioning();
         }
 
+        updateSCM();
+
         WrappedVector position = getInitialPosition();
 
         WrappedVector momentum = drawInitialMomentum();
@@ -155,6 +159,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     abstract double integrateTrajectory(WrappedVector position, WrappedVector momentum);
+
+    void updateSCM() {
+        sampleCov.update(new WrappedVector.Raw(parameter.getParameterValues()));
+    }
 
     WrappedVector drawInitialMomentum() {
         return new WrappedVector.Raw(null, 0, 0);
@@ -488,6 +496,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     Preconditioning preconditioning;
     final private boolean[] missingDataMask;
     private final double[] meanVector;
+
+    protected final AdaptableCovariance sampleCov;
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();

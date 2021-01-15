@@ -253,5 +253,5 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
         return columns;
     }
 
-    private final double refreshmentRate = 0.0;
+    private final double refreshmentRate = 1.4;//todo: make an input option
 }

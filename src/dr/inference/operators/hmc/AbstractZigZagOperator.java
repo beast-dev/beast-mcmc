@@ -7,6 +7,8 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Lanczos;
+import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.TaskPool;
 
@@ -59,6 +61,10 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
             timer.stopTimer("integrateTrajectory");
         }
 
+        if (getCount() > 2 * parameter.getDimension()){
+            getMinEigValueSCM();
+        }
+
         storeVelocity(velocity);
         return 0.0;
     }
@@ -103,6 +109,14 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         }
 
         return finalBounceState;
+    }
+
+    public double getMinEigValueSCM() {
+
+        ReadableMatrix scmArray = sampleCov.getCovariance();
+        double[] eigenvalues = Lanczos.eigen(scmArray, parameter.getDimension());
+        System.err.println("largest eigenvalue is " + eigenvalues[0] + "smallest is " + eigenvalues[parameter.getDimension() - 1]);
+        return eigenvalues[parameter.getDimension() - 1];
     }
 
     abstract WrappedVector drawInitialVelocity(WrappedVector momentum);

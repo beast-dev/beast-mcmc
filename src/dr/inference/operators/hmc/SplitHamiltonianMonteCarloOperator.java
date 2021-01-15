@@ -24,6 +24,8 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     private double stepSize;
     private double relativeScale;
+    private final int updateRelativeScaleDelay = 1000;
+    private final int updateRelativeScaleFrequency = 1000;
     private ReversibleHMCProvider inner;
     private ReversibleHMCProvider outer;
     protected final Parameter parameter;
@@ -149,6 +151,10 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     private double mergedUpdate() {
 
+        if (shouldUpdateRelativeScale()){
+            relativeScale = Math.sqrt(inner.getMinEigValueSCM()) / Math.sqrt(outer.getMinEigValueSCM());
+        }
+
         double[] positionInnerbuffer = inner.getInitialPosition();
         double[] positionOuterbuffer = outer.getInitialPosition();
 
@@ -224,6 +230,9 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     @Override
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
+        if (shouldUpdateRelativeScale()){
+            relativeScale = Math.sqrt(inner.getMinEigValueSCM()) / Math.sqrt(outer.getMinEigValueSCM());
+        }
 
         double[] positionInnerbuffer = new double[dimInner];
         double[] positionOuterbuffer = new double[dimOuter];
@@ -391,6 +400,16 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     public double getStepSize() { //todo:
         return stepSize;
     } //todo: tuning.
+
+    @Override
+    public double getMinEigValueSCM() {
+        return 1;//todo
+    }
+
+    private boolean shouldUpdateRelativeScale(){
+        //use updateRelativeScaleDelay updateRelativeScaleFrequency getCount
+        return true;
+    }
 
     private WrappedVector mergeWrappedVector(WrappedVector lhs, WrappedVector rhs) {
         double[] buffer = new double[lhs.getDim() + rhs.getDim()];

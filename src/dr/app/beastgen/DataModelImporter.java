@@ -89,6 +89,7 @@ public class DataModelImporter {
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
                 importNexusFile(file, guesser, dataModel);
+                importFromTreeFile(file.getAbsolutePath(), dataModel);
             } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
                 // is a FASTA file
                 importFastaFile(file, guesser, dataModel);
@@ -96,7 +97,7 @@ public class DataModelImporter {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file, guesser, dataModel);
 //            } else {
-//                // assume it is a tab-delimited traits file and see if that works...
+                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
             } else {
                 throw new ImportException("Unrecognized format for imported file.");
@@ -494,8 +495,11 @@ public class DataModelImporter {
             dataModel.put("taxonSets", tss);
         }
 
-        dataModel.put("alignment", createAlignment(alignment));
-        dataModel.put("site_count", Integer.toString(alignment.getSiteCount()));
+        if(alignment!=null){
+            dataModel.put("alignment", createAlignment(alignment));
+            dataModel.put("site_count", Integer.toString(alignment.getSiteCount()));
+        }
+
 
         dataModel.put("filename", fileName);
         dataModel.put("filename_stem", fileNameStem);

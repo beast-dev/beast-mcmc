@@ -21,41 +21,20 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
 
     private final Parameter parameter;
     private final Parameter target;
-    private int numSteps;
     private double rate;
 
     private double[] startValues;
-// todo: cleanup and implement or erase numSteps option
 
     public TemperOperator(Parameter parameter,
                           Parameter target,
                           double rate,
-                          int numSteps,
                           double weight) {
 
         this.parameter = parameter;
         this.target = target;
         this.rate = rate;
-        this.numSteps = numSteps;
 
         startValues = parameter.getParameterValues();
-
-        if (numSteps !=0) {
-            throw new RuntimeException("Number of steps not yet implemented, please specifiy a rate.");
-        }
-
-//        if(numSteps != 0 && rate == 0){
-//            if (parameter.getDimension() > 1) {
-//                throw new RuntimeException("Tempering not yet implemented with for parameters with dimension > 1");
-//            }
-//            this.rate = setRate();
-//        }
-//        else if (rate !=0 && numSteps == 0){
-//            this.numSteps = setSteps();
-//        }
-//        else{
-//            throw new RuntimeException("You must provide exactly one: rate or steps.");
-//        }
 
         setWeight(weight);
     }
@@ -64,18 +43,6 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
     public String getOperatorName() {
         return BAYESIAN_BRIDGE_PARSER;
     }
-
-//    private void setRate(){
-//        double start = this.parameter.getValue(0);
-//        double end = this.target.getValue(0);
-//        this.rate = Math.log(end / start) / this.numSteps;
-//    }
-//
-//    private void setSteps(){
-//        double start = this.parameter.getValue(0);
-//        double end = this.target.getValue(0);
-//        this.numSteps = (int) Math.round(Math.log(end / start) / this.rate);
-//    }
 
     @Override
     public double doOperation() {
@@ -124,6 +91,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             }
         }
 
+//        System.out.println("Exponent value: " + parameter.getValue(0));
         return 0;
     }
 
@@ -150,20 +118,13 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
                 throw new XMLParseException("Target parameter cannot have more dimensions than the tempered parameter.");
             }
 
-            int numSteps = xo.getAttribute(NUM_STEPS, 0);
             double rate = xo.getAttribute(RATE, 0);
 
-            if(rate < 0){
+            if (rate < 0) {
                 throw new XMLParseException("Rate cannot be negative");
             }
 
-            else if (numSteps == 0 && rate == 0) {
-                throw new XMLParseException("Rate OR number of steps must be provided.");
-            } else if (numSteps != 0 && rate != 0) {
-                throw new XMLParseException("Cannot specify both the tempering rate and the number of steps.");
-            }
-
-            TemperOperator temper = new TemperOperator(hotParameter, targetParameter, rate, numSteps, weight);
+            TemperOperator temper = new TemperOperator(hotParameter, targetParameter, rate, weight);
             return temper;
         }
 
@@ -190,8 +151,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
                 new ElementRule(TARGET_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class),
                 }),
-                AttributeRule.newStringRule(NUM_STEPS, true),
-                AttributeRule.newStringRule(RATE, true),
+                AttributeRule.newStringRule(RATE),
         };
     };
 }

@@ -75,6 +75,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.preconditioning = setupPreconditioning();
         this.meanVector = getMeanVector(gradientProvider);
         this.sampleCov = new AdaptableCovariance(parameter.getDimension());
+        this.reversibleUpdateCount = 0;
 
         setWeight(weight);
         this.missingDataMask = getMissingDataMask();
@@ -141,8 +142,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             preconditioning = setupPreconditioning();
         }
 
-        updateSCM();
-
         WrappedVector position = getInitialPosition();
 
         WrappedVector momentum = drawInitialMomentum();
@@ -160,8 +159,14 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     abstract double integrateTrajectory(WrappedVector position, WrappedVector momentum);
 
-    void updateSCM() {
-        sampleCov.update(new WrappedVector.Raw(parameter.getParameterValues()));
+    public boolean shouldUpdateSCM() {
+        return ((runtimeOptions.updateSampleCovFrequency > 0)
+                && ((getReversibleUpdateCount() % runtimeOptions.updateSampleCovFrequency == 0)
+                && (getReversibleUpdateCount() > runtimeOptions.updateSampleCovDelay)));
+    }
+
+    public int getReversibleUpdateCount() {
+        return reversibleUpdateCount;
     }
 
     WrappedVector drawInitialMomentum() {
@@ -398,10 +403,14 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         final double randomTimeWidth;
         final int preconditioningUpdateFrequency;
+        final int updateSampleCovFrequency;
+        final int updateSampleCovDelay;
 
-        public Options(double randomTimeWidth, int preconditioningUpdateFrequency) {
+        public Options(double randomTimeWidth, int preconditioningUpdateFrequency, int updateSampleCovFrequency, int updateSampleCovDelay) {
             this.randomTimeWidth = randomTimeWidth;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.updateSampleCovFrequency = updateSampleCovFrequency;
+            this.updateSampleCovDelay = updateSampleCovDelay;
         }
     }
 
@@ -483,7 +492,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final PrecisionMatrixVectorProductProvider productProvider;
     private final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;
-    private final Options runtimeOptions;
+    protected final Options runtimeOptions;
     protected boolean refreshVelocity;
     protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
@@ -498,6 +507,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final double[] meanVector;
 
     protected final AdaptableCovariance sampleCov;
+    protected int reversibleUpdateCount;
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();

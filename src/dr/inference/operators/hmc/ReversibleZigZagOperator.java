@@ -550,6 +550,9 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient,
                                                  int direction, double time) {
+        if (shouldUpdateSCM()){
+            sampleCov.update(new WrappedVector.Raw(position.getBuffer()));
+        }
 
         preconditioning.totalTravelTime = time;
         if (direction == -1) {
@@ -564,6 +567,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             negateVector(momentum);
         }
         ReadableVector.Utils.setParameter(position, parameter);
+        reversibleUpdateCount++;
     }
 
     @Override
@@ -631,6 +635,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public double getStepSize() {
         return preconditioning.totalTravelTime;
+    }
+
+    @Override
+    public double getMinEigValueSCM() {
+        return ReversibleHMCProvider.getMinEigValueLanczos(parameter, sampleCov);
     }
 
     private void negateVector(WrappedVector vector) {

@@ -45,6 +45,10 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
     private final static String BPO_OPERATOR = "bouncyParticleOperator";
     private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
     private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+
+    private final static String UPDATE_SCM_DELAY = "updateSampleCovDelay";
+    private final static String UPDATE_SCM_FREQUENCY = "updateSampleCovFrequency";
+
     private final static String MASKING = "mask";
     private final static String REFRESH_VELOCITY = "refreshVelocity";
 
@@ -86,8 +90,11 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
         double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
         int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
+        int updateSampleCovFrequency = xo.getAttribute(UPDATE_SCM_FREQUENCY, 0);
+        int updateSampleCovDelay = xo.getAttribute(UPDATE_SCM_DELAY, 0);
 
-        return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency);
+        return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency, updateSampleCovFrequency,
+                updateSampleCovDelay);
     }
 
     static AbstractParticleOperator.NativeCodeOptions parseNativeCodeOptions(XMLObject xo) throws XMLParseException {
@@ -109,6 +116,8 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(RANDOM_TIME_WIDTH, true),
             AttributeRule.newIntegerRule(UPDATE_FREQUENCY, true),
+            AttributeRule.newIntegerRule(UPDATE_SCM_FREQUENCY, true),
+            AttributeRule.newIntegerRule(UPDATE_SCM_DELAY, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(PrecisionMatrixVectorProductProvider.class),
             new ElementRule(MASKING, new XMLSyntaxRule[] {

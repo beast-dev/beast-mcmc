@@ -17,6 +17,9 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
     private final static String N_INNER_STEPS = "nInnerSteps";
     private final static String STEP_SIZE = "stepSize";
     private final static String RELATIVE_SCALE = "relativeScale";
+    private final static String UPDATE_RS_FREQUENCY = "updateRelativeScaleFrequency";
+    private final static String UPDATE_RS_DELAY = "updateRelativeScaleDelay";
+    private final static String UPDATE_RS_MAX = "updateRelativeScaleMax";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     private final static String GRADIENT_CHECK_TOL = "gradientCheckTolerance";
 
@@ -36,11 +39,16 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
         int gradientCheckCount = xo.getAttribute(GRADIENT_CHECK_COUNT, 0);
         double gradientCheckTol = xo.getAttribute(GRADIENT_CHECK_TOL, 0.01);
 
+        int updateRelativeScaleFrequency = xo.getAttribute(UPDATE_RS_FREQUENCY, 0);
+        int updateRelativeScaleDelay = xo.getAttribute(UPDATE_RS_DELAY, 0);
+        int updateRelativeScaleMax = xo.getAttribute(UPDATE_RS_MAX, 0);
+
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
         return new SplitHamiltonianMonteCarloOperator(weight, reversibleHMCproviderA, reversibleHMCproviderB, parameter,
                 stepSize, relativeScale, nStep
-                , nInnerStep, gradientCheckCount, gradientCheckTol);
+                , nInnerStep, gradientCheckCount, gradientCheckTol, updateRelativeScaleFrequency,
+                updateRelativeScaleDelay, updateRelativeScaleMax);
     }
 
     @Override

@@ -21,10 +21,11 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
 
     private final Parameter parameter;
     private final Parameter target;
-    private final int numSteps = 0;
-    private final double rate;
+    private int numSteps;
+    private double rate;
 
     private double[] startValues;
+// todo: cleanup and implement or erase numSteps option
 
     public TemperOperator(Parameter parameter,
                           Parameter target,
@@ -35,6 +36,26 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
         this.parameter = parameter;
         this.target = target;
         this.rate = rate;
+        this.numSteps = numSteps;
+
+        startValues = parameter.getParameterValues();
+
+        if (numSteps !=0) {
+            throw new RuntimeException("Number of steps not yet implemented, please specifiy a rate.");
+        }
+
+//        if(numSteps != 0 && rate == 0){
+//            if (parameter.getDimension() > 1) {
+//                throw new RuntimeException("Tempering not yet implemented with for parameters with dimension > 1");
+//            }
+//            this.rate = setRate();
+//        }
+//        else if (rate !=0 && numSteps == 0){
+//            this.numSteps = setSteps();
+//        }
+//        else{
+//            throw new RuntimeException("You must provide exactly one: rate or steps.");
+//        }
 
         setWeight(weight);
     }
@@ -44,15 +65,34 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
         return BAYESIAN_BRIDGE_PARSER;
     }
 
+//    private void setRate(){
+//        double start = this.parameter.getValue(0);
+//        double end = this.target.getValue(0);
+//        this.rate = Math.log(end / start) / this.numSteps;
+//    }
+//
+//    private void setSteps(){
+//        double start = this.parameter.getValue(0);
+//        double end = this.target.getValue(0);
+//        this.numSteps = (int) Math.round(Math.log(end / start) / this.rate);
+//    }
+
     @Override
     public double doOperation() {
+        // plan: start + (end - start) * percentComplete
+        // where percentComplete = [ exp(-Nsteps * exp(-rate)) - 1 ]  is in (0, 1), and importantly goes from *0* to *1*
+        // Note we achieve percentComplete = 1 only when Nsteps * exp(-rate) := 'objective' is large
 
-        if (startValues == null) {
-            startValues = parameter.getParameterValues();
-        }
+        // factor out a -1 to read code below:
+        // start + (start - end) * -1*percentComplete
+
+//        if (startValues == null) {
+//            startValues = parameter.getParameterValues();
+//        }
 
         double currentCount = getCount() + 1;
 
+        // seems unnecessary, could just input exp(-rate) directly as "rate" in XML if desired.
         double objective = currentCount * Math.exp(-rate);
 
 //        for (int i = 0; i < parameter.getDimension(); ++i) {
@@ -73,9 +113,12 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             double currentValue = parameter.getParameterValue(i);
             double targetValue = target.getParameterValue(i % target.getDimension());
 
-            if (objective > 0.1) {
+            // if less than (approx) 90% of the way there, keep going: exp(-2.3) ~ 0.1
+            if (objective < 2.3) {
                 double startValue = startValues[i];
-                double x = startValue + (startValue - targetValue) * Math.exp(-objective);
+                double x = startValue + (startValue - targetValue) * (Math.exp(-objective) - 1);
+                parameter.setParameterValue(i, x);
+
             } else if (currentValue != targetValue) {
                 parameter.setParameterValue(i, targetValue);
             }
@@ -110,10 +153,14 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             int numSteps = xo.getAttribute(NUM_STEPS, 0);
             double rate = xo.getAttribute(RATE, 0);
 
-            if (numSteps == 0 && rate == 0) {
+            if(rate < 0){
+                throw new XMLParseException("Rate cannot be negative");
+            }
+
+            else if (numSteps == 0 && rate == 0) {
                 throw new XMLParseException("Rate OR number of steps must be provided.");
             } else if (numSteps != 0 && rate != 0) {
-                throw new XMLParseException("Cannot specify both tempering rate and the number of steps.");
+                throw new XMLParseException("Cannot specify both the tempering rate and the number of steps.");
             }
 
             TemperOperator temper = new TemperOperator(hotParameter, targetParameter, rate, numSteps, weight);

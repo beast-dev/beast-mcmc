@@ -158,8 +158,11 @@ public class ConstrainedTreeModel extends TreeModel {
         return bits;
     }
 
+    public int getSubtreeCount(){
+        return subtrees.size();
+    }
 
-    public WrappedSubtree getSubtree(NodeRef node,SubtreeContext context) {
+    public TreeModel getSubtree(NodeRef node,SubtreeContext context) {
         return subtrees.get(((Node) node).getSubtreeNumber(context));
     }
 
@@ -171,11 +174,11 @@ public class ConstrainedTreeModel extends TreeModel {
      * @param node
      * @return
      */
-    public WrappedSubtree getSubtree(NodeRef node){
+    public TreeModel getSubtree(NodeRef node){
         return subtrees.get(((Node) node).getSubtreeNumber(SubtreeContext.IncludeRoot));
     }
 
-    public WrappedSubtree getSubtree(int i) {
+    public TreeModel getSubtree(int i) {
         return subtrees.get(i);
     }
 

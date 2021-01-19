@@ -3,6 +3,7 @@ package dr.inferencexml.operators.hmc;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.hmc.SplitHMCtravelTimeMultiplier;
 import dr.inference.operators.hmc.SplitHamiltonianMonteCarloOperator;
 import dr.xml.*;
 
@@ -23,7 +24,6 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     private final static String GRADIENT_CHECK_TOL = "gradientCheckTolerance";
 
-
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -31,24 +31,32 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
         double relativeScale = xo.getDoubleAttribute(RELATIVE_SCALE);
 
-        ReversibleHMCProvider reversibleHMCproviderA = (ReversibleHMCProvider) xo.getChild(1); //todo: avoid hard-coded order of reversible provider?
-        ReversibleHMCProvider reversibleHMCproviderB = (ReversibleHMCProvider) xo.getChild(2);
+        ReversibleHMCProvider reversibleHMCproviderInner = (ReversibleHMCProvider) xo.getChild(1); //todo: avoid hard-coded order of reversible provider?
+        ReversibleHMCProvider reversibleHMCproviderOuter = (ReversibleHMCProvider) xo.getChild(2);
 
         int nStep = xo.getAttribute(N_STEPS, 5);
         int nInnerStep = xo.getAttribute(N_INNER_STEPS, 5);
         int gradientCheckCount = xo.getAttribute(GRADIENT_CHECK_COUNT, 0);
         double gradientCheckTol = xo.getAttribute(GRADIENT_CHECK_TOL, 0.01);
 
-        int updateRelativeScaleFrequency = xo.getAttribute(UPDATE_RS_FREQUENCY, 0);
-        int updateRelativeScaleDelay = xo.getAttribute(UPDATE_RS_DELAY, 0);
-        int updateRelativeScaleMax = xo.getAttribute(UPDATE_RS_MAX, 0);
+        SplitHMCtravelTimeMultiplier.RSoptions rsOptions = parseRSoptions(xo);
+        SplitHMCtravelTimeMultiplier splitHMCmultiplier = SplitHMCtravelTimeMultiplier.create(reversibleHMCproviderInner, reversibleHMCproviderOuter, rsOptions);
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        return new SplitHamiltonianMonteCarloOperator(weight, reversibleHMCproviderA, reversibleHMCproviderB, parameter,
+        return new SplitHamiltonianMonteCarloOperator(weight, reversibleHMCproviderInner, reversibleHMCproviderOuter, parameter,
                 stepSize, relativeScale, nStep
-                , nInnerStep, gradientCheckCount, gradientCheckTol, updateRelativeScaleFrequency,
-                updateRelativeScaleDelay, updateRelativeScaleMax);
+                , nInnerStep, gradientCheckCount, gradientCheckTol, splitHMCmultiplier);
+    }
+
+    static SplitHMCtravelTimeMultiplier.RSoptions parseRSoptions(XMLObject xo) throws XMLParseException {
+
+        int updateRSdelay = xo.getAttribute(UPDATE_RS_DELAY, 0);
+        int updateRSfrequency = xo.getAttribute(UPDATE_RS_FREQUENCY, 0);
+        int updateRSmax = xo.getAttribute(UPDATE_RS_MAX, 0);
+
+        return updateRSfrequency == 0 ? null : new SplitHMCtravelTimeMultiplier.RSoptions(updateRSdelay,
+                updateRSfrequency, updateRSmax);
     }
 
     @Override

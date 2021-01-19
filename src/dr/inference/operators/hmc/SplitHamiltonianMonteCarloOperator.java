@@ -24,9 +24,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     private double stepSize;
     private double relativeScale;
-    private final int updateRelativeScaleDelay;
-    private final int updateRelativeScaleFrequency;
-    private final int updateRelativeScaleMax;
+    protected final SplitHMCtravelTimeMultiplier travelTimeMultipler;
     private ReversibleHMCProvider inner;
     private ReversibleHMCProvider outer;
     protected final Parameter parameter;
@@ -47,8 +45,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
                                               double stepSize,
                                               double relativeScale, int nSteps, int nSplitOuter,
                                               int gradientCheckCount, double gradientCheckTolerance,
-                                              int updateRelativeScaleDelay, int updateRelativeScaleFrequency,
-                                              int updateRelativeScaleMax) {
+                                              SplitHMCtravelTimeMultiplier travelTimeMultiplier) {
 
         setWeight(weight);
         this.inner = inner;
@@ -65,15 +62,20 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         this.gradientCheckCount = gradientCheckCount;
         this.gradientCheckTolerance = gradientCheckTolerance;
 
-        this.updateRelativeScaleDelay = updateRelativeScaleDelay;
-        this.updateRelativeScaleFrequency = updateRelativeScaleFrequency;
-        this.updateRelativeScaleMax = updateRelativeScaleMax;
+        this.travelTimeMultipler = travelTimeMultiplier;
     }
 
     public double doOperation(Likelihood joint) {
         if (getCount() < gradientCheckCount) {
             checkGradient(joint);
         }
+
+        if (travelTimeMultipler != null && travelTimeMultipler.shouldUpdateSCM(getCount())) {
+            travelTimeMultipler.updateSCM(travelTimeMultipler.getInnerCov(), inner.getInitialPosition(), getCount());
+            travelTimeMultipler.updateSCM(travelTimeMultipler.getOuterCov(), outer.getInitialPosition(), getCount());
+            relativeScale = travelTimeMultipler.getMultiplier();
+        }
+
         return mergedUpdate();
     }
 
@@ -158,11 +160,6 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     private double mergedUpdate() {
 
-        if (shouldUpdateRelativeScale()){
-            System.err.println("inner min eigenvalue is " + inner.getMinEigValueSCM() + "outer min eigenvalue is " + outer.getMinEigValueSCM());
-            relativeScale = Math.sqrt(inner.getMinEigValueSCM()) / Math.sqrt(outer.getMinEigValueSCM());
-        }
-
         double[] positionInnerbuffer = inner.getInitialPosition();
         double[] positionOuterbuffer = outer.getInitialPosition();
 
@@ -238,9 +235,6 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     @Override
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
-        if (shouldUpdateRelativeScale()){
-            relativeScale = Math.sqrt(inner.getMinEigValueSCM()) / Math.sqrt(outer.getMinEigValueSCM());
-        }
 
         double[] positionInnerbuffer = new double[dimInner];
         double[] positionOuterbuffer = new double[dimOuter];
@@ -403,28 +397,6 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     @Override
     public double getStepSize() { //todo:
         return stepSize;
-    }
-
-    @Override
-    public double getMinEigValueSCM() {
-        throw new RuntimeException("shouldn't be called!");
-    }
-
-    @Override
-    public int getReversibleUpdateCount() {
-        return 0;
-    }
-
-    @Override
-    public boolean shouldUpdateSCM() {
-        return false;
-    }
-
-    protected boolean shouldUpdateRelativeScale() {
-        return ((updateRelativeScaleFrequency > 0)
-                && (((getCount() % updateRelativeScaleFrequency == 0)
-                && (getCount() > updateRelativeScaleDelay)))
-                && (updateRelativeScaleMax == 0 || getCount() < updateRelativeScaleMax));
     }
 
     private WrappedVector mergeWrappedVector(WrappedVector lhs, WrappedVector rhs) {

@@ -34,7 +34,6 @@ import dr.inference.operators.AbstractAdaptableOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.GeneralOperator;
 import dr.inference.operators.PathDependent;
-import dr.math.AdaptableCovariance;
 import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -57,8 +56,6 @@ public class HamiltonianMonteCarloOperator extends AbstractAdaptableOperator
     protected final Parameter parameter;
     protected final MassPreconditioner preconditioning;
     protected final MassPreconditionScheduler preconditionScheduler;
-    protected final AdaptableCovariance sampleCov;
-    private int reversibleUpdateCount;
     private final Options runtimeOptions;
     protected final double[] mask;
     protected final Transform transform;
@@ -109,8 +106,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         this.preconditioning = preconditioner;
         this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, this);
         this.parameter = parameter;
-        this.sampleCov = new AdaptableCovariance(parameter.getDimension());
-        this.reversibleUpdateCount = 0;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
 
@@ -759,14 +754,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             updateGradient(gradient);
             leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
                     mask(gradient.getBuffer(), mask), time * direction / 2);
-
-            if (shouldUpdateSCM()) {
-                sampleCov.update(new WrappedVector.Raw(position.getBuffer()));
-            }
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
-        reversibleUpdateCount++;
     }
 
     public void updateGradient(WrappedVector gradient) {
@@ -820,23 +810,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     @Override
     public double getStepSize() {
         return stepSize;
-    }
-
-    public double getMinEigValueSCM() {
-        return ReversibleHMCProvider.getMinEigValueLanczos(parameter, sampleCov);
-    }
-
-    @Override
-    public int getReversibleUpdateCount() {
-        return reversibleUpdateCount;
-    }
-
-    @Override
-    public boolean shouldUpdateSCM() {
-        return ((runtimeOptions.preconditioningUpdateFrequency > 0)
-                && (((getReversibleUpdateCount() % runtimeOptions.preconditioningUpdateFrequency == 0)
-                && (getReversibleUpdateCount() > runtimeOptions.preconditioningDelay)))
-                && (runtimeOptions.preconditioningMaxUpdate == 0 || getReversibleUpdateCount() < runtimeOptions.preconditioningMaxUpdate));
     }
 
     public int getNumGradientEvent(){

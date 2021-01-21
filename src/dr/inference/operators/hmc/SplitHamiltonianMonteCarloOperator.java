@@ -23,10 +23,10 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         ReversibleHMCProvider {
 
     private double stepSize;
-    private double relativeScale;
-    protected final SplitHMCtravelTimeMultiplier travelTimeMultipler;
-    private ReversibleHMCProvider inner;
-    private ReversibleHMCProvider outer;
+    public double relativeScale;
+    public final SplitHMCtravelTimeMultiplier travelTimeMultipler;
+    public ReversibleHMCProvider inner;
+    public ReversibleHMCProvider outer;
     protected final Parameter parameter;
 
     int dimInner;
@@ -70,9 +70,9 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
             checkGradient(joint);
         }
 
-        if (travelTimeMultipler != null && travelTimeMultipler.shouldUpdateSCM(getCount())) {
-            travelTimeMultipler.updateSCM(travelTimeMultipler.getInnerCov(), inner.getInitialPosition(), getCount());
-            travelTimeMultipler.updateSCM(travelTimeMultipler.getOuterCov(), outer.getInitialPosition(), getCount());
+        updateRS();
+
+        if (travelTimeMultipler.shouldGetMultiplier(getCount())) {
             relativeScale = travelTimeMultipler.getMultiplier();
         }
 
@@ -235,6 +235,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     @Override
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
+        updateRS();
 
         double[] positionInnerbuffer = new double[dimInner];
         double[] positionOuterbuffer = new double[dimOuter];
@@ -418,6 +419,13 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
             } else {
                 vectorJoint.set(i, vectorRHS.get(i - dimInner));
             }
+        }
+    }
+
+    private void updateRS() {
+        if (travelTimeMultipler != null && travelTimeMultipler.shouldUpdateSCM(getCount())) {
+            travelTimeMultipler.updateSCM(travelTimeMultipler.getInnerCov(), inner.getInitialPosition(), getCount());
+            travelTimeMultipler.updateSCM(travelTimeMultipler.getOuterCov(), outer.getInitialPosition(), getCount());
         }
     }
 }

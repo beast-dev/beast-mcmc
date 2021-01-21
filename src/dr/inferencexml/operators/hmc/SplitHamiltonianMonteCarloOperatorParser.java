@@ -20,7 +20,7 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
     private final static String RELATIVE_SCALE = "relativeScale";
     private final static String UPDATE_RS_FREQUENCY = "updateRelativeScaleFrequency";
     private final static String UPDATE_RS_DELAY = "updateRelativeScaleDelay";
-    private final static String UPDATE_RS_MAX = "updateRelativeScaleMax";
+    private final static String GET_RS_DELAY = "getRelativeScaleDelay";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     private final static String GRADIENT_CHECK_TOL = "gradientCheckTolerance";
 
@@ -53,10 +53,10 @@ public class SplitHamiltonianMonteCarloOperatorParser extends AbstractXMLObjectP
 
         int updateRSdelay = xo.getAttribute(UPDATE_RS_DELAY, 0);
         int updateRSfrequency = xo.getAttribute(UPDATE_RS_FREQUENCY, 0);
-        int updateRSmax = xo.getAttribute(UPDATE_RS_MAX, 0);
+        int getRSdelay = xo.getAttribute(GET_RS_DELAY, 0);
 
         return updateRSfrequency == 0 ? null : new SplitHMCtravelTimeMultiplier.RSoptions(updateRSdelay,
-                updateRSfrequency, updateRSmax);
+                updateRSfrequency, getRSdelay);
     }
 
     @Override

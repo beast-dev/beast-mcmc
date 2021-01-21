@@ -22,6 +22,8 @@ public interface SplitHMCtravelTimeMultiplier {
 
     boolean shouldUpdateSCM(long iter);
 
+    boolean shouldGetMultiplier(long iter);
+
     AdaptableCovariance getInnerCov();
 
     AdaptableCovariance getOuterCov();
@@ -35,12 +37,12 @@ public interface SplitHMCtravelTimeMultiplier {
 
         final int updateRSdelay;
         final int updateRSfrequency;
-        final int updateRSmax;
+        final int getRSdelay;
 
-        public RSoptions(int updateRSdelay, int updateRSfrequency, int updateRSmax) {
+        public RSoptions(int updateRSdelay, int updateRSfrequency, int getRSdelay) {
             this.updateRSdelay = updateRSdelay;
             this.updateRSfrequency = updateRSfrequency;
-            this.updateRSmax = updateRSmax;
+            this.getRSdelay = getRSdelay;
         }
     }
 }
@@ -91,7 +93,6 @@ class LeastEigenvalueRatioSCM implements SplitHMCtravelTimeMultiplier {
 
         if (shouldUpdateSCM(iter)) {
             scm.update(new WrappedVector.Raw(parameterValue));
-            scm.update(new WrappedVector.Raw(parameterValue));
         }
     }
 
@@ -109,5 +110,9 @@ class LeastEigenvalueRatioSCM implements SplitHMCtravelTimeMultiplier {
         return ((rsOptions.updateRSfrequency > 0)
                 && ((iter % rsOptions.updateRSfrequency == 0)
                 && (iter > rsOptions.updateRSdelay)));
+    }
+
+    public boolean shouldGetMultiplier(long iter) {
+        return (iter > rsOptions.getRSdelay);
     }
 }

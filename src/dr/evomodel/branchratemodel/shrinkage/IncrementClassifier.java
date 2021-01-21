@@ -1,6 +1,8 @@
-package dr.evolution.tree;
+package dr.evomodel.branchratemodel.shrinkage;
 
 
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.model.Parameter;
 import dr.xml.*;

@@ -151,7 +151,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
                 new ElementRule(TARGET_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class),
                 }),
-                AttributeRule.newStringRule(RATE),
+                AttributeRule.newDoubleRule(RATE),
         };
     };
 }

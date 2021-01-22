@@ -5,30 +5,37 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
+
+import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Parameter;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 /**
  * @author Alexander Fisher
  */
 public class IncrementClassifier implements TreeTraitProvider {
-// todo: find magic default epsilon from prior simulation
+// todo: find magic default s.d. from prior simulation (then use targetProb to find eps)
     public static final String PARAMETER_CLASSIFIER = "parameterClassifier";
     public static final String EPSILON = "epsilon";
     public static final String TARGET_PROBABILITY = "targetProbability";
 
     private AutoCorrelatedBranchRatesDistribution brm;
     private double epsilon;
-    private boolean epsilonKnown = false;
+    private boolean epsilonKnown = false; // todo: cleanup -- probably don't need to dynamically update epsilon
     private double targetProb;
     private int dim;
-    private ParametricMultivariateDistributionModel distribution;
+
+    private double sd = 1.0; //todo: put magic number here.
+//    private ParametricMultivariateDistributionModel distribution;
+    private JointBayesianBridgeDistributionModel distribution;
 
     private double[] classified;
 
     public IncrementClassifier(AutoCorrelatedBranchRatesDistribution brm, double epsilon, double targetProb) {
         this.brm = brm;
-        this.distribution = brm.getPrior();
+        this.distribution = (distribution instanceof JointBayesianBridgeDistributionModel) ?
+                (JointBayesianBridgeDistributionModel) distribution : null;
 
         if (epsilon != 0.0) {
             this.epsilon = epsilon;
@@ -44,8 +51,11 @@ public class IncrementClassifier implements TreeTraitProvider {
     }
 
     private double findEpsilonFromTargetProb(double targetProb) {
-        // finds eps such that p(abs(increment)) < epsilon = targetProb
-        throw new RuntimeException("Target probabiltiy not yet implemented.");
+        // finds eps such that Prob{abs(increment) < eps} = targetProb
+        double probToFindEpsilon = (targetProb / 2) + 0.5;
+        NormalDistribution norm = new NormalDistribution(0, sd);
+        epsilonKnown = true;
+        return norm.quantile(probToFindEpsilon);
     }
 
     private void classify() {
@@ -56,7 +66,7 @@ public class IncrementClassifier implements TreeTraitProvider {
         for (int i = 0; i < dim; i++) {
             increment = brm.getIncrement(i);
             classified[i] = 1; // is an increment
-            if (increment < epsilon) {
+            if (Math.abs(increment) < epsilon) {
                 classified[i] = 0; // is not an increment
             }
         }

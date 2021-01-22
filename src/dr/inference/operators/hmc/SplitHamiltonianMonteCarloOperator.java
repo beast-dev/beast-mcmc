@@ -330,6 +330,11 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     }
 
     @Override
+    public double[] getMask() {
+        return new double[0];
+    }
+
+    @Override
     public Transform getTransform() {
         return null;
     }

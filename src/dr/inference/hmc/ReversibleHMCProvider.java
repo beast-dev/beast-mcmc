@@ -20,6 +20,8 @@ public interface ReversibleHMCProvider {
 
     int getNumBoundaryEvent();
 
+    double[] getMask();
+
     Transform getTransform();
 
     GradientWrtParameterProvider getGradientProvider();

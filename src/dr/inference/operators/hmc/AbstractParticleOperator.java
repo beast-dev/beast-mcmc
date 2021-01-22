@@ -484,7 +484,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
     final double[] parameterSign;
-    private final double[] maskVector;
+    protected final double[] maskVector;
     int numEvents;
     int numBoundaryEvents;
     int numGradientEvents;

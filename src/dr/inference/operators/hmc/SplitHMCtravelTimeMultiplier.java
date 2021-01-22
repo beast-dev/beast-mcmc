@@ -1,10 +1,10 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.hmc.ReversibleHMCProvider;
-import dr.inference.model.Parameter;
 import dr.math.AdaptableCovariance;
 import dr.math.matrixAlgebra.Lanczos;
 import dr.math.matrixAlgebra.ReadableMatrix;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 
 /**
@@ -53,6 +53,8 @@ class LeastEigenvalueRatioSCM implements SplitHMCtravelTimeMultiplier {
     ReversibleHMCProvider outer;
     AdaptableCovariance adaptableCovarianceInner;
     AdaptableCovariance adaptableCovarianceOuter;
+    double[] maskVectorInner;
+    double[] maskVectorOuter;
 
     RSoptions rsOptions;
 
@@ -64,28 +66,64 @@ class LeastEigenvalueRatioSCM implements SplitHMCtravelTimeMultiplier {
 
         this.adaptableCovarianceInner = new AdaptableCovariance(inner.getInitialPosition().length);
         this.adaptableCovarianceOuter = new AdaptableCovariance(outer.getInitialPosition().length);
+
+        this.maskVectorInner = inner.getMask();
+        this.maskVectorOuter = outer.getMask();
     }
 
     @Override
     public double getMultiplier() {
-        double minEigenInner = getMinEigValueLanczos(inner.getGradientProvider().getParameter(),
-                adaptableCovarianceInner);
-        double minEigenOuter = getMinEigValueLanczos(outer.getGradientProvider().getParameter(),
-                adaptableCovarianceInner);
+        double minEigenInner = getMinEigValueLanczos(adaptableCovarianceInner, maskVectorInner);
+        double minEigenOuter = getMinEigValueLanczos(adaptableCovarianceOuter, maskVectorOuter);
         return Math.sqrt(minEigenInner) / Math.sqrt(minEigenOuter);
     }
 
-    static double getMinEigValueLanczos(Parameter parameter, AdaptableCovariance sampleCov) {
+    static ReadableMatrix subsetByMask(ReadableMatrix adaptableCov, double[] mask) {
 
-        ReadableMatrix scmArray = sampleCov.getCovariance();
-        double[] eigenvalues = Lanczos.eigen(scmArray, parameter.getDimension());
+        int sumDim = 0;
 
-        if (eigenvalues.length < parameter.getDimension()) {
+        for (int i = 0; i < mask.length; i++) {
+            sumDim += mask[i];
+        }
+
+        if (sumDim < 2) {
+            throw new RuntimeException("not a matrix!");
+        }
+
+        double[][] subsetMat = new double[sumDim][sumDim];
+
+        int m = 0;
+        int n;
+        boolean allZeroRow;
+
+        for (int i = 0; i < adaptableCov.getMajorDim(); i++) {
+            n = 0;
+            allZeroRow = true;
+            for (int j = 0; j < adaptableCov.getMajorDim(); j++) {
+                if (mask[i] == 1 && mask[j] == 1) {
+                    allZeroRow = false;
+                    subsetMat[m][n] = adaptableCov.get(i, j);
+                    n++;
+                }
+            }
+            if (!allZeroRow) m++;
+        }
+        return new WrappedMatrix.ArrayOfArray(subsetMat);
+    }
+
+    static double getMinEigValueLanczos(AdaptableCovariance sampleCov, double[] mask) {
+
+        ReadableMatrix scmArray = mask != null ? subsetByMask(sampleCov.getCovariance(), mask) :
+                sampleCov.getCovariance();
+        int dim = scmArray.getMajorDim();
+        double[] eigenvalues = Lanczos.eigen(scmArray, dim);
+
+        if (eigenvalues.length < dim) {
             throw new RuntimeException("called getMinEigValueSCM too early!");
         }
 
-        System.err.println("largest eigenvalue is " + eigenvalues[0] + "smallest is " + eigenvalues[parameter.getDimension() - 1]);
-        return eigenvalues[parameter.getDimension() - 1];
+        //System.err.println("largest eigenvalue is " + eigenvalues[0] + "smallest is " + eigenvalues[dim - 1]);
+        return eigenvalues[dim - 1];
     }
 
     @Override

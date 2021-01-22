@@ -587,6 +587,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     @Override
+    public double[] getMask() {
+        return maskVector;
+    }
+
+    @Override
     public Transform getTransform() {
         return null;
     }

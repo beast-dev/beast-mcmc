@@ -38,11 +38,13 @@ public interface SplitHMCtravelTimeMultiplier {
         final int updateRSdelay;
         final int updateRSfrequency;
         final int getRSdelay;
+        final int getRSfrequency;
 
-        public RSoptions(int updateRSdelay, int updateRSfrequency, int getRSdelay) {
+        public RSoptions(int updateRSdelay, int updateRSfrequency, int getRSdelay, int getRSfrequency) {
             this.updateRSdelay = updateRSdelay;
             this.updateRSfrequency = updateRSfrequency;
             this.getRSdelay = getRSdelay;
+            this.getRSfrequency = getRSfrequency;
         }
     }
 }
@@ -151,6 +153,8 @@ class LeastEigenvalueRatioSCM implements SplitHMCtravelTimeMultiplier {
     }
 
     public boolean shouldGetMultiplier(long iter) {
-        return (iter > rsOptions.getRSdelay);
+        return ((rsOptions.getRSfrequency > 0)
+                && ((iter % rsOptions.getRSfrequency == 0)
+                && (iter > rsOptions.getRSdelay)));
     }
 }

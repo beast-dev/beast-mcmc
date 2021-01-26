@@ -33,14 +33,14 @@ public class IncrementClassifier implements TreeTraitProvider {
 
     private double sd = 1.0; //todo: put magic number here.
 //    private ParametricMultivariateDistributionModel distribution;
-    private JointBayesianBridgeDistributionModel distribution;
+//    private JointBayesianBridgeDistributionModel distribution;
 
     private double[] classified;
 
     public IncrementClassifier(AutoCorrelatedBranchRatesDistribution acbr, double epsilon, double targetProb) {
         this.acbr = acbr;
-        this.distribution = (distribution instanceof JointBayesianBridgeDistributionModel) ?
-                (JointBayesianBridgeDistributionModel) distribution : null;
+//        this.distribution = (distribution instanceof JointBayesianBridgeDistributionModel) ?
+//                (JointBayesianBridgeDistributionModel) distribution : null;
         this.branchRateModel = acbr.getBranchRateModel();
 
         if (epsilon != 0.0) {
@@ -89,6 +89,7 @@ public class IncrementClassifier implements TreeTraitProvider {
 
             public Double getTrait(Tree tree, NodeRef node)
             {
+                classify();
                 int index = branchRateModel.getParameterIndexFromNode(node);
                 return classified[index];
             }

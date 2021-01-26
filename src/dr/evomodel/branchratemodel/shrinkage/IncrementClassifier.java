@@ -10,19 +10,22 @@ import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 
 import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.Parameter;
+import dr.inference.operators.shrinkage.BayesianBridgePriorSampler;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 /**
  * @author Alexander Fisher
  */
-public class IncrementClassifier implements TreeTraitProvider {
-    // todo: find magic number based on input exponent and slabwidth -- sample from global and local scale
-// todo: find magic default s.d. from prior simulation (then use targetProb to find eps)
+public class IncrementClassifier implements TreeTraitProvider, Loggable {
+    //todo: add logger
     public static final String INCREMENT_CLASSIFIER = "incrementClassifier";
     public static final String EPSILON = "epsilon";
     public static final String TARGET_PROBABILITY = "targetProbability";
+    public static final String SAMPLE_PRIOR = "samplePrior";
 
     private AutoCorrelatedBranchRatesDistribution acbr; //autocorrelated branch rates
     private DifferentiableBranchRates branchRateModel;
@@ -31,17 +34,14 @@ public class IncrementClassifier implements TreeTraitProvider {
     private int dim;
     private Helper helper;
 
-    private double sd = 1.0; //todo: put magic number here.
-//    private ParametricMultivariateDistributionModel distribution;
-//    private JointBayesianBridgeDistributionModel distribution;
+    private double sd;
 
     private double[] classified;
 
-    public IncrementClassifier(AutoCorrelatedBranchRatesDistribution acbr, double epsilon, double targetProb) {
+    public IncrementClassifier(AutoCorrelatedBranchRatesDistribution acbr, double epsilon, double targetProb, boolean samplePrior, double sd) {
         this.acbr = acbr;
-//        this.distribution = (distribution instanceof JointBayesianBridgeDistributionModel) ?
-//                (JointBayesianBridgeDistributionModel) distribution : null;
         this.branchRateModel = acbr.getBranchRateModel();
+        this.sd = sd; //only gets used if we are using targetProb
 
         if (epsilon != 0.0) {
             this.epsilon = epsilon;
@@ -87,8 +87,7 @@ public class IncrementClassifier implements TreeTraitProvider {
                 return Intent.BRANCH;
             }
 
-            public Double getTrait(Tree tree, NodeRef node)
-            {
+            public Double getTrait(Tree tree, NodeRef node) {
                 classify();
                 int index = branchRateModel.getParameterIndexFromNode(node);
                 return classified[index];
@@ -131,17 +130,28 @@ public class IncrementClassifier implements TreeTraitProvider {
                 throw new XMLParseException("Cannot set both epsilon and target probability.");
             }
 
+            boolean samplePrior = xo.getAttribute(SAMPLE_PRIOR, false);
+
+            double sd = 1.0; //todo: put magic number here.
+            if (xo.hasAttribute(TARGET_PROBABILITY) && samplePrior){
+                System.out.println("Using default Bayesian bridge prior with standard deviation " + sd + " to set epsilon.");
+            }
+
+            if (samplePrior) {
+                BayesianBridgePriorSampler bayesianBridgePriorSampler = (BayesianBridgePriorSampler) xo.getChild(BayesianBridgePriorSampler.class);
+                sd = bayesianBridgePriorSampler.getStandardDeviation();
+            }
+
             double epsilon = xo.getAttribute(EPSILON, 0.0);
             double targetProbability = xo.getAttribute(TARGET_PROBABILITY, 0.0);
 
             if (epsilon < 0) {
                 throw new XMLParseException("epsilon must be positive.");
-            }
-            else if (targetProbability < 0) {
+            } else if (targetProbability < 0) {
                 throw new XMLParseException("target probability must be positive.");
             }
 
-            IncrementClassifier incrementClassifier = new IncrementClassifier(acbr, epsilon, targetProbability);
+            IncrementClassifier incrementClassifier = new IncrementClassifier(acbr, epsilon, targetProbability, samplePrior, sd);
             return incrementClassifier;
         }
 
@@ -165,8 +175,15 @@ public class IncrementClassifier implements TreeTraitProvider {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(AutoCorrelatedBranchRatesDistribution.class),
+                new ElementRule(BayesianBridgePriorSampler.class, true),
                 AttributeRule.newDoubleRule(EPSILON, true),
                 AttributeRule.newDoubleRule(TARGET_PROBABILITY, true),
+                AttributeRule.newBooleanRule(SAMPLE_PRIOR, true),
         };
     };
+
+    @Override
+    public LogColumn[] getColumns() {
+        return new LogColumn[0];
+    }
 }

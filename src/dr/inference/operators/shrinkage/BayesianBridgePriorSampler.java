@@ -1,10 +1,18 @@
 package dr.inference.operators.shrinkage;
 
 import dr.inference.distribution.ExponentialTiltedStableDistribution;
+import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
+import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
+
+/**
+ * @author Alexander Fisher
+ */
 
 public class BayesianBridgePriorSampler {
     // todo: find magic number based on input exponent and slabwidth -- sample from global and local scale
@@ -15,39 +23,58 @@ public class BayesianBridgePriorSampler {
     public static final String BAYESIAN_BRIDGE_PRIOR_SAMPLER = "bayesianBridgePriorSampler";
     public static final String STEPS = "steps";
 
-    private final BayesianBridgeStatisticsProvider provider;
-    private final Parameter globalScale;
-    private final Parameter localScale;
+//    private final BayesianBridgeStatisticsProvider provider;
+//    private final Parameter globalScale;
+//    private final Parameter localScale;
+    private double globalScale;
+    private double localScale;
+    private Parameter slabWidth;
     private final Parameter regressionExponent;
     private final int dim;
     private final GammaDistribution globalScalePrior;
+    private double[] increments;
+    private double sd;
+    JointBayesianBridgeDistributionModel jointBridge;
 
+    public BayesianBridgePriorSampler(BayesianBridgeDistributionModel dummyBridge, GammaDistribution globalScalePrior, int N){
+//        this.provider = dummyBridge;
+//        this.globalScale = bridge.getGlobalScale(); //shouldn't matter
+//        this.localScale = bridge.getLocalScale(); //shouldn't matter
+//        this.jointBridge = (bridge instanceof JointBayesianBridgeDistributionModel) ?
+//                (JointBayesianBridgeDistributionModel) bridge : null;
 
-    public BayesianBridgePriorSampler(BayesianBridgeStatisticsProvider dummyBridge, GammaDistribution globalScalePrior, int N){
-        this.provider = dummyBridge;
-        this.globalScale = dummyBridge.getGlobalScale(); //shouldn't matter
-        this.localScale = dummyBridge.getLocalScale(); //shouldn't matter
-        this.regressionExponent = dummyBridge.getExponent();
-        this.dim = dummyBridge.getDimension();
-        this.globalScalePrior = globalScalePrior;
-
-        if(dim != 1) {
-            throw new RuntimeException("dimension of dummy bridge should be 1");
+        if (dummyBridge instanceof JointBayesianBridgeDistributionModel) {
+            this.jointBridge = (JointBayesianBridgeDistributionModel) bridge;
+        }
+        else {
+            throw new RuntimeException("Bayesian bridge prior sampler not yet implemented for marginalized bridge.");
         }
 
+
+        this.globalScale = 1.0;
+        this.localScale = 1.0;
+        this.regressionExponent = bridge.getExponent();
+        this.slabWidth = bridge.getSlabWidth();
+        this.dim = 1;
+        this.globalScalePrior = globalScalePrior;
+
+        increments = new double[N];
         sample(N);
     }
 
     void sample(int N){
-        double globalTotal = 0.0;
-        double localTotal = 0.0;
+//        double globalTotal = 0.0;
+//        double localTotal = 0.0;
         for (int i = 0; i < N; i++){
-            globalTotal += sampleGlobalScale();
-            localTotal += sampleLocalScale();
+//            globalTotal += sampleGlobalScale();
+//            localTotal += sampleLocalScale();
+            sampleGlobalScale();
+            increments[i] = MathUtils.nextGaussian() * getStandardDeviation();
+            sampleLocalScale();
         }
 
-        this.globalScale.setParameterValue(0, globalTotal / N);
-        this.localScale.setParameterValue(0, localTotal / N);
+//        this.globalScale.setParameterValue(0, globalTotal / N);
+//        this.localScale.setParameterValue(0, localTotal / N);
 
     }
 
@@ -98,6 +125,8 @@ public class BayesianBridgePriorSampler {
 
     private double sampleLocalScale() {
 
+        // draw coefficient (increment) ~ N(0, sd) where sd comes from local and global
+        // draw local given draw of normal
         final double exponent = regressionExponent.getParameterValue(0);
         final double global = globalScale.getParameterValue(0);
 
@@ -129,7 +158,13 @@ public class BayesianBridgePriorSampler {
     }
 
     public double getStandardDeviation() {
-        return 1.0;
+//        return localScale * globalScale;
+        double globalLocalProduct = globalScale * localScale;
+        if (slabWidth != null) {
+            double ratio = globalLocalProduct / slabWidth.getParameterValue(0);
+            globalLocalProduct /= Math.sqrt(1.0 + ratio * ratio);
+        }
+        return globalLocalProduct;
     }
 
     // **************************************************************
@@ -144,13 +179,39 @@ public class BayesianBridgePriorSampler {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            BayesianBridgeStatisticsProvider bbStatistics = (BayesianBridgeStatisticsProvider) xo.getChild(BayesianBridgeStatisticsProvider.class);
+             BayesianBridgeDistributionModel bayesianBridge = (BayesianBridgeDistributionModel) xo.getChild(BayesianBridgeDistributionModel.class);
+
+//            BayesianBridgeStatisticsProvider bayesianBridge = new BayesianBridgeStatisticsProvider() {
+//
+//                @Override
+//                public double getCoefficient(int i) { return 0.0; }
+//
+//                @Override
+//                public Parameter getGlobalScale() {
+//                    return BBprior.getGlobalScale();
+//                }
+//
+//                @Override
+//                public Parameter getLocalScale() {
+//                    return BBprior.getLocalScale();
+//                }
+//
+//                @Override
+//                public Parameter getExponent() {
+//                    return BBprior.getExponent();
+//                }
+//
+//                @Override
+//                public int getDimension() {
+//                    return BBprior.getLocalScale().getDimension();
+//                }
+//            };
 
             GammaDistribution globalScalePrior = (GammaDistribution) xo.getChild(GammaDistribution.class);
 
             int steps = xo.getIntegerAttribute(STEPS);
 
-            BayesianBridgePriorSampler bbPriorSampler = new BayesianBridgePriorSampler(bbStatistics, globalScalePrior, steps);
+            BayesianBridgePriorSampler bbPriorSampler = new BayesianBridgePriorSampler(bayesianBridge, globalScalePrior, steps);
             return bbPriorSampler;
         }
 

@@ -1,5 +1,6 @@
 package dr.inference.operators.shrinkage;
 
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialTiltedStableDistribution;
 import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
@@ -10,62 +11,51 @@ import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
+import java.util.Arrays;
+
 /**
  * @author Alexander Fisher
  */
 
 public class BayesianBridgePriorSampler {
-    // todo new plan: empirical cdf by sampling increments from prior
-    // todo remove code duplication by accessing relevant functions e.g. jointBayesianBridgeDistribution.getStandardDeviation (this will auto take care of slab/no slab) etc.
-    // todo remember to sample from global scale PRIOR
-    // inc ~ N(0,1) * sd
-
     public static final String BAYESIAN_BRIDGE_PRIOR_SAMPLER = "bayesianBridgePriorSampler";
     public static final String STEPS = "steps";
 
-//    private final BayesianBridgeStatisticsProvider provider;
+    //    private final BayesianBridgeStatisticsProvider provider;
     // todo: make sure these are passed by reference when loaded in the constructor, otherwise need to do the ugly bridge.getGlobalScale().setParameterValue() to use getSD funk
     private final Parameter globalScale;
     private final Parameter localScale;
-//    private Parameter slabWidth;
     private final Parameter regressionExponent;
-//    private final int dim;
     private final GammaDistribution globalScalePrior;
     private double[] coefficients; // (increments)
-    private double sd;
+    private int steps;
+
     JointBayesianBridgeDistributionModel bridge;
 
-    public BayesianBridgePriorSampler(JointBayesianBridgeDistributionModel dummyBridge, GammaDistribution globalScalePrior, int N){
-//        this.provider = dummyBridge;
+    public BayesianBridgePriorSampler(JointBayesianBridgeDistributionModel dummyBridge, GammaDistribution globalScalePrior, int N) {
+        this.bridge = dummyBridge;
         this.globalScale = bridge.getGlobalScale();
         this.localScale = bridge.getLocalScale();
-//        this.jointBridge = (bridge instanceof JointBayesianBridgeDistributionModel) ?
-//                (JointBayesianBridgeDistributionModel) bridge : null;
-
-        this.bridge = dummyBridge;
         this.regressionExponent = bridge.getExponent();
 
-//        this.globalScale = 1.0;
-//        this.localScale = 1.0;
-//        this.slabWidth = bridge.getSlabWidth();
-//        this.dim = 1;
         this.globalScalePrior = globalScalePrior;
 
-        this.coefficients = new double[N];
-        sample(N);
+        this.steps = N;
+        this.coefficients = new double[steps];
+        sample(steps);
     }
 
-    void sample(int N){
+    void sample(int N) {
 //        double globalTotal = 0.0;
 //        double localTotal = 0.0;
-        for (int i = 0; i < N; i++){
+        for (int i = 0; i < N; i++) {
 //            globalTotal += sampleGlobalScale();
 //            localTotal += sampleLocalScale();
             sampleGlobalScale();
             coefficients[i] = MathUtils.nextGaussian() * bridge.getStandardDeviation(0);
             sampleLocalScale(i);
         }
-
+        Arrays.sort(coefficients);
 //        this.globalScale.setParameterValue(0, globalTotal / N);
 //        this.localScale.setParameterValue(0, localTotal / N);
     }
@@ -95,6 +85,12 @@ public class BayesianBridgePriorSampler {
         localScale.setParameterValueQuietly(0, Math.sqrt(1 / (2 * draw)));
     }
 
+    public double getEpsilon(double targetProb) {
+        double probToFindEpsilon = (targetProb / 2) + 0.5;
+        int i = (int) Math.round(this.steps * probToFindEpsilon);
+        return coefficients[i];
+    }
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -107,13 +103,24 @@ public class BayesianBridgePriorSampler {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-             JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) xo.getChild(JointBayesianBridgeDistributionModel.class);
+            JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) xo.getChild(JointBayesianBridgeDistributionModel.class);
 
-             if (bridge.getDimension() > 1) {
-                 throw new XMLParseException("dim " + bridge.getDimension() + " is not equal to 1. Bayesian Bridge prior sampling not yet implemented for dimensions > 1");
-             }
+            if (bridge.getDimension() > 1) {
+                throw new XMLParseException("dim " + bridge.getDimension() + " is not equal to 1. Bayesian Bridge prior sampling not yet implemented for dimensions > 1");
+            }
 
-            GammaDistribution globalScalePrior = (GammaDistribution) xo.getChild(GammaDistribution.class);
+//            GammaDistribution globalScalePrior = (GammaDistribution) xo.getChild(GammaDistribution.class);
+            GammaDistribution globalScalePrior = null;
+
+            DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+            if (prior != null) {
+                if (prior.getDistribution() instanceof GammaDistribution) {
+                    globalScalePrior = (GammaDistribution) prior.getDistribution();
+                } else {
+                    throw new XMLParseException("Gibbs sampler only implemented for a gamma distributed global scale");
+                }
+            }
+
 
             int steps = xo.getIntegerAttribute(STEPS);
 
@@ -138,9 +145,10 @@ public class BayesianBridgePriorSampler {
         public Class getReturnType() {
             return BayesianBridgePriorSampler.class;
         }
+
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(JointBayesianBridgeDistributionModel.class),
-                new ElementRule(GammaDistribution.class),
+                new ElementRule(DistributionLikelihood.class),
                 AttributeRule.newIntegerRule(STEPS),
         };
     };

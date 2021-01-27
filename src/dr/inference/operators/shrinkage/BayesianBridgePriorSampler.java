@@ -2,13 +2,10 @@ package dr.inference.operators.shrinkage;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ExponentialTiltedStableDistribution;
-import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
-import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
-import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 import java.util.Arrays;
@@ -21,8 +18,6 @@ public class BayesianBridgePriorSampler {
     public static final String BAYESIAN_BRIDGE_PRIOR_SAMPLER = "bayesianBridgePriorSampler";
     public static final String STEPS = "steps";
 
-    //    private final BayesianBridgeStatisticsProvider provider;
-    // todo: make sure these are passed by reference when loaded in the constructor, otherwise need to do the ugly bridge.getGlobalScale().setParameterValue() to use getSD funk
     private final Parameter globalScale;
     private final Parameter localScale;
     private final Parameter regressionExponent;
@@ -46,18 +41,12 @@ public class BayesianBridgePriorSampler {
     }
 
     void sample(int N) {
-//        double globalTotal = 0.0;
-//        double localTotal = 0.0;
         for (int i = 0; i < N; i++) {
-//            globalTotal += sampleGlobalScale();
-//            localTotal += sampleLocalScale();
             sampleGlobalScale();
             coefficients[i] = MathUtils.nextGaussian() * bridge.getStandardDeviation(0);
             sampleLocalScale(i);
         }
         Arrays.sort(coefficients);
-//        this.globalScale.setParameterValue(0, globalTotal / N);
-//        this.localScale.setParameterValue(0, localTotal / N);
     }
 
     private void sampleGlobalScale() {
@@ -88,7 +77,15 @@ public class BayesianBridgePriorSampler {
     public double getEpsilon(double targetProb) {
         double probToFindEpsilon = (targetProb / 2) + 0.5;
         int i = (int) Math.round(this.steps * probToFindEpsilon);
+        double epsilon = coefficients[i];
+        if (epsilon < 0.0) {
+            throw new RuntimeException("Target probability too small or need more samples from the prior.");
+        }
         return coefficients[i];
+    }
+
+    public int getSteps() {
+        return steps;
     }
 
     // **************************************************************
@@ -109,7 +106,6 @@ public class BayesianBridgePriorSampler {
                 throw new XMLParseException("dim " + bridge.getDimension() + " is not equal to 1. Bayesian Bridge prior sampling not yet implemented for dimensions > 1");
             }
 
-//            GammaDistribution globalScalePrior = (GammaDistribution) xo.getChild(GammaDistribution.class);
             GammaDistribution globalScalePrior = null;
 
             DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
@@ -117,10 +113,9 @@ public class BayesianBridgePriorSampler {
                 if (prior.getDistribution() instanceof GammaDistribution) {
                     globalScalePrior = (GammaDistribution) prior.getDistribution();
                 } else {
-                    throw new XMLParseException("Gibbs sampler only implemented for a gamma distributed global scale");
+                    throw new XMLParseException("Currently only gamma prior on global scale implemented.");
                 }
             }
-
 
             int steps = xo.getIntegerAttribute(STEPS);
 

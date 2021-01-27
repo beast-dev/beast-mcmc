@@ -7,14 +7,9 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
-import dr.inference.distribution.ParametricMultivariateDistributionModel;
-
-import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.Parameter;
 import dr.inference.operators.shrinkage.BayesianBridgePriorSampler;
-import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 /**
@@ -25,12 +20,10 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
     public static final String INCREMENT_CLASSIFIER = "incrementClassifier";
     public static final String EPSILON = "epsilon";
     public static final String TARGET_PROBABILITY = "targetProbability";
-//    public static final String SAMPLE_PRIOR = "samplePrior";
 
     private AutoCorrelatedBranchRatesDistribution acbr; //autocorrelated branch rates
     private DifferentiableBranchRates branchRateModel;
     private double epsilon;
-    //    private double targetProb;
     private int dim;
     private Helper helper;
 
@@ -42,15 +35,6 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
         this.acbr = acbr;
         this.branchRateModel = acbr.getBranchRateModel();
         this.epsilon = epsilon;
-//        this.sd = sd; //only gets used if we are using targetProb
-
-//        if (epsilon != 0.0) {
-//            this.epsilon = epsilon;
-//        } else if (targetProb != 0.0) {
-//            this.targetProb = targetProb;
-//            this.epsilon = findEpsilonFromTargetProb(targetProb);
-//        }
-
         this.dim = acbr.getDimension();
         this.classified = new double[dim];
         classify();
@@ -125,35 +109,26 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
             AutoCorrelatedBranchRatesDistribution acbr = (AutoCorrelatedBranchRatesDistribution) xo.getChild(AutoCorrelatedBranchRatesDistribution.class);
-
-            if (xo.hasAttribute(EPSILON) && xo.hasAttribute(TARGET_PROBABILITY)) {
-                throw new XMLParseException("Cannot set both epsilon and target probability.");
-            }
-
-//            boolean samplePrior = xo.getAttribute(SAMPLE_PRIOR, false);
-
-//            double sd = 1.0; //todo: put magic number here.
-//            if (xo.hasAttribute(TARGET_PROBABILITY) && samplePrior){
-//                System.out.println("Using default Bayesian bridge prior with standard deviation " + sd + " to set epsilon.");
-//            }
 
             double epsilon = xo.getAttribute(EPSILON, 0.0);
             double targetProbability = xo.getAttribute(TARGET_PROBABILITY, 0.0);
-
-
-            BayesianBridgePriorSampler bayesianBridgePriorSampler;
-            if (targetProbability != 0.0) {
-                bayesianBridgePriorSampler = (BayesianBridgePriorSampler) xo.getChild(BayesianBridgePriorSampler.class);
-//                sd = bayesianBridgePriorSampler.getStandardDeviation();
-                epsilon = bayesianBridgePriorSampler.getEpsilon(targetProbability);
-            }
 
             if (epsilon < 0.0) {
                 throw new XMLParseException("epsilon must be positive.");
             } else if (targetProbability < 0.0) {
                 throw new XMLParseException("target probability must be positive.");
+            }
+
+            BayesianBridgePriorSampler bayesianBridgePriorSampler;
+            if (targetProbability != 0.0) {
+                bayesianBridgePriorSampler = (BayesianBridgePriorSampler) xo.getChild(BayesianBridgePriorSampler.class);
+                double steps = bayesianBridgePriorSampler.getSteps();
+                // ensure at least 50 samples from median, in general: 2*n / steps for n steps away
+                if (targetProbability < 100 / steps) {
+                    throw new XMLParseException("For BB prior with " + bayesianBridgePriorSampler.getSteps() + " steps, target Probability should be greater than " + 100.0 / steps);
+                }
+                epsilon = bayesianBridgePriorSampler.getEpsilon(targetProbability);
             }
 
             IncrementClassifier incrementClassifier = new IncrementClassifier(acbr, epsilon);

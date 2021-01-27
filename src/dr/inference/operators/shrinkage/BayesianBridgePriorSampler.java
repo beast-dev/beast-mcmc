@@ -15,10 +15,10 @@ import dr.xml.*;
  */
 
 public class BayesianBridgePriorSampler {
-    // todo: find magic number based on input exponent and slabwidth -- sample from global and local scale
-    //todo: it's okay for sampleGLobalScale and sampleLocalScale to return doubles, but they should also update the parameter themselves since
-    // sampling one  depends on sampling the other! i.e. need to gibbs sample back and forth.
-    // todo: make getSD function
+    // todo new plan: empirical cdf by sampling increments from prior
+    // todo remove code duplication by accessing relevant functions e.g. jointBayesianBridgeDistribution.getStandardDeviation (this will auto take care of slab/no slab) etc.
+    // todo remember to sample from global scale PRIOR
+    // inc ~ N(0,1) * sd
 
     public static final String BAYESIAN_BRIDGE_PRIOR_SAMPLER = "bayesianBridgePriorSampler";
     public static final String STEPS = "steps";

@@ -9,6 +9,7 @@ import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.operators.shrinkage.BayesianBridgePriorSampler;
 import dr.xml.*;
 
@@ -27,8 +28,6 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
     private int dim;
     private Helper helper;
 
-    private double sd;
-
     private double[] classified;
 
     public IncrementClassifier(AutoCorrelatedBranchRatesDistribution acbr, double epsilon) {
@@ -38,7 +37,7 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
         this.dim = acbr.getDimension();
         this.classified = new double[dim];
         classify();
-
+        System.out.println("EPSILON is " + epsilon);
         helper = new Helper();
         setupTraits();
     }
@@ -155,10 +154,6 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(AutoCorrelatedBranchRatesDistribution.class),
-//                new ElementRule(BayesianBridgePriorSampler.class, true),
-//                AttributeRule.newDoubleRule(EPSILON, true),
-//                AttributeRule.newDoubleRule(TARGET_PROBABILITY, true),
-//                AttributeRule.newBooleanRule(SAMPLE_PRIOR, true),
                 new XORRule(
                         AttributeRule.newDoubleRule(EPSILON, false),
                         new AndRule(
@@ -171,6 +166,18 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
 
     @Override
     public LogColumn[] getColumns() {
-        return new LogColumn[0];
+        LogColumn[] columns = new LogColumn[dim];
+        classify();
+        for (int i = 0; i < dim; i++) {
+            String colName = "incrementClass.";
+            int finalI = i;
+            columns[i] = new NumberColumn(colName + finalI) {
+                @Override
+                public double getDoubleValue() {
+                        return classified[finalI];
+                }
+            };
+        }
+        return columns;
     }
 }

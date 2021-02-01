@@ -534,6 +534,7 @@ public interface MassPreconditioner {
 
         private void setInitialMass() {
             double[] values = gradient.getParameter().getParameterValues();
+            double[] storedValues = values.clone();
             for (int i = 0; i < dim; i++) {
                 gradient.getParameter().setParameterValueQuietly(i, values[i] + MachineAccuracy.SQRT_SQRT_EPSILON);
             }
@@ -548,7 +549,9 @@ public interface MassPreconditioner {
 
             for (int i = 0; i < dim; i++) {
                 values[i] = Math.abs((gradientPlus[i] - gradientMinus[i]) / (2.0 * MachineAccuracy.SQRT_SQRT_EPSILON));
+                gradient.getParameter().setParameterValueQuietly(i, storedValues[i]);
             }
+            gradient.getParameter().fireParameterChangedEvent();
             fillZeros(values);
             inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);
         }

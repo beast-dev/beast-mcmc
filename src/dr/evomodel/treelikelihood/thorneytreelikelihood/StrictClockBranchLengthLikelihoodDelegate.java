@@ -5,20 +5,19 @@ import org.apache.commons.math.special.Gamma;
 import org.apache.commons.math.util.FastMath;
 
 public class StrictClockBranchLengthLikelihoodDelegate extends AbstractModel implements ThorneyBranchLengthLikelihoodDelegate {
-    private Parameter mutationRate;
+    private final Parameter rate;
     private final double scale;
 
-    public StrictClockBranchLengthLikelihoodDelegate(String name, Parameter mutationRate, double scale){
+    public StrictClockBranchLengthLikelihoodDelegate(String name, Parameter rate, double scale){
         super(name);
-        this.mutationRate = mutationRate;
+        this.rate = rate;
+        addVariable(rate);
         this.scale = scale;
-        addVariable(mutationRate);
-
     }
 
     @Override
     public double getLogLikelihood(double mutations, double time) {
-        return SaddlePointExpansion.logPoissonProbability(time*mutationRate.getValue(0)*scale, (int) Math.round(mutations));
+        return SaddlePointExpansion.logPoissonProbability(time*rate.getValue(0)*scale, (int) Math.round(mutations));
     }
 
     @Override
@@ -75,7 +74,7 @@ public class StrictClockBranchLengthLikelihoodDelegate extends AbstractModel imp
 
 // Grabbed some stuff from Commons Maths as it is not public
 // This code is under the Apache License 2.0
-
+//TODO move around
 final class SaddlePointExpansion {
     private static final double HALF_LOG_2_PI = 0.5D * FastMath.log(6.283185307179586D);
     private static final double[] EXACT_STIRLING_ERRORS = new double[]{0.0D, 0.15342640972002736D, 0.08106146679532726D, 0.05481412105191765D, 0.0413406959554093D, 0.03316287351993629D, 0.02767792568499834D, 0.023746163656297496D, 0.020790672103765093D, 0.018488450532673187D, 0.016644691189821193D, 0.015134973221917378D, 0.013876128823070748D, 0.012810465242920227D, 0.01189670994589177D, 0.011104559758206917D, 0.010411265261972096D, 0.009799416126158804D, 0.009255462182712733D, 0.008768700134139386D, 0.00833056343336287D, 0.00793411456431402D, 0.007573675487951841D, 0.007244554301320383D, 0.00694284010720953D, 0.006665247032707682D, 0.006408994188004207D, 0.006171712263039458D, 0.0059513701127588475D, 0.0057462165130101155D, 0.005554733551962801D};

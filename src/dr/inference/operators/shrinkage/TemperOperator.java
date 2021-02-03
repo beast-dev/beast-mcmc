@@ -16,7 +16,6 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
 
     public static final String TEMPER_OPERATOR = "temperOperator";
     public static final String TARGET_PARAMETER = "targetParameter";
-    public static final String NUM_STEPS = "numSteps";
     public static final String RATE = "rate";
 
     private final Parameter parameter;
@@ -118,9 +117,9 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
                 throw new XMLParseException("Target parameter cannot have more dimensions than the tempered parameter.");
             }
 
-            double rate = xo.getAttribute(RATE, 0);
+            double rate = xo.getAttribute(RATE, 0.0);
 
-            if (rate < 0) {
+            if (rate < 0.0) {
                 throw new XMLParseException("Rate cannot be negative");
             }
 

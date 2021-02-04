@@ -31,7 +31,7 @@ public class StrictClockBranchLengthLikelihoodParser extends AbstractXMLObjectPa
     }
 
     public Class getReturnType() {
-        return BranchLengthProvider.class;
+        return StrictClockBranchLengthLikelihoodDelegate.class;
     }
 
     public static final XMLSyntaxRule[] rules = {

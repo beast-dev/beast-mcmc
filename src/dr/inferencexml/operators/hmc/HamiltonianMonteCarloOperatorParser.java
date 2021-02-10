@@ -156,7 +156,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 0.8); // Stan default
         String instabilityHandlerCase = xo.getAttribute(INSTABILITY_HANDLER, "reject");
         HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
-        boolean guessInitialMass = xo.getAttribute(PRECONDITIONING_GUESS_INIT_MASS, true);
+        boolean guessInitialMass = xo.getAttribute(PRECONDITIONING_GUESS_INIT_MASS, false);
 
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,

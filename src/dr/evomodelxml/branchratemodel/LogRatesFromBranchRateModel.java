@@ -20,7 +20,7 @@ public class LogRatesFromBranchRateModel implements Loggable {
     private TreeModel tree;
     private int numBranches;
 
-    private LogRatesFromBranchRateModel(BranchRateModel model, TreeModel tree){
+    private LogRatesFromBranchRateModel(BranchRateModel model, TreeModel tree) {
         this.model = model;
         this.tree = tree;
         this.numBranches = tree.getNodeCount() - 1;
@@ -33,7 +33,7 @@ public class LogRatesFromBranchRateModel implements Loggable {
         NodeRef node;
         for (int i = 0; i < numBranches; i++) {
             node = tree.getNode(i);
-            logs[i] = new RateColumn(getName(i), i, node) ;
+            logs[i] = new RateColumn(getName(i), i, node);
 //                    model.getBranchRate(tree, node);
         }
         return logs;
@@ -47,6 +47,7 @@ public class LogRatesFromBranchRateModel implements Loggable {
     private class RateColumn extends NumberColumn {
         private final int dim;
         private final NodeRef node;
+
         public RateColumn(String label, int dim, NodeRef node) {
             super(label);
             this.dim = dim;
@@ -54,7 +55,8 @@ public class LogRatesFromBranchRateModel implements Loggable {
         }
 
         public double getDoubleValue() {
-            return model.getBranchRate(tree, node); }
+            return model.getBranchRate(tree, node);
+        }
     }
 
 
@@ -87,7 +89,6 @@ public class LogRatesFromBranchRateModel implements Loggable {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(BranchRateModel.class),
                 new ElementRule(TreeModel.class),
-
         };
 
         public String getParserDescription() {

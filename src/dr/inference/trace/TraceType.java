@@ -37,6 +37,7 @@ public enum TraceType {
     REAL("real", "R", Double.class),
     INTEGER("integer", "I", Integer.class),
     CATEGORICAL("categorical", "C", String.class),
+    TEMPORAL("temporal", "T", Double.class),
     BINARY("binary", "B", Integer.class);
 
     TraceType(String name, String brief, Class type) {

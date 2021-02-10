@@ -1,6 +1,7 @@
 
 package dr.evomodelxml.treelikelihood.thorneytreelikelihood;
 
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.BranchLengthProvider;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.ThorneyBranchLengthLikelihoodDelegate;
@@ -25,10 +26,10 @@ public class ThorneyTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-
+        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class); // can be null
         BranchLengthProvider branchLengthProvider = (BranchLengthProvider) xo.getChild(BranchLengthProvider.class);
         ThorneyBranchLengthLikelihoodDelegate thorneyBranchLengthLikelihoodDelegate = (ThorneyBranchLengthLikelihoodDelegate) xo.getChild(ThorneyBranchLengthLikelihoodDelegate.class);
-        return new ThorneyTreeLikelihood(TREE_LIKELIHOOD, treeModel,branchLengthProvider, thorneyBranchLengthLikelihoodDelegate);
+        return new ThorneyTreeLikelihood(TREE_LIKELIHOOD, treeModel,branchLengthProvider, thorneyBranchLengthLikelihoodDelegate, branchRateModel);
     }
 
     //************************************************************************

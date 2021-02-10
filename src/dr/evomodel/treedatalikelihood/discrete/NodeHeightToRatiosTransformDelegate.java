@@ -358,8 +358,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     private double getNodePartial(NodeRef node) {
-        final int nodeIndex = getRatiosIndex(node);
-        return (tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight()) / ratios.getParameterValue(nodeIndex);
+        return tree.getNodeHeight(tree.getParent(node)) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
     }
 
     private double getEpochGradientAddition(NodeRef node, NodeRef child, double[] ratiosGradientUnweightedLogDensity) {

@@ -104,7 +104,7 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SWAP_RATES, true),
             AttributeRule.newBooleanRule(SWAP_TRAITS, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
-            new ElementRule(DefaultTreeModel.class)
+            new ElementRule(TreeModel.class)
     };
 
 }

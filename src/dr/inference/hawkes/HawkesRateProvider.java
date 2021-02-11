@@ -41,6 +41,8 @@ public interface HawkesRateProvider {
 
     Parameter getParameter();
 
+    double[] orderByNodeIndex(double[] orderByTime);
+
     class None implements HawkesRateProvider {
 
         @Override
@@ -52,21 +54,44 @@ public interface HawkesRateProvider {
         public Parameter getParameter() {
             throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
         }
+
+        @Override
+        public double[] orderByNodeIndex(double[] orderByTime) {
+            throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
+        }
     }
 
     class Default extends AbstractModel implements HawkesRateProvider {
 
-        Parameter rate;
+        private Parameter rate;
+        private int[] indices;
+        private boolean[] onTree;
 
-        Default(Parameter rate) {
+        Default(Parameter rate,
+                int[] indices,
+                boolean[] onTree) {
             super("HawkesRateProvider$Default");
             this.rate = rate;
+            this.indices = indices;
+            this.onTree = onTree;
             addVariable(rate);
         }
 
         @Override
         public void setRandomRates(HawkesCore hawkesCore) {
-            hawkesCore.setRandomRates(rate.getParameterValues());
+            double[] orderedRates = new double[rate.getDimension()];
+            for (int i = 0; i < rate.getDimension(); i++) {
+                orderedRates[i] = rate.getParameterValue(indices[i]);
+            }
+            hawkesCore.setRandomRates(orderedRates);
+        }
+
+        public double[] orderByNodeIndex(double[] orderByTime) {
+            double[] nodeOrdered = new double[orderByTime.length];
+            for (int i = 0; i < orderByTime.length; i++) {
+                nodeOrdered[indices[i]] = orderByTime[i];
+            }
+            return nodeOrdered;
         }
 
         @Override

@@ -34,7 +34,9 @@ import dr.inference.model.*;
 import dr.util.HeapSort;
 import dr.xml.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
@@ -451,6 +453,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String THETA = "theta";
         final static String MU = "mu0";
         final static String RANDOM_RATES = "randomRates";
+        final static String ON_TREE = "onTree";
+        final static String NOT_ON_TREE = "notOnTree";
         final static String TOLERANCE = GRADIENT_CHECK_TOLERANCE;
         final static String JITTER = TreeTraitParserUtilities.JITTER;
 
@@ -506,12 +510,15 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             HawkesRateProvider rateProvider;
             if (xo.hasChildNamed(RANDOM_RATES)) {
                 XMLObject dxo = xo.getChild(RANDOM_RATES);
-                Parameter rates = (Parameter) dxo.getChild(Parameter.class);
+                Parameter onTreeRates = (Parameter) dxo.getChild(ON_TREE).getChild(Parameter.class);
+                Parameter notOnTreeRates = (Parameter) dxo.getChild(NOT_ON_TREE).getChild(Parameter.class);
+                Parameter rates = new CompoundParameter("HawkesRates", new Parameter[]{onTreeRates, notOnTreeRates});
                 Taxa taxaOnTree = (Taxa) dxo.getChild(Taxa.class);
                 TreeModel tree = (TreeModel) dxo.getChild(TreeModel.class);
                 boolean[] onTree = new boolean[rates.getDimension()];
                 int[] indices = new int[rates.getDimension()];
-                rateProvider = new HawkesRateProvider.Default(rates);
+                mapRandomRates(taxa, timeTraitName, taxaOnTree, tree, onTree, indices);
+                rateProvider = new HawkesRateProvider.Default(rates, indices, onTree);
             } else {
                 rateProvider = new HawkesRateProvider.None();
             }
@@ -523,23 +530,36 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         }
 
-        private void mapRandomRates(Taxa timeTaxa, String timeTraitName, Taxa taxaOnTree, Parameter rates, TreeModel tree, boolean[] onTree, int[] indices) {
+        private void mapRandomRates(Taxa timeTaxa, String timeTraitName, Taxa taxaOnTree, TreeModel tree, boolean[] onTree, int[] indices) {
             double[] times = new double[timeTaxa.getTaxonCount()];
-            double[] orderedTimes = new double[timeTaxa.getTaxonCount()];
             for (int i = 0; i < timeTaxa.getTaxonCount(); i++) {
                 times[i] = Double.valueOf((String) timeTaxa.getTaxon(i).getAttribute(timeTraitName));
             }
             int[] timeIndices = new int[times.length];
             HeapSort.sort(times, timeIndices);
 
+            Map<Taxon, Integer> onTreeParameterIndexMap = new HashMap<>();
+            int parameterIndex = 0;
+            for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                Taxon currentTip = tree.getTaxon(i);
+                if (taxaOnTree.contains(currentTip)) {
+                    onTreeParameterIndexMap.put(currentTip, parameterIndex);
+                    parameterIndex++;
+                }
+            }
+
+            int offTreeParameterIndex = taxaOnTree.getTaxonCount();
             for (int i = 0; i < timeTaxa.getTaxonCount(); i++) {
-                Taxon currentTaxon = timeTaxa.getTaxon(i);
+                Taxon currentTaxon = timeTaxa.getTaxon(timeIndices[i]);
                 if (taxaOnTree.contains(currentTaxon)) {
                     onTree[i] = true;
+                    indices[i] = onTreeParameterIndexMap.get(currentTaxon);
                 } else {
                     onTree[i] = false;
+                    indices[i] = offTreeParameterIndex;
+                    offTreeParameterIndex++;
                 }
-            },
+            }
         }
 
         private double[] parseTimes(Taxa taxa, String timeTraitName, MatrixParameterInterface locationsParameter, String locationName) {
@@ -607,7 +627,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 new ElementRule(MU, Parameter.class),
                 new ElementRule(RANDOM_RATES,
                         new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class, "The random rate parameter"),
+                                new ElementRule(ON_TREE, Parameter.class, "The random rates that are on the tree."),
+                                new ElementRule(NOT_ON_TREE, Parameter.class, "The random rates that are not on the tree."),
                                 new ElementRule(Taxa.class, "Taxa that contains taxons with known locations on the tree"),
                                 new ElementRule(TreeModel.class, "TreeModel that contains the trait parameter."),
                         }, true),

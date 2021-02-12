@@ -64,9 +64,12 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
 
         op.doOperation();
         System.out.println(constrainedTreeModel.toString());
-        thorneyTreeLikelihood.getLogLikelihood();
+        double LL = thorneyTreeLikelihood.getLogLikelihood();
+        thorneyTreeLikelihood.makeDirty();
+        double newLL = thorneyTreeLikelihood.getLogLikelihood();
         // NO error?
-        assertTrue(true);
+        assertEquals(newLL,LL,1E-13 );
+
     }
 /*
     public void testAfterPolytomyRootChange() throws TreeUtils.MissingTaxonException {

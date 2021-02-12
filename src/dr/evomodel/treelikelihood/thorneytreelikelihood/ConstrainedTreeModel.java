@@ -101,6 +101,9 @@ public class ConstrainedTreeModel extends TreeModel {
                 constraintsTreeMap.keySet()) {
             NodeRef constraintsTreeNode = constraintsTreeMap.get(clade);
             NodeRef treeModelNode = treeModelMap.get(clade);
+            if(treeModelNode==null){
+                throw new RuntimeException("All clades in the constraints tree must be present in the starting tree");
+            }
             constraintsNodeToTreeNode.put(constraintsTreeNode, treeModelNode);
         }
 

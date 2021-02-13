@@ -161,6 +161,22 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return ratios.getParameterValues();
     }
 
+    public double[] setMaskByHeightDifference(double threshold) {
+        double[] tooSmall = new double[ratios.getDimension()];
+        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                final double distance = tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
+                if (distance < threshold) {
+                    tooSmall[i - tree.getExternalNodeCount()] = 0.0;
+                } else {
+                    tooSmall[i - tree.getExternalNodeCount()] = 1.0;
+                }
+            }
+        }
+        return tooSmall;
+    }
+
     @Override
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
@@ -294,7 +310,17 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                logJacobian += Math.log(getNodePartial(node));
+                if (ratios.getParameterValue(i - tree.getExternalNodeCount()) == 0.0) {
+                    System.err.println("see here too");
+                }
+                final double singleContribution = Math.log(getNodePartial(node));
+                if (Math.abs(singleContribution) > 20) {
+                    System.err.println("here");
+                }
+                if (!Double.isFinite(singleContribution) || !Double.isFinite(logJacobian + singleContribution)) {
+                    System.err.println("why");
+                }
+                logJacobian += singleContribution;
             }
         }
         return -logJacobian;

@@ -824,6 +824,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         return 0;
     }
 
+    @Override
+    public double[] getMask() {
+        return mask;
+    }
+
     protected void handleInstability() {
         throw new RuntimeException("Numerical instability; need to handle"); // TODO
     }

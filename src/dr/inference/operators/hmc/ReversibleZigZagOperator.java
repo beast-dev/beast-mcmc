@@ -31,8 +31,7 @@ import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.ReadableVector;
-import dr.math.matrixAlgebra.WrappedVector;
+import dr.math.matrixAlgebra.*;
 import dr.util.TaskPool;
 import dr.util.Transform;
 import dr.xml.Reportable;
@@ -585,6 +584,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     @Override
     public int getNumBoundaryEvent() {
         return numBoundaryEvents;
+    }
+
+    @Override
+    public double[] getMask() {
+        return maskVector;
     }
 
     @Override

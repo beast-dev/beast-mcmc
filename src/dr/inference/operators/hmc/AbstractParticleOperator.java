@@ -390,10 +390,14 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         final double randomTimeWidth;
         final int preconditioningUpdateFrequency;
+        final int updateSampleCovFrequency;
+        final int updateSampleCovDelay;
 
-        public Options(double randomTimeWidth, int preconditioningUpdateFrequency) {
+        public Options(double randomTimeWidth, int preconditioningUpdateFrequency, int updateSampleCovFrequency, int updateSampleCovDelay) {
             this.randomTimeWidth = randomTimeWidth;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.updateSampleCovFrequency = updateSampleCovFrequency;
+            this.updateSampleCovDelay = updateSampleCovDelay;
         }
     }
 
@@ -475,12 +479,12 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     private final PrecisionMatrixVectorProductProvider productProvider;
     private final PrecisionColumnProvider columnProvider;
     protected final Parameter parameter;
-    private final Options runtimeOptions;
+    protected final Options runtimeOptions;
     protected boolean refreshVelocity;
     protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
     final double[] parameterSign;
-    private final double[] maskVector;
+    protected final double[] maskVector;
     int numEvents;
     int numBoundaryEvents;
     int numGradientEvents;

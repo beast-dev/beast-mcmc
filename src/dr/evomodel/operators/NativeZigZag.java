@@ -60,6 +60,9 @@ public class NativeZigZag {
                 (observed != null && dimension != observed.length)) {
             throw new RuntimeException("Invalid dimensions");
         }
+        if (mask == null){
+            mask = allOneMask(dimension);
+        }
 
         int result = create(dimension, options, mask, observed);
         if (result < 0) {
@@ -67,6 +70,14 @@ public class NativeZigZag {
         }
 
         return instanceNumber++;
+    }
+
+    private double[] allOneMask(int dimension) {
+        double[] mask = new double[dimension];
+        for (int i = 0; i < dimension; i++) {
+            mask[i] = 1;
+        }
+        return mask;
     }
 
     private native int create(int dimension,

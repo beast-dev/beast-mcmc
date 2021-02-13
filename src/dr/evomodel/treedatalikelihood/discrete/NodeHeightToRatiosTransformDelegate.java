@@ -310,17 +310,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                if (ratios.getParameterValue(i - tree.getExternalNodeCount()) == 0.0) {
-                    System.err.println("see here too");
-                }
-                final double singleContribution = Math.log(getNodePartial(node));
-                if (Math.abs(singleContribution) > 20) {
-                    System.err.println("here");
-                }
-                if (!Double.isFinite(singleContribution) || !Double.isFinite(logJacobian + singleContribution)) {
-                    System.err.println("why");
-                }
-                logJacobian += singleContribution;
+                logJacobian += Math.log(getNodePartial(node));
             }
         }
         return -logJacobian;

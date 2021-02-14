@@ -25,7 +25,10 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.inference.model.*;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inference.model.VariableListener;
+import dr.util.Transform;
 import dr.xml.*;
 
 /**
@@ -126,9 +129,9 @@ public class RatioMasker implements VariableListener {
             }
             double ratioThreshold = xo.getAttribute(RATIO_THRESHOLD, 0.0);
             double heightThreshold = xo.getAttribute(HEIGHT_THRESHOLD, 0.0);
-            NodeHeightTransform transform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
+            Transform.ComposeMultivariable transform = (Transform.ComposeMultivariable) xo.getChild(Transform.ComposeMultivariable.class);
 
-            return new RatioMasker(ratio, mask, transform, ratioThreshold, heightThreshold);
+            return new RatioMasker(ratio, mask, (NodeHeightTransform) transform.getInnerTransform(), ratioThreshold, heightThreshold);
         }
 
         public String getParserDescription() {
@@ -144,7 +147,7 @@ public class RatioMasker implements VariableListener {
                 new ElementRule(RATIO, Parameter.class),
                 AttributeRule.newDoubleRule(RATIO_THRESHOLD),
                 AttributeRule.newDoubleRule(HEIGHT_THRESHOLD),
-                new ElementRule(NodeHeightTransform.class)
+                new ElementRule(Transform.ComposeMultivariable.class)
         };
 
         public Class getReturnType() {

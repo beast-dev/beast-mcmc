@@ -65,6 +65,11 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
     }
 
     @Override
+    public double[] setMaskByRatio(double threshold) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
     double[] transform(double[] values) {
         setNodeHeights(values);
         skyrideLikelihood.setupCoalescentIntervals();

@@ -25,9 +25,8 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.inference.model.VariableListener;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.*;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -35,9 +34,9 @@ import dr.xml.*;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class RatioMasker implements VariableListener {
+public class RatioMasker implements ModelListener {
 
-    private final Parameter ratio;
+    private final TreeModel tree;
     private final Parameter mask;
     private final NodeHeightTransform nodeHeightTransform;
     private final double ratioSamllValueThreshold;
@@ -45,28 +44,33 @@ public class RatioMasker implements VariableListener {
     private boolean updatedByHeight;
     private boolean updatedByRatio;
 
-    public RatioMasker(Parameter ratio,
+    public RatioMasker(TreeModel tree,
                        Parameter mask,
                        NodeHeightTransform nodeHeightTransform,
                        double ratioSamllValueThreshold,
                        double heightDistanceThreshold) {
-        this.ratio = ratio;
+        this.tree = tree;
         this.mask = mask;
         this.nodeHeightTransform = nodeHeightTransform;
         this.ratioSamllValueThreshold = ratioSamllValueThreshold;
         this.heightDistanceThreshold = heightDistanceThreshold;
-        ratio.addParameterListener(this);
+        tree.addModelListener(this);
         dimensionCheck();
     }
 
     private void dimensionCheck() {
-        if (ratio.getDimension() != mask.getDimension()) {
+        if (nodeHeightTransform.getDimension() != mask.getDimension()) {
             throw new RuntimeException("Ratio and mask parameters should have same dimension.");
         }
     }
 
     @Override
-    public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+    public void modelChangedEvent(Model model, Object object, int index) {
+        updateMask();
+    }
+
+    @Override
+    public void modelRestored(Model model) {
         updateMask();
     }
 
@@ -90,14 +94,8 @@ public class RatioMasker implements VariableListener {
 
     private double[] updateMaskByRatio() {
         if (!updatedByRatio) {
-            double[] maskByRatio = new double[ratio.getDimension()];
-            for (int i = 0; i < ratio.getDimension(); i++) {
-                if (ratio.getParameterValue(i) > ratioSamllValueThreshold && ratio.getParameterValue(i) < 1.0 - ratioSamllValueThreshold) {
-                    maskByRatio[i] = 1.0;
-                }
-            }
             updatedByRatio = true;
-            return maskByRatio;
+            return nodeHeightTransform.getNodeHeightTransformDelegate().setMaskByRatio(ratioSamllValueThreshold);
         }
         return mask.getParameterValues();
     }
@@ -113,7 +111,6 @@ public class RatioMasker implements VariableListener {
         final static String RATIO_THRESHOLD = "ratioThreshold";
         final static String HEIGHT_THRESHOLD = "heightThreshold";
         final static String MASK = "mask";
-        final static String RATIO = "ratio";
 
         public String getParserName() {
             return RATIO_MASKER;
@@ -122,16 +119,16 @@ public class RatioMasker implements VariableListener {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter mask = (Parameter) xo.getChild(MASK).getChild(Parameter.class);
-            Parameter ratio = (Parameter) xo.getChild(RATIO).getChild(Parameter.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            if (mask.getDimension() == 1) {
-                mask.setDimension(ratio.getDimension());
-            }
             double ratioThreshold = xo.getAttribute(RATIO_THRESHOLD, 0.0);
             double heightThreshold = xo.getAttribute(HEIGHT_THRESHOLD, 0.0);
             Transform.ComposeMultivariable transform = (Transform.ComposeMultivariable) xo.getChild(Transform.ComposeMultivariable.class);
 
-            return new RatioMasker(ratio, mask, (NodeHeightTransform) transform.getInnerTransform(), ratioThreshold, heightThreshold);
+            if (mask.getDimension() == 1) {
+                mask.setDimension(transform.getDimension());
+            }
+            return new RatioMasker(treeModel, mask, (NodeHeightTransform) transform.getInnerTransform(), ratioThreshold, heightThreshold);
         }
 
         public String getParserDescription() {
@@ -144,7 +141,7 @@ public class RatioMasker implements VariableListener {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(MASK, Parameter.class),
-                new ElementRule(RATIO, Parameter.class),
+                new ElementRule(TreeModel.class),
                 AttributeRule.newDoubleRule(RATIO_THRESHOLD),
                 AttributeRule.newDoubleRule(HEIGHT_THRESHOLD),
                 new ElementRule(Transform.ComposeMultivariable.class)

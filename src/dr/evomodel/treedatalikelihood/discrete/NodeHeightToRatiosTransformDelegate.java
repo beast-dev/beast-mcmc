@@ -178,6 +178,17 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     @Override
+    public double[] setMaskByRatio(double threshold) {
+        double[] maskByRatio = new double[ratios.getDimension()];
+        for (int i = 0; i < ratios.getDimension(); i++) {
+            if (ratios.getParameterValue(i) > threshold && ratios.getParameterValue(i) < 1.0 - threshold) {
+                maskByRatio[i] = 1.0;
+            }
+        }
+        return maskByRatio;
+    }
+
+    @Override
     public void setNodeHeights(double[] nodeHeights) {
         super.setNodeHeights(nodeHeights);
         ratiosKnown = false;

@@ -125,7 +125,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         return "VanillaHMC(" + parameter.getParameterName() + ")";
     }
 
-    private static double[] buildMask(Parameter maskParameter) {
+    protected double[] buildMask(Parameter maskParameter) {
 
         if (maskParameter == null) return null;
 
@@ -681,13 +681,13 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         class WithTransform extends Default {
 
-            final private Transform transform;
+            final protected Transform transform;
             double[] unTransformedPosition;
 
-            private WithTransform(Parameter parameter, Transform transform,
-                                  InstabilityHandler instabilityHandler,
-                                  MassPreconditioner preconditioning,
-                                  double[] mask) {
+            WithTransform(Parameter parameter, Transform transform,
+                          InstabilityHandler instabilityHandler,
+                          MassPreconditioner preconditioning,
+                          double[] mask) {
                 super(parameter, instabilityHandler, preconditioning, mask);
                 this.transform = transform;
             }

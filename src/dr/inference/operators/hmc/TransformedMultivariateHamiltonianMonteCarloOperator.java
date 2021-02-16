@@ -38,7 +38,7 @@ import dr.xml.Reportable;
  */
 public class TransformedMultivariateHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
-    private final Parameter maskParameter;
+    private Parameter maskParameter;
 
     public TransformedMultivariateHamiltonianMonteCarloOperator(AdaptationMode mode,
                                                                 double weight,
@@ -51,13 +51,22 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
                                                                 MassPreconditionScheduler.Type preconditionSchedulerType) {
         super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner, preconditionSchedulerType);
 
-        this.maskParameter = maskParameter;
 
+
+    }
+
+    protected double[] buildMask(Parameter maskParameter) {
+        this.maskParameter = maskParameter;
+        double[] mask = new double[gradientProvider.getDimension()];
+        for (int i = 0; i < mask.length; i++) {
+            mask[i] = 1.0;
+        }
+        return mask;
     }
 
     @Override
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
-        return new MaskedMultivariateTransform(parameter, getDefaultInstabilityHandler(), preconditioning, maskParameter, (Transform.MultivariateTransform) transform);
+        return new MaskedMultivariateTransform(parameter, gradientProvider, getDefaultInstabilityHandler(), preconditioning, maskParameter, transform);
     }
 
     @Override
@@ -65,19 +74,18 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
         return null;
     }
 
-    class MaskedMultivariateTransform extends HamiltonianMonteCarloOperator.LeapFrogEngine.Default {
+    class MaskedMultivariateTransform extends HamiltonianMonteCarloOperator.LeapFrogEngine.WithTransform {
 
-        private final Transform.MultivariateTransform transform;
         private final Parameter mask;
 
 
         MaskedMultivariateTransform(Parameter parameter,
+                                    GradientWrtParameterProvider gradientProvider,
                                     InstabilityHandler instabilityHandler,
                                     MassPreconditioner preconditioning,
                                     Parameter mask,
-                                    Transform.MultivariateTransform transform) {
-            super(parameter, instabilityHandler, preconditioning, mask.getParameterValues());
-            this.transform = transform;
+                                    Transform transform) {
+            super(parameter, transform, instabilityHandler, preconditioning, new double[gradientProvider.getDimension()]);
             this.mask = mask;
             setMaskUntransformedSpace();
         }
@@ -85,6 +93,24 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
         private void setMaskUntransformedSpace() {
             for (int i = 0; i < super.mask.length; i++) {
                 super.mask[i] = 1.0;
+            }
+        }
+
+        @Override
+        public void updateMomentum(double[] position, double[] momentum, double[] gradient,
+                                   double functionalStepSize) throws NumericInstabilityException {
+
+            gradient = transform.updateGradientLogDensity(gradient, unTransformedPosition,
+                    0, unTransformedPosition.length);
+            mask(gradient);
+            super.updateMomentum(position, momentum, gradient, functionalStepSize);
+        }
+
+        private void mask(double[] array) {
+            assert(mask.getDimension() == array.length);
+
+            for (int i = 0; i < array.length; ++i) {
+                array[i] *= mask.getParameterValue(i);
             }
         }
     }

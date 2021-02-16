@@ -142,7 +142,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         if (xo.hasChildNamed(MASK)) {
             mask = (Parameter) xo.getElementFirstChild(MASK);
 
-            if (mask.getDimension() != derivative.getDimension()) {
+            dimensionMismatch = mask.getDimension() != derivative.getDimension();
+
+            if (transform instanceof Transform.MultivariableTransform) {
+                dimensionMismatch = ((Transform.MultivariableTransform) transform).getDimension() != mask.getDimension();
+            }
+
+            if (dimensionMismatch) {
                 throw new XMLParseException("Mask (" + mask.getDimension()
                         + ") must be the same dimension as the gradient (" + derivative.getDimension() + ")");
             }

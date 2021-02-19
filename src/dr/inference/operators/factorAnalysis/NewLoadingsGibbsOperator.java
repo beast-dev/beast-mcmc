@@ -73,6 +73,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final ColumnDimProvider columnDimProvider;
 
     private final double[][] observedIndicators;
+    private boolean statisticsOnly = false;
+
 
     public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
@@ -130,6 +132,24 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         } else {
             observedIndicators = null;
         }
+    }
+
+    public FactorAnalysisOperatorAdaptor getAdaptor() {
+        return adaptor;
+    }
+
+    public void setStatisticsOnly(boolean value) {
+        statisticsOnly = value;
+    }
+
+    public double[] getCurrentMean(int i) {
+        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
+        return meanArray.get(arrayInd);
+    }
+
+    public double[][] getCurrentPrecision(int i) {
+        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
+        return precisionArray.get(arrayInd);
     }
 
     public enum CacheProvider {
@@ -289,16 +309,19 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        if (!statisticsOnly) {
 
-        adaptor.setLoadingsForTraitQuietly(i, draw);
+            double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
-        if (DEBUG) {
-            System.err.println("draw: " + new Vector(draw));
+            adaptor.setLoadingsForTraitQuietly(i, draw);
+
+            if (DEBUG) {
+                System.err.println("draw: " + new Vector(draw));
+            }
         }
     }
 
-    private void drawI(int i) {
+    public void drawI(int i) {
         int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
         drawI(i, precisionArray.get(arrayInd), meanMidArray.get(arrayInd), meanArray.get(arrayInd));
     }

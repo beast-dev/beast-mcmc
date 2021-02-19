@@ -90,7 +90,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             }
         }
 
-        System.out.println("Exponent value: " + parameter.getValue(0));
+//        System.out.println("Exponent value: " + parameter.getValue(0));
         return 0;
     }
 

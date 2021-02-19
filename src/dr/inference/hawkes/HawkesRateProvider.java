@@ -139,7 +139,7 @@ public interface HawkesRateProvider {
 
         private Parameter coefficients;
         private TreeModel tree;
-        private double[] orderedTimes;
+        private double[] nodeTimes;
         private boolean timeEffect;
         private boolean intercept;
         private ContinuousBranchValueProvider branchValueProvider;
@@ -153,7 +153,7 @@ public interface HawkesRateProvider {
             this.tree = tree;
             this.timeEffect = timeEffect;
             this.intercept = intercept;
-            this.orderedTimes = orderedTimes;
+            this.nodeTimes = orderByNodeIndex(orderedTimes);
             this.branchValueProvider = new ContinuousBranchValueProvider.MidPoint();
 
             addVariable(coefficients);
@@ -175,7 +175,8 @@ public interface HawkesRateProvider {
 
         private double getTimeEffect(int nodeIndex) {
             if (timeEffect) {
-                return coefficients.getParameterValue(1) * (tree.getNodeHeight(tree.getRoot()) - orderedTimes[indices[nodeIndex]]);
+
+                return coefficients.getParameterValue(1) * nodeTimes[nodeIndex];
             } else {
                 return 0.0;
             }

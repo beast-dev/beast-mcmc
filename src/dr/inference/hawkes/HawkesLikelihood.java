@@ -457,6 +457,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         final static String NOT_ON_TREE = "notOnTree";
         final static String TOLERANCE = GRADIENT_CHECK_TOLERANCE;
         final static String JITTER = TreeTraitParserUtilities.JITTER;
+        final static String TIME_EFFECT = "timeEffect";
+        final static String GLM_COEFFICIENTS = "glmCoefficients";
+        final static String HAS_INTERCEPT = "hasIntercept";
 
         public String getParserName() {
             return HAWKES_LIKELIHOOD;
@@ -517,8 +520,19 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                 TreeModel tree = (TreeModel) dxo.getChild(TreeModel.class);
                 boolean[] onTree = new boolean[rates.getDimension()];
                 int[] indices = new int[rates.getDimension()];
-                mapRandomRates(taxa, timeTraitName, taxaOnTree, tree, onTree, indices);
-                rateProvider = new HawkesRateProvider.Default(rates, indices, onTree);
+                double mostRecentTipHeight = mapRandomRates(taxa, timeTraitName, taxaOnTree, tree, onTree, indices);
+                if (dxo.hasChildNamed(GLM_COEFFICIENTS)) {
+                    boolean hasIntercept = dxo.getAttribute(HAS_INTERCEPT, false);
+                    boolean timeEffect = dxo.getAttribute(TIME_EFFECT, false);
+                    Parameter coefficients = (Parameter) dxo.getChild(GLM_COEFFICIENTS).getChild(Parameter.class);
+                    double[] orderedHeights = new double[times.length];
+                    for (int i = 0; i < times.length; i++) {
+                        orderedHeights[i] = mostRecentTipHeight + times[i];
+                    }
+                    rateProvider = new HawkesRateProvider.GLM(rates, coefficients, tree, indices, orderedHeights, onTree, timeEffect, hasIntercept);
+                } else {
+                    rateProvider = new HawkesRateProvider.Default(rates, indices, onTree);
+                }
             } else {
                 rateProvider = new HawkesRateProvider.None();
             }
@@ -530,7 +544,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         }
 
-        private void mapRandomRates(Taxa timeTaxa, String timeTraitName, Taxa taxaOnTree, TreeModel tree, boolean[] onTree, int[] indices) {
+        private double mapRandomRates(Taxa timeTaxa, String timeTraitName, Taxa taxaOnTree, TreeModel tree, boolean[] onTree, int[] indices) {
             double[] times = new double[timeTaxa.getTaxonCount()];
             for (int i = 0; i < timeTaxa.getTaxonCount(); i++) {
                 times[i] = Double.valueOf((String) timeTaxa.getTaxon(i).getAttribute(timeTraitName));
@@ -540,10 +554,14 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
             Map<Taxon, Integer> onTreeParameterIndexMap = new HashMap<>();
             int parameterIndex = 0;
+            Double mostRecentTip = Double.POSITIVE_INFINITY;
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
                 Taxon currentTip = tree.getTaxon(i);
                 if (taxaOnTree.contains(currentTip)) {
                     onTreeParameterIndexMap.put(currentTip, parameterIndex);
+                    if (mostRecentTip > tree.getNodeHeight(tree.getNode(i))) {
+                        mostRecentTip = tree.getNodeHeight(tree.getNode(i));
+                    }
                     parameterIndex++;
                 }
             }
@@ -560,6 +578,7 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                     offTreeParameterIndex++;
                 }
             }
+            return mostRecentTip;
         }
 
         private double[] parseTimes(Taxa taxa, String timeTraitName, MatrixParameterInterface locationsParameter, String locationName) {
@@ -631,6 +650,9 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
                                 new ElementRule(NOT_ON_TREE, Parameter.class, "The random rates that are not on the tree."),
                                 new ElementRule(Taxa.class, "Taxa that contains taxons with known locations on the tree"),
                                 new ElementRule(TreeModel.class, "TreeModel that contains the trait parameter."),
+                                new ElementRule(GLM_COEFFICIENTS, Parameter.class, "GLM coefficient parameter.", true),
+                                AttributeRule.newStringRule(TIME_EFFECT, true),
+                                AttributeRule.newStringRule(HAS_INTERCEPT, true)
                         }, true),
                 AttributeRule.newDoubleRule(TOLERANCE, true),
                 TreeTraitParserUtilities.jitterRules(true),

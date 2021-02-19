@@ -25,6 +25,8 @@
 
 package dr.inference.hawkes;
 
+import dr.evomodel.branchratemodel.ContinuousBranchValueProvider;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -63,8 +65,8 @@ public interface HawkesRateProvider {
 
     class Default extends AbstractModel implements HawkesRateProvider {
 
-        private Parameter rate;
-        private int[] indices;
+        protected Parameter rate;
+        protected int[] indices;
         private boolean[] onTree;
 
         Default(Parameter rate,
@@ -79,11 +81,19 @@ public interface HawkesRateProvider {
 
         @Override
         public void setRandomRates(HawkesCore hawkesCore) {
-            double[] orderedRates = new double[rate.getDimension()];
-            for (int i = 0; i < rate.getDimension(); i++) {
-                orderedRates[i] = rate.getParameterValue(indices[i]);
+            hawkesCore.setRandomRates(orderByTime(getRatesByNodes()));
+        }
+
+        protected double[] getRatesByNodes() {
+            return rate.getParameterValues();
+        }
+
+        public double[] orderByTime(double[] orderByNodes) {
+            double[] timeOrdered = new double[orderByNodes.length];
+            for (int i = 0; i < orderByNodes.length; i++) {
+                timeOrdered[i] = orderByNodes[indices[i]];
             }
-            hawkesCore.setRandomRates(orderedRates);
+            return timeOrdered;
         }
 
         public double[] orderByNodeIndex(double[] orderByTime) {
@@ -122,6 +132,53 @@ public interface HawkesRateProvider {
         @Override
         protected void acceptState() {
 
+        }
+    }
+
+    class GLM extends Default {
+
+        private Parameter coefficients;
+        private TreeModel tree;
+        private double[] orderedTimes;
+        private boolean timeEffect;
+        private boolean intercept;
+        private ContinuousBranchValueProvider branchValueProvider;
+
+        GLM(Parameter rate, Parameter coefficients, TreeModel tree, int[] indices, double[] orderedTimes,
+            boolean[] onTree, boolean timeEffect, boolean intercept) {
+
+            super(rate, indices, onTree);
+
+            this.coefficients = coefficients;
+            this.tree = tree;
+            this.timeEffect = timeEffect;
+            this.intercept = intercept;
+            this.orderedTimes = orderedTimes;
+            this.branchValueProvider = new ContinuousBranchValueProvider.MidPoint();
+
+            addVariable(coefficients);
+        }
+
+        protected double[] getRatesByNodes() {
+            double[] residues = super.getRatesByNodes();
+            double[] rates = new double[rate.getDimension()];
+            for (int i = 0; i < rate.getDimension(); i++) {
+                rates[i] = getIntercept() + getTimeEffect(i) + residues[i];
+            }
+            return rates;
+        }
+
+        private double getIntercept() {
+            if (intercept) return coefficients.getParameterValue(0);
+            else return 0.0;
+        }
+
+        private double getTimeEffect(int nodeIndex) {
+            if (timeEffect) {
+                return coefficients.getParameterValue(1) * (tree.getNodeHeight(tree.getRoot()) - orderedTimes[indices[nodeIndex]]);
+            } else {
+                return 0.0;
+            }
         }
     }
 

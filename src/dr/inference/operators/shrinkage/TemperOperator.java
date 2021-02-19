@@ -21,7 +21,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
     private final Parameter parameter;
     private final Parameter target;
     private double rate;
-
+    private double currentCount;
     private double[] startValues;
 
     public TemperOperator(Parameter parameter,
@@ -34,7 +34,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
         this.rate = rate;
 
         startValues = parameter.getParameterValues();
-
+        currentCount = 0;
         setWeight(weight);
     }
 
@@ -56,7 +56,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
 //            startValues = parameter.getParameterValues();
 //        }
 
-        double currentCount = getCount() + 1;
+        currentCount = currentCount + 1;
 
         // seems unnecessary, could just input exp(-rate) directly as "rate" in XML if desired.
         double objective = currentCount * Math.exp(-rate);
@@ -90,7 +90,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             }
         }
 
-//        System.out.println("Exponent value: " + parameter.getValue(0));
+        System.out.println("Exponent value: " + parameter.getValue(0));
         return 0;
     }
 

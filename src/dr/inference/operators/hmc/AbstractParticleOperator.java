@@ -75,7 +75,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.meanVector = getMeanVector(gradientProvider);
 
         setWeight(weight);
-        this.missingDataMask = getMissingDataMask();
+        this.observedDataMask = getObservedDataMask();
         checkParameterBounds(parameter);
 
         long flags = 128;
@@ -87,7 +87,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
 
             nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), options,
-                    maskVector, getObservedDataMask());
+                    maskVector, getObservedDataMask(), parameterSign);
         }
     }
 
@@ -104,20 +104,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             sign[i] = startingValue[i] > 0 ? 1 : -1;
         }
         return sign;
-    }
-
-    private boolean[] getMissingDataMask() {
-
-        int dim = parameter.getDimension();
-        boolean[] missing = new boolean[dim];
-        assert (dim == parameter.getBounds().getBoundsDimension());
-
-        for (int i = 0; i < dim; ++i) {
-
-            missing[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
-                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY);
-        }
-        return missing;
     }
 
     private double[] getObservedDataMask() {
@@ -296,12 +282,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     }
 
     boolean headingTowardsBoundary(double velocity, int positionIndex) {
-
-        if (missingDataMask[positionIndex]) {
-            return false;
-        } else {
-            return parameterSign[positionIndex] * velocity < 0.0;
-        }
+        return observedDataMask[positionIndex] * parameterSign[positionIndex] * velocity < 0.0;
     }
 
     private WrappedVector getInitialPosition() {
@@ -490,7 +471,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     int numGradientEvents;
     protected WrappedVector storedVelocity;
     Preconditioning preconditioning;
-    final private boolean[] missingDataMask;
+    final private double[] observedDataMask;
     private final double[] meanVector;
 
     final static boolean TIMING = true;

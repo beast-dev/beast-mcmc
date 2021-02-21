@@ -143,6 +143,7 @@ public interface HawkesRateProvider {
         private boolean timeEffect;
         private boolean intercept;
         private ContinuousBranchValueProvider branchValueProvider;
+        private final Options options;
 
         GLM(Parameter rate, Parameter coefficients, TreeModel tree, int[] indices, double[] orderedTimes,
             boolean[] onTree, boolean timeEffect, boolean intercept) {
@@ -155,6 +156,7 @@ public interface HawkesRateProvider {
             this.intercept = intercept;
             this.nodeTimes = orderByNodeIndex(orderedTimes);
             this.branchValueProvider = new ContinuousBranchValueProvider.MidPoint();
+            this.options = new Options(intercept, timeEffect);
 
             addVariable(coefficients);
         }
@@ -169,17 +171,47 @@ public interface HawkesRateProvider {
         }
 
         private double getIntercept() {
-            if (intercept) return coefficients.getParameterValue(0);
+            if (intercept) return coefficients.getParameterValue(options.getInterceptIndex());
             else return 0.0;
         }
 
         private double getTimeEffect(int nodeIndex) {
             if (timeEffect) {
 
-                return coefficients.getParameterValue(1) * nodeTimes[nodeIndex];
+                return coefficients.getParameterValue(options.getTimeEffectIndex()) * nodeTimes[nodeIndex];
             } else {
                 return 0.0;
             }
+        }
+
+        private class Options {
+
+            private final int interceptIndex;
+            private final int timeEffectIndex;
+
+            Options (boolean hasIntercept, boolean hasTimeEffect) {
+                if (hasTimeEffect) {
+                    if (hasIntercept) timeEffectIndex = 1;
+                    else timeEffectIndex = 0;
+                } else {
+                    timeEffectIndex = -1;
+                }
+
+                if (hasIntercept) {
+                    interceptIndex = 0;
+                } else {
+                    interceptIndex = -1;
+                }
+            }
+
+            int getTimeEffectIndex() {
+                return timeEffectIndex;
+            }
+
+            int getInterceptIndex() {
+                return interceptIndex;
+            }
+
         }
     }
 

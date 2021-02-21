@@ -658,7 +658,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeCloseTag(continuousDataLikelihoodParser.getParserTag());
 
-        if (traitDimension > 1) {
+        if (traitDimension > 1 && partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
             writer.writeOpenTag("compoundParameter",
                     new Attribute.Default<String>("id", partitionData.getName() + "." + ContinuousComponentOptions.DRIFT_RATE));
             for (int i = 0; i < traitDimension; i++) { // todo iterate over dimension of trait

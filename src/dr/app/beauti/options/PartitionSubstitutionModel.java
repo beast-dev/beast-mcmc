@@ -86,6 +86,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
     private Microsatellite microsatellite = null;
     private boolean isLatitudeLongitude = false;
+    private boolean isIndependent = false;
     private double jitterWindow = 0.0;
 
     public TraitData getTraitData() {
@@ -1049,6 +1050,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return isLatitudeLongitude;
     }
 
+    public void setIsIndependent(boolean isIndependent) {
+        this.isIndependent = isIndependent;
+    }
+
+    public boolean isIndependent() {
+        return isIndependent;
+    }
+
     public void setJitterWindow(double jitterWindow) {
         this.jitterWindow = jitterWindow;
     }
@@ -1059,6 +1068,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public int getContinuousTraitCount() {
         return continuousTraitCount;
+    }
+
+    public int getContinuousTraitDimension() {
+        if (isIndependent) {
+            return 1;
+        }
+
+        return getContinuousTraitCount();
     }
 
     public int getExtendedTraitCount() {

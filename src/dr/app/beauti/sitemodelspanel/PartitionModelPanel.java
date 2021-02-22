@@ -115,6 +115,9 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox latLongCheck = new JCheckBox(
             "Bivariate trait represents latitude and longitude");
 
+    private JCheckBox treatIndependentCheck = new JCheckBox(
+            "Each site is independent");
+
     private JCheckBox useLambdaCheck = new JCheckBox(
             "Estimate phylogenetic signal using tree transform");
 
@@ -353,6 +356,18 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
+        PanelUtils.setupComponent(treatIndependentCheck);
+        treatIndependentCheck
+                .setToolTipText("<html>Specify whether the traits should be treated as independent.");
+
+        treatIndependentCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setIsIndependent(treatIndependentCheck.isSelected());
+            }
+        });
+        treatIndependentCheck.setEnabled(true);
+
+
         PanelUtils.setupComponent(latLongCheck);
         latLongCheck
                 .setToolTipText("<html>Specify whether this is a geographical trait representing <br>"
@@ -574,6 +589,10 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 latLongCheck.setSelected(model.isLatitudeLongitude());
                 latLongCheck.setEnabled(model.getContinuousTraitCount() == 2);
+
+                treatIndependentCheck.setSelected(model.isIndependent());
+                treatIndependentCheck.setEnabled(model.getContinuousTraitCount() > 1);
+
                 useLambdaCheck.setSelected(component.useLambda(model));
                 break;
             case DataType.MICRO_SAT:
@@ -750,6 +769,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
                 addComponent(latLongCheck);
+                addComponent(treatIndependentCheck);
                 addSeparator();
                 addComponent(addJitterCheck);
                 OptionsPanel panel = new OptionsPanel();

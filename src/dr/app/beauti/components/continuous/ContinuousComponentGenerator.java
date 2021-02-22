@@ -167,7 +167,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             String wishartId = model.getName() + ".precisionPrior";
 
-            writeMultivariateWishartPrior(writer, wishartId, precisionMatrixId, model.getContinuousTraitCount());
+            writeMultivariateWishartPrior(writer, wishartId, precisionMatrixId, model.getContinuousTraitDimension());
         }
     }
 
@@ -186,9 +186,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", precisionMatrixId)
                 });
 
-        for (int i = 0; i < model.getContinuousTraitCount(); i++) {
+        for (int i = 0; i < model.getContinuousTraitDimension(); i++) {
             StringBuilder sb = new StringBuilder();
-            for (int j = 0; j < model.getContinuousTraitCount(); j++) {
+            for (int j = 0; j < model.getContinuousTraitDimension(); j++) {
                 if (j > 0) {
                     sb.append(" ");
                 }
@@ -631,7 +631,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("meanParameter");
         StringBuilder sb = new StringBuilder();
-        for (int j = 0; j < partitionData.getTraits().size(); j++) {
+        for (int j = 0; j < partitionData.getPartitionSubstitutionModel().getContinuousTraitDimension(); j++) {
             if (j > 0) {
                 sb.append(" ");
             }

@@ -10,6 +10,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.PoissonDistribution;
 import junit.framework.TestCase;
 
@@ -60,7 +61,7 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
     public void testAfterTopologyChange(){
 
         ExchangeOperator narrow = new ExchangeOperator(0, null, 10);
-        ConstrainedTreeOperator op = new ConstrainedTreeOperator(constrainedTreeModel,10,narrow);
+        ConstrainedTreeOperator op = new ConstrainedTreeOperator(constrainedTreeModel,10,narrow,1.0,1, AdaptationMode.ADAPTATION_OFF,0.2);
 
         op.doOperation();
         System.out.println(constrainedTreeModel.toString());

@@ -30,6 +30,7 @@ import dr.evomodel.operators.RandomWalkNodeHeightOperator;
 import dr.evomodel.operators.ScaleNodeHeightOperator;
 import dr.evomodel.operators.UniformNodeHeightOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.thorneytreelikelihood.MultiMoveUniformNodeHeightOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
@@ -44,7 +45,8 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
         UNIFORM("uniform"),
         RANDOMWALK("random walk"),
         SCALEROOT("scale root"),
-        SCALEALL("scale all internal");
+        SCALEALL("scale all internal"),
+        MULTIMOVEUNIFORM("multiMoveUniform");
 
         OperatorType(String name) {
             this.name = name;
@@ -62,6 +64,7 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SIZE = "size";
     public static final String SCALE_FACTOR = "scaleFactor";
+    public static final String MEAN_COUNT = "meanCount";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
     public static final String OPERATOR_TYPE = "type";
 
@@ -100,6 +103,12 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
                     throw new XMLParseException("The UniformNodeHeightOperator scaleFactor attribute must be between 0 and 1.");
                 }
             }
+            if (xo.hasAttribute(MEAN_COUNT)) {
+                tuningParameter = xo.getDoubleAttribute(MEAN_COUNT);
+                if (tuningParameter <= 0.0) {
+                    throw new XMLParseException("The UniformNodeHeightOperator nonshifted mean attribute must be positive and non-zero.");
+                }
+            }
 
             final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
@@ -113,6 +122,8 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
                 case SCALEROOT:
                 case SCALEALL:
                     return new ScaleNodeHeightOperator(treeModel, weight, tuningParameter, operatorType, mode, targetAcceptance);
+                case MULTIMOVEUNIFORM:
+                    return new MultiMoveUniformNodeHeightOperator(treeModel, weight, tuningParameter,mode,targetAcceptance);
                 default:
                     throw new IllegalArgumentException("Unknown operator type");
             }

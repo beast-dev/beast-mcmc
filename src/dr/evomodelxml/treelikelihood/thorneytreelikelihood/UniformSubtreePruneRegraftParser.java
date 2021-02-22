@@ -1,5 +1,6 @@
 package dr.evomodelxml.treelikelihood.thorneytreelikelihood;
 
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeModel;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.ConstrainedTreeOperator;
@@ -18,7 +19,7 @@ public class UniformSubtreePruneRegraftParser extends AbstractXMLObjectParser {
 
        UniformSubtreePruneRegraft op = new UniformSubtreePruneRegraft(tree,weight);
        if(tree instanceof ConstrainedTreeModel){
-           return new ConstrainedTreeOperator((ConstrainedTreeModel) tree, weight, op);
+           return ConstrainedTreeOperator.parse((ConstrainedTreeModel) tree, weight, op,xo);
        }else{
            return op;
        }
@@ -36,7 +37,7 @@ public class UniformSubtreePruneRegraftParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return UniformSubtreePruneRegraft.class;
+        return AbstractTreeOperator.class;
     }
 
     @Override

@@ -1,8 +1,8 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.substmodel.DifferentialMassProvider;
-import dr.evomodel.tree.TreeParameterModel;
 
 import java.util.List;
 
@@ -11,52 +11,18 @@ import java.util.List;
  */
 class BranchDifferentialMassProvider {
 
-    private IndexHelper indexHelper;
+    private DifferentiableBranchRates indexHelper;
     private List<DifferentialMassProvider> differentialMassProviderList;
 
-    BranchDifferentialMassProvider(TreeParameterModel indexHelper,
+    BranchDifferentialMassProvider(DifferentiableBranchRates indexHelper,
                                    List<DifferentialMassProvider> differentialMassProviderList) {
 
-        this.indexHelper = factory(indexHelper);
+        this.indexHelper = indexHelper;
         this.differentialMassProviderList = differentialMassProviderList;
-
     }
 
     double[] getDifferentialMassMatrixForBranch(NodeRef node, double time) {
-        return differentialMassProviderList.get(indexHelper.getParameterIndexFromNodeNumber(node.getNumber())).getDifferentialMassMatrix(time);
-    }
-
-    private IndexHelper factory(TreeParameterModel indexHelper) {
-        if (indexHelper == null) {
-            return new IndexHelper.HomogeneousIndexHelper();
-        } else {
-            return new IndexHelper.TreeParameterIndexHelper(indexHelper);
-        }
-    }
-
-    private interface IndexHelper {
-        int getParameterIndexFromNodeNumber(int nodeNumber);
-
-        class TreeParameterIndexHelper implements IndexHelper {
-
-            private TreeParameterModel helper;
-
-            TreeParameterIndexHelper(TreeParameterModel helper) {
-                this.helper = helper;
-            }
-
-            @Override
-            public int getParameterIndexFromNodeNumber(int nodeNumber) {
-                return helper.getParameterIndexFromNodeNumber(nodeNumber);
-            }
-        }
-
-        class HomogeneousIndexHelper implements IndexHelper {
-
-            @Override
-            public int getParameterIndexFromNodeNumber(int nodeNumber) {
-                return 0;
-            }
-        }
+        int index = indexHelper == null ? 0 : indexHelper.getParameterIndexFromNode(node);
+        return differentialMassProviderList.get(index).getDifferentialMassMatrix(time);
     }
 }

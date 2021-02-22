@@ -28,15 +28,16 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.substmodel.GLMSubstitutionModel;
+import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
-import dr.inference.glm.GeneralizedLinearModel;
+import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.util.Author;
@@ -44,6 +45,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,31 +54,34 @@ import java.util.List;
  */
 public class GlmSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable, Loggable, Citable {
 
-    private final TreeDataLikelihood treeDataLikelihood;
-    private final TreeTrait treeTraitProvider;
-    private final Tree tree;
+    protected final TreeDataLikelihood treeDataLikelihood;
+    protected final TreeTrait treeTraitProvider;
+    protected final Tree tree;
 
-    private final GeneralizedLinearModel glm;
-    private final Parameter allCoefficients;
-
+    protected final OldGLMSubstitutionModel substitutionModel;
+    protected final GeneralizedLinearModel glm;
+    private final ParameterMap parameterMap;
+    protected final int stateCount;
 
     public GlmSubstitutionModelGradient(String traitName,
                                         TreeDataLikelihood treeDataLikelihood,
                                         BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                        GLMSubstitutionModel substitutionModel) {
+                                        OldGLMSubstitutionModel substitutionModel) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
+        this.substitutionModel = substitutionModel;
         this.glm = substitutionModel.getGeneralizedLinearModel();
-        this.allCoefficients = glm.getDependentVariable();
+        this.parameterMap = makeParameterMap(glm);
+        this.stateCount = substitutionModel.getDataType().getStateCount();
 
         String name = SubstitutionModelCrossProductDelegate.getName(traitName);
-        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
 
-        if (test == null) {
+        if (treeDataLikelihood.getTreeTrait(name) == null) {
             ProcessSimulationDelegate gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
                     treeDataLikelihood.getTree(),
                     likelihoodDelegate,
+                    treeDataLikelihood.getBranchRateModel(),
                     substitutionModel.getDataType().getStateCount());
             TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
             treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
@@ -86,6 +91,42 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         assert (treeTraitProvider != null);
     }
 
+    ParameterMap makeParameterMap(GeneralizedLinearModel glm) {
+
+        final List<Integer> whichBlock = new ArrayList<>();
+        final List<Integer> whichIndex = new ArrayList<>();
+
+        CompoundParameter cp = new CompoundParameter("fixedEffects");
+        boolean multi = glm.getNumberOfFixedEffects() > 1;
+
+        for (int i = 0; i < glm.getNumberOfFixedEffects(); ++i) {
+            Parameter p = glm.getFixedEffect(i);
+            if (multi) {
+                cp.addParameter(p);
+            }
+            for (int j = 0; j < p.getDimension(); ++j) {
+                whichBlock.add(i);
+                whichIndex.add(j);
+            }
+
+            if (glm.getFixedEffectIndicator(i) != null) {
+                throw new IllegalArgumentException("GLM fixed effects gradients do not currently work with indicator variables");
+            }
+        }
+
+        final Parameter whichParameter = multi ? cp : glm.getFixedEffect(0);
+        return new ParameterMap() {
+
+            @Override
+            public double[] getCovariateColumn(int i) {
+                return glm.getDesignMatrix(whichBlock.get(i)).getColumnValues(whichIndex.get(i));
+            }
+
+            @Override
+            public Parameter getParameter() { return whichParameter; }
+        };
+    }
+
     @Override
     public Likelihood getLikelihood() {
         return treeDataLikelihood;
@@ -93,7 +134,7 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
 
     @Override
     public Parameter getParameter() {
-        return allCoefficients;
+        return parameterMap.getParameter();
     }
 
     @Override
@@ -110,7 +151,20 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
         }
 
         double[] differentials = (double[]) treeTraitProvider.getTrait(tree, null);
+        double[] generator = new double[differentials.length];
 
+        substitutionModel.getInfinitesimalMatrix(generator);
+        double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+
+        double normalizationConstant = preProcessNormalization(differentials, generator,
+                substitutionModel.getNormalization());
+
+        final double[] gradient = new double[getParameter().getDimension()];
+        for (int i = 0; i < getParameter().getDimension(); ++i) {
+            gradient[i] = processSingleGradientDimension(i, differentials, generator, pi,
+                    substitutionModel.getNormalization(),
+                    normalizationConstant);
+        }
 
         if (COUNT_TOTAL_OPERATIONS) {
             ++gradientCount;
@@ -118,9 +172,70 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
             totalGradientTime += (endTime - startTime) / 1000000;
         }
 
-        return differentials;
+        return gradient;
     }
 
+    double preProcessNormalization(double[] differentials, double[] generator,
+                                   boolean normalize) {
+        return 0.0;
+    }
+
+    double processSingleGradientDimension(int i,
+                                          double[] differentials, double[] generator, double[] pi,
+                                          boolean normalize, double normalizationConstant) {
+
+        double[] covariate = parameterMap.getCovariateColumn(i);
+        return calculateCovariateDifferential(generator, differentials, covariate, pi, normalize);
+    }
+
+    private double calculateCovariateDifferential(double[] generator, double[] differential,
+                                                  double[] covariate, double[] pi,
+                                                  boolean doNormalization) {
+
+        double normalization = 0.0;
+        double total = 0.0;
+
+        int k = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = i + 1; j < stateCount; ++j) {
+
+                double xij = covariate[k++];
+                double element = xij * generator[index(i,j)];
+
+                total += differential[index(i,j)] * element;
+                total -= differential[index(i,i)] * element;
+
+                normalization += element * pi[i];
+            }
+        }
+
+        for (int j = 0; j < stateCount; ++j) {
+            for (int i = j + 1; i < stateCount; ++i) {
+
+                double xij = covariate[k++];
+                double element = xij * generator[index(i,j)];
+
+                total += differential[index(i,j)] * element;
+                total -= differential[index(i,i)] * element;
+
+                normalization += element * pi[i];
+            }
+        }
+
+        if (doNormalization) {
+            for (int i = 0; i < stateCount; ++i) {
+                for (int j = 0; j < stateCount; ++j) {
+                    total -= differential[index(i,j)] * generator[index(i,j)] * normalization;
+                }
+            }
+        }
+
+        return total;
+    }
+
+    int index(int i, int j) {
+        return i * stateCount + j;
+    }
 
     @Override
     public String getReport() {
@@ -175,4 +290,9 @@ public class GlmSubstitutionModelGradient implements GradientWrtParameterProvide
             "Phylogeographic GLM random effects",
             "",
             Citation.Status.IN_PREPARATION);
+
+    interface ParameterMap {
+        double[] getCovariateColumn(int i);
+        Parameter getParameter();
+    }
 }

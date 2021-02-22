@@ -454,6 +454,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     static final boolean CPP_NEXT_BOUNCE = false;
-    private static final boolean NEW_WAY = true;
+    private static final boolean NEW_WAY = false;
     private static final boolean NOT_YET_IMPLEMENTED = false;
 }

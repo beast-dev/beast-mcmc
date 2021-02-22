@@ -28,9 +28,15 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GLMSubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
+
+import java.util.Arrays;
+
+import static dr.evomodel.treedatalikelihood.discrete.DiscreteTraitBranchRateDelegate.scaleInfinitesimalMatrixByRates;
 
 /**
  * @author Marc A. Suchard
@@ -38,6 +44,8 @@ import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradientDelegate {
 
     private final String name;
+    private final Tree tree;
+    private final BranchRateModel branchRateModel;
     private final int stateCount;
 
     private static final String GRADIENT_TRAIT_NAME = "substitutionModelCrossProductGradient";
@@ -45,11 +53,32 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
     public SubstitutionModelCrossProductDelegate(String name,
                                                  Tree tree,
                                                  BeagleDataLikelihoodDelegate likelihoodDelegate,
+                                                 BranchRateModel branchRateModel,
                                                  int stateCount) {
 
         super(name, tree, likelihoodDelegate);
         this.name = name;
+        this.tree = tree;
         this.stateCount = stateCount;
+        this.branchRateModel = branchRateModel;
+    }
+
+    private double getBranchLength(NodeRef node) {
+
+        final double branchRate;
+        synchronized (branchRateModel) {
+            branchRate = branchRateModel.getBranchRate(tree, node);
+        }
+
+        double parentHeight = tree.getNodeHeight(tree.getParent(node));
+        double nodeHeight = tree.getNodeHeight(node);
+
+        return branchRate * (parentHeight - nodeHeight);
+    }
+
+    @Override
+    protected int getGradientLength() {
+        return stateCount * stateCount;
     }
 
     @Override
@@ -60,20 +89,27 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
+        final double[] branchLengths = new double[tree.getNodeCount() - 1];
 
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            NodeRef node = tree.getNode(nodeNum);
             if (!tree.isRoot(tree.getNode(nodeNum))) {
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
+                branchLengths[u] = getBranchLength(node);
                 u++;
             }
         }
 
+        Arrays.fill(first, 0, first.length, 0.0);
         double[] firstSquared = (second != null) ? new double[second.length] : null;
 
         beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
-                new int[] { 0 }, tree.getNodeCount() - 1, first, firstSquared);
+                new int[] { 0 }, new int[] { 0 },
+                branchLengths,
+                tree.getNodeCount() - 1,
+                first, firstSquared);
 
         if (second != null) {
 //            beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
@@ -100,7 +136,7 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
 //    }
 
     public static String getName(String name) {
-        return GRADIENT_TRAIT_NAME + ":" + name;
+        return GRADIENT_TRAIT_NAME + "." + name;
     }
 
     @Override

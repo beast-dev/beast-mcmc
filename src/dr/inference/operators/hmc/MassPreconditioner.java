@@ -5,14 +5,16 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
-import dr.inference.distribution.shrinkage.JointBayesianBridgeDistributionModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.math.*;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.*;
+import dr.math.matrixAlgebra.ReadableVector;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
+import dr.math.matrixAlgebra.WrappedMatrix;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
 
 import java.util.ArrayList;
@@ -425,7 +427,8 @@ public interface MassPreconditioner {
             double diagonal[] = new double[(priorDistribution.getDimension())];
 
             for (int i = 0; i < priorDistribution.getDimension(); i++){
-                diagonal[i] = Math.pow(priorDistribution.getStandardDeviation(i), 2);
+                double stDev = priorDistribution.getStandardDeviation(i);
+                diagonal[i] = stDev * stDev;
             }
             return diagonal;
         }
@@ -436,7 +439,7 @@ public interface MassPreconditioner {
         }
     }
 
-        class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
+    class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
 
         final protected HessianWrtParameterProvider hessian;
 
@@ -517,15 +520,11 @@ public interface MassPreconditioner {
             this.variance = new AdaptableVector.AdaptableVariance(dim);
             this.minimumUpdates = preconditioningDelay;
             this.gradient = gradient;
-            setInitialMass();
-        }
-
-        @Override
-        protected void initializeMass() {
         }
 
         private void setInitialMass() {
             double[] values = gradient.getParameter().getParameterValues();
+            double[] storedValues = values.clone();
             for (int i = 0; i < dim; i++) {
                 gradient.getParameter().setParameterValueQuietly(i, values[i] + MachineAccuracy.SQRT_SQRT_EPSILON);
             }
@@ -546,7 +545,9 @@ public interface MassPreconditioner {
 
             for (int i = 0; i < dim; i++) {
                 values[i] = Math.abs((gradientPlus[i] - gradientMinus[i]) / (2.0 * MachineAccuracy.SQRT_SQRT_EPSILON));
+                gradient.getParameter().setParameterValueQuietly(i, storedValues[i]);
             }
+            gradient.getParameter().fireParameterChangedEvent();
             inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);
         }
 
@@ -555,8 +556,9 @@ public interface MassPreconditioner {
 
             if (variance.getUpdateCount() > minimumUpdates) {
                 double[] newVariance = variance.getVariance();
-                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
-                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+//                adaptiveDiagonal.update(new WrappedVector.Raw(newVariance));
+//                return normalizeVector(adaptiveDiagonal.getMean(), dim);
+                return normalizeVector(new WrappedVector.Raw(newVariance), dim);
             } else {
                 return inverseMass;
             }

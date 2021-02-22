@@ -35,10 +35,10 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
  */
 public class DifferentiableSubstitutionModelUtil {
 
-    public static double[] getDifferentialMassMatrix(double time,
-                                                     int stateCount,
-                                                     WrappedMatrix differentialMassMatrix,
-                                                     EigenDecomposition eigenDecomposition) {
+    static double[] getDifferentialMassMatrix(double time,
+                                              int stateCount,
+                                              WrappedMatrix differentialMassMatrix,
+                                              EigenDecomposition eigenDecomposition) {
 
         double[] eigenValues = eigenDecomposition.getEigenValues();
         WrappedMatrix eigenVectors = new WrappedMatrix.Raw(eigenDecomposition.getEigenVectors(), 0, stateCount, stateCount);
@@ -68,7 +68,7 @@ public class DifferentiableSubstitutionModelUtil {
 
     }
 
-    public static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
+    private static void getTripleMatrixMultiplication(int stateCount, ReadableMatrix leftMatrix,
                                                       WrappedMatrix middleMatrix, ReadableMatrix rightMatrix) {
 
         double[][] tmpMatrix = new double[stateCount][stateCount];
@@ -125,7 +125,66 @@ public class DifferentiableSubstitutionModelUtil {
             }
         }
 
-        return new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+        WrappedMatrix differential = new WrappedMatrix.ArrayOfArray(differentialMassMatrix);
+
+        if (CHECK_COMMUTABILITY) {
+            checkCommutability(differential, new WrappedMatrix.Raw(Q, 0, stateCount, stateCount));
+        }
+
+        return differential;
+    }
+
+    private static final boolean CHECK_COMMUTABILITY = true;
+    private static final double COMMUTABILITY_CHECK_THRESHOLD = 0.01;
+
+    public static boolean checkCommutability(WrappedMatrix x, WrappedMatrix y) {
+
+        WrappedMatrix xy = product(x, y);
+        WrappedMatrix yx = product(y, x);
+
+        System.err.println(xy);
+        System.err.println(yx);
+        System.err.println();
+
+        boolean isCommutable = true;
+        for (int i = 0; i < xy.getDim(); i++) {
+            if (Math.abs(2.0 * (xy.get(i) - yx.get(i)) /  (xy.get(i) + yx.get(i)))> COMMUTABILITY_CHECK_THRESHOLD) {
+                isCommutable = false;
+            }
+        }
+
+        if (isCommutable) {
+            System.err.println("Generator and its differential matrix commute.");
+        } else {
+            System.err.println("Generator and its differential matrix do not commute.");
+        }
+
+        return isCommutable;
+    }
+
+    private static WrappedMatrix product(WrappedMatrix x, WrappedMatrix y) {
+        final int majorDim = x.getMajorDim();
+        final int minorDim = y.getMinorDim();
+
+        final int innerDim = x.getMinorDim();
+
+        if (innerDim != y.getMajorDim()) {
+            return null;
+        }
+
+        WrappedMatrix result = new WrappedMatrix.Raw(new double[majorDim * minorDim], 0, majorDim, minorDim);
+
+        for (int i = 0; i < majorDim; ++i) {
+            for (int j = 0; j < minorDim; ++j) {
+                double total = 0.0;
+                for (int k = 0; k < innerDim; ++k) {
+                    total += x.get(i, k) * y.get(k, j);
+                }
+                result.set(i, j, total);
+            }
+        }
+
+        return result;
     }
 
 }

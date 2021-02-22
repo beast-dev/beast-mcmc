@@ -64,8 +64,18 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
 
     public ArbitraryBranchRates(String name, TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
                                 boolean setRates) {
+        this(name, tree, rateParameter, transform, setRates, TreeParameterModel.Type.WITHOUT_ROOT);
+    }
 
-        super(name);
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
+                                boolean setRates, TreeParameterModel.Type includeRoot) {
+        this(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, tree, rateParameter, transform, setRates, includeRoot);
+    }
+
+    public ArbitraryBranchRates(String name, TreeModel tree, Parameter rateParameter, BranchRateTransform transform,
+        boolean setRates, TreeParameterModel.Type includeRoot) {
+
+            super(name);
 
         this.transform = transform;
         if (transform instanceof Model) {
@@ -85,7 +95,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
         Parameter.DefaultBounds bounds = new Parameter.DefaultBounds(upper, lower, rateParameter.getDimension());
         rateParameter.addBounds(bounds);
 
-        this.rates = new TreeParameterModel(tree, rateParameter, false);
+        this.rates = new TreeParameterModel(tree, rateParameter, includeRoot);
         this.rateParameter = rateParameter;
 
         addModel(rates);
@@ -231,6 +241,8 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
 
         double upper();
 
+        double randomize(double raw);
+
         abstract class Base implements BranchRateTransform {
             @Override
             public double center() {
@@ -246,6 +258,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
         }
 
         class None extends Base {
@@ -282,6 +297,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double transform(double raw, Tree tree, NodeRef node) {
                 return 1.0 / raw;
             }
+
+            @Override
+            public double randomize(double raw) { return -Math.exp(raw); }
         }
 
         class Exponentiate implements BranchRateTransform {
@@ -300,6 +318,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double transform(double raw, Tree tree, NodeRef node) {
                 return Math.exp(raw);
             }
+
+            @Override
+            public double randomize(double raw) { return raw; }
 
             @Override
             public double center() {
@@ -359,6 +380,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
 
             @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -498,6 +522,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
             public double upper() {
                 return Double.POSITIVE_INFINITY;
             }
+
+            @Override
+            public double randomize(double raw) { return Math.exp(raw); }
 
             @Override
             protected void handleModelChangedEvent(Model model, Object object, int index) {

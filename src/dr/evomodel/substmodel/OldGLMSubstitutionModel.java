@@ -26,6 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LogLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
@@ -51,6 +52,8 @@ public class OldGLMSubstitutionModel extends ComplexSubstitutionModel {
         testProbabilities = new double[stateCount*stateCount];
 
     }
+
+    public GeneralizedLinearModel getGeneralizedLinearModel() { return glm; }
 
     protected void setupRelativeRates(double[] rates) {
         System.arraycopy(glm.getXBeta(),0,rates,0,rates.length);

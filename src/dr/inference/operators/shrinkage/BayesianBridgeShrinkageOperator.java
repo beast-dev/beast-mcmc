@@ -28,12 +28,6 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
 
     public BayesianBridgeShrinkageOperator(BayesianBridgeStatisticsProvider bayesianBridge,
                                            GammaDistribution globalScalePrior,
-                                           double weight) {
-        this(bayesianBridge, globalScalePrior, null, weight);
-    }
-
-    public BayesianBridgeShrinkageOperator(BayesianBridgeStatisticsProvider bayesianBridge,
-                                           GammaDistribution globalScalePrior,
                                            Parameter mask,
                                            double weight) {
 

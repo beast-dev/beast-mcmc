@@ -539,6 +539,12 @@ public interface MassPreconditioner {
             double[] gradientMinus = gradient.getGradientLogDensity();
 
             for (int i = 0; i < dim; i++) {
+                gradient.getParameter().setParameterValueQuietly(i, values[i]);
+            }
+            gradient.getParameter().fireParameterChangedEvent();
+
+
+            for (int i = 0; i < dim; i++) {
                 values[i] = Math.abs((gradientPlus[i] - gradientMinus[i]) / (2.0 * MachineAccuracy.SQRT_SQRT_EPSILON));
             }
             inverseMass = normalizeVector(new WrappedVector.Raw(values), dim);

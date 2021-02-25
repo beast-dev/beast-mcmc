@@ -13,9 +13,8 @@ public class LoadingsStatisticsProvider {
     private final int nTraits;
     private final int nFactors;
 
-    private final boolean useInnerProductCache = false; //TODO: in parser
+    private final boolean useInnerProductCache = true; //TODO: in parser
     private Map<HashedMissingArray, DenseMatrix64F> factorInnerProductMap = new HashMap<>();
-    private Map<HashedMissingArray, double[]> factorTraitProductMap = new HashMap<>();
 
     private static int numThreads = 1; //TODO: in parser
     private static boolean multiThreaded = false; //TODO in parser
@@ -72,10 +71,17 @@ public class LoadingsStatisticsProvider {
 
         if (!useInnerProductCache || hashedInnerProduct == null) {
 
+            double[][] fullAnswer = answer;
+            int rowDimension = newRowDimension;
+            if (useInnerProductCache) {
+                fullAnswer = new double[nFactors][nFactors];
+                rowDimension = nFactors;
+            }
+
             int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
 
-            for (int i = 0; i < newRowDimension; i++) {
-                for (int j = i; j < newRowDimension; j++) {
+            for (int i = 0; i < rowDimension; i++) {
+                for (int j = i; j < rowDimension; j++) {
                     double sum = 0;
                     for (int k = 0; k < p; k++) {
                         if (adaptor.isNotMissing(trait, k)) {
@@ -83,19 +89,24 @@ public class LoadingsStatisticsProvider {
                         }
                     }
 
-                    answer[i][j] = sum;
+                    fullAnswer[i][j] = sum;
                     if (i != j) {
-                        answer[j][i] = sum;
+                        fullAnswer[j][i] = sum;
                     }
                 }
             }
 
             if (useInnerProductCache) {
-                factorInnerProductMap.put(observedArray, new DenseMatrix64F(answer));
+
+                for (int i = 0; i < newRowDimension; i++) {
+                    System.arraycopy(fullAnswer[i], 0, answer[i], 0, newRowDimension);
+                }
+
+                factorInnerProductMap.put(observedArray, new DenseMatrix64F(fullAnswer));
             }
         } else {
             for (int i = 0; i < newRowDimension; i++) {
-                System.arraycopy(hashedInnerProduct.getData(), i * newRowDimension,
+                System.arraycopy(hashedInnerProduct.getData(), i * nFactors,
                         answer[i], 0, newRowDimension);
             }
 
@@ -103,45 +114,25 @@ public class LoadingsStatisticsProvider {
     }
 
 
-
     public void getFactorTraitProductForTrait(int trait, int newRowDimension, double[] answer) {
-        double[] hashedProduct = null;
-        HashedMissingArray observedArray = null;
 
-        if (useInnerProductCache) { //TODO: remove code duplication with getFactorInnerProductForTrait?
-            double[] observed = observedIndicators[trait];
-            observedArray = new HashedMissingArray(observed);
-            hashedProduct = factorTraitProductMap.get(observedArray);
-        }
+        int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
 
-        if (!useInnerProductCache || hashedProduct == null) {
+        for (int i = 0; i < newRowDimension; i++) {
+            double sum = 0;
 
-            int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
-
-            for (int i = 0; i < newRowDimension; i++) {
-                double sum = 0;
-
-                for (int k = 0; k < p; k++) {
-                    if (adaptor.isNotMissing(trait, k)) {
-                        sum += adaptor.getFactorValue(i, k) /*Left.getParameterValue(i, k)*/
-                                * adaptor.getDataValue(trait, k); //data.getParameterValue(dataColumn, k);
-                    }
+            for (int k = 0; k < p; k++) {
+                if (adaptor.isNotMissing(trait, k)) {
+                    sum += adaptor.getFactorValue(i, k) /*Left.getParameterValue(i, k)*/
+                            * adaptor.getDataValue(trait, k); //data.getParameterValue(dataColumn, k);
                 }
-
-
-                answer[i] = sum;
             }
 
-            if (useInnerProductCache) {
-                double[] answerCopy = new double[newRowDimension];
-                System.arraycopy(answer, 0, answerCopy, 0, newRowDimension);
-                factorTraitProductMap.put(observedArray, answerCopy);
-            }
-        } else {
-            System.arraycopy(hashedProduct, 0, answer, 0, newRowDimension);
+            answer[i] = sum;
         }
-    }
 
+
+    }
 
 
 }

@@ -154,14 +154,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             checkGradient(joint);
         }
 
-        if (preconditionScheduler.shouldUpdatePreconditioning()) {
-            double[] lastGradient = leapFrogEngine.getLastGradient();
-            double[] lastPosition = leapFrogEngine.getLastPosition();
-            if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
-                preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
-            }
-            preconditioning.updateMass();
-        }
+        updatePreconditioning();
 
         try {
             return leapFrog();
@@ -173,6 +166,18 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             } else {
                 throw e;
             }
+        }
+    }
+
+    private void updatePreconditioning(){
+
+        if (preconditionScheduler.shouldUpdatePreconditioning()) {
+            double[] lastGradient = leapFrogEngine.getLastGradient();
+            double[] lastPosition = leapFrogEngine.getLastPosition();
+            if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
+                preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
+            }
+            preconditioning.updateMass();
         }
     }
 
@@ -746,6 +751,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     @Override
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
                                                  WrappedVector gradient, int direction, double time) {
+
+        preconditionScheduler.forceUpdateCount();
+        updatePreconditioning();
 
         try {
             leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),

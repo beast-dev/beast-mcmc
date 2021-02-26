@@ -37,6 +37,8 @@ public interface MassPreconditionScheduler {
 
     boolean shouldStoreSecant(double[] lastGradient, double[] lastPosition);
 
+    void forceUpdateCount();
+
     enum Type {
 
         NONE("none") {
@@ -86,6 +88,10 @@ public interface MassPreconditionScheduler {
         public boolean shouldStoreSecant(double[] lastGradient, double[] lastPosition) {
             return false;
         }
+
+        @Override
+        public void forceUpdateCount() {
+        }
     }
 
     class Default implements MassPreconditionScheduler {
@@ -93,6 +99,8 @@ public interface MassPreconditionScheduler {
         private HamiltonianMonteCarloOperator.Options options;
         private AdaptableMCMCOperator operator;
         private int totalUpdates = 0;
+        private long paramUpdateCount = 0;
+        private boolean useOperatorCount = true;
 
         Default(HamiltonianMonteCarloOperator.Options options,
                 AdaptableMCMCOperator operator) {
@@ -103,7 +111,8 @@ public interface MassPreconditionScheduler {
         @Override
         public boolean shouldUpdatePreconditioning() {
 
-            boolean shouldUpdate = shouldUpdate();
+            long count = useOperatorCount ? operator.getCount() : this.paramUpdateCount;
+            boolean shouldUpdate = shouldUpdate(count);
 
             if (shouldUpdate) {
                 totalUpdates++;
@@ -112,16 +121,22 @@ public interface MassPreconditionScheduler {
             return shouldUpdate;
         }
 
-        protected boolean shouldUpdate() {
+        protected boolean shouldUpdate(long count) {
             return ((options.preconditioningUpdateFrequency > 0)
-                    && (((operator.getCount() % options.preconditioningUpdateFrequency == 0)
-                    && (operator.getCount() > options.preconditioningDelay)))
+                    && (((count % options.preconditioningUpdateFrequency == 0)
+                    && (count > options.preconditioningDelay)))
                     && (options.preconditioningMaxUpdate == 0 || totalUpdates < options.preconditioningMaxUpdate));
         }
 
         @Override
         public boolean shouldStoreSecant(double[] lastGradient, double[] lastPosition) {
             return lastGradient != null && lastPosition != null;
+        }
+
+        @Override
+        public void forceUpdateCount() {
+            paramUpdateCount++;
+            useOperatorCount = false;
         }
     }
 

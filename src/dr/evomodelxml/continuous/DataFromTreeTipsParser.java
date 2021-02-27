@@ -54,6 +54,8 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, treeModel, true);
+
+        //TODO: does the code below do anything?
         MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
                 returnValue.traitParameter);
 
@@ -72,7 +74,7 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
             }
         }
 
-        return dataParameter;
+        return returnValue;
     }
 
     private static final XMLSyntaxRule[] rules = {
@@ -97,7 +99,7 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return MatrixParameter.class;
+        return TreeTraitParserUtilities.TraitsAndMissingIndices.class;
     }
 
 

@@ -27,6 +27,7 @@ package dr.evomodelxml.continuous;
 
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -51,8 +52,14 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 (TreeTraitParserUtilities.TraitsAndMissingIndices) dataAndMissingFromTreeTipsParser.parseXMLObject(xo);
 
-        MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
-                returnValue.traitParameter);
+
+        MatrixParameterInterface dataParameter;
+        if (returnValue.traitParameter instanceof MatrixParameterInterface) {
+            dataParameter = (MatrixParameterInterface) returnValue.traitParameter;
+        } else {
+            dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
+                    returnValue.traitParameter);
+        }
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.MISSING)) {
             Parameter missing = (Parameter) xo.getChild(TreeTraitParserUtilities.MISSING).getChild(Parameter.class);

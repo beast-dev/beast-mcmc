@@ -674,3 +674,164 @@
         </expected>
     </assertEqual>
 </beast>
+
+<!--
+# JULIA CODE FOR CALCULATING "EXPECTED" VALUES
+
+using LinearAlgebra, Random
+
+Random.seed!(666)
+
+
+function get_loadings_stats(Y::Matrix{Float64}, # data matrix
+                            F::Matrix{Float64}, # factor matrix
+                            λ::Vector{Float64}, # residual precision
+                            μ_prior::Vector{Float64}, # prior mean
+                            Σ_prior::AbstractMatrix{Float64}; # prior variance
+                            upperTriangular::Bool = false)
+
+    n, p = size(Y)
+    n2, k = size(F)
+    p2 = length(λ)
+
+    @assert n == n2 && p == p2
+
+    # calculate likelihood-based information
+    μ = zeros(k * p)
+    P = zeros(k * p, k * p)
+    FtF = zeros(k, k)
+    FtY = zeros(k)
+    for j = 1:p
+        inds = j:p:(k * p)
+        fill!(FtY, 0.0)
+        fill!(FtF, 0.0)
+        for i = 1:n
+            if !isnan(Y[i, j])
+                fi = F[i, :]
+                FtF .+= fi * fi'
+                FtY .+= fi * Y[i, j]
+            end
+        end
+
+        Pj = FtF * λ[j]
+        u = inv(FtF) * FtY
+
+        μ[inds] .= u
+        P[inds, inds] .= Pj
+    end
+
+
+    # add prior information
+    P_full = P + inv(Σ_prior)
+    Σ_full = inv(P_full)
+    μ_full = Σ_full * (P * μ + inv(Σ_prior) * μ_prior)
+
+    # pivot if applying upper triangular constraint
+    if upperTriangular
+        pivot_mat = zeros(Int, p, k)
+        for i = 1:k
+            for j = (i + 1):k
+                pivot_mat[i, j] = 1
+            end
+        end
+
+        sample_inds = findall(isequal(0), vec(pivot_mat))
+        fixed_inds = setdiff(1:(k * p), sample_inds)
+
+        l = zeros(k * p)
+
+        μ_full[sample_inds] .= pivot_mean(l, Σ_full,  μ_full, sample_inds)
+        μ_full[fixed_inds] .= 0.0
+
+        Σ_full[sample_inds, sample_inds] .=pivot_cov(Σ_full, sample_inds)
+        Σ_full[fixed_inds, :] .= 0.0
+        Σ_full[:, fixed_inds] .= 0.0
+    end
+
+    return μ_full, Σ_full
+end
+
+function pivot_cov(M::Matrix{Float64}, dims::Vector{Int};
+        obs_dims::Vector{Int} = setdiff(1:size(M, 1), dims))
+
+    Mmm = M[dims, dims]
+    Mmo = M[dims, obs_dims]
+    Moo = M[obs_dims, obs_dims]
+    @show size(Moo)
+    @show size(Mmo)
+    display(Moo)
+
+    return Mmm - Mmo * inv(Moo) * Mmo'
+end
+
+function pivot_mean(Y::AbstractArray{Float64, 1}, M::Matrix{Float64},
+        μ::Vector{Float64}, dims::Vector{Int};
+        obs_dims::Vector{Int} = setdiff(1:size(M, 1), dims))
+
+    μm = μ[dims]
+    Mmo = M[dims, obs_dims]
+    Moo = M[obs_dims, obs_dims]
+    deviation = Y[obs_dims] - μ[obs_dims]
+    return μm + Mmo * (inv(Moo) * deviation)
+end
+
+function format_values(x::Vector{Float64})
+    return join(x, " ")
+end
+
+function format_values(x::Matrix{Float64})
+    return join([join(x[i, :], ' ') for i = 1:size(x, 1)], '\n')
+end
+
+
+n = 20
+p = 6
+k = 3
+
+F = randn(n, k)
+L = randn(k, p)
+λ = exp.(randn(p))
+
+E = randn(n, p) * Diagonal(λ.^(-0.5))
+
+Y = F * L + E
+
+
+
+# add missing data
+for i = 1:length(Y)
+    if rand() < 0.1
+        Y[i] = NaN
+    end
+end
+
+# priors
+
+μ_prior = randn(k * p)
+Σ_prior = Diagonal(exp.(randn(k * p)))
+
+# means and variances
+
+## these are the
+μ, Σ = get_loadings_stats(Y, F, λ, μ_prior, Σ_prior)
+μ_tri, Σ_tri = get_loadings_stats(Y, F, λ, μ_prior, Σ_prior, upperTriangular=true)
+
+println("Unconstrained mean:\n" * format_values(μ))
+println("Unconstrained variance:\n" * format_values(Σ))
+println("Constrained mean:\n" * format_values(μ_tri))
+println("Constrained variance:\n"* format_values(Σ_tri))
+
+#change parameter values
+F2 = randn(n, k)
+λ2 = exp.(randn(p))
+Y2 = randn(n, p)
+Y2[findall(isnan, Y)] .= NaN
+
+μ2, Σ2 = get_loadings_stats(Y2, F2, λ2, μ_prior, Σ_prior)
+μ2_tri, Σ2_tri = get_loadings_stats(Y2, F2, λ2, μ_prior, Σ_prior, upperTriangular=true)
+
+println("Unconstrained mean 2:\n" * format_values(μ2))
+println("Unconstrained variance 2:\n" * format_values(Σ2))
+println("Constrained mean 2:\n" * format_values(μ2_tri))
+println("Constrained variance 2:\n"* format_values(Σ2_tri))
+-->

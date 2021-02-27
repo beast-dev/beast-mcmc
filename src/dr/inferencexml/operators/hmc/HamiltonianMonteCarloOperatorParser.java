@@ -174,14 +174,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
                 guessInitialMass
         );
 
-        MassPreconditioner preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
+        MassPreconditioner preconditioner;
 
         if (xo.hasChildNamed(PRECONDITIONER)) {
 
-            if (xo.hasAttribute(PRECONDITIONING)) {
-                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
-            }
-
+            // should check for preconditioning = diagonalPreconditioner here
+//            if (xo.hasAttribute(PRECONDITIONING)) {
+//                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
+//            }
             Object cxo = xo.getElementFirstChild(PRECONDITIONER);
 
             if (cxo instanceof PriorPreconditioningProvider) {
@@ -189,6 +189,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");
             }
+        }
+        else {
+            preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
         }
 
         return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, preconditionSchedulerType, reversibleHMCprovider);

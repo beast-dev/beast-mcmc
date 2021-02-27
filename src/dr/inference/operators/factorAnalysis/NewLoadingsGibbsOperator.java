@@ -625,7 +625,8 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     @Override
     public String getReport() {
-        int repeats = 1000000;
+        int repeats = 10000;
+
         int nFac = adaptor.getNumberOfFactors();
         int nTraits = adaptor.getNumberOfTraits();
 

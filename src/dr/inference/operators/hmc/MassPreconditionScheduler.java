@@ -26,6 +26,7 @@
 package dr.inference.operators.hmc;
 
 import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.MCMCOperator;
 
 /**
  * @author Marc A. Suchard
@@ -43,15 +44,15 @@ public interface MassPreconditionScheduler {
 
         NONE("none") {
             @Override
-            public MassPreconditionScheduler factory(HamiltonianMonteCarloOperator.Options options,
-                                                     AdaptableMCMCOperator operator) {
+            public MassPreconditionScheduler factory(MassPreconditioningOptions options,
+                                                     MCMCOperator operator) {
                 return new None();
             }
         },
         DEFAULT("default") {
             @Override
-            public MassPreconditionScheduler factory(HamiltonianMonteCarloOperator.Options options,
-                                                     AdaptableMCMCOperator operator) {
+            public MassPreconditionScheduler factory(MassPreconditioningOptions options,
+                                                     MCMCOperator operator) {
                 return new Default(options, operator);
             }
         };
@@ -62,8 +63,9 @@ public interface MassPreconditionScheduler {
             this.name = name;
         }
 
-        public abstract MassPreconditionScheduler factory(HamiltonianMonteCarloOperator.Options options,
-                                                          AdaptableMCMCOperator operator);
+        public abstract MassPreconditionScheduler factory(MassPreconditioningOptions options,
+                                                          MCMCOperator operator);
+
 
         public String getName() { return name; }
 
@@ -96,14 +98,14 @@ public interface MassPreconditionScheduler {
 
     class Default implements MassPreconditionScheduler {
 
-        private HamiltonianMonteCarloOperator.Options options;
-        private AdaptableMCMCOperator operator;
+        private MassPreconditioningOptions options;
+        private MCMCOperator operator;
         private int totalUpdates = 0;
         private long paramUpdateCount = 0;
         private boolean useOperatorCount = true;
 
-        Default(HamiltonianMonteCarloOperator.Options options,
-                AdaptableMCMCOperator operator) {
+        Default(MassPreconditioningOptions options,
+                MCMCOperator operator) {
             this.options = options;
             this.operator = operator;
         }
@@ -122,10 +124,10 @@ public interface MassPreconditionScheduler {
         }
 
         protected boolean shouldUpdate(long count) {
-            return ((options.preconditioningUpdateFrequency > 0)
-                    && (((count % options.preconditioningUpdateFrequency == 0)
-                    && (count > options.preconditioningDelay)))
-                    && (options.preconditioningMaxUpdate == 0 || totalUpdates < options.preconditioningMaxUpdate));
+            return ((options.preconditioningUpdateFrequency() > 0)
+                    && (((count % options.preconditioningUpdateFrequency() == 0)
+                    && (count > options.preconditioningDelay())))
+                    && (options.preconditioningMaxUpdate() == 0 || totalUpdates < options.preconditioningMaxUpdate()));
         }
 
         @Override

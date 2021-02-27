@@ -43,7 +43,7 @@ public interface MassPreconditioner {
 
         NONE("none") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 final Parameter parameter = gradient.getParameter();
                 int dim = parameter.getDimension();
                 if (transform != null && transform instanceof Transform.MultivariableTransform) {
@@ -54,21 +54,21 @@ public interface MassPreconditioner {
         },
         DIAGONAL("diagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory);
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
+                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory());
             }
         },
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 int dimension = transform instanceof Transform.MultivariableTransform ?
                         ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
-                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay);
+                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay());
             }
         },
         PRIOR_DIAGONAL("priorDiagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
 
                 if (!(gradient instanceof PriorPreconditioningProvider)) {
                     throw new RuntimeException("Gradient must be a PriorPreconditioningProvider for prior preconditioning!");
@@ -80,23 +80,23 @@ public interface MassPreconditioner {
         },
         FULL("full") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 return new FullHessianPreconditioning((HessianWrtParameterProvider) gradient, transform);
             }
         },
         SECANT("secant") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                SecantHessian secantHessian = new SecantHessian(gradient, options.preconditioningMemory);
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
+                SecantHessian secantHessian = new SecantHessian(gradient, options.preconditioningMemory());
                 return new Secant(secantHessian, transform);
             }
         },
         ADAPTIVE("adaptive") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
 //                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
                 AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
-                return new AdaptiveFullHessianPreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension(), options.preconditioningDelay);
+                return new AdaptiveFullHessianPreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension(), options.preconditioningDelay());
             }
         };
 
@@ -106,7 +106,7 @@ public interface MassPreconditioner {
             this.name = name;
         }
 
-        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options);
+        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options);
 
         public String getName() { return name; }
 

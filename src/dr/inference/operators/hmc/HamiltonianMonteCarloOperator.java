@@ -30,10 +30,7 @@ import dr.inference.hmc.PathGradient;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractAdaptableOperator;
-import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.GeneralOperator;
-import dr.inference.operators.PathDependent;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
@@ -104,7 +101,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         this.runtimeOptions = runtimeOptions;
         this.stepSize = runtimeOptions.initialStepSize;
         this.preconditioning = preconditioner;
-        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, this);
+        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, (AdaptableMCMCOperator) this);
         this.parameter = parameter;
         this.mask = buildMask(maskParameter);
         this.transform = transform;
@@ -335,7 +332,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
     private static final boolean DEBUG = false;
 
-    public static class Options {
+    public static class Options implements MassPreconditioningOptions {
 
         final double initialStepSize;
         final int nSteps;
@@ -369,6 +366,26 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
             this.targetAcceptanceProbability = targetAcceptanceProbability;
             this.instabilityHandler = instabilityHandler;
+        }
+
+        @Override
+        public int preconditioningUpdateFrequency() {
+            return preconditioningUpdateFrequency;
+        }
+
+        @Override
+        public int preconditioningDelay() {
+            return preconditioningDelay;
+        }
+
+        @Override
+        public int preconditioningMaxUpdate() {
+            return preconditioningMaxUpdate;
+        }
+
+        @Override
+        public int preconditioningMemory() {
+            return preconditioningMemory;
         }
     }
 

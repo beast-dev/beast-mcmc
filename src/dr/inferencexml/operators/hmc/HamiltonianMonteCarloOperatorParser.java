@@ -53,8 +53,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING = "preconditioning";
     private final static String PRECONDITIONING_SCHEDULE = "preconditioningSchedule";
     private final static String PRECONDITIONING_UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
-    private final static String PRECONDITIONING_MAX_UPDATE = "preconditioningMaxUpdate";
-    private final static String PRECONDITIONING_DELAY = "preconditioningDelay";
+    final static String PRECONDITIONING_MAX_UPDATE = "preconditioningMaxUpdate";
+    final static String PRECONDITIONING_DELAY = "preconditioningDelay";
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
    

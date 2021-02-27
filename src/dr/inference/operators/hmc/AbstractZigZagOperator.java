@@ -21,9 +21,11 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                            PrecisionColumnProvider columnProvider,
                            double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
                            boolean refreshVelocity, Parameter mask,
-                           int threadCount) {
+                           int threadCount, MassPreconditioner massPreconditioner,
+                           MassPreconditionScheduler.Type preconditionSchedulerType) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
+                refreshVelocity, mask, massPreconditioner, preconditionSchedulerType);
         this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
     }
 
@@ -137,7 +139,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     double findBoundaryTime(int index, double position,
-                                    double velocity) {
+                            double velocity) {
 
         double time = Double.POSITIVE_INFINITY;
 
@@ -188,7 +190,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     private static void reflectVelocity(WrappedVector velocity,
-                                int eventIndex) {
+                                        int eventIndex) {
 
         velocity.set(eventIndex, -velocity.get(eventIndex));
     }

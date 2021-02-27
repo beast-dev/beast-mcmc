@@ -26,7 +26,6 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -72,14 +71,14 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         return HMC_OPERATOR;
     }
 
-    private MassPreconditioner.Type parsePreconditioning(XMLObject xo) throws XMLParseException {
+    static MassPreconditioner.Type parsePreconditioning(XMLObject xo) throws XMLParseException {
 
         return MassPreconditioner.Type.parseFromString(
                 xo.getAttribute(PRECONDITIONING, MassPreconditioner.Type.NONE.getName())
         );
     }
 
-    private MassPreconditionScheduler.Type parsePreconditionScheduler(XMLObject xo,
+    static MassPreconditionScheduler.Type parsePreconditionScheduler(XMLObject xo,
                                                                       MassPreconditioner.Type preconditioningType) throws XMLParseException {
         if (preconditioningType == MassPreconditioner.Type.NONE) {
             return MassPreconditionScheduler.Type.NONE;
@@ -125,7 +124,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         Transform transform = parseTransform(xo);
 
-        ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
 
         boolean dimensionMismatch = derivative.getDimension() != parameter.getDimension();
         if (transform instanceof Transform.MultivariableTransform) {
@@ -182,13 +180,12 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             }
         }
 
-        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, preconditionSchedulerType, reversibleHMCprovider);
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, preconditionSchedulerType);
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType,
-                                                    ReversibleHMCProvider reversibleHMCprovider) {
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType) {
 
         return new HamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,

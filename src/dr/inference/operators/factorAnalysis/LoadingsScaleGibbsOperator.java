@@ -66,18 +66,14 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
 
                 precision[k1][k1] += factorInnerProduct[k1][k1] * u1 * u1 * factorPrecision;
 
-                meanBuffer[k1] *= factorPrecision * u1;
-
                 for (int k2 = k1 + 1; k2 < nFactors; k2++) {
                     double u2 = matrixComponent.getParameterValue(j, k2);
                     precision[k1][k2] += factorInnerProduct[k1][k2] * u1 * u2 * factorPrecision;
                     precision[k2][k1] = precision[k1][k2];
-
                 }
 
-                for (int k2 = 0; k2 < nFactors; k2++) {
-                    mean[k1] += meanBuffer[k2] * precision[k1][k2];
-                }
+                statisticsProvider.getFactorTraitProduct(j, nFactors, meanBuffer);
+                mean[k1] += meanBuffer[k1] * u1 * factorPrecision;
             }
         }
 

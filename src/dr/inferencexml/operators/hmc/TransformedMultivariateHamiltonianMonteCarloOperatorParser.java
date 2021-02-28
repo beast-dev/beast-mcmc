@@ -25,12 +25,20 @@
 
 package dr.inferencexml.operators.hmc;
 
+import dr.evomodel.treedatalikelihood.discrete.MaskProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.hmc.*;
+import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
+import dr.inference.operators.hmc.MassPreconditionScheduler;
+import dr.inference.operators.hmc.MassPreconditioner;
+import dr.inference.operators.hmc.TransformedMultivariateHamiltonianMonteCarloOperator;
 import dr.util.Transform;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
 
 /**
@@ -40,6 +48,14 @@ import dr.util.Transform;
 public class TransformedMultivariateHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
 
     final static String TRANSFORMED_MULTIVARIATE_HMC = "transformedMultivariateHamiltonianMonteCarlo";
+    private MaskProvider maskProvider;
+
+    @Override
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        this.maskProvider = (MaskProvider) xo.getChild(MaskProvider.class);
+        return super.parseXMLObject(xo);
+    }
+
 
     @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
@@ -49,7 +65,7 @@ public class TransformedMultivariateHamiltonianMonteCarloOperatorParser extends 
                                                     ReversibleHMCProvider reversibleHMCprovider) {
 
         return new TransformedMultivariateHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
-                parameter, transform, mask,
+                parameter, transform, maskProvider,
                 runtimeOptions, preconditioner, schedulerType);
     }
 
@@ -57,6 +73,16 @@ public class TransformedMultivariateHamiltonianMonteCarloOperatorParser extends 
     @Override
     public String getParserDescription() {
         return "Returns a Hamiltonian Monte Carlo transition kernel with dynamic mask on (only) transformed space";
+    }
+
+    @Override
+    public XMLSyntaxRule[] getSyntaxRules() {
+        XMLSyntaxRule[] extendedRules = new XMLSyntaxRule[rules.length + 1];
+        extendedRules[0] = new ElementRule(MaskProvider.class);
+        for (int i = 0; i < rules.length; i++) {
+            extendedRules[i + 1] = rules[i];
+        }
+        return extendedRules;
     }
 
     @Override

@@ -25,8 +25,11 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.*;
+import dr.inference.model.Model;
+import dr.inference.model.ModelListener;
+import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -34,7 +37,7 @@ import dr.xml.*;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class RatioMasker implements ModelListener {
+public class RatioMasker implements ModelListener, MaskProvider {
 
     private final TreeModel tree;
     private final Parameter mask;
@@ -43,20 +46,52 @@ public class RatioMasker implements ModelListener {
     private final double heightDistanceThreshold;
     private boolean updatedByHeight;
     private boolean updatedByRatio;
+    private final double traverseProbability;
 
     public RatioMasker(TreeModel tree,
                        Parameter mask,
                        NodeHeightTransform nodeHeightTransform,
                        double ratioSamllValueThreshold,
                        double heightDistanceThreshold) {
+        this(tree, mask, nodeHeightTransform, ratioSamllValueThreshold, heightDistanceThreshold, 0.0);
+    }
+
+    public RatioMasker(TreeModel tree,
+                       Parameter mask,
+                       NodeHeightTransform nodeHeightTransform,
+                       double ratioSamllValueThreshold,
+                       double heightDistanceThreshold,
+                       double traverseProbability) {
         this.tree = tree;
         this.mask = mask;
         this.nodeHeightTransform = nodeHeightTransform;
         this.ratioSamllValueThreshold = ratioSamllValueThreshold;
         this.heightDistanceThreshold = heightDistanceThreshold;
+        this.traverseProbability = traverseProbability;
         tree.addModelListener(this);
+        tree.addModelRestoreListener(this);
         dimensionCheck();
     }
+
+    private enum SubTreeMasker {
+        NONE {
+            @Override
+            double[] getSubTreeMask(Tree tree, double traverseProbability, boolean withRoot) {
+                if (withRoot) return new double[tree.getInternalNodeCount()];
+                else return new double[tree.getInternalNodeCount() - 1];
+            }
+        },
+        TRAVERSE {
+            @Override
+            double[] getSubTreeMask(Tree tree, double traverseProbability, boolean withRoot) {
+                return new double[0];
+            }
+        };
+
+        abstract double[] getSubTreeMask(Tree tree, double traverseProbability, boolean withRoot);
+
+    }
+
 
     private void dimensionCheck() {
         if (nodeHeightTransform.getDimension() != mask.getDimension()) {
@@ -66,15 +101,22 @@ public class RatioMasker implements ModelListener {
 
     @Override
     public void modelChangedEvent(Model model, Object object, int index) {
-        updateMask();
+        updatedByRatio = false;
+        updatedByHeight = false;
     }
 
     @Override
     public void modelRestored(Model model) {
-        updateMask();
+        updatedByRatio = false;
+        updatedByHeight = false;
     }
 
-    private void updateMask() {
+    @Override
+    public Parameter getMask() {
+        return mask;
+    }
+
+    public void updateMask() {
         double[] maskByHeight = updateMaskByHeight();
         double[] maskByRatio = updateMaskByRatio();
         for (int i = 0; i < mask.getDimension(); i++) {

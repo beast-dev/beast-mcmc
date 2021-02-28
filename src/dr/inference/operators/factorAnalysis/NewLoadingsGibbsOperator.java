@@ -174,23 +174,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean) {
 
-        final int p = adaptor.getNumberOfTaxa();
+        statisticsProvider.getFactorTraitProduct(dataColumn, newRowDimension, midMean);
 
         for (int i = 0; i < newRowDimension; i++) {
-            double sum = 0;
-
-            for (int k = 0; k < p; k++) {
-                if (adaptor.isNotMissing(dataColumn, k)) {
-                    sum += adaptor.getFactorValue(i, k) /*Left.getParameterValue(i, k)*/
-                            * adaptor.getDataValue(dataColumn, k); //data.getParameterValue(dataColumn, k);
-                }
-            }
 
             int priorDim = adaptor.getNumberOfTraits() * i + dataColumn;
 
-            sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
-            midMean[i] = sum;
+            midMean[i] *= adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
+            midMean[i] += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
         }
 
         for (int i = 0; i < newRowDimension; i++) {

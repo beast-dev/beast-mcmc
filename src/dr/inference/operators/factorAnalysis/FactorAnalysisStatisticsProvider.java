@@ -88,13 +88,28 @@ public class FactorAnalysisStatisticsProvider {
 
     }
 
+    public void getFactorTraitProduct(int trait, int dim, double[] buffer) {
+        final int p = adaptor.getNumberOfTaxa();
+
+        for (int i = 0; i < dim; i++) {
+            double sum = 0;
+
+            for (int k = 0; k < p; k++) {
+                if (adaptor.isNotMissing(trait, k)) {
+                    sum += adaptor.getFactorValue(i, k) /*Left.getParameterValue(i, k)*/
+                            * adaptor.getDataValue(trait, k); //data.getParameterValue(dataColumn, k);
+                }
+            }
+
+            buffer[i] = sum;
+        }
+    }
+
     public void clearInnerProductMap() { //TODO: base on listeners and remove function
         if (useInnerProductCache) {
             innerProductMap.clear();
         }
     }
-
-
 
 
     public enum CacheProvider {

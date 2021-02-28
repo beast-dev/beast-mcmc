@@ -27,7 +27,6 @@ package dr.inferencexml.operators.hmc;
 
 import dr.evomodel.treedatalikelihood.discrete.MaskProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
@@ -60,9 +59,7 @@ public class TransformedMultivariateHamiltonianMonteCarloOperatorParser extends 
     @Override
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
-                                                    HamiltonianMonteCarloOperator.Options runtimeOptions,
-                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType,
-                                                    ReversibleHMCProvider reversibleHMCprovider) {
+                                                    HamiltonianMonteCarloOperator.Options runtimeOptions, MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType) {
 
         return new TransformedMultivariateHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, maskProvider,

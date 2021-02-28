@@ -73,7 +73,8 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
                 parseRuntimeOptions(xo),
                 parseNativeCodeOptions(xo),
                 refreshVelocity,
-                parseMask(xo));
+                parseMask(xo),
+                null, null);
     }
 
     static Parameter parseMask(XMLObject xo) throws XMLParseException {
@@ -90,11 +91,14 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
         double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
         int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
+        int preconditioningMaxUpdate = xo.getAttribute(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_MAX_UPDATE, 0);
+        int preconditioningDelay = xo.getAttribute(HamiltonianMonteCarloOperatorParser.PRECONDITIONING_DELAY, 0);
+
         int updateSampleCovFrequency = xo.getAttribute(UPDATE_SCM_FREQUENCY, 0);
         int updateSampleCovDelay = xo.getAttribute(UPDATE_SCM_DELAY, 0);
 
-        return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency, updateSampleCovFrequency,
-                updateSampleCovDelay);
+        return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency, preconditioningMaxUpdate,
+                preconditioningDelay, updateSampleCovFrequency, updateSampleCovDelay);
     }
 
     static AbstractParticleOperator.NativeCodeOptions parseNativeCodeOptions(XMLObject xo) throws XMLParseException {

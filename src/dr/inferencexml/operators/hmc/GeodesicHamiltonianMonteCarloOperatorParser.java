@@ -30,8 +30,7 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
                                                     HamiltonianMonteCarloOperator.Options runtimeOptions,
-                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType,
-                                                    ReversibleHMCProvider reversibleHMCprovider) {
+                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType) {
         return new GeodesicHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
                 runtimeOptions, preconditioner);

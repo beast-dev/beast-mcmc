@@ -34,10 +34,7 @@ import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inference.operators.factorAnalysis.LoadingsGibbsOperator;
-import dr.inference.operators.factorAnalysis.LoadingsGibbsTruncatedOperator;
-import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
-import dr.inference.operators.factorAnalysis.NewLoadingsGibbsOperator;
+import dr.inference.operators.factorAnalysis.*;
 import dr.math.distributions.Distribution;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Attribute;
@@ -133,12 +130,12 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
                                 NewLoadingsGibbsOperator.ColumnDimProvider.UPPER_TRIANGULAR.getName())
                         );
 
-                NewLoadingsGibbsOperator.CacheProvider cacheProvider;
+                FactorAnalysisStatisticsProvider.CacheProvider cacheProvider;
                 boolean useCache = xo.getAttribute(USE_CACHE, false);
                 if (useCache) {
-                    cacheProvider = NewLoadingsGibbsOperator.CacheProvider.USE_CACHE;
+                    cacheProvider = FactorAnalysisStatisticsProvider.CacheProvider.USE_CACHE;
                 } else {
-                    cacheProvider = NewLoadingsGibbsOperator.CacheProvider.NO_CACHE;
+                    cacheProvider = FactorAnalysisStatisticsProvider.CacheProvider.NO_CACHE;
                 }
 
                 return new NewLoadingsGibbsOperator(adaptor, prior, weight, randomScan, WorkingPrior,

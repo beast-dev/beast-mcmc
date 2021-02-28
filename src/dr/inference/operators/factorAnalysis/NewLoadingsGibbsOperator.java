@@ -52,8 +52,7 @@ import java.util.concurrent.Executors;
  */
 public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
-    private final boolean useInnerProductCache;
-    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
+    private final FactorAnalysisStatisticsProvider statisticsProvider;
 
 
     private NormalDistributionModel workingPrior;
@@ -72,7 +71,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final ConstrainedSampler constrainedSampler;
     private final ColumnDimProvider columnDimProvider;
 
-    private final double[][] observedIndicators;
     private boolean statisticsOnly = false;
 
 
@@ -81,12 +79,13 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
                                     ColumnDimProvider columnDimProvider,
-                                    CacheProvider cacheProvider
+                                    FactorAnalysisStatisticsProvider.CacheProvider cacheProvider
     ) {
 
         setWeight(weight);
 
         this.adaptor = adaptor;
+        this.statisticsProvider = new FactorAnalysisStatisticsProvider(adaptor, cacheProvider);
 
         this.prior = prior;
 
@@ -120,17 +119,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             columnDimProvider.allocateStorage(precisionArray, meanMidArray, meanArray, adaptor.getNumberOfFactors());
         }
 
-        this.useInnerProductCache = cacheProvider.useCache();
 
-        if (useInnerProductCache) {
+        if (cacheProvider.useCache()) { //TODO: get from StatisticsProvider
             if (multiThreaded && numThreads > 1) {
                 throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
             }
-
-            observedIndicators = setupObservedIndicators();
-
-        } else {
-            observedIndicators = null;
         }
     }
 
@@ -152,89 +145,17 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         return precisionArray.get(arrayInd);
     }
 
-    public enum CacheProvider {
-        USE_CACHE {
-            @Override
-            boolean useCache() {
-                return true;
-            }
-
-        },
-        NO_CACHE {
-            @Override
-            boolean useCache() {
-                return false;
-            }
-        };
-
-        abstract boolean useCache();
-
-    }
 
     private double getPrecision(NormalStatisticsProvider provider, int dim) {
         double sd = provider.getNormalSD(dim);
         return 1.0 / (sd * sd);
     }
 
-    private double[][] setupObservedIndicators() {
-        double[][] obsInds = new double[adaptor.getNumberOfTraits()][adaptor.getNumberOfTaxa()];
-
-        for (int trait = 0; trait < adaptor.getNumberOfTraits(); trait++) {
-            for (int taxon = 0; taxon < adaptor.getNumberOfTaxa(); taxon++) {
-
-                if (adaptor.isNotMissing(trait, taxon)) {
-                    obsInds[trait][taxon] = 1.0;
-                }
-            }
-        }
-
-
-        return obsInds;
-    }
-
 
     private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adaptor, //MatrixParameterInterface full,
                                          int newRowDimension, int row, double[][] answer) {
 
-        DenseMatrix64F hashedPrecision = null;
-        HashedMissingArray observedArray = null;
-
-        if (useInnerProductCache) {
-            double[] observed = observedIndicators[row];
-            observedArray = new HashedMissingArray(observed);
-            hashedPrecision = precisionMatrixMap.get(observedArray);
-        }
-
-        if (!useInnerProductCache || hashedPrecision == null) {
-
-            int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
-
-            for (int i = 0; i < newRowDimension; i++) {
-                for (int j = i; j < newRowDimension; j++) {
-                    double sum = 0;
-                    for (int k = 0; k < p; k++) {
-                        if (adaptor.isNotMissing(row, k)) {
-                            sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
-                        }
-                    }
-
-                    answer[i][j] = sum;
-                    if (i != j) {
-                        answer[j][i] = sum;
-                    }
-                }
-            }
-
-            if (useInnerProductCache) {
-                precisionMatrixMap.put(observedArray, new DenseMatrix64F(answer));
-            }
-        } else {
-            for (int i = 0; i < newRowDimension; i++) {
-                System.arraycopy(hashedPrecision.getData(), i * newRowDimension,
-                        answer[i], 0, newRowDimension);
-            }
-
-        }
+        statisticsProvider.getFactorInnerProduct(row, newRowDimension, answer);
 
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = i; j < newRowDimension; j++) {
@@ -351,9 +272,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         int size = adaptor.getNumberOfTraits();
 
-        if (useInnerProductCache) {
-            precisionMatrixMap.clear();
-        }
+        statisticsProvider.clearInnerProductMap(); //TODO: remove (base on listeners)
 
         if (pool != null) {
 

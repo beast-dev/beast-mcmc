@@ -12,7 +12,7 @@ public class LoadingsOperatorParserUtilities {
 
     private final static String USE_CACHE = "cacheInnerProducts";
 
-    static FactorAnalysisStatisticsProvider parseAdaptorAndStatistics(XMLObject xo) throws XMLParseException {
+    public static FactorAnalysisStatisticsProvider parseAdaptorAndStatistics(XMLObject xo) throws XMLParseException {
 
 
         final FactorAnalysisStatisticsProvider.CacheProvider cacheProvider;
@@ -29,7 +29,7 @@ public class LoadingsOperatorParserUtilities {
     }
 
 
-    static FactorAnalysisOperatorAdaptor parseFactorAnalsysisOperatorAdaptor(XMLObject xo) {
+    public static FactorAnalysisOperatorAdaptor parseFactorAnalsysisOperatorAdaptor(XMLObject xo) {
         LatentFactorModel factorModel = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
 
         if (factorModel == null) {

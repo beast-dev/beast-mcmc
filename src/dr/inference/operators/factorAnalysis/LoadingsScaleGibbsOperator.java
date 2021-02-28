@@ -6,10 +6,12 @@ import dr.inference.model.Parameter;
 import dr.inference.model.ScaledMatrixParameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.xml.*;
 
 public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
@@ -76,12 +78,8 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
                 for (int k2 = 0; k2 < nFactors; k2++) {
                     mean[k1] += meanBuffer[k2] * precision[k1][k2];
                 }
-
             }
-
-
         }
-
 
         for (int i = 0; i < nFactors; i++) {
             double sd = prior.getNormalSD(i);
@@ -116,4 +114,45 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
     }
 
     private static final String LOADINGS_SCALE_OPERATOR = "loadingsScaleGibbsOperator";
+
+    public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            FactorAnalysisStatisticsProvider statisticsProvider =
+                    LoadingsOperatorParserUtilities.parseAdaptorAndStatistics(xo);
+            NormalStatisticsProvider prior = (NormalStatisticsProvider) xo.getChild(NormalStatisticsProvider.class);
+
+            MatrixParameterInterface loadings = statisticsProvider.getAdaptor().getLoadings();
+            if (!(loadings instanceof ScaledMatrixParameter)) {
+                throw new XMLParseException("The loadings matrix is of class" + loadings.getClass() + ". It must be " +
+                        "of class " + ScaledMatrixParameter.class);
+            }
+            return new LoadingsScaleGibbsOperator(statisticsProvider, prior);
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return XMLSyntaxRule.Utils.concatenate(
+                    LoadingsOperatorParserUtilities.statisticsProviderRules,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(NormalStatisticsProvider.class)
+                    }
+            );
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "Gibbs operator for scale component of loadings.";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return LoadingsScaleGibbsOperator.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return LOADINGS_SCALE_OPERATOR;
+        }
+    };
 }

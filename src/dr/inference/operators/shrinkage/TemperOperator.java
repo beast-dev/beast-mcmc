@@ -52,27 +52,10 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
         // factor out a -1 to read code below:
         // start + (start - end) * -1*percentComplete
 
-//        if (startValues == null) {
-//            startValues = parameter.getParameterValues();
-//        }
-
         currentCount = currentCount + 1;
 
         // seems unnecessary, could just input exp(-rate) directly as "rate" in XML if desired.
         double objective = currentCount * Math.exp(-rate);
-
-//        for (int i = 0; i < parameter.getDimension(); ++i) {
-//
-//            double currentValue = parameter.getParameterValue(i);
-//            double targetValue = target.getParameterValue(i % target.getDimension());
-//
-//            if (objective > 0.1) {
-//                double startValue = startValues[i];
-//                double x = startValue + (startValue - targetValue) * Math.exp(-objective);
-//            } else if (currentValue != targetValue) {
-//                parameter.setParameterValue(i, targetValue);
-//            }
-//        }
 
         for (int i = 0; i < parameter.getDimension(); ++i) {
 

@@ -59,7 +59,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
-   private final static String PRIOR_PRECONDITIONING = "priorDiagonal";
+    private final static String PRIOR_PRECONDITIONING = "priorDiagonal";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -184,12 +184,11 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             Object cxo = xo.getElementFirstChild(PRECONDITIONER);
 
             if (cxo instanceof PriorPreconditioningProvider) {
-                preconditioner = new MassPreconditioner.PriorPreconditioner((PriorPreconditioningProvider)cxo, transform);
+                preconditioner = new MassPreconditioner.PriorPreconditioner((PriorPreconditioningProvider) cxo, transform);
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");
             }
-        }
-        else {
+        } else {
             preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
         }
 
@@ -224,10 +223,10 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
-            new ElementRule(MASK, new XMLSyntaxRule[] {
+            new ElementRule(MASK, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
             }, true),
-            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[] {
+            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
                     new XORRule(
                             new ElementRule(MassPreconditioner.class),
                             new ElementRule(PriorPreconditioningProvider.class)

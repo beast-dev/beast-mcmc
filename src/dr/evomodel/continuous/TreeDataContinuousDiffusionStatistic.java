@@ -40,7 +40,7 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
  * @author Marc A. Suchard
  * @author Philippe Lemey
  * @author Andrew Holbrook
- * @author Alex Fisher
+ * @author Alexander Fisher
  */
 
 public class TreeDataContinuousDiffusionStatistic extends TreeStatistic {

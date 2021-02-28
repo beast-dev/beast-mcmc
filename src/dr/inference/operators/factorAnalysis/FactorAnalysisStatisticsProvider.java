@@ -20,7 +20,7 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
     private Parameter[] factorDependentParameters;
 
 
-    FactorAnalysisStatisticsProvider(FactorAnalysisOperatorAdaptor adaptor, CacheProvider cacheProvider) {
+    public FactorAnalysisStatisticsProvider(FactorAnalysisOperatorAdaptor adaptor, CacheProvider cacheProvider) {
         this.adaptor = adaptor;
         this.useInnerProductCache = cacheProvider.useCache();
 
@@ -133,6 +133,10 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
     public FactorAnalysisOperatorAdaptor getAdaptor() {
         return adaptor;
     } //TODO: maybe make StatisticsProvider extend adaptor?
+
+    public boolean useCache() {
+        return useInnerProductCache;
+    }
 
 
     public enum CacheProvider {

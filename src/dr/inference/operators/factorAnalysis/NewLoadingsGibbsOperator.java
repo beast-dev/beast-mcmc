@@ -74,18 +74,16 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private boolean statisticsOnly = false;
 
 
-    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, NormalStatisticsProvider prior,
+    public NewLoadingsGibbsOperator(FactorAnalysisStatisticsProvider statisticsProvider, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
-                                    ColumnDimProvider columnDimProvider,
-                                    FactorAnalysisStatisticsProvider.CacheProvider cacheProvider
-    ) {
+                                    ColumnDimProvider columnDimProvider) {
 
         setWeight(weight);
 
-        this.adaptor = adaptor;
-        this.statisticsProvider = new FactorAnalysisStatisticsProvider(adaptor, cacheProvider);
+        this.statisticsProvider = statisticsProvider;
+        this.adaptor = statisticsProvider.getAdaptor();
 
         this.prior = prior;
 
@@ -120,7 +118,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         }
 
 
-        if (cacheProvider.useCache()) { //TODO: get from StatisticsProvider
+        if (statisticsProvider.useCache()) {
             if (multiThreaded && numThreads > 1) {
                 throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
             }

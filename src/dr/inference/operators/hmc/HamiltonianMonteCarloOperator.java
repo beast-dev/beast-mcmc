@@ -308,7 +308,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         if (mask != null) {
             for (int i = 0; i < vector.length; ++i) {
-                vector[i] = mask[i] == 0.0 ? 0.0:vector[i];
+                if (mask[i] == 0.0) {
+                    vector[i] = 0.0;
+                }
             }
         }
 
@@ -321,7 +323,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         if (mask != null) {
             for (int i = 0; i < vector.getDim(); ++i) {
-                vector.set(i, mask[i] == 0.0 ? 0.0 : vector.get(i));
+                if (mask[i] == 0.0) {
+                    vector.set(i, 0.0);
+                }
             }
         }
 

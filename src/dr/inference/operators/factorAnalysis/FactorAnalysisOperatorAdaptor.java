@@ -46,12 +46,19 @@ public interface FactorAnalysisOperatorAdaptor {
 
     Parameter[] getFactorDependentParameters();
 
+    MatrixParameterInterface getLoadings();
+
     abstract class Abstract implements FactorAnalysisOperatorAdaptor, Reportable {
 
         private final MatrixParameterInterface loadings;
 
         Abstract(MatrixParameterInterface loadings) {
             this.loadings = loadings;
+        }
+
+        @Override
+        public MatrixParameterInterface getLoadings() {
+            return loadings;
         }
 
         @Override

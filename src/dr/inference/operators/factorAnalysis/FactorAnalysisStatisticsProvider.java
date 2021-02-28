@@ -130,6 +130,10 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
         }
     }
 
+    public FactorAnalysisOperatorAdaptor getAdaptor() {
+        return adaptor;
+    } //TODO: maybe make StatisticsProvider extend adaptor?
+
 
     public enum CacheProvider {
         USE_CACHE {

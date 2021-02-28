@@ -59,7 +59,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
-   
+   private final static String PRIOR_PRECONDITIONING = "priorDiagonal";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -178,10 +178,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         if (xo.hasChildNamed(PRECONDITIONER)) {
 
-            // should check for preconditioning = diagonalPreconditioner here
-//            if (xo.hasAttribute(PRECONDITIONING)) {
-//                throw new XMLParseException("Cannot precondition and use an alternative preconditioner");
-//            }
+            if (preconditioningType.getName() != PRIOR_PRECONDITIONING) {
+                throw new XMLParseException("Incorrect prior preconditioning or not yet implemented");
+            }
             Object cxo = xo.getElementFirstChild(PRECONDITIONER);
 
             if (cxo instanceof PriorPreconditioningProvider) {

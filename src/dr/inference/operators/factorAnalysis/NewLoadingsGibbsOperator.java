@@ -263,8 +263,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         int size = adaptor.getNumberOfTraits();
 
-        statisticsProvider.clearInnerProductMap(); //TODO: remove (base on listeners)
-
         if (pool != null) {
 
             if (DEBUG) {

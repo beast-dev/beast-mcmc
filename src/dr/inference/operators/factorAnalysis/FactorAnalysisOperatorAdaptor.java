@@ -44,6 +44,8 @@ public interface FactorAnalysisOperatorAdaptor {
 
     boolean isNotMissing(int trait, int taxon);
 
+    Parameter[] getFactorDependentParameters();
+
     abstract class Abstract implements FactorAnalysisOperatorAdaptor, Reportable {
 
         private final MatrixParameterInterface loadings;
@@ -198,6 +200,11 @@ public interface FactorAnalysisOperatorAdaptor {
 
             return missing == null || missing.getParameterValue(index) != 1.0;
         }
+
+        @Override
+        public Parameter[] getFactorDependentParameters() {
+            return new Parameter[]{LFM.getFactors()};
+        }
     }
 
     class IntegratedFactors extends Abstract {
@@ -268,6 +275,15 @@ public interface FactorAnalysisOperatorAdaptor {
         public boolean isNotMissing(int trait, int taxon) {
             int index = taxon * getNumberOfTraits() + trait;
             return !factorLikelihood.getDataMissingIndicators()[index];
+        }
+
+        @Override
+        public Parameter[] getFactorDependentParameters() {
+            return new Parameter[]{
+                    factorLikelihood.getLoadings(),
+                    factorLikelihood.getParameter(),
+                    factorLikelihood.getPrecision()
+            };
         }
 
         private static final boolean DEBUG = false;

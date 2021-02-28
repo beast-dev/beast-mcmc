@@ -1,18 +1,23 @@
 package dr.inference.operators.factorAnalysis;
 
 import dr.evomodel.treedatalikelihood.continuous.HashedMissingArray;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inference.model.VariableListener;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class FactorAnalysisStatisticsProvider {
+public class FactorAnalysisStatisticsProvider implements VariableListener {
 
     private final FactorAnalysisOperatorAdaptor adaptor;
     private final boolean useInnerProductCache;
     private Map<HashedMissingArray, DenseMatrix64F> innerProductMap = new HashMap<>();
 
     private final double[][] observedIndicators;
+    private boolean needToUpdateCache = true;
+    private Parameter[] factorDependentParameters;
 
 
     FactorAnalysisStatisticsProvider(FactorAnalysisOperatorAdaptor adaptor, CacheProvider cacheProvider) {
@@ -26,7 +31,10 @@ public class FactorAnalysisStatisticsProvider {
             observedIndicators = null;
         }
 
-
+        this.factorDependentParameters = adaptor.getFactorDependentParameters();
+        for (Parameter parameter : factorDependentParameters) {
+            parameter.addParameterListener(this);
+        }
     }
 
     private double[][] setupObservedIndicators() {
@@ -50,6 +58,7 @@ public class FactorAnalysisStatisticsProvider {
         HashedMissingArray observedArray = null;
 
         if (useInnerProductCache) {
+            checkNeedToUpdateInnerProduct();
             double[] observed = observedIndicators[trait];
             observedArray = new HashedMissingArray(observed);
             hashedPrecision = innerProductMap.get(observedArray);
@@ -105,9 +114,19 @@ public class FactorAnalysisStatisticsProvider {
         }
     }
 
-    public void clearInnerProductMap() { //TODO: base on listeners and remove function
-        if (useInnerProductCache) {
+    public void checkNeedToUpdateInnerProduct() {
+        if (useInnerProductCache && needToUpdateCache) {
             innerProductMap.clear();
+            needToUpdateCache = false;
+        }
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        for (Parameter parameter : factorDependentParameters) {
+            if (variable == parameter) {
+                needToUpdateCache = true;
+            }
         }
     }
 

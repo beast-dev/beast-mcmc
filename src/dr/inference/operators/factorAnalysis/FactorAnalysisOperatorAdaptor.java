@@ -46,6 +46,8 @@ public interface FactorAnalysisOperatorAdaptor {
 
     Parameter[] getFactorDependentParameters();
 
+    Parameter[] getLoadingsDependentParameter();
+
     MatrixParameterInterface getLoadings();
 
     abstract class Abstract implements FactorAnalysisOperatorAdaptor, Reportable {
@@ -212,6 +214,15 @@ public interface FactorAnalysisOperatorAdaptor {
         public Parameter[] getFactorDependentParameters() {
             return new Parameter[]{LFM.getFactors()};
         }
+
+        @Override
+        public Parameter[] getLoadingsDependentParameter() {
+            return new Parameter[]{
+                    LFM.getFactors(),
+                    LFM.getColumnPrecision(),
+                    LFM.getData()
+            };
+        }
     }
 
     class IntegratedFactors extends Abstract {
@@ -291,6 +302,11 @@ public interface FactorAnalysisOperatorAdaptor {
                     factorLikelihood.getParameter(),
                     factorLikelihood.getPrecision()
             };
+        }
+
+        @Override
+        public Parameter[] getLoadingsDependentParameter() {
+            return getFactorDependentParameters();
         }
 
         private static final boolean DEBUG = false;

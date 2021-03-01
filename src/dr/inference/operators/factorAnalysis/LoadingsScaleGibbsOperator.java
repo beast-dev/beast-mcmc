@@ -1,19 +1,18 @@
 package dr.inference.operators.factorAnalysis;
 
 import dr.inference.distribution.NormalStatisticsProvider;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
-import dr.inference.model.ScaledMatrixParameter;
+import dr.inference.model.*;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 
-public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, VariableListener {
 
     private final Parameter sccaleComponent;
     private final MatrixParameterInterface matrixComponent;
@@ -23,6 +22,14 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
     private final int nFactors;
 
     private final NormalStatisticsProvider prior;
+
+    private final double[] mean;
+    private final double[][] variance;
+
+    private final Parameter[] listeningParameters;
+    private boolean needToUpdateStatistics = true;
+
+    private double[][] cholesky;
 
     LoadingsScaleGibbsOperator(FactorAnalysisStatisticsProvider statisticsProvider,
                                NormalStatisticsProvider prior) {
@@ -36,6 +43,10 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
         this.nFactors = matrixComponent.getColumnDimension();
 
         this.prior = prior;
+
+        this.mean = new double[nFactors];
+        this.variance = new double[nFactors][nFactors];
+        this.listeningParameters = statisticsProvider.getAdaptor().getLoadingsDependentParameter();
     }
 
     @Override
@@ -45,12 +56,32 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
 
     @Override
     public double doOperation() {
+        if (needToUpdateStatistics) {
+            updateMeanAndVariance();
 
+            try {
+                cholesky = new CholeskyDecomposition(variance).getL();
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();
+            }
+
+            needToUpdateStatistics = false;
+        }
+
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        for (int k = 0; k < nFactors; k++) {
+            sccaleComponent.setParameterValueQuietly(k, draw[k]);
+        }
+        sccaleComponent.fireParameterChangedEvent();
+
+        return 0;
+    }
+
+    private void updateMeanAndVariance() {
         double[][] precision = new double[nFactors][nFactors];
 
         double[][] factorInnerProduct = new double[nFactors][nFactors];
 
-        double[] mean = new double[nFactors];
         double[] meanBuffer = new double[nFactors];
 
         for (int j = 0; j < nTraits; j++) {
@@ -58,7 +89,7 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
             double factorPrecision = statisticsProvider.getAdaptor().getColumnPrecision(j);
 
             statisticsProvider.getFactorInnerProduct(j, nFactors, factorInnerProduct);
-            statisticsProvider.getFactorTraitProduct(j, nFactors, meanBuffer);
+            statisticsProvider.getFactorTraitProduct(j, nFactors, mean);
 
             for (int k1 = 0; k1 < nFactors; k1++) {
 
@@ -72,8 +103,8 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
                     precision[k2][k1] = precision[k1][k2];
                 }
 
-                statisticsProvider.getFactorTraitProduct(j, nFactors, meanBuffer);
-                mean[k1] += meanBuffer[k1] * u1 * factorPrecision;
+                statisticsProvider.getFactorTraitProduct(j, nFactors, mean);
+                meanBuffer[k1] += mean[k1] * u1 * factorPrecision;
             }
         }
 
@@ -81,33 +112,34 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
             double sd = prior.getNormalSD(i);
             double precI = 1.0 / (sd * sd);
             precision[i][i] += precI;
-            mean[i] += precI * prior.getNormalMean(i);
+            meanBuffer[i] += precI * prior.getNormalMean(i);
         }
 
-        double[][] variance = (new SymmetricMatrix(precision)).inverse().toComponents();
-
-        for (int k1 = 0; k1 < nFactors; k1++) {
-            meanBuffer[k1] = 0;
-            for (int k2 = 0; k2 < nFactors; k2++) {
-                meanBuffer[k1] += variance[k1][k2] * mean[k2];
+        Matrix varMat = (new SymmetricMatrix(precision)).inverse(); //TODO: don't invert then do Cholesky
+        for (int i = 0; i < nFactors; i++) {
+            for (int j = 0; j < nFactors; j++) {
+                variance[i][j] = varMat.component(i, j);
             }
         }
 
-        double[][] cholesky = null;
-        try {
-            cholesky = new CholeskyDecomposition(variance).getL();
-        } catch (IllegalDimension illegalDimension) {
-            illegalDimension.printStackTrace();
+        for (int k1 = 0; k1 < nFactors; k1++) {
+            mean[k1] = 0;
+            for (int k2 = 0; k2 < nFactors; k2++) {
+                mean[k1] += variance[k1][k2] * meanBuffer[k2];
+            }
         }
-
-        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(meanBuffer, cholesky);
-        for (int k = 0; k < nFactors; k++) {
-            sccaleComponent.setParameterValueQuietly(k, draw[k]);
-        }
-        sccaleComponent.fireParameterChangedEvent();
-
-        return 0;
     }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        for (Parameter parameter : listeningParameters) {
+            if (variable == parameter) {
+                needToUpdateStatistics = true;
+                break;
+            }
+        }
+    }
+
 
     private static final String LOADINGS_SCALE_OPERATOR = "loadingsScaleGibbsOperator";
 
@@ -151,4 +183,6 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
             return LOADINGS_SCALE_OPERATOR;
         }
     };
+
+
 }

@@ -213,7 +213,7 @@
         <nodeHeights internalNodes="true" rootNode="true">
             <parameter id="treeModel.allInternalNodeHeights"/>
         </nodeHeights>
-        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="false" traitDimension="6"
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="6"
                     name="traits">
             <parameter id="leafTraits"/>
         </nodeTraits>

@@ -79,6 +79,13 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         return new MatrixParameter(name, parameters);
     }
 
+    public static MatrixParameterInterface checkMatrixAndRecast(CompoundParameter compoundParameter) {
+        if (compoundParameter instanceof MatrixParameterInterface) {
+            return (MatrixParameterInterface) compoundParameter;
+        }
+        return recast(compoundParameter.getId(), compoundParameter);
+    }
+
     public double getParameterValue(int row, int col) {
         return getParameter(col).getParameterValue(row);
     }

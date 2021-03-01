@@ -53,13 +53,7 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
                 (TreeTraitParserUtilities.TraitsAndMissingIndices) dataAndMissingFromTreeTipsParser.parseXMLObject(xo);
 
 
-        MatrixParameterInterface dataParameter;
-        if (returnValue.traitParameter instanceof MatrixParameterInterface) {
-            dataParameter = (MatrixParameterInterface) returnValue.traitParameter;
-        } else {
-            dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
-                    returnValue.traitParameter);
-        }
+        MatrixParameterInterface dataParameter = MatrixParameter.checkMatrixAndRecast(returnValue.traitParameter);
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.MISSING)) {
             Parameter missing = (Parameter) xo.getChild(TreeTraitParserUtilities.MISSING).getChild(Parameter.class);

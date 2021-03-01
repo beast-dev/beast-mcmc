@@ -66,7 +66,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             factors = (MatrixParameterInterface) xo.getChild(FACTORS).getChild(MatrixParameterInterface.class);
         }
 
-        MatrixParameterInterface dataParameter;
+        final MatrixParameterInterface dataParameter;
         Parameter missingIndicator = null;
 
         XMLObject dxo = xo.getChild(DATA);
@@ -76,7 +76,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                         dxo.getChild(TreeTraitParserUtilities.TraitsAndMissingIndices.class);
 
         if (returnValue != null) {
-            dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(), returnValue.traitParameter);
+            dataParameter = MatrixParameter.checkMatrixAndRecast(returnValue.traitParameter);
 
             double[] missingIndicators = new double[returnValue.missingIndicators.length]; //TODO standardize how these models handle missing data
             for (int i = 0; i < missingIndicators.length; i++) {

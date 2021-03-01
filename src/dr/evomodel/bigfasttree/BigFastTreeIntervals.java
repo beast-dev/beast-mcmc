@@ -17,7 +17,10 @@ import java.util.List;
 
 public class BigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
     public BigFastTreeIntervals(TreeModel tree) {
-        super("bigFastIntervals");
+        this("bigFastIntervals",tree);
+    }
+    public BigFastTreeIntervals(String name, TreeModel tree) {
+        super(name);
         int maxEventCount = tree.getNodeCount();
 
         this.tree = tree;

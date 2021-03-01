@@ -13,11 +13,10 @@ public class BigFastTreeIntervalsParser extends AbstractXMLObjectParser {
     public String getParserName() {
         return TREE_INTERVALS;
     }
-
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        return new BigFastTreeIntervals(tree);
+        return new BigFastTreeIntervals(xo.getId(), tree);
 
     }
 

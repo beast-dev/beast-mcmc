@@ -6,13 +6,11 @@ import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.CholeskyDecomposition;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.*;
 import dr.xml.*;
 
-public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, VariableListener {
+public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, VariableListener,
+        Reportable {
 
     private final Parameter sccaleComponent;
     private final MatrixParameterInterface matrixComponent;
@@ -138,6 +136,22 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
                 break;
             }
         }
+    }
+
+    @Override
+    public String getReport() {
+        updateMeanAndVariance();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(getOperatorName() + "Report:\n");
+        sb.append("Scale mean:\n");
+        sb.append(new Vector(mean));
+        sb.append("\n\n");
+        sb.append("Scale covariance:\n");
+        sb.append(new Matrix(variance));
+        sb.append("\n\n");
+
+        return sb.toString();
     }
 
 

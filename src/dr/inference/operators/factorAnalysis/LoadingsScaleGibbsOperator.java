@@ -44,7 +44,11 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
 
         this.mean = new double[nFactors];
         this.variance = new double[nFactors][nFactors];
+
         this.listeningParameters = statisticsProvider.getAdaptor().getLoadingsDependentParameter();
+        for (Parameter parameter : listeningParameters) {
+            parameter.addParameterListener(this);
+        }
     }
 
     @Override

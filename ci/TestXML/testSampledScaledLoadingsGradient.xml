@@ -100,10 +100,10 @@
                     name="traits">
             <parameter id="leafTraits"/>
         </nodeTraits>
-<!--        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="3"-->
-<!--                    name="factors">-->
-<!--            <parameter id="leafFactors"/>-->
-<!--        </nodeTraits>-->
+        <!--        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="3"-->
+        <!--                    name="factors">-->
+        <!--            <parameter id="leafFactors"/>-->
+        <!--        </nodeTraits>-->
     </treeModel>
     <multivariateDiffusionModel id="diffusionModel">
         <precisionMatrix>
@@ -165,7 +165,8 @@
     </integratedFactorModel>
 
     <traitDataLikelihood allowIdentical="true" standardize="true" cacheBranches="true" id="integratedLikelihood"
-                         traitName="factors_unobserved" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         traitName="factors_unobserved" useTreeLength="false" scaleByTime="false"
+                         reportAsMultivariate="true"
                          allowSingular="true">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>
@@ -245,49 +246,35 @@
 
         <hamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0" autoOptimize="true"
                                        gradientCheckCount="100" gradientCheckTolerance="1e-3">
-            <jointGradient>
-<!--                <gradient>-->
-<!--                    <distributionLikelihood idref="L.prior"/>-->
-<!--                    <matrixParameter idref="L"/>-->
-<!--                </gradient>-->
-                <scaledMatrixGradient component="matrix">
+
+            <scaledMatrixGradient component="matrix">
+                <jointGradient>
                     <sampledLoadingsGradient>
                         <latentFactorModel idref="factorModel"/>
-                        <loadingsGibbsOperator weight="1" randomScan="false"
-                                               newMode="true"
-                                               constraint="none" sparsity="none">
-                            <latentFactorModel idref="factorModel"/>
-                            <traitDataLikelihood idref="traitLikelihood"/>
-                            <normalPrior idref="L.prior"/>
-                        </loadingsGibbsOperator>
                     </sampledLoadingsGradient>
-                </scaledMatrixGradient>
-
-            </jointGradient>
+                    <gradient>
+                        <distributionLikelihood idref="L.prior"/>
+                        <parameter idref="L"/>
+                    </gradient>
+                </jointGradient>
+            </scaledMatrixGradient>
             <matrixParameter idref="U"/>
         </hamiltonianMonteCarloOperator>
 
         <hamiltonianMonteCarloOperator weight="1.0" nSteps="10" stepSize="0.05" drawVariance="1.0" autoOptimize="true"
                                        gradientCheckCount="100" gradientCheckTolerance="1e-3">
-            <jointGradient>
-                <!--                <gradient>-->
-                <!--                    <distributionLikelihood idref="L.prior"/>-->
-                <!--                    <matrixParameter idref="L"/>-->
-                <!--                </gradient>-->
-                <scaledMatrixGradient component="scale">
+            <scaledMatrixGradient component="scale">
+                <jointGradient>
                     <sampledLoadingsGradient>
                         <latentFactorModel idref="factorModel"/>
-                        <loadingsGibbsOperator weight="1" randomScan="false"
-                                               newMode="true"
-                                               constraint="none" sparsity="none">
-                            <latentFactorModel idref="factorModel"/>
-                            <traitDataLikelihood idref="traitLikelihood"/>
-                            <normalPrior idref="L.prior"/>
-                        </loadingsGibbsOperator>
                     </sampledLoadingsGradient>
-                </scaledMatrixGradient>
+                    <gradient>
+                        <distributionLikelihood idref="L.prior"/>
+                        <parameter idref="L"/>
+                    </gradient>
+                </jointGradient>
+            </scaledMatrixGradient>
 
-            </jointGradient>
             <matrixParameter idref="scale"/>
         </hamiltonianMonteCarloOperator>
 
@@ -299,7 +286,7 @@
         <posterior id="posterior">
             <prior id="prior">
                 <distributionLikelihood idref="L.prior"/>
-<!--                <gammaPrior idref="factorPrecision.prior"/>-->
+                <!--                <gammaPrior idref="factorPrecision.prior"/>-->
             </prior>
             <likelihood id="likelihood">
                 <traitDataLikelihood idref="traitLikelihood"/>

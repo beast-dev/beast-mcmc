@@ -97,6 +97,21 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
 
     }
 
+    public void getScaledFactorInnerProduct(int trait, int dim, double[][] buffer) {
+        getFactorInnerProduct(trait, dim, buffer);
+
+        double precision = adaptor.getColumnPrecision(trait);
+
+        for (int i = 0; i < dim; i++) {
+            buffer[i][i] *= precision;
+
+            for (int j = (i + 1); j < dim; j++) {
+                buffer[i][j] *= precision;
+                buffer[j][i] = buffer[i][j];
+            }
+        }
+    }
+
     public void getFactorTraitProduct(int trait, int dim, double[] buffer) {
         final int p = adaptor.getNumberOfTaxa();
 
@@ -111,6 +126,14 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
             }
 
             buffer[i] = sum;
+        }
+    }
+
+    public void getScaledFactorTraitProduct(int trait, int dim, double[] buffer) {
+        getFactorTraitProduct(trait, dim, buffer);
+        double precision = adaptor.getColumnPrecision(trait);
+        for (int i = 0; i < dim; i++) {
+            buffer[i] *= precision;
         }
     }
 

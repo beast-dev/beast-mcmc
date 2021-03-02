@@ -55,6 +55,7 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
     @Override
     public double doOperation() {
         if (needToUpdateStatistics) {
+            statisticsProvider.getAdaptor().drawFactors();
             updateMeanAndVariance();
 
             try {

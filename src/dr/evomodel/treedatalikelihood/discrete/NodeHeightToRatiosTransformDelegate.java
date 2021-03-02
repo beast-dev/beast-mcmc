@@ -327,6 +327,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         return -logJacobian;
     }
 
+    private boolean DEBUG = false;
+
     protected int getNodeHeightGradientIndex(NodeRef node) {
         return node.getNumber() - tree.getExternalNodeCount();
     }

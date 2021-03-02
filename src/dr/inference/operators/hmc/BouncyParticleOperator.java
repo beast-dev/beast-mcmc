@@ -48,8 +48,12 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     public BouncyParticleOperator(GradientWrtParameterProvider gradientProvider,
                                   PrecisionMatrixVectorProductProvider multiplicationProvider,
                                   PrecisionColumnProvider columnProvider,
-                                  double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask);
+                                  double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                                  boolean refreshVelocity, Parameter mask,
+                                  MassPreconditioner massPreconditioner,
+                                  MassPreconditionScheduler.Type preconditionSchedulerType) {
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
+                refreshVelocity, mask, massPreconditioner, preconditionSchedulerType);
     }
 
     @Override
@@ -203,7 +207,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     private double getBounceTime(double v_phi_v, double v_phi_x, double u_min) {
         double a = v_phi_v / 2;
         double b = v_phi_x;
-        double c = - u_min - MathUtils.nextExponential(1);
+        double c = -u_min - MathUtils.nextExponential(1);
         return (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
     }
 

@@ -59,8 +59,7 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,
                                                     Parameter parameter, Transform transform, Parameter mask,
                                                     HamiltonianMonteCarloOperator.Options runtimeOptions,
-                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType,
-                                                    ReversibleHMCProvider reversibleHMCprovider) {
+                                                    MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType) {
 
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,

@@ -26,6 +26,7 @@
 
 package dr.inference.operators.hmc;
 
+import dr.evomodel.treedatalikelihood.discrete.MaskProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
@@ -38,25 +39,25 @@ import dr.xml.Reportable;
  */
 public class TransformedMultivariateHamiltonianMonteCarloOperator extends HamiltonianMonteCarloOperator implements Reportable {
 
-    private Parameter maskParameter;
+    private final MaskProvider maskProvider;
 
     public TransformedMultivariateHamiltonianMonteCarloOperator(AdaptationMode mode,
                                                                 double weight,
                                                                 GradientWrtParameterProvider gradientProvider,
                                                                 Parameter parameter,
                                                                 Transform transform,
-                                                                Parameter maskParameter,
+                                                                MaskProvider maskProvider,
                                                                 Options runtimeOptions,
                                                                 MassPreconditioner preconditioner,
                                                                 MassPreconditionScheduler.Type preconditionSchedulerType) {
-        super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner, preconditionSchedulerType);
-
+        super(mode, weight, gradientProvider, parameter, transform, maskProvider.getMask(), runtimeOptions, preconditioner, preconditionSchedulerType);
+        this.maskProvider = maskProvider;
+        this.leapFrogEngine = constructLeapFrogEngine(transform);
 
 
     }
 
     protected double[] buildMask(Parameter maskParameter) {
-        this.maskParameter = maskParameter;
         double[] mask = new double[gradientProvider.getDimension()];
         for (int i = 0; i < mask.length; i++) {
             mask[i] = 1.0;
@@ -66,7 +67,7 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
 
     @Override
     protected LeapFrogEngine constructLeapFrogEngine(Transform transform) {
-        return new MaskedMultivariateTransform(parameter, gradientProvider, getDefaultInstabilityHandler(), preconditioning, maskParameter, transform);
+        return new MaskedMultivariateTransform(parameter, gradientProvider, getDefaultInstabilityHandler(), preconditioning, maskProvider, transform);
     }
 
     @Override
@@ -76,17 +77,17 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
 
     class MaskedMultivariateTransform extends HamiltonianMonteCarloOperator.LeapFrogEngine.WithTransform {
 
-        private final Parameter mask;
+        private final MaskProvider maskProvider;
 
 
         MaskedMultivariateTransform(Parameter parameter,
                                     GradientWrtParameterProvider gradientProvider,
                                     InstabilityHandler instabilityHandler,
                                     MassPreconditioner preconditioning,
-                                    Parameter mask,
+                                    MaskProvider maskProvider,
                                     Transform transform) {
             super(parameter, transform, instabilityHandler, preconditioning, new double[gradientProvider.getDimension()]);
-            this.mask = mask;
+            this.maskProvider = maskProvider;
             setMaskUntransformedSpace();
         }
 
@@ -107,10 +108,11 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
         }
 
         private void mask(double[] array) {
-            assert(mask.getDimension() == array.length);
+            assert(maskProvider.getMask().getDimension() == array.length);
+            maskProvider.updateMask();
 
             for (int i = 0; i < array.length; ++i) {
-                array[i] *= mask.getParameterValue(i);
+                array[i] *= maskProvider.getMask().getParameterValue(i);
             }
         }
     }

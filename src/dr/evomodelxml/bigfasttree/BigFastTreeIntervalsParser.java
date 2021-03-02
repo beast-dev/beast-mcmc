@@ -16,7 +16,7 @@ public class BigFastTreeIntervalsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        return new BigFastTreeIntervals(xo.getId(), tree);
+        return new BigFastTreeIntervals( tree);
 
     }
 

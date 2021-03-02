@@ -25,7 +25,6 @@
 
 package dr.inference.operators.factorAnalysis;
 
-import dr.evomodel.treedatalikelihood.continuous.HashedMissingArray;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.NormalStatisticsProvider;
@@ -35,12 +34,9 @@ import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,8 +66,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private final ConstrainedSampler constrainedSampler;
     private final ColumnDimProvider columnDimProvider;
-
-    private boolean statisticsOnly = false;
 
 
     public NewLoadingsGibbsOperator(FactorAnalysisStatisticsProvider statisticsProvider, NormalStatisticsProvider prior,
@@ -128,21 +122,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     public FactorAnalysisOperatorAdaptor getAdaptor() {
         return adaptor;
     }
-
-    public void setStatisticsOnly(boolean value) {
-        statisticsOnly = value;
-    }
-
-    public double[] getCurrentMean(int i) {
-        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
-        return meanArray.get(arrayInd);
-    }
-
-    public double[][] getCurrentPrecision(int i) {
-        int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
-        return precisionArray.get(arrayInd);
-    }
-
 
     private double getPrecision(NormalStatisticsProvider provider, int dim) {
         double sd = provider.getNormalSD(dim);
@@ -219,19 +198,17 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
-        if (!statisticsOnly) {
 
-            double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
-            adaptor.setLoadingsForTraitQuietly(i, draw);
+        adaptor.setLoadingsForTraitQuietly(i, draw);
 
-            if (DEBUG) {
-                System.err.println("draw: " + new Vector(draw));
-            }
+        if (DEBUG) {
+            System.err.println("draw: " + new Vector(draw));
         }
     }
 
-    public void drawI(int i) {
+    private void drawI(int i) {
         int arrayInd = columnDimProvider.getArrayIndex(i, adaptor.getNumberOfFactors());
         drawI(i, precisionArray.get(arrayInd), meanMidArray.get(arrayInd), meanArray.get(arrayInd));
     }

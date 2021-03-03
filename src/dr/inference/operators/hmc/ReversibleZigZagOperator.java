@@ -554,6 +554,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient,
                                                  int direction, double time) {
 
+        preconditionScheduler.forceUpdateCount();
+
+        if (preconditionScheduler.shouldUpdatePreconditioning()){
+            updatePreconditioning(position);
+        }
+
         preconditioning.totalTravelTime = time;
         if (direction == -1) {
             // negate momentum

@@ -309,10 +309,12 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
             this.delta = deltaList;
         }else{
             this.delta = new ArrayList<Parameter>();
-            for(int i = 0; i < betaList.size(); i++){
-                Parameter deltaParam = new Parameter.Default(1.0);
-                deltaParam.setParameterValue(0,1.0);
-                this.delta.add(deltaParam);
+            if (betaList != null) {
+                for(int i = 0; i < betaList.size(); i++) {
+                    Parameter deltaParam = new Parameter.Default(1.0);
+                    deltaParam.setParameterValue(0, 1.0);
+                    this.delta.add(deltaParam);
+                }
             }
         }
 

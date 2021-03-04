@@ -514,8 +514,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
             if (xo.hasChildNamed(RANDOM_RATES)) {
                 XMLObject dxo = xo.getChild(RANDOM_RATES);
                 Parameter onTreeRates = (Parameter) dxo.getChild(ON_TREE).getChild(Parameter.class);
-                Parameter notOnTreeRates = (Parameter) dxo.getChild(NOT_ON_TREE).getChild(Parameter.class);
-                Parameter rates = new CompoundParameter("HawkesRates", new Parameter[]{onTreeRates, notOnTreeRates});
+                Parameter notOnTreeRates = dxo.getChild(NOT_ON_TREE) == null ? null : (Parameter) dxo.getChild(NOT_ON_TREE).getChild(Parameter.class);
+                Parameter rates = notOnTreeRates == null ? onTreeRates : new CompoundParameter("HawkesRates", new Parameter[]{onTreeRates, notOnTreeRates});
                 Taxa taxaOnTree = (Taxa) dxo.getChild(Taxa.class);
                 TreeModel tree = (TreeModel) dxo.getChild(TreeModel.class);
                 boolean[] onTree = new boolean[rates.getDimension()];

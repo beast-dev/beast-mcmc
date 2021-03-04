@@ -79,7 +79,6 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
 
         private final MaskProvider maskProvider;
 
-
         MaskedMultivariateTransform(Parameter parameter,
                                     GradientWrtParameterProvider gradientProvider,
                                     InstabilityHandler instabilityHandler,
@@ -98,6 +97,11 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
         }
 
         @Override
+        public void updateMask() {
+            maskProvider.updateMask();
+        }
+
+        @Override
         public void updateMomentum(double[] position, double[] momentum, double[] gradient,
                                    double functionalStepSize) throws NumericInstabilityException {
 
@@ -109,7 +113,6 @@ public class TransformedMultivariateHamiltonianMonteCarloOperator extends Hamilt
 
         private void mask(double[] array) {
             assert(maskProvider.getMask().getDimension() == array.length);
-            maskProvider.updateMask();
 
             for (int i = 0; i < array.length; ++i) {
                 array[i] *= maskProvider.getMask().getParameterValue(i);

@@ -430,6 +430,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     }
 
     protected double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+        leapFrogEngine.updateMask();
         final double[] position = leapFrogEngine.getInitialPosition();
         leapFrogEngine.projectMomentum(momentum.getBuffer(), position); //if momentum restricted to subspace
 
@@ -628,6 +629,8 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         void projectMomentum(double[] momentum, double[] position);
 
+        void updateMask();
+
         class Default implements LeapFrogEngine {
 
             final protected Parameter parameter;
@@ -670,6 +673,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
             @Override
             public void projectMomentum(double[] momentum, double[] position) {
+                // do nothing
+            }
+
+            @Override
+            public void updateMask() {
                 // do nothing
             }
 

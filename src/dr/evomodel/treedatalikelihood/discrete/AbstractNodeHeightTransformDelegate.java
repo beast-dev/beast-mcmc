@@ -54,6 +54,10 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         treeModel.addModelListener(this);
     }
 
+    abstract public double[] setMaskByHeightDifference(double threshold);
+
+    abstract public double[] setMaskByRatio(double threshold);
+
     public void setNodeHeights(double[] nodeHeights) {
         if (nodeHeights.length != this.nodeHeights.getDimension()) {
             throw new RuntimeException("Dimension mismatch!");

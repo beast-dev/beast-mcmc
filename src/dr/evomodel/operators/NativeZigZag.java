@@ -53,15 +53,19 @@ public class NativeZigZag {
     int createInstance(int dimension,
                        NativeZigZagOptions options,
                        double[] mask,
-                       double[] observed) {
+                       double[] observed,
+                       double[] parameterSign) {
 
 
         if ((mask != null && dimension != mask.length) ||
                 (observed != null && dimension != observed.length)) {
             throw new RuntimeException("Invalid dimensions");
         }
+        if (mask == null){
+            mask = allOneMask(dimension);
+        }
 
-        int result = create(dimension, options, mask, observed);
+        int result = create(dimension, options, mask, observed, parameterSign);
         if (result < 0) {
             throw new RuntimeException("Unable to create instance");
         }
@@ -69,10 +73,19 @@ public class NativeZigZag {
         return instanceNumber++;
     }
 
+    private double[] allOneMask(int dimension) {
+        double[] mask = new double[dimension];
+        for (int i = 0; i < dimension; i++) {
+            mask[i] = 1;
+        }
+        return mask;
+    }
+
     private native int create(int dimension,
                               NativeZigZagOptions options,
                               double[] mask,
-                              double[] observed);
+                              double[] observed,
+                              double[] parameterSign);
 
     native int operate(int instanceNumber,
                        PrecisionColumnProvider columnProvider,

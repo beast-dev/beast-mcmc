@@ -23,9 +23,10 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         ReversibleHMCProvider {
 
     private double stepSize;
-    private double relativeScale;
-    private ReversibleHMCProvider inner;
-    private ReversibleHMCProvider outer;
+    public double relativeScale;
+    public final SplitHMCtravelTimeMultiplier travelTimeMultipler;
+    public ReversibleHMCProvider inner;
+    public ReversibleHMCProvider outer;
     protected final Parameter parameter;
 
     int dimInner;
@@ -43,7 +44,8 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
                                               ReversibleHMCProvider outer, Parameter parameter,
                                               double stepSize,
                                               double relativeScale, int nSteps, int nSplitOuter,
-                                              int gradientCheckCount, double gradientCheckTolerance) {
+                                              int gradientCheckCount, double gradientCheckTolerance,
+                                              SplitHMCtravelTimeMultiplier travelTimeMultiplier) {
 
         setWeight(weight);
         this.inner = inner;
@@ -59,12 +61,21 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
         this.gradientCheckCount = gradientCheckCount;
         this.gradientCheckTolerance = gradientCheckTolerance;
+
+        this.travelTimeMultipler = travelTimeMultiplier;
     }
 
     public double doOperation(Likelihood joint) {
         if (getCount() < gradientCheckCount) {
             checkGradient(joint);
         }
+
+        updateRS();
+
+        if (travelTimeMultipler.shouldGetMultiplier(getCount())) {
+            relativeScale = travelTimeMultipler.getMultiplier();
+        }
+
         return mergedUpdate();
     }
 
@@ -224,6 +235,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     @Override
     public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction,
                                                  double time) {
+        updateRS();
 
         double[] positionInnerbuffer = new double[dimInner];
         double[] positionOuterbuffer = new double[dimOuter];
@@ -318,6 +330,11 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     }
 
     @Override
+    public double[] getMask() {
+        return new double[0];
+    }
+
+    @Override
     public Transform getTransform() {
         return null;
     }
@@ -335,7 +352,6 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
                 , dimOuter);
         return jointPosition;
     }
-
 
     @Override
     public void setParameter(double[] position) {
@@ -380,9 +396,6 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
         ReadableVector momentumA = new WrappedVector.Raw(bufferA);
         ReadableVector momentumB = new WrappedVector.Raw(bufferB);
-        // TODO Use ReadableVector.View instead
-//        return inner.getKineticEnergy(new ReadableVector.View(momentum, 0, dimA)) +
-//                outer.getKineticEnergy(new ReadableVector.View(momentum, dimA, dimB));
 
         return inner.getKineticEnergy(momentumA) + outer.getKineticEnergy(momentumB);
     }
@@ -390,7 +403,7 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
     @Override
     public double getStepSize() { //todo:
         return stepSize;
-    } //todo: tuning.
+    }
 
     private WrappedVector mergeWrappedVector(WrappedVector lhs, WrappedVector rhs) {
         double[] buffer = new double[lhs.getDim() + rhs.getDim()];
@@ -411,6 +424,13 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
             } else {
                 vectorJoint.set(i, vectorRHS.get(i - dimInner));
             }
+        }
+    }
+
+    private void updateRS() {
+        if (travelTimeMultipler != null && travelTimeMultipler.shouldUpdateSCM(getCount())) {
+            travelTimeMultipler.updateSCM(travelTimeMultipler.getInnerCov(), inner.getInitialPosition(), getCount());
+            travelTimeMultipler.updateSCM(travelTimeMultipler.getOuterCov(), outer.getInitialPosition(), getCount());
         }
     }
 }

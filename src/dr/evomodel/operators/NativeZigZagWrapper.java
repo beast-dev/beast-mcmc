@@ -13,8 +13,9 @@ public class NativeZigZagWrapper {
     public NativeZigZagWrapper(int dimension,
                                NativeZigZagOptions options,
                                double[] mask,
-                               double[] observed) {
-        this.instanceNumber = NativeZigZag.INSTANCE.createInstance(dimension, options, mask, observed);
+                               double[] observed,
+                               double[] parameterSign) {
+        this.instanceNumber = NativeZigZag.INSTANCE.createInstance(dimension, options, mask, observed, parameterSign);
     }
 
     public void operate(PrecisionColumnProvider columnProvider,

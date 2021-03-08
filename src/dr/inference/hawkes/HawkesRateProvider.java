@@ -45,6 +45,8 @@ public interface HawkesRateProvider {
 
     double[] orderByNodeIndex(double[] orderByTime);
 
+    void updateRateGradient(double[] gradient);
+
     class None implements HawkesRateProvider {
 
         @Override
@@ -60,6 +62,11 @@ public interface HawkesRateProvider {
         @Override
         public double[] orderByNodeIndex(double[] orderByTime) {
             throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
+        }
+
+        @Override
+        public void updateRateGradient(double[] gradient) {
+            // do nothing
         }
     }
 
@@ -102,6 +109,11 @@ public interface HawkesRateProvider {
                 nodeOrdered[indices[i]] = orderByTime[i];
             }
             return nodeOrdered;
+        }
+
+        @Override
+        public void updateRateGradient(double[] gradient) {
+            // do nothing
         }
 
         @Override
@@ -165,7 +177,7 @@ public interface HawkesRateProvider {
             double[] residues = super.getRatesByNodes();
             double[] rates = new double[rate.getDimension()];
             for (int i = 0; i < rate.getDimension(); i++) {
-                rates[i] = getIntercept() + getTimeEffect(i) + residues[i];
+                rates[i] = Math.exp(getIntercept() + getTimeEffect(i) + residues[i]);
             }
             return rates;
         }
@@ -181,6 +193,15 @@ public interface HawkesRateProvider {
                 return coefficients.getParameterValue(options.getTimeEffectIndex()) * nodeTimes[nodeIndex];
             } else {
                 return 0.0;
+            }
+        }
+
+        @Override
+        public void updateRateGradient(double[] gradient) {
+            double[] rates = orderByTime(getRatesByNodes());
+            assert(rates.length == gradient.length);
+            for (int i = 0; i < gradient.length; i++) {
+                gradient[i] *= rates[i];
             }
         }
 

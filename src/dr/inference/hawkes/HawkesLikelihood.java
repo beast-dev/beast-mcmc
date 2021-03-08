@@ -276,6 +276,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
 
         hphCore.getRandomRatesGradient(gradient);
 
+        hawkesModel.getRateProvider().updateRateGradient(gradient);
+
         return gradient;
     }
 

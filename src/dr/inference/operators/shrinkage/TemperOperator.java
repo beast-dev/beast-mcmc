@@ -15,14 +15,14 @@ import static dr.inferencexml.operators.shrinkage.BayesianBridgeShrinkageOperato
 public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     public static final String TEMPER_OPERATOR = "temperOperator";
-    public static final String TARGET_PARAMETER = "targetParameter";
-    public static final String RATE = "rate";
+    private static final String TARGET_PARAMETER = "target";
+    private static final String RATE = "rate";
 
     private final Parameter parameter;
     private final Parameter target;
-    private double rate;
+    private final double rate;
     private double currentCount;
-    private double[] startValues;
+    private final double[] startValues;
 
     public TemperOperator(Parameter parameter,
                           Parameter target,
@@ -94,20 +94,20 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             Parameter hotParameter = (Parameter) xo.getChild(Parameter.class);
 
             XMLObject cxo = xo.getChild(TARGET_PARAMETER);
-            Parameter targetParameter = (Parameter) cxo.getChild(Parameter.class);
+            Parameter targetParameter = (cxo.getChild(0) instanceof Parameter) ?
+                (Parameter) cxo.getChild(Parameter.class) :
+                new Parameter.Default(cxo.getDoubleChild(0));
 
             if (targetParameter.getDimension() > hotParameter.getDimension()) {
                 throw new XMLParseException("Target parameter cannot have more dimensions than the tempered parameter.");
             }
 
             double rate = xo.getAttribute(RATE, 0.0);
-
             if (rate < 0.0) {
                 throw new XMLParseException("Rate cannot be negative");
             }
 
-            TemperOperator temper = new TemperOperator(hotParameter, targetParameter, rate, weight);
-            return temper;
+            return new TemperOperator(hotParameter, targetParameter, rate, weight);
         }
 
         //************************************************************************
@@ -123,16 +123,19 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
             return "Tempers (anneals) a parameter from starting value to target value.";
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
         public Class getReturnType() {
             return TemperOperator.class;
         }
 
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(Parameter.class),
                 new ElementRule(TARGET_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class),
-                }),
+                        new XORRule(
+                                new ElementRule(Parameter.class),
+                                new ElementRule(Double.class)
+                        )}),
                 AttributeRule.newDoubleRule(RATE),
         };
     };

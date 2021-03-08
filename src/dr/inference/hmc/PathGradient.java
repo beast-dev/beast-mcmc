@@ -107,7 +107,7 @@ public class PathGradient implements HessianWrtParameterProvider, PathDependent 
         final double[] likelihood = ((HessianWrtParameterProvider) source).getDiagonalHessianLogDensity();
 
         if (beta != 1.0) {
-            final double[] second = ((HessianWrtParameterProvider) destination).getGradientLogDensity();
+            final double[] second = ((HessianWrtParameterProvider) destination).getDiagonalHessianLogDensity();
 
             for (int i = 0; i < likelihood.length; ++i) {
                 likelihood[i] = blend(likelihood[i], second[i], beta);

@@ -67,6 +67,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     private double storedTimeTotal;
 
     private double meanRateParameterValue;
+    private double storedMeanRate;
 
     private DenseMatrix64F Jacobian;
 
@@ -108,6 +109,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         storedBranchTotal = branchTotal;
         storedTimeTotal = timeTotal;
+        storedMeanRate = meanRateParameterValue;
     }
 
     protected void restoreState() {
@@ -116,6 +118,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         branchTotal = storedBranchTotal;
         timeTotal = storedTimeTotal;
+
+        meanRateParameterValue = storedMeanRate;
     }
 
     protected void acceptState() { }

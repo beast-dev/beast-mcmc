@@ -58,7 +58,6 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
-    private final static String PRIOR_PRECONDITIONING = "priorDiagonal";
     private final static String GRADIENT_CHECK_COUNT = "gradientCheckCount";
     public final static String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     private final static String MAX_ITERATIONS = "checkStepSizeMaxIterations";
@@ -80,7 +79,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     }
 
     static MassPreconditionScheduler.Type parsePreconditionScheduler(XMLObject xo,
-                                                                      MassPreconditioner.Type preconditioningType) throws XMLParseException {
+                                                                     MassPreconditioner.Type preconditioningType) throws XMLParseException {
         if (preconditioningType == MassPreconditioner.Type.NONE) {
             return MassPreconditionScheduler.Type.NONE;
         } else {
@@ -96,7 +95,13 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         int nSteps = xo.getAttribute(N_STEPS, 10);
         double stepSize = xo.getDoubleAttribute(STEP_SIZE);
 
-        MassPreconditioner.Type preconditioningType = parsePreconditioning(xo);
+        MassPreconditioner.Type preconditioningType;
+        if (xo.hasChildNamed(PRECONDITIONER)) {
+            preconditioningType = MassPreconditioner.Type.PRIOR_DIAGONAL;
+        } else {
+            preconditioningType = parsePreconditioning(xo);
+        }
+
         MassPreconditionScheduler.Type preconditionSchedulerType = parsePreconditionScheduler(xo, preconditioningType);
 
         double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
@@ -174,13 +179,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
 
         MassPreconditioner preconditioner;
 
-        if (xo.hasChildNamed(PRECONDITIONER)) {
-
-            if (preconditioningType.getName() != PRIOR_PRECONDITIONING) {
-                throw new XMLParseException("Incorrect prior preconditioning or not yet implemented");
-            }
+        if (preconditioningType == MassPreconditioner.Type.PRIOR_DIAGONAL) {
             Object cxo = xo.getElementFirstChild(PRECONDITIONER);
-
             if (cxo instanceof PriorPreconditioningProvider) {
                 preconditioner = new MassPreconditioner.PriorPreconditioner((PriorPreconditioningProvider) cxo, transform);
             } else {

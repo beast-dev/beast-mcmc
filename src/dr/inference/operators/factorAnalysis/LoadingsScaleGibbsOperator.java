@@ -3,14 +3,15 @@ package dr.inference.operators.factorAnalysis;
 import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.*;
 import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.RejectionOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.*;
 
-public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, VariableListener,
-        Reportable {
+public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements GibbsOperator,
+        RejectionOperator.RejectionProvider, VariableListener, Reportable {
 
     private final Parameter sccaleComponent;
     private final MatrixParameterInterface matrixComponent;
@@ -58,6 +59,18 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
 
     @Override
     public double doOperation() {
+        double draw[] = getProposedUpdate();
+
+        for (int k = 0; k < nFactors; k++) {
+            sccaleComponent.setParameterValueQuietly(k, draw[k]);
+        }
+        sccaleComponent.fireParameterChangedEvent();
+
+        return 0;
+    }
+
+    @Override
+    public double[] getProposedUpdate() {
         if (needToUpdateStatistics) {
             statisticsProvider.getAdaptor().drawFactors();
             updateMeanAndVariance();
@@ -72,12 +85,12 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
         }
 
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
-        for (int k = 0; k < nFactors; k++) {
-            sccaleComponent.setParameterValueQuietly(k, draw[k]);
-        }
-        sccaleComponent.fireParameterChangedEvent();
+        return draw;
+    }
 
-        return 0;
+    @Override
+    public Parameter getParameter() {
+        return sccaleComponent;
     }
 
     private void updateMeanAndVariance() {
@@ -202,6 +215,5 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
             return LOADINGS_SCALE_OPERATOR;
         }
     };
-
 
 }

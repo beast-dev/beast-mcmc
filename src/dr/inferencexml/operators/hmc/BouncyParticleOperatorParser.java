@@ -33,6 +33,7 @@ import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.AbstractParticleOperator;
 import dr.inference.operators.hmc.BouncyParticleOperator;
+import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.xml.*;
 
 /**
@@ -74,7 +75,7 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
                 parseNativeCodeOptions(xo),
                 refreshVelocity,
                 parseMask(xo),
-                null, null);
+                null, MassPreconditionScheduler.Type.NONE);
     }
 
     static Parameter parseMask(XMLObject xo) throws XMLParseException {

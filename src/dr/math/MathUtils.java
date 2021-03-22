@@ -90,7 +90,7 @@ public class MathUtils {
 
 		}
 		for (int i = 0; i < pdf.length; i++) {
-			System.out.println(i + "\t" + pdf[i]);
+			System.err.println(i + "\t" + pdf[i]);
 		}
 		throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
 				"distribution, or all zeroes?");

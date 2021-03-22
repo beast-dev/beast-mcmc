@@ -196,8 +196,8 @@
             <prior idref="priorIncrements"/>
         </actual>
         <expected>
-            -45.94630020258188
-        </expected>
+			-12.344489547816243
+		</expected>
     </assertEqual>
 
     <report>
@@ -212,8 +212,8 @@
             <prior idref="priorRates"/>
         </actual>
         <expected>
-            -55.612444466542954
-        </expected>
+			-22.01063381177731
+		</expected>
     </assertEqual>
 
     <report>
@@ -247,7 +247,7 @@
 		   <gradientWrtIncrements idref="incrementGradient"/>
         </actual>
         <expected>
-            80.2581273215782, 23.053874813953737, 5.757572363869119, -3.1417273498166933, 0.37922883813142577, -3.0390512384618753
+			12.841300371452512, 3.688619970232598, 0.921211578219059, -0.502676375970671, 0.06067661410102813, -0.4862481981539
         </expected>
     </assertEqual>
 
@@ -263,7 +263,7 @@
             <gradientWrtIncrements idref="incrementGradientForRates"/>
         </actual>
         <expected>
-            78.02205934407841, 22.053874813953737, 4.757572363869119, -5.970154474562884, -5.620771161868574, -11.69930527630626
+			10.605232393952722, 2.688619970232598, -0.07878842178094103, -3.3311035007168615, -5.939323385898972, -9.146502235998286
         </expected>
     </assertEqual>
 

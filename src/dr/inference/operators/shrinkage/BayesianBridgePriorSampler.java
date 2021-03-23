@@ -28,10 +28,11 @@ public class BayesianBridgePriorSampler {
     JointBayesianBridgeDistributionModel bridge;
 
     public BayesianBridgePriorSampler(JointBayesianBridgeDistributionModel dummyBridge, GammaDistribution globalScalePrior, int N) {
-        this.bridge = dummyBridge;
-        this.globalScale = bridge.getGlobalScale();
-        this.localScale = bridge.getLocalScale();
-        this.regressionExponent = bridge.getExponent();
+        this.localScale = new Parameter.Default(1, 10.0); // initial value does not matter
+        this.globalScale = new Parameter.Default(1, dummyBridge.getGlobalScale().getParameterValue(0));
+        this.regressionExponent = dummyBridge.getExponent();
+
+        this.bridge = new JointBayesianBridgeDistributionModel(globalScale, localScale, regressionExponent, dummyBridge.getSlabWidth(), 1, false);
 
         this.globalScalePrior = globalScalePrior;
 
@@ -101,10 +102,6 @@ public class BayesianBridgePriorSampler {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             JointBayesianBridgeDistributionModel bridge = (JointBayesianBridgeDistributionModel) xo.getChild(JointBayesianBridgeDistributionModel.class);
-
-            if (bridge.getDimension() > 1) {
-                throw new XMLParseException("dim " + bridge.getDimension() + " is not equal to 1. Bayesian Bridge prior sampling not yet implemented for dimensions > 1");
-            }
 
             GammaDistribution globalScalePrior = null;
 

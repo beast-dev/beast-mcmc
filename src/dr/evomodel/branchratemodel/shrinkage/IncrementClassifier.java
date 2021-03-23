@@ -17,6 +17,7 @@ import dr.xml.*;
  * @author Alexander Fisher
  */
 public class IncrementClassifier implements TreeTraitProvider, Loggable {
+    //todo: add logger
     public static final String INCREMENT_CLASSIFIER = "incrementClassifier";
     public static final String EPSILON = "epsilon";
     public static final String TARGET_PROBABILITY = "targetProbability";
@@ -40,6 +41,14 @@ public class IncrementClassifier implements TreeTraitProvider, Loggable {
         helper = new Helper();
         setupTraits();
     }
+
+//    private double findEpsilonFromTargetProb(double targetProb) {
+//        // finds eps such that Prob{abs(increment) < eps} = targetProb
+//        double probToFindEpsilon = (targetProb / 2) + 0.5;
+////        NormalDistribution normal = new NormalDistribution(0, sd);
+////        return normal.quantile(probToFindEpsilon);
+//        return()
+//    }
 
     private void classify() {
         double increment;

@@ -67,7 +67,6 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         if (slabWidth != null) {
             double ratio = globalLocalProduct / slabWidth.getParameterValue(0);
             globalLocalProduct /= Math.sqrt(1.0 + ratio * ratio);
-            globalLocalProduct = globalLocalProduct * slabWidth.getParameterValue(0);
         }
         return globalLocalProduct;
     }

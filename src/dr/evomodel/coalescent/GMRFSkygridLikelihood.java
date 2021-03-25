@@ -659,7 +659,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
                 currentTime = nextTime;
                 currentTimeIndex++;
 
-                while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
+                while (currentTimeIndex < intervalsList.get(i).getIntervalCount()) {
                     // currentTime = nextTime;
                     // currentTimeIndex++;
 
@@ -690,7 +690,7 @@ public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
                 // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
 
             } else {
-                while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
+                while ((currentTimeIndex) < intervalsList.get(i).getIntervalCount()) {
                     //check to see if interval is coalescent interval or sampling interval
                     //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
                     if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {

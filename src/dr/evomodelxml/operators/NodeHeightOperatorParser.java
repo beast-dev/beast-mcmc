@@ -30,7 +30,7 @@ import dr.evomodel.operators.RandomWalkNodeHeightOperator;
 import dr.evomodel.operators.ScaleNodeHeightOperator;
 import dr.evomodel.operators.UniformNodeHeightOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.thorneytreelikelihood.MultiMoveUniformNodeHeightOperator;
+//import dr.evomodel.treelikelihood.thorneytreelikelihood.MultiMoveUniformNodeHeightOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
@@ -45,8 +45,10 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
         UNIFORM("uniform"),
         RANDOMWALK("random walk"),
         SCALEROOT("scale root"),
-        SCALEALL("scale all internal"),
-        MULTIMOVEUNIFORM("multiMoveUniform");
+        SCALEALL("scale all internal");
+//        MULTIMOVEUNIFORM("multiMoveUniform");
+        // -JT the order in which nodes are picked matters but there is more than
+        // one way to pick the nodes I don't trust the multimove operator
 
         OperatorType(String name) {
             this.name = name;
@@ -122,8 +124,8 @@ public class NodeHeightOperatorParser extends AbstractXMLObjectParser {
                 case SCALEROOT:
                 case SCALEALL:
                     return new ScaleNodeHeightOperator(treeModel, weight, tuningParameter, operatorType, mode, targetAcceptance);
-                case MULTIMOVEUNIFORM:
-                    return new MultiMoveUniformNodeHeightOperator(treeModel, weight, tuningParameter,mode,targetAcceptance);
+//                case MULTIMOVEUNIFORM:
+//                    return new MultiMoveUniformNodeHeightOperator(treeModel, weight, tuningParameter,mode,targetAcceptance);
                 default:
                     throw new IllegalArgumentException("Unknown operator type");
             }

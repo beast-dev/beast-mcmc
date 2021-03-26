@@ -29,12 +29,16 @@ public class MultiMoveUniformNodeHeightOperator extends AbstractAdaptableTreeOpe
     }
 
     /**
-     * Do a subtree leap move.
+     * Do operation.
      *
      * @return the log-transformed hastings ratio
      */
     public double doOperation() {
 
+        //TODO the order in which nodes are picked matters but there is more than
+        // one way to pick the nodes I don't trust the hasting ration of 1.
+        throw new UnsupportedOperationException("Multimove node heights operations are not supported");
+        /*
         List<NodeRef> selected = new ArrayList<>();
         Set<NodeRef> ignore  = new HashSet<>();
         ignore.add(tree.getRoot());
@@ -64,7 +68,7 @@ public class MultiMoveUniformNodeHeightOperator extends AbstractAdaptableTreeOpe
         }
 
         return logL;
-
+*/
     }
 
     private double doMove(NodeRef node){

@@ -13,117 +13,6 @@ public class RejectionOperator extends SimpleMCMCOperator {
         Parameter getParameter();
     }
 
-    public interface AcceptCondition {
-        boolean satisfiesCondition(double[] values);
-    }
-
-    public enum SimpleAcceptCondition implements AcceptCondition {
-        DescendingAbsoluteValue("descendingAbsoluteValue") {
-            @Override
-            public boolean satisfiesCondition(double[] values) {
-                for (int i = 1; i < values.length; i++) {
-                    if (Math.abs(values[i - 1]) < Math.abs(values[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        },
-
-//        DescendingAbsoluteValueSpaced("descendingAbsoluteValueSpaced") {
-//            @Override
-//            public boolean satisfiesCondition(double[] values) {
-//                for (int i = 1; i < values.length; i++) {
-//                    if (0.9 * Math.abs(values[i - 1]) < Math.abs(values[i])) {
-//                        return false;
-//                    }
-//                }
-//                return true;
-//            }
-//        },
-
-        AlternatingSigns("descendingAlternatingSigns") {
-            @Override
-            public boolean satisfiesCondition(double[] values) {
-                for (int i = 1; i < values.length; i++) {
-                    Boolean signa = (values[i] > 0);
-                    Boolean signb = (values[i - 1] > 0);
-                    if (Math.abs(values[i - 1]) < Math.abs(values[i]) || signa == signb) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        };
-
-        private final String name;
-
-        SimpleAcceptCondition(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public abstract boolean satisfiesCondition(double[] values);
-    }
-
-    public static class DescendingAndSpacedCondition implements AcceptCondition {
-        private final double spacing;
-
-        DescendingAndSpacedCondition(double spacing) {
-            this.spacing = spacing;
-        }
-
-        @Override
-        public boolean satisfiesCondition(double[] values) {
-            for (int i = 1; i < values.length; i++) {
-                if (spacing * Math.abs(values[i - 1]) < Math.abs(values[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static final String DESCENDING_AND_SPACED = "descendingAndSpaced";
-        private static final String SPACING = "spacing";
-
-        public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
-            @Override
-            public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-                double spacing = xo.getDoubleAttribute(SPACING);
-                if (spacing < 0.0 || spacing > 1.0) {
-                    throw new XMLParseException("Attribute '" + SPACING + "' must be between 0 and 1.");
-                }
-
-                return new DescendingAndSpacedCondition(spacing);
-            }
-
-            @Override
-            public XMLSyntaxRule[] getSyntaxRules() {
-                return new XMLSyntaxRule[]{
-                        AttributeRule.newDoubleRule(SPACING)
-                };
-            }
-
-            @Override
-            public String getParserDescription() {
-                return "Condition requiring parameter to have descending absolute values with some minimum spacing.";
-            }
-
-            @Override
-            public Class getReturnType() {
-                return DescendingAndSpacedCondition.class;
-            }
-
-            @Override
-            public String getParserName() {
-                return DESCENDING_AND_SPACED;
-            }
-        };
-    }
 
     private final RejectionProvider gibbsOp;
     private final AcceptCondition condition;
@@ -167,11 +56,10 @@ public class RejectionOperator extends SimpleMCMCOperator {
             double weight = xo.getAttribute(WEIGHT, gibbsOp.getWeight());
 
             AcceptCondition condition = null;
-            String stringCondition = xo.getStringAttribute(CONDITION);
-            if (stringCondition == null) {
-                condition = (AcceptCondition) xo.getChild(AcceptCondition.class);
-            } else {
-                for (SimpleAcceptCondition simpleCondition : SimpleAcceptCondition.values()) {
+            if (xo.hasAttribute(CONDITION)) {
+                String stringCondition = xo.getStringAttribute(CONDITION);
+
+                for (AcceptCondition.SimpleAcceptCondition simpleCondition : AcceptCondition.SimpleAcceptCondition.values()) {
                     if (stringCondition.equalsIgnoreCase(simpleCondition.getName())) {
                         condition = simpleCondition;
                         break;
@@ -180,6 +68,8 @@ public class RejectionOperator extends SimpleMCMCOperator {
                 if (condition == null) {
                     throw new XMLParseException("Unrecognized condition type: " + stringCondition);
                 }
+            } else {
+                condition = (AcceptCondition) xo.getChild(AcceptCondition.class);
             }
             return new RejectionOperator(gibbsOp, condition, weight);
         }

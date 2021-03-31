@@ -3,7 +3,7 @@ package dr.inference.operators.factorAnalysis;
 import dr.inference.distribution.NormalStatisticsProvider;
 import dr.inference.model.*;
 import dr.inference.operators.GibbsOperator;
-import dr.inference.operators.RejectionOperator;
+import dr.inference.operators.rejection.RejectionOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.math.distributions.MultivariateNormalDistribution;

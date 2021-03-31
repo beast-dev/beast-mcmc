@@ -1,6 +1,8 @@
-package dr.inference.operators;
+package dr.inference.operators.rejection;
 
 import dr.inference.model.Parameter;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 
 public class RejectionOperator extends SimpleMCMCOperator {

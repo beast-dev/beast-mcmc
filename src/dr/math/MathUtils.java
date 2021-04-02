@@ -90,7 +90,7 @@ public class MathUtils {
 
         }
         for (int i = 0; i < pdf.length; i++) {
-            System.out.println(i + "\t" + pdf[i]);
+            System.err.println(i + "\t" + pdf[i]);
         }
         throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
                 "distribution, or all zeroes?");
@@ -489,7 +489,6 @@ public class MathUtils {
 
         return true;
     }
-
 
     public static boolean isRelativelyClose(double x, double y, double relativeTolerance) {
         double relativeDifference = 2 * (x - y) / (x + y);

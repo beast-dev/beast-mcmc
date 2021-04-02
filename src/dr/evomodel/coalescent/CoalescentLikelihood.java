@@ -48,7 +48,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	// PUBLIC STUFF
 
 	/**
-	 * A constructor that takes an IntervalList. This is uses the older DemographicModel which
+	 * A constructor that takes an IntervalList. This uses the older DemographicModel which
 	 * is no deprecated but left here for backwards compatibility
 	 * @param intervalList the interval list
 	 * @param demographicModel a demographic model
@@ -60,6 +60,8 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		this.populationSizeModel = null;
 		this.demographicModel = demographicModel;
+
+		this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
 
 		addModel(demographicModel);
 	}
@@ -76,6 +78,8 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		this.populationSizeModel = populationSizeModel;
 		this.demographicModel = null;
+
+		this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
 
 		addModel(populationSizeModel);
 	}
@@ -223,6 +227,36 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	}
 
 	// **************************************************************
+	// CoalescentIntervalProvider IMPLEMENTATION
+	// **************************************************************
+
+	@Override
+	public int getNumberOfCoalescentEvents() {
+		return getIntervalList().getIntervalCount()/2;
+	}
+
+	@Override
+	public double getCoalescentEventsStatisticValue(int i) {
+		if (i == 0) {
+			IntervalList intervals = getIntervalList();
+			final int intervalCount = intervals.getIntervalCount();
+			for (int j = 0; j < coalescentEventStatisticValues.length; j++) {
+				coalescentEventStatisticValues[j] = 0.0;
+			}
+			int counter = 0;
+			for (int j = 0; j < intervalCount; j++) {
+				if (intervals.getIntervalType(j) == IntervalType.COALESCENT) {
+					this.coalescentEventStatisticValues[counter] += intervals.getInterval(j) * (intervals.getLineageCount(j) * (intervals.getLineageCount(j) - 1.0)) / 2.0;
+					counter++;
+				} else {
+					this.coalescentEventStatisticValues[counter] += intervals.getInterval(j) * (intervals.getLineageCount(j) * (intervals.getLineageCount(j) - 1.0)) / 2.0;
+				}
+			}
+		}
+		return coalescentEventStatisticValues[i];
+	}
+
+	// **************************************************************
 	// Units IMPLEMENTATION
 	// **************************************************************
 
@@ -253,4 +287,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 	/** The demographic model. */
 	private final DemographicModel demographicModel;
+
+	private double[] coalescentEventStatisticValues;
+
 }

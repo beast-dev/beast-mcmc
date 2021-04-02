@@ -40,8 +40,9 @@ public class LogLinearModel extends GeneralizedLinearModel {
     @Override
     public double[] getXBeta() {
         double[] xBeta = super.getXBeta();
-        for(int i=0; i<xBeta.length; i++)
+        for(int i = 0; i < xBeta.length; i++) {
             xBeta[i] = Math.exp(xBeta[i]);
+        }
         return xBeta;
     }
 

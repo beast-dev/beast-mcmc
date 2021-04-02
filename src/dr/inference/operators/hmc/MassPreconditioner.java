@@ -35,6 +35,10 @@ public interface MassPreconditioner {
 
     void updateMass();
 
+    WrappedVector getMass();
+
+    void updateVariance(WrappedVector position);
+
     ReadableVector doCollision(int[] indices, ReadableVector momentum);
 
     int getDimension();
@@ -43,7 +47,7 @@ public interface MassPreconditioner {
 
         NONE("none") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 final Parameter parameter = gradient.getParameter();
                 int dim = parameter.getDimension();
                 if (transform != null && transform instanceof Transform.MultivariableTransform) {
@@ -54,21 +58,21 @@ public interface MassPreconditioner {
         },
         DIAGONAL("diagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory);
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
+                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory());
             }
         },
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 int dimension = transform instanceof Transform.MultivariableTransform ?
                         ((Transform.MultivariableTransform) transform).getDimension() : gradient.getDimension();
-                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay);
+                return new AdaptiveDiagonalPreconditioning(dimension, gradient, transform, options.preconditioningDelay());
             }
         },
         PRIOR_DIAGONAL("priorDiagonal") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
 
                 if (!(gradient instanceof PriorPreconditioningProvider)) {
                     throw new RuntimeException("Gradient must be a PriorPreconditioningProvider for prior preconditioning!");
@@ -80,23 +84,23 @@ public interface MassPreconditioner {
         },
         FULL("full") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
                 return new FullHessianPreconditioning((HessianWrtParameterProvider) gradient, transform);
             }
         },
         SECANT("secant") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
-                SecantHessian secantHessian = new SecantHessian(gradient, options.preconditioningMemory);
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
+                SecantHessian secantHessian = new SecantHessian(gradient, options.preconditioningMemory());
                 return new Secant(secantHessian, transform);
             }
         },
         ADAPTIVE("adaptive") {
             @Override
-            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options) {
+            public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
 //                AdaptableCovariance adaptableCovariance = new AdaptableCovariance.WithSubsampling(gradient.getDimension(), 1000);
                 AdaptableCovariance adaptableCovariance = new AdaptableCovariance(gradient.getDimension());
-                return new AdaptiveFullHessianPreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension(), options.preconditioningDelay);
+                return new AdaptiveFullHessianPreconditioning(gradient, adaptableCovariance, transform, gradient.getDimension(), options.preconditioningDelay());
             }
         };
 
@@ -106,7 +110,7 @@ public interface MassPreconditioner {
             this.name = name;
         }
 
-        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, HamiltonianMonteCarloOperator.Options options);
+        public abstract MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options);
 
         public String getName() { return name; }
 
@@ -222,6 +226,16 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
         public int getDimension() {
             return dim;
         }
@@ -272,6 +286,18 @@ public interface MassPreconditioner {
             updatedMomentum.set(indices[0], momentum.get(indices[1]));
             updatedMomentum.set(indices[1], momentum.get(indices[0]));
             return updatedMomentum;
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            Arrays.fill(mass, 1.0);
+            return new WrappedVector.Raw(mass);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
         }
 
         @Override
@@ -437,6 +463,16 @@ public interface MassPreconditioner {
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
         }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
     }
 
     class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
@@ -504,6 +540,16 @@ public interface MassPreconditioner {
             // Do nothing
         }
 
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
     }
 
 
@@ -568,6 +614,20 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
              variance.update(position);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            variance.update(position);
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                mass[i] = 1 / inverseMass[i];
+            }
+            return new WrappedVector.Raw(mass);
         }
     }
 
@@ -735,6 +795,16 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
         }
 
         @Override

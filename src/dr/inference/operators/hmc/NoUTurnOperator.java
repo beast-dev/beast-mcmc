@@ -23,10 +23,12 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     public NoUTurnOperator(ReversibleHMCProvider hmcProvider,
                            boolean adaptiveStepsize,
+                           int adaptiveDelay,
                            double weight) {
 
         this.hmcProvider = hmcProvider;
         this.adaptiveStepsize = adaptiveStepsize;
+        this.adaptiveDelay = adaptiveDelay;
         if (hmcProvider instanceof SplitHamiltonianMonteCarloOperator) {
             this.splitHMCmultiplier = ((SplitHamiltonianMonteCarloOperator) hmcProvider).travelTimeMultipler;
             this.splitHMCinner = ((SplitHamiltonianMonteCarloOperator) hmcProvider).inner;
@@ -89,7 +91,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
                 trajectoryTree.flagContinue = false;
             }
         }
-        if (adaptiveStepsize) {
+        if (adaptiveStepsize && getCount() > adaptiveDelay) {
             stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
         }
         return endPosition;
@@ -423,6 +425,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
+    private int adaptiveDelay;
     private int numBaseCalls;
     private int numBoundaryEvents;
     private int numGradientEvents;

@@ -58,7 +58,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
-                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask) {
+                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                             boolean refreshVelocity, Parameter mask,
+                             MassPreconditioner massPreconditioner,
+                             MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -73,6 +76,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.refreshVelocity = refreshVelocity;
         this.preconditioning = setupPreconditioning();
         this.meanVector = getMeanVector(gradientProvider);
+
+        this.massPreconditioning = massPreconditioner;
+        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, this);
 
         setWeight(weight);
         this.observedDataMask = getObservedDataMask();
@@ -121,13 +127,13 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     @Override
     public double doOperation() {
 
-        if (shouldUpdatePreconditioning()) {
-            preconditioning = setupPreconditioning();
-        }
-
         WrappedVector position = getInitialPosition();
 
         WrappedVector momentum = drawInitialMomentum();
+
+        if (preconditionScheduler.shouldUpdatePreconditioning()){
+            updatePreconditioning(position);
+        }
 
         double hastingsRatio = integrateTrajectory(position, momentum);
 
@@ -315,31 +321,32 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         );
     }
 
-    private boolean shouldUpdatePreconditioning() {
-        return runtimeOptions.preconditioningUpdateFrequency > 0
-                && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
+    void updatePreconditioning(WrappedVector position) {
+        massPreconditioning.updateVariance(position);
+        massPreconditioning.updateMass();
+        preconditioning.mass = massPreconditioning.getMass();
     }
 
-    void initializeNumEvent(){
+    void initializeNumEvent() {
         numEvents = 0;
         numBoundaryEvents = 0;
         numGradientEvents = 0;
     }
 
-    void recordOneMoreEvent(){
+    void recordOneMoreEvent() {
         numEvents++;
     }
 
-    void recordEvents(Type eventType){
+    void recordEvents(Type eventType) {
         numEvents++;
-        if (eventType == Type.BOUNDARY){
+        if (eventType == Type.BOUNDARY) {
             numBoundaryEvents++;
-        } else if (eventType == Type.GRADIENT){
+        } else if (eventType == Type.GRADIENT) {
             numGradientEvents++;
         }
     }
 
-    void storeVelocity(WrappedVector velocity){
+    void storeVelocity(WrappedVector velocity) {
         storedVelocity = velocity;
     }
 
@@ -367,18 +374,43 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return mean;
     }
 
-    public static class Options {
+    public static class Options implements MassPreconditioningOptions {
 
         final double randomTimeWidth;
         final int preconditioningUpdateFrequency;
+        final int preconditioningMaxUpdate;
+        final int preconditioningDelay;
         final int updateSampleCovFrequency;
         final int updateSampleCovDelay;
 
-        public Options(double randomTimeWidth, int preconditioningUpdateFrequency, int updateSampleCovFrequency, int updateSampleCovDelay) {
+        public Options(double randomTimeWidth, int preconditioningUpdateFrequency, int preconditioningMaxUpdate,
+                       int preconditioningDelay, int updateSampleCovFrequency, int updateSampleCovDelay) {
             this.randomTimeWidth = randomTimeWidth;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.preconditioningMaxUpdate = preconditioningMaxUpdate;
+            this.preconditioningDelay = preconditioningDelay;
             this.updateSampleCovFrequency = updateSampleCovFrequency;
             this.updateSampleCovDelay = updateSampleCovDelay;
+        }
+
+        @Override
+        public int preconditioningUpdateFrequency() {
+            return preconditioningUpdateFrequency;
+        }
+
+        @Override
+        public int preconditioningDelay() {
+            return preconditioningDelay;
+        }
+
+        @Override
+        public int preconditioningMaxUpdate() {
+            return preconditioningMaxUpdate;
+        }
+
+        @Override
+        public int preconditioningMemory() {
+            return 0;
         }
     }
 
@@ -387,7 +419,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         final boolean useNativeFindNextBounce;
         final boolean useNativeUpdateDynamics;
 
-        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce, boolean useNativeUpdateDynamics){
+        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce,
+                                 boolean useNativeUpdateDynamics) {
             this.testNativeFindNextBounce = testNativeFindNextBounce;
             this.useNativeFindNextBounce = useNativeFindNextBounce;
             this.useNativeUpdateDynamics = useNativeUpdateDynamics;
@@ -396,7 +429,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     protected class Preconditioning {
 
-        final WrappedVector mass;
+        WrappedVector mass;
         double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
@@ -471,6 +504,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     int numGradientEvents;
     protected WrappedVector storedVelocity;
     Preconditioning preconditioning;
+    protected final MassPreconditioner massPreconditioning;
+    protected final MassPreconditionScheduler preconditionScheduler;
     final private double[] observedDataMask;
     private final double[] meanVector;
 

@@ -11,6 +11,7 @@ public interface ReversibleHMCProvider {
 
     void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient,
                                           int direction, double time);
+    void providerUpdatePreconditioning();
 
     double[] getInitialPosition();
 

@@ -151,7 +151,9 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             checkGradient(joint);
         }
 
-        updatePreconditioning();
+        if (preconditionScheduler.shouldUpdatePreconditioning()) {
+            updatePreconditioning();
+        }
 
         try {
             return leapFrog();
@@ -166,16 +168,14 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         }
     }
 
-    private void updatePreconditioning(){
+    private void updatePreconditioning() {
 
-        if (preconditionScheduler.shouldUpdatePreconditioning()) {
-            double[] lastGradient = leapFrogEngine.getLastGradient();
-            double[] lastPosition = leapFrogEngine.getLastPosition();
-            if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
-                preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
-            }
-            preconditioning.updateMass();
+        double[] lastGradient = leapFrogEngine.getLastGradient();
+        double[] lastPosition = leapFrogEngine.getLastPosition();
+        if (preconditionScheduler.shouldStoreSecant(lastGradient, lastPosition)) {
+            preconditioning.storeSecant(new WrappedVector.Raw(lastGradient), new WrappedVector.Raw(lastPosition));
         }
+        preconditioning.updateMass();
     }
 
     private static final boolean REJECT_ARITHMETIC_EXCEPTION = true;
@@ -770,7 +770,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                                                  WrappedVector gradient, int direction, double time) {
 
         preconditionScheduler.forceUpdateCount();
-        updatePreconditioning();
+        //providerUpdatePreconditioning();
 
         try {
             leapFrogEngine.updateMomentum(position.getBuffer(), momentum.getBuffer(),
@@ -782,6 +782,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         } catch (NumericInstabilityException e) {
             handleInstability();
         }
+    }
+
+    @Override
+    public void providerUpdatePreconditioning() {
+        updatePreconditioning();
     }
 
     public void updateGradient(WrappedVector gradient) {

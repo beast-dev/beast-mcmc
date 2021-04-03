@@ -22,6 +22,10 @@ public class ScaledParameter extends ProductParameter {
 
     }
 
+    public ScaledParameter(double scale, Parameter vecParam) {
+        this(new Parameter.Default(scale), vecParam);
+    }
+
     @Override
     public double getParameterValue(int dim) {
         return scaleParam.getParameterValue(0) * vecParam.getParameterValue(dim);

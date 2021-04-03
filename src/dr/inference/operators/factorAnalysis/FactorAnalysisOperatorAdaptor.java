@@ -3,13 +3,12 @@ package dr.inference.operators.factorAnalysis;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
+
+import java.util.ArrayList;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
 import static dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser.FACTOR_NAME;
@@ -44,12 +43,25 @@ public interface FactorAnalysisOperatorAdaptor {
 
     boolean isNotMissing(int trait, int taxon);
 
+    Parameter[] getFactorDependentParameters();
+
+    Parameter[] getLoadingsDependentParameter();
+
+    MatrixParameterInterface getLoadings();
+
+    ArrayList<Likelihood> getLikelihoods();
+
     abstract class Abstract implements FactorAnalysisOperatorAdaptor, Reportable {
 
         private final MatrixParameterInterface loadings;
 
         Abstract(MatrixParameterInterface loadings) {
             this.loadings = loadings;
+        }
+
+        @Override
+        public MatrixParameterInterface getLoadings() {
+            return loadings;
         }
 
         @Override
@@ -198,6 +210,27 @@ public interface FactorAnalysisOperatorAdaptor {
 
             return missing == null || missing.getParameterValue(index) != 1.0;
         }
+
+        @Override
+        public Parameter[] getFactorDependentParameters() {
+            return new Parameter[]{LFM.getFactors()};
+        }
+
+        @Override
+        public Parameter[] getLoadingsDependentParameter() {
+            return new Parameter[]{
+                    LFM.getFactors(),
+                    LFM.getColumnPrecision(),
+                    LFM.getData()
+            };
+        }
+
+        @Override
+        public ArrayList<Likelihood> getLikelihoods() {
+            ArrayList<Likelihood> likelihoods = new ArrayList<>();
+            likelihoods.add(LFM);
+            return likelihoods;
+        }
     }
 
     class IntegratedFactors extends Abstract {
@@ -268,6 +301,28 @@ public interface FactorAnalysisOperatorAdaptor {
         public boolean isNotMissing(int trait, int taxon) {
             int index = taxon * getNumberOfTraits() + trait;
             return !factorLikelihood.getDataMissingIndicators()[index];
+        }
+
+        @Override
+        public Parameter[] getFactorDependentParameters() {
+            return new Parameter[]{
+                    factorLikelihood.getLoadings(),
+                    factorLikelihood.getParameter(),
+                    factorLikelihood.getPrecision()
+            };
+        }
+
+        @Override
+        public Parameter[] getLoadingsDependentParameter() {
+            return getFactorDependentParameters();
+        }
+
+        @Override
+        public ArrayList<Likelihood> getLikelihoods() {
+            ArrayList<Likelihood> likelihoods = new ArrayList<>();
+            likelihoods.add(factorLikelihood);
+            likelihoods.add(treeLikelihood);
+            return likelihoods;
         }
 
         private static final boolean DEBUG = false;

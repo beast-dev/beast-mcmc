@@ -14,14 +14,14 @@ import java.util.regex.Pattern;
 public class BeastUnitTest implements Reportable {
 
     private final String message;
-    private final String actual;
+    private final String[] actual;
     private final String expected;
 
     private Boolean pass;
 
     private final AssertType assertType;
 
-    public BeastUnitTest(String message, String actual, String expected,
+    public BeastUnitTest(String message, String[] actual, String expected,
                          AssertType assertType) {
         this.message = message;
         this.actual = actual;
@@ -30,16 +30,18 @@ public class BeastUnitTest implements Reportable {
     }
 
     public void execute() {
-        if (!assertType.equivalent(actual, expected)) {
-            failCheck();
+        for (int i = 0; i < actual.length; i++) {
+            if (!assertType.equivalent(actual[i], expected)) {
+                failCheck(i);
+            }
         }
 
         pass = true;
     }
 
-    private void failCheck() {
+    private void failCheck(int i) {
         String string = formatName()
-                + ": '" + actual + "' != '" + expected + "'";
+                + ": '" + actual[i] + "' != '" + expected + "'";
         System.err.println(string);
         System.exit(-1);
     }
@@ -161,8 +163,13 @@ public class BeastUnitTest implements Reportable {
                 message = xo.getChild(MESSAGE).getStringChild(0);
             }
 
-            String expected = parseValue(xo.getChild(EXPECTED));
-            String actual = parseValue(xo.getChild(ACTUAL));
+            String[] expectedArray = parseValues(xo.getChild(EXPECTED));
+            if (expectedArray.length != 1) {
+                throw new XMLParseException("There should only be one '" + EXPECTED + "' value.");
+            }
+            String expected = expectedArray[0];
+
+            String[] actual = parseValues(xo.getChild(ACTUAL));
             String stripChars = xo.getAttribute(STRIP_CHARACTERS, ",");
 
             AssertType assertType;
@@ -200,26 +207,31 @@ public class BeastUnitTest implements Reportable {
             return unitTest;
         }
 
-        private String parseValue(XMLObject xo) throws XMLParseException {
+        private String[] parseValues(XMLObject xo) throws XMLParseException {
+            int nChildren = xo.getChildCount();
+            String[] rawStrings = new String[nChildren];
 
-            String rawString;
 
-            if (xo.getChild(0) instanceof Reportable) {
-                Reportable reportable = (Reportable) xo.getChild(0);
-                rawString = reportable.getReport();
-            } else {
-                rawString = xo.getStringChild(0);
+            for (int i = 0; i < nChildren; i++) {
+                if (xo.getChild(i) instanceof Reportable) {
+                    Reportable reportable = (Reportable) xo.getChild(i);
+                    rawStrings[i] = reportable.getReport();
+                } else {
+                    rawStrings[i] = xo.getStringChild(i);
+                }
             }
 
             if (xo.hasAttribute(REGEX)) {
                 Pattern pattern = Pattern.compile(xo.getStringAttribute(REGEX));
-                Matcher matcher = pattern.matcher(rawString);
-                if (matcher.find()) {
-                    rawString = matcher.group(1);
+                for (int i = 0; i < nChildren; i++) {
+                    Matcher matcher = pattern.matcher(rawStrings[i]);
+                    if (matcher.find()) {
+                        rawStrings[i] = matcher.group(1);
+                    }
                 }
             }
 
-            return rawString;
+            return rawStrings;
         }
 
         @Override
@@ -254,8 +266,8 @@ public class BeastUnitTest implements Reportable {
             }),
             new ElementRule(ACTUAL, new XMLSyntaxRule[]{
                     new XORRule(
-                            new ElementRule(Reportable.class),
-                            new ElementRule(String.class)
+                            new ElementRule(Reportable.class, 1, Integer.MAX_VALUE),
+                            new ElementRule(String.class, 1, Integer.MAX_VALUE)
                     ),
                     AttributeRule.newStringRule(REGEX, true),
             }),

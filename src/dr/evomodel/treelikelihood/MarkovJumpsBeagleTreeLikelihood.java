@@ -438,8 +438,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                     computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
                             branchRate, childNum, parentStates, childStates, parentTime, childTime, probabilities, scaleByTime[r],
                             expectedJumps.get(r), rateCategory,
-                            true
-//                            r == historyRegisterNumber
+                            (branchModel instanceof EpochBranchModel) || r == historyRegisterNumber
                     );
                 } else {
                     computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,

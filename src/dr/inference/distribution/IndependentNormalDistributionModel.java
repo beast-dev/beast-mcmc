@@ -1,6 +1,8 @@
 package dr.inference.distribution;
 
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
+import dr.inference.operators.repeatedMeasures.MultiplicativeGammaGibbsHelper;
 import dr.math.distributions.NormalDistribution;
 
 /**
@@ -9,7 +11,8 @@ import dr.math.distributions.NormalDistribution;
  * @author Marc Suchard
  */
 
-public class IndependentNormalDistributionModel extends AbstractModelLikelihood implements NormalStatisticsProvider {
+public class IndependentNormalDistributionModel extends AbstractModelLikelihood implements NormalStatisticsProvider,
+        MultiplicativeGammaGibbsHelper {
     Parameter mean;
     Parameter variance;
     Parameter precision;
@@ -118,5 +121,21 @@ public class IndependentNormalDistributionModel extends AbstractModelLikelihood 
         } else {
             return Math.sqrt(variance.getParameterValue(dim));
         }
+    }
+
+    @Override
+    public double computeSumSquaredErrors(int column) {
+        double error = mean.getParameterValue(column) - data.getParameterValue(column);
+        return error * error;
+    }
+
+    @Override
+    public int getRowDimension() {
+        return 1;
+    }
+
+    @Override
+    public int getColumnDimension() {
+        return data.getDimension();
     }
 }

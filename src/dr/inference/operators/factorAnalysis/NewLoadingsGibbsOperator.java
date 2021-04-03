@@ -25,7 +25,6 @@
 
 package dr.inference.operators.factorAnalysis;
 
-import dr.evomodel.treedatalikelihood.continuous.HashedMissingArray;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.NormalStatisticsProvider;
@@ -35,12 +34,9 @@ import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import dr.xml.Reportable;
-import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,8 +48,7 @@ import java.util.concurrent.Executors;
  */
 public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
-    private final boolean useInnerProductCache;
-    private Map<HashedMissingArray, DenseMatrix64F> precisionMatrixMap = new HashMap<>();
+    private final FactorAnalysisStatisticsProvider statisticsProvider;
 
 
     private NormalDistributionModel workingPrior;
@@ -72,19 +67,17 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
     private final ConstrainedSampler constrainedSampler;
     private final ColumnDimProvider columnDimProvider;
 
-    private final double[][] observedIndicators;
 
-    public NewLoadingsGibbsOperator(FactorAnalysisOperatorAdaptor adaptor, NormalStatisticsProvider prior,
+    public NewLoadingsGibbsOperator(FactorAnalysisStatisticsProvider statisticsProvider, NormalStatisticsProvider prior,
                                     double weight, boolean randomScan, DistributionLikelihood workingPrior,
                                     boolean multiThreaded, int numThreads,
                                     ConstrainedSampler constrainedSampler,
-                                    ColumnDimProvider columnDimProvider,
-                                    CacheProvider cacheProvider
-    ) {
+                                    ColumnDimProvider columnDimProvider) {
 
         setWeight(weight);
 
-        this.adaptor = adaptor;
+        this.statisticsProvider = statisticsProvider;
+        this.adaptor = statisticsProvider.getAdaptor();
 
         this.prior = prior;
 
@@ -118,37 +111,16 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             columnDimProvider.allocateStorage(precisionArray, meanMidArray, meanArray, adaptor.getNumberOfFactors());
         }
 
-        this.useInnerProductCache = cacheProvider.useCache();
 
-        if (useInnerProductCache) {
+        if (statisticsProvider.useCache()) {
             if (multiThreaded && numThreads > 1) {
                 throw new IllegalArgumentException("Cannot currently parallelize cached precisions");
             }
-
-            observedIndicators = setupObservedIndicators();
-
-        } else {
-            observedIndicators = null;
         }
     }
 
-    public enum CacheProvider {
-        USE_CACHE {
-            @Override
-            boolean useCache() {
-                return true;
-            }
-
-        },
-        NO_CACHE {
-            @Override
-            boolean useCache() {
-                return false;
-            }
-        };
-
-        abstract boolean useCache();
-
+    public FactorAnalysisOperatorAdaptor getAdaptor() {
+        return adaptor;
     }
 
     private double getPrecision(NormalStatisticsProvider provider, int dim) {
@@ -156,65 +128,11 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         return 1.0 / (sd * sd);
     }
 
-    private double[][] setupObservedIndicators() {
-        double[][] obsInds = new double[adaptor.getNumberOfTraits()][adaptor.getNumberOfTaxa()];
-
-        for (int trait = 0; trait < adaptor.getNumberOfTraits(); trait++) {
-            for (int taxon = 0; taxon < adaptor.getNumberOfTaxa(); taxon++) {
-
-                if (adaptor.isNotMissing(trait, taxon)) {
-                    obsInds[trait][taxon] = 1.0;
-                }
-            }
-        }
-
-
-        return obsInds;
-    }
-
 
     private void getPrecisionOfTruncated(FactorAnalysisOperatorAdaptor adaptor, //MatrixParameterInterface full,
                                          int newRowDimension, int row, double[][] answer) {
 
-        DenseMatrix64F hashedPrecision = null;
-        HashedMissingArray observedArray = null;
-
-        if (useInnerProductCache) {
-            double[] observed = observedIndicators[row];
-            observedArray = new HashedMissingArray(observed);
-            hashedPrecision = precisionMatrixMap.get(observedArray);
-        }
-
-        if (!useInnerProductCache || hashedPrecision == null) {
-
-            int p = adaptor.getNumberOfTaxa(); //.getColumnDimension();
-
-            for (int i = 0; i < newRowDimension; i++) {
-                for (int j = i; j < newRowDimension; j++) {
-                    double sum = 0;
-                    for (int k = 0; k < p; k++) {
-                        if (adaptor.isNotMissing(row, k)) {
-                            sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
-                        }
-                    }
-
-                    answer[i][j] = sum;
-                    if (i != j) {
-                        answer[j][i] = sum;
-                    }
-                }
-            }
-
-            if (useInnerProductCache) {
-                precisionMatrixMap.put(observedArray, new DenseMatrix64F(answer));
-            }
-        } else {
-            for (int i = 0; i < newRowDimension; i++) {
-                System.arraycopy(hashedPrecision.getData(), i * newRowDimension,
-                        answer[i], 0, newRowDimension);
-            }
-
-        }
+        statisticsProvider.getFactorInnerProduct(row, newRowDimension, answer);
 
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = i; j < newRowDimension; j++) {
@@ -233,23 +151,14 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
     private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean) {
 
-        final int p = adaptor.getNumberOfTaxa();
+        statisticsProvider.getFactorTraitProduct(dataColumn, newRowDimension, midMean);
 
         for (int i = 0; i < newRowDimension; i++) {
-            double sum = 0;
-
-            for (int k = 0; k < p; k++) {
-                if (adaptor.isNotMissing(dataColumn, k)) {
-                    sum += adaptor.getFactorValue(i, k) /*Left.getParameterValue(i, k)*/
-                            * adaptor.getDataValue(dataColumn, k); //data.getParameterValue(dataColumn, k);
-                }
-            }
 
             int priorDim = adaptor.getNumberOfTraits() * i + dataColumn;
 
-            sum = sum * adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
-            sum += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
-            midMean[i] = sum;
+            midMean[i] *= adaptor.getColumnPrecision(dataColumn); //adaptor.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
+            midMean[i] += prior.getNormalMean(priorDim) * getPrecision(prior, priorDim);
         }
 
         for (int i = 0; i < newRowDimension; i++) {
@@ -289,6 +198,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 
         getMean(i, variance, midMean, mean);
 
+
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 
         adaptor.setLoadingsForTraitQuietly(i, draw);
@@ -327,10 +237,6 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
         adaptor.drawFactors();
 
         int size = adaptor.getNumberOfTraits();
-
-        if (useInnerProductCache) {
-            precisionMatrixMap.clear();
-        }
 
         if (pool != null) {
 
@@ -513,6 +419,28 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             }
         },
 
+        FIRST_ROW("firstRow") {
+            @Override
+            int getColumnDim(int colIndex, int nRows) {
+                return 1;
+            }
+
+            @Override
+            int getArrayIndex(int colIndex, int nRows) {
+                return 0;
+            }
+
+            @Override
+            void allocateStorage(ArrayList<double[][]> precisionArray, ArrayList<double[]> midMeanArray,
+                                 ArrayList<double[]> meanArray, int nRows) {
+
+                precisionArray.add(new double[1][1]);
+                midMeanArray.add(new double[1]);
+                meanArray.add(new double[1]);
+
+            }
+        },
+
         HYBRID("hybrid") {
             @Override
             int getColumnDim(int colIndex, int nRows) {
@@ -576,11 +504,12 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
             throw new IllegalArgumentException("Unknown dimension provider type");
         }
 
-        }
+    }
 
     @Override
     public String getReport() {
-        int repeats = 1000000;
+        int repeats = 20000;
+
         int nFac = adaptor.getNumberOfFactors();
         int nTraits = adaptor.getNumberOfTraits();
 

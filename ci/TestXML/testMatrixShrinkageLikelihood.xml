@@ -239,41 +239,12 @@
         <prior>
             <gammaPrior idref="globalPrecisionPrior1"/>
         </prior>
-        <multiplicativeGammaGibbsProvider row="1">
-            <rowMultipliers>
+        <multiplicativeGammaGibbsProvider>
+            <compoundParameter>
                 <parameter idref="globalPrecision1"/>
                 <parameter idref="rowMult2"/>
                 <parameter idref="rowMult3"/>
-
-            </rowMultipliers>
-            <matrixShrinkageLikelihood idref="L.prior"/>
-        </multiplicativeGammaGibbsProvider>
-    </normalGammaPrecisionGibbsOperator>
-
-    <normalGammaPrecisionGibbsOperator id="g2" weight="1.0">
-        <prior>
-            <gammaPrior idref="rowMultPrior2"/>
-        </prior>
-        <multiplicativeGammaGibbsProvider row="2">
-            <rowMultipliers>
-                <parameter idref="globalPrecision1"/>
-                <parameter idref="rowMult2"/>
-                <parameter idref="rowMult3"/>
-            </rowMultipliers>
-            <matrixShrinkageLikelihood idref="L.prior"/>
-        </multiplicativeGammaGibbsProvider>
-    </normalGammaPrecisionGibbsOperator>
-
-    <normalGammaPrecisionGibbsOperator id="g3" weight="1.0">
-        <prior>
-            <gammaPrior idref="rowMultPrior3"/>
-        </prior>
-        <multiplicativeGammaGibbsProvider row="3">
-            <rowMultipliers>
-                <parameter idref="globalPrecision1"/>
-                <parameter idref="rowMult2"/>
-                <parameter idref="rowMult3"/>
-            </rowMultipliers>
+            </compoundParameter>
             <matrixShrinkageLikelihood idref="L.prior"/>
         </multiplicativeGammaGibbsProvider>
     </normalGammaPrecisionGibbsOperator>
@@ -283,83 +254,30 @@
         <normalGammaPrecisionGibbsOperator idref="g1"/>
     </cachedReport>
 
-    <cachedReport id="globalOp2">
-        <normalGammaPrecisionGibbsOperator idref="g2"/>
-    </cachedReport>
-
-    <cachedReport id="globalOp3">
-        <normalGammaPrecisionGibbsOperator idref="g3"/>
-    </cachedReport>
 
     <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
         <message>
-            Checking multiplicative gamma gibbs operator (row 1) sse
+            Checking multiplicative gamma gibbs operator sse
         </message>
         <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
             <cachedReport idref="globalOp1"/>
         </actual>
         <expected>
-            2727.588390346408
+            2727.588390346408 35589.658833018264 6138.20254553635
+
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 2) sse
-        </message>
-        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp2"/>
-        </actual>
-        <expected>
-            35589.658833018264
-        </expected>
-    </assertEqual>
 
     <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
         <message>
-            Checking multiplicative gamma gibbs operator (row 3) sse
-        </message>
-        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp3"/>
-        </actual>
-        <expected>
-            6138.20254553635
-        </expected>
-    </assertEqual>
-
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 1) obs count
+            Checking multiplicative gamma gibbs operator obs count
         </message>
         <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
             <cachedReport idref="globalOp1"/>
         </actual>
         <expected>
-            12
-        </expected>
-    </assertEqual>
-
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 2) obs count
-        </message>
-        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp2"/>
-        </actual>
-        <expected>
-            8
-        </expected>
-    </assertEqual>
-
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 3) obs count
-        </message>
-        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp3"/>
-        </actual>
-        <expected>
-            4
+            12 8 4
         </expected>
     </assertEqual>
 
@@ -453,85 +371,31 @@
         <normalGammaPrecisionGibbsOperator idref="g1"/>
     </cachedReport>
 
-    <cachedReport id="globalOp2.2">
-        <normalGammaPrecisionGibbsOperator idref="g2"/>
-    </cachedReport>
-
-    <cachedReport id="globalOp3.2">
-        <normalGammaPrecisionGibbsOperator idref="g3"/>
-    </cachedReport>
-
 
     <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
         <message>
-            Checking multiplicative gamma gibbs operator (row 1) sse
+            Checking multiplicative gamma gibbs operator sse
         </message>
         <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
             <cachedReport idref="globalOp1.2"/>
         </actual>
         <expected>
-            152.36534995962523
+            152.36534995962523 60.88677632369482 12.27645607958311
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 2) sse
-        </message>
-        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp2.2"/>
-        </actual>
-        <expected>
-            60.88677632369482
-        </expected>
-    </assertEqual>
 
     <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
         <message>
-            Checking multiplicative gamma gibbs operator (row 3) sse
-        </message>
-        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp3.2"/>
-        </actual>
-        <expected>
-            12.27645607958311
-        </expected>
-    </assertEqual>
-
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 1) obs count
+            Checking multiplicative gamma gibbs operator obs count
         </message>
         <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
             <cachedReport idref="globalOp1.2"/>
         </actual>
         <expected>
-            12
+            12 8 4
         </expected>
     </assertEqual>
 
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 2) obs count
-        </message>
-        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp2.2"/>
-        </actual>
-        <expected>
-            8
-        </expected>
-    </assertEqual>
-
-    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
-        <message>
-            Checking multiplicative gamma gibbs operator (row 3) obs count
-        </message>
-        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
-            <cachedReport idref="globalOp3.2"/>
-        </actual>
-        <expected>
-            4
-        </expected>
-    </assertEqual>
 
 </beast>

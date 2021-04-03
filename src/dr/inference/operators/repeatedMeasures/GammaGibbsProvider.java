@@ -186,21 +186,13 @@ public interface GammaGibbsProvider {
     class MultiplicativeGammaGibbsProvider implements GammaGibbsProvider {
         // TODO: add citation to "Sparse Bayesian infinite factor models BY A. BHATTACHARYA AND D. B. DUNSON, Biometrika (2011)"
 
-        private final CompoundParameter rowMultipliers;
-        private final MatrixShrinkageLikelihood shrinkageLikelihood; // TODO: change to NormalStatisticsProvider
-        private final MatrixParameterInterface matParam;
-        private final int index;
+        private final Parameter rowMultipliers;
+        private final MultiplicativeGammaGibbsHelper helper;
 
-        public MultiplicativeGammaGibbsProvider(CompoundParameter rowMultipliers,
-                                                MatrixShrinkageLikelihood shrinkageLikelihood,
-                                                MatrixParameterInterface matParam,
-                                                int index) {
+        public MultiplicativeGammaGibbsProvider(Parameter rowMultipliers,
+                                                MultiplicativeGammaGibbsHelper helper) {
             this.rowMultipliers = rowMultipliers;
-            this.shrinkageLikelihood = shrinkageLikelihood;
-            this.matParam = matParam;
-            this.index = index;
-
-
+            this.helper = helper;
         }
 
 
@@ -210,27 +202,23 @@ public interface GammaGibbsProvider {
 
             double rateSum = 0;
 
-            int k = matParam.getColumnDimension();
-            int p = matParam.getRowDimension();
-            for (int i = index; i < k; i++) {
-                double globalConst = gpMult(i + 1, index);
-                double sum = 0;
-                for (int j = 0; j < p; j++) {
-                    double localSD = shrinkageLikelihood.getLikelihood(i).getLocalScale().getParameterValue(j);
-                    double loadEl = matParam.getParameterValue(j, i);
-                    double x = loadEl / localSD;
-                    sum += x * x;
-                }
-                rateSum += globalConst * sum;
+            int k = helper.getColumnDimension();
+            int p = helper.getRowDimension();
+
+            for (int i = dim; i < k; i++) {
+                double globalConst = gpMult(i + 1, dim);
+                double sumSquares = helper.computeSumSquaredErrors(i);
+
+                rateSum += globalConst * sumSquares;
             }
 
-            return new SufficientStatistics(p * (k - index), rateSum);
+            return new SufficientStatistics(p * (k - dim), rateSum);
 
         }
 
         @Override
         public Parameter getPrecisionParameter() {
-            return rowMultipliers.getParameter(index);
+            return rowMultipliers;
         }
 
         @Override
@@ -242,7 +230,7 @@ public interface GammaGibbsProvider {
             double value = 1.0;
             for (int i = 0; i < multTo; i++) {
                 if (i != skip) { // TODO: could remove 'if' statement with two for loops (probably doesn't matter)
-                    value *= rowMultipliers.getParameter(i).getParameterValue(0);
+                    value *= rowMultipliers.getParameterValue(i);
                 }
             }
             return value;

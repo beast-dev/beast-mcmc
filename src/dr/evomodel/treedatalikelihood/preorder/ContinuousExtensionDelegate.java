@@ -25,7 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.preorder;
 
-import com.sun.xml.internal.ws.policy.EffectiveAlternativeSelector;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;

@@ -14,6 +14,9 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
                                                      TreeTrait treeTrait,
                                                      Tree tree);
 
+    double[] transformTreeTraits(double[] treeTraits);
+
+
     interface NormalExtensionProvider extends ModelExtensionProvider {
 
         boolean diagonalVariance();
@@ -23,8 +26,6 @@ public interface ModelExtensionProvider extends ContinuousTraitPartialsProvider 
         DenseMatrix64F getExtensionVariance(NodeRef node);
 
         MatrixParameterInterface getExtensionPrecision();
-
-        double[] transformTreeTraits(double[] treeTraits);
 
         void chainRuleWrtVariance(double[] gradient, NodeRef node);
     }

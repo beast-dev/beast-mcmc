@@ -36,6 +36,7 @@ import dr.util.CommonCitations;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -65,6 +66,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         this.isUnordered = isUnordered;
         this.NAcode = setNAcode();
 
+        this.thresholdIndices = setupThresholdIndices();
+
         addVariable(tipTraitParameter);
         addVariable(thresholdParameter);
 
@@ -75,6 +78,19 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         sb.append("\tBinary patterns: ").append(patternList.getId()).append("\n");
         sb.append("\tPlease cite:\n").append(Citable.Utils.getCitationString(this));
         Logger.getLogger("dr.evomodel.continous").info(sb.toString());
+    }
+
+    private HashMap<Integer, Integer> setupThresholdIndices() {
+        int index = 0;
+        HashMap<Integer, Integer> indices = new HashMap<>();
+        for (int i = 0; i < numClasses.getDimension(); i++) {
+            if (numClasses.getParameterValue(i) > 2) {
+                indices.put(i, index);
+                index++;
+            }
+        }
+
+        return indices;
     }
 
     public CompoundParameter getTipTraitParameter() {
@@ -278,8 +294,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
         if (!isUnordered) {
 
-            int threshNum = 0;
-
             for (int index = 0; index < data.length && valid; ++index) {
 
                 int datum = data[index];
@@ -302,6 +316,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                         }
                     }
                 } else {
+                    int threshNum = thresholdIndices.get(index);
                     if (datum == 0) {
                         valid = trait <= 0.0;
                     } else if (datum == 1) {
@@ -316,7 +331,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                                 trait <= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 1));
                     }
 
-                    threshNum++;
                 }
             }
         } else {
@@ -549,6 +563,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     private PatternList patternList;
     public CompoundParameter tipTraitParameter;
     private CompoundParameter thresholdParameter;
+    private final HashMap<Integer, Integer> thresholdIndices;
+
     public Parameter numClasses;
     private Parameter containsMissing;
     private int NAcode;

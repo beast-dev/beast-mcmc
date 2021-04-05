@@ -73,15 +73,21 @@ public interface ContinuousBranchValueProvider {
         public double getBranchValue(Tree tree, NodeRef node) {
             assert (tree.getRoot() != node);
 
-            final double midPoint;
-            if (tree.getNodeHeight(tree.getParent(node)) > heightLowerBound.getParameterValue(0)) {
-                midPoint = (tree.getNodeHeight(tree.getParent(node)) + tree.getNodeHeight(node)) * 0.5;
+            final double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
+            final double nodeHeight = tree.getNodeHeight(node);
+            final double timeEffect;
+
+            if (parentNodeHeight < heightLowerBound.getParameterValue(0)) {
+                timeEffect = heightLowerBound.getParameterValue(0);
+            } else if (nodeHeight < heightLowerBound.getParameterValue(0)) {
+                timeEffect = (0.5 * parentNodeHeight * parentNodeHeight
+                        + 0.5 * heightLowerBound.getParameterValue(0) * heightLowerBound.getParameterValue(0)
+                        - heightLowerBound.getParameterValue(0) * nodeHeight ) / (parentNodeHeight - nodeHeight);
             } else {
-                midPoint = heightLowerBound.getParameterValue(0);
+                timeEffect = 0.5 * (nodeHeight + parentNodeHeight);
             }
 
-            return transform(midPoint);
-
+            return transform(timeEffect);
         }
 
         double transform(double x) {

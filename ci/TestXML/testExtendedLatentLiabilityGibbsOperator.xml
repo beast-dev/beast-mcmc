@@ -111,30 +111,98 @@
 
     <alignment id="alignment">
         <generalDataType idref="discreteStates"/>
-        <sequence><taxon idref="taxon1"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon2"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon3"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon4"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon5"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon6"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon7"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon8"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon9"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon10"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon11"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon12"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon13"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon14"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon15"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon16"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon17"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon18"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon19"/>0 0 0 0 9 9</sequence>
-        <sequence><taxon idref="taxon20"/>0 0 0 0 9 9</sequence>
+        <sequence><taxon idref="taxon1"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon2"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon3"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon4"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon5"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon6"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon7"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon8"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon9"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon10"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon11"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon12"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon13"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon14"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon15"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon16"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon17"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon18"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon19"/>0 0 0 0 9 9
+        </sequence>
+        <sequence><taxon idref="taxon20"/>0 0 0 0 9 9
+        </sequence>
+    </alignment>
+
+    <alignment id="alignment2">
+        <generalDataType idref="discreteStates"/>
+        <sequence><taxon idref="taxon1"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon2"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon3"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon4"/>0 0 0 0 0 2
+        </sequence>
+        <sequence><taxon idref="taxon5"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon6"/>0 0 0 0 1 2
+        </sequence>
+        <sequence><taxon idref="taxon7"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon8"/>0 0 0 0 1 2
+        </sequence>
+        <sequence><taxon idref="taxon9"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon10"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon11"/>0 0 0 0 1 2
+        </sequence>
+        <sequence><taxon idref="taxon12"/>0 0 0 0 1 1
+        </sequence>
+        <sequence><taxon idref="taxon13"/>0 0 0 0 1 0
+        </sequence>
+        <sequence><taxon idref="taxon14"/>0 0 0 0 0 1
+        </sequence>
+        <sequence><taxon idref="taxon15"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon16"/>0 0 0 0 0 1
+        </sequence>
+        <sequence><taxon idref="taxon17"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon18"/>0 0 0 0 0 0
+        </sequence>
+        <sequence><taxon idref="taxon19"/>0 0 0 0 0 1
+        </sequence>
+        <sequence><taxon idref="taxon20"/>0 0 0 0 0 0
+        </sequence>
     </alignment>
 
     <patterns id="patterns" from="1" unique="false">
         <alignment idref="alignment"/>
+    </patterns>
+
+    <patterns id="patterns2" from="1" unique="false">
+        <alignment idref="alignment2"/>
     </patterns>
     <newick id="startingTree" usingHeights="true" usingDates="false">
         ((((taxon8:0.31135077910530073,(taxon14:0.13406227589651015,(taxon16:0.1311133345386281,taxon4:0.1311133345386281):0.0029489413578820353):0.17728850320879055):0.0646343881112902,taxon1:0.3759851672165909):0.3164314906963885,(((taxon7:0.2971597702886777,(taxon15:0.0522153556488882,taxon3:0.0522153556488882):0.2449444146397895):0.04187135796770953,(taxon6:0.040951647849333854,taxon11:0.040951647849333854):0.2980794804070534):0.12324816728611637,taxon18:0.4622792955425036):0.2301373623704758):0.30758334208702065,((taxon13:0.1446646393115494,taxon17:0.1446646393115494):0.48416004491470493,(((taxon5:0.0980178853353565,taxon2:0.0980178853353565):0.28987418004657534,taxon20:0.3878920653819318):0.15898354804666512,(taxon10:0.4185730895313018,((taxon12:0.1930018602647644,taxon19:0.1930018602647644):0.13517872422074134,taxon9:0.32818058448550574):0.09039250504579605):0.12830252389729516):0.08194907079765738):0.3711753157737457);;
@@ -223,8 +291,24 @@
         <parameter id="thresh6State" value="1" lower="0"/>
     </CompoundParameter>
 
-    <orderedLatentLiabilityLikelihood id="liabilityLikelihood" NData="1" NTraits="6"> <!-- change NTraits to the total number of traits-->
+    <orderedLatentLiabilityLikelihood id="liabilityLikelihood" NData="1"
+                                      NTraits="6"> <!-- change NTraits to the total number of traits-->
         <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <tipTrait>
+            <parameter idref="leafTraits"/>
+        </tipTrait>
+        <threshold>
+            <parameter idref="threshold"/>
+        </threshold>
+        <numClasses>
+            <parameter value="1 1 1 1 2 3"/>
+        </numClasses>
+    </orderedLatentLiabilityLikelihood>
+
+    <orderedLatentLiabilityLikelihood id="liabilityLikelihood2" NData="1"
+                                      NTraits="6"> <!-- change NTraits to the total number of traits-->
+        <patterns idref="patterns2"/>
         <treeModel idref="treeModel"/>
         <tipTrait>
             <parameter idref="leafTraits"/>
@@ -242,8 +326,17 @@
         <orderedLatentLiabilityLikelihood idref="liabilityLikelihood"/>
     </extendedLatentLiabilityGibbsOperator>
 
+    <extendedLatentLiabilityGibbsOperator id="op2">
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <orderedLatentLiabilityLikelihood idref="liabilityLikelihood2"/>
+    </extendedLatentLiabilityGibbsOperator>
+
     <cachedReport id="preReport">
         <extendedLatentLiabilityGibbsOperator idref="op"/>
+    </cachedReport>
+
+    <cachedReport id="preReport2">
+        <extendedLatentLiabilityGibbsOperator idref="op2"/>
     </cachedReport>
 
     <report>
@@ -258,7 +351,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.4314845160136349 0.8991295498492263 1.0752448441687281 -2.3562892674570706 -0.9060073381990605 -0.36573806028025047
+            0.4314845160136349 0.8991295498492263 1.0752448441687281 -2.3562892674570706 -0.9060073381990605
+            -0.36573806028025047
         </expected>
     </assertEqual>
 
@@ -270,7 +364,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            1.304364645815579 1.5497543589222116 0.31535352898439784 -6.048781282062214 -2.333179623620822 -2.415334006470289
+            1.304364645815579 1.5497543589222116 0.31535352898439784 -6.048781282062214 -2.333179623620822
+            -2.415334006470289
         </expected>
     </assertEqual>
 
@@ -282,7 +377,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.485737391995807 0.2589060144971486 1.7519984845521153 -1.1808588189257114 -1.0472272459167016 0.18382401966630368
+            -0.485737391995807 0.2589060144971486 1.7519984845521153 -1.1808588189257114 -1.0472272459167016
+            0.18382401966630368
         </expected>
     </assertEqual>
 
@@ -294,7 +390,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.3699750204540442 1.370232793198287 0.3458142948033789 0.6136054813491951 0.045716614151160684 1.05155750313736
+            0.3699750204540442 1.370232793198287 0.3458142948033789 0.6136054813491951 0.045716614151160684
+            1.05155750313736
         </expected>
     </assertEqual>
 
@@ -306,7 +403,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.3149445730432676 -1.3417780275475142 2.1635871900498804 -3.2835934251768952 -1.8240791799872795 -1.4634393034465347
+            0.3149445730432676 -1.3417780275475142 2.1635871900498804 -3.2835934251768952 -1.8240791799872795
+            -1.4634393034465347
         </expected>
     </assertEqual>
 
@@ -318,7 +416,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.06530128976473926 1.2400369803755198 0.6380568430697036 2.0518598842343274 0.12973334064759 1.4295193183780839
+            -0.06530128976473926 1.2400369803755198 0.6380568430697036 2.0518598842343274 0.12973334064759
+            1.4295193183780839
         </expected>
     </assertEqual>
 
@@ -330,7 +429,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.8941453134095505 -0.913535775807089 0.47099966363477996 -1.835981612400956 -1.1879553228493478 -0.5721337724411342
+            0.8941453134095505 -0.913535775807089 0.47099966363477996 -1.835981612400956 -1.1879553228493478
+            -0.5721337724411342
         </expected>
     </assertEqual>
 
@@ -342,7 +442,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -1.5780806606858475 -0.033147855212214083 0.5802531469531342 1.6200297614579002 0.4195205626290317 1.3744944196206461
+            -1.5780806606858475 -0.033147855212214083 0.5802531469531342 1.6200297614579002 0.4195205626290317
+            1.3744944196206461
         </expected>
     </assertEqual>
 
@@ -354,7 +455,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.2261141567119961 -0.7309041491183306 0.12391451081076255 0.9552290922035691 -0.20298930454958963 0.5816581612801883
+            -0.2261141567119961 -0.7309041491183306 0.12391451081076255 0.9552290922035691 -0.20298930454958963
+            0.5816581612801883
         </expected>
     </assertEqual>
 
@@ -366,7 +468,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -2.0629766663305076 -1.5957570969584025 -0.7660845614617926 1.297309848276327 0.2428104443725374 0.43591934961057177
+            -2.0629766663305076 -1.5957570969584025 -0.7660845614617926 1.297309848276327 0.2428104443725374
+            0.43591934961057177
         </expected>
     </assertEqual>
 
@@ -378,7 +481,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.782666689226927 -0.31805684525369593 0.1385936875576001 1.3712633025972847 0.04475030812886871 1.2238646449501402
+            -0.782666689226927 -0.31805684525369593 0.1385936875576001 1.3712633025972847 0.04475030812886871
+            1.2238646449501402
         </expected>
     </assertEqual>
 
@@ -390,7 +494,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            2.5242658618969287 2.373095201774038 1.332972466004328 -0.2555483939893037 -0.7602434119600616 0.6191230414937081
+            2.5242658618969287 2.373095201774038 1.332972466004328 -0.2555483939893037 -0.7602434119600616
+            0.6191230414937081
         </expected>
     </assertEqual>
 
@@ -402,7 +507,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.8019862239830622 -0.1623990645650038 0.9869321626708986 -3.7993970574921065 -1.456109432860842 -1.581546345212132
+            0.8019862239830622 -0.1623990645650038 0.9869321626708986 -3.7993970574921065 -1.456109432860842
+            -1.581546345212132
         </expected>
     </assertEqual>
 
@@ -414,7 +520,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.3343596255620972 1.2870320784077083 0.6260584847255795 0.8260045308127297 0.08119215874899055 1.1528173117195593
+            0.3343596255620972 1.2870320784077083 0.6260584847255795 0.8260045308127297 0.08119215874899055
+            1.1528173117195593
         </expected>
     </assertEqual>
 
@@ -426,7 +533,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            1.7713813951843251 1.6634096351097734 1.3945352026908575 -1.4755098229085457 -1.1325564060005036 0.10030611943568601
+            1.7713813951843251 1.6634096351097734 1.3945352026908575 -1.4755098229085457 -1.1325564060005036
+            0.10030611943568601
         </expected>
     </assertEqual>
 
@@ -438,7 +546,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.8923679368691424 0.8664803870810118 1.7100652934443366 -0.3259860589539013 -0.1755888534210044 0.8113467696640555
+            -0.8923679368691424 0.8664803870810118 1.7100652934443366 -0.3259860589539013 -0.1755888534210044
+            0.8113467696640555
         </expected>
     </assertEqual>
 
@@ -450,7 +559,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.11699996758558684 1.5288278687911983 0.07288399614095342 -3.8719997106752753 -1.3335926675911765 -1.542080738420168
+            -0.11699996758558684 1.5288278687911983 0.07288399614095342 -3.8719997106752753 -1.3335926675911765
+            -1.542080738420168
         </expected>
     </assertEqual>
 
@@ -462,7 +572,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            1.2788249276011856 2.5744551165907303 2.5061586716211846 -4.819564669849062 -2.048978749566004 -1.0481359861718147
+            1.2788249276011856 2.5744551165907303 2.5061586716211846 -4.819564669849062 -2.048978749566004
+            -1.0481359861718147
         </expected>
     </assertEqual>
 
@@ -474,7 +585,8 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            -0.17714282965047073 0.6510471365020332 0.5608413128835298 2.1216699802181216 0.025663482913671487 1.4457174632638043
+            -0.17714282965047073 0.6510471365020332 0.5608413128835298 2.1216699802181216 0.025663482913671487
+            1.4457174632638043
         </expected>
     </assertEqual>
 
@@ -486,31 +598,351 @@
             <cachedReport idref="preReport"/>
         </actual>
         <expected>
-            0.6360521149809162 0.111780623060309 1.7037454729915757 -3.5421514974450568 -1.75407591216549 -1.2626679476032905
+            0.6360521149809162 0.111780623060309 1.7037454729915757 -3.5421514974450568 -1.75407591216549
+            -1.2626679476032905
         </expected>
     </assertEqual>
 
 
+    <report>
+        latent liability thresholds applied
+        <cachedReport idref="preReport2"/>
+    </report>
 
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 4
+        </message>
+        <actual regex="taxon6.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            1
+        </expected>
+    </assertEqual>
 
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 6
+        </message>
+        <actual regex="taxon6.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 8
+        </message>
+        <actual regex="taxon8.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 11
+        </message>
+        <actual regex="taxon11.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 12
+        </message>
+        <actual regex="taxon12.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4">
+        <message>
+            check minima 13
+        </message>
+        <actual regex="taxon13.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 14
+        </message>
+        <actual regex="taxon14.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 16
+        </message>
+        <actual regex="taxon16.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 19
+        </message>
+        <actual regex="taxon19.traits minimum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 1
+        </message>
+        <actual regex="taxon1.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 2
+        </message>
+        <actual regex="taxon2.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 3
+        </message>
+        <actual regex="taxon3.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4">
+        <message>
+            check maxima 4
+        </message>
+        <actual regex="taxon4.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 5
+        </message>
+        <actual regex="taxon5.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 7
+        </message>
+        <actual regex="taxon7.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 9
+        </message>
+        <actual regex="taxon9.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 10
+        </message>
+        <actual regex="taxon10.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check maxima 12
+        </message>
+        <actual regex="taxon12.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check maxima 13
+        </message>
+        <actual regex="taxon13.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 14
+        </message>
+        <actual regex="taxon14.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 15
+        </message>
+        <actual regex="taxon15.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 16
+        </message>
+        <actual regex="taxon16.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 17
+        </message>
+        <actual regex="taxon17.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 18
+        </message>
+        <actual regex="taxon18.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 19
+        </message>
+        <actual regex="taxon19.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 20
+        </message>
+        <actual regex="taxon20.traits maximum:(.*?)\n">
+            <cachedReport idref="preReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
 
     <operators id="operators">
-        <fireParameterChanged weight="1" value="0.0076177742633394985 0.3515255484089337 0.30611493207760276 -2.132446790112065 -0.05945162267545193 -0.8161262390971513 0.05702524809146323 -0.784929798992992 -1.0304943902767967 -0.3930227002265834 0.2079912019698792 -1.0144436604293505 -0.5484010117038763 0.24501763591278475 -0.21629784327601548 1.712948337244973 1.4061412930408388 1.056873733132347">
+        <fireParameterChanged weight="1"
+                              value="0.0076177742633394985 0.3515255484089337 0.30611493207760276 -2.132446790112065 -0.05945162267545193 -0.8161262390971513 0.05702524809146323 -0.784929798992992 -1.0304943902767967 -0.3930227002265834 0.2079912019698792 -1.0144436604293505 -0.5484010117038763 0.24501763591278475 -0.21629784327601548 1.712948337244973 1.4061412930408388 1.056873733132347">
             <parameter idref="L"/>
         </fireParameterChanged>
-        <fireParameterChanged weight="1" value="6.017805562468654 3.420812136460994 4.801192122486432 0.5742522443741247 0.1982380664552551 0.49750326634774017">
+        <fireParameterChanged weight="1"
+                              value="6.017805562468654 3.420812136460994 4.801192122486432 0.5742522443741247 0.1982380664552551 0.49750326634774017">
             <parameter idref="factorPrecision"/>
         </fireParameterChanged>
+        <fireParameterChanged weight="1" value="1.1">
+            <parameter idref="threshold"/>
+        </fireParameterChanged>
+        <!--        <op idref="op2"/>-->
     </operators>
 
 
-
-
-    <mcmc id="mcmc" chainLength="10" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="20" autoOptimize="true">
         <joint id="joint">
             <prior id="prior">
                 <gammaPrior idref="factorPrecision.prior"/>
                 <distributionLikelihood idref="L.prior"/>
+                <!--                <orderedLatentLiabilityLikelihood idref="liabilityLikelihood2"/>-->
             </prior>
             <likelihood id="likelihood">
                 <traitDataLikelihood idref="traitLikelihood"/>
@@ -529,7 +961,7 @@
                 <likelihood idref="likelihood"/>
             </column>
         </log>
-        <log id="fileLog" logEvery="10" fileName="testExtendedLatentLiabilityGibbsOperator.log" overwrite="true">
+        <log id="fileLog" logEvery="20" fileName="testExtendedLatentLiabilityGibbsOperator.log" overwrite="true">
             <joint idref="joint"/>
             <prior idref="prior"/>
             <likelihood idref="likelihood"/>
@@ -538,12 +970,16 @@
             <parameter idref="leafTraits"/>
         </log>
     </mcmc>
-    
-    
+
+
     <cachedReport id="postReport">
         <extendedLatentLiabilityGibbsOperator idref="op"/>
     </cachedReport>
-    
+
+    <cachedReport id="postReport2">
+        <extendedLatentLiabilityGibbsOperator idref="op2"/>
+    </cachedReport>
+
     <report>
         <cachedReport idref="postReport"/>
     </report>
@@ -556,7 +992,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.4314845160136349 0.8991295498492263 1.0752448441687281 -2.3562892674570706 -0.7670542444628268 -0.17268904493732862
+            0.4314845160136349 0.8991295498492263 1.0752448441687281 -2.3562892674570706 -0.7670542444628268
+            -0.17268904493732862
         </expected>
     </assertEqual>
 
@@ -568,7 +1005,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            1.304364645815579 1.5497543589222116 0.31535352898439784 -6.048781282062214 -2.307391613031257 -2.0369338900424054
+            1.304364645815579 1.5497543589222116 0.31535352898439784 -6.048781282062214 -2.307391613031257
+            -2.0369338900424054
         </expected>
     </assertEqual>
 
@@ -580,7 +1018,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.485737391995807 0.2589060144971486 1.7519984845521153 -1.1808588189257114 -1.3973095048934852 0.239441409250162
+            -0.485737391995807 0.2589060144971486 1.7519984845521153 -1.1808588189257114 -1.3973095048934852
+            0.239441409250162
         </expected>
     </assertEqual>
 
@@ -592,7 +1031,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.3699750204540442 1.370232793198287 0.3458142948033789 0.6136054813491951 0.13380767468873955 0.8376331057851303
+            0.3699750204540442 1.370232793198287 0.3458142948033789 0.6136054813491951 0.13380767468873955
+            0.8376331057851303
         </expected>
     </assertEqual>
 
@@ -604,7 +1044,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.3149445730432676 -1.3417780275475142 2.1635871900498804 -3.2835934251768952 -2.2312736872829078 -1.5342849351333143
+            0.3149445730432676 -1.3417780275475142 2.1635871900498804 -3.2835934251768952 -2.2312736872829078
+            -1.5342849351333143
         </expected>
     </assertEqual>
 
@@ -616,7 +1057,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.06530128976473926 1.2400369803755198 0.6380568430697036 2.0518598842343274 0.1876737501299317 1.2006874952973021
+            -0.06530128976473926 1.2400369803755198 0.6380568430697036 2.0518598842343274 0.1876737501299317
+            1.2006874952973021
         </expected>
     </assertEqual>
 
@@ -628,7 +1070,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.8941453134095505 -0.913535775807089 0.47099966363477996 -1.835981612400956 -1.7231615368608004 -0.9582351348307157
+            0.8941453134095505 -0.913535775807089 0.47099966363477996 -1.835981612400956 -1.7231615368608004
+            -0.9582351348307157
         </expected>
     </assertEqual>
 
@@ -640,7 +1083,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -1.5780806606858475 -0.033147855212214083 0.5802531469531342 1.6200297614579002 1.274053664066912 1.5032545360303402
+            -1.5780806606858475 -0.033147855212214083 0.5802531469531342 1.6200297614579002 1.274053664066912
+            1.5032545360303402
         </expected>
     </assertEqual>
 
@@ -652,7 +1096,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.2261141567119961 -0.7309041491183306 0.12391451081076255 0.9552290922035691 -0.22827604455130768 0.3122054069033311
+            -0.2261141567119961 -0.7309041491183306 0.12391451081076255 0.9552290922035691 -0.22827604455130768
+            0.3122054069033311
         </expected>
     </assertEqual>
 
@@ -664,7 +1109,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -2.0629766663305076 -1.5957570969584025 -0.7660845614617926 1.297309848276327 1.5932149026215257 0.626753440571747
+            -2.0629766663305076 -1.5957570969584025 -0.7660845614617926 1.297309848276327 1.5932149026215257
+            0.626753440571747
         </expected>
     </assertEqual>
 
@@ -676,7 +1122,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.782666689226927 -0.31805684525369593 0.1385936875576001 1.3712633025972847 0.2746602108638285 1.0643520639993085
+            -0.782666689226927 -0.31805684525369593 0.1385936875576001 1.3712633025972847 0.2746602108638285
+            1.0643520639993085
         </expected>
     </assertEqual>
 
@@ -688,7 +1135,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            2.5242658618969287 2.373095201774038 1.332972466004328 -0.2555483939893037 -2.04611653288282 0.1700718778049577
+            2.5242658618969287 2.373095201774038 1.332972466004328 -0.2555483939893037 -2.04611653288282
+            0.1700718778049577
         </expected>
     </assertEqual>
 
@@ -700,7 +1148,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.8019862239830622 -0.1623990645650038 0.9869321626708986 -3.7993970574921065 -1.3525586696964638 -1.5650449609752286
+            0.8019862239830622 -0.1623990645650038 0.9869321626708986 -3.7993970574921065 -1.3525586696964638
+            -1.5650449609752286
         </expected>
     </assertEqual>
 
@@ -712,7 +1161,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.3343596255620972 1.2870320784077083 0.6260584847255795 0.8260045308127297 0.10569058122445085 0.923273674592906
+            0.3343596255620972 1.2870320784077083 0.6260584847255795 0.8260045308127297 0.10569058122445085
+            0.923273674592906
         </expected>
     </assertEqual>
 
@@ -724,7 +1174,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            1.7713813951843251 1.6634096351097734 1.3945352026908575 -1.4755098229085457 -1.7806519924045574 -0.0324494168161209
+            1.7713813951843251 1.6634096351097734 1.3945352026908575 -1.4755098229085457 -1.7806519924045574
+            -0.0324494168161209
         </expected>
     </assertEqual>
 
@@ -736,7 +1187,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.8923679368691424 0.8664803870810118 1.7100652934443366 -0.3259860589539013 0.2637169052351851 1.1960916040626444
+            -0.8923679368691424 0.8664803870810118 1.7100652934443366 -0.3259860589539013 0.2637169052351851
+            1.1960916040626444
         </expected>
     </assertEqual>
 
@@ -748,7 +1200,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.11699996758558684 1.5288278687911983 0.07288399614095342 -3.8719997106752753 -0.6194466363062929 -1.1644584656773986
+            -0.11699996758558684 1.5288278687911983 0.07288399614095342 -3.8719997106752753 -0.6194466363062929
+            -1.1644584656773986
         </expected>
     </assertEqual>
 
@@ -760,7 +1213,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            1.2788249276011856 2.5744551165907303 2.5061586716211846 -4.819564669849062 -2.4468144264881744 -0.5712999489547883
+            1.2788249276011856 2.5744551165907303 2.5061586716211846 -4.819564669849062 -2.4468144264881744
+            -0.5712999489547883
         </expected>
     </assertEqual>
 
@@ -772,7 +1226,8 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            -0.17714282965047073 0.6510471365020332 0.5608413128835298 2.1216699802181216 -0.3757331213458883 1.0702726736933528
+            -0.17714282965047073 0.6510471365020332 0.5608413128835298 2.1216699802181216 -0.3757331213458883
+            1.0702726736933528
         </expected>
     </assertEqual>
 
@@ -784,9 +1239,298 @@
             <cachedReport idref="postReport"/>
         </actual>
         <expected>
-            0.6360521149809162 0.111780623060309 1.7037454729915757 -3.5421514974450568 -2.037397664099842 -1.0978383396570734
+            0.6360521149809162 0.111780623060309 1.7037454729915757 -3.5421514974450568 -2.037397664099842
+            -1.0978383396570734
         </expected>
     </assertEqual>
-    
-    
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 8
+        </message>
+        <actual regex="taxon8.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 1.1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 11
+        </message>
+        <actual regex="taxon11.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 1.1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check minima 12
+        </message>
+        <actual regex="taxon12.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4">
+        <message>
+            check minima 13
+        </message>
+        <actual regex="taxon13.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 14
+        </message>
+        <actual regex="taxon14.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 16
+        </message>
+        <actual regex="taxon16.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check minima 19
+        </message>
+        <actual regex="taxon19.traits minimum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 1
+        </message>
+        <actual regex="taxon1.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 2
+        </message>
+        <actual regex="taxon2.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 3
+        </message>
+        <actual regex="taxon3.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4">
+        <message>
+            check maxima 4
+        </message>
+        <actual regex="taxon4.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 5
+        </message>
+        <actual regex="taxon5.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 7
+        </message>
+        <actual regex="taxon7.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 9
+        </message>
+        <actual regex="taxon9.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 10
+        </message>
+        <actual regex="taxon10.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check maxima 12
+        </message>
+        <actual regex="taxon12.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            1.1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="5">
+        <message>
+            check maxima 13
+        </message>
+        <actual regex="taxon13.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 14
+        </message>
+        <actual regex="taxon14.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 1.1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 15
+        </message>
+        <actual regex="taxon15.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 16
+        </message>
+        <actual regex="taxon16.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 1.1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 17
+        </message>
+        <actual regex="taxon17.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 18
+        </message>
+        <actual regex="taxon18.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 19
+        </message>
+        <actual regex="taxon19.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 1.1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-2" verbose="true" charactersToStrip="\[\]," actualIndices="4 5">
+        <message>
+            check maxima 20
+        </message>
+        <actual regex="taxon20.traits maximum:(.*?)\n">
+            <cachedReport idref="postReport2"/>
+        </actual>
+        <expected>
+            0 0
+        </expected>
+    </assertEqual>
+
+
 </beast>

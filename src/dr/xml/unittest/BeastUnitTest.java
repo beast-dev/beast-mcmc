@@ -16,22 +16,24 @@ public class BeastUnitTest implements Reportable {
     private final String message;
     private final String[] actual;
     private final String expected;
+    private final int[] indices;
 
     private Boolean pass;
 
     private final AssertType assertType;
 
     public BeastUnitTest(String message, String[] actual, String expected,
-                         AssertType assertType) {
+                         AssertType assertType, int[] indices) {
         this.message = message;
         this.actual = actual;
         this.expected = expected;
         this.assertType = assertType;
+        this.indices = indices;
     }
 
     public void execute() {
         for (int i = 0; i < actual.length; i++) {
-            if (!assertType.equivalent(actual[i], expected)) {
+            if (!assertType.equivalent(actual[i], indices, expected)) {
                 failCheck(i);
             }
         }
@@ -63,12 +65,12 @@ public class BeastUnitTest implements Reportable {
 
     interface AssertType {
 
-        boolean equivalent(String a, String b);
+        boolean equivalent(String a, int[] aIndices, String b);
 
         class StringAssert implements AssertType {
 
             @Override
-            public boolean equivalent(String a, String b) {
+            public boolean equivalent(String a, int[] aIndices, String b) {
                 return a.compareTo(b) == 0;
             }
         }
@@ -86,11 +88,10 @@ public class BeastUnitTest implements Reportable {
             }
 
             @Override
-            public boolean equivalent(String a, String b) {
+            public boolean equivalent(String a, int[] aIndices, String b) {
 
-                double[] lhs = parseArray(a);
-                double[] rhs = parseArray(b);
-
+                double[] lhs = parseArray(a, aIndices);
+                double[] rhs = parseArray(b, null);
                 if (lhs.length != rhs.length) {
                     System.err.println("The dimensions of the \"actual\" and \"expected\" values are not the same.");
                     return false;
@@ -106,14 +107,26 @@ public class BeastUnitTest implements Reportable {
                 return true;
             }
 
-            private double[] parseArray(String string) {
+            private double[] parseArray(String string, int[] indices) {
                 string = string.replaceAll(",", " ");
                 string = string.replaceAll("[" + stripChars + "]", " ");
                 string = string.trim();
                 String[] strings = string.split("\\s+");
-                double[] reals = new double[strings.length];
-                for (int i = 0; i < strings.length; ++i) {
-                    reals[i] = Double.valueOf(strings[i]);
+                final double[] reals;
+                if (indices == null) {
+                    reals = new double[strings.length];
+
+                    for (int i = 0; i < strings.length; ++i) {
+                        reals[i] = Double.valueOf(strings[i]);
+                    }
+                } else {
+                    reals = new double[indices.length];
+
+                    int dim = 0;
+                    for (int i : indices) {
+                        reals[dim] = Double.valueOf(strings[i]);
+                        dim++;
+                    }
                 }
 
                 return reals;
@@ -152,6 +165,7 @@ public class BeastUnitTest implements Reportable {
     private static final String TOLERANCE_TYPE = "toleranceType";
     private static final String ABSOLUTE = "absolute";
     private static final String RELATIVE = "relative";
+    private static final String INDICES = "actualIndices";
 
     public static AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -196,8 +210,10 @@ public class BeastUnitTest implements Reportable {
             } else {
                 assertType = new AssertType.StringAssert();
             }
+            int[] indices = null;
+            if (xo.hasAttribute(INDICES)) indices = xo.getIntegerArrayAttribute(INDICES);
 
-            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType);
+            BeastUnitTest unitTest = new BeastUnitTest(message, actual, expected, assertType, indices);
             unitTest.execute();
 
             if (xo.getAttribute(VERBOSE, false)) {
@@ -277,6 +293,7 @@ public class BeastUnitTest implements Reportable {
             }, true),
             AttributeRule.newDoubleRule(TOLERANCE_STRING, true),
             AttributeRule.newBooleanRule(VERBOSE, true),
-            AttributeRule.newStringRule(TOLERANCE_TYPE, true)
+            AttributeRule.newStringRule(TOLERANCE_TYPE, true),
+            AttributeRule.newIntegerArrayRule(INDICES, true)
     };
 }

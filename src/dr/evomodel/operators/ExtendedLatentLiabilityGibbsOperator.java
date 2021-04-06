@@ -16,6 +16,7 @@ import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.getTreeTraitFromDataLikelihood;
 
@@ -148,17 +149,31 @@ public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator imp
         int nTraits = dataParameter.getParameter(0).getDimension();
 
         int reps = 20000;
-        double[] mean = new double[dataParameter.getDimension()];
+        int m = dataParameter.getDimension();
+        double[] mean = new double[m];
+        double[] min = new double[m];
+        double[] max = new double[m];
+
+        Arrays.fill(min, Double.POSITIVE_INFINITY);
+        Arrays.fill(max, Double.NEGATIVE_INFINITY);
 
 
         for (int i = 0; i < reps; i++) {
             doOperation();
-            for (int j = 0; j < mean.length; j++) {
-                mean[j] += dataParameter.getParameterValue(j);
+            for (int j = 0; j < m; j++) {
+                double value = dataParameter.getParameterValue(j);
+                mean[j] += value;
+
+                if (value < min[j]) {
+                    min[j] = value;
+                }
+                if (value > max[j]) {
+                    max[j] = value;
+                }
             }
         }
 
-        for (int i = 0; i < mean.length; i++) {
+        for (int i = 0; i < m; i++) {
             mean[i] /= reps;
         }
 
@@ -176,7 +191,17 @@ public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator imp
                 sb.append(mean[offset + trait]);
                 sb.append(" ");
             }
-            sb.append("\n");
+            sb.append("\n\t" + taxonID + " minimum:\t");
+            for (int trait = 0; trait < nTraits; trait++) {
+                sb.append(min[offset + trait]);
+                sb.append(" ");
+            }
+            sb.append("\n\t" + taxonID + " maximum:\t");
+            for (int trait = 0; trait < nTraits; trait++) {
+                sb.append(max[offset + trait]);
+                sb.append(" ");
+            }
+            sb.append("\n\n");
 
 
         }

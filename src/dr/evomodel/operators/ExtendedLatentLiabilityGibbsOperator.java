@@ -7,6 +7,8 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -17,7 +19,7 @@ import java.util.ArrayList;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.getTreeTraitFromDataLikelihood;
 
-public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 
     private final ContinuousExtensionDelegate extensionDelegate;
     private final OrderedLatentLiabilityLikelihood latentLiabilityLikelihood;
@@ -138,4 +140,49 @@ public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator imp
             return EXTENDED_LATENT_GIBBS;
         }
     };
+
+    @Override
+    public String getReport() {
+        CompoundParameter dataParameter = dataModel.getParameter();
+        int nTaxa = dataParameter.getParameterCount();
+        int nTraits = dataParameter.getParameter(0).getDimension();
+
+        int reps = 20000;
+        double[] mean = new double[dataParameter.getDimension()];
+
+
+        for (int i = 0; i < reps; i++) {
+            doOperation();
+            for (int j = 0; j < mean.length; j++) {
+                mean[j] += dataParameter.getParameterValue(j);
+            }
+        }
+
+        for (int i = 0; i < mean.length; i++) {
+            mean[i] /= reps;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(EXTENDED_LATENT_GIBBS + " report:\n");
+
+        for (int taxon = 0; taxon < nTaxa; taxon++) {
+            Parameter taxonParameter = dataParameter.getParameter(taxon);
+            String taxonID = taxonParameter.getId();
+            int offset = taxon * nTraits;
+
+
+            sb.append("\t" + taxonID + " mean:\t");
+            for (int trait = 0; trait < nTraits; trait++) {
+                sb.append(mean[offset + trait]);
+                sb.append(" ");
+            }
+            sb.append("\n");
+
+
+        }
+
+        sb.append("\n\n");
+
+        return sb.toString();
+    }
 }

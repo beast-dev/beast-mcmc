@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.model.CompoundParameter;
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -50,6 +51,8 @@ public abstract class ContinuousExtensionDelegate {
     protected final int dimTrait;
     protected final int nTaxa;
 
+    private boolean forceResample = true;
+
 
     public ContinuousExtensionDelegate(
             ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -64,18 +67,26 @@ public abstract class ContinuousExtensionDelegate {
         this.dataModel = dataModel;
 
         this.dimTrait = dataModel.getDataDimension();
-        this.nTaxa = tree.getExternalNodeCount();
+        this.nTaxa = tree.getExternalNodeCount(); //TODO: tree only used to get number of taxa
     }
 
-    protected double[] getTreeTraits() {
-        likelihoodDelegate.fireModelChanged(); //Forces new sample
+    public ModelExtensionProvider getDataModel() {
+        return dataModel;
+    }
+
+    public double[] getTreeTraits() {
+        if (forceResample) likelihoodDelegate.fireModelChanged(); //Forces new sample
         return (double[]) treeTrait.getTrait(tree, null);
     }
 
     public double[] getExtendedValues() {
-        double[] treeTraits = getTreeTraits();
-        double[] transformedTraits = dataModel.transformTreeTraits(treeTraits);
+        double[] transformedTraits = getTransformedTraits();
         return getExtendedValues(transformedTraits);
+    }
+
+    public double[] getTransformedTraits() {
+        double[] treeTraits = getTreeTraits();
+        return dataModel.transformTreeTraits(treeTraits);
     }
 
     public double[] getExtendedValues(double[] treeValues) {
@@ -97,11 +108,6 @@ public abstract class ContinuousExtensionDelegate {
 
             sampleMissingValues(sample, treeValues, partition, i);
 
-//                if (dataModel.diagonalVariance()) {
-//                    for (int j : partition.misInds) {
-//                        int ind = j + offset;
-//                        sample[ind] = MathUtils.nextGaussian() * Math.sqrt(extensionVar.get(j, j)) + treeValues[ind];
-//                    }
         }
 
         return sample;
@@ -246,5 +252,44 @@ public abstract class ContinuousExtensionDelegate {
 
     }
 
+    public static class IndependentNormalExtensionDelegate extends ContinuousExtensionDelegate {
+
+        private final ModelExtensionProvider.NormalExtensionProvider dataModel;
+        private final double[] stdev;
+
+        public IndependentNormalExtensionDelegate(
+                ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                TreeTrait treeTrait,
+                ModelExtensionProvider.NormalExtensionProvider dataModel,
+                Tree tree
+        ) {
+            super(likelihoodDelegate, dataModel, treeTrait, tree);
+
+            this.dataModel = dataModel;
+            this.stdev = new double[dimTrait];
+
+        }
+
+        @Override
+        public double[] getExtendedValues(double[] inputValues) {
+            DenseMatrix64F variance = dataModel.getExtensionVariance();
+            for (int i = 0; i < dimTrait; i++) {
+                stdev[i] = Math.sqrt(variance.get(i, i));
+            }
+
+            return super.getExtendedValues(inputValues);
+        }
+
+
+        @Override
+        protected void sampleMissingValues(double[] sample, double[] input, IndexPartition partition, int taxon) {
+            int offset = dimTrait * taxon;
+            for (int j : partition.misInds) {
+                int ind = j + offset;
+                sample[ind] = MathUtils.nextGaussian() * stdev[j] + input[ind];
+            }
+        }
+
+    }
 }
 

@@ -301,6 +301,10 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
         int datum = tipData[tip][index];
 
+        if (datum == -1.0) {
+            return true; //TODO: this is really really bad. find some other way to deal with missingness
+        }
+
 
         int dim = (int) numClasses.getParameterValue(index);
 

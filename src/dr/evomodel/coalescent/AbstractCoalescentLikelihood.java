@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.util.Units;
 import dr.inference.model.*;
 
@@ -130,13 +131,17 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     protected abstract double calculateLogLikelihood();
 
 
-    protected final IntervalList getIntervalList() {
+    public IntervalList getIntervalList() {
         return intervalList;
     }
 
     public String toString() {
         return Double.toString(logLikelihood);
     }
+
+
+
+
 
     // ****************************************************************
     // Inner classes

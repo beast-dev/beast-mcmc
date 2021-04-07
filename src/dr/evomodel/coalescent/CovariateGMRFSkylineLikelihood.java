@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.MatrixParameter;
@@ -48,9 +49,9 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	//private ArrayList<CoalescentIntervalWithData> storedIntervals;
 
 
-	public CovariateGMRFSkylineLikelihood(IntervalList intervalList, Parameter popParameter, Parameter precParameter,
-	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
-	                                      Parameter data, Parameter times) {
+	public CovariateGMRFSkylineLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
+										  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+										  Parameter data, Parameter times) {
 		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;

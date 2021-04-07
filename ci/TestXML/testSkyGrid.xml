@@ -2275,16 +2275,18 @@
         <cutOff>
             <parameter id="skygrid.cutOff" value="1.0"/>
         </cutOff>
-        <!--
         <populationTree>
             <treeModel idref="treeModel"/>
         </populationTree>
-        -->
+                <!--
+
         <intervals>
             <treeIntervals>
                 <treeModel idref="treeModel"/>
             </treeIntervals>
         </intervals>
+                -->
+
     </gmrfSkyGridLikelihood>
 
     <!-- The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )-->
@@ -2563,9 +2565,9 @@
         <uniformOperator weight="30">
             <parameter idref="treeModel.internalNodeHeights"/>
         </uniformOperator>
-       <!-- <gmrfGridBlockUpdateOperator scaleFactor="1.0" weight="2">
+     <gmrfBlockUpdateOperator scaleFactor="1.0" weight="2">
             <gmrfSkyrideLikelihood idref="skygrid"/>
-        </gmrfGridBlockUpdateOperator> -->
+        </gmrfBlockUpdateOperator>
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="skygrid.precision"/>
         </scaleOperator>

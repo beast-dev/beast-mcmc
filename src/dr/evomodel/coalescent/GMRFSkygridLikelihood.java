@@ -47,7 +47,7 @@ import java.util.List;
  * @author Mandev Gill
  * @author Marc A. Suchard
  */
-
+@Deprecated
 public class GMRFSkygridLikelihood extends GMRFSkyrideLikelihood
         implements GradientWrtParameterProvider, CoalescentIntervalProvider, Citable {
 

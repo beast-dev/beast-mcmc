@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -62,7 +63,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
 
     // PRIVATE STUFF
 
-    protected IntervalList intervalList = null;
+    protected TreeIntervalList intervalList = null;
     protected Parameter popSizeParameter;
     protected Parameter groupSizeParameter;
     protected Parameter precisionParameter;
@@ -94,7 +95,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         super(name);
     }
 
-    public GMRFSkyrideLikelihood(IntervalList intervalList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
+    public GMRFSkyrideLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
                                     Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                     boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
 
@@ -157,7 +158,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
 
 
 
-    public GMRFSkyrideLikelihood(List<IntervalList> intervalsList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
+    public GMRFSkyrideLikelihood(List<TreeIntervalList> intervalsList, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
                                     Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                     boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
 
@@ -243,12 +244,13 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         return 1;
     } */
 
-    protected int setIntervalList(List<IntervalList> intervalsList) {
+    protected int setIntervalList(List<TreeIntervalList> intervalsList) {
         if (intervalsList.size() != 1) {
             throw new RuntimeException("GMRFSkyrideLikelihood only implemented for one tree");
         }
         this.intervalList = intervalsList.get(0);
         addModel((Model)intervalList);
+        intervalList.setBuildIntervalNodeMapping(true);
         return 1;
     }
 
@@ -293,12 +295,9 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
     // **************************************************************
 
     //public double getLogLikelihood() {
-    public double calculateLogLikelihood(){
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogCoalescentLikelihood();
-            logFieldLikelihood = calculateLogFieldLikelihood();
-            likelihoodKnown = true;
-        }
+    protected double calculateLogLikelihood(){
+        logLikelihood = calculateLogCoalescentLikelihood();
+        logFieldLikelihood = calculateLogFieldLikelihood();
         return logLikelihood + logFieldLikelihood;
     }
 
@@ -389,6 +388,14 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         }
         a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
         return a;
+    }
+
+    public void setupCoalescentIntervals() {
+        this.intervalList.calculateIntervals();
+        setupSufficientStatistics();
+    }
+    public  TreeIntervalList getIntervalList() {
+        return intervalList;
     }
 
     public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision) {

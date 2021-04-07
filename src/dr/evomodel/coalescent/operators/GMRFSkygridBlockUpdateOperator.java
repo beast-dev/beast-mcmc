@@ -44,6 +44,7 @@ import java.util.logging.Logger;
  * @author Mandev Gill
  * @version $Id: GMRFMultilocusSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
+@Deprecated
 public class GMRFSkygridBlockUpdateOperator extends AbstractAdaptableOperator {
 
     private static boolean FAIL_SILENTLY = true;

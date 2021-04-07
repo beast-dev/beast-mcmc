@@ -39,6 +39,8 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+//Deprecated as we should be using the model version in coalescent likelihoods
+@Deprecated
 public class TreeIntervals implements IntervalList {
 
     /**

@@ -85,20 +85,28 @@ public class Intervals implements IntervalList {
     }
 
     public void addSampleEvent(double time) {
+        this.addSampleEvent(time,-1);
+    }
+    public void addSampleEvent(double time,int nodeNumber) {
         if (time < startTime) {
             startTime = time;
         }
 
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.SAMPLE;
+        events[eventCount].nodeNumber=nodeNumber;
         eventCount++;
         sampleCount++;
         intervalsKnown = false;
     }
-
     public void addCoalescentEvent(double time) {
+        this.addCoalescentEvent(time, -1);
+    }
+
+    public void addCoalescentEvent(double time, int nodeNumber) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.COALESCENT;
+        events[eventCount].nodeNumber=nodeNumber;
         eventCount++;
         intervalsKnown = false;
     }
@@ -107,6 +115,7 @@ public class Intervals implements IntervalList {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.MIGRATION;
         events[eventCount].info = destination;
+        events[eventCount].nodeNumber=-1;
         eventCount++;
         intervalsKnown = false;
     }
@@ -114,6 +123,7 @@ public class Intervals implements IntervalList {
     public void addNothingEvent(double time) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.NOTHING;
+        events[eventCount].nodeNumber = -1;
         eventCount++;
         intervalsKnown = false;
     }
@@ -174,7 +184,13 @@ public class Intervals implements IntervalList {
         }
         return intervalTypes[i];
     }
-
+    //Return the node that triggers the event
+    public int getNodeForEvent(int i){
+        if (!intervalsKnown){
+            calculateIntervals();
+        }
+        return events[i].nodeNumber;
+    }
     public double getTotalDuration() {
 
         if (!intervalsKnown) {
@@ -261,6 +277,7 @@ public class Intervals implements IntervalList {
          * Some extra information for the event (e.g., destination of a migration)
          */
         int info;
+        int nodeNumber;
 
     }
 

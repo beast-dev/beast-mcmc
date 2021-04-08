@@ -204,7 +204,6 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
             double[] gamma = skyrideLikelihood.getPopSizeParameter().getParameterValues();
             IntervalList intervals =  skyrideLikelihood.getIntervalList();
 
-//TODO does this indexing need updating because of the intervals
 
             int index = 0;
             for (int i = 0; i < intervals.getIntervalCount(); i++) {

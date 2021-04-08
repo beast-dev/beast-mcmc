@@ -30,7 +30,6 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
@@ -96,7 +95,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     private double[] coalescentEventStatisticValues;
 
 //    private List<Tree> treeList;
-    private List<TreeIntervalList> intervalsList;
+    private final List<TreeIntervalList> intervalsList;
 
     public GMRFMultilocusSkyrideLikelihood(List<TreeIntervalList> intervalsList,
                                            Parameter popParameter,

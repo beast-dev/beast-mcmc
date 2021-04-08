@@ -50,7 +50,7 @@ import java.util.List;
  */
 
 public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
-        implements  CoalescentIntervalProvider, Citable {
+        implements CoalescentIntervalProvider, Citable {
 
     public static final boolean DEBUG = false;
 
@@ -77,7 +77,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 //    protected SymmTridiagMatrix storedPrecMatrix;
 
     private final SkygridHelper skygridHelper;
-//    protected List<Parameter> missingCov;
+    //    protected List<Parameter> missingCov;
     private final List<MatrixParameter> covariates;
     private final List<Parameter> beta;
     private final List<Parameter> delta;
@@ -94,10 +94,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     private double[] coalescentEventStatisticValues;
 
-//    private List<Tree> treeList;
-    private final List<TreeIntervalList> intervalsList;
+    //    private List<Tree> treeList;
+    private final List<IntervalList> intervalsList;
 
-    public GMRFMultilocusSkyrideLikelihood(List<TreeIntervalList> intervalsList,
+    public GMRFMultilocusSkyrideLikelihood(List<IntervalList> intervalsList,
                                            Parameter popParameter,
                                            Parameter groupParameter,
                                            Parameter precParameter,
@@ -108,7 +108,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                                            double cutOff,
                                            int numGridPoints,
                                            Parameter phi,
-                                           Parameter ploidyFactorsParameter){
+                                           Parameter ploidyFactorsParameter) {
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
         // adding the key word to the the model means the keyword will be logged in the
@@ -117,7 +117,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         //if (treeList.size() > 1) {
         //    this.addKeyword("multilocus");
         // }
-        if(intervalsList.size() > 1){
+        if (intervalsList.size() > 1) {
             this.addKeyword("multilocus");
         }
 
@@ -156,8 +156,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         this.intervalsList = intervalsList;
         //this.numTrees = setTree(treeList);
 
-        for (TreeIntervalList intervals : intervalsList) {
-            intervals.setBuildIntervalNodeMapping(true);
+        for (IntervalList intervals : intervalsList) {
             addModel((Model) intervals);
         }
 
@@ -220,7 +219,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
 
     //rewrite this constructor without duplicating so much code
-    public GMRFMultilocusSkyrideLikelihood(List<TreeIntervalList> intervalsList,
+    public GMRFMultilocusSkyrideLikelihood(List<IntervalList> intervalsList,
                                            Parameter popParameter,
                                            Parameter groupParameter,
                                            Parameter precParameter,
@@ -259,17 +258,17 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 this.firstObservedIndex[i] = (int) firstObservedIndexParameter.get(i).getParameterValue(0);
             }
 
-            if(recentIndices != null){
+            if (recentIndices != null) {
                 // indices specify which covariates require default unobserved covariate data prior
-                this.recIndices = new int [firstObservedIndexParameter.size()];
-                for (int i = 0; i < firstObservedIndexParameter.size(); i++){
+                this.recIndices = new int[firstObservedIndexParameter.size()];
+                for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
                     this.recIndices[i] = (int) recentIndices.getParameterValue(i);
                 }
-            }else{
+            } else {
                 // If specific covariates not specified by indices, need default unobserved covariate data prior for all covariates
-                this.recIndices = new int [firstObservedIndexParameter.size()];
-                for (int i = 0; i < firstObservedIndexParameter.size(); i++){
-                    this.recIndices[i] = i+1;
+                this.recIndices = new int[firstObservedIndexParameter.size()];
+                for (int i = 0; i < firstObservedIndexParameter.size(); i++) {
+                    this.recIndices[i] = i + 1;
                 }
             }
 
@@ -281,17 +280,17 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 this.lastObservedIndex[i] = (int) lastObservedIndexParameter.get(i).getParameterValue(0);
             }
 
-            if(distantIndices != null){
+            if (distantIndices != null) {
                 // indices specify which covariates require default unobserved covariate data prior
-                this.distIndices = new int [lastObservedIndexParameter.size()];
-                for (int i = 0; i < lastObservedIndexParameter.size(); i++){
+                this.distIndices = new int[lastObservedIndexParameter.size()];
+                for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
                     this.distIndices[i] = (int) distantIndices.getParameterValue(i);
                 }
-            }else{
+            } else {
                 // If specific covariates not specified by indices, need default unobserved covariate data prior for all covariates
-                this.distIndices = new int [lastObservedIndexParameter.size()];
-                for (int i = 0; i < lastObservedIndexParameter.size(); i++){
-                    this.distIndices[i] = i+1;
+                this.distIndices = new int[lastObservedIndexParameter.size()];
+                for (int i = 0; i < lastObservedIndexParameter.size(); i++) {
+                    this.distIndices[i] = i + 1;
                 }
             }
 
@@ -314,9 +313,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         this.lambdaParameter = lambda;
         this.beta = betaList;
 
-        if(deltaList != null) {
+        if (deltaList != null) {
             this.delta = deltaList;
-        }else{
+        } else {
             this.delta = new ArrayList<Parameter>();
             if (betaList != null) {
                 for (int i = 0; i < betaList.size(); i++) {
@@ -346,8 +345,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             }
         }
         this.covPrecParametersDistant = covPrecParametersDistant;
-        if (covPrecParametersDistant != null){
-            for(Parameter covPrecDistant : covPrecParametersDistant){
+        if (covPrecParametersDistant != null) {
+            for (Parameter covPrecDistant : covPrecParametersDistant) {
                 addVariable(covPrecDistant);
             }
         }
@@ -360,8 +359,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         this.intervalsList = intervalsList;
 
-        for (TreeIntervalList intervalList : intervalsList) {
-            intervalList.setBuildIntervalNodeMapping(true);
+        for (IntervalList intervalList : intervalsList) {
             addModel((Model) intervalList);
         }
 
@@ -444,7 +442,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             tips += tree.getExternalNodeCount();
         }
         return tips - treeList.size();*/
-        for(IntervalList intervalList : intervalsList){
+        for (IntervalList intervalList : intervalsList) {
             tips += intervalList.getSampleCount();
         }
         return tips - intervalsList.size();
@@ -619,18 +617,18 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                         // numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
                         numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
 
-                         while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
+                        while (currentAndNextTime[1] < gridPoints[currentGridIndex]) {
                             //check to see if interval is coalescent interval or sampling interval
-                             //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
-                             if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
-                                 numCoalEvents[currentGridIndex]++;
+                            //if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex + 1) > 0) {
+                            if (intervalsList.get(i).getCoalescentEvents(currentTimeIndex) > 0) {
+                                numCoalEvents[currentGridIndex]++;
                             }
                             sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (currentAndNextTime[1] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
-                             currentTimeIndex++;
+                            currentTimeIndex++;
                             currentTimeIndex = moveToNextTimeIndex(i, currentTimeIndex, currentAndNextTime);
 
-                             //numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
-                             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
+                            //numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
+                            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex);
                         }
                         sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex] - currentAndNextTime[0]) * numLineages * (numLineages - 1) * 0.5 * ploidyFactor;
                         ploidySums[currentGridIndex] = ploidySums[currentGridIndex] + Math.log(ploidyFactor) * numCoalEvents[currentGridIndex];
@@ -695,11 +693,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     public double[] getNumCoalEvents() {
         return numCoalEvents;
     }
+    public int getNumTrees(){
+        return numTrees;
+    }
 
     public int getNumberOfCoalescentEvents() {
         return getCorrectOldFieldLength();
     }
-
 
 
     public double getCoalescentEventsStatisticValue(int i) {
@@ -754,15 +754,17 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return currentLike;
     }
 
-    protected double calculateLogFieldLikelihood(){
+    protected double calculateLogFieldLikelihood() {
         return skygridHelper.getLogFieldLikelihood();
     }
+
     /**
      * Retun the number of intervals covered by the likelihood. This should replace the same method in OldAbstractCoalescentLikelihood
+     *
      * @return number of intervals
      */
-    private int getIntervalCount(){
-        int count =0;
+    private int getIntervalCount() {
+        int count = 0;
         for (IntervalList intervalList : this.intervalsList) {
             count += intervalList.getIntervalCount();
         }
@@ -883,11 +885,24 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     }
 
     public Tree getTree(int nt) {
-        return intervalsList.get(nt).getTree();
+        if (intervalsList.get(nt) instanceof TreeIntervalList) {
+            return ((TreeIntervalList) intervalsList.get(nt)).getTree();
+        } else {
+            throw new IllegalArgumentException("Interval list " + nt +
+                    "is not a treeIntervalList and does not have access to its tree");
+        }
+
     }
 
-    public TreeIntervalList getTreeIntervals(int nt) {
+    public IntervalList getIntervalList(int nt) {
         return intervalsList.get(nt);
+    }
+    public IntervalList getIntervalList(){
+        if(intervalsList.size()>1){
+            throw new IllegalArgumentException("There are multiple interval lists to choose from,"+
+                    "you are using a method that assumes there is just one underlying interval please specify an index");
+        }
+        return getIntervalList(0);
     }
 
     public double getPopulationFactor(int nt) {
@@ -944,7 +959,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return getGradientLogDensity();
     }
 
-    public double[] getDiagonalHessianWrtLogPopulationSize() { return getDiagonalHessianLogDensity(); }
+    public double[] getDiagonalHessianWrtLogPopulationSize() {
+        return getDiagonalHessianLogDensity();
+    }
 
     private double[] getMeanAdjustedGamma() {
         return skygridHelper.getMeanAdjustedGamma().getData();
@@ -960,7 +977,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
             grad -= 0.5 * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i]);
         }
 
-        return new double[] { grad };
+        return new double[]{grad};
     }
 
     public double[] getDiagonalHessianWrtPrecision() {
@@ -968,7 +985,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         double currentPrec = precisionParameter.getParameterValue(0);
         double hessian = -numGridPoints / (2 * currentPrec * currentPrec);
 
-        return new double[] { hessian };
+        return new double[]{hessian};
     }
 
     public double[] getGradientWrtRegressionCoefficients() {
@@ -987,7 +1004,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         // TODO Need to delegate to SkygridCovariateHelper
 
-        double[] gradLogDens = new double [beta.getDimension()];
+        double[] gradLogDens = new double[beta.getDimension()];
         double[] gamma = getMeanAdjustedGamma();
 
         double currentPrec = precisionParameter.getParameterValue(0);
@@ -995,15 +1012,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         for (int k = 0; k < beta.getDimension(); k++) {
 
             double gradient = // numGridPoints / 2
-                    + currentPrec * (gamma[0]             - gamma[1]                ) * covk.getParameterValue(k,0)
-                    + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * covk.getParameterValue(k, numGridPoints)
+                    +currentPrec * (gamma[0] - gamma[1]) * covk.getParameterValue(k, 0)
+                            + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * covk.getParameterValue(k, numGridPoints)
 //                    - 0.5 * currentPrec * (gamma[1] - gamma[0]) * (gamma[1] - gamma[0])
                     ;
 
-            for(int i = 1; i < numGridPoints; i++){
+            for (int i = 1; i < numGridPoints; i++) {
                 gradient +=
 //                        -0.5 * currentPrec * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i])
-                        + currentPrec * (-gamma[i - 1] + 2 * gamma[i] -gamma[i + 1]) * covk.getParameterValue(k, i);
+                        +currentPrec * (-gamma[i - 1] + 2 * gamma[i] - gamma[i + 1]) * covk.getParameterValue(k, i);
             }
 
             gradLogDens[k] = gradient;
@@ -1023,19 +1040,18 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         Parameter beta = this.beta.get(0);
         MatrixParameter covk = covariates.get(0);
 
-        double[] hessian = new double [beta.getDimension()];
+        double[] hessian = new double[beta.getDimension()];
         double currentPrec = precisionParameter.getParameterValue(0);
 
         for (int k = 0; k < beta.getDimension(); k++) {
 
             double h = // numGridPoints / 2
-                    - currentPrec * (covk.getParameterValue(k, 0) - covk.getParameterValue(k,1)) * covk.getParameterValue(k,0)
-                    - currentPrec * (covk.getParameterValue(k, numGridPoints) - covk.getParameterValue(k, numGridPoints - 1)) * covk.getParameterValue(k, numGridPoints)
-                    ;
+                    -currentPrec * (covk.getParameterValue(k, 0) - covk.getParameterValue(k, 1)) * covk.getParameterValue(k, 0)
+                            - currentPrec * (covk.getParameterValue(k, numGridPoints) - covk.getParameterValue(k, numGridPoints - 1)) * covk.getParameterValue(k, numGridPoints);
 
-            for(int i = 1; i < numGridPoints; i++){
-                h += - currentPrec * (-covk.getParameterValue(k, i - 1) + 2 * covk.getParameterValue(k, i) - covk.getParameterValue(k, i + 1)) * covk.getParameterValue(k, i)
-                        ;
+            for (int i = 1; i < numGridPoints; i++) {
+                h += -currentPrec * (-covk.getParameterValue(k, i - 1) + 2 * covk.getParameterValue(k, i) - covk.getParameterValue(k, i + 1)) * covk.getParameterValue(k, i)
+                ;
 
             }
 
@@ -1059,15 +1075,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 - numCoalEvents[0] + sufficientStatistics[0]
                 * Math.exp(-popSizeParameter.getParameterValue(0));
 
-        for (int i = 1; i < (dim-1); i++) {
+        for (int i = 1; i < (dim - 1); i++) {
             gradLogDens[i] = -currentPrec * (-gamma[i - 1] + 2 * gamma[i] - gamma[i + 1])
                     - numCoalEvents[i] + sufficientStatistics[i]
                     * Math.exp(-popSizeParameter.getParameterValue(i));
         }
 
-        gradLogDens[dim-1] = -currentPrec * (gamma[dim - 1] - gamma[dim - 2])
+        gradLogDens[dim - 1] = -currentPrec * (gamma[dim - 1] - gamma[dim - 2])
                 - numCoalEvents[dim - 1] + sufficientStatistics[dim - 1]
-                * Math.exp(-popSizeParameter.getParameterValue(dim-1));
+                * Math.exp(-popSizeParameter.getParameterValue(dim - 1));
 
         return gradLogDens;
 
@@ -1129,7 +1145,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     class SkygridHelper {
 
-        SkygridHelper() { }
+        SkygridHelper() {
+        }
 
         void updateGammaWithCovariates(DenseVector currentGamma) {
             // Do nothing
@@ -1170,7 +1187,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     class SkygridCovariateHelper extends SkygridHelper {
 
-        SkygridCovariateHelper() { }
+        SkygridCovariateHelper() {
+        }
 
         @Override
         protected void updateGammaWithCovariates(DenseVector currentGamma) {
@@ -1214,12 +1232,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                         if ((J != covariate.getRowDimension()) ||
                                 (N != covariate.getColumnDimension())) { // Note: XML current has covariates transposed
                             throw new RuntimeException("Incorrect dimensions in " + covariate.getId() + " (r=" + covariate.getRowDimension() +
-                                    ",c=" + covariate.getColumnDimension()+ ")");
+                                    ",c=" + covariate.getColumnDimension() + ")");
                         }
 
                         for (int i = 0; i < N; ++i) {
                             for (int j = 0; j < J; ++j) {
-                                update[i] += covariate.getParameterValue(j, i) * b.getParameterValue(j)*d.getParameterValue(j);
+                                update[i] += covariate.getParameterValue(j, i) * b.getParameterValue(j) * d.getParameterValue(j);
                             }
                         }
                     }
@@ -1233,7 +1251,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 DenseVector currentBeta = new DenseVector(beta.size());
 
                 for (int i = 0; i < beta.size(); i++) {
-                    currentBeta.set(i, beta.get(i).getParameterValue(0)*delta.get(i).getParameterValue(0));
+                    currentBeta.set(i, beta.get(i).getParameterValue(0) * delta.get(i).getParameterValue(0));
                 }
 
                 //int numMissing = fieldLength - lastObservedIndex;
@@ -1261,7 +1279,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
     class SkygridMissingCovariateHelper extends SkygridCovariateHelper {
 
-        SkygridMissingCovariateHelper() { }
+        SkygridMissingCovariateHelper() {
+        }
 
         @Override
         protected double handleMissingValues() {
@@ -1278,7 +1297,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
             double currentLike = 0.0;
 
-            if(lastObservedIndex != null) {
+            if (lastObservedIndex != null) {
                 for (int i = 0; i < covPrecParametersDistant.size(); i++) {
 
                     numMissing = fieldLength - lastObservedIndex[i];
@@ -1299,11 +1318,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                 }
             }
 
-            if(firstObservedIndex != null){
+            if (firstObservedIndex != null) {
 
                 for (int i = 0; i < covPrecParametersRecent.size(); i++) {
 
-                    numMissingRecent = firstObservedIndex[i]-1;
+                    numMissingRecent = firstObservedIndex[i] - 1;
                     tempVectMissingCov = new DenseVector(numMissingRecent);
                     tempVectMissingCov2 = new DenseVector(numMissingRecent);
 
@@ -1312,7 +1331,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
                     for (int j = 0; j < numMissingRecent; j++) {
                         tempVectMissingCov.set(j, covariates.get(recIndices[i] - 1).getParameterValue(0, j) -
-                                covariates.get(recIndices[i] - 1).getParameterValue(0, firstObservedIndex[i]-1));
+                                covariates.get(recIndices[i] - 1).getParameterValue(0, firstObservedIndex[i] - 1));
                     }
 
                     missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);
@@ -1338,31 +1357,31 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
     @Override
     public List<Citation> getCitations() {
         return Arrays.asList(new Citation(
-                    new Author[]{
-                            new Author("MS", "Gill"),
-                            new Author("P", "Lemey"),
-                            new Author("NR", "Faria"),
-                            new Author("A", "Rambaut"),
-                            new Author("B", "Shapiro"),
-                            new Author("MA", "Suchard")
-                    },
-                    "Improving Bayesian population dynamics inference: a coalescent-based model for multiple loci",
-                    2013,
-                    "Mol Biol Evol",
-                    30, 713, 724
-            ),
-            new Citation(
-                    new Author[]{
-                            new Author("VN", "Minin"),
-                            new Author("EW", "Bloomquist"),
-                            new Author("MA", "Suchard")
-                    },
-                    "Smooth skyride through a rough skyline: Bayesian coalescent-based inference of population dynamics",
-                    2008,
-                    "Mol Biol Evol",
-                    25, 1459, 1471,
-                    "10.1093/molbev/msn090"
-            )
+                        new Author[]{
+                                new Author("MS", "Gill"),
+                                new Author("P", "Lemey"),
+                                new Author("NR", "Faria"),
+                                new Author("A", "Rambaut"),
+                                new Author("B", "Shapiro"),
+                                new Author("MA", "Suchard")
+                        },
+                        "Improving Bayesian population dynamics inference: a coalescent-based model for multiple loci",
+                        2013,
+                        "Mol Biol Evol",
+                        30, 713, 724
+                ),
+                new Citation(
+                        new Author[]{
+                                new Author("VN", "Minin"),
+                                new Author("EW", "Bloomquist"),
+                                new Author("MA", "Suchard")
+                        },
+                        "Smooth skyride through a rough skyline: Bayesian coalescent-based inference of population dynamics",
+                        2008,
+                        "Mol Biol Evol",
+                        25, 1459, 1471,
+                        "10.1093/molbev/msn090"
+                )
         );
     }
 }

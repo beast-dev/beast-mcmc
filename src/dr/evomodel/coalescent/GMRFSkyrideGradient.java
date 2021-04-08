@@ -28,6 +28,7 @@ package dr.evomodel.coalescent;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -58,7 +59,10 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
                                NodeHeightTransform nodeHeightTransform) {
 
         this.skyrideLikelihood = gmrfSkyrideLikelihood;
-        this.intervalNodeMapping = skyrideLikelihood.getIntervalList();
+        //Casting is guaranteed by the parser
+        TreeIntervalList intervalList = (TreeIntervalList) skyrideLikelihood.getIntervalList();
+        intervalList.setBuildIntervalNodeMapping(true);
+        this.intervalNodeMapping =intervalList;
         this.wrtParameter = wrtParameter;
         this.nodeHeightTransform = nodeHeightTransform;
         if (nodeHeightTransform == null) {

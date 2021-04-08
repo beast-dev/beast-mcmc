@@ -3,12 +3,10 @@ package dr.evomodel.coalescent.hmc;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervalList;
-import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
@@ -29,6 +27,13 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
     public GMRFGradient(GMRFMultilocusSkyrideLikelihood skygridLikelihood,
                         WrtParameter wrtParameter) {
+
+        for (int i = 0; i < skygridLikelihood.getNumTrees(); i++) {
+            //Casting is guaranteed by the parser
+            TreeIntervalList intervalList = (TreeIntervalList) skygridLikelihood.getIntervalList(i);
+            intervalList.setBuildIntervalNodeMapping(true);
+        }
+
         this.skygridLikelihood = skygridLikelihood;
         this.wrtParameter = wrtParameter;
         parameter = wrtParameter.getParameter(skygridLikelihood);
@@ -96,7 +101,9 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+            double getParameterLowerBound() {
+                return Double.NEGATIVE_INFINITY;
+            }
 
             @Override
             public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
@@ -120,7 +127,9 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            double getParameterLowerBound() { return 0.0; }
+            double getParameterLowerBound() {
+                return 0.0;
+            }
 
             @Override
             public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
@@ -150,7 +159,9 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+            double getParameterLowerBound() {
+                return Double.NEGATIVE_INFINITY;
+            }
 
             @Override
             public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
@@ -202,7 +213,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
 
-                final TreeIntervalList intervals = likelihood.getTreeIntervals(0);
+                final TreeIntervalList intervals = (TreeIntervalList) likelihood.getIntervalList(0);
 
                 int[] gridIndices = getGridIndexForInternalNodes(likelihood, 0);
 
@@ -237,7 +248,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             private int[] getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex) {
                 Tree tree = likelihood.getTree(treeIndex);
-                TreeIntervalList intervals = likelihood.getTreeIntervals(treeIndex);
+                TreeIntervalList intervals = (TreeIntervalList) likelihood.getIntervalList(treeIndex);
 
                 int[] indices = new int[tree.getInternalNodeCount()];
 
@@ -245,7 +256,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 double[] gridPoints = likelihood.getGridPoints();
                 for (int i = 0; i < intervals.getIntervalCount(); i++) {
                     if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                        while(gridPoints[gridIndex] < intervals.getInterval(i)) {
+                        while (gridPoints[gridIndex] < intervals.getInterval(i)) {
                             gridIndex++;
                         }
                         indices[getNodeHeightParameterIndex(intervals.getCoalescentNode(i), tree)] = gridIndex;

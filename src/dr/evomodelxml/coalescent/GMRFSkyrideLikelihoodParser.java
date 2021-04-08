@@ -54,7 +54,6 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PRECISION_PARAMETER = "precisionParameter";
     public static final String POPULATION_TREE = "populationTree";
     public static final String INTERVALS = "intervals";
-    public static final String BUILD_MAPPING = "intervalNodeMapping";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
     public static final String BETA_PARAMETER = "betaParameter";
     public static final String DELTA_PARAMETER = "deltaParameter";
@@ -98,9 +97,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        boolean buildIntervalNodeMapping = xo.getAttribute(BUILD_MAPPING, false);
 
-        List<TreeIntervalList> intervalsList = new ArrayList<TreeIntervalList>();
+        List<IntervalList> intervalsList = new ArrayList<IntervalList>();
 
         List<Tree> treeList = new ArrayList<Tree>();
         if(xo.getChild(POPULATION_TREE) != null) {
@@ -108,7 +106,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             for (int i = 0; i < cxo.getChildCount(); i++){
                 Object testObject = cxo.getChild(i);
                 if (testObject instanceof Tree) {
-                    intervalsList.add(new TreeIntervals((TreeModel) testObject, buildIntervalNodeMapping));
+                    intervalsList.add(new TreeIntervals((TreeModel) testObject));
 //                    TreeIntervals treeIntervals;
 //                    try {
 //                        treeIntervals = new TreeIntervals((Tree) testObject, null, null);
@@ -131,12 +129,11 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.getChild(INTERVALS) != null) {
             cxo = xo.getChild(INTERVALS);
-            intervalsList = new ArrayList<TreeIntervalList>();
+            intervalsList = new ArrayList<IntervalList>();
             for (int i = 0; i < cxo.getChildCount(); i++) {
                 Object testObject = cxo.getChild(i);
-                if (testObject instanceof TreeIntervalList) {
-                    ((TreeIntervalList)testObject).setBuildIntervalNodeMapping(buildIntervalNodeMapping);
-                    intervalsList.add((TreeIntervalList) testObject);
+                if (testObject instanceof IntervalList) {
+                    intervalsList.add((IntervalList) testObject);
                 }
             }
         }
@@ -459,7 +456,6 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
-            AttributeRule.newBooleanRule(BUILD_MAPPING, true)
     };
 
 }

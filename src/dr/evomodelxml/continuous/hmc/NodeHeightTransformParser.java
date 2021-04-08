@@ -26,7 +26,10 @@
 package dr.evomodelxml.continuous.hmc;
 
 
+import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -94,6 +97,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                 nodeHeightTransform = transform;
             }
         } else {
+            checkIntervals(skyrideLikelihood);
             nodeHeightTransform = new NodeHeightTransform(nodeHeightParameter, tree, skyrideLikelihood);
             coalescentIntervals = ((NodeHeightTransform) nodeHeightTransform).getParameter();
             cxo = xo.getChild(COALESCENT_INTERVAL);
@@ -104,12 +108,29 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
         return nodeHeightTransform;
     }
 
+    /**
+     * Check the intervals in the likelihood are tree intervals and have an interval-node mapping
+     *
+     * @param likelihood the skygrid likelihood
+     */
+    private void checkIntervals(GMRFSkyrideLikelihood likelihood) {
+
+
+        IntervalList intervalList = likelihood.getIntervalList();
+        if (!(intervalList instanceof TreeIntervalList)) {
+            throw new IllegalArgumentException("Skyride likelihood does not have intervals which map to " +
+                    "the underlying tree. This is needed for gradient calculations");
+        }
+
+
+    }
+
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new XORRule(new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
                         new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class, "Construct a proxy parameter for coalescent intervals from the Skyride likelihood.")
-                        ),
+                ),
                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter"),
                 new ElementRule(TreeModel.class),
                 new ElementRule(BranchRateModel.class),

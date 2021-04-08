@@ -1,5 +1,6 @@
 package test.dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -28,7 +29,7 @@ public class SkyrideLikelihoodTest extends TestCase {
         MathUtils.setSeed(7);
         TreeModel tree = new DefaultTreeModel(importer.importTree(null));
         TreeIntervalList treeIntervals = new TreeIntervals(tree);
-        List<TreeIntervalList> treeIntervalsList = new ArrayList<>();
+        List<IntervalList> treeIntervalsList = new ArrayList<>();
         treeIntervalsList.add(treeIntervals);
 
 //        List<Tree> treeList = new ArrayList<>();

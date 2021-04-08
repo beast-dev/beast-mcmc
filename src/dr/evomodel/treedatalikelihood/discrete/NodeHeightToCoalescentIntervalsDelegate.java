@@ -51,7 +51,10 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         super(treeModel, nodeHeights);
 
         this.skyrideLikelihood = skyrideLikelihood;
-        this.intervalNodeMapping = skyrideLikelihood.getIntervalList();
+        //Casting guaranteed by parser
+        TreeIntervalList intervalList = (TreeIntervalList)skyrideLikelihood.getIntervalList();
+        intervalList.setBuildIntervalNodeMapping(true);
+        this.intervalNodeMapping = intervalList;
         this.coalescentIntervals = createProxyForCoalescentIntervals();
         this.coalescentIntervals.addBounds(new NodeHeightToCoalescentIntervalsDelegate.CoalescentIntervalBounds());
         addVariable(coalescentIntervals);
@@ -180,7 +183,7 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
 
             private void updateCoalescentIntervals() {
                 if (!proxyValuesKnown) {
-                    System.arraycopy(skyrideLikelihood.getIntervalList().getCoalescentIntervals(), 0,
+                    System.arraycopy(intervalNodeMapping.getCoalescentIntervals(), 0,
                             proxy, 0, proxy.length);
                     ((NodeHeightToCoalescentIntervalsDelegate.CoalescentIntervalBounds) getBounds()).setupBounds();
                     proxyValuesKnown = true;

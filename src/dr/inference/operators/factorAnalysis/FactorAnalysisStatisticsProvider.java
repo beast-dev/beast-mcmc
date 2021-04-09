@@ -6,6 +6,7 @@ import dr.inference.model.Variable;
 import dr.inference.model.VariableListener;
 import org.ejml.data.DenseMatrix64F;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,7 +54,49 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
         return obsInds;
     }
 
+    public void getFactorMeans(double[] buffer) {
+        int n = adaptor.getNumberOfTaxa();
+        int k = adaptor.getNumberOfFactors();
+
+        for (int factor = 0; factor < k; factor++) {
+            double sum = 0;
+            for (int taxon = 0; taxon < n; taxon++) {
+                sum += adaptor.getFactorValue(factor, taxon);
+            }
+            buffer[factor] = sum / n;
+        }
+    }
+
+    public void getLoadingsInnerProduct(double[][] buffer) {
+        int k = adaptor.getNumberOfFactors();
+        int p = adaptor.getNumberOfTraits();
+        for (int k1 = 0; k1 < k; k1++) {
+            for (int k2 = k1; k2 < k; k2++) {
+                double sum = 0;
+                int k1Offset = k1 * p;
+                int k2Offset = k2 * p;
+
+                for (int j = 0; j < p; j++) {
+                    double l1 = adaptor.getLoadingsValue(j + k1Offset);
+                    double l2 = adaptor.getLoadingsValue(j + k2Offset);
+
+                    sum += l1 * l2;
+                }
+
+                buffer[k1][k2] = sum;
+                if (k1 != k2) {
+                    buffer[k2][k1] = sum;
+                }
+            }
+        }
+
+    }
+
     public void getFactorInnerProduct(int trait, int dim, double[][] buffer) {
+        getFactorInnerProduct(trait, dim, buffer, true);
+    }
+
+    public void getFactorInnerProduct(int trait, int dim, double[][] buffer, boolean checkMissing) {
         DenseMatrix64F hashedPrecision = null;
         HashedMissingArray observedArray = null;
 
@@ -72,7 +115,7 @@ public class FactorAnalysisStatisticsProvider implements VariableListener {
                 for (int j = i; j < dim; j++) {
                     double sum = 0;
                     for (int k = 0; k < p; k++) {
-                        if (adaptor.isNotMissing(trait, k)) {
+                        if (!checkMissing || adaptor.isNotMissing(trait, k)) {
                             sum += adaptor.getFactorValue(i, k) * adaptor.getFactorValue(j, k);
                         }
                     }

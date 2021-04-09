@@ -283,3 +283,87 @@
         </expected>
     </assertEqual>
 </beast>
+
+<!--
+# Julia code
+
+using Statistics, LinearAlgebra, Random
+
+function v1(F::Matrix{Float64}, L::Matrix{Float64}, λ::Vector{Float64})
+    n, k = size(F)
+    k2, p = size(L)
+    @assert k2 == k
+    p2 = length(λ)
+    @assert p == p2
+
+    J = ones(n, n)
+    M = L' * F' * F * L - 1 / n * L' * F' * J * F * L + (n - 1) * inv(Diagonal(λ))
+
+    return tr(M)
+end
+
+function v2(F::Matrix{Float64}, L::Matrix{Float64}, λ::Vector{Float64})
+    n = size(F, 1)
+
+    LLt = L * L'
+    FtF = F' * F
+    μF = mean(F, dims=1)
+    M = LLt .* (FtF - n * μF' * μF)
+    err_comp = (n - 1) * sum(1.0 ./ λ)
+    fac_comp = sum(M)
+    total = err_comp + fac_comp
+    fac_prop = fac_comp / total
+    abs_prop = diag(M) / total
+    rel_prop = diag(M) / fac_comp
+    marg_prop = tr(M) / fac_comp
+
+    @show fac_prop
+    @show abs_prop
+    @show rel_prop
+    @show marg_prop
+    return sum(M) + (n - 1) * sum(1.0 ./ λ)
+end
+
+function empirical(F::Matrix{Float64}, L::Matrix{Float64}, λ::Vector{Float64}; m::Int = 10000)
+    stds = 1.0 ./ sqrt.(λ)
+    S = Diagonal(stds)
+    n = size(F, 1)
+    p = length(stds)
+    Y_hat = F * L
+
+    total = 0
+
+    for i = 1:m
+        errors = randn(n, p) * S
+        Y = Y_hat + errors
+        Y_bar = ones(n) * mean(Y, dims = 1)
+        Y_res = Y - Y_bar
+        total += tr(Y_res' * Y_res)
+    end
+
+    return total / m
+end
+
+
+Random.seed!(666)
+
+
+n = 20
+p = 10
+k = 3
+
+F = randn(n, k)
+L = randn(k, p)
+λ = exp.(randn(p))
+
+x = v1(F, L, λ)
+y = v2(F, L, λ)
+ve = empirical(F, L, λ, m = 10000)
+
+@show x
+@show y
+@show ve
+
+;
+
+-->

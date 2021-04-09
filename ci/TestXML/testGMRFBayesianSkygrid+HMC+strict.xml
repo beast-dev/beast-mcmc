@@ -349,7 +349,7 @@
 			</report>
 		</actual>
 		<expected>
-			9.181681877927971 <!-- from master branch cf3d7370ca1a5b697f0f49be49765dcd6ad06dfb -->
+			22.992365936309355 <!-- from master branch cf3d7370ca1a5b697f0f49be49765dcd6ad06dfb -->
 		</expected>
 	</assertEqual>
 

@@ -4,7 +4,6 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;

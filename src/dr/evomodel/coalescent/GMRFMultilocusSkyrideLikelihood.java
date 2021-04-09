@@ -448,10 +448,17 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         return tips - intervalsList.size();
     }
 
+    /**
+     * This overwrites the handling in AbstractCoalescentLikelhood because there can be multiple intervalLists here
+     * @param model
+     * @param object
+     * @param index
+     */
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-        if (model instanceof TreeIntervalList) {
-            TreeIntervalList intervalList = (TreeIntervalList) model;
+        if (model instanceof IntervalList) {
+            IntervalList intervalList = (IntervalList) model;
             int tn = intervalsList.indexOf(intervalList);
             if (tn >= 0) {
                 intervalsKnown = false;
@@ -893,10 +900,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         }
 
     }
-
+    //These two methods override the method in AbstractCoalescentLikelihood since there may be multiple intervalLists here
     public IntervalList getIntervalList(int nt) {
         return intervalsList.get(nt);
     }
+
     public IntervalList getIntervalList(){
         if(intervalsList.size()>1){
             throw new IllegalArgumentException("There are multiple interval lists to choose from,"+

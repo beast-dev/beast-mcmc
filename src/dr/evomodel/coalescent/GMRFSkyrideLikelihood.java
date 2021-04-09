@@ -63,7 +63,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
 
     // PRIVATE STUFF
 
-    protected IntervalList intervalList = null;
+    private IntervalList intervalList;
     protected Parameter popSizeParameter;
     protected Parameter groupSizeParameter;
     protected Parameter precisionParameter;
@@ -99,13 +99,13 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
                                     Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                     boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
 
-        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,intervalList);
 
         // adding the key word to the the model means the keyword will be logged in the
         // header of the logfile.
         this.addKeyword("skyride");
 
-        this.intervalList = intervalList;
+        this.intervalList = this.getIntervalList(); // pull this down from the AbtractCoalescentLikelihood for ease of access.
         this.popSizeParameter = popParameter;
         this.groupSizeParameter = groupParameter;
         this.precisionParameter = precParameter;
@@ -163,7 +163,7 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
                                     Parameter lambda, Parameter beta, MatrixParameter dMatrix,
                                     boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
 
-        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
+        super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,intervalsList.get(0));
 
         // adding the key word to the the model means the keyword will be logged in the
         // header of the logfile.
@@ -249,8 +249,8 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         if (intervalsList.size() != 1) {
             throw new RuntimeException("GMRFSkyrideLikelihood only implemented for one tree");
         }
-        this.intervalList = intervalsList.get(0);
-        addModel((Model)intervalList);
+        this.intervalList = this.getIntervalList(); // pull this down from the AbtractCoalescentLikelihood for ease of access.
+
         return 1;
     }
 
@@ -391,11 +391,8 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
     }
 
     public void setupCoalescentIntervals() {
-        this.intervalList.calculateIntervals();
+//        this.intervalList.calculateIntervals(); // Done lazily in IntervalList
         setupSufficientStatistics();
-    }
-    public  IntervalList getIntervalList() {
-        return intervalList;
     }
 
     public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision) {

@@ -77,6 +77,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
+        // Currently GMRF likelihoods have parameters but they override this method. In the future the GMRF bit may
+        // be extracted out and then such classes would not have to override this method. -JT
 
     // **************************************************************
     // Model IMPLEMENTATION

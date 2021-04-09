@@ -8,7 +8,7 @@
 <!--       http://beast.community/                                           -->
 <beast version="1.10.4">
 
-
+<!-- adapted from https://github.com/GuyBaele/Skygrid-Protocol -->
     <!-- The list of taxa to be analysed (can also include dates/ages).          -->
     <!-- ntax=196                                                                -->
     <taxa id="taxa">

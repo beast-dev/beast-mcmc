@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon1">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">0.0076177742633394985 0.04658821120386576 -0.454549337998158</attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">0.05702524809146323 1.0015698840090395 -1.5146279580725215</attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.5484010117038763 -0.42898479922720356 0.6436374468251037</attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">0.3515255484089337 0.09104086929644847 -1.426378176957026</attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.784929798992992 -0.8970245252413375 1.5439602691637375</attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">0.24501763591278475 0.4270454816694809 -0.16450480870919917</attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">0.30611493207760276 -0.8920557774375898 -0.16240458275087258</attr>
+        </taxon>
+        <taxon id="taxon8">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-1.0304943902767967 -0.8909827170981991 -0.39339506737983243</attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.21629784327601548 -0.11560476062111587 0.8655080462439241</attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-2.132446790112065 -0.7122666957434696 -0.17865180808229236</attr>
+        </taxon>
+        <taxon id="taxon11">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.3930227002265834 -0.8666572905938715 -0.5001246338040305</attr>
+        </taxon>
+        <taxon id="taxon12">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">1.712948337244973 2.3897801345872987 0.8960512885879615</attr>
+        </taxon>
+        <taxon id="taxon13">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.05945162267545193 -0.3440100523685048 -0.09729958495856225</attr>
+        </taxon>
+        <taxon id="taxon14">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">0.2079912019698792 0.38443026317349643 -0.7790116303715932</attr>
+        </taxon>
+        <taxon id="taxon15">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">1.4061412930408388 0.7619824434342454 0.09081342420693704</attr>
+        </taxon>
+        <taxon id="taxon16">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.8161262390971513 -0.6230781939110783 -0.4456292313690999</attr>
+        </taxon>
+        <taxon id="taxon17">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-1.0144436604293505 1.478607059857378 -0.6908795858187</attr>
+        </taxon>
+        <taxon id="taxon18">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">1.056873733132347 1.1873505039550996 1.066150616149452</attr>
+        </taxon>
+        <taxon id="taxon19">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.2221684856569227 0.41571346596533654 0.10898633050895852</attr>
+        </taxon>
+        <taxon id="taxon20">
+            <attr name="traits">0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</attr>
+            <attr name="factors">-0.17438164408909365 -0.44738267923159963 0.23315524522158199</attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (((taxon14:2.092848811254844,((taxon11:1.9634883883601628,taxon20:0.12056731181064986):0.25468867164193315,taxon4:1.2375369910946323):0.36329291698076804):0.053097266265871614,taxon8:0.52891209906865):1.7995647949658438,((((taxon9:0.31511610580589244,(taxon5:1.354648819396587,taxon6:0.032058192743205184):0.6623528849464647):0.1296673145409989,taxon3:0.5441406848591287):0.40563093946705603,taxon18:1.6082955937409578):2.5655997260029166,((taxon15:0.39415022915412373,(taxon12:1.741812566085844,taxon16:0.2796186339500969):0.4328243345587691):0.340433952126297,((taxon1:0.6427626260915962,(taxon17:0.05067245865138466,taxon7:1.5221147808667619):0.5610090446220208):0.9374970525864179,(((taxon2:1.7252286071614462,taxon13:0.691462046423952):0.3346388759278716,taxon10:0.5021271430389443):0.9222724996416762,taxon19:0.10136636478705219):0.5341069093574254):0.6832441985857809):0.11891535677341286):0.7534354016690697);;
+    </newick>
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="10"
+                    name="traits">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix>
+                <parameter value="1.0 1.0 1.0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <multivariateTraitLikelihood allowIdentical="true" standardize="true" cacheBranches="true"
+                                 integrateInternalTraits="true" id="traitLikelihood" traitName="factors"
+                                 useTreeLength="false" scaleByTime="true" reportAsMultivariate="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter id="traitParameter"/>
+        </traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </multivariateTraitLikelihood>
+    <matrixParameter id="L">
+        <parameter
+                value="-0.5397266841036715 0.2981854605237854 -0.07712188884427165 -0.11815301665147325 -0.26585513665368177 -0.8064419255097306 1.6684512296510925 -0.7522851275073772 0.2845890830831352 0.5446097585263934"/>
+        <parameter
+                value="-2.2012739127775762 1.6135287964494376 -1.7083839109325234 -1.7602681547880719 -0.09793696210859011 1.8746839016075518 1.808755790283758 0.15591719805356494 1.7342729545238105 -0.48494596043058696"/>
+        <parameter
+                value="-1.396413239367357 0.01045577909380348 -0.01291823951389353 -0.45853354257678275 -0.8583256421345544 -0.20065549976147048 -0.463888888052059 0.03706742865102728 -0.6319790093391232 -1.541215041853975"/>
+    </matrixParameter>
+    <distributionLikelihood id="L.prior">
+        <data>
+            <matrixParameter idref="L"/>
+        </data>
+        <distribution>
+            <normalDistributionModel>
+                <mean>
+                    <parameter value="0.0"/>
+                </mean>
+                <stdev>
+                    <parameter value="1.0" lower="0.0"/>
+                </stdev>
+            </normalDistributionModel>
+        </distribution>
+    </distributionLikelihood>
+    <latentFactorModel id="latentFactorModel" factorNumber="3" traitName="traits" scaleData="true">
+        <factors>
+            <parameter idref="traitParameter"/>
+        </factors>
+        <data>
+            <dataAndMissingFromTreeTips traitName="traits">
+                <treeModel idref="treeModel"/>
+                <traitParameter>
+                    <parameter idref="leafTraits"/>
+                </traitParameter>
+            </dataAndMissingFromTreeTips>
+        </data>
+        <treeModel idref="treeModel"/>
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <rowPrecision>
+            <DiagonalMatrix>
+                <parameter value="1" dimension="10"/>
+            </DiagonalMatrix>
+        </rowPrecision>
+        <columnPrecision>
+            <DiagonalMatrix>
+                <parameter id="factorPrecision"
+                           value="2.248237585348348 4.811337260866145 8.858813077989874 0.5193763986583242 1.0442116502600536 1.3281199590551744 0.48833035286862686 0.9153215130195242 0.5583323818830066 0.7344683423364431"/>
+            </DiagonalMatrix>
+        </columnPrecision>
+    </latentFactorModel>
+
+    <factorProportionStatistic id="factorProportion">
+        <latentFactorModel idref="latentFactorModel"/>
+    </factorProportionStatistic>
+    <report>
+        <cachedReport id="report">
+            <factorProportionStatistic idref="factorProportion"/>
+        </cachedReport>
+    </report>
+
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check totalProportion
+        </message>
+        <actual regex="factorProportion.factorProportion:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.7400195485105537
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check absolute proportion 1
+        </message>
+        <actual regex="factorProportion.absoluteProportion.1:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.09087891209978205
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check absolute proportion 2
+        </message>
+        <actual regex="factorProportion.absoluteProportion.2:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.4746868993123823
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check absolute proportion 3
+        </message>
+        <actual regex="factorProportion.absoluteProportion.3:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.0894101028041868
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check relative proportion 1
+        </message>
+        <actual regex="factorProportion.relativeProportion.1:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.12280609651825432
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check relative proportion 2
+        </message>
+        <actual regex="factorProportion.relativeProportion.2:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.6414518376815724
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            check relative proportion 3
+        </message>
+        <actual regex="factorProportion.relativeProportion.3:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.12082127152470985
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            Check relative marginal proportion
+        </message>
+        <actual regex="factorProportion.relativeMarginalProportion:\s*(.*?)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            0.8850792057245366
+        </expected>
+    </assertEqual>
+</beast>

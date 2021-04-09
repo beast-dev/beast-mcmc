@@ -4,8 +4,9 @@ import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.FactorAnalysisStatisticsProvider;
 import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.xml.*;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
-public class FactorProportionStatistic extends Statistic.Abstract implements Reportable {
+public class FactorProportionStatistic extends Statistic.Abstract{
 
     private final FactorAnalysisOperatorAdaptor adaptor;
     private final FactorAnalysisStatisticsProvider statisticsProvider;
@@ -46,7 +47,7 @@ public class FactorProportionStatistic extends Statistic.Abstract implements Rep
             return absoluteFactorProportions[dim - 1];
         } else if (dim < (2 * k + 1)) {
             return relativeFactorProportions[dim - (k + 1)];
-        } else if (dim == getDimension()) {
+        } else if (dim == getDimension() - 1) {
             return relativeMarginalProportion;
         } else {
             throw new RuntimeException("Unknown dimension: " + dim);
@@ -63,7 +64,7 @@ public class FactorProportionStatistic extends Statistic.Abstract implements Rep
             dimName = "absoluteProportion." + dim;
         } else if (dim < (2 * k + 1)) {
             dimName = "relativeProportion." + (dim - k);
-        } else if (dim == getDimension()) {
+        } else if (dim == getDimension() - 1) {
             dimName = "relativeMarginalProportion";
         } else {
             throw new RuntimeException("Unknown dimension: " + dim);
@@ -152,8 +153,4 @@ public class FactorProportionStatistic extends Statistic.Abstract implements Rep
         }
     };
 
-    @Override
-    public String getReport() {
-        return null;
-    }
 }

@@ -263,9 +263,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         int index = -1;
         Type type = Type.NONE;
 
+        CategoryBounceInformation categoryBoundaryTime = findCategoricalBoundaryTime(position, velocity);
+
         for (int i = begin; i < end; ++i) {
 
-            double boundaryTime = findBoundaryTime(i, position[i], velocity[i]);
+            double signBoundaryTime = findBinaryBoundaryTime(i, position[i], velocity[i]);
+            double boundaryTime = Math.min(signBoundaryTime, categoryBoundaryTime.time);
 
             if (boundaryTime < minimumTime) {
                 minimumTime = boundaryTime;

@@ -287,7 +287,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    boolean headingTowardsBoundary(double velocity, int positionIndex) {
+    boolean headingTowardsBinaryBoundary(double velocity, int positionIndex) {
         return observedDataMask[positionIndex] * parameterSign[positionIndex] * velocity < 0.0;
     }
 
@@ -506,8 +506,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     Preconditioning preconditioning;
     protected final MassPreconditioner massPreconditioning;
     protected final MassPreconditionScheduler preconditionScheduler;
-    final private double[] observedDataMask;
+    final protected double[] observedDataMask;
     private final double[] meanVector;
+
+    protected final int[] categoryClasses = null; //todo: length(numClasses) = dim, numClass[i] = K if position[i] corresponds to a K-class category
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();

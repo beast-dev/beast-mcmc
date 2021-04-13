@@ -138,16 +138,74 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return minimumPositiveRoot(-0.5 * action, gradient, momentum);
     }
 
-    double findBoundaryTime(int index, double position,
-                            double velocity) {
+    double findBinaryBoundaryTime(int index, double position,
+                                  double velocity) {
 
         double time = Double.POSITIVE_INFINITY;
 
-        if (headingTowardsBoundary(velocity, index)) {
+        if (headingTowardsBinaryBoundary(velocity, index)) {
             time = Math.abs(position / velocity);
         }
 
         return time;
+    }
+
+    CategoryBounceInformation findCategoricalBoundaryTime(double[] position, double[] velocity) {
+
+        double time = Double.POSITIVE_INFINITY;
+        int[] bounceIndex = new int[2];
+
+        if (categoryClasses == null) return new CategoryBounceInformation(time, bounceIndex);
+
+        for (int i = 0; i < position.length; i++) {
+            if (categoryClasses[i] > 0) {
+                int nDim = categoryClasses[i] - 1;
+
+                for (int j = 0; j < nDim; j++) {
+
+                    if (observedDataMask[i + j] == 1) {
+
+                        double[] positionSubset = new double[nDim];
+                        double[] velocitySubset = new double[nDim];
+                        System.arraycopy(position, i, positionSubset, 0, nDim);
+                        System.arraycopy(velocity, i, velocitySubset, 0, nDim);
+
+                        CategoryBounceInformation bounceInfo = findCategoricalBoundaryTime(positionSubset,
+                                velocitySubset, j);
+
+                        time = bounceInfo.time;
+                        bounceIndex[0] = i + j;
+                        bounceIndex[1] = i + bounceInfo.index[1];
+                    }
+                }
+            }
+        }
+
+        return new CategoryBounceInformation(time, bounceIndex);
+    }
+
+    private CategoryBounceInformation findCategoricalBoundaryTime(double[] positionSubset, double[] velocitySubset,
+                                                                  int bounceIndex1) {
+
+        int[] bounceIndex = new int[2];
+        bounceIndex[0] = bounceIndex1;
+
+        double bounceTime = Double.POSITIVE_INFINITY;
+
+        for (int i = 0; i < positionSubset.length; i++) {
+
+            double vDiff = velocitySubset[bounceIndex1] - velocitySubset[i];
+            double xDiff = positionSubset[bounceIndex1] - positionSubset[i];
+            if (vDiff < 0) {
+                double time = -xDiff / vDiff;
+                if (time < bounceTime) {
+                    bounceTime = time;
+                    bounceIndex[1] = i;
+                }
+            }
+        }
+
+        return new CategoryBounceInformation(bounceTime, bounceIndex);
     }
 
     private static double minimumPositiveRoot(double a,

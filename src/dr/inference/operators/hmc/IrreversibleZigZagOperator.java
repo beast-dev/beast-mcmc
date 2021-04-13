@@ -185,7 +185,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             for (int i = 0, end = p.length; i < end; i++) {
 
-                double boundaryTime = findBoundaryTime(i, p[i], v[i]);
+                double boundaryTime = findBinaryBoundaryTime(i, p[i], v[i]);
 
                 if (boundaryTime < minBoundaryTime) {
                     minBoundaryTime = boundaryTime;
@@ -207,7 +207,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
 
             for (int i = 0, end = p.length; i < end; ++i) {
 
-                double boundaryTime = findBoundaryTime(i, p[i], v[i]);
+                double boundaryTime = findBinaryBoundaryTime(i, p[i], v[i]);
 
                 if (boundaryTime < minimumTime) {
                     minimumTime = boundaryTime;

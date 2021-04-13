@@ -339,7 +339,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void recordEvents(Type eventType) {
         numEvents++;
-        if (eventType == Type.BOUNDARY) {
+        if (eventType == Type.BINARY_BOUNDARY || eventType == Type.CATE_BOUNDARY) {
             numBoundaryEvents++;
         } else if (eventType == Type.GRADIENT) {
             numGradientEvents++;
@@ -467,7 +467,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     enum Type {
         NONE,
-        BOUNDARY,
+        BINARY_BOUNDARY,
+        CATE_BOUNDARY,
         GRADIENT,
         REFRESHMENT;
 
@@ -475,9 +476,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             if (i == 0) {
                 return NONE;
             } else if (i == 1) {
-                return BOUNDARY;
+                return BINARY_BOUNDARY;
             } else if (i == 2) {
                 return GRADIENT;
+            } else if (i > 2) {
+                return CATE_BOUNDARY;
             } else {
                 throw new RuntimeException("Unknown type");
             }

@@ -200,7 +200,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 type = Type.GRADIENT;
             } else {
                 minimumTime = minBoundaryTime;
-                type = Type.BOUNDARY;
+                type = Type.BINARY_BOUNDARY;
             }
 
         } else {
@@ -212,7 +212,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                 if (boundaryTime < minimumTime) {
                     minimumTime = boundaryTime;
                     index = i;
-                    type = Type.BOUNDARY;
+                    type = Type.BINARY_BOUNDARY;
                 }
 
                 double T = MathUtils.nextExponential(1);
@@ -427,7 +427,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                         WrappedVector momentum,
                         WrappedVector column,
                         double time,
-                        int index,
+                        int[] index,
                         Type eventType) {
 
         final double[] p = position.getBuffer();
@@ -436,7 +436,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         final double[] g = gradient.getBuffer();
         final double[] c = column.getBuffer();
 
-        final double twoV = 2 * v[index];
+        final double twoV = 2 * v[index[0]];
 
         for (int i = 0, len = p.length; i < len; ++i) {
             final double ai = a[i];
@@ -447,7 +447,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
         }
 
         if (NOT_YET_IMPLEMENTED) {
-            nativeZigZag.updateIrreversibleDynamics(p, v, a, g, c, time, index, eventType.ordinal());
+            nativeZigZag.updateIrreversibleDynamics(p, v, a, g, c, time, index[0], eventType.ordinal());
         }
     }
 

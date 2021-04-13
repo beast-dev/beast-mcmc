@@ -74,7 +74,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
 
         while (bounceState.remainingTime > 0) {
 
-            if (bounceState.type == Type.BOUNDARY) {
+            if (bounceState.type == Type.BINARY_BOUNDARY) {
                 updateAction(action, velocity, bounceState.index);
             } else {
                 action = getPrecisionProduct(velocity);
@@ -108,7 +108,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
                                  WrappedVector gradient, WrappedVector action) {
 
         double timeToBoundary = boundaryInfo.time;
-        int boundaryIndex = boundaryInfo.index;
+        int boundaryIndex = boundaryInfo.index[0];
         final BounceState finalBounceState;
         final Type eventType;
         int eventIndex;
@@ -126,7 +126,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
 
                 refreshVelocity(velocity);
             } else if (timeToBoundary < bounceTime) { // Reflect against the boundary
-                eventType = Type.BOUNDARY;
+                eventType = Type.BINARY_BOUNDARY;
                 eventIndex = boundaryIndex;
 
                 updatePosition(position, velocity, timeToBoundary);

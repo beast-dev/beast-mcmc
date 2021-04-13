@@ -87,13 +87,13 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         } else {
 
             final Type eventType = firstBounce.type;
-            final int eventIndex = firstBounce.index;
+            final int eventIndex = firstBounce.index[0];
 
             WrappedVector column = getPrecisionColumn(eventIndex);
 
-            updateDynamics(position, velocity, action, gradient, momentum, column, eventTime, eventIndex, eventType);
+            updateDynamics(position, velocity, action, gradient, momentum, column, eventTime, firstBounce.index, eventType);
 
-            reflectVelocity(velocity, eventIndex);
+            reflectVelocity(velocity, firstBounce.index);
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
 
@@ -129,7 +129,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                  WrappedVector momentum,
                                  WrappedVector column,
                                  double eventTime,
-                                 int eventIndex,
+                                 int[] eventIndex,
                                  Type eventType);
 
     static double findGradientRoot(double action,
@@ -150,12 +150,12 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return time;
     }
 
-    CategoryBounceInformation findCategoricalBoundaryTime(double[] position, double[] velocity) {
+    MinimumTravelInformation findCategoricalBoundaryTime(double[] position, double[] velocity) {
 
         double time = Double.POSITIVE_INFINITY;
         int[] bounceIndex = new int[2];
 
-        if (categoryClasses == null) return new CategoryBounceInformation(time, bounceIndex);
+        if (categoryClasses == null) return new MinimumTravelInformation(time, bounceIndex);
 
         for (int i = 0; i < position.length; i++) {
             if (categoryClasses[i] > 0) {
@@ -170,7 +170,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                         System.arraycopy(position, i, positionSubset, 0, nDim);
                         System.arraycopy(velocity, i, velocitySubset, 0, nDim);
 
-                        CategoryBounceInformation bounceInfo = findCategoricalBoundaryTime(positionSubset,
+                        MinimumTravelInformation bounceInfo = findCategoricalBoundaryTime(positionSubset,
                                 velocitySubset, j);
 
                         time = bounceInfo.time;
@@ -181,10 +181,10 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
             }
         }
 
-        return new CategoryBounceInformation(time, bounceIndex);
+        return new MinimumTravelInformation(time, bounceIndex);
     }
 
-    private CategoryBounceInformation findCategoricalBoundaryTime(double[] positionSubset, double[] velocitySubset,
+    private MinimumTravelInformation findCategoricalBoundaryTime(double[] positionSubset, double[] velocitySubset,
                                                                   int bounceIndex1) {
 
         int[] bounceIndex = new int[2];
@@ -205,7 +205,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
             }
         }
 
-        return new CategoryBounceInformation(bounceTime, bounceIndex);
+        return new MinimumTravelInformation(bounceTime, bounceIndex);
     }
 
     private static double minimumPositiveRoot(double a,
@@ -248,9 +248,11 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     private static void reflectVelocity(WrappedVector velocity,
-                                        int eventIndex) {
+                                        int[] eventIndex) {
+        for (int i = 0; i < eventIndex.length; i++) {
+            if (eventIndex[i] >= 0) velocity.set(eventIndex[i], -velocity.get(eventIndex[i]));
+        }
 
-        velocity.set(eventIndex, -velocity.get(eventIndex));
     }
 
 //    private static double minimumPositiveRoot(double a,

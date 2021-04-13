@@ -260,27 +260,31 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                                                        final double[] momentum) {
 
         double minimumTime = Double.POSITIVE_INFINITY;
-        int index = -1;
+        int[] index = {-1, -1};
         Type type = Type.NONE;
 
-        CategoryBounceInformation categoryBoundaryTime = findCategoricalBoundaryTime(position, velocity);
+        MinimumTravelInformation categoryBoundaryTime = findCategoricalBoundaryTime(position, velocity);
+        if (categoryBoundaryTime.time < minimumTime){
+            minimumTime = categoryBoundaryTime.time;
+            index = categoryBoundaryTime.index.clone();
+            type = Type.CATE_BOUNDARY;
+        }
 
         for (int i = begin; i < end; ++i) {
 
             double signBoundaryTime = findBinaryBoundaryTime(i, position[i], velocity[i]);
-            double boundaryTime = Math.min(signBoundaryTime, categoryBoundaryTime.time);
 
-            if (boundaryTime < minimumTime) {
-                minimumTime = boundaryTime;
-                index = i;
-                type = Type.BOUNDARY;
+            if (signBoundaryTime < minimumTime) {
+                minimumTime = signBoundaryTime;
+                index[0] = i;
+                type = Type.BINARY_BOUNDARY;
             }
 
             double gradientTime = findGradientRoot(action[i], gradient[i], momentum[i]);
 
             if (gradientTime < minimumTime) {
                 minimumTime = gradientTime;
-                index = i;
+                index[0] = i;
                 type = Type.GRADIENT;
             }
         }
@@ -490,10 +494,17 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                                 double[] m,
                                 double[] c,
                                 double time,
-                                int index) {
+                                int[] index) {
 
         final double halfTimeSquared = time * time / 2;
-        final double twoV = 2 * v[index];
+        final double twoV1 = 2 * v[index[0]];
+        double twoV2 = 0;
+        double[] c2 = new double[c.length];
+
+        if (index[1] > 0) {
+            c2 = getPrecisionColumn(index[1]).getBuffer();
+            twoV2 = 2 * v[index[0]];
+        }
 
         for (int i = 0, len = p.length; i < len; ++i) {
             final double gi = g[i];
@@ -502,7 +513,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             p[i] = p[i] + time * v[i];
             m[i] = m[i] + time * gi - halfTimeSquared * ai;
             g[i] = gi - time * ai;
-            a[i] = ai - twoV * c[i];
+            a[i] = ai - twoV1 * c[i] - twoV2 * c2[i];
         }
     }
 
@@ -514,7 +525,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                         WrappedVector momentum,
                         WrappedVector column,
                         double eventTime,
-                        int eventIndex,
+                        int[] eventIndex,
                         Type eventType) {
 
         if (!nativeCodeOptions.useNativeUpdateDynamics) {
@@ -524,20 +535,23 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                     column.getBuffer(), eventTime, eventIndex);
 
         } else {
-
+            System.exit(-1);//todo: fix native zigzag for category traits
             nativeZigZag.updateReversibleDynamics(position.getBuffer(), velocity.getBuffer(),
                     action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(),
-                    column.getBuffer(), eventTime, eventIndex, eventType.ordinal());
+                    column.getBuffer(), eventTime, eventIndex[0], eventType.ordinal());
         }
 
-        if (eventType == Type.BOUNDARY) { // Reflect against boundary
+        if (eventType == Type.BINARY_BOUNDARY) { // Reflect against binary boundary
 
-            reflectMomentum(momentum, position, eventIndex);
+            reflectMomentum(momentum, position, eventIndex[0]);
 
-        } else { // Bounce caused by the gradient
+        } if (eventType == Type.CATE_BOUNDARY){ // Reflect against category boundary
+            reflectMomentum(momentum, position, eventIndex[0]);
+            reflectMomentum(momentum, position, eventIndex[1]);
+        }
 
-            setZeroMomentum(momentum, eventIndex);
-
+        else { // Bounce caused by the gradient
+            setZeroMomentum(momentum, eventIndex[0]);
         }
     }
 

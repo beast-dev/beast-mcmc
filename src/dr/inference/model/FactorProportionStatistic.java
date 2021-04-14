@@ -78,6 +78,8 @@ public class FactorProportionStatistic extends Statistic.Abstract{
         int n = adaptor.getNumberOfTaxa();
         int p = adaptor.getNumberOfTraits();
 
+        adaptor.drawFactors();
+
         double[][] factorInnerProduct = new double[k][k];
         statisticsProvider.getFactorInnerProduct(-1, k, factorInnerProduct, false);
 

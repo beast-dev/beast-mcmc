@@ -26,6 +26,7 @@
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
@@ -38,8 +39,9 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  * @author Xiang Ji
  */
 
-public class BayesianBridgeLikelihood extends AbstractModelLikelihood
-        implements BayesianBridgeStatisticsProvider, GradientWrtParameterProvider {
+public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
+        BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
+        GradientWrtParameterProvider, HessianWrtParameterProvider {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
                                     BayesianBridgeDistributionModel distribution) {
@@ -73,6 +75,16 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return distribution.getDiagonalHessianLogDensity(coefficients.getParameterValues());
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public int getDimension() {
         return dim;
     }
@@ -103,23 +115,32 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     }
 
     @Override
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    public final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
        // no intermediates need to be recalculated...
     }
 
     @Override
-    protected void storeState() {
+    public void storeState() {
        // Do nothing
     }
 
     @Override
-    protected void restoreState() {
+    public void restoreState() {
         // Do nothing
     }
 
     @Override
-    protected void acceptState() {
+    public void acceptState() {
     } // no additional state needs accepting
+
+    @Override
+    public double getStandardDeviation(int index) {
+        if (distribution instanceof PriorPreconditioningProvider) {
+            return ((PriorPreconditioningProvider) distribution).getStandardDeviation(index);
+        } else {
+            throw new RuntimeException("Not a prior conditioner");
+        }
+    }
 
     private final Parameter coefficients;
     private final BayesianBridgeDistributionModel distribution;

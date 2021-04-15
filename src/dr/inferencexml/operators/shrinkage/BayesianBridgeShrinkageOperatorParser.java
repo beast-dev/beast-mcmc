@@ -9,6 +9,7 @@ import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
+import static dr.evoxml.MaskedPatternsParser.MASK;
 import static dr.inference.operators.MCMCOperator.WEIGHT;
 
 public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectParser {
@@ -27,13 +28,23 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
             bayesianBridge = parseAutoCorrelatedRates(xo);
         }
 
-        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
-        if (!(prior.getDistribution() instanceof GammaDistribution)) {
-            throw new XMLParseException("Gibbs sampler only implemented for a gamma distributed global scale");
-        }
-        GammaDistribution globalScalePrior = (GammaDistribution) prior.getDistribution();
+        GammaDistribution globalScalePrior = null;
 
-        return new BayesianBridgeShrinkageOperator(bayesianBridge, globalScalePrior, weight);
+        DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        if (prior != null) {
+            if (prior.getDistribution() instanceof GammaDistribution) {
+                globalScalePrior = (GammaDistribution) prior.getDistribution();
+            } else {
+                throw new XMLParseException("Gibbs sampler only implemented for a gamma distributed global scale");
+            }
+        }
+
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASK)) {
+            mask = (Parameter) xo.getElementFirstChild(MASK);
+        }
+
+        return new BayesianBridgeShrinkageOperator(bayesianBridge, globalScalePrior, mask, weight);
     }
 
     private BayesianBridgeStatisticsProvider parseAutoCorrelatedRates(XMLObject xo) throws XMLParseException {
@@ -85,7 +96,11 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
                     new ElementRule(BayesianBridgeStatisticsProvider.class),
                     new ElementRule(AutoCorrelatedBranchRatesDistribution.class)
             ),
-            new ElementRule(DistributionLikelihood.class),
+            new ElementRule(DistributionLikelihood.class, true),
+            new ElementRule(MASK, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class),
+
+            }, true),
     };
 
     @Override

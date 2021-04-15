@@ -26,6 +26,7 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.OldGLMSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -41,6 +42,7 @@ import dr.xml.*;
 public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String GLM_SUBSTITUTION_MODEL = "glmSubstitutionModel";
+    private static final String NORMALIZE = "normalize";
 
 
     public String getParserName() {
@@ -70,7 +72,12 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
         }
 
-        return new OldGLMSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
+        boolean normalize = xo.getAttribute(NORMALIZE, true);
+
+        OldGLMSubstitutionModel model = new OldGLMSubstitutionModel(xo.getId(), dataType, rootFreq, glm);
+        model.setNormalization(normalize);
+
+        return model;
     }
 
     //************************************************************************
@@ -97,6 +104,7 @@ public class OldGLMSubstitutionModelParser extends AbstractXMLObjectParser {
             ),
             new ElementRule(ComplexSubstitutionModelParser.ROOT_FREQUENCIES, FrequencyModel.class),
             new ElementRule(GeneralizedLinearModel.class),
+            AttributeRule.newBooleanRule(NORMALIZE, true),
     };
 
 }

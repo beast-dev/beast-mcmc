@@ -1,7 +1,7 @@
 /*
  * DiscreteTraitBranchRateGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,13 +25,12 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -43,26 +42,30 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
+import java.util.Collections;
+import java.util.List;
+
 import static dr.math.MachineAccuracy.SQRT_EPSILON;
+
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
 public class DiscreteTraitBranchRateGradient
-        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
-    protected final TreeTrait treeTraitProvider;
+    private final TreeTrait treeTraitProvider;
     protected final Tree tree;
     protected final boolean useHessian;
-
-    //    private final int nTraits;
-//    private final int dim;
     protected final Parameter rateParameter;
-    protected final ArbitraryBranchRates branchRateModel;
+    protected final DifferentiableBranchRates branchRateModel;
 
     // TODO Refactor / remove code duplication with BranchRateGradient
     // TODO Maybe use:  AbstractBranchRateGradient, DiscreteTraitBranchRateGradient, ContinuousTraitBranchRateGradient
@@ -80,7 +83,7 @@ public class DiscreteTraitBranchRateGradient
         this.useHessian = useHessian;
 
         BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
-        this.branchRateModel = (brm instanceof ArbitraryBranchRates) ? (ArbitraryBranchRates) brm : null;
+        this.branchRateModel = (brm instanceof DifferentiableBranchRates) ? (DifferentiableBranchRates) brm : null;
 
         String name = DiscreteTraitBranchRateDelegate.getName(traitName);
         TreeTrait test = treeDataLikelihood.getTreeTrait(name);
@@ -138,6 +141,8 @@ public class DiscreteTraitBranchRateGradient
             }
         }
 
+        result = branchRateModel.updateDiagonalHessianLogDensity(result, gradient,null, 0, gradient.length);
+
         return result;
     }
 
@@ -147,6 +152,11 @@ public class DiscreteTraitBranchRateGradient
     }
 
     public double[] getGradientLogDensity() {
+
+        long startTime;
+        if (COUNT_TOTAL_OPERATIONS) {
+            startTime = System.nanoTime();
+        }
 
         double[] result = new double[tree.getNodeCount() - 1];
 
@@ -159,16 +169,18 @@ public class DiscreteTraitBranchRateGradient
             if (!tree.isRoot(node)) {
                 final int destinationIndex = getParameterIndexFromNode(node);
                 final double nodeResult = gradient[v] * getChainGradient(tree, node);
-//                if (Double.isNaN(nodeResult) && !Double.isInfinite(treeDataLikelihood.getLogLikelihood())) {
-//                    System.err.println("Check Gradient calculation please.");
-//                }
                 result[destinationIndex] = nodeResult;
                 v++;
             }
         }
 
+        // TODO Ideally move all chain-ruling into branchRateModel (except branchLengths?)
+        result = branchRateModel.updateGradientLogDensity(result, null, 0, gradient.length);
+
         if (COUNT_TOTAL_OPERATIONS) {
             ++getGradientLogDensityCount;
+            long endTime = System.nanoTime();
+            totalGradientTime += (endTime - startTime) / 1000000;
         }
 
         return result;
@@ -186,17 +198,14 @@ public class DiscreteTraitBranchRateGradient
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
 
-//    private static final boolean DEBUG = true;
-
-    protected MultivariateFunction numeric1 = new MultivariateFunction() {
+    MultivariateFunction numeric1 = new MultivariateFunction() {
         @Override
         public double evaluate(double[] argument) {
 
             for (int i = 0; i < argument.length; ++i) {
                 rateParameter.setParameterValue(i, argument[i]);
             }
-
-//            treeDataLikelihood.makeDirty();
+            
             return treeDataLikelihood.getLogLikelihood();
         }
 
@@ -216,6 +225,7 @@ public class DiscreteTraitBranchRateGradient
         }
     };
 
+    @SuppressWarnings("unused")
     protected boolean valuesAreSufficientlyLarge(double[] vector) {
         for (double x : vector) {
             if (Math.abs(x) < SQRT_EPSILON * 1.2) {
@@ -231,39 +241,70 @@ public class DiscreteTraitBranchRateGradient
 
         StringBuilder sb = new StringBuilder();
         if (COUNT_TOTAL_OPERATIONS) {
-            sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount).append("\n");
-            sb.append(treeTraitProvider.toString()).append("\n");
-            sb.append(treeDataLikelihood.getReport());
+            sb.append("\n\tgetGradientLogDensityCount = ").append(getGradientLogDensityCount);
+            sb.append("\n\taverageGradientTime = ");
+            if (getGradientLogDensityCount > 0) {
+                sb.append(totalGradientTime / getGradientLogDensityCount);
+            } else {
+                sb.append("NA");
+            }
+            sb.append("\n");
         }
 
-        String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+        if (CHECK_GRADIENT_IN_REPORT) {
+            String message = GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
 
-        if (useHessian) {
-            message += "Hessian\n";
-            message += HessianWrtParameterProvider.getReportAndCheckForError(this, null);
+            if (useHessian) {
+                message += HessianWrtParameterProvider.getReportAndCheckForError(this, null);
+            }
+
+            sb.append(message);
         }
 
-        message += sb.toString();
-
-        return  message;
+        return  sb.toString();
     }
 
-    private static final boolean DEBUG = true;
-
+    private static final boolean CHECK_GRADIENT_IN_REPORT = true;
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
-    protected long getGradientLogDensityCount = 0;
+    private long getGradientLogDensityCount = 0;
+    private long totalGradientTime = 0;
 
     @Override
     public LogColumn[] getColumns() {
-
-        LogColumn[] columns = new LogColumn[1];
-        columns[0] = new LogColumn.Default("gradient report", new Object() {
-            @Override
-            public String toString() {
-                return "\n" + getReport();
-            }
-        });
-
-        return columns;
+        return Loggable.getColumnsFromReport(this, "gradient report");
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using linear-time branch-specific parameter differential calculations";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    private static final Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("X", "Ji"),
+                    new Author("Z", "Zhang"),
+                    new Author("A", "Holbrook"),
+                    new Author("A", "Nishimura"),
+                    new Author("G", "Beale"),
+                    new Author("A", "Rambaut"),
+                    new Author("P", "Lemey"),
+                    new Author("MA", "Suchard"),
+            },
+            "Gradients do grow on trees: a linear-time O(N)-dimensional gradient for statistical phylogenetics",
+            2020,
+            "Molecular Biology and Evolution",
+            37,
+            3047,
+            3060,
+            Citation.Status.PUBLISHED);
 }

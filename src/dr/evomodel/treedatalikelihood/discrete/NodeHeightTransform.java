@@ -41,28 +41,34 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
 
     private AbstractNodeHeightTransformDelegate nodeHeightTransformDelegate;
     private TreeModel tree;
+    private Parameter nodeHeights;
 
-    public NodeHeightTransform(Parameter nodeHeights,
-                               Parameter ratios,
+    public NodeHeightTransform(Parameter ratios,
                                TreeModel tree,
-                               BranchRateModel branchrateModel) {
-        super(nodeHeights.getDimension());
+                               BranchRateModel branchrateModel,
+                               boolean withRoot) {
+        super(tree.getInternalNodeCount(), withRoot ? tree.getInternalNodeCount() : tree.getInternalNodeCount() - 1);
         this.tree = tree;
-        if (nodeHeights.getDimension() == tree.getInternalNodeCount()) {
+        if (withRoot) {
+            this.nodeHeights = new NodeHeightProxyParameter("nodeHeightToFullRatiosProxyParameter", tree, true);
             this.nodeHeightTransformDelegate = new NodeHeightToRatiosFullTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
-        } else if (nodeHeights.getDimension() == tree.getInternalNodeCount() - 1) {
-            this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
         } else {
-            throw new RuntimeException("Check internal nodeHeight parameter dimentions.");
+            this.nodeHeights = new NodeHeightProxyParameter("nodeHeightToRatiosProxyParameter", tree, false);
+            this.nodeHeightTransformDelegate = new NodeHeightToRatiosTransformDelegate(tree, nodeHeights, ratios, branchrateModel);
         }
     }
 
+    @Deprecated
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
                                GMRFSkyrideLikelihood skyrideLikelihood) {
         super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
+    }
+
+    public AbstractNodeHeightTransformDelegate getNodeHeightTransformDelegate() {
+        return nodeHeightTransformDelegate;
     }
 
     public Parameter getNodeHeights() {

@@ -26,7 +26,6 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.util.Units;
 import dr.inference.model.*;
 

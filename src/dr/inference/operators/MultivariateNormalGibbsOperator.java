@@ -70,7 +70,7 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
 
 
     private void setParameterValue(Parameter set, double[] value){
-        set.setDimension(value.length);
+//        set.setDimension(value.length);
         for(int i=0; i<value.length; i++)
         {set.setParameterValueQuietly(i,value[i]);}
         set.fireParameterChangedEvent();

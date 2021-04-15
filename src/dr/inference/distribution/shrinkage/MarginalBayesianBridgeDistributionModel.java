@@ -1,6 +1,7 @@
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.model.Parameter;
+import dr.math.distributions.LaplaceDistribution;
 import dr.math.distributions.MarginalizedAlphaStableDistribution;
 
 /**
@@ -12,15 +13,20 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
 
     public MarginalBayesianBridgeDistributionModel(Parameter globalScale,
                                                    Parameter exponent,
-                                                   int dim) {
-        super(globalScale, exponent, dim);
+                                                   int dim,
+                                                   boolean includeNormalizingConstant) {
+        super(globalScale, exponent, dim, includeNormalizingConstant);
     }
 
     @Override
-    public Parameter getLocalScale() { return null; }
+    public Parameter getLocalScale() {
+        return null;
+    }
 
     @Override
-    public Parameter getSlabWidth() { return null; }
+    public Parameter getSlabWidth() {
+        return null;
+    }
 
     @Override
     double[] gradientLogPdf(double[] x) {
@@ -29,9 +35,16 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
         final double alpha = exponent.getParameterValue(0);
 
         double[] gradient = new double[dim];
-        for (int i = 0; i < dim; ++i) {
-            gradient[i] = MarginalizedAlphaStableDistribution.gradLogPdf(x[i], scale, alpha);
+        if (alpha != 1.0) {
+            for (int i = 0; i < dim; ++i) {
+                gradient[i] = MarginalizedAlphaStableDistribution.gradLogPdf(x[i], scale, alpha);
+            }
+        } else if (alpha == 1.0) {
+            for (int i = 0; i < dim; ++i) {
+                gradient[i] = LaplaceDistribution.gradLogPdf(x[i], 0, scale);
+            }
         }
+
         return gradient;
     }
 
@@ -41,9 +54,26 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
         final double alpha = exponent.getParameterValue(0);
 
         double sum = 0.0;
-        for (double x : v) {
-            sum += MarginalizedAlphaStableDistribution.logPdf(x, scale, alpha);
+        if (alpha != 1.0) {
+            for (double x : v) {
+                sum += MarginalizedAlphaStableDistribution.logPdf(x, scale, alpha);
+            }
+        } else if (alpha == 1.0) {
+            for (int i = 0; i < dim; ++i) {
+                sum += LaplaceDistribution.logPdf(v[i], 0, scale);
+            }
         }
+
+        if (includeNormalizingConstant) {
+            // TODO Add
+            throw new RuntimeException("Not yet implemented");
+        }
+
         return sum;
+    }
+
+    @Override
+    public double[] hessianLogPdf(double[] x) {
+        throw new RuntimeException("Not yet implemented");
     }
 }

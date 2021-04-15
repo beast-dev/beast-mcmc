@@ -25,7 +25,6 @@
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
@@ -38,6 +37,7 @@ import dr.inference.model.Variable;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
+@Deprecated
 public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightTransformDelegate {
 
     private GMRFSkyrideLikelihood skyrideLikelihood;
@@ -60,6 +60,16 @@ public class NodeHeightToCoalescentIntervalsDelegate extends AbstractNodeHeightT
         addVariable(coalescentIntervals);
 
         this.proxyValuesKnown = false;
+    }
+
+    @Override
+    public double[] setMaskByHeightDifference(double threshold) {
+        throw new RuntimeException("Not yet implemented!");
+    }
+
+    @Override
+    public double[] setMaskByRatio(double threshold) {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     @Override

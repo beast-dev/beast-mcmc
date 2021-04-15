@@ -30,14 +30,12 @@ import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.hmc.AbstractParticleOperator;
-import dr.inference.operators.hmc.IrreversibleZigZagOperator;
-import dr.inference.operators.hmc.ReversibleZigZagOperator;
+import dr.inference.operators.hmc.*;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
-import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseMask;
-import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRuntimeOptions;
+import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.*;
+import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.*;
 
 /**
  * @author Aki Nishimura
@@ -49,6 +47,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String ZIG_ZAG_PARSER = "zigZagOperator";
     private final static String REVERSIBLE_FLG = "reversibleFlag";
+    private final static String REFRESH_VELOCITY = "refreshVelocity";
 
     @Override
     public String getParserName() {
@@ -71,17 +70,24 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         Parameter mask = parseMask(xo);
         AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+        AbstractParticleOperator.NativeCodeOptions nativeCodeOptions = parseNativeCodeOptions(xo);
 
         int threadCount = xo.getAttribute(THREAD_COUNT, 1);
 
         boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
+        boolean refreshVelocity = xo.getAttribute(REFRESH_VELOCITY, true);
+
+        MassPreconditioner.Type preconditioningType = parsePreconditioning(xo);
+        MassPreconditionScheduler.Type preconditionSchedulerType = parsePreconditionScheduler(xo, preconditioningType);
+        MassPreconditioner preconditioner = preconditioningType.factory(derivative, null, runtimeOptions);
+
 
         if (reversible){
             return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
-                    runtimeOptions, mask, threadCount);
+                    runtimeOptions, nativeCodeOptions, refreshVelocity, mask, threadCount, preconditioner, preconditionSchedulerType);
         } else {
             return new IrreversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
-                    runtimeOptions, mask, threadCount);
+                    runtimeOptions, nativeCodeOptions, refreshVelocity, mask, threadCount,preconditioner, preconditionSchedulerType);
         }
     }
 

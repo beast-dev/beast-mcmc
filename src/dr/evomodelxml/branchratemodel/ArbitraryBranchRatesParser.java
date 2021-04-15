@@ -28,6 +28,7 @@ package dr.evomodelxml.branchratemodel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -47,6 +48,11 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
     private static final String MULTIPLIER = "multiplier";
     private static final String CENTER_AT_ONE = "centerAtOne";
     private static final String RANDOMIZE_RATES = "randomizeRates";
+    private static final String RANDOM_SCALE = "randomScale";
+
+    private static final String INCLUDE_ROOT = "includeRoot";
+    private static final String RANDOM_INDICATOR = "randomIndicator"; // keep some rates fixed but randomize others
+
     static final String LOCATION = "location";
     static final String SCALE = "scale";
 
@@ -66,7 +72,7 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
 
-        if(centerAtOne && randomizeRates) {
+        if (centerAtOne && randomizeRates) {
             throw new XMLParseException("Cannot centerAtOne and randomize the starting rates");
         }
 
@@ -79,21 +85,42 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             rateCategoryParameter.setDimension(numBranches);
         }
 
+        Parameter randomIndicator = null;
+        if (xo.hasChildNamed(RANDOM_INDICATOR)) {
+            randomIndicator = (Parameter) xo.getElementFirstChild(RANDOM_INDICATOR);
+
+            if (!randomizeRates) {
+                throw new XMLParseException("Cannot provide indicator for randomized rates without randomizeRates=true");
+            }
+
+            if (randomIndicator.getDimension() != rateCategoryParameter.getDimension()) {
+                throw new XMLParseException("randomIndicator (" + randomIndicator.getDimension()
+                        + ") must be the same dimension as the rate parameter (" + rateCategoryParameter.getDimension() + ")");
+            }
+        }
+
         Logger.getLogger("dr.evomodel").info("\nUsing an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
         Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on "
                 + rateCategoryParameter.getId());
 
-
         ArbitraryBranchRates.BranchRateTransform transform = parseTransform(xo);
 
+        double scale = xo.getAttribute(RANDOM_SCALE, 1.0);
         if (randomizeRates) {
             for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-                rateCategoryParameter.setValue(i, MathUtils.uniform(0,10));
+                if (randomIndicator == null || randomIndicator.getParameterValue(i) == 1.0) {
+                    double increment = MathUtils.nextGaussian() * scale;
+                    double x = transform.randomize(increment);
+                    rateCategoryParameter.setValue(i, x);
+                }
             }
         }
 
-        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne);
+        TreeParameterModel.Type includeRoot = xo.getAttribute(INCLUDE_ROOT, false) ?
+                TreeParameterModel.Type.WITH_ROOT : TreeParameterModel.Type.WITHOUT_ROOT;
+
+        return new ArbitraryBranchRates(tree, rateCategoryParameter, transform, centerAtOne, includeRoot);
     }
 
     //************************************************************************
@@ -147,7 +174,11 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(CENTER_AT_ONE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_RATES, true),
             AttributeRule.newBooleanRule(EXP, true),
+            AttributeRule.newDoubleRule(RANDOM_SCALE, true),
             new ElementRule(SCALE, Parameter.class, "optional scale parameter", true),
             new ElementRule(LOCATION, Parameter.class, "optional location parameter", true),
+            new ElementRule(RANDOM_INDICATOR, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class),
+            }, true),
     };
 }

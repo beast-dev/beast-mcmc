@@ -1,7 +1,7 @@
 /*
  * GMRFSkygridLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -420,6 +420,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         initializationReport();
 
         phiParameter = null;
+
+        this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
     }
 
 //    protected int setTree(List<Tree> treeList) {
@@ -496,7 +498,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         int currentTimeIndex = lastTimeIndex;
         double currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
         double nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
-        while (nextTime <= currentTime) {
+        while (nextTime <= currentTime && currentTimeIndex + 2 < intervalsList.get(treeIndex).getIntervalCount()) {
             currentTimeIndex++;
             currentTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex);
             nextTime = intervalsList.get(treeIndex).getIntervalTime(currentTimeIndex + 1);
@@ -1006,9 +1008,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         Parameter beta = this.beta.get(0);
         MatrixParameter covk = covariates.get(0);
+        boolean transposed = isTransposed(numGridPoints + 1, beta.getDimension(), covk);
 
         // TODO I believe we need one Parameter beta (is the same across loci) and List covariates (can differ across loci)
-
 
         // TODO Need to delegate to SkygridCovariateHelper
 
@@ -1020,15 +1022,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         for (int k = 0; k < beta.getDimension(); k++) {
 
             double gradient = // numGridPoints / 2
-                    +currentPrec * (gamma[0] - gamma[1]) * covk.getParameterValue(k, 0)
-                            + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * covk.getParameterValue(k, numGridPoints)
+                    + currentPrec * (gamma[0]             - gamma[1]                ) * getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k,0)
+                    + currentPrec * (gamma[numGridPoints] - gamma[numGridPoints - 1]) * getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
 //                    - 0.5 * currentPrec * (gamma[1] - gamma[0]) * (gamma[1] - gamma[0])
                     ;
 
             for (int i = 1; i < numGridPoints; i++) {
                 gradient +=
 //                        -0.5 * currentPrec * (gamma[i + 1] - gamma[i]) * (gamma[i + 1] - gamma[i])
-                        +currentPrec * (-gamma[i - 1] + 2 * gamma[i] - gamma[i + 1]) * covk.getParameterValue(k, i);
+                        + currentPrec * (-gamma[i - 1] + 2 * gamma[i] -gamma[i + 1]) * getCovariateValue(covk, i, k, transposed); //covk.getParameterValue(k, i);
             }
 
             gradLogDens[k] = gradient;
@@ -1047,6 +1049,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
 
         Parameter beta = this.beta.get(0);
         MatrixParameter covk = covariates.get(0);
+        boolean transposed = isTransposed(numGridPoints + 1, beta.getDimension(), covk);
 
         double[] hessian = new double[beta.getDimension()];
         double currentPrec = precisionParameter.getParameterValue(0);
@@ -1054,12 +1057,23 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
         for (int k = 0; k < beta.getDimension(); k++) {
 
             double h = // numGridPoints / 2
-                    -currentPrec * (covk.getParameterValue(k, 0) - covk.getParameterValue(k, 1)) * covk.getParameterValue(k, 0)
-                            - currentPrec * (covk.getParameterValue(k, numGridPoints) - covk.getParameterValue(k, numGridPoints - 1)) * covk.getParameterValue(k, numGridPoints);
+                    - currentPrec * (
+                            getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k, 0)
+                            - getCovariateValue(covk, 1, k, transposed)) //covk.getParameterValue(k,1))
+                            * getCovariateValue(covk, 0, k, transposed) //covk.getParameterValue(k,0)
+                    - currentPrec * (
+                            getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
+                            - getCovariateValue(covk,numGridPoints - 1, k, transposed)) //covk.getParameterValue(k, numGridPoints - 1))
+                            * getCovariateValue(covk, numGridPoints, k, transposed) //covk.getParameterValue(k, numGridPoints)
+                    ;
 
-            for (int i = 1; i < numGridPoints; i++) {
-                h += -currentPrec * (-covk.getParameterValue(k, i - 1) + 2 * covk.getParameterValue(k, i) - covk.getParameterValue(k, i + 1)) * covk.getParameterValue(k, i)
-                ;
+            for(int i = 1; i < numGridPoints; i++){
+                h += - currentPrec * (
+                        -getCovariateValue(covk, i - 1, k, transposed) //covk.getParameterValue(k, i - 1)
+                                + 2 * getCovariateValue(covk, i, k, transposed) //covk.getParameterValue(k, i)
+                                - getCovariateValue(covk, i + 1, k, transposed)) //covk.getParameterValue(k, i + 1))
+                        * getCovariateValue(covk, i, k, transposed) //covk.getParameterValue(k, i)
+                        ;
 
             }
 
@@ -1236,12 +1250,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                         Parameter d = delta.get(k);
                         final int J = b.getDimension();
                         MatrixParameter covariate = covariates.get(k);
-
-                        if ((J != covariate.getRowDimension()) ||
-                                (N != covariate.getColumnDimension())) { // Note: XML current has covariates transposed
-                            throw new RuntimeException("Incorrect dimensions in " + covariate.getId() + " (r=" + covariate.getRowDimension() +
-                                    ",c=" + covariate.getColumnDimension() + ")");
-                        }
+                        boolean transposed = isTransposed(N, J, covariate);
 
                         for (int i = 0; i < N; ++i) {
                             for (int j = 0; j < J; ++j) {
@@ -1279,7 +1288,28 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood
                         }
                     }
                 }
+
+                throw new RuntimeException("Should not get here.");
             }
+        }
+    }
+
+    private double getCovariateValue(MatrixParameter matrix, int i, int j, boolean transposed) {
+        if (transposed) {
+            return matrix.getParameterValue(j, i);
+        } else {
+            return matrix.getParameterValue(i, j);
+        }
+    }
+
+    private boolean isTransposed(int N, int J, MatrixParameter matrix) {
+        if (J == matrix.getRowDimension() && N == matrix.getColumnDimension()) {
+            return true;
+        } else if (J == matrix.getColumnDimension() && N == matrix.getRowDimension()) {
+            return false;
+        } else {
+            throw new RuntimeException("Incorrect dimensions in " + matrix.getId() + " (r=" + matrix.getRowDimension() +
+                    ",c=" + matrix.getColumnDimension()+ ")");
         }
     }
 

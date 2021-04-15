@@ -34,7 +34,7 @@ import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
- * @author Alex Fisher
+ * @author Alexander Fisher
  * @author Xiang Ji
  */
 public class BranchRateGradientWrtIncrements implements GradientWrtParameterProvider, Reportable {
@@ -42,7 +42,7 @@ public class BranchRateGradientWrtIncrements implements GradientWrtParameterProv
     private final GradientWrtParameterProvider rateGradientProvider;
     private final AutoCorrelatedGradientWrtIncrements priorGradientProvider;
 
-    private final ArbitraryBranchRates branchRates;
+    private final DifferentiableBranchRates branchRates;
     private final Tree tree;
 
     private final AutoCorrelatedBranchRatesDistribution.BranchVarianceScaling scaling;

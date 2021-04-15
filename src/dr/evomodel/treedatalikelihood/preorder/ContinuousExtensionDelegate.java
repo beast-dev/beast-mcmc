@@ -29,6 +29,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.model.CompoundParameter;
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -91,7 +92,7 @@ public class ContinuousExtensionDelegate {
         ) {
             super(likelihoodDelegate, treeTrait, tree);
             this.dataModel = dataModel;
-            this.dimTrait = dataModel.getTraitDimension();
+            this.dimTrait = dataModel.getDataDimension();
             this.nTaxa = tree.getExternalNodeCount();
             this.sample = new double[nTaxa * dimTrait];
 
@@ -109,7 +110,7 @@ public class ContinuousExtensionDelegate {
 
             CompoundParameter dataParameter = dataModel.getParameter();
             DenseMatrix64F extensionVar = dataModel.getExtensionVariance();
-            boolean[] missingVec = dataModel.getMissingIndicator();
+            boolean[] missingVec = dataModel.getDataMissingIndicators();
             boolean choleskyKnown = false;
             double[][] cholesky = null;
 
@@ -118,13 +119,20 @@ public class ContinuousExtensionDelegate {
 
             for (int i = 0; i < nTaxa; i++) {
 
+
                 IndexPartition partition = new IndexPartition(missingVec, i);
 
-                if (partition.nObserved == dimTrait) {
-                    for (int j = offset; j < offset + dimTrait; j++) {
-                        sample[j] = dataParameter.getParameterValue(j);
+                for (int j : partition.obsInds) {
+                    int ind = j + offset;
+                    sample[ind] = dataParameter.getParameterValue(ind);
+                }
+
+                if (dataModel.diagonalVariance()) {
+                    for (int j : partition.misInds) {
+                        int ind = j + offset;
+                        sample[ind] = MathUtils.nextGaussian() * Math.sqrt(extensionVar.get(j, j)) + treeValues[ind];
                     }
-                } else if (partition.nMissing == dimTrait) {
+                } else if (partition.nMissing == dimTrait) { // variance not diagonal, all traits missing
                     double[] mean = new double[dimTrait];
                     System.arraycopy(treeValues, offset, mean, 0, dimTrait);
                     if (!choleskyKnown) {
@@ -135,7 +143,7 @@ public class ContinuousExtensionDelegate {
                     for (int j = offset; j < offset + dimTrait; j++) {
                         sample[j] = draw[j - offset];
                     }
-                } else {
+                } else { // variance not diagonal, some traits missing
                     ConditionalVarianceAndTransform2 transform = new ConditionalVarianceAndTransform2(extensionVar,
                             partition.misInds, partition.obsInds);
 

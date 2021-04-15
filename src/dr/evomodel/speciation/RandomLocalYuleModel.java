@@ -232,4 +232,9 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
     private Parameter meanRate;
     private boolean birthRatesAreMultipliers = false;
     private NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+
+    @Override
+    public double getNodeGradient(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented!");
+    }
 }

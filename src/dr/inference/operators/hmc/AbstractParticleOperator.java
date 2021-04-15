@@ -25,9 +25,10 @@
 
 package dr.inference.operators.hmc;
 
-import dr.evomodel.operators.NativeZigZag;
 import dr.evomodel.operators.NativeZigZagOptions;
 import dr.evomodel.operators.NativeZigZagWrapper;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
@@ -42,7 +43,6 @@ import dr.xml.Reportable;
 
 import java.util.Arrays;
 
-import static dr.inference.operators.hmc.IrreversibleZigZagOperator.CPP_NEXT_BOUNCE;
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
@@ -58,7 +58,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     AbstractParticleOperator(GradientWrtParameterProvider gradientProvider,
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
-                             double weight, Options runtimeOptions, Parameter mask) {
+                             double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
+                             MassPreconditioner massPreconditioner, MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         this.gradientProvider = gradientProvider;
         this.productProvider = multiplicationProvider;
@@ -66,40 +67,47 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         this.parameter = gradientProvider.getParameter();
         this.mask = mask;
         this.maskVector = mask != null ? mask.getParameterValues() : null;
+        this.parameterSign = setParameterSign(gradientProvider);
 
         this.runtimeOptions = runtimeOptions;
+        this.nativeCodeOptions = nativeOptions;
+        this.refreshVelocity = refreshVelocity;
         this.preconditioning = setupPreconditioning();
+        this.meanVector = getMeanVector(gradientProvider);
+
+        this.massPreconditioning = massPreconditioner;
+        this.preconditionScheduler = preconditionSchedulerType.factory(runtimeOptions, this);
 
         setWeight(weight);
-        this.missingDataMask = getMissingDataMask();
+        this.observedDataMask = getObservedDataMask();
         checkParameterBounds(parameter);
 
-        long flags = NativeZigZag.Flag.PRECISION_DOUBLE.getMask() |
-                NativeZigZag.Flag.FRAMEWORK_TBB.getMask();
+        long flags = 128;
         long nativeSeed = MathUtils.nextLong();
         int nThreads = 4;
-        
-        if (TEST_NATIVE_BOUNCE || TEST_NATIVE_OPERATOR || CPP_NEXT_BOUNCE) {
+
+        if (nativeOptions.testNativeFindNextBounce || nativeOptions.useNativeFindNextBounce || nativeOptions.useNativeUpdateDynamics) {
 
             NativeZigZagOptions options = new NativeZigZagOptions(flags, nativeSeed, nThreads);
 
             nativeZigZag = new NativeZigZagWrapper(parameter.getDimension(), options,
-                    maskVector, getObservedDataMask());
+                    maskVector, getObservedDataMask(), parameterSign);
         }
     }
 
-    private boolean[] getMissingDataMask() {
+    private double[] setParameterSign(GradientWrtParameterProvider gradientProvider) {
 
-        int dim = parameter.getDimension();
-        boolean[] missing = new boolean[dim];
-        assert (dim == parameter.getBounds().getBoundsDimension());
+        double[] startingValue = gradientProvider.getParameter().getParameterValues();
+        double[] sign = new double[startingValue.length];
 
-        for (int i = 0; i < dim; ++i) {
+        for (int i = 0; i < startingValue.length; i++) {
 
-            missing[i] = (parameter.getBounds().getUpperLimit(i) == Double.POSITIVE_INFINITY &&
-                    parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY);
+            if (startingValue[i] == 0 && (mask == null || mask.getParameterValue(i) == 1)) {
+                throw new RuntimeException("Must start from either positive or negative value!");
+            }
+            sign[i] = startingValue[i] > 0 ? 1 : -1;
         }
-        return missing;
+        return sign;
     }
 
     private double[] getObservedDataMask() {
@@ -123,7 +131,9 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         WrappedVector position = getInitialPosition();
 
-        double hastingsRatio = integrateTrajectory(position);
+        WrappedVector momentum = drawInitialMomentum();
+
+        double hastingsRatio = integrateTrajectory(position, momentum);
 
         setParameter(position, parameter);
 
@@ -134,7 +144,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return hastingsRatio;
     }
 
-    abstract double integrateTrajectory(WrappedVector position);
+    abstract double integrateTrajectory(WrappedVector position, WrappedVector momentum);
+
+    WrappedVector drawInitialMomentum() {
+        return new WrappedVector.Raw(null, 0, 0);
+    }
 
     double drawTotalTravelTime() {
         double randomFraction = 1.0 + runtimeOptions.randomTimeWidth * (MathUtils.nextDouble() - 0.5);
@@ -160,6 +174,23 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             p[i] += time * v[i];
         }
     }
+
+    static void updatePosition(double[] p, double[] v, double time) {
+        for (int i = 0, len = p.length; i < len; ++i) {
+            p[i] += time * v[i];
+        }
+    }
+
+
+    static void updateMomentum(double[] a, double[] g, double[] m, double time) {
+
+        final double halfTimeSquared = time * time / 2;
+
+        for (int i = 0, len = m.length; i < len; ++i) {
+            m[i] = m[i] + time * g[i] - halfTimeSquared * a[i];
+        }
+    }
+
 
     WrappedVector getInitialGradient() {
 
@@ -195,8 +226,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     WrappedVector getPrecisionProduct(ReadableVector velocity) {
 
-        setParameter(velocity, parameter);
-
+        WrappedVector velocityPlusMean = new WrappedVector.Raw(new double[velocity.getDim()]);
+        for (int i = 0; i < velocityPlusMean.getDim(); i++) {
+            velocityPlusMean.set(i, velocity.get(i) + meanVector[i]);
+        }
+        setParameter(velocityPlusMean, parameter);
         double[] product = productProvider.getProduct(parameter);
 
         if (mask != null) {
@@ -227,12 +261,6 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void updateAction(WrappedVector action, ReadableVector velocity, int eventIndex) {
 
-        if (TEST_CRITICAL_REGION) {
-            if (nativeZigZag.inCriticalRegion()) {
-                nativeZigZag.exitCriticalRegion();
-            }
-        }
-
         WrappedVector column = getPrecisionColumn(eventIndex);
 
         if (TIMING) {
@@ -257,13 +285,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    boolean headingTowardsBoundary(double position, double velocity, int positionIndex) {
-
-        if (missingDataMask[positionIndex]) {
-            return false;
-        } else {
-            return position * velocity < 0.0;
-        }
+    boolean headingTowardsBoundary(double velocity, int positionIndex) {
+        return observedDataMask[positionIndex] * parameterSign[positionIndex] * velocity < 0.0;
     }
 
     private WrappedVector getInitialPosition() {
@@ -301,21 +324,105 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                 && (getCount() % runtimeOptions.preconditioningUpdateFrequency == 0);
     }
 
-    public static class Options {
+    void initializeNumEvent(){
+        numEvents = 0;
+        numBoundaryEvents = 0;
+        numGradientEvents = 0;
+    }
+
+    void recordOneMoreEvent(){
+        numEvents++;
+    }
+
+    void recordEvents(Type eventType){
+        numEvents++;
+        if (eventType == Type.BOUNDARY){
+            numBoundaryEvents++;
+        } else if (eventType == Type.GRADIENT){
+            numGradientEvents++;
+        }
+    }
+
+    void storeVelocity(WrappedVector velocity){
+        storedVelocity = velocity;
+    }
+
+    double[] getMeanVector(GradientWrtParameterProvider gradientProvider) {
+
+        double[] mean = new double[parameter.getDimension()];
+
+        if (gradientProvider.getLikelihood() instanceof TreeDataLikelihood) {
+
+            TreeDataLikelihood likelihood = (TreeDataLikelihood) gradientProvider.getLikelihood();
+            ContinuousDataLikelihoodDelegate likelihoodDelegate =
+                    (ContinuousDataLikelihoodDelegate) likelihood.getDataLikelihoodDelegate();
+            double[] rootMean = likelihoodDelegate.getRootPrior().getMean();
+            int dimTrait = likelihoodDelegate.getTraitDim();
+            int taxonCount = parameter.getDimension() / dimTrait;
+
+            int index = 0;
+            for (int taxon = 0; taxon < taxonCount; ++taxon) {
+                for (int trait = 0; trait < dimTrait; ++trait) {
+                    mean[index + trait] = rootMean[trait];
+                }
+                index += dimTrait;
+            }
+        }
+        return mean;
+    }
+
+    public static class Options implements MassPreconditioningOptions{
 
         final double randomTimeWidth;
         final int preconditioningUpdateFrequency;
+        final int preconditioningMaxUpdate;
+        final int preconditioningDelay;
+        final int updateSampleCovFrequency;
+        final int updateSampleCovDelay;
 
-        public Options(double randomTimeWidth, int preconditioningUpdateFrequency) {
+        public Options(double randomTimeWidth, int preconditioningUpdateFrequency, int preconditioningMaxUpdate,
+                       int preconditioningDelay, int updateSampleCovFrequency, int updateSampleCovDelay) {
             this.randomTimeWidth = randomTimeWidth;
             this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
+            this.preconditioningMaxUpdate = preconditioningMaxUpdate;
+            this.preconditioningDelay = preconditioningDelay;
+            this.updateSampleCovFrequency = updateSampleCovFrequency;
+            this.updateSampleCovDelay = updateSampleCovDelay;
+        }
+
+        @Override
+        public int preconditioningUpdateFrequency() { return preconditioningUpdateFrequency; }
+
+        @Override
+        public int preconditioningDelay() { return preconditioningDelay; }
+
+        @Override
+        public int preconditioningMaxUpdate() {
+            return preconditioningMaxUpdate;
+        }
+
+        @Override
+        public int preconditioningMemory() {
+            return 0;
+        }
+    }
+
+    public static class NativeCodeOptions {
+        final boolean testNativeFindNextBounce;
+        final boolean useNativeFindNextBounce;
+        final boolean useNativeUpdateDynamics;
+
+        public NativeCodeOptions(boolean testNativeFindNextBounce, boolean useNativeFindNextBounce, boolean useNativeUpdateDynamics){
+            this.testNativeFindNextBounce = testNativeFindNextBounce;
+            this.useNativeFindNextBounce = useNativeFindNextBounce;
+            this.useNativeUpdateDynamics = useNativeUpdateDynamics;
         }
     }
 
     protected class Preconditioning {
 
         final WrappedVector mass;
-        final double totalTravelTime;
+        double totalTravelTime;
 
         private Preconditioning(WrappedVector mass, double totalTravelTime) {
             this.mass = mass;
@@ -374,24 +481,29 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         return TIMING ? timer.toString() : "";
     }
 
-    private final GradientWrtParameterProvider gradientProvider;
+    protected final GradientWrtParameterProvider gradientProvider;
     private final PrecisionMatrixVectorProductProvider productProvider;
-    final PrecisionColumnProvider columnProvider;
-    private final Parameter parameter;
-    private final Options runtimeOptions;
+    private final PrecisionColumnProvider columnProvider;
+    protected final Parameter parameter;
+    protected final Options runtimeOptions;
+    protected boolean refreshVelocity;
+    protected final NativeCodeOptions nativeCodeOptions;
     final Parameter mask;
-    private final double[] maskVector;
-
+    final double[] parameterSign;
+    protected final double[] maskVector;
+    int numEvents;
+    int numBoundaryEvents;
+    int numGradientEvents;
+    protected WrappedVector storedVelocity;
     Preconditioning preconditioning;
-    final private boolean[] missingDataMask;
+    protected final MassPreconditioner massPreconditioning;
+    protected final MassPreconditionScheduler preconditionScheduler;
+    final private double[] observedDataMask;
+    private final double[] meanVector;
 
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 
-    final static boolean TEST_NATIVE_OPERATOR = false;
-    final static boolean TEST_NATIVE_BOUNCE = false;
-    final static boolean TEST_CRITICAL_REGION = false;
-    final static boolean TEST_NATIVE_INNER_BOUNCE = false;
-    final static boolean TEST_FUSED_DYNAMICS = true;
+//  final static boolean TEST_CRITICAL_REGION = false;
     NativeZigZagWrapper nativeZigZag;
 }

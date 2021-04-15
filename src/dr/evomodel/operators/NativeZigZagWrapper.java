@@ -13,8 +13,9 @@ public class NativeZigZagWrapper {
     public NativeZigZagWrapper(int dimension,
                                NativeZigZagOptions options,
                                double[] mask,
-                               double[] observed) {
-        this.instanceNumber = NativeZigZag.INSTANCE.createInstance(dimension, options, mask, observed);
+                               double[] observed,
+                               double[] parameterSign) {
+        this.instanceNumber = NativeZigZag.INSTANCE.createInstance(dimension, options, mask, observed, parameterSign);
     }
 
     public void operate(PrecisionColumnProvider columnProvider,
@@ -27,14 +28,43 @@ public class NativeZigZagWrapper {
         NativeZigZag.INSTANCE.operate(instanceNumber, columnProvider, position, velocity, action, gradient, moment, time);
     }
 
-    public MinimumTravelInformation getNextEvent(double[] position,
-                                                 double[] velocity,
-                                                 double[] action,
-                                                 double[] gradient,
-                                                 double[] moment) {
+    public MinimumTravelInformation getNextReversibleEvent(double[] position,
+                                                           double[] velocity,
+                                                           double[] action,
+                                                           double[] gradient,
+                                                           double[] moment) {
         return NativeZigZag.INSTANCE.getNextEvent(instanceNumber, position, velocity, action, gradient, moment);
     }
 
+    public MinimumTravelInformation getNextIrreversibleEvent(double[] position,
+                                                             double[] velocity,
+                                                             double[] action,
+                                                             double[] gradient) {
+        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient);
+    }
+
+    public void updateReversibleDynamics(double[] position,
+                                         double[] velocity,
+                                         double[] action,
+                                         double[] gradient,
+                                         double[] momentum,
+                                         double[] column,
+                                         double eventTime, int eventIndex, int eventType) {
+        NativeZigZag.INSTANCE.updateDynamics(instanceNumber, position, velocity, action, gradient, momentum,
+                column, eventTime, eventIndex, eventType);
+    }
+
+    public void updateIrreversibleDynamics(double[] position,
+                                           double[] velocity,
+                                           double[] action,
+                                           double[] gradient,
+                                           double[] column,
+                                           double eventTime, int eventIndex, int eventType) {
+        NativeZigZag.INSTANCE.updateDynamics(instanceNumber, position, velocity, action, gradient, null,
+                column, eventTime, eventIndex, eventType);
+    }
+
+    @SuppressWarnings("unused")
     public int enterCriticalRegion(
             double[] position,
             double[] velocity,
@@ -44,18 +74,22 @@ public class NativeZigZagWrapper {
         return NativeZigZag.INSTANCE.enterCriticalRegion(instanceNumber, position, velocity, action, gradient, momentum);
     }
 
+    @SuppressWarnings("unused")
     public int exitCriticalRegion() {
         return NativeZigZag.INSTANCE.exitCriticalRegion(instanceNumber);
     }
 
+    @SuppressWarnings("unused")
     public boolean inCriticalRegion() {
         return NativeZigZag.INSTANCE.inCriticalRegion(instanceNumber);
     }
 
+    @SuppressWarnings("unused")
     public MinimumTravelInformation getNextEventInCriticalRegion() {
         return NativeZigZag.INSTANCE.getNextEventInCriticalRegion(instanceNumber);
     }
 
+    @SuppressWarnings("unused")
     public void innerBounce(double[] position,
                             double[] velocity,
                             double[] action,
@@ -66,25 +100,8 @@ public class NativeZigZagWrapper {
                 eventTime, eventIndex, eventType);
     }
 
+    @SuppressWarnings("unused")
     public void innerBounceCriticalRegion(double eventTime, int eventIndex, int eventType) {
         NativeZigZag.INSTANCE.innerBounceCriticalRegion(instanceNumber, eventTime, eventIndex, eventType);
-    }
-
-    public void updateDynamics(double[] position,
-                               double[] velocity,
-                               double[] action,
-                               double[] gradient,
-                               double[] momentum,
-                               double[] column,
-                               double eventTime, int eventIndex, int eventType) {
-        NativeZigZag.INSTANCE.updateDynamics(instanceNumber, position, velocity, action, gradient, momentum,
-                column, eventTime, eventIndex, eventType);
-    }
-
-    public MinimumTravelInformation getNextEventIrreversible(double[] position,
-                                                             double[] velocity,
-                                                             double[] action,
-                                                             double[] gradient) {
-        return NativeZigZag.INSTANCE.getNextEventIrreversible(instanceNumber, position, velocity, action, gradient);
     }
 }

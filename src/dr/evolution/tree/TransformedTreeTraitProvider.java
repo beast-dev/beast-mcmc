@@ -3,7 +3,7 @@ package dr.evolution.tree;
 import dr.util.Transform;
 
 /**
- * @author Alex Fisher
+ * @author Alexander Fisher
  * @author Marc A. Suchard
  */
 public class TransformedTreeTraitProvider implements TreeTraitProvider {

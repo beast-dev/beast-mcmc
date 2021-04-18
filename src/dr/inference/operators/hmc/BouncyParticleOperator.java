@@ -53,7 +53,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
                                   MassPreconditioner massPreconditioner,
                                   MassPreconditionScheduler.Type preconditionSchedulerType) {
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
-                refreshVelocity, mask, massPreconditioner, preconditionSchedulerType);
+                refreshVelocity, mask, null, massPreconditioner, preconditionSchedulerType);
     }
 
     @Override

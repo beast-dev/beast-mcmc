@@ -59,7 +59,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
                              double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
-                             boolean refreshVelocity, Parameter mask,
+                             boolean refreshVelocity, Parameter mask, Parameter categoryClass,
                              MassPreconditioner massPreconditioner,
                              MassPreconditionScheduler.Type preconditionSchedulerType) {
 
@@ -82,6 +82,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         setWeight(weight);
         this.observedDataMask = getObservedDataMask();
+        this.categoryClasses = getCategoryClasses(categoryClass);
         checkParameterBounds(parameter);
 
         long flags = 128;
@@ -122,6 +123,25 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                     parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 0.0 : 1.0;
         }
         return observed;
+    }
+
+    private int[] getCategoryClasses(Parameter categoryVector) {
+        int dim = parameter.getDimension();
+        int[] categoryClasses = new int[dim];
+
+        if (categoryVector != null) {
+            int[] category = new int[categoryVector.getDimension()];
+            for (int i = 0; i < category.length; i++) {
+                category[i] = (int) categoryVector.getParameterValues()[i];
+            }
+
+            int L = categoryVector.getDimension();
+            int n = dim / L;
+            for (int i = 0; i < n; i++) {
+                System.arraycopy(category, 0, categoryClasses, i * L, L);
+            }
+        }
+        return categoryClasses;
     }
 
     @Override
@@ -512,8 +532,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     final protected double[] observedDataMask;
     private final double[] meanVector;
 
-    protected final int[] categoryClasses = null; //todo: length(numClasses) = dim, numClass[i] = K if position[i] corresponds to a K-class category
-
+    protected final int[] categoryClasses;
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 

@@ -47,12 +47,12 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
                                       PrecisionMatrixVectorProductProvider multiplicationProvider,
                                       PrecisionColumnProvider columnProvider,
                                       double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
-                                      boolean refreshVelocity, Parameter mask,
+                                      boolean refreshVelocity, Parameter mask, Parameter categoryClass,
                                       int threadCount, MassPreconditioner massPreconditioner,
                                       MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
-                refreshVelocity, mask, threadCount, massPreconditioner, preconditionSchedulerType);
+                refreshVelocity, mask, categoryClass, threadCount, massPreconditioner, preconditionSchedulerType);
     }
 
 

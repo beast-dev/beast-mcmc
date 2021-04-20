@@ -1,9 +1,9 @@
 package dr.evomodel.coalescent.hmc;
 
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -295,26 +295,27 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
 
-                final IntervalList intervals = likelihood.getIntervalList(0);
+                final TreeIntervals intervals = (TreeIntervals) likelihood.getIntervalList(0);
 
-                int[] intervalIndices = new int[tree.getInternalNodeCount()];
                 int[] gridIndices = new int[tree.getInternalNodeCount()];
 
-                getGridIndexForInternalNodes(likelihood, 0, intervalIndices, gridIndices);
+                getGridIndexForInternalNodes(likelihood, 0, gridIndices);
 
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                     NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
 
                     final int nodeIndex = getNodeHeightParameterIndex(node, tree);
 
-                    final int numLineage = intervals.getLineageCount(intervalIndices[i]);
+                    final int[] currentIntervals = intervals.getIntervalsForNode(node.getNumber());
+
+                    final int numLineage = intervals.getLineageCount(currentIntervals[0]);
 
                     final double currentPopSize = Math.exp(-currentGamma[gridIndices[nodeIndex]]);
 
                     gradient[nodeIndex] += -currentPopSize * numLineage * (numLineage - 1);
 
                     if (!tree.isRoot(node)) {
-                        final int nextNumLineage = intervals.getLineageCount(intervalIndices[i] + 1);
+                        final int nextNumLineage = intervals.getLineageCount(currentIntervals[1]);
                         gradient[nodeIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
                     }
                 }
@@ -332,7 +333,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             private void getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex,
-                                                       int[] intervalIndices, int[] gridIndices) {
+                                                       int[] gridIndices) {
                 Tree tree = likelihood.getTree(treeIndex);
                 double[] sortedValues = new double[tree.getInternalNodeCount()];
                 double[] nodeHeights = new double[tree.getInternalNodeCount()];
@@ -341,18 +342,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 int gridIndex = 0;
                 double[] gridPoints = likelihood.getGridPoints();
-                int intervalIndex = 0;
-                final IntervalList intervals = likelihood.getIntervalList(treeIndex);
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                     while(gridIndex < gridPoints.length && gridPoints[gridIndex] < sortedValues[i]) {
                         gridIndex++;
                     }
                     gridIndices[nodeIndices[i]] = gridIndex;
-
-                    while(intervalIndex < intervals.getIntervalCount() - 1 && intervals.getIntervalTime(intervalIndex) < sortedValues[i]) {
-                        intervalIndex++;
-                    }
-                    intervalIndices[nodeIndices[i]] = intervalIndex;
                 }
             }
 

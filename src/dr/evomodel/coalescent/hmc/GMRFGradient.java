@@ -321,7 +321,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                         gradient[heightIndex] += -currentPopSize * numLineage * (numLineage - 1);
                         if (!tree.isRoot(node)) {
                             final int nextNumLineage = intervals.getLineageCount(i + 1);
-                            gradient[heightIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
+                            gradient[heightIndex] += currentPopSize * nextNumLineage * (nextNumLineage - 1);
                         }
                     }
                 }

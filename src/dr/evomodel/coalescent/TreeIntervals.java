@@ -246,6 +246,10 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         eventsKnown = true;
     }
 
+    public boolean getBuildIntervalNodeMapping() {
+        return buildIntervalNodeMapping;
+    }
+
 
     /**
      * extract coalescent times and tip information into ArrayList times from tree.

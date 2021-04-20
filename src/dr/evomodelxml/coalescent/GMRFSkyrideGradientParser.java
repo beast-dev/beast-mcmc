@@ -28,9 +28,10 @@ package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
-import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideGradient;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -108,6 +109,11 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
                 if(!(intervalList instanceof TreeIntervalList)){
                     throw new IllegalArgumentException("Skygrid likelihood does not have intervals which map to "+
                             "the underlying tree. This is needed for gradient calculations");
+                }
+                if(intervalList instanceof TreeIntervals) {
+                    if (!((TreeIntervals) intervalList).getBuildIntervalNodeMapping()) {
+                        ((TreeIntervals) intervalList).setBuildIntervalNodeMapping(true);
+                    }
                 }
             }
         }else{

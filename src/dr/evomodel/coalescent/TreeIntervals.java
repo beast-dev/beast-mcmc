@@ -157,6 +157,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         // copy the intervals into the storedIntervals
         storedIntervals.copyIntervals(intervals);
         storedEventsKnown = eventsKnown;
+        this.intervalNodeMapping.storeMapping();
     }
 
     /**
@@ -169,6 +170,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         intervals = tmp;
 
         eventsKnown = storedEventsKnown;
+        this.intervalNodeMapping.restoreMapping();
+
     }
 
     protected final void acceptState() {
@@ -469,14 +472,22 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         void initializeMaps();
 
         void mapNodeInterval(int nodeNumber, int intervalNumber);
+        //could put this in store restore model
+        void storeMapping();
+        void restoreMapping();
         int[] getIntervalsForNode(int nodeNumber);
         int[] getNodeNumbersForInterval(int interval);
         double[] sortByNodeNumbers(double[] byIntervalOrder);
 
-        class Default implements IntervalNodeMapping {
-            final int[] nodeNumbersInIntervals;
-            final int[] intervalStartIndices;
-            final int[] intervalNumberOfNodes;
+        class Default implements IntervalNodeMapping  {
+            private int[] nodeNumbersInIntervals;
+            private int[] intervalStartIndices;
+            private int[] intervalNumberOfNodes;
+
+            private int[] storedNodeNumbersInIntervals;
+            private int[] storedIntervalStartIndices;
+            private int[] storedIntervalNumberOfNodes;
+
             private int nextIndex = 0;
             private int nIntervals;
             private Tree tree;
@@ -485,9 +496,16 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
             public Default (int maxIntervalCount, Tree tree) {
                 nodeNumbersInIntervals = new int[maxIndicesPerNode * maxIntervalCount];
+                storedNodeNumbersInIntervals = new int[maxIndicesPerNode * maxIntervalCount];
+
                 intervalStartIndices = new int[maxIntervalCount];
+                storedIntervalStartIndices = new int[maxIntervalCount];
+
                 intervalNumberOfNodes = new int[maxIndicesPerNode * maxIntervalCount];
+                storedIntervalNumberOfNodes = new int[maxIndicesPerNode * maxIntervalCount];
+
                 this.tree = tree;
+
             }
 
             public void addNode(int nodeNumber) {
@@ -615,6 +633,39 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
                 }
                 return sortedValues;
             }
+
+
+
+
+            /**
+             * Additional state information, outside of the sub-model is stored by this call.
+             */
+            public void storeMapping() {
+                System.arraycopy(nodeNumbersInIntervals,0,storedNodeNumbersInIntervals,0,nodeNumbersInIntervals.length);
+                System.arraycopy(intervalNumberOfNodes,0,storedIntervalNumberOfNodes,0,intervalNumberOfNodes.length);
+                System.arraycopy(intervalStartIndices,0,storedIntervalStartIndices,0,intervalStartIndices.length);
+            }
+
+            /**
+             * After this call the model is guaranteed to have returned its extra state information to
+             * the values coinciding with the last storeState call.
+             * Sub-models are handled automatically and do not need to be considered in this method.
+             */
+             public void restoreMapping() {
+                int[] tmp = storedNodeNumbersInIntervals;
+                storedNodeNumbersInIntervals = nodeNumbersInIntervals;
+                nodeNumbersInIntervals = tmp;
+
+                int[] tmp2 = storedIntervalNumberOfNodes;
+                storedIntervalNumberOfNodes=intervalNumberOfNodes;
+                intervalNumberOfNodes = tmp2;
+
+                int[] tmp3= storedIntervalStartIndices;
+                storedIntervalStartIndices = intervalStartIndices;
+                intervalStartIndices =tmp3;
+            }
+
+
         }
 
         class None implements IntervalNodeMapping {
@@ -654,6 +705,24 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             public double[] sortByNodeNumbers(double[] byIntervalOrder) {
                 throw new RuntimeException("No intervalNodeMapping available. This function should not be called.");
             }
+
+            /**
+             * Additional state information, outside of the sub-model is stored by this call.
+             */
+            public void storeMapping() {
+                //nothing
+            }
+
+            /**
+             * After this call the model is guaranteed to have returned its extra state information to
+             * the values coinciding with the last storeState call.
+             * Sub-models are handled automatically and do not need to be considered in this method.
+             */
+            public void restoreMapping() {
+               //Nothing
+            }
+
+
         }
     }
 

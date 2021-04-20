@@ -123,7 +123,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping){
         this.buildIntervalNodeMapping=buildIntervalNodeMapping;
         this.intervalNodeMapping = buildIntervalNodeMapping?new IntervalNodeMapping.Default(tree.getNodeCount(),tree):new IntervalNodeMapping.None();
-
+        //Force a recalculation here
+        eventsKnown=false;
     }
     // **************************************************************
     // ModelListener IMPLEMENTATION

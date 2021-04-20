@@ -1,9 +1,11 @@
 package dr.evomodel.coalescent.hmc;
 
+import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.IntervalType;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -37,6 +39,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                         WrtParameter wrtParameter,
                         Double tolerance) {
         this.skygridLikelihood = skygridLikelihood;
+        ((TreeIntervalList) this.skygridLikelihood.getIntervalList()).setBuildIntervalNodeMapping(true);
         this.wrtParameter = wrtParameter;
         parameter = wrtParameter.getParameter(skygridLikelihood);
         this.tolerance = tolerance;
@@ -116,7 +119,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+            public void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
                 if (likelihood.getPopSizeParameter() instanceof MatrixVectorProductParameter) {
                     throw new XMLParseException("Cannot use 'logPopulationSizes' with deterministic skygrid");
                 }
@@ -179,10 +182,12 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            double getParameterLowerBound() { return Double.NEGATIVE_INFINITY; }
+            double getParameterLowerBound() {
+                return Double.NEGATIVE_INFINITY;
+            }
 
             @Override
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+            public void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
                 if (!(likelihood.getPopSizeParameter() instanceof MatrixVectorProductParameter)) {
                     throw new XMLParseException("Cannot use 'deterministicSkygrid' with stochastic skygrid");
                 }
@@ -210,7 +215,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
+            public void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) {
 
             }
         },
@@ -242,7 +247,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             @Override
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+            public void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
                 if (likelihood.getBetaParameter() == null) {
                     throw new XMLParseException("Cannot use 'regressionCoefficients' with deterministic skygrid");
                 }
@@ -278,7 +283,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 return 0.0;
             }
 
-            public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+            public void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
                 if (likelihood.nLoci() > 1) {
                     throw new XMLParseException("Not yet implemented for multiple loci.");
                 }
@@ -295,28 +300,29 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
 
-                final TreeIntervals intervals = (TreeIntervals) likelihood.getIntervalList(0);
+                final TreeIntervalList intervals = (TreeIntervalList) likelihood.getIntervalList(0);
 
-                int[] gridIndices = new int[tree.getInternalNodeCount()];
 
-                getGridIndexForInternalNodes(likelihood, 0, gridIndices);
-
-                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                    NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
-
-                    final int nodeIndex = getNodeHeightParameterIndex(node, tree);
-
-                    final int[] currentIntervals = intervals.getIntervalsForNode(node.getNumber());
-
-                    final int numLineage = intervals.getLineageCount(currentIntervals[0]);
-
-                    final double currentPopSize = Math.exp(-currentGamma[gridIndices[nodeIndex]]);
-
-                    gradient[nodeIndex] += -currentPopSize * numLineage * (numLineage - 1);
-
-                    if (!tree.isRoot(node)) {
-                        final int nextNumLineage = intervals.getLineageCount(currentIntervals[1]);
-                        gradient[nodeIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
+//                getGridIndexForInternalNodes(likelihood, 0, intervalIndices, gridIndices);
+                double[] grids = likelihood.getGridPoints();
+                int currentGridIndex = 0;
+                //Loop over all intervals and get the nodes that ends each coalescent interval. We can never start
+                // with a coalescent interval so this is ok
+                for (int i = 0; i < intervals.getIntervalCount(); i++) {
+                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                        NodeRef node = intervals.getCoalescentNode(i);
+                        double height = tree.getNodeHeight(node);
+                        while (currentGridIndex < grids.length && height > grids[currentGridIndex]) {
+                            currentGridIndex++;
+                        }
+                        final int heightIndex = getNodeHeightParameterIndex(node, tree);
+                        final int numLineage = intervals.getLineageCount(i);
+                        final double currentPopSize = Math.exp(-currentGamma[currentGridIndex]);
+                        gradient[heightIndex] += -currentPopSize * numLineage * (numLineage - 1);
+                        if (!tree.isRoot(node)) {
+                            final int nextNumLineage = intervals.getLineageCount(i + 1);
+                            gradient[heightIndex] -= -currentPopSize * nextNumLineage * (nextNumLineage - 1);
+                        }
                     }
                 }
 
@@ -333,7 +339,7 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             private void getGridIndexForInternalNodes(GMRFMultilocusSkyrideLikelihood likelihood, int treeIndex,
-                                                       int[] gridIndices) {
+                                                      int[] intervalIndices, int[] gridIndices) {
                 Tree tree = likelihood.getTree(treeIndex);
                 double[] sortedValues = new double[tree.getInternalNodeCount()];
                 double[] nodeHeights = new double[tree.getInternalNodeCount()];
@@ -342,11 +348,18 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
                 int gridIndex = 0;
                 double[] gridPoints = likelihood.getGridPoints();
+                int intervalIndex = 0;
+                final IntervalList intervals = likelihood.getIntervalList(treeIndex);
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                    while(gridIndex < gridPoints.length && gridPoints[gridIndex] < sortedValues[i]) {
+                    while (gridIndex < gridPoints.length && gridPoints[gridIndex] < sortedValues[i]) {
                         gridIndex++;
                     }
                     gridIndices[nodeIndices[i]] = gridIndex;
+
+                    while (intervalIndex < intervals.getIntervalCount() - 1 && intervals.getIntervalTime(intervalIndex) < sortedValues[i]) {
+                        intervalIndex++;
+                    }
+                    intervalIndices[nodeIndices[i]] = intervalIndex;
                 }
             }
 
@@ -374,13 +387,27 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
         abstract Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood);
 
+
         abstract double[] getGradientLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
 
         abstract double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood);
 
         abstract double getParameterLowerBound();
 
-        public abstract void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException;
+        public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+            this.getIntervalWarning(likelihood);
+            this.getTypeWarning(likelihood);
+        }
+
+        public abstract void getTypeWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException;
+
+        private void getIntervalWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
+            if (!(likelihood.getIntervalList() instanceof TreeIntervalList)) {
+                throw new XMLParseException("Cannot use GMRF skygrid with " +
+                        likelihood.getIntervalList().toString() +
+                        " since it does not know about the tree. Please use a TreeIntervalList");
+            }
+        }
 
         private final String name;
 

@@ -472,7 +472,7 @@ public class WorkingPriorParsers {
                     TransformedNormalKDEDistribution[] arrayKDE = new TransformedNormalKDEDistribution[dimension];
                     String[] newParameterName = new String[dimension];
 
-                    upperlimit = dimension;
+                    //upperlimit = dimension;
                     
                     if (xo.hasAttribute(PARAMETER_NAMES)) {
                         String temp = (String) xo.getAttribute(PARAMETER_NAMES);

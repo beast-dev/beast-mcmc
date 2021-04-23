@@ -154,7 +154,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     MinimumTravelInformation findCategoricalBoundaryTime(double[] position, double[] velocity) {
 
         double time = Double.POSITIVE_INFINITY;
-        int[] bounceIndex = new int[2];
+        int[] bounceIndex = {-1, -1};;
 
         if (categoryClasses == null) return new MinimumTravelInformation(time, bounceIndex);
 
@@ -171,7 +171,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                 System.arraycopy(velocity, i, velocitySubset, 0, nDim);
                 System.arraycopy(observedDataMask, i, observedDataMaskSubset, 0, nDim);
 
-                MinimumTravelInformation bounceInfo = findCategoricalBoundaryTime(positionSubset,
+                MinimumTravelInformation bounceInfo = findCategoricalBoundaryTimeOneTrait(positionSubset,
                         velocitySubset, observedDataMaskSubset);
 
                 if (bounceInfo.time < time) {
@@ -187,37 +187,45 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return new MinimumTravelInformation(time, bounceIndex);
     }
 
-    private MinimumTravelInformation findCategoricalBoundaryTime(double[] positionSubset, double[] velocitySubset,
-                                                                 double[] observedDataMaskSubset) {
+    private MinimumTravelInformation findCategoricalBoundaryTimeOneTrait(double[] positionSubset, double[] velocitySubset,
+                                                                         double[] observedDataMaskSubset) {
 
-        int[] bounceIndex = new int[2];
-
-        int bounceIndex1 = -1;
-        for (int i = 0; i < observedDataMaskSubset.length; i++) {
-            if (observedDataMaskSubset[i] > 0) {
-                bounceIndex1 = i;
-                break;
-            }
-        }
-
-        bounceIndex[0] = bounceIndex1;
-
+        int[] bounceIndex = { -1, -1};
         double bounceTime = Double.POSITIVE_INFINITY;
 
-        for (int i = 0; i < positionSubset.length; i++) {
+        if (!isReferenceClass(observedDataMaskSubset)) {
 
-            double vDiff = velocitySubset[bounceIndex1] - velocitySubset[i];
-            double xDiff = positionSubset[bounceIndex1] - positionSubset[i];
-            if (vDiff < 0) {
-                double time = -xDiff / vDiff;
-                if (time < bounceTime) {
-                    bounceTime = time;
-                    bounceIndex[1] = i;
+            int bounceIndex1 = -1;
+            for (int i = 0; i < observedDataMaskSubset.length; i++) {
+                if (observedDataMaskSubset[i] > 0) {
+                    bounceIndex1 = i;
+                    break;
+                }
+            }
+
+            bounceIndex[0] = bounceIndex1;
+            for (int i = 0; i < positionSubset.length; i++) {
+
+                double vDiff = velocitySubset[bounceIndex1] - velocitySubset[i];
+                double xDiff = positionSubset[bounceIndex1] - positionSubset[i];
+                if (vDiff < 0) {
+                    double time = -xDiff / vDiff;
+                    if (time < bounceTime) {
+                        bounceTime = time;
+                        bounceIndex[1] = i;
+                    }
                 }
             }
         }
-
         return new MinimumTravelInformation(bounceTime, bounceIndex);
+    }
+
+    private boolean isReferenceClass(double[] observedDataMaskSubset) {
+
+        for (int i = 0; i < observedDataMaskSubset.length; i++) {
+            if (observedDataMaskSubset[i] == 0) return false;
+        }
+        return true;
     }
 
     private static double minimumPositiveRoot(double a,

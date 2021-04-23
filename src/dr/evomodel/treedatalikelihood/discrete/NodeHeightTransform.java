@@ -58,12 +58,17 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
         }
     }
 
+    @Deprecated
     public NodeHeightTransform(Parameter nodeHeights,
                                TreeModel tree,
                                OldGMRFSkyrideLikelihood skyrideLikelihood) {
         super(nodeHeights.getDimension());
         this.tree = tree;
         this.nodeHeightTransformDelegate = new NodeHeightToCoalescentIntervalsDelegate(tree, nodeHeights, skyrideLikelihood);
+    }
+
+    public AbstractNodeHeightTransformDelegate getNodeHeightTransformDelegate() {
+        return nodeHeightTransformDelegate;
     }
 
     public Parameter getNodeHeights() {

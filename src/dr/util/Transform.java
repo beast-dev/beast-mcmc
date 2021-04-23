@@ -1329,6 +1329,10 @@ public interface Transform {
             return "compose." + outer.getTransformName() + "." + inner.getTransformName();
         }
 
+        public Transform getInnerTransform() {
+            return inner;
+        }
+
         @Override
         public double[] transform(double[] values, int from, int to) {
             return outer.transform(inner.transform(values, from, to), from, to);

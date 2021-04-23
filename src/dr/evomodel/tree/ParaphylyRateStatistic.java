@@ -93,7 +93,6 @@ public class ParaphylyRateStatistic extends TreeStatistic {
 
     private double recurseToAccumulateRate(NodeRef node, List<NodeRef> complement) {
         double total = 0.0;
-        // curent default behavior includes "stem" of MRCA
         if (!tree.isExternal(node)) {
             if (!complement.contains(node)) {
                 total += recurseToAccumulateRate(tree.getChild(node, 0), complement);
@@ -101,9 +100,9 @@ public class ParaphylyRateStatistic extends TreeStatistic {
             }
         }
 
-        //ensures you don't add a root stem
-        if (!complement.contains(node) && !tree.isRoot(node)) {
-            total += branchWeighting.getBranchRate(branchRateModel, tree, node);
+// curent default behavior does NOT include "stem" of MRCA
+        if (!MRCANodeList.contains(node) && !tree.isRoot(node)) {
+        total += branchWeighting.getBranchRate(branchRateModel, tree, node);
             this.totalTime += branchWeighting.getDenominator(tree, node);
         }
         return total;

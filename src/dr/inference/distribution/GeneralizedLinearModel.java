@@ -200,6 +200,10 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return independentParam.get(j);
     }
 
+    public Parameter getFixedEffectIndicator(int j) {
+        return indParamDelta.get(j);
+    }
+
     public Parameter getRandomEffect(int j) {
         return randomEffects.get(j);
     }

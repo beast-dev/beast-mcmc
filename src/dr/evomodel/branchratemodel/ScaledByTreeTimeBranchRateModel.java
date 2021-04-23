@@ -66,6 +66,9 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
     private double timeTotal;
     private double storedTimeTotal;
 
+    private double meanRateParameterValue;
+    private double storedMeanRate;
+
     private DenseMatrix64F Jacobian;
 
     public ScaledByTreeTimeBranchRateModel(TreeModel treeModel,
@@ -79,7 +82,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         this.differentiableBranchRateModel = (branchRateModel instanceof DifferentiableBranchRates) ?
                 (DifferentiableBranchRates) branchRateModel : null;
         this.meanRateParameter = meanRateParameter;
-
+        meanRateParameterValue = 1.0;
         addModel(treeModel);
         addModel(branchRateModel);
 
@@ -106,6 +109,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         storedBranchTotal = branchTotal;
         storedTimeTotal = timeTotal;
+        storedMeanRate = meanRateParameterValue;
     }
 
     protected void restoreState() {
@@ -114,6 +118,8 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         branchTotal = storedBranchTotal;
         timeTotal = storedTimeTotal;
+
+        meanRateParameterValue = storedMeanRate;
     }
 
     protected void acceptState() { }
@@ -171,12 +177,16 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
 
         if (USE_GENERIC) {
 
+            if (meanRateParameter != null) {
+                meanRateParameterValue = meanRateParameter.getParameterValue(0);
+            }
+
             forEachOverRates(
                     (indexI, nodeI, rateI) -> {
                         final double crossTermNodeI = scaleFactor * scaleFactor / timeTotal * treeModel.getBranchLength(nodeI);
                         result[indexI] = mapReduceOverRates(
-                                (indexJ, nodeJ, rateJ) -> crossTermNodeI * rateJ * gradient[indexJ],
-                                (lhs, rhs) -> lhs - rhs, scaleFactor * gradient[indexI]);
+                                (indexJ, nodeJ, rateJ) -> crossTermNodeI * rateJ * meanRateParameterValue * gradient[indexJ],
+                                (lhs, rhs) -> lhs - rhs, scaleFactor * meanRateParameterValue * gradient[indexI]);
                         return 0.0; // Ignored
                     });
 
@@ -255,7 +265,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
             scaleFactorKnown = true;
         }
 
-        return scaleFactor * branchRateModel.getBranchRate(tree, node);
+        return meanRateParameterValue * scaleFactor * branchRateModel.getBranchRate(tree, node);
     }
 
     private void calculateScaleFactor() {
@@ -288,7 +298,7 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         double scaleFactor = timeTotal / branchTotal;
 
         if (meanRateParameter != null) {
-            scaleFactor *= meanRateParameter.getParameterValue(0);
+            meanRateParameterValue = meanRateParameter.getParameterValue(0);
         }
 
         this.scaleFactor = scaleFactor;

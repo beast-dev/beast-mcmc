@@ -27,6 +27,11 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         this.hmcProvider = hmcProvider;
         this.adaptiveStepsize = adaptiveStepsize;
+        if (hmcProvider instanceof SplitHamiltonianMonteCarloOperator) {
+            this.splitHMCmultiplier = ((SplitHamiltonianMonteCarloOperator) hmcProvider).travelTimeMultipler;
+            this.splitHMCinner = ((SplitHamiltonianMonteCarloOperator) hmcProvider).inner;
+            this.splitHMCouter = ((SplitHamiltonianMonteCarloOperator) hmcProvider).outer;
+        }
         setWeight(weight);
     }
 
@@ -37,6 +42,13 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
     @Override
     public double doOperation() {
+
+        if (hmcProvider instanceof SplitHamiltonianMonteCarloOperator) {
+            updateRS();
+            if (splitHMCmultiplier.shouldGetMultiplier(getCount())){
+                ((SplitHamiltonianMonteCarloOperator) hmcProvider).relativeScale = splitHMCmultiplier.getMultiplier();
+            }
+        }
 
         final double[] initialPosition = hmcProvider.getInitialPosition();
 
@@ -401,11 +413,22 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         return columns;
     }
 
+    private void updateRS() {
+        if (splitHMCmultiplier != null && splitHMCmultiplier.shouldUpdateSCM(getCount())) {
+            splitHMCmultiplier.updateSCM(splitHMCmultiplier.getInnerCov(), splitHMCinner.getInitialPosition(), getCount());
+            splitHMCmultiplier.updateSCM(splitHMCmultiplier.getOuterCov(), splitHMCouter.getInitialPosition(), getCount());
+        }
+    }
+
     private ReversibleHMCProvider hmcProvider;
     private StepSize stepSizeInformation;
     private boolean adaptiveStepsize;
     private int numBaseCalls;
     private int numBoundaryEvents;
     private int numGradientEvents;
+
+    private SplitHMCtravelTimeMultiplier splitHMCmultiplier = null;
+    private ReversibleHMCProvider splitHMCinner = null;
+    private ReversibleHMCProvider splitHMCouter = null;
 }
 

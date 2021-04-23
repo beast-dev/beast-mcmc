@@ -34,7 +34,7 @@ import dr.xml.Reportable;
 
 /**
  * @author Marc A. Suchard
- * @author Alex Fisher
+ * @author Alexander Fisher
  * @author Xiang Ji
  */
 public class BranchRateGradientWrtIncrements implements GradientWrtParameterProvider, Reportable {

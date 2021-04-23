@@ -25,12 +25,14 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
+import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
 
 /**
  * @author Alexei Drummond
  */
-public class LaplaceDistribution implements Distribution {
+public class LaplaceDistribution implements Distribution, GradientProvider {
 
     // the mean parameter
     double mu;
@@ -112,7 +114,13 @@ public class LaplaceDistribution implements Distribution {
     }
 
     public double logPdf(double x) {
-        return Math.log(c) - (Math.abs(x - mu) / beta);
+        return logPdf(x, mu, beta);
+    }
+
+
+    public static double logPdf(double x, double mu, double beta) {
+
+        return Math.log(1 / (2 * beta)) - (Math.abs(x - mu) / beta);
     }
 
     public double quantile(double y) {
@@ -147,4 +155,31 @@ public class LaplaceDistribution implements Distribution {
             return Double.POSITIVE_INFINITY;
         }
     };
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+
+    public static double gradLogPdf(double x, double m, double scale) {
+        if (x < m) {
+            return (x - m) / scale;
+        } else if (x > m) {
+            return (m - x) / scale;
+        } else {
+            return 0.0; // maybe bad idea: let likelihood determine joint gradient where non-differentiable.
+        }
+    }
+
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], getMu(), getBeta());
+        }
+        return result;
+    }
 }

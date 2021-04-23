@@ -216,7 +216,9 @@ public class BigFastTreeModel extends TreeModel {
      */
     @Override
     public double getNodeRate(NodeRef node) {
-        throw new UnsupportedOperationException("getNodeRate not available in BigFastTreeModel");
+//        //mimics default tree that does not have node rates
+            return 1.0;
+//        throw new UnsupportedOperationException("getNodeRate not available in BigFastTreeModel");
     }
 
     @Override

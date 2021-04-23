@@ -123,10 +123,7 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
         }
     }
 
-//    private void cacheDifferentialMassMatrix(Tree tree, boolean b) {
-//    }
-
-
+    @Override
     protected String getGradientTraitName() {
         return GRADIENT_TRAIT_NAME + "." + name;
     }
@@ -159,6 +156,4 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
             }
         });
     }
-
-//    private static final boolean DEBUG = false;
 }

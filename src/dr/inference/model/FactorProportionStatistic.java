@@ -4,7 +4,6 @@ import dr.inference.operators.factorAnalysis.FactorAnalysisOperatorAdaptor;
 import dr.inference.operators.factorAnalysis.FactorAnalysisStatisticsProvider;
 import dr.inferencexml.operators.factorAnalysis.LoadingsOperatorParserUtilities;
 import dr.xml.*;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 public class FactorProportionStatistic extends Statistic.Abstract{
 

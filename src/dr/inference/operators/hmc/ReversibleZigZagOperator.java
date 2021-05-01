@@ -50,12 +50,12 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                                     PrecisionMatrixVectorProductProvider multiplicationProvider,
                                     PrecisionColumnProvider columnProvider,
                                     double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
-                                    boolean refreshVelocity, Parameter mask,
+                                    boolean refreshVelocity, Parameter mask, Parameter categoryClass,
                                     int threadCount, MassPreconditioner massPreconditioner,
                                     MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
-                refreshVelocity, mask, threadCount, massPreconditioner, preconditionSchedulerType);
+                refreshVelocity, mask, categoryClass, threadCount, massPreconditioner, preconditionSchedulerType);
     }
 
     @Override
@@ -198,7 +198,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         } else {
 
-            if (nativeCodeOptions.useNativeFindNextBounce){
+            if (nativeCodeOptions.useNativeFindNextBounce) {
                 firstBounce = getNextBounceNative(position, velocity, action, gradient, momentum);
             } else {
                 firstBounce = getNextBounceSerial(position, velocity, action, gradient, momentum);
@@ -264,6 +264,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
         Type type = Type.NONE;
 
         MinimumTravelInformation categoryBoundaryTime = findCategoricalBoundaryTime(position, velocity);
+
         if (categoryBoundaryTime.time < minimumTime){
             minimumTime = categoryBoundaryTime.time;
             index = categoryBoundaryTime.index.clone();
@@ -277,6 +278,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             if (signBoundaryTime < minimumTime) {
                 minimumTime = signBoundaryTime;
                 index[0] = i;
+                index[1] = -1;
                 type = Type.BINARY_BOUNDARY;
             }
 
@@ -285,21 +287,21 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
             if (gradientTime < minimumTime) {
                 minimumTime = gradientTime;
                 index[0] = i;
+                index[1] = -1;
                 type = Type.GRADIENT;
             }
         }
-
         return new MinimumTravelInformation(minimumTime, index, type);
     }
 
     @Override
     final WrappedVector drawInitialMomentum() {
-        
+
         // Definition of "mass matrix" is not standardized for non-Gaussian momentum.
         // We choose mass_i = var(momentum_i) = mean(|momentum_i|)^2 so that the mass 
         // can be tuned in a manner analogous to the Gaussian momentum case --- it is
         // reasonable to tune $mass_i^{-1} = var(position_i) since |velocity_i| = mass_i^{-1/2}.
-        
+
         ReadableVector mass = preconditioning.mass;
         double[] momentum = new double[mass.getDim()];
 
@@ -356,11 +358,11 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
     }
 
     private MinimumTravelInformation getNextBounceNative(
-                            WrappedVector position,
-                            WrappedVector velocity,
-                            WrappedVector action,
-                            WrappedVector gradient,
-                            WrappedVector momentum) {
+            WrappedVector position,
+            WrappedVector velocity,
+            WrappedVector action,
+            WrappedVector gradient,
+            WrappedVector momentum) {
 
         if (TIMING) {
             timer.startTimer("getNextC++");
@@ -503,7 +505,7 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         if (index[1] > 0) {
             c2 = getPrecisionColumn(index[1]).getBuffer();
-            twoV2 = 2 * v[index[0]];
+            twoV2 = 2 * v[index[1]];
         }
 
         for (int i = 0, len = p.length; i < len; ++i) {
@@ -543,14 +545,16 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
 
         if (eventType == Type.BINARY_BOUNDARY) { // Reflect against binary boundary
 
-            reflectMomentum(momentum, position, eventIndex[0]);
+            reflectMomentum(momentum, eventIndex[0]);
+            setZeroPosition(position, eventIndex[0]);
 
-        } if (eventType == Type.CATE_BOUNDARY){ // Reflect against category boundary
-            reflectMomentum(momentum, position, eventIndex[0]);
-            reflectMomentum(momentum, position, eventIndex[1]);
-        }
+        } else if (eventType == Type.CATE_BOUNDARY) { // Reflect against category boundary
 
-        else { // Bounce caused by the gradient
+            reflectMomentum(momentum, eventIndex[0]);
+            reflectMomentum(momentum, eventIndex[1]);
+            setEqualPosition(position, eventIndex[0], eventIndex[1]);
+
+        } else { // Bounce caused by the gradient
             setZeroMomentum(momentum, eventIndex[0]);
         }
     }
@@ -564,7 +568,8 @@ public class ReversibleZigZagOperator extends AbstractZigZagOperator implements 
                                    double time) {
 
         updatePosition(position.getBuffer(), velocity.getBuffer(), time);
-        updateMomentum(action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(), time); // TODO This step is only necessary with NUTS
+        updateMomentum(action.getBuffer(), gradient.getBuffer(), momentum.getBuffer(), time); // TODO This step is
+        // only necessary with NUTS
     }
 
     @Override

@@ -11,6 +11,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.thorneytreelikelihood.BranchLengthProvider;
 import dr.inference.model.Parameter;
+import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.PoissonDistribution;
 import junit.framework.TestCase;
 
@@ -61,13 +62,16 @@ public class ThorneyTreeLikelihoodTest extends TestCase {
     public void testAfterTopologyChange(){
 
         ExchangeOperator narrow = new ExchangeOperator(0, null, 10);
-        ConstrainedTreeOperator op = new ConstrainedTreeOperator(constrainedTreeModel,10,narrow);
+        ConstrainedTreeOperator op = new ConstrainedTreeOperator(constrainedTreeModel,10,narrow,1.0,1, AdaptationMode.ADAPTATION_OFF,0.2);
 
         op.doOperation();
         System.out.println(constrainedTreeModel.toString());
-        thorneyTreeLikelihood.getLogLikelihood();
+        double LL = thorneyTreeLikelihood.getLogLikelihood();
+        thorneyTreeLikelihood.makeDirty();
+        double newLL = thorneyTreeLikelihood.getLogLikelihood();
         // NO error?
-        assertTrue(true);
+        assertEquals(newLL,LL,1E-13 );
+
     }
 /*
     public void testAfterPolytomyRootChange() throws TreeUtils.MissingTaxonException {

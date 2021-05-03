@@ -22,7 +22,7 @@ public class ConstrainedTreeModelParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
         Tree constraintsTree = (Tree) xo.getElementFirstChild(CONSTRAINTS_TREE);
         Logger.getLogger("dr.evomodel").info("\nCreating the constrained tree model based on big fast tree model, '" + xo.getId() + "'");
-        ConstrainedTreeModel treeModel =  new ConstrainedTreeModel(tree, constraintsTree);
+        ConstrainedTreeModel treeModel =  new ConstrainedTreeModel(xo.getId(),tree, constraintsTree);
         Logger.getLogger("dr.evomodel").info("  taxon count = " + treeModel.getExternalNodeCount());
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;

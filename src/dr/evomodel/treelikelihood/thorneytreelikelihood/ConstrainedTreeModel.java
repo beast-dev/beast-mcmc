@@ -101,6 +101,9 @@ public class ConstrainedTreeModel extends TreeModel {
                 constraintsTreeMap.keySet()) {
             NodeRef constraintsTreeNode = constraintsTreeMap.get(clade);
             NodeRef treeModelNode = treeModelMap.get(clade);
+            if(treeModelNode==null){
+                throw new RuntimeException("All clades in the constraints tree must be present in the starting tree");
+            }
             constraintsNodeToTreeNode.put(constraintsTreeNode, treeModelNode);
         }
 
@@ -400,13 +403,17 @@ public class ConstrainedTreeModel extends TreeModel {
     public void setRoot(NodeRef newRoot) {
         throw new RuntimeException("Cannot directly change the topology of a constrained tree! Please use a compatible operator");
     }
+    public void setRootByForce(NodeRef node) {
+        this.root = node.getNumber();
+    }
+
 
     @Override
     public void addChild(NodeRef p, NodeRef c) {
         throw new RuntimeException("Cannot directly change the toplogy of a constrained tree! Please use a compatible operator");
     }
 
-    private void addChildBySubtree(NodeRef p, NodeRef c) {
+    private void addChildByForce(NodeRef p, NodeRef c) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
@@ -432,7 +439,7 @@ public class ConstrainedTreeModel extends TreeModel {
         throw new RuntimeException("Cannot directly change the toplogy of a constrained tree! Please use a compatible operator");
     }
 
-    public void removeChildBySubtree(NodeRef p, NodeRef c) {
+    public void removeChildByForce(NodeRef p, NodeRef c) {
 
         if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
 
@@ -529,7 +536,7 @@ public class ConstrainedTreeModel extends TreeModel {
         for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
             int childCount = this.getChildCount(nodes[i]);
             for (int j = 0; j < childCount; j++) {
-                this.removeChild(nodes[i], this.getChild(nodes[i], 0)); // nodes move into the first spot when it's filled
+                this.removeChildByForce(nodes[i], this.getChild(nodes[i], 0)); // nodes move into the first spot when it's filled
             }
         }
 
@@ -550,11 +557,11 @@ public class ConstrainedTreeModel extends TreeModel {
                 //make distinction between external nodes and internal nodes
                 if (i < this.getExternalNodeCount()) {
                     //external node
-                    this.addChild(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
+                    this.addChildByForce(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
                     System.out.println("external: " + edges[i] + " > " + nodeMap[i]);
                 } else {
                     //internal node
-                    this.addChild(this.getNode(edges[i]), this.getNode(i));
+                    this.addChildByForce(this.getNode(edges[i]), this.getNode(i));
                     System.out.println("internal: " + edges[i] + " > " + i);
                 }
             } else {
@@ -575,11 +582,11 @@ public class ConstrainedTreeModel extends TreeModel {
                         NodeRef childOne = getChild(node, 0);
                         NodeRef childTwo = getChild(node, 1);
 
-                        removeChild(node, childOne);
-                        removeChild(node, childTwo);
+                        removeChildByForce(node, childOne);
+                        removeChildByForce(node, childTwo);
 
-                        addChild(node, childTwo);
-                        addChild(node, childOne);
+                        addChildByForce(node, childTwo);
+                        addChildByForce(node, childOne);
                     }
                 } else {
                     if (childOrder[i] == 0 && getChild(nodes[edges[i]], 0) != nodes[i]) {
@@ -589,18 +596,18 @@ public class ConstrainedTreeModel extends TreeModel {
                         NodeRef childOne = getChild(node, 0);
                         NodeRef childTwo = getChild(node, 1);
 
-                        removeChild(node, childOne);
-                        removeChild(node, childTwo);
+                        removeChildByForce(node, childOne);
+                        removeChildByForce(node, childTwo);
 
-                        addChild(node, childTwo);
-                        addChild(node, childOne);
+                        addChildByForce(node, childTwo);
+                        addChildByForce(node, childOne);
                     }
                 }
             }
 
         }
 
-        this.setRoot(nodes[newRootIndex]);
+        this.setRootByForce(nodes[newRootIndex]);
     }
 
     // *****************************************************************
@@ -930,9 +937,9 @@ public class ConstrainedTreeModel extends TreeModel {
 
             if (isRoot(child)) {
                 NodeRef rootParent = wrappedTree.getParent(wrappedChild);
-                wrappedTree.removeChildBySubtree(rootParent, wrappedChild);
+                wrappedTree.removeChildByForce(rootParent, wrappedChild);
             }
-            wrappedTree.addChildBySubtree(wrappedParent, wrappedChild);
+            wrappedTree.addChildByForce(wrappedParent, wrappedChild);
         }
 
         /**
@@ -946,7 +953,7 @@ public class ConstrainedTreeModel extends TreeModel {
         public void removeChild(NodeRef parent, NodeRef child) {
             NodeRef wrappedParent = getNodeInWrappedTree(parent);
             NodeRef wrappedChild = getNodeInWrappedTree(child);
-            wrappedTree.removeChildBySubtree(wrappedParent, wrappedChild);
+            wrappedTree.removeChildByForce(wrappedParent, wrappedChild);
         }
 
         /**

@@ -124,75 +124,161 @@ public class LogCombiner {
                 System.out.println();
             }
 
+            boolean processTrees = stripAnnotations || convertToDecimal;
+
             if (treeFiles) {
 
-                TreeImporter importer = new NexusImporter(new FileReader(inputFile), stripAnnotations);
-                try {
-                    while (importer.hasTree()) {
-                        Tree tree = importer.importNextTree();
-                        if (firstTree) {
-                            startLog(tree, writer);
-                            firstTree = false;
-                        }
+                if (processTrees) { // then we need to read each tree and write it.
+                    TreeImporter importer = new NexusImporter(new FileReader(inputFile), stripAnnotations);
+                    try {
+                        while (importer.hasTree()) {
+                            Tree tree = importer.importNextTree();
+                            if (firstTree) {
+                                startLog(tree, writer);
+                                firstTree = false;
+                            }
 
-                        String name = tree.getId();
-                        if (name == null) {
-                            System.err.println("ERROR: Trees do not give state numbers as tree attributes.");
-                            return;
-                        }
+                            String name = tree.getId();
+                            if (name == null) {
+                                System.err.println("ERROR: Trees do not give state numbers as tree attributes.");
+                                return;
+                            }
 
-                        // split on underscore in STATE_xxxx
-                        String[] bits = name.split("_");
-                        long state = Long.parseLong(bits[1]);
+                            // split on underscore in STATE_xxxx
+                            String[] bits = name.split("_");
+                            long state = Long.parseLong(bits[1]);
 
-                        if (stateStep < 0 && state > 0) {
-                            stateStep = state;
-                        }
+                            if (stateStep < 0 && state > 0) {
+                                stateStep = state;
+                            }
 
-                        if (state >= burnin) {
-                            if (stateStep > 0) {
-                                if (!renumberOutput) {
-                                    stateCount += stateStep;
+                            if (state >= burnin) {
+                                if (stateStep > 0) {
+                                    if (!renumberOutput) {
+                                        stateCount += stateStep;
+                                    } else {
+                                        stateCount += 1;
+                                    }
+                                }
+
+                                if (resample >= 0) {
+                                    if (resample % stateStep != 0) {
+                                        System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
+                                        return;
+                                    }
+                                }
+
+                                boolean logThis;
+                                if (resample < 0) {
+                                    // not resampling, log every state
+                                    logThis = true;
+                                } else if (!renumberOutput) {
+                                    // resampling but not renumbering
+                                    logThis = (stateCount % resample == 0);
                                 } else {
-                                    stateCount += 1;
+                                    logThis = (stateCount * stateStep % resample == 0);
                                 }
-                            }
 
-                            if (resample >= 0) {
-                                if (resample % stateStep != 0) {
-                                    System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
-                                    return;
+                                long stateLineEntry;
+                                if (!renumberOutput) {
+                                    stateLineEntry = stateCount;
+                                } else {
+                                    stateLineEntry = stateCount / (resample / stateStep);
                                 }
-                            }
 
-                            boolean logThis;
-                            if (resample < 0) {
-                                // not resampling, log every state
-                                logThis=true;
-                            } else if (!renumberOutput) {
-                                // resampling but not renumbering
-                                logThis=(stateCount % resample == 0);
-                            } else {
-                                logThis=(stateCount*stateStep % resample == 0);
-                            }
+                                if (logThis) {
+                                    writeTree(stateLineEntry, tree, convertToDecimal, writer);
+                                }
 
-                            long stateLineEntry;
-                            if (!renumberOutput){
-                                stateLineEntry=stateCount;
-                            } else {
-                                stateLineEntry=stateCount/(resample/stateStep);
                             }
-
-                            if (logThis){
-                                writeTree(stateLineEntry, tree, convertToDecimal, writer);
-                            }
-
                         }
+                    } catch (Importer.ImportException e) {
+                        System.err.println("Error Parsing Input Tree: " + e.getMessage());
+                        return;
                     }
-                } catch (Importer.ImportException e) {
-                    System.err.println("Error Parsing Input Tree: " + e.getMessage());
-                    return;
+                } else {
+                    BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+
+                    String line = reader.readLine();
+
+                    // skip (or write) the headers
+                    while (line != null && !line.trim().startsWith("tree ")) {
+                        if (firstFile) {
+                            writer.println(line);
+                        }
+                        line = reader.readLine();
+                    }
+
+                    Pattern pattern = Pattern.compile("tree STATE_(\\d+)(\\s.*)");
+
+                    while (line != null) {
+                        Matcher m = pattern.matcher(line);
+                        if (m.matches()) {
+
+                            long state = Long.parseLong(m.group(1));
+
+                            String treeString = m.group(2);
+
+                            boolean skip = false;
+                            if (!skip) {
+                                if (stateStep < 0 && state > 0) {
+                                    stateStep = state;
+                                }
+
+                                // if the columnCount is not the same then perhaps the line is corrupt so skip it.
+                                if (state >= burnin) {
+                                    if (stateStep > 0) {
+                                        if (!renumberOutput) {
+                                            stateCount += stateStep;
+                                        } else {
+                                            stateCount += 1;
+                                        }
+                                    }
+
+                                    if (resample >= 0) {
+                                        if (resample % stateStep != 0) {
+                                            System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
+                                            return;
+                                        }
+                                    }
+
+                                    boolean logThis;
+                                    if (resample < 0) {
+                                        logThis = true;
+                                    } else if (!renumberOutput) {
+                                        logThis = (stateCount % resample == 0);
+                                    } else {
+                                        logThis = ((stateCount * stateStep) % resample == 0);
+                                    }
+
+                                    long stateLineEntry;
+                                    if (!renumberOutput) {
+                                        stateLineEntry = stateCount;
+                                    } else {
+
+//                                	System.out.println("stateCount: " + stateCount);
+//                                	System.out.println("resample: " + resample);
+//                                	System.out.println("stateStep: " + stateStep);
+//                                	System.out.println("resample / stateStep: " + (resample / stateStep));
+
+                                        stateLineEntry = stateCount / (resample / stateStep);
+                                    }
+
+                                    if (logThis) {
+                                        writer.print("tree STATE_");
+                                        writer.print(stateLineEntry);
+                                        writer.println(treeString);
+                                    }
+                                }
+                            }
+                        }
+                        line = reader.readLine();
+                        //lineCount++;
+                    }
                 }
+
+                firstFile = false;
+
 
             } else {
                 BufferedReader reader = new BufferedReader(new FileReader(inputFile));
@@ -290,12 +376,12 @@ public class LogCombiner {
                                 if (!renumberOutput){
                                     stateLineEntry = stateCount;
                                 } else {
-                                	
+
 //                                	System.out.println("stateCount: " + stateCount);
 //                                	System.out.println("resample: " + resample);
 //                                	System.out.println("stateStep: " + stateStep);
 //                                	System.out.println("resample / stateStep: " + (resample / stateStep));
-                                	
+
                                     stateLineEntry = stateCount / (resample / stateStep);
                                 }
 

@@ -162,6 +162,15 @@ public class MassivelyParallelHPHImpl implements HawkesCore {
         }
     }
 
+    @Override
+    public void getRandomRatesHessian(double[] rate) {
+        singleton.getRandomRatesHessian(instance, rate);
+
+        if (CHECK_GRADIENT) {
+            checkGradient(rate);
+        }
+    }
+
     private void checkGradient(double[] array) {
         for (double x : array) {
                 if (Double.isNaN(x) || Double.isInfinite(x)) {

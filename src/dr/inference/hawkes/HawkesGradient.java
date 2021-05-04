@@ -26,6 +26,7 @@
 package dr.inference.hawkes;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -35,15 +36,18 @@ import dr.xml.*;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public class HawkesGradient implements GradientWrtParameterProvider, Reportable {
+public class HawkesGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     final private WrtParameter wrtParameter;
     final private HawkesLikelihood likelihood;
+    final private boolean withHessian;
 
     public HawkesGradient(WrtParameter wrtParameter,
-                          HawkesLikelihood likelihood) {
+                          HawkesLikelihood likelihood,
+                          boolean withHessian) {
         this.wrtParameter = wrtParameter;
         this.likelihood = likelihood;
+        this.withHessian = withHessian;
     }
 
     @Override
@@ -68,7 +72,18 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, null);
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, null)
+                + (withHessian ? HessianWrtParameterProvider.getReportAndCheckForError(this, null) : "");
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return wrtParameter.getDiagonalHessianLogDensity(likelihood);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented!");
     }
 
     enum WrtParameter {
@@ -83,6 +98,11 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
             double[] getGradientLogDensity(HawkesLikelihood likelihood) {
                 return likelihood.getGradientLogDensity();
             }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(HawkesLikelihood likelihood) {
+                throw new RuntimeException("Not yet implemented!");
+            }
         },
 
         RANDOM_RATES("randomRates") {
@@ -95,6 +115,11 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
             double[] getGradientLogDensity(HawkesLikelihood likelihood) {
                 return likelihood.getHawkesModel().getRateProvider().orderByNodeIndex(likelihood.getRandomRateGradient());
             }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(HawkesLikelihood likelihood) {
+                return likelihood.getHawkesModel().getRateProvider().orderByNodeIndex(likelihood.getRandomRateHessian());
+            }
         };
         WrtParameter(String name) {
             this.name = name;
@@ -103,6 +128,8 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
         abstract Parameter getParameter(HawkesLikelihood likelihood);
 
         abstract double[] getGradientLogDensity(HawkesLikelihood likelihood);
+
+        abstract double[] getDiagonalHessianLogDensity(HawkesLikelihood likelihood);
 
         private final String name;
 
@@ -124,6 +151,7 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
 
         final static String HAWKES_GRADIENT = "hawkesGradient";
         final static String WRT_PARAMETER = "wrt";
+        final static String HESSIAN = "hessian";
 
         public String getParserName() {
             return HAWKES_GRADIENT;
@@ -136,7 +164,9 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
 
             WrtParameter wrt = WrtParameter.factory(wrtParameter);
 
-            return new HawkesGradient(wrt, likelihood);
+            boolean withHessian = xo.getAttribute(HESSIAN, false);
+
+            return new HawkesGradient(wrt, likelihood, withHessian);
 
         }
 
@@ -154,7 +184,8 @@ public class HawkesGradient implements GradientWrtParameterProvider, Reportable 
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(WRT_PARAMETER),
-                new ElementRule(HawkesLikelihood.class)
+                new ElementRule(HawkesLikelihood.class),
+                AttributeRule.newBooleanRule(HESSIAN, true),
         };
 
         public Class getReturnType() {

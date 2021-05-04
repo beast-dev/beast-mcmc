@@ -105,6 +105,8 @@ public interface HawkesCore {
      */
     void getRandomRatesGradient(double[] rate);
 
+    void getRandomRatesHessian(double[] rate);
+
     int getInternalDimension();
 
     int DEFAULT_DEVICE = -1;

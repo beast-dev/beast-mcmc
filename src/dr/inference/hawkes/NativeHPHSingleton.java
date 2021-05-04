@@ -144,6 +144,8 @@ public class NativeHPHSingleton {
 
     public native void getRandomRatesGradient(int instance, double[] gradient);
 
+    public native void getRandomRatesHessian(int instance, double[] hessian);
+
     public native int getInternalDimension(int instance);
 
 //jsize size = env->GetArrayLength( arr );

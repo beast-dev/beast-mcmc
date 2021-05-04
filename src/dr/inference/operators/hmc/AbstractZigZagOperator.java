@@ -161,7 +161,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         int i = 0;
         while (i < position.length) {
             if (categoryClasses[i] > 0) {
-                int nDim = categoryClasses[i];
+                int nDim = categoryClasses[i] - 1;
 
                 double[] positionSubset = new double[nDim];
                 double[] velocitySubset = new double[nDim];

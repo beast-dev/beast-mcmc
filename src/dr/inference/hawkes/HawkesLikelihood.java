@@ -286,9 +286,6 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         double[] gradient = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
         double[] hessian = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
 
-        double[] chainGradient = hawkesModel.getRateProvider().getChainGradient();
-        double[] chainSecondDerivative = hawkesModel.getRateProvider().getChainSecondDerivative();
-
         double[] result = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
 
         getLogLikelihood();
@@ -297,11 +294,8 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
         hphCore.getRandomRatesGradient(gradient);
         hphCore.getRandomRatesHessian(hessian);
 
-        for (int i = 0; i < gradient.length; i++) {
-            result[i] = gradient[i] * chainSecondDerivative[i] + hessian[i] * chainGradient[i] * chainGradient[i];
-        }
 
-        hawkesModel.getRateProvider().updateRateGradient(result);
+        hawkesModel.getRateProvider().updateRateHessian(gradient, hessian, result);
 
         return result;
     }

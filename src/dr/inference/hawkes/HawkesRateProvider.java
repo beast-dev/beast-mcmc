@@ -32,8 +32,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
-import java.util.Arrays;
-
 /**
  * @author Andrew Holbrook
  * @author Xiang Ji
@@ -49,9 +47,7 @@ public interface HawkesRateProvider {
 
     void updateRateGradient(double[] gradient);
 
-    double[] getChainSecondDerivative();
-
-    double[] getChainGradient();
+    void updateRateHessian(double[] gradient, double[] hessian, double[] result);
 
     class None implements HawkesRateProvider {
 
@@ -76,13 +72,8 @@ public interface HawkesRateProvider {
         }
 
         @Override
-        public double[] getChainSecondDerivative() {
-            throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
-        }
-
-        @Override
-        public double[] getChainGradient() {
-            throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
+        public void updateRateHessian(double[] gradient, double[] hessian, double[] result) {
+            // do nothing
         }
     }
 
@@ -133,15 +124,8 @@ public interface HawkesRateProvider {
         }
 
         @Override
-        public double[] getChainSecondDerivative() {
-            return new double[getParameter().getDimension()];
-        }
-
-        @Override
-        public double[] getChainGradient() {
-            double[] allOnes = new double[getParameter().getDimension()];
-            Arrays.fill(allOnes, 1.0);
-            return allOnes;
+        public void updateRateHessian(double[] gradient, double[] hessian, double[] result) {
+            // do nothing
         }
 
         @Override
@@ -224,14 +208,12 @@ public interface HawkesRateProvider {
             }
         }
 
-        @Override
         public double[] getChainSecondDerivative() {
-            return getParameter().getParameterValues();
+            return orderByTime(getRatesByNodes());
         }
 
-        @Override
         public double[] getChainGradient() {
-            return getParameter().getParameterValues();
+            return orderByTime(getRatesByNodes());
         }
 
         @Override
@@ -240,6 +222,16 @@ public interface HawkesRateProvider {
             assert(rates.length == gradient.length);
             for (int i = 0; i < gradient.length; i++) {
                 gradient[i] *= rates[i];
+            }
+        }
+
+        @Override
+        public void updateRateHessian(double[] gradient, double[] hessian, double[] result) {
+            double[] chainGradient = getChainGradient();
+            double[] chainSecondDerivative = getChainSecondDerivative();
+
+            for (int i = 0; i < gradient.length; i++) {
+                result[i] = gradient[i] * chainSecondDerivative[i] + hessian[i] * chainGradient[i] * chainGradient[i];
             }
         }
 

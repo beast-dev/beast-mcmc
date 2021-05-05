@@ -32,6 +32,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.Arrays;
+
 /**
  * @author Andrew Holbrook
  * @author Xiang Ji
@@ -46,6 +48,10 @@ public interface HawkesRateProvider {
     double[] orderByNodeIndex(double[] orderByTime);
 
     void updateRateGradient(double[] gradient);
+
+    double[] getChainSecondDerivative();
+
+    double[] getChainGradient();
 
     class None implements HawkesRateProvider {
 
@@ -67,6 +73,16 @@ public interface HawkesRateProvider {
         @Override
         public void updateRateGradient(double[] gradient) {
             // do nothing
+        }
+
+        @Override
+        public double[] getChainSecondDerivative() {
+            throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
+        }
+
+        @Override
+        public double[] getChainGradient() {
+            throw new RuntimeException("No rate parameter in the 'None' case of Hawkes");
         }
     }
 
@@ -114,6 +130,18 @@ public interface HawkesRateProvider {
         @Override
         public void updateRateGradient(double[] gradient) {
             // do nothing
+        }
+
+        @Override
+        public double[] getChainSecondDerivative() {
+            return new double[getParameter().getDimension()];
+        }
+
+        @Override
+        public double[] getChainGradient() {
+            double[] allOnes = new double[getParameter().getDimension()];
+            Arrays.fill(allOnes, 1.0);
+            return allOnes;
         }
 
         @Override
@@ -194,6 +222,16 @@ public interface HawkesRateProvider {
             } else {
                 return 0.0;
             }
+        }
+
+        @Override
+        public double[] getChainSecondDerivative() {
+            return getParameter().getParameterValues();
+        }
+
+        @Override
+        public double[] getChainGradient() {
+            return getParameter().getParameterValues();
         }
 
         @Override

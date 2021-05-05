@@ -284,14 +284,26 @@ public class HawkesLikelihood extends AbstractModelLikelihood implements Reporta
     public double[] getRandomRateHessian() {
 
         double[] gradient = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
+        double[] hessian = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
+
+        double[] chainGradient = hawkesModel.getRateProvider().getChainGradient();
+        double[] chainSecondDerivative = hawkesModel.getRateProvider().getChainSecondDerivative();
+
+        double[] result = new double[hawkesModel.getRateProvider().getParameter().getDimension()];
 
         getLogLikelihood();
 
-        hphCore.getRandomRatesHessian(gradient);
 
-        hawkesModel.getRateProvider().updateRateGradient(gradient);
+        hphCore.getRandomRatesGradient(gradient);
+        hphCore.getRandomRatesHessian(hessian);
 
-        return gradient;
+        for (int i = 0; i < gradient.length; i++) {
+            result[i] = gradient[i] * chainSecondDerivative[i] + hessian[i] * chainGradient[i] * chainGradient[i];
+        }
+
+        hawkesModel.getRateProvider().updateRateGradient(result);
+
+        return result;
     }
 
     public enum ObservationType {

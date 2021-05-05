@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.preorder.NewTipFullConditionalDistribution
 import dr.evomodel.treedatalikelihood.preorder.TipFullConditionalDistributionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.TipGradientViaFullConditionalDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
@@ -39,7 +40,7 @@ import dr.xml.Reportable;
 /**
  * @author Marc A. Suchard
  */
-public class TreeTipGradient implements GradientWrtParameterProvider, Reportable {
+public class TreeTipGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait treeTraitProvider;
@@ -126,22 +127,26 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
 
         double[] gradient = new double[nTaxa  * dimTrait * nTraits];
 
+        maskDerivative(gradient);
+
+        return gradient;
+    }
+
+    private void maskDerivative(double[] derivative) {
         int offsetOutput = 0;
         for (int taxon = 0; taxon < nTaxa; ++taxon) {
             double[] taxonGradient = (double[]) treeTraitProvider.getTrait(tree, tree.getExternalNode(taxon));
-            System.arraycopy(taxonGradient, 0, gradient, offsetOutput, taxonGradient.length);
+            System.arraycopy(taxonGradient, 0, derivative, offsetOutput, taxonGradient.length);
             offsetOutput += taxonGradient.length;
         }
 
         if (maskParameter != null) {
             for (int i = 0; i < maskParameter.getDimension(); ++i) {
                 if (maskParameter.getParameterValue(i) == 0.0) {
-                    gradient[i] = 0.0;
+                    derivative[i] = 0.0;
                 }
             }
         }
-
-        return gradient;
     }
 
     @Override
@@ -150,4 +155,19 @@ public class TreeTipGradient implements GradientWrtParameterProvider, Reportable
     }
 
     private double tolerance = 1E-3;
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+
+        double[] diagonalHessian = new double[nTaxa * dimTrait * nTraits];
+
+        maskDerivative(diagonalHessian);
+
+        return diagonalHessian;
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented.");
+    }
 }

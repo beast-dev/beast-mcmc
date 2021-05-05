@@ -32,7 +32,7 @@ import dr.inference.model.*;
  * @author Marc A. Suchard
  */
 
-public class MaskedGradient implements GradientWrtParameterProvider, VariableListener {
+public class MaskedGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, VariableListener {
 
     private final int dimension;
     private final GradientWrtParameterProvider gradient;
@@ -71,12 +71,14 @@ public class MaskedGradient implements GradientWrtParameterProvider, VariableLis
 
     @Override
     public double[] getGradientLogDensity() {
+        return maskArray(gradient.getGradientLogDensity());
+    }
 
-        double[] originalGradient = gradient.getGradientLogDensity();
+    private double[] maskArray(double[] original) {
         double[] result = new double[dimension];
 
         for (int i = 0; i < dimension; ++i) {
-            result[i] = originalGradient[map[i]];
+            result[i] = original[map[i]];
         }
 
         return result;
@@ -85,5 +87,15 @@ public class MaskedGradient implements GradientWrtParameterProvider, VariableLis
     @Override
     public void variableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         throw new RuntimeException("Changing mask is not implemented");
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return maskArray(((HessianWrtParameterProvider) gradient).getDiagonalHessianLogDensity());
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented!");
     }
 }

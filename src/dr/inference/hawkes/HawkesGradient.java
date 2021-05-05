@@ -29,6 +29,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
 /**
@@ -41,12 +42,15 @@ public class HawkesGradient implements GradientWrtParameterProvider, HessianWrtP
     final private WrtParameter wrtParameter;
     final private HawkesLikelihood likelihood;
     final private boolean withHessian;
+    final private Double tolerance;
 
     public HawkesGradient(WrtParameter wrtParameter,
                           HawkesLikelihood likelihood,
+                          Double tolerance,
                           boolean withHessian) {
         this.wrtParameter = wrtParameter;
         this.likelihood = likelihood;
+        this.tolerance = tolerance;
         this.withHessian = withHessian;
     }
 
@@ -72,8 +76,8 @@ public class HawkesGradient implements GradientWrtParameterProvider, HessianWrtP
 
     @Override
     public String getReport() {
-        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, null)
-                + (withHessian ? HessianWrtParameterProvider.getReportAndCheckForError(this, null) : "");
+        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0, Double.POSITIVE_INFINITY, tolerance)
+                + (withHessian ? HessianWrtParameterProvider.getReportAndCheckForError(this, tolerance) : "");
     }
 
     @Override
@@ -152,6 +156,7 @@ public class HawkesGradient implements GradientWrtParameterProvider, HessianWrtP
         final static String HAWKES_GRADIENT = "hawkesGradient";
         final static String WRT_PARAMETER = "wrt";
         final static String HESSIAN = "hessian";
+        private static final String TOLERANCE = HamiltonianMonteCarloOperatorParser.GRADIENT_CHECK_TOLERANCE;
 
         public String getParserName() {
             return HAWKES_GRADIENT;
@@ -165,8 +170,9 @@ public class HawkesGradient implements GradientWrtParameterProvider, HessianWrtP
             WrtParameter wrt = WrtParameter.factory(wrtParameter);
 
             boolean withHessian = xo.getAttribute(HESSIAN, false);
+            double tolerance = xo.getAttribute(TOLERANCE, 1E-4);
 
-            return new HawkesGradient(wrt, likelihood, withHessian);
+            return new HawkesGradient(wrt, likelihood, tolerance, withHessian);
 
         }
 
@@ -186,6 +192,7 @@ public class HawkesGradient implements GradientWrtParameterProvider, HessianWrtP
                 AttributeRule.newStringRule(WRT_PARAMETER),
                 new ElementRule(HawkesLikelihood.class),
                 AttributeRule.newBooleanRule(HESSIAN, true),
+                AttributeRule.newDoubleRule(TOLERANCE, true),
         };
 
         public Class getReturnType() {

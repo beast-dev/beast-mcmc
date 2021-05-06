@@ -101,7 +101,7 @@
     </zigZagOperator>
   </operators>
 
-  <mcmc id="mcmc.mc" chainLength="300" autoOptimize="true">
+  <mcmc id="mcmc.mc" chainLength="100" autoOptimize="true">
     <posterior>
       <likelihood id="likelihood.mc">
         <distributionLikelihood idref="distribution"/>
@@ -110,7 +110,7 @@
     <operators idref="operators.MZZ"/>
 
 
-    <log logEvery="100">
+    <log logEvery="10">
 			<column label="posterior" dp="4" width="12">
 				<likelihood idref="likelihood.hmc"/>
 			</column>
@@ -134,17 +134,17 @@
 
 	<traceAnalysis fileName="MZZ_ar1_trunc_d10.log" stdError="true"/>
 
-    <assertEqual tolerance="1e-5" verbose="true" charactersToStrip="\[\],">
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
         <message>
             Check log-likelihood
         </message>
         <actual regex="MultivariateDistributionLikelihood\((.*?)\)">
-                <report>
-                    <distributionLikelihood idref="distribution"/>
-                </report>
+            <report>
+                <distributionLikelihood idref="distribution"/>
+            </report>
         </actual>
         <expected>
-            -7.796707619719140
+            -5.5056
         </expected>
     </assertEqual>
 

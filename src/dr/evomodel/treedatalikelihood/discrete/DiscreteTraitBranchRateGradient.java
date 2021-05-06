@@ -301,6 +301,10 @@ public class DiscreteTraitBranchRateGradient
                     new Author("MA", "Suchard"),
             },
             "Gradients do grow on trees: a linear-time O(N)-dimensional gradient for statistical phylogenetics",
+            2020,
             "Molecular Biology and Evolution",
-            Citation.Status.IN_PRESS);
+            37,
+            3047,
+            3060,
+            Citation.Status.PUBLISHED);
 }

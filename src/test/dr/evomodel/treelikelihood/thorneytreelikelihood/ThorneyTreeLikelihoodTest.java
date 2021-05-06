@@ -1,7 +1,6 @@
 package test.dr.evomodel.treelikelihood.thorneytreelikelihood;
 
 import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
 import dr.evomodel.bigfasttree.*;

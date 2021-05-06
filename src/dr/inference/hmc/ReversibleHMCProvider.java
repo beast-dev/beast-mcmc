@@ -9,15 +9,18 @@ import dr.util.Transform;
 
 public interface ReversibleHMCProvider {
 
-    void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient, int direction, double time);
+    void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum, WrappedVector gradient,
+                                          int direction, double time);
 
     double[] getInitialPosition();
 
     double getParameterLogJacobian();
 
-    int getNumGradientEvent();
+    int getNumGradientEvent();// todo: make another interface to record these counts.
 
     int getNumBoundaryEvent();
+
+    double[] getMask();
 
     Transform getTransform();
 

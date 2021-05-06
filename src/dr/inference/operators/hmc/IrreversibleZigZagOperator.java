@@ -46,10 +46,13 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     public IrreversibleZigZagOperator(GradientWrtParameterProvider gradientProvider,
                                       PrecisionMatrixVectorProductProvider multiplicationProvider,
                                       PrecisionColumnProvider columnProvider,
-                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions, boolean refreshVelocity, Parameter mask,
-                                      int threadCount) {
+                                      double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
+                                      boolean refreshVelocity, Parameter mask,
+                                      int threadCount, MassPreconditioner massPreconditioner,
+                                      MassPreconditionScheduler.Type preconditionSchedulerType) {
 
-        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions, refreshVelocity, mask, threadCount);
+        super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
+                refreshVelocity, mask, threadCount, massPreconditioner, preconditionSchedulerType);
     }
 
 
@@ -454,6 +457,6 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     static final boolean CPP_NEXT_BOUNCE = false;
-    private static final boolean NEW_WAY = true;
+    private static final boolean NEW_WAY = false;
     private static final boolean NOT_YET_IMPLEMENTED = false;
 }

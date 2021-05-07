@@ -180,9 +180,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         MassPreconditioner preconditioner;
 
         if (xo.hasChildNamed(PRECONDITIONER)) {
-            Object cxo = xo.getElementFirstChild(PRECONDITIONER);
-            if (cxo instanceof PriorPreconditioningProvider) {
-                preconditioner = new MassPreconditioner.PriorPreconditioner((PriorPreconditioningProvider) cxo, transform);
+            PriorPreconditioningProvider priorPreconditioningProvider = (PriorPreconditioningProvider) xo.getChild(PRECONDITIONER).getChild(PriorPreconditioningProvider.class);
+            if (priorPreconditioningProvider !=  null) {
+                preconditioner = new MassPreconditioner.PriorPreconditioner(priorPreconditioningProvider, transform);
             } else {
                 throw new XMLParseException("Unknown preconditioner specified");
             }

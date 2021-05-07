@@ -34,6 +34,7 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
 import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.inference.operators.hmc.MassPreconditioner;
+import dr.inference.operators.hmc.MassPreconditioningOptions;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -167,15 +168,15 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         HamiltonianMonteCarloOperator.InstabilityHandler instabilityHandler = HamiltonianMonteCarloOperator.InstabilityHandler.factory(instabilityHandlerCase);
         boolean guessInitialMass = xo.getAttribute(PRECONDITIONING_GUESS_INIT_MASS, false);
 
+        MassPreconditioningOptions preconditioningOptions = new MassPreconditioningOptions.Default(preconditioningUpdateFrequency, preconditioningMaxUpdate, preconditioningDelay, preconditioningMemory, guessInitialMass);
+
         HamiltonianMonteCarloOperator.Options runtimeOptions = new HamiltonianMonteCarloOperator.Options(
                 stepSize, nSteps, randomStepFraction,
-                preconditioningUpdateFrequency, preconditioningMaxUpdate, preconditioningDelay, preconditioningMemory,
+                preconditioningOptions,
                 gradientCheckCount, gradientCheckTolerance,
                 maxIterations, reductionFactor,
                 targetAcceptanceProbability,
-                instabilityHandler,
-                guessInitialMass
-        );
+                instabilityHandler);
 
         MassPreconditioner preconditioner;
 

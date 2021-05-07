@@ -341,58 +341,49 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final double initialStepSize;
         final int nSteps;
         final double randomStepCountFraction;
-        final int preconditioningUpdateFrequency;
-        final int preconditioningMaxUpdate;
-        final int preconditioningDelay;
-        final int preconditioningMemory;
         final int gradientCheckCount;
+        final MassPreconditioningOptions preconditioningOptions;
         final double gradientCheckTolerance;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
         final double targetAcceptanceProbability;
         final InstabilityHandler instabilityHandler;
-        final boolean guessInitialMass;
 
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
-                       int preconditioningUpdateFrequency, int preconditioningMaxUpdate, int preconditioningDelay, int preconditioningMemory,
+                       MassPreconditioningOptions preconditioningOptions,
                        int gradientCheckCount, double gradientCheckTolerance,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
-                       double targetAcceptanceProbability, InstabilityHandler instabilityHandler,
-                       boolean guessInitialMass) {
+                       double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
             this.initialStepSize = initialStepSize;
             this.nSteps = nSteps;
             this.randomStepCountFraction = randomStepCountFraction;
-            this.preconditioningUpdateFrequency = preconditioningUpdateFrequency;
-            this.preconditioningMaxUpdate = preconditioningMaxUpdate;
-            this.preconditioningDelay = preconditioningDelay;
-            this.preconditioningMemory = preconditioningMemory;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
             this.targetAcceptanceProbability = targetAcceptanceProbability;
             this.instabilityHandler = instabilityHandler;
-            this.guessInitialMass = guessInitialMass;
+            this.preconditioningOptions = preconditioningOptions;
         }
 
         @Override
         public int preconditioningUpdateFrequency() {
-            return preconditioningUpdateFrequency;
+            return preconditioningOptions.preconditioningUpdateFrequency();
         }
 
         @Override
         public int preconditioningDelay() {
-            return preconditioningDelay;
+            return preconditioningOptions.preconditioningDelay();
         }
 
         @Override
         public int preconditioningMaxUpdate() {
-            return preconditioningMaxUpdate;
+            return preconditioningOptions.preconditioningMaxUpdate();
         }
 
         @Override
         public int preconditioningMemory() {
-            return preconditioningMemory;
+            return preconditioningOptions.preconditioningMemory();
         }
     }
 

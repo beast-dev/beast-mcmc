@@ -31,10 +31,7 @@ import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
-import dr.inference.operators.hmc.MassPreconditionScheduler;
-import dr.inference.operators.hmc.MassPreconditioner;
-import dr.inference.operators.hmc.MassPreconditioningOptions;
+import dr.inference.operators.hmc.*;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -191,7 +188,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             preconditioner = preconditioningType.factory(derivative, transform, runtimeOptions);
         }
 
-        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditioner, preconditionSchedulerType);
+        PreconditionHandler preconditionHandler = new PreconditionHandler(preconditioner, preconditioningOptions, preconditionSchedulerType);
+
+        return factory(adaptationMode, weight, derivative, parameter, transform, mask, runtimeOptions, preconditionHandler.getMassPreconditioner(), preconditionHandler.getSchedulerType());
     }
 
     protected HamiltonianMonteCarloOperator factory(AdaptationMode adaptationMode, double weight, GradientWrtParameterProvider derivative,

@@ -1,3 +1,32 @@
+/*
+ * BranchRates.java
+ *
+ * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * @author Alexander Fisher
+ */
+
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
@@ -10,36 +39,16 @@ import java.util.function.DoubleBinaryOperator;
 public class RandomLocalClockRateWrapper implements DifferentiableBranchRates {
 
     public static final String RLC_RATES_WRAPPER = "rlcRatesWrapper";
-//    public static final String PARAPHYLY_LIST = "paraphylyList";
-//    public static final String WEIGHTING = "weighting";
 
-    //    private List<Taxa> paraphylySet;
     private RandomLocalClockModel rlcModel;
-//    private Tree tree;
-//    private double totalTime;
-//    private List<NodeRef> MRCANodeList;
-//    private int dim;
-//    private BranchWeighting branchWeighting;
-
 
     public RandomLocalClockRateWrapper(RandomLocalClockModel rlcModel) {
 
         this.rlcModel = rlcModel;
-//        super(name);
-//        this.branchRateModel = branchRateModel;
-//        this.paraphylySet = paraphylySet;
-//        this.tree = branchRateModel.getTree();
-//        this.branchWeighting = branchWeighting;
-//        this.dim = dim;
-//        this.MRCANodeList = new ArrayList<NodeRef>(dim);
-//        for (int i = 0; i < dim; i++) {
-//            MRCANodeList.add(null);
-//        }
     }
 
     @Override
     public double getUntransformedBranchRate(Tree tree, NodeRef node) {
-//        return getBranchRate(tree, node);
         return rlcModel.getUnscaledBranchRate(tree, node);
     }
 
@@ -113,27 +122,8 @@ public class RandomLocalClockRateWrapper implements DifferentiableBranchRates {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//            final String name = xo.getAttribute(Statistic.NAME, xo.getId());
-
-//            List<String> names = new ArrayList<>();
 
             RandomLocalClockModel rlcModel = (RandomLocalClockModel) xo.getChild(RandomLocalClockModel.class);
-
-//            List<Taxa> paraphylySet = new ArrayList<>();
-//
-//            Taxa paraphyly;
-//
-//            if (xo.hasChildNamed(PARAPHYLY_LIST)) {
-//                XMLObject cxo = xo.getChild(PARAPHYLY_LIST);
-//                for (int i = 0; i < cxo.getChildCount(); i++) {
-//                    paraphyly = (Taxa) cxo.getChild(i);
-//                    paraphylySet.add(paraphyly);
-//                }
-//            }
-//
-//            int dim = paraphylySet.size();
-//
-//            BranchWeighting branchWeighting = parseWeighting(xo);
 
             RandomLocalClockRateWrapper rlcRateWrapper = new RandomLocalClockRateWrapper(rlcModel);
             return rlcRateWrapper;

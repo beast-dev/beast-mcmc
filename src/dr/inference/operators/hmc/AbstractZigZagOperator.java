@@ -20,12 +20,12 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                            PrecisionMatrixVectorProductProvider multiplicationProvider,
                            PrecisionColumnProvider columnProvider,
                            double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
-                           boolean refreshVelocity, Parameter mask,
+                           boolean refreshVelocity, Parameter mask, Parameter categoryClass,
                            int threadCount, MassPreconditioner massPreconditioner,
                            MassPreconditionScheduler.Type preconditionSchedulerType) {
 
         super(gradientProvider, multiplicationProvider, columnProvider, weight, runtimeOptions, nativeOptions,
-                refreshVelocity, mask, massPreconditioner, preconditionSchedulerType);
+                refreshVelocity, mask, categoryClass, massPreconditioner, preconditionSchedulerType);
         this.taskPool = (threadCount > 1) ? new TaskPool(gradientProvider.getDimension(), threadCount) : null;
     }
 
@@ -87,13 +87,14 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         } else {
 
             final Type eventType = firstBounce.type;
-            final int eventIndex = firstBounce.index;
+            final int eventIndex = firstBounce.index[0];
 
             WrappedVector column = getPrecisionColumn(eventIndex);
 
-            updateDynamics(position, velocity, action, gradient, momentum, column, eventTime, eventIndex, eventType);
+            updateDynamics(position, velocity, action, gradient, momentum, column, eventTime, firstBounce.index,
+                    eventType);
 
-            reflectVelocity(velocity, eventIndex);
+            reflectVelocity(velocity, firstBounce.index);
 
             finalBounceState = new BounceState(eventType, eventIndex, remainingTime - eventTime);
 
@@ -129,7 +130,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                                  WrappedVector momentum,
                                  WrappedVector column,
                                  double eventTime,
-                                 int eventIndex,
+                                 int[] eventIndex,
                                  Type eventType);
 
     static double findGradientRoot(double action,
@@ -138,16 +139,93 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
         return minimumPositiveRoot(-0.5 * action, gradient, momentum);
     }
 
-    double findBoundaryTime(int index, double position,
-                            double velocity) {
+    double findBinaryBoundaryTime(int index, double position,
+                                  double velocity) {
 
         double time = Double.POSITIVE_INFINITY;
 
-        if (headingTowardsBoundary(velocity, index)) {
+        if (headingTowardsBinaryBoundary(velocity, index)) {
             time = Math.abs(position / velocity);
         }
 
         return time;
+    }
+
+    MinimumTravelInformation findCategoricalBoundaryTime(double[] position, double[] velocity) {
+
+        double time = Double.POSITIVE_INFINITY;
+        int[] bounceIndex = {-1, -1};;
+
+        if (categoryClasses == null) return new MinimumTravelInformation(time, bounceIndex);
+
+        int i = 0;
+        while (i < position.length) {
+            if (categoryClasses[i] > 0) {
+                int nDim = categoryClasses[i] - 1;
+
+                double[] positionSubset = new double[nDim];
+                double[] velocitySubset = new double[nDim];
+                double[] observedDataMaskSubset = new double[nDim];
+
+                System.arraycopy(position, i, positionSubset, 0, nDim);
+                System.arraycopy(velocity, i, velocitySubset, 0, nDim);
+                System.arraycopy(observedDataMask, i, observedDataMaskSubset, 0, nDim);
+
+                MinimumTravelInformation bounceInfo = findCategoricalBoundaryTimeOneTrait(positionSubset,
+                        velocitySubset, observedDataMaskSubset);
+
+                if (bounceInfo.time < time) {
+                    time = bounceInfo.time;
+                    bounceIndex[0] = i + bounceInfo.index[0];
+                    bounceIndex[1] = i + bounceInfo.index[1];
+                }
+
+                i += nDim;
+            } else i += 1;
+        }
+
+        return new MinimumTravelInformation(time, bounceIndex);
+    }
+
+    private MinimumTravelInformation findCategoricalBoundaryTimeOneTrait(double[] positionSubset, double[] velocitySubset,
+                                                                         double[] observedDataMaskSubset) {
+
+        int[] bounceIndex = { -1, -1};
+        double bounceTime = Double.POSITIVE_INFINITY;
+
+        if (!isReferenceClass(observedDataMaskSubset)) {
+
+            int bounceIndex1 = -1;
+            for (int i = 0; i < observedDataMaskSubset.length; i++) {
+                if (observedDataMaskSubset[i] > 0) {
+                    bounceIndex1 = i;
+                    break;
+                }
+            }
+
+            bounceIndex[0] = bounceIndex1;
+            for (int i = 0; i < positionSubset.length; i++) {
+
+                double vDiff = velocitySubset[bounceIndex1] - velocitySubset[i];
+                double xDiff = positionSubset[bounceIndex1] - positionSubset[i];
+                if (vDiff < 0) {
+                    double time = -xDiff / vDiff;
+                    if (time < bounceTime) {
+                        bounceTime = time;
+                        bounceIndex[1] = i;
+                    }
+                }
+            }
+        }
+        return new MinimumTravelInformation(bounceTime, bounceIndex);
+    }
+
+    private boolean isReferenceClass(double[] observedDataMaskSubset) {
+
+        for (int i = 0; i < observedDataMaskSubset.length; i++) {
+            if (observedDataMaskSubset[i] == 0) return false;
+        }
+        return true;
     }
 
     private static double minimumPositiveRoot(double a,
@@ -176,11 +254,16 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     static void reflectMomentum(WrappedVector momentum,
-                                WrappedVector position,
                                 int eventIndex) {
-
         momentum.set(eventIndex, -momentum.get(eventIndex));
-        position.set(eventIndex, 0.0); // Exactly on boundary to avoid potential round-off error
+    }
+
+    static void setZeroPosition(WrappedVector position, int index) {
+        position.set(index, 0.0); // Exactly on boundary to avoid potential round-off error
+    }
+
+    static void setEqualPosition(WrappedVector position, int index0, int index1) {
+        position.set(index1, position.get(index0)); // Exactly on category boundary to avoid potential round-off error
     }
 
     static void setZeroMomentum(WrappedVector momentum,
@@ -190,9 +273,10 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
     }
 
     private static void reflectVelocity(WrappedVector velocity,
-                                        int eventIndex) {
-
-        velocity.set(eventIndex, -velocity.get(eventIndex));
+                                        int[] eventIndex) {
+        for (int i = 0; i < eventIndex.length; i++) {
+            if (eventIndex[i] >= 0) velocity.set(eventIndex[i], -velocity.get(eventIndex[i]));
+        }
     }
 
 //    private static double minimumPositiveRoot(double a,

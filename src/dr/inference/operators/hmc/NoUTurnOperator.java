@@ -54,6 +54,10 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
 
         final double[] initialPosition = hmcProvider.getInitialPosition();
 
+        if(updatePreconditioning){ //todo: should preconditioning, use a schedular
+            hmcProvider.providerUpdatePreconditioning();
+        }
+
         if (stepSizeInformation == null) {
             stepSizeInformation = findReasonableStepSize(initialPosition,
                     hmcProvider.getGradientProvider().getGradientLogDensity(), hmcProvider.getStepSize());
@@ -93,6 +97,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
         }
         if (adaptiveStepsize && getCount() > adaptiveDelay) {
             stepSizeInformation.update(m, trajectoryTree.cumAcceptProb, trajectoryTree.numAcceptProbStates);
+            if (printStepsize) System.err.println("step size is " + stepSizeInformation.getStepSize());
         }
         return endPosition;
     }
@@ -433,5 +438,8 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     private SplitHMCtravelTimeMultiplier splitHMCmultiplier = null;
     private ReversibleHMCProvider splitHMCinner = null;
     private ReversibleHMCProvider splitHMCouter = null;
+
+    private final boolean updatePreconditioning = false;
+    private final boolean printStepsize = false;
 }
 

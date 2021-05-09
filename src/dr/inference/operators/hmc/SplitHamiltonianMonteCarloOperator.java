@@ -268,6 +268,12 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
         updateMergedVector(momentumA, momentumB, momentum);
     }
 
+    @Override
+    public void providerUpdatePreconditioning() {
+        inner.providerUpdatePreconditioning();
+        outer.providerUpdatePreconditioning();
+    }
+
     public double[] jointTransformInverse(double[] argument) {
         double[] jointUntransformedPosition = new double[dimInner + dimOuter];
         double[] transformedPositionB = new double[dimOuter];
@@ -321,12 +327,12 @@ public class SplitHamiltonianMonteCarloOperator extends AbstractAdaptableOperato
 
     @Override
     public int getNumGradientEvent() {
-        return 0;
+        return inner.getNumGradientEvent() + outer.getNumGradientEvent();
     }
 
     @Override
     public int getNumBoundaryEvent() {
-        return 0;
+        return inner.getNumBoundaryEvent() + outer.getNumBoundaryEvent();
     }
 
     @Override

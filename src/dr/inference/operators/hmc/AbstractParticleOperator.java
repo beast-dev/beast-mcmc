@@ -59,7 +59,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                              PrecisionMatrixVectorProductProvider multiplicationProvider,
                              PrecisionColumnProvider columnProvider,
                              double weight, Options runtimeOptions, NativeCodeOptions nativeOptions,
-                             boolean refreshVelocity, Parameter mask,
+                             boolean refreshVelocity, Parameter mask, Parameter categoryClass,
                              MassPreconditioner massPreconditioner,
                              MassPreconditionScheduler.Type preconditionSchedulerType) {
 
@@ -82,6 +82,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
         setWeight(weight);
         this.observedDataMask = getObservedDataMask();
+        this.categoryClasses = getCategoryClasses(categoryClass);
         checkParameterBounds(parameter);
 
         long flags = 128;
@@ -122,6 +123,25 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
                     parameter.getBounds().getLowerLimit(i) == Double.NEGATIVE_INFINITY) ? 0.0 : 1.0;
         }
         return observed;
+    }
+
+    private int[] getCategoryClasses(Parameter categoryVector) {
+        int dim = parameter.getDimension();
+        int[] categoryClasses = new int[dim];
+
+        if (categoryVector != null) {
+            int[] category = new int[categoryVector.getDimension()];
+            for (int i = 0; i < category.length; i++) {
+                category[i] = (int) categoryVector.getParameterValues()[i];
+            }
+
+            int L = categoryVector.getDimension();
+            int n = dim / L;
+            for (int i = 0; i < n; i++) {
+                System.arraycopy(category, 0, categoryClasses, i * L, L);
+            }
+        }
+        return categoryClasses;
     }
 
     @Override
@@ -287,7 +307,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         }
     }
 
-    boolean headingTowardsBoundary(double velocity, int positionIndex) {
+    boolean headingTowardsBinaryBoundary(double velocity, int positionIndex) {
         return observedDataMask[positionIndex] * parameterSign[positionIndex] * velocity < 0.0;
     }
 
@@ -339,7 +359,7 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     void recordEvents(Type eventType) {
         numEvents++;
-        if (eventType == Type.BOUNDARY) {
+        if (eventType == Type.BINARY_BOUNDARY || eventType == Type.CATE_BOUNDARY) {
             numBoundaryEvents++;
         } else if (eventType == Type.GRADIENT) {
             numGradientEvents++;
@@ -467,7 +487,8 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     enum Type {
         NONE,
-        BOUNDARY,
+        BINARY_BOUNDARY,
+        CATE_BOUNDARY,
         GRADIENT,
         REFRESHMENT;
 
@@ -475,9 +496,11 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
             if (i == 0) {
                 return NONE;
             } else if (i == 1) {
-                return BOUNDARY;
+                return BINARY_BOUNDARY;
             } else if (i == 2) {
                 return GRADIENT;
+            } else if (i > 2) {
+                return CATE_BOUNDARY;
             } else {
                 throw new RuntimeException("Unknown type");
             }
@@ -506,9 +529,10 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
     Preconditioning preconditioning;
     protected final MassPreconditioner massPreconditioning;
     protected final MassPreconditionScheduler preconditionScheduler;
-    final private double[] observedDataMask;
+    final protected double[] observedDataMask;
     private final double[] meanVector;
 
+    protected final int[] categoryClasses;
     final static boolean TIMING = true;
     BenchmarkTimer timer = new BenchmarkTimer();
 

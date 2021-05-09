@@ -1266,7 +1266,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
         } else {
 
-            for (int i = 1; i <= codonPartitionCount; i++) {
+            /*for (int i = 1; i <= codonPartitionCount; i++) {
                 writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                         new Attribute[]{
                                 new Attribute.Default<String>("fileName", beautiOptions.logFileName),
@@ -1276,7 +1276,25 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         });
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
                 writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+            }*/
+
+            String customNames = "";
+            for (int i = 1; i <= codonPartitionCount; i++) {
+                customNames += model.getPrefix(i) + "mu ";
             }
+
+            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                    new Attribute[]{
+                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                            new Attribute.Default<String>("parameterColumn", model.getPrefix() + "allMus"),
+                            new Attribute.Default<Integer>("dimension", codonPartitionCount),
+                            new Attribute.Default<String>("parameterNames", customNames),
+                            new Attribute.Default<String>("burnin", "" + (int) (beautiOptions.chainLength * 0.10)),
+                            new Attribute.Default<String>("upperLimit", "" + (double) (codonPartitionCount))
+                    });
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "allMus");
+            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
         }
 
     }

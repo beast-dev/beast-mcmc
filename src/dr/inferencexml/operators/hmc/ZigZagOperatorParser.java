@@ -35,7 +35,6 @@ import dr.xml.*;
 
 import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
 import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.*;
-import static dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser.*;
 
 /**
  * @author Aki Nishimura
@@ -84,8 +83,8 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
         boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
         boolean refreshVelocity = xo.getAttribute(REFRESH_VELOCITY, true);
 
-        MassPreconditioner.Type preconditioningType = parsePreconditioning(xo);
-        MassPreconditionScheduler.Type preconditionSchedulerType = parsePreconditionScheduler(xo, preconditioningType);
+        MassPreconditioner.Type preconditioningType = PreconditionHandlerParser.parsePreconditioning(xo);
+        MassPreconditionScheduler.Type preconditionSchedulerType = PreconditionHandlerParser.parsePreconditionScheduler(xo, preconditioningType);
         MassPreconditioner preconditioner = preconditioningType.factory(derivative, null, runtimeOptions);
 
 

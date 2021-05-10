@@ -166,7 +166,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                final double distance = tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
+//                final double distance = tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
+                final double distance = tree.getNodeHeight(tree.getParent(node)) -  tree.getNodeHeight(node);
                 if (distance < threshold) {
                     tooSmall[i - tree.getExternalNodeCount()] = 0.0;
                 } else {

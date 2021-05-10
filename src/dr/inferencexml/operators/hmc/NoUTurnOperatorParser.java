@@ -41,6 +41,7 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
 
     private final static String NUTS = "NoUTurnOperator";
     private final static String ADAPTIVE_STEPSIZE_FLG = "adaptiveStepsize";
+    private final static String ADAPTIVE_STEPSIZE_DELAY = "adaptiveDelay";
 
     @Override
     public String getParserName() {
@@ -53,7 +54,8 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
         boolean adaptiveStepsize = xo.getAttribute(ADAPTIVE_STEPSIZE_FLG, true);
-        return new NoUTurnOperator(reversibleHMCprovider, adaptiveStepsize, weight);
+        int adaptiveDelay = xo.getAttribute(ADAPTIVE_STEPSIZE_DELAY, -1);
+        return new NoUTurnOperator(reversibleHMCprovider, adaptiveStepsize, adaptiveDelay, weight);
     }
 
     @Override

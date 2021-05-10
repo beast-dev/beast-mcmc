@@ -35,6 +35,10 @@ public interface MassPreconditioner {
 
     void updateMass();
 
+    WrappedVector getMass();
+
+    void updateVariance(WrappedVector position);
+
     ReadableVector doCollision(int[] indices, ReadableVector momentum);
 
     int getDimension();
@@ -223,6 +227,16 @@ public interface MassPreconditioner {
         }
 
         @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
         public int getDimension() {
             return dim;
         }
@@ -273,6 +287,18 @@ public interface MassPreconditioner {
             updatedMomentum.set(indices[0], momentum.get(indices[1]));
             updatedMomentum.set(indices[1], momentum.get(indices[0]));
             return updatedMomentum;
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            Arrays.fill(mass, 1.0);
+            return new WrappedVector.Raw(mass);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
         }
 
         @Override
@@ -438,6 +464,16 @@ public interface MassPreconditioner {
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
         }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            // Do nothing
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
+        }
     }
 
     class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
@@ -503,6 +539,16 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
         }
 
     }
@@ -606,6 +652,20 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
              variance.update(position);
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+            variance.update(position);
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            double[] mass = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                mass[i] = 1 / inverseMass[i];
+            }
+            return new WrappedVector.Raw(mass);
         }
     }
 
@@ -773,6 +833,16 @@ public interface MassPreconditioner {
         @Override
         public void storeSecant(ReadableVector gradient, ReadableVector position) {
             // Do nothing
+        }
+
+        @Override
+        public void updateVariance(WrappedVector position) {
+
+        }
+
+        @Override
+        public WrappedVector getMass() {
+            throw new RuntimeException("Not yet implemented!");
         }
 
         @Override

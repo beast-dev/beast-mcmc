@@ -26,7 +26,10 @@
 package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.StandardizeTraits;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -34,6 +37,8 @@ import dr.xml.*;
 
 import java.util.*;
 import java.util.logging.Logger;
+
+import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 
 /**
  * @author Marc A. Suchard
@@ -541,5 +546,16 @@ public class TreeTraitParserUtilities {
             }
         }
         return thisMap;
+    }
+
+    public static TreeTrait getTreeTraitFromDataLikelihood(TreeDataLikelihood dataLikelihood) {
+        ContinuousDataLikelihoodDelegate delegate =
+                (ContinuousDataLikelihoodDelegate) dataLikelihood.getDataLikelihoodDelegate();
+
+        ContinuousTraitPartialsProvider dataModel = delegate.getDataModel();
+        String traitName = dataModel.getTipTraitName();
+//        String realizedTraitName = getTipTraitName(traitName);
+
+        return dataLikelihood.getTreeTrait(traitName);
     }
 }

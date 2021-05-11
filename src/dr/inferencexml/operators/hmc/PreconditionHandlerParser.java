@@ -50,7 +50,6 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
-    private final static String PRECONDITION_HANDLER = "preconditionHandler";
 
     public static PreconditionHandler parsePreconditionHandler(XMLObject xo) throws XMLParseException {
         MassPreconditioner.Type preconditioningType;
@@ -101,18 +100,23 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
+        return rules;
     }
 
-    protected final XMLSyntaxRule[] rules = {
+    private final XMLSyntaxRule[] rules = {
+
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
-            new ElementRule(GradientWrtParameterProvider.class),
-            new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
-                    new XORRule(
-                            new ElementRule(MassPreconditioner.class),
-                            new ElementRule(PriorPreconditioningProvider.class)
-                    ),
-            }, true),
+
+            new XORRule(
+                    new ElementRule(GradientWrtParameterProvider.class),
+                    new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
+                            new XORRule(
+                                    new ElementRule(MassPreconditioner.class),
+                                    new ElementRule(PriorPreconditioningProvider.class)
+                            ),
+                    })
+            )
+
     };
 
     static MassPreconditioner.Type parsePreconditioning(XMLObject xo) throws XMLParseException {
@@ -144,6 +148,6 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserName() {
-        return PRECONDITION_HANDLER;
+        return PRECONDITIONING;
     }
 }

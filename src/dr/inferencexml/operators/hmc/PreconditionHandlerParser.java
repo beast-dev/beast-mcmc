@@ -26,6 +26,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.inference.operators.hmc.MassPreconditioner;
@@ -50,6 +51,7 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
     private final static String PRECONDITIONING_MEMORY = "preconditioningMemory";
     private final static String PRECONDITIONER = "preconditioner";
     private final static String PRECONDITIONING_GUESS_INIT_MASS = "guessInitialMass";
+    private final static String BOUNDS = "bounds";
 
     public static PreconditionHandler parsePreconditionHandler(XMLObject xo) throws XMLParseException {
         MassPreconditioner.Type preconditioningType;
@@ -115,7 +117,11 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
                                     new ElementRule(PriorPreconditioningProvider.class)
                             ),
                     })
-            )
+            ),
+
+            new ElementRule(BOUNDS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 2, 2)
+            }, true),
 
     };
 

@@ -479,10 +479,20 @@ public interface MassPreconditioner {
     class DiagonalHessianPreconditioning extends DiagonalPreconditioning {
 
         final protected HessianWrtParameterProvider hessian;
+        final private Parameter lowerBound;
+        final private Parameter upperBound;
 
         DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
                                        Transform transform,
                                        int memorySize) {
+            this(hessian, transform, memorySize,  new Parameter.Default(1E-2), new Parameter.Default(1E2));
+        }
+
+        DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
+                                       Transform transform,
+                                       int memorySize,
+                                       Parameter lowerBound,
+                                       Parameter upperBound) {
             super(hessian.getDimension(), transform);
             this.hessian = hessian;
             if (memorySize > 0) {
@@ -490,6 +500,8 @@ public interface MassPreconditioner {
             } else {
                 this.adaptiveDiagonal = new AdaptableVector.Default(hessian.getDimension());
             }
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
         }
 
         @Override
@@ -515,18 +527,16 @@ public interface MassPreconditioner {
 
         private double[] boundMassInverse(double[] diagonalHessian) {
 
-            final double lowerBound = 1E-2; //TODO bad magic numbers
-            final double upperBound = 1E2;
             double[] boundedMassInverse = diagonalHessian.clone();
 
             normalizeL1(boundedMassInverse, dim);
 
             for (int i = 0; i < dim; i++) {
                 boundedMassInverse[i] = 1.0 / boundedMassInverse[i];
-                if (boundedMassInverse[i] < lowerBound) {
-                    boundedMassInverse[i] = lowerBound;
-                } else if (boundedMassInverse[i] > upperBound) {
-                    boundedMassInverse[i] = upperBound;
+                if (boundedMassInverse[i] < lowerBound.getParameterValue(0)) {
+                    boundedMassInverse[i] = lowerBound.getParameterValue(0);
+                } else if (boundedMassInverse[i] > upperBound.getParameterValue(0)) {
+                    boundedMassInverse[i] = upperBound.getParameterValue(0);
                 }
             }
 

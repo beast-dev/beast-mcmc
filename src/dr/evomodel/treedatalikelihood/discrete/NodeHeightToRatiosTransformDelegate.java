@@ -209,7 +209,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
                 constructEpochs();
             }
             for (Epoch epoch : epochs) {
-                double previousNodeHeight = tree.getNodeHeight(epoch.getConnectingNode());
+                double previousNodeHeight = tree.getNodeHeight(tree.getNode(epoch.getConnectingNodeNumber()));
                 final double anchorNodeHeight = epoch.getAnchorTipHeight();
                 for (int nodeNumber : epoch.getInternalNodes()) {
 
@@ -236,6 +236,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     protected void updateNodeHeights() {
+        if (!epochKnown) {
+            constructEpochs();
+        }
         preOrderTraversal.updateAllNodes();
         preOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
         final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = preOrderTraversal.getNodeOperations();
@@ -410,7 +413,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         private final int anchorTipNodeNumber;
         private List<Integer> internalNodes = new ArrayList<Integer>();
         private Epoch lastEpoch;
-        private NodeRef connectingNode;
+        private int connectingNodeNumber;
 
         private Epoch(NodeRef anchorTipNode) {
             this.anchorTipNodeNumber = anchorTipNode.getNumber();
@@ -423,7 +426,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
         public void endEpoch(NodeRef node, Epoch lastEpoch) {
             this.lastEpoch = lastEpoch;
-            this.connectingNode = node;
+            this.connectingNodeNumber = node.getNumber();
         }
 
         public void addInternalNode(NodeRef node) {
@@ -434,8 +437,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
             return internalNodes;
         }
 
-        public NodeRef getConnectingNode() {
-            return connectingNode;
+        public int getConnectingNodeNumber() {
+            return connectingNodeNumber;
         }
 
         @Override

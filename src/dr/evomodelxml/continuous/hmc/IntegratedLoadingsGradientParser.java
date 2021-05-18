@@ -5,6 +5,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.JointPartialsProvider;
 import dr.util.TaskPool;
 import dr.xml.*;
 
@@ -68,12 +69,16 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                     "=\"" + PARALLEL + "\" or remove the " + TaskPoolParser.TASK_PARSER_NAME + " element.");
         }
 
+        JointPartialsProvider jointPartials = (JointPartialsProvider) xo.getChild(JointPartialsProvider.class);
+
+
         // TODO Check dimensions, parameters, etc.
 
         return factory(
                 treeDataLikelihood,
                 continuousDataLikelihoodDelegate,
                 factorAnalysis,
+                jointPartials,
                 taskPool,
                 threadProvider,
                 remainderCompProvider);
@@ -83,6 +88,7 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
     protected IntegratedLoadingsGradient factory(TreeDataLikelihood treeDataLikelihood,
                                                  ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                                  IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                                 JointPartialsProvider jointPartialsProvider,
                                                  TaskPool taskPool,
                                                  IntegratedLoadingsGradient.ThreadUseProvider threadUseProvider,
                                                  IntegratedLoadingsGradient.RemainderCompProvider remainderCompProvider)
@@ -92,6 +98,7 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
                 treeDataLikelihood,
                 likelihoodDelegate,
                 factorAnalysisLikelihood,
+                jointPartialsProvider,
                 taskPool,
                 threadUseProvider,
                 remainderCompProvider);
@@ -123,7 +130,8 @@ public class IntegratedLoadingsGradientParser extends AbstractXMLObjectParser {
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(TaskPool.class, true),
             AttributeRule.newStringRule(THREAD_TYPE, true),
-            AttributeRule.newStringRule(REMAINDER_COMPUTATION, true)
+            AttributeRule.newStringRule(REMAINDER_COMPUTATION, true),
+            new ElementRule(JointPartialsProvider.class, true)
 
     };
 }

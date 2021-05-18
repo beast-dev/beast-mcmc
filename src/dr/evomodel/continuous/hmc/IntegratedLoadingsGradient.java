@@ -2,10 +2,10 @@ package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihood;
+import dr.evomodel.treedatalikelihood.continuous.JointPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
@@ -16,7 +16,6 @@ import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import dr.util.StopWatch;
 import dr.util.TaskPool;
-import dr.evomodelxml.continuous.hmc.TaskPoolParser;
 import dr.xml.*;
 import org.ejml.data.DenseMatrix64F;
 
@@ -44,16 +43,19 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
     private final ThreadUseProvider threadUseProvider;
     private final RemainderCompProvider remainderCompProvider;
     private final TaskPool taskPool;
+    private final JointPartialsProvider jointPartials;
 
     public IntegratedLoadingsGradient(TreeDataLikelihood treeDataLikelihood,
                                       ContinuousDataLikelihoodDelegate likelihoodDelegate,
                                       IntegratedFactorAnalysisLikelihood factorAnalysisLikelihood,
+                                      JointPartialsProvider jointPartials,
                                       TaskPool taskPool,
                                       ThreadUseProvider threadUseProvider,
                                       RemainderCompProvider remainderCompProvider) {
 
 
         this.factorAnalysisLikelihood = factorAnalysisLikelihood;
+        this.jointPartials = jointPartials;
 
         String traitName = factorAnalysisLikelihood.getModelName();
 
@@ -275,9 +277,15 @@ public class IntegratedLoadingsGradient implements GradientWrtParameterProvider,
 
 //        for (WrappedNormalSufficientStatistics statistic : statistics) {  // TODO Maybe need to re-enable
 
-        final ReadableVector meanFactor = statistic.getMean();
-        final WrappedMatrix precisionFactor = statistic.getPrecision();
-        final WrappedMatrix varianceFactor = statistic.getVariance();
+        final WrappedNormalSufficientStatistics extendedStatistic;
+        if (jointPartials == null) {
+            extendedStatistic = statistic;
+        } else {
+            extendedStatistic = jointPartials.partitionNormalStatistics(statistic, factorAnalysisLikelihood);
+        }
+        final ReadableVector meanFactor = extendedStatistic.getMean();
+        final WrappedMatrix precisionFactor = extendedStatistic.getPrecision();
+        final WrappedMatrix varianceFactor = extendedStatistic.getVariance();
 
         if (DEBUG) {
             System.err.println("FM" + taxon + " : " + meanFactor);

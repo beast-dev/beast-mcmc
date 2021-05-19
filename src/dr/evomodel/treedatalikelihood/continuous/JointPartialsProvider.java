@@ -268,6 +268,7 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
         }
     }
 
+    @Override
     public WrappedNormalSufficientStatistics partitionNormalStatistics(WrappedNormalSufficientStatistics statistic,
                                                                        ContinuousTraitPartialsProvider provider) {
 

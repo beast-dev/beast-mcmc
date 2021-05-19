@@ -27,6 +27,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.inference.model.CompoundParameter;
 
 import java.util.ArrayList;
@@ -77,10 +78,21 @@ public interface ContinuousTraitPartialsProvider {
         return true;
     }
 
-    default int[] getPartitionDimensions() { return null;}
+    default int[] getPartitionDimensions() {
+        return null;
+    }
 
     default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
         // Do nothing
+    }
+
+    default WrappedNormalSufficientStatistics partitionNormalStatistics(WrappedNormalSufficientStatistics statistic,
+                                                                        ContinuousTraitPartialsProvider provider) {
+        if (this == provider) {
+            return statistic;
+        }
+        throw new RuntimeException("This class does not currently support 'partitionNormalStatistics' with " +
+                "a provider other than itself.");
     }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {

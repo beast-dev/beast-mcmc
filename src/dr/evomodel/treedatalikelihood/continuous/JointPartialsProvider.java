@@ -179,10 +179,10 @@ public class JointPartialsProvider extends AbstractModel implements ContinuousTr
                 double subDet = subPartial[precisionType.getDeterminantOffset(subDim)];
 
                 if (!precisionType.isMissingDeterminantValue(subDet)) {
-
-                    DenseMatrix64F prec = MissingOps.wrap(subPartial, precisionOffset, subDim, subDim);
-                    DenseMatrix64F var = new DenseMatrix64F(subDim, subDim);
-                    subDet = MissingOps.safeInvert2(prec, var, true).getLogDeterminant();
+                    //TODO: what was I trying to do here?
+//                    DenseMatrix64F prec = MissingOps.wrap(subPartial, precisionOffset, subDim, subDim);
+//                    DenseMatrix64F var = new DenseMatrix64F(subDim, subDim);
+//                    subDet = MissingOps.safeInvert2(prec, var, true).getLogDeterminant();
                 }
 
                 partial[detDim] += subDet;

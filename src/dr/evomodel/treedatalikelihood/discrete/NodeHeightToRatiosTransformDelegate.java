@@ -162,17 +162,32 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     }
 
     public double[] setMaskByHeightDifference(double threshold) {
+
         double[] tooSmall = new double[ratios.getDimension()];
-        for (int i = tree.getExternalNodeCount(); i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            if (!tree.isRoot(node)) {
-//                final double distance = tree.getNodeHeight(node) - nodeEpochMap.get(node.getNumber()).getAnchorTipHeight();
-                final double distance = tree.getNodeHeight(tree.getParent(node)) -  tree.getNodeHeight(node);
-                if (distance < threshold) {
-                    tooSmall[i - tree.getExternalNodeCount()] = 0.0;
-                } else {
-                    tooSmall[i - tree.getExternalNodeCount()] = 1.0;
+
+        if (!epochKnown) {
+            constructEpochs();
+        }
+
+        for (Epoch epoch : epochs) {
+            for (int nodeNumber : epoch.getInternalNodes()) {
+
+                NodeRef node = tree.getNode(nodeNumber);
+
+                final int ratioNum = getRatiosIndex(node);
+
+                if (tree.getParent(node) == null) {
+                    System.err.println("stop");
                 }
+
+                if (nodeEpochMap.get(node.getNumber()) == null) {
+                    System.err.println("stop too");
+                }
+
+                final double distance = getNodePartial(node);
+
+                tooSmall[ratioNum] = distance < threshold ? 0.0 : 1.0;
+
             }
         }
         return tooSmall;

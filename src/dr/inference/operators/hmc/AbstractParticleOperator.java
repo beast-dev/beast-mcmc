@@ -432,6 +432,16 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
         public int preconditioningMemory() {
             return 0;
         }
+
+        @Override
+        public Parameter preconditioningEigenLowerBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+        @Override
+        public Parameter preconditioningEigenUpperBound() {
+            throw new RuntimeException("Not yet implemented.");
+        }
     }
 
     public static class NativeCodeOptions {

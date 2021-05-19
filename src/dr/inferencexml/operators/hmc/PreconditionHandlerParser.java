@@ -78,7 +78,19 @@ public class PreconditionHandlerParser extends AbstractXMLObjectParser {
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
-        MassPreconditioningOptions preconditioningOptions = new MassPreconditioningOptions.Default(preconditioningUpdateFrequency, preconditioningMaxUpdate, preconditioningDelay, preconditioningMemory, guessInitialMass);
+        Parameter eigenLowerBound, eigenUpperBound;
+        if (xo.hasAttribute(BOUNDS)) {
+            eigenLowerBound = xo.getChild(BOUNDS).getAllChildren(Parameter.class).get(0);
+            eigenUpperBound = xo.getChild(BOUNDS).getAllChildren(Parameter.class).get(1);
+        } else {
+            eigenLowerBound = new Parameter.Default(1E-2);
+            eigenUpperBound = new Parameter.Default(1E2);
+        }
+
+        MassPreconditioningOptions preconditioningOptions =
+                new MassPreconditioningOptions.Default(preconditioningUpdateFrequency, preconditioningMaxUpdate,
+                        preconditioningDelay, preconditioningMemory, guessInitialMass, eigenLowerBound, eigenUpperBound);
+
         MassPreconditioner preconditioner;
 
         if (xo.hasChildNamed(PRECONDITIONER)) {

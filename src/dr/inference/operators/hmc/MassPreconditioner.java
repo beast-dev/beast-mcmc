@@ -59,7 +59,9 @@ public interface MassPreconditioner {
         DIAGONAL("diagonal") {
             @Override
             public MassPreconditioner factory(GradientWrtParameterProvider gradient, Transform transform, MassPreconditioningOptions options) {
-                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform, options.preconditioningMemory());
+                return new DiagonalHessianPreconditioning((HessianWrtParameterProvider) gradient, transform,
+                        options.preconditioningMemory(),
+                        options.preconditioningEigenLowerBound(), options.preconditioningEigenUpperBound());
             }
         },
         ADAPTIVE_DIAGONAL("adaptiveDiagonal") {
@@ -481,12 +483,6 @@ public interface MassPreconditioner {
         final protected HessianWrtParameterProvider hessian;
         final private Parameter lowerBound;
         final private Parameter upperBound;
-
-        DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
-                                       Transform transform,
-                                       int memorySize) {
-            this(hessian, transform, memorySize,  new Parameter.Default(1E-2), new Parameter.Default(1E2));
-        }
 
         DiagonalHessianPreconditioning(HessianWrtParameterProvider hessian,
                                        Transform transform,

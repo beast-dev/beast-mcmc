@@ -26,6 +26,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
@@ -52,7 +53,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     private List<Epoch> epochs = new ArrayList<Epoch>();
 
     private boolean ratiosKnown = false;
-    private boolean epochKnown = false;
+    protected boolean epochKnown = false;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
                   Parameter nodeHeights,
@@ -95,7 +96,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         ratios.restoreParameterValues();
     }
 
-    private void constructEpochs() {
+    protected void constructEpochs() {
         nodeEpochMap.clear();
         epochs.clear();
 
@@ -246,22 +247,42 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         if (!epochKnown) {
             constructEpochs();
         }
-        preOrderTraversal.updateAllNodes();
-        preOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = preOrderTraversal.getNodeOperations();
-        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
-            NodeRef node = tree.getNode(op.getLeftChild());
-            if (!tree.isRoot(node) && !tree.isExternal(node)) {
-                Epoch epoch = nodeEpochMap.get(node.getNumber());
-                final NodeRef parentNode = tree.getParent(node);
-
-                final double ratio = ratios.getParameterValue(getRatiosIndex(node));
-                final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
-
-                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
-            }
-        }
+//        preOrderTraversal.updateAllNodes();
+//        preOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
+//        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = preOrderTraversal.getNodeOperations();
+//        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
+//            NodeRef node = tree.getNode(op.getLeftChild());
+//            if (!tree.isRoot(node) && !tree.isExternal(node)) {
+//                Epoch epoch = nodeEpochMap.get(node.getNumber());
+//                final NodeRef parentNode = tree.getParent(node);
+//
+//                final double ratio = ratios.getParameterValue(getRatiosIndex(node));
+//                final double nodeHeight = ratio * (tree.getNodeHeight(parentNode) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
+//
+//                nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
+//            }
+//        }
+        preOrderUpdateNodeHeights(tree, tree.getRoot(), null);
         tree.pushTreeChangedEvent(TreeChangedEvent.create());
+    }
+
+    private void preOrderUpdateNodeHeights(final Tree tree, final NodeRef node, final NodeRef parent) {
+
+        if (parent != null && (!tree.isExternal(node))) {
+            Epoch epoch = nodeEpochMap.get(node.getNumber());
+            final double ratio = ratios.getParameterValue(getRatiosIndex(node));
+            final double nodeHeight = ratio * (tree.getNodeHeight(parent) - epoch.getAnchorTipHeight()) + epoch.getAnchorTipHeight();
+
+            nodeHeights.setParameterValueQuietly(getNodeHeightIndex(node), nodeHeight);
+        }
+
+        if (!tree.isExternal(node)) {
+            final NodeRef child1 = tree.getChild(node, 0);
+            final NodeRef child2 = tree.getChild(node, 1);
+
+            preOrderUpdateNodeHeights(tree, child1, node);
+            preOrderUpdateNodeHeights(tree, child2, node);
+        }
     }
 
     protected int getNodeHeightIndex(NodeRef node) {

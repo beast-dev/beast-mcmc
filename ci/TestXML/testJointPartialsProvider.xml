@@ -458,7 +458,7 @@
         </precisionMatrix>
     </multivariateDiffusionModel>
 
-    <traitDataLikelihood id="traits.traitLikelihood" traitName="joint"
+    <traitDataLikelihood id="traits.traitLikelihood" traitName="X"
                          useTreeLength="false" scaleByTime="true"
                          forceFullPrecision="true" allowSingular="true"
                          reportAsMultivariate="true" integrateInternalTraits="true">

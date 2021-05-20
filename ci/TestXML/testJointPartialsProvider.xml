@@ -443,5 +443,172 @@
         </log>
     </mcmc>
 
+    <multivariateDiffusionModel id="traits.diffusionModel">
+        <precisionMatrix>
+            <cachedMatrixInverse id="traits.precision.matrix">
+                <compoundSymmetricMatrix id="traits.variance.matrix" asCorrelation="true" isCholesky="true">
+                    <diagonal>
+                        <parameter id="traits.variance.diagonal" value="1 1 1 1" lower="0 0 0 0"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="traits.variance.offDiagonal" value="0 0 0 0 0 0"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+            </cachedMatrixInverse>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <traitDataLikelihood id="traits.traitLikelihood" traitName="joint"
+                         useTreeLength="false" scaleByTime="true"
+                         forceFullPrecision="true" allowSingular="true"
+                         reportAsMultivariate="true" integrateInternalTraits="true">
+        <multivariateDiffusionModel idref="traits.diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <jointPartialsProvider idref="jointModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0 0 0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/> <!-- 1 is probably a good number -->
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <LKJCorrelationPrior id="traits.variance.offDiagonal.prior" shapeParameter="1.0" dimension="4">
+        <data>
+            <parameter idref="traits.variance.offDiagonal"/>
+        </data>
+    </LKJCorrelationPrior>
+    <halfTPrior id="traits.variance.diagonal.prior" df="1" scale="2.5">
+        <parameter idref="traits.variance.diagonal"/>
+    </halfTPrior>
+
+
+    <diffusionGradient id="traitLikelihood.gradient">
+        <precisionGradient parameter="both" traitName="joint">
+            <traitDataLikelihood idref="traits.traitLikelihood"/>
+            <cachedMatrixInverse idref="traits.precision.matrix"/>
+        </precisionGradient>
+        <!--        <meanGradient parameter="root" traitName="traits">-->
+        <!--            <traitDataLikelihood idref="traits.traitLikelihood"/>-->
+        <!--            <parameter idref="traits.meanParameter"/>-->
+        <!--        </meanGradient>-->
+    </diffusionGradient>
+
+    <report>
+        <diffusionGradient idref="traitLikelihood.gradient"/>
+    </report>
+
+    <compoundGradient id="prior.gradient">
+        <gradient>
+            <halfTPrior idref="traits.variance.diagonal.prior"/>
+            <parameter idref="traits.variance.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="traits.variance.offDiagonal.prior"/>
+        </gradient>
+        <!--        <gradient>-->
+        <!--            <distributionLikelihood idref="traits.meanParameter.prior"/>-->
+        <!--            <parameter idref="traits.meanParameter"/>-->
+        <!--        </gradient>-->
+    </compoundGradient>
+
+    <jointGradient id="posterior.gradient">
+        <diffusionGradient idref="traitLikelihood.gradient"/>
+        <compoundGradient idref="prior.gradient"/>
+    </jointGradient>
+
+    <!-- END Multivariate diffusion model                                        -->
+
+
+    <!-- Likelihood for tree given sequence data                                 -->
+
+
+    <!-- Define operators                                                        -->
+    <operators id="operators2" optimizationSchedule="log">
+        <!-- START Multivariate diffusion model                                      -->
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="100" gradientCheckTolerance="0.01">
+
+            <gradient idref="posterior.gradient"/>
+
+            <compoundParameter id="traits.compound.parameter">
+                <parameter idref="traits.variance.diagonal"/>
+                <parameter idref="traits.variance.offDiagonal"/>
+                <!--                <parameter idref="traits.meanParameter"/>-->
+            </compoundParameter>
+            <multivariateCompoundTransform id="traits.compound.transform">
+                <transform type="log" dim="4"/>
+                <LKJTransform dimension="4"/>
+                <!--                <transform type="none" dim="3"/>-->
+            </multivariateCompoundTransform>
+            <mask>
+                <parameter value="1 1 1 1 0 1 1 1 1 1"/>
+            </mask>
+        </hamiltonianMonteCarloOperator>
+        <!-- END Multivariate diffusion model                                        -->
+    </operators>
+
+    <mcmc chainLength="100" autoOptimize="true">
+        <joint id="joint2">
+            <prior id="prior2">
+
+                <!-- START Multivariate diffusion model                                      -->
+                <LKJCorrelationPrior idref="traits.variance.offDiagonal.prior"/>
+                <halfTPrior idref="traits.variance.diagonal.prior"/>
+
+                <!-- END Multivariate diffusion model                                        -->
+
+            </prior>
+            <likelihood id="likelihood2">
+
+                <!-- START Multivariate diffusion model                                      -->
+                <traitDataLikelihood idref="traits.traitLikelihood"/>
+                <integratedFactorModel idref="factorModel"/>
+
+                <!-- END Multivariate diffusion model                                        -->
+
+            </likelihood>
+        </joint>
+        <operators idref="operators2"/>
+
+        <!-- write log to screen                                                     -->
+        <log logEvery="1000">
+            <column label="Joint" dp="4" width="12">
+                <joint idref="joint2"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior2"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood2"/>
+            </column>
+        </log>
+
+        <!-- write log to file                                                       -->
+        <log logEvery="10" fileName="testJointPartialsProvider.log" overwrite="false">
+            <joint idref="joint2"/>
+            <prior idref="prior2"/>
+            <likelihood idref="likelihood2"/>
+
+            <!-- START Multivariate diffusion model                                      -->
+            <matrixParameter idref="traits.precision.matrix"/>
+            <matrixParameter idref="traits.variance.matrix"/>
+            <matrixParameter idref="traits.variance.diagonal"/>
+            <matrixParameter idref="traits.variance.offDiagonal"/>
+
+            <!-- END Multivariate diffusion model                                        -->
+
+
+            <!-- START Multivariate diffusion model                                      -->
+            <traitDataLikelihood idref="traits.traitLikelihood"/>
+
+            <!-- END Multivariate diffusion model                                        -->
+
+        </log>
+
+    </mcmc>
+
 
 </beast>
